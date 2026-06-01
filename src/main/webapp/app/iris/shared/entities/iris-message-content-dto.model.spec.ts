@@ -1,6 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 
 describe('IrisMessageContentDTO', () => {
+    setupTestBed({ zoneless: true });
+
     it('should create text content DTO', () => {
         const content = 'Hello World';
         const dto = IrisMessageContentDTO.text(content);

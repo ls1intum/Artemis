@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
@@ -10,7 +10,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
@@ -18,13 +18,17 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ModelingExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
     let component: ModelingExamSummaryComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
@@ -34,17 +38,19 @@ describe('ModelingExamSummaryComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingExamSummaryComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ModelingExamSummaryComponent);
+        component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
         expect(ModelingExamSummaryComponent).not.toBeNull();
+        expect(component).not.toBeNull();
     });
 
     it('should show no submission when there is no uml model', () => {
@@ -71,8 +77,8 @@ describe('ModelingExamSummaryComponent', () => {
         const course = new Course();
         const exercise = { course: course, exerciseGroup: undefined, diagramType: UMLDiagramType.ClassDiagram, studentParticipations: [{ id: 1 }] } as ModelingExercise;
         course.isAtLeastInstructor = true;
-        component.exercise = exercise;
-        component.submission = mockSubmission;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('submission', mockSubmission);
 
         fixture.detectChanges();
 

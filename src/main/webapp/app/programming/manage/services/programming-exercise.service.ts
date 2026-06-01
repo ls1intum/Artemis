@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
@@ -14,8 +14,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { SortService } from 'app/shared/service/sort.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -75,7 +75,7 @@ export class ProgrammingExerciseService {
      * Resets a programming exercise with the given exerciseId by performing a set of operations
      * as specified in the ProgrammingExerciseResetOptions. The available operations include:
      * 1. `deleteParticipationsSubmissionsAndResults`: Deleting all participations, submissions, and results (also deletes repositories and build plans).
-     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI, this will reset the customized build plans).
      *
      * @param exerciseId - of the programming exercise that should be reset.
      * @param options - Configuration options specifying which operations to perform during the exercise reset.
@@ -146,7 +146,7 @@ export class ProgrammingExerciseService {
 
         exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
@@ -413,7 +413,7 @@ export class ProgrammingExerciseService {
      */
     exportInstructorRepository(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId: number | undefined): Observable<HttpResponse<Blob>> {
         if (repositoryType === RepositoryType.AUXILIARY && auxiliaryRepositoryId !== undefined) {
-            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
+            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository?repositoryId=${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',
             });
@@ -431,7 +431,7 @@ export class ProgrammingExerciseService {
      * @param participationId The ID of the (student) participation
      */
     exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`, {
             observe: 'response',
             responseType: 'blob',
         });

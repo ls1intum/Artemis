@@ -20,8 +20,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
@@ -127,7 +127,8 @@ class HyperionQuizQuestionGenerationServiceTest {
                 List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make the question more precise");
 
-        QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);
+        QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO response = (QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO) service
+                .refineQuizQuestion(course, request);
 
         assertThat(response.question().title()).isEqualTo("HTTP Idempotency");
         assertThat(response.question().questionText()).isEqualTo("Which HTTP method is idempotent?");

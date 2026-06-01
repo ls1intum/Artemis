@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,11 +16,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
@@ -55,8 +56,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateMultipleOneToOneChatsWhenDifferentLoginsAreProvided() throws Exception {
         // when
-        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
-                HttpStatus.CREATED);
+        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", new OneToOneChatCreationDTO(null, testPrefix + "student2"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
 
         var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student3"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
@@ -148,8 +149,10 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(chat.getId(), "student1");
         // then
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
+        // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost);
+        // match by post id since record equality between PostResponseDTO and Post entity wouldn't hold.
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
 
     }
@@ -191,6 +194,26 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundWhenUnknownUserIdIsPassed() throws Exception {
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/99999", null, OneToOneChatDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateOneToOneChatWhenRequestedWithUserIdInBody() throws Exception {
+        Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
+
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", Map.of("userId", student2Id), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(chat).isNotNull();
+        assertParticipants(chat.getId(), 2, "student1", "student2");
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestWhenUserIdInBodyIsFractional() throws Exception {
+        // A fractional userId must be rejected, not silently truncated (e.g. 1.9 -> 1), which could otherwise start a chat with a different user than the body names.
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", Map.of("userId", 1.9), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest

@@ -1,0 +1,12 @@
+.competency-selector {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    column-gap: 24px;
+    max-height: 200px;
+    overflow-x: auto;
+
+    label {
+        display: contents;
+    }
+}

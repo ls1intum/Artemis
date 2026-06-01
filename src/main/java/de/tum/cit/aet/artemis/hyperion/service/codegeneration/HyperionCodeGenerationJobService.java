@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,7 +18,7 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -58,16 +59,19 @@ public class HyperionCodeGenerationJobService {
     /**
      * Starts a new asynchronous code generation job.
      *
-     * @param user           the requesting user
-     * @param exercise       the target exercise
-     * @param courseId       resolved course id for telemetry attribution
-     * @param repositoryType the target repository type
+     * @param user                      the requesting user
+     * @param exercise                  the target exercise
+     * @param courseId                  resolved course id for telemetry attribution
+     * @param repositoryType            the target repository type
+     * @param initialAutoGeneration     whether this job is the initial automatic generation pass
+     * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
      * @return the created job id
      */
-    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType) {
+    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            List<Long> selectedFeedbackThreadIds) {
         JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
         String jobId = job.jobId();
-        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, () -> clearJob(exercise.getId(), jobId));
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, () -> clearJob(exercise.getId(), jobId));
         return jobId;
     }
 

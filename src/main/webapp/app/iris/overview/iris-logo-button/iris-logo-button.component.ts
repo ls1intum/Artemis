@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-iris-logo-button',

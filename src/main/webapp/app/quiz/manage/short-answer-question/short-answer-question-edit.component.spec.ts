@@ -14,7 +14,7 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
+import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -520,7 +520,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             getText: vi.fn().mockReturnValue('Question text [-option 1]'),
         };
         const mockQuestionEditor = {
-            monacoEditor: mockMonacoEditor,
+            monacoEditor: () => mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
         // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals

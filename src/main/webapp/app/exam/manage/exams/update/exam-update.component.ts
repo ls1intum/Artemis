@@ -3,34 +3,34 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
-import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -51,6 +51,7 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
         ArtemisTranslatePipe,
         ButtonComponent,
         ConfirmEntityNameComponent,
+        Dialog,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -59,9 +60,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private alertService = inject(AlertService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
-    private modalService = inject(NgbModal);
     private router = inject(Router);
-    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -81,16 +80,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private originalEndDate?: dayjs.Dayjs;
 
-    private activeModalRef: NgbModalRef | null = null;
-
     private componentActive = true;
 
     confirmEntityNameValue = signal('');
+    confirmDateChangeVisible = signal(false);
+    confirmDisabled = computed(() => {
+        const value = this.confirmEntityNameValue();
+        return !value || !this.exam?.title || value !== this.exam.title;
+    });
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
-    public workingTimeConfirmationContent = viewChild<TemplateRef<any>>('workingTimeConfirmationContent');
     readonly datePickers = viewChildren(FormDateTimePickerComponent);
 
     private viewInitialized = false;
@@ -265,31 +266,29 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (datesChanged && this.isOngoingExam) {
             this.confirmEntityNameValue.set('');
-            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-            this.activeModalRef = modalRef;
-            modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
-            modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent();
-            modalRef.componentInstance.confirmDisabled = true;
-            modalRef.result.then(this.save.bind(this));
+            this.confirmDateChangeVisible.set(true);
         } else {
             this.save();
         }
     }
 
     /**
-     * Updates the confirmation state of the date change modal.
-     * The confirm action is only enabled when:
-     * - an entered value exists
-     * - the exam title is defined
-     * - the entered value exactly matches the exam title
+     * Updates the entered exam title used to enable/disable the confirm button.
      */
     onConfirmNameChange(value: string) {
         this.confirmEntityNameValue.set(value);
-        if (this.activeModalRef) {
-            const confirmDisabled = !value || !this.exam.title || value !== this.exam.title;
-            this.activeModalRef.componentInstance.confirmDisabled = confirmDisabled;
+    }
+
+    confirmDateChange() {
+        if (this.confirmDisabled()) {
+            return;
         }
+        this.confirmDateChangeVisible.set(false);
+        this.save();
+    }
+
+    cancelDateChange() {
+        this.confirmDateChangeVisible.set(false);
     }
 
     /**

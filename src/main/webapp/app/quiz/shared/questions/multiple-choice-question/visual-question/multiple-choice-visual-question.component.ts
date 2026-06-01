@@ -3,12 +3,12 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { faBan, faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneDeep } from 'lodash-es';
 
 @Component({

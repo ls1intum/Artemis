@@ -1,5 +1,5 @@
 import { UMLModel, importDiagram } from '@tumaet/apollon';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -10,14 +10,14 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
@@ -48,7 +48,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<ModelingSubmission>();
-    problemStatementHtml: SafeHtml;
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     exercise = input.required<ModelingExercise>();
     umlModel: UMLModel; // input model for Apollon+
@@ -67,7 +67,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -76,7 +76,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
+        this.problemStatementHtml.set(newProblemStatementHtml);
         this.changeDetectorReference.detectChanges();
     }
 

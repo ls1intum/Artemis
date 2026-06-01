@@ -3,16 +3,15 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -56,7 +55,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 MockComponent(HelpIconComponent),
             ],
             providers: [
-                MockProvider(NgbActiveModal),
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
@@ -91,7 +89,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should not have selected rooms and distribute button disabled on first open', () => {
         fixture.detectChanges();
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -106,7 +104,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(component.hasSelectedRooms()).toBe(true);
         expect(button.hidden).toBe(false);
     });
@@ -121,7 +119,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -173,7 +171,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should update reserve percentage when typing valid numbers', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -186,7 +184,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should reset reserve factor to latest value when invalid input is entered', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -223,7 +221,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should toggle use narrow layouts when switch is pressed', () => {
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
+        const checkbox: HTMLInputElement = document.body.querySelector('#allowNarrowLayoutsToggle') as HTMLInputElement;
 
         expect(component.allowNarrowLayouts()).toBe(false);
 

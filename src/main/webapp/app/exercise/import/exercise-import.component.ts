@@ -8,15 +8,15 @@ import { ProgrammingExercisePagingService } from 'app/programming/manage/service
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
-import { ImportComponent } from 'app/shared/import/import.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ImportComponent } from 'app/shared-ui/import/import.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
@@ -75,6 +75,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         }
 
         super.ngOnInit();
+        this.search.next();
     }
 
     private getPagingService(): ExercisePagingService<Exercise> {

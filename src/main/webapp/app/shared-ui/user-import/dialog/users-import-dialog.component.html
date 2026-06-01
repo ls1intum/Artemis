@@ -1,0 +1,240 @@
+<p-dialog
+    [header]="'artemisApp.importUsers.dialogTitle' | artemisTranslate"
+    [modal]="true"
+    [visible]="dialogVisible()"
+    [closable]="true"
+    [dismissableMask]="true"
+    (visibleChange)="dialogVisible.set($event)"
+    (onHide)="clear()"
+    [style]="{ width: '70rem' }"
+    appendTo="body"
+>
+    <form id="userImportDialogForm" name="importForm" role="form" novalidate>
+        <div class="form-group">
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText"></p>
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
+        </div>
+        @if (!examUserMode()) {
+            <div class="d-flex justify-content-center align-items-center">
+                <table class="table table-bordered w-auto">
+                    <thead>
+                        <tr>
+                            <th>Login</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_1</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>user_2&#64;artemis.org</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>11712345</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <fa-icon [icon]="faArrowRight" class="mx-2" />
+                <span>user_1, user_2, user_3</span>
+            </div>
+        }
+        @if (examUserMode()) {
+            <div class="d-flex justify-content-center align-items-center">
+                <table class="table table-bordered w-auto">
+                    <thead>
+                        <tr>
+                            <th>Login</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.room'">Room</th>
+                            <th [jhiTranslate]="'artemisApp.importUsers.seat'">Seat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_1</td>
+                            <td>user_2&#64;artemis.org</td>
+                            <td>11712345</td>
+                            <td>10.101</td>
+                            <td>25F</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <fa-icon [icon]="faArrowRight" class="mx-2" />
+                <span>user_1</span>
+            </div>
+        }
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <div>
+                    <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
+                    <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
+                </div>
+                @if (isParsing) {
+                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
+                }
+            </div>
+            <div class="mt-2">
+                <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                @if (validationError || noUsersFoundError) {
+                    <div class="mt-4 mb-2 text-danger">
+                        <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
+                        <ul class="mt-1">
+                            @if (validationError) {
+                                <li>
+                                    <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.failedRows'"></b>
+                                    <b [innerHTML]="validationError"> </b>
+                                </li>
+                            }
+                            @if (noUsersFoundError) {
+                                <li>
+                                    <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.noUsersFound'"></b>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (usersToImport && usersToImport.length > 0 && !examUserMode()) {
+            <div class="form-group mt-4">
+                <div>
+                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
+                </div>
+                <table class="table table-striped table-sm header-fixed mt-2">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" style="width: 300px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
+                            <th scope="col">Login</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body--students">
+                        @for (user of usersToImport; track user; let i = $index) {
+                            <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
+                                <th scope="row">{{ i + 1 }}</th>
+                                <td style="width: 300px">{{ user.registrationNumber }}</td>
+                                <td>{{ user.login }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.firstName }}</td>
+                                <td>{{ user.lastName }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @if (examUsersToImport && examUsersToImport.length > 0 && examUserMode()) {
+            <div class="form-group mt-4 table-responsive">
+                <div>
+                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
+                </div>
+                <table class="table table-striped table-sm header-fixed mt-2">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" style="width: 350px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
+                            <th scope="col">Login</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.room'">Room</th>
+                            <th scope="col" [jhiTranslate]="'artemisApp.exam.examUsers.seat'">Seat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body--students">
+                        @for (user of examUsersToImport; track user; let i = $index) {
+                            <tr [class.import-success]="wasImported(user)" [class.import-fail]="wasNotImported(user)">
+                                <th scope="row">{{ i + 1 }}</th>
+                                <td style="width: 350px">{{ user.registrationNumber }}</td>
+                                <td>{{ user.login }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.firstName }}</td>
+                                <td>{{ user.lastName }}</td>
+                                <td>{{ user.room }}</td>
+                                <td>{{ user.seat }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </form>
+    <ng-template pTemplate="footer">
+        <div class="d-flex justify-content-between w-100">
+            @if (usersToImport && usersToImport.length > 0) {
+                <div class="flex-shrink-0 me-2 d-flex">
+                    @if (!hasImported) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ usersToImport.length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>{{ numberOfUsersImported }}</span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
+                            <span
+                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                            >
+                        </div>
+                    }
+                </div>
+            }
+            @if (examUsersToImport && examUsersToImport.length > 0) {
+                <div class="flex-shrink-0 me-2 d-flex">
+                    @if (!hasImported) {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsers"></strong>
+                            <span>&nbsp;{{ examUsersToImport.length }}</span>
+                        </div>
+                    } @else {
+                        <div>
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersImported"></strong>
+                            <span>{{ numberOfUsersImported }}</span>
+                        </div>
+                        <div class="ms-2">
+                            <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
+                            <span
+                                ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                            >
+                        </div>
+                    }
+                </div>
+            }
+            <div class="flex-grow-1 d-flex justify-content-end">
+                @if (!hasImported) {
+                    <button type="button" class="btn btn-secondary cancel me-2" (click)="clear()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                    <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                        <fa-icon [icon]="faUpload" class="me-2" />
+                        <span jhiTranslate="entity.action.to-import"></span>
+                        <fa-icon class="ms-1" [hidden]="!isImporting" animation="spin" [icon]="faCircleNotch" />
+                    </button>
+                } @else {
+                    <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                        <fa-icon [icon]="faCheck" class="me-2" />
+                        <span jhiTranslate="entity.action.finish"></span>
+                    </button>
+                }
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>

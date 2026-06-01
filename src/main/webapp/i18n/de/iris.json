@@ -1,6 +1,28 @@
 {
     "artemisApp": {
         "iris": {
+            "onboarding": {
+                "title": "Lerne Iris kennen",
+                "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",
+                "note": "Bitte beachte: Iris unterstützt nur kursbezogene Fragen und beteiligt sich nicht an themenfremden Gesprächen.",
+                "close": "Schließen",
+                "getStarted": "Zur Tour",
+                "next": "Weiter",
+                "stepOf": "Schritt {{current}} von {{total}}",
+                "finish": "Fertig",
+                "step1": {
+                    "title": "Passe deinen Kontext an",
+                    "description": "Iris bezieht sich standardmäßig auf deinen gesamten Kurs. Versuche, zu einer bestimmten Übung oder Vorlesung zu wechseln, um gezieltere Antworten zu erhalten."
+                },
+                "step2": {
+                    "title": "Nicht sicher, wo du anfangen sollst?",
+                    "description": "Tippe auf einen Vorschlags-Chip, um deine erste Nachricht zu senden. Der \"Quiz\"-Prompt ist ein guter Einstieg."
+                },
+                "step3": {
+                    "title": "Kenne die Grenzen",
+                    "description": "Iris erklärt Konzepte und hilft beim Problemlösen, gibt aber keine Lösungen vor. Klicke auf das Info-Symbol, um mehr zu erfahren."
+                }
+            },
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
                 "saved": "Alles gespeichert",
@@ -143,6 +165,8 @@
                     "learnStarter": "Hilf mir, das Konzept zu verstehen von ",
                     "quiz": "Quiz",
                     "quizTopicStarter": "Erstelle 5 Multiple-Choice-Fragen, um mich zum Thema zu prüfen: ",
+                    "quizLectureStarter": "Erstelle 5 Multiple-Choice-Fragen, um mich zu dieser Vorlesung zu prüfen",
+                    "quizExerciseStarter": "Erstelle 5 Multiple-Choice-Fragen, um mich zu den Konzepten hinter dieser Aufgabe zu prüfen",
                     "tips": "Tipps",
                     "tipsStarter": "Gib mir 3 Tipps, um diesen Kurs effektiv zu lernen"
                 },
@@ -155,7 +179,8 @@
                     },
                     "lecture": {
                         "keyPoints": "Was sind die wichtigsten Punkte, die ich aus dieser Vorlesung wissen sollte?",
-                        "summarise": "Fasse zusammen, was ich wissen sollte"
+                        "summarise": "Fasse zusammen, was ich wissen sollte",
+                        "whereToStart": "Ich stecke fest, wo soll ich anfangen?"
                     }
                 }
             },

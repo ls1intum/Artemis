@@ -13,7 +13,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { FileUploadSubmissionService } from '../file-upload-submission.service';
@@ -23,24 +23,24 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { FileService } from 'app/shared/service/file.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { FileService } from 'app/foundation/service/file.service';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 describe('FileUploadSubmissionComponent', () => {
     setupTestBed({ zoneless: true });

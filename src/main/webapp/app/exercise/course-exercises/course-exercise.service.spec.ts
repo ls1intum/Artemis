@@ -2,14 +2,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import dayjs from 'dayjs/esm';
 import { take } from 'rxjs/operators';
@@ -247,7 +247,7 @@ describe('Course Management Service', () => {
 
         requestAndExpectDateConversion(
             'PUT',
-            `api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
+            `api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`,
             returnedFromService,
             participation.exercise,
             true,

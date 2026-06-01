@@ -19,36 +19,37 @@ import {
 import { FormsModule, NgModel } from '@angular/forms';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { removeSpecialCharacters } from 'app/shared/util/utils';
+import { removeSpecialCharacters } from 'app/foundation/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -82,6 +83,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faPlus = faPlus;
+    protected readonly PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isImport = input.required<boolean>();
@@ -325,7 +327,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         }
 
         if (newShortName && newShortName.length > 3) {
-            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
+            const sanitizedShortName = removeSpecialCharacters(newShortName).slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH);
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
@@ -357,7 +359,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 this.alertService.error('artemisApp.error.shortNameGenerationFailed');
                 break;
             }
-            newShortName = `${shortName}${counter}`;
+            // Truncate the base so that base + counter suffix still fits within the max length.
+            const suffix = `${counter}`;
+            const truncatedBase = shortName.slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH - suffix.length);
+            newShortName = `${truncatedBase}${suffix}`;
             counter++;
         }
         return newShortName;

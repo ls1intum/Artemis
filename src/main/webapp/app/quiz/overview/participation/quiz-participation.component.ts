@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, map, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -13,8 +13,8 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { TranslateService } from '@ngx-translate/core';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -29,22 +29,22 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { onError } from 'app/shared/util/global.utils';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { onError } from 'app/foundation/util/global.utils';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
@@ -141,6 +141,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _submitTitleKey = signal('entity.action.submit');
     readonly isSubmitDisabled = this._isSubmitDisabled.asReadonly();
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
+    private readonly _shouldTreatAsSubmittedForUi = signal(false);
+    readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -695,6 +697,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.submission = new QuizSubmission();
             this.initQuiz();
         }
+
+        // Re-sync after submission state is set (applyQuizFull called syncSubmitState before submission was assigned)
+        this.syncSubmitState();
     }
 
     /**
@@ -1135,8 +1140,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @returns `true` if the submission should be considered submitted in the UI;
      *          `false` otherwise.
      */
-
-    get shouldTreatAsSubmittedForUi(): boolean {
+    private computeShouldTreatAsSubmittedForUi(): boolean {
         const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
@@ -1147,8 +1151,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * on a button inside this component.
      */
     syncSubmitState(): void {
-        const disabled = this.shouldTreatAsSubmittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
+        this._shouldTreatAsSubmittedForUi.set(submittedForUi);
+        const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
-        this._submitTitleKey.set(this.shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
+        this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
     }
 }

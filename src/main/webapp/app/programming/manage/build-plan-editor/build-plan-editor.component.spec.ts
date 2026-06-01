@@ -14,9 +14,9 @@ import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Build Plan Editor', () => {

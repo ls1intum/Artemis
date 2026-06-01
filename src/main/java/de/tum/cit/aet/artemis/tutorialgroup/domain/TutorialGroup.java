@@ -17,8 +17,6 @@ import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,16 +24,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Entity
 @Table(name = "tutorial_group")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroup extends DomainObject {
 
@@ -146,9 +143,9 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
+    // No @Cache here on purpose: mutated when sessions are generated / adjusted for the schedule. See #12574 / #12584.
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
 
     @OneToOne(fetch = FetchType.EAGER)
@@ -377,11 +374,20 @@ public class TutorialGroup extends DomainObject {
 
     /**
      * Hides privacy sensitive information.
+     * <p>
+     * Both the entity references and the flattened transient fields populated by
+     * {@code TutorialGroupService.setTransientPropertiesForUser} must be cleared so privacy is
+     * preserved regardless of which projection a caller serializes.
      */
     public void hidePrivacySensitiveInformation() {
         this.setRegistrations(null);
         this.setTeachingAssistant(null);
         this.setCourse(null);
+        this.setNumberOfRegisteredUsers(null);
+        this.setTeachingAssistantName(null);
+        this.setTeachingAssistantId(null);
+        this.setTeachingAssistantImageUrl(null);
+        this.setCourseTitle(null);
     }
 
     /**

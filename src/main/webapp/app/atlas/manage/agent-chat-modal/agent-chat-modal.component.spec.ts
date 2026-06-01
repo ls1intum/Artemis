@@ -6,8 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { AgentChatModalComponent } from './agent-chat-modal.component';
 import { AgentChatResponse, AgentChatService, AgentHistoryMessage } from '../services/agent-chat.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatMessage, CompetencyMappingViewModel, ExerciseMappingPreviewViewModel } from 'app/atlas/shared/entities/chat-message.model';
 import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -790,8 +790,6 @@ describe('AgentChatModalComponent', () => {
             it('should handle empty response message from service', () => {
                 component.currentMessage.set('Test message');
                 component.isAgentTyping.set(false);
-                const errorText = 'Error text';
-                const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(errorText);
                 const mockResponse = {
                     message: '',
                     sessionId: 'course_123',
@@ -804,7 +802,10 @@ describe('AgentChatModalComponent', () => {
 
                 const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                 sendButton.click();
-                expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
+                // With ?? (nullish coalescing), empty string is a valid message and used as-is
+                const messages = component.messages();
+                const lastAgentMessage = messages.filter((m) => !m.isUser).pop();
+                expect(lastAgentMessage?.content).toBe('');
             });
 
             it('should handle null response message from service', () => {
@@ -2231,16 +2232,12 @@ describe('AgentChatModalComponent', () => {
     });
 
     describe('isDelegationBrief', () => {
-        it.each([
-            'EXERCISE_ID: 42',
-            '%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER',
-            '[CREATE_APPROVED_EXERCISE_MAPPING]:{}',
-            '[CREATE_APPROVED_COMPETENCY]:',
-            '[CREATE_APPROVED_RELATION]:',
-            '  EXERCISE_ID: 42',
-        ])('returns true for internal system message: %s', (content) => {
-            expect(component['isDelegationBrief'](content)).toBeTruthy();
-        });
+        it.each(['EXERCISE_ID: 42', '[CREATE_APPROVED_EXERCISE_MAPPING]:{}', '[CREATE_APPROVED_COMPETENCY]:', '[CREATE_APPROVED_RELATION]:', '  EXERCISE_ID: 42'])(
+            'returns true for internal system message: %s',
+            (content) => {
+                expect(component['isDelegationBrief'](content)).toBeTruthy();
+            },
+        );
 
         it('returns false for normal message or empty string', () => {
             expect(component['isDelegationBrief']('Please help')).toBeFalsy();

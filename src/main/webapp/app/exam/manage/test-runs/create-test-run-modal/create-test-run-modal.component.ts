@@ -1,12 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
@@ -16,19 +16,28 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule],
 })
 export class CreateTestRunModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
 
-    exam: Exam;
+    exam = signal<Exam | undefined>(undefined);
     workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
 
     ngOnInit(): void {
+        const data = this.dialogConfig?.data;
+        if (data?.exam) {
+            this.exam.set(data.exam);
+        }
+
         this.initWorkingTimeForm();
         this.ignoreEmptyExerciseGroups();
-        for (const exerciseGroup of this.exam.exerciseGroups!) {
-            if (exerciseGroup.exercises?.length === 1) {
-                this.onSelectExercise(exerciseGroup.exercises[0], exerciseGroup);
+        const currentExam = this.exam();
+        if (currentExam) {
+            for (const exerciseGroup of currentExam.exerciseGroups!) {
+                if (exerciseGroup.exercises?.length === 1) {
+                    this.onSelectExercise(exerciseGroup.exercises[0], exerciseGroup);
+                }
             }
         }
     }
@@ -39,16 +48,18 @@ export class CreateTestRunModalComponent implements OnInit {
      * Closes the modal and returns the configured testRun.
      */
     createTestRun() {
+        const currentExam = this.exam();
+        if (!currentExam) return;
         if (this.testRunConfigured) {
             const testRun = new StudentExam();
-            testRun.exam = this.exam;
+            testRun.exam = currentExam;
             testRun.exercises = [];
             // add exercises one by one to maintain exerciseGroup order
-            for (const exerciseGroup of this.exam.exerciseGroups!) {
+            for (const exerciseGroup of currentExam.exerciseGroups!) {
                 testRun.exercises.push(this.testRunConfiguration[exerciseGroup.id!]);
             }
             testRun.workingTime = this.workingTimeForm.controls.minutes.value * 60 + this.workingTimeForm.controls.seconds.value;
-            this.activeModal.close(testRun);
+            this.dialogRef.close(testRun);
         }
     }
 
@@ -66,42 +77,45 @@ export class CreateTestRunModalComponent implements OnInit {
      * Returns true if an exercise has been selected for every exercise group
      */
     get testRunConfigured(): boolean {
-        return Object.keys(this.testRunConfiguration).length === this.exam.exerciseGroups?.length;
+        return Object.keys(this.testRunConfiguration).length === this.exam()?.exerciseGroups?.length;
     }
 
     /**
      * Closes the modal by dismissing it
      */
     cancel() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     /**
      * Removes the exerciseGroups from the exam which do not contain exercises
      */
     private ignoreEmptyExerciseGroups() {
+        const currentExam = this.exam();
+        if (!currentExam) return;
         const exerciseGroupWithExercises: ExerciseGroup[] = [];
-        for (const exerciseGroup of this.exam.exerciseGroups!) {
+        for (const exerciseGroup of currentExam.exerciseGroups!) {
             if (!!exerciseGroup.exercises && exerciseGroup.exercises.length > 0) {
                 exerciseGroupWithExercises.push(exerciseGroup);
             }
         }
-        this.exam.exerciseGroups = exerciseGroupWithExercises;
+        currentExam.exerciseGroups = exerciseGroupWithExercises;
     }
 
     /**
      * Sets up the working time form to display the default working time based on the exam dates
      */
     private initWorkingTimeForm() {
-        const defaultWorkingTime = this.exam.endDate?.diff(this.exam.startDate, 'seconds');
+        const currentExam = this.exam();
+        const defaultWorkingTime = currentExam?.endDate?.diff(currentExam?.startDate, 'seconds');
         const workingTime = this.artemisDurationFromSecondsPipe.transform(defaultWorkingTime ?? 0);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: !!this.exam.visible }, [
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: !!currentExam?.visible }, [
                 Validators.min(0),
                 Validators.required,
             ]),
-            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: !!this.exam.visible }, [
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: !!currentExam?.visible }, [
                 Validators.min(0),
                 Validators.max(59),
                 Validators.required,

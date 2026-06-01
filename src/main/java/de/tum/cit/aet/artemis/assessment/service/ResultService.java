@@ -26,6 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -45,16 +47,14 @@ import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -65,13 +65,13 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
@@ -206,17 +206,16 @@ public class ResultService {
      * <b>IMPORTANT — Two deletion paths exist due to Hibernate constraints:</b>
      * <p>
      * The {@link Result} entity has {@code @OneToMany(cascade = ALL, orphanRemoval = true)} relationships to
-     * {@link Feedback} and {@link de.tum.cit.aet.artemis.assessment.domain.AssessmentNote AssessmentNote},
-     * and feedbacks use an L2 cache ({@code @Cache} on the collection). The deletion strategy depends on
-     * whether the {@code feedbacks} collection was eagerly loaded (initialized) or is still a lazy proxy:
+     * {@link Feedback} and {@link de.tum.cit.aet.artemis.assessment.domain.AssessmentNote AssessmentNote}. The
+     * deletion strategy depends on whether the {@code feedbacks} collection was eagerly loaded (initialized)
+     * or is still a lazy proxy:
      * <p>
      * <b>Path 1 — Feedbacks initialized:</b>
      * Only non-cascaded references (complaints, ratings, participant scores) are deleted via JPQL.
      * Feedbacks and long feedback texts are left for Hibernate cascade during {@code em.remove()}.
      * We use {@code deleteById} (not {@code delete(result)}) to load a fresh managed entity, avoiding
-     * {@code em.merge()} on a potentially detached entity — merge would re-initialize the feedbacks
-     * collection from the L2 cache, which causes {@code JpaObjectRetrievalFailureException} if the
-     * cached references are stale. {@code deleteById} fires {@code @PreRemove} in {@link ResultListener}.
+     * {@code em.merge()} on a potentially detached entity. {@code deleteById} fires {@code @PreRemove} in
+     * {@link ResultListener}.
      * <p>
      * <b>Path 2 — Feedbacks NOT initialized (lazy proxy):</b>
      * We MUST NOT touch the feedbacks collection or call JPA delete, as either would trigger lazy
@@ -227,9 +226,8 @@ public class ResultService {
      * <p>
      * <b>DO NOT CHANGE</b> the two-path structure or the deletion order without carefully considering:
      * (1) Hibernate lazy-loading behavior for uninitialized collections,
-     * (2) the L2 cache on {@code Result.feedbacks} and how JPQL bypasses it,
-     * (3) FK constraints between {@code long_feedback_text -> feedback -> result} and {@code assessment_note -> result},
-     * (4) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
+     * (2) FK constraints between {@code long_feedback_text -> feedback -> result} and {@code assessment_note -> result},
+     * (3) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
      *
      * @param result                      the result to delete
      * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
@@ -243,13 +241,9 @@ public class ResultService {
         deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
 
         if (Hibernate.isInitialized(result.getFeedbacks())) {
-            // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks
-            // and long feedback texts. DO NOT bulk-delete feedbacks via JPQL because it bypasses
-            // both the persistence context and the L2 cache (@Cache on Result.feedbacks), leaving
-            // stale cached references that cause JpaObjectRetrievalFailureException when the result
-            // is subsequently merged and deleted.
-            // Use deleteById (not delete(result)) to load a fresh managed entity into the
-            // persistence context, avoiding em.merge() on a potentially detached entity.
+            // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks and long feedback texts.
+            // Use deleteById (not delete(result)) to load a fresh managed entity into the persistence context,
+            // avoiding em.merge() on a potentially detached entity.
             resultRepository.deleteById(resultId);
         }
         else {
@@ -331,8 +325,8 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
-        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
+    public Result storeFeedbackInResult(@NonNull Result result, Collection<Feedback> feedbackList, boolean shouldSave) {
+        var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, new ArrayList<>(feedbackList));
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
     }
@@ -814,11 +808,11 @@ public class ResultService {
      * {@link Result#updateAllFeedbackItems} method, which is designed for manual feedback management. Using this method with automatic assessments could
      * lead to unintended behavior or data inconsistencies.
      *
-     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
+     * @param feedbackList The collection of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
      *                         non-null ID will be processed.
      * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
      */
-    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
+    public void deleteLongFeedback(Collection<Feedback> feedbackList, Result result) {
         if (feedbackList == null) {
             return;
         }

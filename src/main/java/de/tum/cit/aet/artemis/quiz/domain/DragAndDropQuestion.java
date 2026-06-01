@@ -11,16 +11,15 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,29 +52,32 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Column(name = "background_file_path")
     private String backgroundFilePath;
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // No @Cache on the three child collections below: they are the parent collections of DragItem / DropLocation / DragAndDropMapping
+    // references resolved during submission merge cascade. Stale reads under clustered NONSTRICT_READ_WRITE were the root of #12574 / #12584.
+    // Bidirectional mapping: each child owns the question_id FK via its @ManyToOne back-reference, so a parent saveAndFlush
+    // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
+    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
+    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "drop_locations_order")
     private List<DropLocation> dropLocations = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "drag_items_order")
     private List<DragItem> dragItems = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
+    // Stored as a Set: position carries no semantic meaning — each mapping is identified by its (dragItem, dropLocation)
+    // pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the sibling dragItems /
+    // dropLocations Lists, never in correctMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
+    // products that would otherwise appear when callers JOIN FETCH correctMappings alongside another collection,
+    // avoids MultipleBagFetchException risk if a sibling ever drops @OrderColumn, and matches the conceptual model
+    // (a set of mapping pairs). HashSet membership is contract-safe across transient → persisted transitions because
+    // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
+    // still discriminates instances. With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
+    // failure mode requires the unidirectional + @JoinColumn shape).
+    // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -90,17 +92,35 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     public void setDropLocations(List<DropLocation> dropLocations) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.dropLocations = dropLocations;
     }
 
+    /**
+     * Adds a single drop location and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param dropLocation the drop location to add
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
+        if (this.dropLocations == null) {
+            this.dropLocations = new ArrayList<>();
+        }
         this.dropLocations.add(dropLocation);
         dropLocation.setQuestion(this);
         return this;
     }
 
+    /**
+     * Removes a single drop location and clears its back-reference; with {@code orphanRemoval = true} the location will also be deleted on the next flush.
+     *
+     * @param dropLocation the drop location to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
-        this.dropLocations.remove(dropLocation);
+        if (this.dropLocations != null) {
+            this.dropLocations.remove(dropLocation);
+        }
         dropLocation.setQuestion(null);
         return this;
     }
@@ -110,37 +130,73 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     public void setDragItems(List<DragItem> dragItems) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.dragItems = dragItems;
     }
 
+    /**
+     * Adds a single drag item and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param dragItem the drag item to add
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion addDragItem(DragItem dragItem) {
+        if (this.dragItems == null) {
+            this.dragItems = new ArrayList<>();
+        }
         this.dragItems.add(dragItem);
         dragItem.setQuestion(this);
         return this;
     }
 
+    /**
+     * Removes a single drag item and clears its back-reference; with {@code orphanRemoval = true} the item will also be deleted on the next flush.
+     *
+     * @param dragItem the drag item to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeDragItem(DragItem dragItem) {
-        this.dragItems.remove(dragItem);
+        if (this.dragItems != null) {
+            this.dragItems.remove(dragItem);
+        }
         dragItem.setQuestion(null);
         return this;
     }
 
-    public List<DragAndDropMapping> getCorrectMappings() {
+    public Set<DragAndDropMapping> getCorrectMappings() {
         return correctMappings;
     }
 
-    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
+    public void setCorrectMappings(Set<DragAndDropMapping> dragAndDropMappings) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.correctMappings = dragAndDropMappings;
     }
 
+    /**
+     * Adds a single mapping and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param dragAndDropMapping the mapping to add
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
+        if (this.correctMappings == null) {
+            this.correctMappings = new HashSet<>();
+        }
         this.correctMappings.add(dragAndDropMapping);
         dragAndDropMapping.setQuestion(this);
         return this;
     }
 
+    /**
+     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     *
+     * @param dragAndDropMapping the mapping to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.remove(dragAndDropMapping);
+        if (this.correctMappings != null) {
+            this.correctMappings.remove(dragAndDropMapping);
+        }
         dragAndDropMapping.setQuestion(null);
         return this;
     }
@@ -174,6 +230,37 @@ public class DragAndDropQuestion extends QuizQuestion {
         // replace placeholder with actual id if necessary (id is no longer null at this point)
         if (backgroundFilePath != null && backgroundFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
             backgroundFilePath = backgroundFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
+        }
+    }
+
+    /**
+     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
+     * via {@code getDropLocations().add(...)} / {@code getDragItems().add(...)} / {@code getCorrectMappings().add(...)}
+     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
+     */
+    @PrePersist
+    @PreUpdate
+    private void ensureChildBackReferences() {
+        if (dropLocations != null) {
+            for (DropLocation location : dropLocations) {
+                if (location != null && location.getQuestion() != this) {
+                    location.setQuestion(this);
+                }
+            }
+        }
+        if (dragItems != null) {
+            for (DragItem item : dragItems) {
+                if (item != null && item.getQuestion() != this) {
+                    item.setQuestion(this);
+                }
+            }
+        }
+        if (correctMappings != null) {
+            for (DragAndDropMapping mapping : correctMappings) {
+                if (mapping != null && mapping.getQuestion() != this) {
+                    mapping.setQuestion(this);
+                }
+            }
         }
     }
 
@@ -334,6 +421,8 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // spuriously triggering recalculation when the only difference is row order.
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
                     || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
         }

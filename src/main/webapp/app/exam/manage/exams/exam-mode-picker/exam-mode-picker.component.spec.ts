@@ -1,27 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamModePickerComponent } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const exam = {
     id: 2,
 };
 describe('ExamModePickerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamModePickerComponent;
     let fixture: ComponentFixture<ExamModePickerComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ExamModePickerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamModePickerComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamModePickerComponent);
+        component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should be in readonly mode', () => {
@@ -38,7 +44,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
-        expect(component.exam().testExam).toBeTrue();
+        expect(component.exam().testExam).toBe(true);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -47,7 +53,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
-        expect(component.exam().testExam).toBeFalse();
+        expect(component.exam().testExam).toBe(false);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 });

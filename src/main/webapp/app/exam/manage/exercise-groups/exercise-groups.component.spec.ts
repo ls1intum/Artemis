@@ -1,11 +1,13 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -26,17 +28,19 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('Exercise Groups Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = new Course();
     course.id = 456;
 
@@ -64,8 +68,8 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ExerciseGroupsComponent],
-            declarations: [
+            imports: [
+                ExerciseGroupsComponent,
                 MockComponent(ExamExerciseRowButtonsComponent),
                 MockComponent(ProgrammingExerciseInstructorStatusComponent),
                 MockDirective(DeleteButtonDirective),
@@ -117,24 +121,28 @@ describe('Exercise Groups Component', () => {
             });
     });
 
-    it('loads the exercise groups', fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('loads the exercise groups', async () => {
         const mockResponse = new HttpResponse<Exam>({ body: exam });
 
-        jest.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
 
         comp.loadExerciseGroups().subscribe((response) => {
             expect(response.body).not.toBeNull();
             expect(response.body!.id).toBe(exam.id);
         });
 
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
-    it('loads exam information', fakeAsync(() => {
+    it('loads exam information', async () => {
         const latestIndividualEndDate = dayjs();
         const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
 
-        jest.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
@@ -142,8 +150,8 @@ describe('Exercise Groups Component', () => {
             expect(response!.body!.latestIndividualEndDate).toBe(latestIndividualEndDate);
         });
 
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('removes an exercise from group', () => {
         comp.exerciseGroups = groups;
@@ -153,18 +161,18 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups[0].exercises).toHaveLength(1);
     });
 
-    it('deletes an exercise group', fakeAsync(() => {
+    it('deletes an exercise group', async () => {
         comp.exerciseGroups = groups;
 
-        jest.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
-        jest.spyOn(eventManager, 'broadcast');
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});
-        tick();
+        await Promise.resolve();
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups).toHaveLength(groups.length - 1);
-    }));
+    });
 
     it('returns the exercise icon type quiz', () => {
         const icon = faCheckDouble;
@@ -203,38 +211,38 @@ describe('Exercise Groups Component', () => {
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
         'opens the import dialog and navigates to import page',
-        fakeAsync((exerciseType: ExerciseType) => {
+        async (exerciseType: ExerciseType) => {
             const onCloseSubject = new Subject<Exercise | undefined>();
             const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            jest.spyOn(router, 'navigate');
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+            vi.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
 
             // Simulate dialog closing with result
             onCloseSubject.next({ id: 1 } as Exercise);
             onCloseSubject.complete();
-            tick();
+            await Promise.resolve();
 
             expect(dialogService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
-        }),
+        },
     );
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
         'opens the import dialog and navigates to import from file page',
-        fakeAsync((exerciseType: ExerciseType) => {
+        async (exerciseType: ExerciseType) => {
             const onCloseSubject = new Subject<Exercise | undefined>();
             const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-            jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-            jest.spyOn(router, 'navigate');
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+            vi.spyOn(router, 'navigate');
 
             comp.openImportModal(groups[0], exerciseType);
 
             // Simulate dialog closing with result (no id means import from file)
             onCloseSubject.next({ id: undefined } as Exercise);
             onCloseSubject.complete();
-            tick();
+            await Promise.resolve();
 
             expect(dialogService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
@@ -242,7 +250,7 @@ describe('Exercise Groups Component', () => {
                 ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
                 expect.anything(),
             );
-        }),
+        },
     );
 
     it('moves up an exercise group', () => {
@@ -279,30 +287,30 @@ describe('Exercise Groups Component', () => {
         const expectedResult = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
         comp.setupExerciseGroupToExerciseTypesDict();
-        const map = comp.exerciseGroupToExerciseTypesDict;
+        const map = comp.exerciseGroupToExerciseTypesDict();
 
         expect(map).toBeDefined();
         expect(map.size).toBe(groups.length);
         expect(map.get(firstGroupId)).toEqual(expectedResult);
     });
 
-    it('opens the import modal for exercise groups', fakeAsync(() => {
-        const alertSpy = jest.spyOn(alertService, 'success');
+    it('opens the import modal for exercise groups', async () => {
+        const alertSpy = vi.spyOn(alertService, 'success');
         const exerciseGroup = { id: 1 } as ExerciseGroup;
 
         const onCloseSubject = new Subject<ExerciseGroup[] | undefined>();
         const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         comp.openExerciseGroupImportModal();
 
         // Simulate dialog closing with result
         onCloseSubject.next([exerciseGroup]);
         onCloseSubject.complete();
-        tick();
+        await Promise.resolve();
 
         expect(dialogService.open).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
-    }));
+    });
 });

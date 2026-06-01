@@ -1,14 +1,15 @@
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Subscription, from } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-edit-working-time',
@@ -16,7 +17,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     alertService = inject(AlertService);
 
     exam = input.required<Exam>();
@@ -25,9 +27,9 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     faHourglassHalf = faHourglassHalf;
     workingTimeChangeAllowed = false;
 
-    private modalRef: NgbModalRef | undefined;
+    private dialogRef: DynamicDialogRef | null | undefined;
     private timeoutRef: any;
-    private subscription: Subscription;
+    private subscription: Subscription | undefined;
 
     ngOnInit() {
         this.checkWorkingTimeChangeAllowed();
@@ -37,9 +39,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
         if (this.timeoutRef) {
             clearTimeout(this.timeoutRef);
         }
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
+        this.subscription?.unsubscribe();
     }
 
     private checkWorkingTimeChangeAllowed() {
@@ -56,14 +56,23 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     openDialog(event: MouseEvent) {
         event.preventDefault();
         this.alertService.closeAll();
-        this.modalRef = this.modalService.open(ExamEditWorkingTimeDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: true,
+        this.dialogRef = this.dialogService.open(ExamEditWorkingTimeDialogComponent, {
+            header: this.translateService.instant('artemisApp.examManagement.editWorkingTime.title'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                exam: this.exam(),
+            },
         });
-        this.modalRef.componentInstance.exam = this.exam();
-        this.subscription = this.modalRef.componentInstance.examChange.subscribe((exam: Exam) => this.examChange.emit(exam));
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
+        this.subscription = this.dialogRef?.onClose.subscribe((updatedExam: Exam | undefined) => {
+            if (updatedExam) {
+                this.examChange.emit(updatedExam);
+            }
+            this.dialogRef = undefined;
+        });
     }
 }

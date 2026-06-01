@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -11,7 +11,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -20,7 +20,11 @@ import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-sco
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('ExamParticipationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -48,7 +52,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -59,7 +63,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -70,7 +74,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -90,7 +94,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamGradeInfoForSummary(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExamWithGrade }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -116,7 +120,7 @@ describe('ExamParticipationService', () => {
         service
             .getOwnStudentExam(1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -143,7 +147,7 @@ describe('ExamParticipationService', () => {
         service
             .getOwnStudentExam(1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -170,7 +174,7 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -193,13 +197,17 @@ describe('ExamParticipationService', () => {
             exercises: [exercise],
             exam: examToSend,
         });
+        let received: void | null = undefined;
         service
             .submitStudentExam(2, 2, returnedFromService)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+            .subscribe((resp) => {
+                received = resp;
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
+        req.flush(null);
+        expect(received).toBeNull();
     });
 
     it('should update a QuizSubmission', async () => {
@@ -208,7 +216,7 @@ describe('ExamParticipationService', () => {
         service
             .updateQuizSubmission(1, expected)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp).toMatchObject(expected));
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
@@ -220,7 +228,7 @@ describe('ExamParticipationService', () => {
         service
             .loadTestRunWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp).toMatchObject(expected));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -228,7 +236,7 @@ describe('ExamParticipationService', () => {
 
     it('save examSessionToken to sessionStorage', async () => {
         service.saveExamSessionTokenToSessionStorage('token1');
-        jest.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+        vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
             expect(sessionStorage['ExamSessionToken']).toBe('token1');
         });
     });
@@ -244,36 +252,40 @@ describe('ExamParticipationService', () => {
     });
 
     it('should load a List of StudentExams for a user and course', async () => {
-        const returnedFromService = Object.assign({}, [studentExam]);
+        const returnedFromService = [studentExam];
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: [studentExam] }));
+            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
 
     it('should submit a StudentExam successfully', async () => {
         const studentExamCopy = Object.assign({}, studentExam);
+        let received: void | null = undefined;
         service
             .submitStudentExam(1, 1, studentExamCopy)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toBeUndefined());
+            .subscribe((resp) => {
+                received = resp;
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
         expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
+        expect(received).toBeNull();
     });
     it('should fetch sidebar data successfully', async () => {
         const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
+        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
 
     it('should throw error if submission is not in time', async () => {
-        const errorHeaders = new HttpHeaders({ 'x-null-error': 'submissionNotInTime' });
+        const errorHeaders = new HttpHeaders({ 'x-null-error': 'error.submissionNotInTime' });
         const errorResponse = new HttpErrorResponse({
             status: 403,
             headers: errorHeaders,
@@ -322,5 +334,50 @@ describe('ExamParticipationService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush('Hand-in failed', errorResponse);
+    });
+
+    describe('Athena feedback for test exams', () => {
+        it('should POST to the request-feedback endpoint with an empty body', () => {
+            let nextCalled = false;
+            service
+                .requestAthenaFeedback(7, 8, 9)
+                .pipe(take(1))
+                .subscribe(() => (nextCalled = true));
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
+            expect(req.request.body).toBeNull();
+            req.flush(null);
+
+            expect(nextCalled).toBe(true);
+        });
+
+        it('should GET the Athena feedback usage and return used/limit', () => {
+            const usage = { used: 3, limit: 10 };
+            let received: { used: number; limit: number } | undefined;
+            service
+                .getAthenaFeedbackUsage(7, 8, 9)
+                .pipe(take(1))
+                .subscribe((resp) => (received = resp));
+
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
+            req.flush(usage);
+
+            expect(received).toEqual(usage);
+        });
+
+        it('should propagate errors from the request-feedback endpoint', () => {
+            let errorStatus: number | undefined;
+            service
+                .requestAthenaFeedback(1, 2, 3)
+                .pipe(take(1))
+                .subscribe({
+                    error: (err: HttpErrorResponse) => (errorStatus = err.status),
+                });
+
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
+            req.flush('rate limit reached', new HttpErrorResponse({ status: 400 }));
+
+            expect(errorStatus).toBe(400);
+        });
     });
 });

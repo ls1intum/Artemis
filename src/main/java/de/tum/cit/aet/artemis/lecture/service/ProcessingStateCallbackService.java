@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -220,8 +221,9 @@ public class ProcessingStateCallbackService {
      * @param lectureUnitId the ID of the lecture unit
      * @param jobToken      the job token from the callback
      * @param success       whether processing succeeded
+     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -253,9 +255,9 @@ public class ProcessingStateCallbackService {
             notifyProcessingStateChange(state, txStatus);
         }
         else {
-            log.warn("Processing failed for unit {}", lectureUnitId);
+            log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
             // handleProcessingFailure saves the state and sends WebSocket notification internally
-            handleProcessingFailure(state);
+            handleProcessingFailure(state, errorCode);
         }
 
         // Fill the freed slot with the next pending job
@@ -422,6 +424,24 @@ public class ProcessingStateCallbackService {
      * @param state the processing state that failed
      */
     void handleProcessingFailure(LectureUnitProcessingState state) {
+        handleProcessingFailure(state, null);
+    }
+
+    /**
+     * Handle processing failure with retry logic, forwarding an optional machine-readable error code.
+     * <p>
+     * Transitions to FAILED immediately so the UI reflects the error. The raw Pyris {@code errorCode}
+     * is translated to a specific, instructor-readable i18n key at this state-write boundary (the sole
+     * place where classification happens).
+     * <p>
+     * Permanent input failures (e.g. private/live videos) skip {@code scheduleRetry} entirely — the state
+     * is left with {@code retryEligibleAt == null}, which the dispatcher treats as terminal for auto-retries.
+     * Transient failures follow the existing exponential backoff until {@code MAX_PROCESSING_RETRIES}.
+     *
+     * @param state     the processing state that failed
+     * @param errorCode machine-readable error code from Pyris (e.g. {@code YOUTUBE_PRIVATE}); may be {@code null}
+     */
+    void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
 
@@ -429,23 +449,56 @@ public class ProcessingStateCallbackService {
         // does not lose it when a failure occurs after transcription already completed.
         TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
 
-        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
-            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        ProcessingErrorClassification classification = classifyIngestionFailure(errorCode);
+        state.markFailed(classification.errorKey());
+
+        boolean maxRetriesReached = state.getRetryCount() >= MAX_PROCESSING_RETRIES;
+        if (maxRetriesReached || !classification.retryable()) {
+            if (!classification.retryable()) {
+                log.warn("Unit {} failed with permanent error code '{}', no retry scheduled", state.getLectureUnit().getId(), errorCode);
+            }
+            else {
+                log.warn("Max retries reached for unit {}, marking as permanently failed", state.getLectureUnit().getId());
+            }
             processingStateRepository.save(state);
             notifyProcessingStateChange(state, txStatus);
             return;
         }
 
-        // Transition to FAILED so the UI shows the error, but schedule a retry
         long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-        state.markFailed("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         state.scheduleRetry(backoffMinutes);
         processingStateRepository.save(state);
         notifyProcessingStateChange(state, txStatus);
 
         log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
                 MAX_PROCESSING_RETRIES);
+    }
+
+    /**
+     * Translate a raw Pyris {@code error_code} into a specific, instructor-readable i18n key plus a
+     * retryability flag. Unknown and blank codes fall back to the generic key with retryable = true.
+     */
+    static ProcessingErrorClassification classifyIngestionFailure(@Nullable String rawCode) {
+        if (rawCode == null || rawCode.isBlank()) {
+            return new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
+        }
+        return switch (rawCode) {
+            case "YOUTUBE_PRIVATE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate", false);
+            case "YOUTUBE_LIVE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeLive", false);
+            case "YOUTUBE_TOO_LONG" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong", false);
+            case "YOUTUBE_UNAVAILABLE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", false);
+            case "YOUTUBE_DOWNLOAD_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed", true);
+            default -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
+        };
+    }
+
+    /**
+     * Result of classifying a raw Pyris failure code at the state-write boundary.
+     *
+     * @param errorKey  i18n key stored on the processing state; shown to instructors via the status tooltip
+     * @param retryable whether the failure is eligible for automatic retry (permanent input errors are not)
+     */
+    record ProcessingErrorClassification(String errorKey, boolean retryable) {
     }
 
     /**

@@ -8,9 +8,9 @@ import { Tag } from 'primeng/tag';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
@@ -179,21 +179,21 @@ export class ResultHistoryDropdownComponent {
             return this.translateService.instant('artemisApp.result.progressString.buildFailed');
         }
 
-        const score = result.score ?? 0;
-        if (score === 100) {
+        const currentScore = result.score ?? 0;
+        if (currentScore === 100) {
             return this.translateService.instant('artemisApp.result.progressString.goalReached');
         }
 
         const sortedResults = this.sortedHistoryResults();
-        const index = sortedResults.indexOf(result);
-        if (index <= 0) {
-            return this.translateService.instant('artemisApp.result.progressString.niceProgress');
-        }
+        const currentResultIndex = sortedResults.indexOf(result);
 
-        const previousScore = sortedResults[index - 1].score ?? 0;
-        if (score > previousScore) {
+        if (currentResultIndex === sortedResults.length - 1) {
+            return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
+        }
+        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        if (currentScore > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
-        } else if (score < previousScore) {
+        } else if (currentScore < previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.scoreDrop');
         } else {
             return this.translateService.instant('artemisApp.result.progressString.stuck');

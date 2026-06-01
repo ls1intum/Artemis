@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -15,12 +17,12 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { provideRouter } from '@angular/router';
@@ -29,6 +31,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
     let studentExamDetailTableRowComponent: StudentExamDetailTableRowComponent;
     let course: Course;
@@ -51,8 +55,17 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent, StudentExamDetailTableRowComponent],
-            declarations: [MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            imports: [
+                NgbModule,
+                NgxDatatableModule,
+                ReactiveFormsModule,
+                TranslateModule.forRoot(),
+                FaIconComponent,
+                StudentExamDetailTableRowComponent,
+                MockComponent(DataTableComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
         })
             .compileComponents()
@@ -62,7 +75,7 @@ describe('StudentExamDetailTableRowComponent', () => {
             });
     });
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should return the right icon based on exercise type', () => {
@@ -80,7 +93,7 @@ describe('StudentExamDetailTableRowComponent', () => {
     });
 
     it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
+        const getAssessmentLinkSpy = vi.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,

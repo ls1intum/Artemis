@@ -1,11 +1,11 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
-
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 /**
  * DTO for auxiliary repository
  */
@@ -67,6 +67,7 @@ export interface UpdateProgrammingExerciseDTO {
     startDate?: string;
     dueDate?: string;
     assessmentDueDate?: string;
+    assessmentType?: AssessmentType;
     exampleSolutionPublicationDate?: string;
 
     // Course/ExerciseGroup references (by ID)
@@ -144,7 +145,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         ? {
               sequentialTestRuns: exercise.buildConfig.sequentialTestRuns,
               buildPlanConfiguration: exercise.buildConfig.buildPlanConfiguration,
-              buildScript: exercise.buildConfig.buildScript,
+              buildScript: undefined, // legacy buildScript is now read-only via the editor and only nulled on conversion
               checkoutSolutionRepository: exercise.buildConfig.checkoutSolutionRepository ?? false,
               testCheckoutPath: exercise.buildConfig.testCheckoutPath,
               assignmentCheckoutPath: exercise.buildConfig.assignmentCheckoutPath,
@@ -187,6 +188,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         startDate: convertDateFromClient(exercise.startDate),
         dueDate: convertDateFromClient(exercise.dueDate),
         assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
+        assessmentType: exercise.assessmentType,
         exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
         courseId,
         exerciseGroupId,

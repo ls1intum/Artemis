@@ -6,15 +6,15 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
@@ -92,8 +92,9 @@ public class AutonomousTutorForwardingService {
         String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, new PyrisPostDTO(post), course, new PyrisUserDTO(author), null, null, null, stages -> {
-        });
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null, null,
+                stages -> {
+                });
     }
 
     /**
@@ -151,7 +152,12 @@ public class AutonomousTutorForwardingService {
         String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, new PyrisPostDTO(parentPost), course, new PyrisUserDTO(author), null, null, null, stages -> {
-        });
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null, null, null,
+                stages -> {
+                });
+    }
+
+    private PyrisUserDTO toPyrisUserDTO(User user) {
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
     }
 }

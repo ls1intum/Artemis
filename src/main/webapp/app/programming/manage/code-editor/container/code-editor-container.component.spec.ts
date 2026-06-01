@@ -11,7 +11,7 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -371,6 +371,33 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.unsavedFiles).toEqual({ 'b.java': 'y' });
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.editor.errors.saveFailed', { connectionIssue: '' });
         expect((component.monacoEditor as any).storeAnnotations).toHaveBeenCalledWith(['a.java']);
+    });
+
+    it('should set commit state to clean and emit events after inline-fix commit when no unsaved files remain', () => {
+        component.unsavedFiles = {};
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        const commitStateSpy = jest.fn();
+        const commitSpy = jest.fn();
+        component.onCommitStateChange.subscribe(commitStateSpy);
+        component.onCommit.subscribe(commitSpy);
+
+        component.onInlineFixCommitted();
+
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateSpy).toHaveBeenCalledWith(CommitState.CLEAN);
+        expect(commitSpy).toHaveBeenCalled();
+    });
+
+    it('should keep uncommitted state after inline-fix commit when new unsaved files exist', () => {
+        component.unsavedFiles = { 'src/main/App.java': 'local changes' };
+        component.commitState = CommitState.UNCOMMITTED_CHANGES;
+        const commitStateSpy = jest.fn();
+        component.onCommitStateChange.subscribe(commitStateSpy);
+
+        component.onInlineFixCommitted();
+
+        expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        expect(commitStateSpy).toHaveBeenCalledWith(CommitState.UNCOMMITTED_CHANGES);
     });
 
     it('should forward annotations and compute error files', () => {

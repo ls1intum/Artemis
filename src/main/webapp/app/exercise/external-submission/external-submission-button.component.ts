@@ -3,21 +3,21 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-external-submission',
     template: `
-        @if (!exercise.teamMode) {
-            <jhi-button
-                [btnType]="ButtonType.WARNING"
-                [btnSize]="ButtonSize.SMALL"
-                [icon]="faPlus"
-                [title]="'entity.action.addExternalSubmission'"
-                (onClick)="openExternalSubmissionDialog($event)"
-            />
-        }
+        <jhi-button
+            [btnType]="ButtonType.WARNING"
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faPlus"
+            [title]="'entity.action.addExternalSubmission'"
+            [shouldToggle]="true"
+            [toggleBreakpoint]="'md'"
+            (onClick)="openExternalSubmissionDialog($event)"
+        />
     `,
     imports: [ButtonComponent],
 })

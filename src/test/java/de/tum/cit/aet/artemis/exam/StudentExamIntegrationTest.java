@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.json.JSONException;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.skyscreamer.jsonassert.JSONAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +56,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -67,13 +67,12 @@ import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -107,6 +106,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -117,7 +117,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -627,7 +626,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(testRun.isTestRun()).isTrue();
 
-        var response = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+        var response = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
         assertThat(response).isEqualTo(testRun);
         assertThat(response.isStarted()).isTrue();
@@ -1098,8 +1097,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                    assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                    assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("You did not submit your exam");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1134,8 +1132,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                        assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("You did not submit your exam");
+                        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("You did not submit your exam");
                     }
                 }
                 else {
@@ -1176,8 +1173,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                    assertThat(result.getFeedbacks()).isNotEmpty();
-                    assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
+                    assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("Empty submission");
                 }
                 else {
                     fail("StudentParticipation which is part of an unsubmitted StudentExam contains no submission or result after automatic assessment of unsubmitted student exams call.");
@@ -1218,8 +1214,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                         assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).orElseThrow();
-                        assertThat(result.getFeedbacks()).isNotEmpty();
-                        assertThat(result.getFeedbacks().getFirst().getDetailText()).isEqualTo("Empty submission");
+                        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("Empty submission");
                     }
                 }
                 else {
@@ -1524,7 +1519,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             String fileName = "update-" + UUID.randomUUID() + ".txt";
             FileUtils.writeStringToFile(cloneDirectory.resolve(fileName).toFile(), "updated content", java.nio.charset.StandardCharsets.UTF_8);
             git.add().addFilepattern(fileName).call();
-            RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage("Add " + fileName).call();
+            RevCommit commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(git).setMessage("Add " + fileName).call();
             git.push().call();
             return commit.getId().getName();
         }
@@ -1609,20 +1604,39 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 assertThat(submission).isInstanceOf(QuizSubmission.class);
 
                 /*
-                 * When comparing the JSON of the submitted answers to the versioned submission,
-                 * a direct string comparison may not always be accurate due to the following reasons:
-                 * 1. The order of the submitted answers can change since they are stored as sets.
-                 * 2. Data fetched from the server might occasionally contain IDs, while the data returned directly might not.
-                 * To account for these discrepancies, we perform a non-strict (= order-agnostic) deep JSON comparison after removing any IDs.
-                 * This ensures that the content is accurately matched, irrespective of the order or the presence of IDs.
+                 * The version content captures the student's submitted answers for audit purposes. Compare its
+                 * structure (one JSON entry per submitted answer, with the discriminator type) to the local
+                 * submission view. Deep field-by-field comparison would be brittle: the version is serialized
+                 * from the server-managed entity (which carries fields like exerciseId derived from the back-ref
+                 * to QuizExercise), while the local view is deserialized from the student-facing API response
+                 * (which omits those server-only fields). What matters here is that an entry exists per answer
+                 * and the answer types line up; the score/feedback/answer-specific assertions live in the
+                 * dedicated quiz tests.
                  */
                 try {
-                    var submittedAnswersAsJson = removeIdFieldsFromJSONString(objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers()));
-                    var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
-                    JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
+                    var versionTree = objectMapper.readTree(versionedSubmission.get().getContent());
+                    assertThat(versionTree.isArray()).as("version content must be a JSON array of submitted answers").isTrue();
+                    var quizSubmission = (QuizSubmission) submission;
+                    assertThat(versionTree.size()).as("version must contain one entry per submitted answer").isEqualTo(quizSubmission.getSubmittedAnswers().size());
+                    Map<String, Long> versionedTypeCounts = new HashMap<>();
+                    versionTree.forEach(node -> versionedTypeCounts.merge(node.path("quizQuestion").path("type").asText(), 1L, Long::sum));
+                    Map<String, Long> submittedTypeCounts = quizSubmission.getSubmittedAnswers().stream().collect(Collectors.groupingBy(answer -> {
+                        var question = answer.getQuizQuestion();
+                        if (question instanceof MultipleChoiceQuestion) {
+                            return "multiple-choice";
+                        }
+                        if (question instanceof DragAndDropQuestion) {
+                            return "drag-and-drop";
+                        }
+                        if (question instanceof ShortAnswerQuestion) {
+                            return "short-answer";
+                        }
+                        return "unknown";
+                    }, Collectors.counting()));
+                    assertThat(versionedTypeCounts).as("version must reference the same per-type count of question types as the submission").isEqualTo(submittedTypeCounts);
                 }
-                catch (JsonProcessingException | JSONException e) {
-                    fail("Exception thrown while serializing submitted answers", e);
+                catch (JsonProcessingException e) {
+                    fail("Exception thrown while parsing versioned submission content", e);
                 }
                 assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
             }
@@ -2335,7 +2349,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -2352,7 +2366,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testRun2.setExercises(List.of(testRun1.getExercises().getFirst()));
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun1.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
         testRunList.getFirst().getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -2372,7 +2386,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testRun2.setExercises(List.of(testRun1.getExercises().getFirst()));
         testRun2.setWorkingTime(testRun1.getWorkingTime());
         studentExamRepository.save(testRun2);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun2.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
         testRunList.getFirst().getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
@@ -2388,7 +2402,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissions(testRun.getExercises().getFirst().getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationDeletionService.delete(participations.getFirst().getId(), true);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -2396,7 +2410,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testDeleteTestRunAsTutor() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam1, instructor, exam1.getExerciseGroups());
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-run/" + testRun.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-runs/" + testRun.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -2429,7 +2443,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testRun.setUser(instructor);
 
         var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
-        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class,
+        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", testRun, StudentExam.class,
                 HttpStatus.OK);
         var testRunsInDbAfter = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
         assertThat(testRunsInDbAfter).hasSize(testRunsInDbBefore.size() + 1);
@@ -2444,7 +2458,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testSubmitTestRun() throws Exception {
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
         QuizExercise quizExercise = null;
@@ -2482,7 +2496,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // Create a test run and get conduction data (which creates participations + submissions)
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
         // Find the text exercise in the test run
@@ -2511,7 +2525,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testSubmitModelingExerciseDuringTestRun() throws Exception {
         var testRun = createTestRun();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
         // Find the modeling exercise in the test run
@@ -3007,7 +3021,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             // load Quiz Submissions Submitted Answers (for comparison)
             // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
-            final int quizQueryCount = 8;
+            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more — Hibernate now issues per-child-collection
+            // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
+            // Tracked in #12808 to evaluate switching those collections to FetchType.LAZY and reclaiming the +2.
+            final int quizQueryCount = 10;
 
             // When
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,

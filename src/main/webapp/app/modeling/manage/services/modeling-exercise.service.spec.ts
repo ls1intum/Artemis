@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import dayjs from 'dayjs/esm';
-import * as helper from 'app/shared/util/download.util';
+import * as helper from 'app/foundation/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { lastValueFrom } from 'rxjs';
@@ -146,7 +146,7 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => {
                 expect(resp.body).toEqual(expected);
             });
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import/${modelingExercise.id}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import?sourceExerciseId=${modelingExercise.id}` });
         req.flush(returnedFromService);
     });
 });

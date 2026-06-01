@@ -13,13 +13,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.export.LearnerProfileExportDTO;
-import de.tum.cit.aet.artemis.core.dto.export.UserLearnerProfileExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.LearnerProfileExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.UserLearnerProfileExportDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -86,7 +86,7 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
      * @return list of learner profile export DTOs
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.export.LearnerProfileExportDTO(
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.export.LearnerProfileExportDTO(
                 clp.learnerProfile.user.login, clp.aimForGradeOrBonus, clp.timeInvestment, clp.repetitionIntensity)
             FROM CourseLearnerProfile clp
             WHERE clp.course.id = :courseId
@@ -100,7 +100,7 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
      * @return list of user learner profile export DTOs with course information
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.export.UserLearnerProfileExportDTO(
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.export.UserLearnerProfileExportDTO(
                 clp.course.id, clp.course.title, clp.aimForGradeOrBonus, clp.timeInvestment, clp.repetitionIntensity)
             FROM CourseLearnerProfile clp
             WHERE clp.learnerProfile.user.id = :userId

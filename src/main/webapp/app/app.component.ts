@@ -6,16 +6,17 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { LtiService } from 'app/shared/service/lti.service';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseNotificationPopupOverlayComponent } from 'app/notification/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
+import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 
 @Component({
     selector: 'jhi-app',
@@ -32,6 +33,7 @@ import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/compon
         CourseNotificationPopupOverlayComponent,
         LLMSelectionModalComponent,
         GlobalSearchModalComponent,
+        SetupPasskeyModalComponent,
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {

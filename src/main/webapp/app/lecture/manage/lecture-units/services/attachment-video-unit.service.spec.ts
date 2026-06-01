@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 
 describe('AttachmentVideoUnitService', () => {
@@ -355,7 +355,7 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-video-units/${attachmentVideoUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');
@@ -374,7 +374,7 @@ describe('AttachmentVideoUnitService', () => {
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/tumlive/playlist' && r.params.get('url') === pageUrl);
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/videosource/playlist' && r.params.get('url') === pageUrl);
             expect(req.request.responseType).toBe('text');
             req.flush(playlistUrl);
 
@@ -390,7 +390,7 @@ describe('AttachmentVideoUnitService', () => {
                 .pipe(take(1))
                 .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/tumlive/playlist');
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/videosource/playlist');
             req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();

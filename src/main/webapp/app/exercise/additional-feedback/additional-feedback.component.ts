@@ -1,15 +1,15 @@
 import { Component, Input, inject } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-additional-feedback',

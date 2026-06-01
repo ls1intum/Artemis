@@ -1,3 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import 'app/foundation/util/map.extension';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 
@@ -5,7 +8,7 @@ import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismResultsService } from 'app/plagiarism/shared/services/plagiarism-results.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
@@ -20,6 +23,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SuspiciousBehaviorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: SuspiciousBehaviorComponent;
     let fixture: ComponentFixture<SuspiciousBehaviorComponent>;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, examId: 2 }) } } as unknown as ActivatedRoute;
@@ -72,8 +77,7 @@ describe('SuspiciousBehaviorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective],
-            declarations: [SuspiciousBehaviorComponent, MockComponent(PlagiarismCasesOverviewComponent)],
+            imports: [MockRouterLinkDirective, SuspiciousBehaviorComponent, MockComponent(PlagiarismCasesOverviewComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -94,22 +98,26 @@ describe('SuspiciousBehaviorComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should set course and exam id onInit', () => {
         component.ngOnInit();
-        expect(component.courseId).toBe(1);
-        expect(component.examId).toBe(2);
+        expect(component.courseId()).toBe(1);
+        expect(component.examId()).toBe(2);
     });
 
     it('should not make a request onInit', () => {
-        const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        const suspiciousSessionsServiceSpy = vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
         component.ngOnInit();
         expect(suspiciousSessionsServiceSpy).not.toHaveBeenCalledOnce();
     });
 
     it('should make a request on click', () => {
-        const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
-        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
-        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        const suspiciousSessionsServiceSpy = vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked.set(true);
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked.set(true);
         component.analyzeSessions();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, {
@@ -119,11 +127,11 @@ describe('SuspiciousBehaviorComponent', () => {
             differentBrowserFingerprintsSameStudentExam: false,
             ipAddressOutsideOfRange: false,
         });
-        expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
+        expect(component.suspiciousSessions()).toEqual([suspiciousSessions]);
     });
 
     it('should set analyzed to true and analyzing to false if the request fails', () => {
-        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(
+        vi.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(
             throwError(
                 () =>
                     new HttpErrorResponse({
@@ -131,46 +139,46 @@ describe('SuspiciousBehaviorComponent', () => {
                     }),
             ),
         );
-        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
-        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked.set(true);
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked.set(true);
         component.analyzeSessions();
-        expect(component.analyzed).toBeTrue();
-        expect(component.analyzing).toBeFalse();
+        expect(component.analyzed()).toBe(true);
+        expect(component.analyzing()).toBe(false);
     });
 
     it('should navigate to suspicious sessions on click', () => {
-        const routerSpy = jest.spyOn(router, 'navigate');
-        component.suspiciousSessions = [suspiciousSessions];
+        const routerSpy = vi.spyOn(router, 'navigate');
+        component.suspiciousSessions.set([suspiciousSessions]);
         fixture.detectChanges();
         fixture.debugElement.nativeElement.querySelector('#view-sessions-btn').click();
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(['/course-management', 1, 'exams', 2, 'suspicious-behavior', 'suspicious-sessions'], {
-            state: { suspiciousSessions: [suspiciousSessions] },
+            state: { suspiciousSessions: [suspiciousSessions], ipSubnet: undefined },
         });
     });
 
     it('should retrieve plagiarism cases/results onInit', () => {
-        const examServiceSpy = jest.spyOn(examService, 'getExercisesWithPotentialPlagiarismForExam').mockReturnValue(of([exercise1, exercise2]));
-        const plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getNumberOfPlagiarismCasesForExercise').mockReturnValueOnce(of(0)).mockReturnValueOnce(of(1));
-        const plagiarismResultsServiceSpy = jest.spyOn(plagiarismResultsService, 'getNumberOfPlagiarismResultsForExercise').mockReturnValueOnce(of(2)).mockReturnValueOnce(of(4));
+        const examServiceSpy = vi.spyOn(examService, 'getExercisesWithPotentialPlagiarismForExam').mockReturnValue(of([exercise1, exercise2]));
+        const plagiarismCasesServiceSpy = vi.spyOn(plagiarismCasesService, 'getNumberOfPlagiarismCasesForExercise').mockReturnValueOnce(of(0)).mockReturnValueOnce(of(1));
+        const plagiarismResultsServiceSpy = vi.spyOn(plagiarismResultsService, 'getNumberOfPlagiarismResultsForExercise').mockReturnValueOnce(of(2)).mockReturnValueOnce(of(4));
         component.ngOnInit();
         expect(examServiceSpy).toHaveBeenCalledOnce();
         expect(examServiceSpy).toHaveBeenCalledWith(1, 2);
-        expect(component.exercises).toEqual([exercise1, exercise2]);
+        expect(component.exercises()).toEqual([exercise1, exercise2]);
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(2);
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledWith(exercise1);
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledWith(exercise2);
-        expect(component.plagiarismCasesPerExercise).toEqual(
+        expect(component.plagiarismCasesPerExercise()).toEqual(
             new Map([
                 [exercise1, 0],
                 [exercise2, 1],
             ]),
         );
-        expect(component.anyPlagiarismCases).toBeTrue();
+        expect(component.anyPlagiarismCases()).toBe(true);
         expect(plagiarismResultsServiceSpy).toHaveBeenCalledTimes(2);
         expect(plagiarismResultsServiceSpy).toHaveBeenCalledWith(1);
         expect(plagiarismResultsServiceSpy).toHaveBeenCalledWith(2);
-        expect(component.plagiarismResultsPerExercise).toEqual(
+        expect(component.plagiarismResultsPerExercise()).toEqual(
             new Map([
                 [exercise1, 2],
                 [exercise2, 4],

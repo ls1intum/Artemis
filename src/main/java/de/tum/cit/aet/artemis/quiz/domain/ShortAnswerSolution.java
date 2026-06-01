@@ -7,12 +7,10 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,9 +20,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A ShortAnswerSolution.
  */
+// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
 @Entity
 @Table(name = "short_answer_solution")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSolution extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
@@ -35,13 +33,13 @@ public class ShortAnswerSolution extends DomainObject implements QuizQuestionCom
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
 
     // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
     @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ShortAnswerMapping> mappings = new HashSet<>();
 
     public String getText() {

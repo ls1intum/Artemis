@@ -2,15 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { HttpResponse } from '@angular/common/http';
-import { LtiService } from 'app/shared/service/lti.service';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 describe('CourseLecturesComponent', () => {

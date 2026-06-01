@@ -2,9 +2,9 @@ import { AfterViewInit, Component, DestroyRef, OnInit, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
+import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { switchMap } from 'rxjs';
 
 @Component({

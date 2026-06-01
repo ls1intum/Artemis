@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
+import { User } from 'app/account/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
@@ -9,7 +10,7 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/shared/services/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -19,11 +20,13 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;
@@ -89,6 +92,7 @@ describe('ProgrammingSubmissionService', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
@@ -582,4 +586,102 @@ describe('ProgrammingSubmissionService', () => {
 
         discardPeriodicTasks();
     }));
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: ProgrammingSubmissionService;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    { provide: WebsocketService, useClass: MockWebsocketService },
+                    { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                    { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                    { provide: AccountService, useValue: customAccountService },
+                ],
+            });
+            scoped = TestBed.inject(ProgrammingSubmissionService);
+        });
+
+        it('should clear cached submission state and tear down subscriptions on logout', () => {
+            const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+            const exerciseBuildSubject = new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined);
+            const resultTimerSubject = new Subject<undefined>();
+            // @ts-ignore - access private cache
+            scoped.submissionSubjects = { 1: subject };
+            // @ts-ignore
+            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+            // @ts-ignore
+            scoped.exerciseBuildStateSubjects.set(10, exerciseBuildSubject);
+            // @ts-ignore
+            scoped.resultTimerSubjects.set(1, resultTimerSubject);
+            // @ts-ignore
+            scoped.startedProcessingCache.set('hash', { buildStartDate: undefined, estimatedCompletionDate: undefined });
+            // @ts-ignore
+            scoped.participationIdToExerciseId.set(1, 10);
+            // @ts-ignore
+            scoped.submissionTopicsSubscribed.set(1, '/topic/foo');
+
+            let completed = false;
+            subject.subscribe({ complete: () => (completed = true) });
+            let exerciseBuildCompleted = false;
+            exerciseBuildSubject.subscribe({ complete: () => (exerciseBuildCompleted = true) });
+            let resultTimerCompleted = false;
+            resultTimerSubject.subscribe({ complete: () => (resultTimerCompleted = true) });
+
+            authState.next(undefined);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateValue).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateSubjects.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.resultTimerSubjects.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.startedProcessingCache.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.participationIdToExerciseId.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.submissionTopicsSubscribed.size).toBe(0);
+            expect(completed).toBeTrue();
+            expect(exerciseBuildCompleted).toBeTrue();
+            expect(resultTimerCompleted).toBeTrue();
+        });
+
+        it('should clear cached submission state when a different user logs in', () => {
+            // @ts-ignore
+            scoped.submissionSubjects = { 1: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
+            // @ts-ignore
+            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+
+            authState.next({ id: 42 } as User);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateValue).toEqual({});
+        });
+
+        it('should not clear submission state when the same user re-emits', () => {
+            const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+            // @ts-ignore
+            scoped.submissionSubjects = { 1: subject };
+
+            authState.next({ id: 99 } as User);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({ 1: subject });
+        });
+    });
 });

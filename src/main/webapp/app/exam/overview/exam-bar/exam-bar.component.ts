@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -10,7 +10,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-bar',
@@ -18,40 +18,33 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './exam-bar.component.html',
     styleUrl: './exam-bar.component.scss',
 })
-export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ExamBarComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
 
     protected readonly faDoorClosed = faDoorClosed;
 
-    @Output() onExamHandInEarly = new EventEmitter<void>();
-    @Output() examAboutToEnd = new EventEmitter<void>();
-    @Output() heightChange = new EventEmitter<number>();
+    readonly onExamHandInEarly = output<void>();
+    readonly examAboutToEnd = output<void>();
+    readonly heightChange = output<number>();
 
-    @Input() examTimeLineView = false;
-    @Input() endDate: dayjs.Dayjs;
-    @Input() exerciseIndex = 0;
-    @Input() isEndView: boolean;
-    @Input() testRunStartTime: dayjs.Dayjs | undefined;
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() examStartDate: dayjs.Dayjs;
+    readonly examTimeLineView = input(false);
+    readonly endDate = input<dayjs.Dayjs>(undefined!);
+    readonly exerciseIndex = input(0);
+    readonly isEndView = input<boolean>(undefined!);
+    readonly testRunStartTime = input<dayjs.Dayjs>();
+    readonly exam = input<Exam>(undefined!);
+    readonly studentExam = input<StudentExam>(undefined!);
+    readonly examStartDate = input<dayjs.Dayjs>(undefined!);
 
     criticalTime = dayjs.duration(5, 'minutes');
     criticalTimeEndView = dayjs.duration(30, 'seconds');
-    testExam: boolean;
-    isTestRun: boolean;
+    readonly testExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isTestRun = computed(() => this.studentExam()?.testRun ?? false);
+    readonly examTitle = computed(() => this.exam()?.title ?? '');
+    readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);
 
     private previousHeight: number;
     private resizeObserver: ResizeObserver | undefined;
-    examTitle: string;
-    exercises: Exercise[] = [];
-
-    ngOnInit(): void {
-        this.examTitle = this.exam.title ?? '';
-        this.exercises = this.studentExam.exercises ?? [];
-        this.testExam = this.exam.testExam ?? false;
-        this.isTestRun = this.studentExam.testRun ?? false;
-    }
 
     /**
      * It sets up a ResizeObserver to monitor changes in the height of the exam bar element.
@@ -84,9 +77,10 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
      * Save the currently active exercise
      */
     saveExercise() {
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const exercises = this.exercises();
+        const submission = ExamParticipationService.getSubmissionForExercise(exercises[this.exerciseIndex()]);
         // we do not submit programming exercises on a save
-        if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
+        if (submission && exercises[this.exerciseIndex()].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
     }
@@ -96,9 +90,6 @@ export class ExamBarComponent implements AfterViewInit, OnInit, OnDestroy {
         this.examAboutToEnd.emit();
     }
 
-    /**
-     * Notify parent component when user wants to hand in early
-     */
     handInEarly() {
         this.onExamHandInEarly.emit();
     }

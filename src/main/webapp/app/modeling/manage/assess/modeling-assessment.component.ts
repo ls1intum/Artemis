@@ -1,14 +1,14 @@
-import { AfterViewInit, Component, OnDestroy, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 
@@ -27,6 +27,7 @@ export interface DropInfo {
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private readonly elementRef = inject(ElementRef);
 
     maxScore = input<number>(0);
     maxBonusPoints = input(0);
@@ -129,6 +130,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
             }
             this.apollonEditor.destroy();
+            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
         }
     }
 
@@ -155,6 +157,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
         });
+
+        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
+        // Mirrors the pattern in ModelingEditorComponent so Playwright can interact with the
+        // assessment editor without dblclick races on multi-node setups.
+        (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
             if (!this.readOnly()) {

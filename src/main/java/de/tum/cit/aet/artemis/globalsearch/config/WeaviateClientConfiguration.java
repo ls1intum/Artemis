@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -9,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateAuthenticationException;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateAuthenticationException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.Authentication;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
@@ -45,6 +46,7 @@ public class WeaviateClientConfiguration {
      * @throws WeaviateConnectionException if the connection to Weaviate fails
      */
     @Bean(destroyMethod = "close")
+    @ConditionalOnProperty(name = "artemis.openapi-docs-generation", havingValue = "false", matchIfMissing = true)
     public WeaviateClient weaviateClient() {
         try {
             boolean usesOpenAiVectorizer = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(weaviateProperties.vectorizerModule());

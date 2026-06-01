@@ -17,14 +17,14 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -33,22 +33,26 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { finalize } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import {
+    DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
+    RequestFeedbackButtonComponent,
+    countSuccessfulAthenaFeedbackRequests,
+} from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -185,7 +189,7 @@ export class ExerciseHeaderActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
 
-    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();
@@ -202,7 +206,7 @@ export class ExerciseHeaderActionsComponent {
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
     readonly hasUserAcceptedLLM = computed(() => {
         const selection = this.userLLMSelection();
-        return selection === LLMSelectionDecision.CLOUD_AI;
+        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
     readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
 
@@ -503,6 +507,9 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
+        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+            return;
+        }
         this.submitPopoverRef()?.open();
     }
 

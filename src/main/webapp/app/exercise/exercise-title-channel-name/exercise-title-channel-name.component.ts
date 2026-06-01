@@ -1,10 +1,13 @@
 import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 
+/**
+ * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',

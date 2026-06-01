@@ -24,8 +24,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -85,11 +87,12 @@ public class IrisMessageResource {
      */
     @GetMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<IrisMessageResponseDTO>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
-        var messages = irisMessageRepository.findAllBySessionId(sessionId);
+        var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(sessionId);
         return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
     }
 
@@ -103,6 +106,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
@@ -156,6 +160,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
@@ -186,6 +191,7 @@ public class IrisMessageResource {
      */
     @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/helpful")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();

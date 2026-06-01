@@ -9,12 +9,12 @@ import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -122,6 +122,29 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
+        });
+
+        it('should truncate auto-generated short names to PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            // 50-char title sanitises to 50 chars, must be truncated to 36.
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(36));
+        });
+
+        it('should truncate the base when adding a uniqueness suffix would exceed the max length', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            // Pre-load the truncated 36-char base so the generator must add a numeric suffix while keeping length <= 36.
+            comp.alreadyUsedShortNames.set(new Set(['A'.repeat(36)]));
+
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(35) + '1');
         });
     });
 });

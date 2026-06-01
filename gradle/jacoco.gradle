@@ -4,28 +4,48 @@ ext {
     AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 152]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
+        "account"       :          ["INSTRUCTION": 0.870, "CLASS":  4],
+        // TODO: admin still has 7 uncovered classes and only 76% instruction coverage; ratchet up as
+        // admin-side tests are added (e.g. for AdminSbomResource, AdminBuildJobQueueResource).
+        "admin"         :          ["INSTRUCTION": 0.755, "CLASS":  7],
         "assessment"    :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.851, "CLASS":  2],
         // CLASS raised from 6 to 7: removal of CompetencyJolIntegrationTest (JOL feature eliminated)
         "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  7],
         // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
         "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
-        "communication" :          ["INSTRUCTION": 0.861, "CLASS":  7],
-        "core"          :          ["INSTRUCTION": 0.785, "CLASS": 67],
+        "localci"       :          ["INSTRUCTION": 0.750, "CLASS": 15],
+        "localvc"       :          ["INSTRUCTION": 0.750, "CLASS":  5],
+        // Lowered after notification extraction (~9k LOC moved out, including well-tested course
+        // notification services). Remaining communication module covers messaging/conversations
+        // only. TODO: ratchet back up as messaging side gets more focused test coverage.
+        "communication" :          ["INSTRUCTION": 0.800, "CLASS": 10],
+        // Lowered from 0.780 / CLASS 66 -> 0.750 / 57 after course (~10k LOC, high coverage) and
+        // admin (~10k LOC, moderate coverage) extracted out of core. The remaining core code is
+        // dominated by Spring infrastructure / connectors that historically have lower coverage.
+        // TODO: ratchet back up as core continues to slim down.
+        "core"          :          ["INSTRUCTION": 0.750, "CLASS": 57],
+        "course"        :          ["INSTRUCTION": 0.880, "CLASS":  2],
         "exam"          :          ["INSTRUCTION": 0.902, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.906, "CLASS":  2],
         "fileupload"    :          ["INSTRUCTION": 0.924, "CLASS":  1],
         "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
         "iris"          :          ["INSTRUCTION": 0.811, "CLASS": 21],
+        // New module extracted from programming in this PR. Conservative initial baseline; ratchet up
+        // once CI measures the actual coverage of the extracted Jenkins connector code.
+        "jenkins"       :          ["INSTRUCTION": 0.750, "CLASS":  5],
         "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.860, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  1],
+        // New module extracted from communication in this PR. Conservative initial baseline;
+        // ratchet up once CI measures the actual coverage of the extracted code.
+        "notification"  :          ["INSTRUCTION": 0.800, "CLASS": 10],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
         "programming"   :          ["INSTRUCTION": 0.819, "CLASS": 28],
         "quiz"          :          ["INSTRUCTION": 0.865, "CLASS":  3],
         "text"          :          ["INSTRUCTION": 0.942, "CLASS":  1],
-        "tumlive"       :          ["INSTRUCTION": 0.800, "CLASS":  0],
         "tutorialgroup" :          ["INSTRUCTION": 0.917, "CLASS":  1],
+        "videosource"   :          ["INSTRUCTION": 0.800, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0

@@ -29,6 +29,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -46,24 +49,19 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -78,6 +76,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -142,8 +141,6 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
-    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
-
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -151,7 +148,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -176,7 +173,6 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
-        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -723,12 +719,12 @@ public class ExerciseService {
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
-                List<Feedback> existingFeedback = result.getFeedbacks();
+                Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
                     existingFeedback.removeAll(feedbackToBeDeleted);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
-                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(existingFeedback);
+                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
                 result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
             }
 

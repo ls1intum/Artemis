@@ -1,0 +1,16 @@
+<p-iconfield>
+    <p-inputicon class="pi pi-search" />
+    <input
+        #searchInput
+        id="search"
+        type="text"
+        pSize="small"
+        pInputText
+        [value]="searchValue()"
+        (input)="setSearchValue(searchInput.value)"
+        [placeholder]="placeholderKey() | artemisTranslate"
+        aria-label="Filter Search Field"
+        aria-describedby="filter-search-field"
+    />
+    <p-inputicon class="pi pi-times pointer" [style.display]="searchValue() ? '' : 'none'" (click)="resetSearchValue()" />
+</p-iconfield>

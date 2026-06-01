@@ -9,6 +9,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Fixtures } from '../../fixtures/fixtures';
 import { SEED_COURSES } from '../../support/seedData';
+import { Commands } from '../../support/commands';
 
 // Common primitives
 const dateFormat = 'MMM D, YYYY HH:mm';
@@ -37,6 +38,13 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
+        // Wait for the form to hydrate from the server before typing again.
+        // Asserting on the visible title input is a deterministic UI signal
+        // that the lecture has been loaded — more robust than `networkidle`,
+        // which can hang on SPAs with long-polling / SSE / background work.
+        // Monaco's own value would be an even closer signal, but title is
+        // both sufficient and trivial to observe.
+        await expect(page.locator('#field_title')).toHaveValue(lectureData.title);
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
@@ -55,7 +63,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
     test('Deletes a lecture', async ({ page, login, courseManagementAPIRequests, lectureManagement }) => {
         await login(instructor, '/');
         const lecture = await courseManagementAPIRequests.createLecture(course);
-        await page.goto('/course-management/' + course.id + '/lectures');
+        await Commands.gotoAndEnsureRendered(page, '/course-management/' + course.id + '/lectures');
         const resp = await lectureManagement.deleteLecture(lecture);
         expect(resp.status()).toBe(200);
         await expect(lectureManagement.getLecture(lecture.id!)).not.toBeVisible();
@@ -67,8 +75,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         test.beforeEach(async ({ login, page, courseManagementAPIRequests }) => {
             await login(instructor);
             lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
-            await page.goto(`/course-management/${course.id}/lectures`);
-            await page.waitForLoadState('networkidle');
+            await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/lectures`);
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {

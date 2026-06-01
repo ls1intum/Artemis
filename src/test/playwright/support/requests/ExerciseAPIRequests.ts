@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -510,6 +510,7 @@ export class ExerciseAPIRequests {
         quizQuestions: any[];
         title?: string;
         releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
@@ -520,6 +521,7 @@ export class ExerciseAPIRequests {
             quizQuestions,
             title = 'Quiz ' + generateUUID(),
             releaseDate = dayjs().add(1, 'year'),
+            dueDate,
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
@@ -540,9 +542,14 @@ export class ExerciseAPIRequests {
         let quizBatches: any[] = [];
         if ('course' in body) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
-            const dates = {
+            const dates: { releaseDate: string; dueDate?: string } = {
                 releaseDate: dayjsToString(releaseDate),
             };
+            if (dueDate) {
+                // Allow tests to mark a quiz as already-ended (dueDate in the past) so the practice / training
+                // submission paths become reachable without driving the instructor-end-quiz UI flow.
+                dates.dueDate = dayjsToString(dueDate);
+            }
             if (startOfWorkingTime) {
                 quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
             }
@@ -595,6 +602,17 @@ export class ExerciseAPIRequests {
      */
     async startQuizNow(quizId: number) {
         await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/start-now`);
+    }
+
+    /**
+     * Ends a running quiz exercise immediately via API. Equivalent to the lifecycle
+     * `endQuiz` UI action but skips the course-management navigation chain so tests can
+     * advance to the result-check step without a 3rd instructor login.
+     *
+     * @param quizId - The ID of the quiz exercise to end.
+     */
+    async endQuizNow(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/end-now`);
     }
 
     /**
@@ -660,21 +678,26 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for an programming exercise with the specified exercise ID.
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipation> representing the student participation.
+     * @returns A Promise<StudentParticipation> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        // Use the endpoint that returns all participations for the exercise with latest results
-        // NOTE: This endpoint requires at least tutor permissions
-        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
-        const participations = (await response.json()) as StudentParticipation[];
+        const pageResponse = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!pageResponse.ok()) {
+            throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);
+        }
+        const participations = (await pageResponse.json()) as Array<{ participationId: number }>;
         if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
-        return participations[0];
+        return this.getParticipationWithLatestResult(participations[0].participationId);
     }
 
     /**

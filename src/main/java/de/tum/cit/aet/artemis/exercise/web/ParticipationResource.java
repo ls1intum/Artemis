@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
@@ -23,23 +22,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -62,6 +60,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -106,7 +105,7 @@ public class ParticipationResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final ProfileService profileService;
+    private final ModuleFeatureService moduleFeatureService;
 
     private final FeedbackRequestService feedbackRequestService;
 
@@ -114,7 +113,7 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ProfileService profileService, FeedbackRequestService feedbackRequestService) {
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -128,7 +127,7 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
-        this.profileService = profileService;
+        this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
 
@@ -189,6 +188,7 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations/practice")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
@@ -209,9 +209,9 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
         }
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !profileService.isProfileActive(PROFILE_ATHENA)) {
-            throw new ServiceUnavailableAlertException("Practice mode for text and modeling exercises requires the Athena profile", ENTITY_NAME,
-                    "dueDateOver.athenaProfileRequired");
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
+            throw new ServiceUnavailableAlertException("Practice mode for text and modeling exercises requires Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
+                    "dueDateOver.athenaNotEnabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
@@ -236,7 +236,8 @@ public class ParticipationResource {
      * @param participationId of the participation that should be resumed
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
+    @PutMapping({ "exercises/{exerciseId}/participations/{participationId}/resume-programming-participation",
+            "exercises/{exerciseId}/resume-programming-participation/{participationId}" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
@@ -303,9 +304,9 @@ public class ParticipationResource {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "feedbackRequest.programmingExercisesDisabled");
         }
 
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !profileService.isProfileActive(PROFILE_ATHENA)) {
-            throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require the Athena profile", ENTITY_NAME,
-                    "feedbackRequest.athenaProfileRequired");
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
+            throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
+                    "feedbackRequest.athenaNotEnabled");
         }
 
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate()) && !participation.isPracticeMode()) {

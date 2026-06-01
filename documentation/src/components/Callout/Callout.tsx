@@ -19,32 +19,28 @@ const Callout: React.FC<CalloutProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        margin: "0.5rem",
+        margin: '0.5rem',
+    };
+
+    const iconStyle: React.CSSProperties = {
+        fontSize: '1.2em',
+        alignSelf: 'center',
+        flexShrink: 0,
+    };
+
+    const contentStyle: React.CSSProperties = {
+        flex: 1,
+        minWidth: 0,
     };
 
     return (
-        <div style={bannerStyle} role="alert">
-          <span style={{ fontSize: '1.2em', alignSelf: 'center' }}>
-            {currentStyle.icon}
-          </span>
-            <span
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '100%',
-                    flex: 1,
-                    margin: 0,
-                }}
-            >
-            <div style={{ width: '100%' }}>
-              {React.Children.map(children, (child) =>
-                  React.isValidElement(child) && child.type === 'p'
-                      ? React.cloneElement(child as React.DetailedReactHTMLElement<any, HTMLElement>, { style: { margin: 0 } })
-                      : child,
-              )}
+        <aside style={bannerStyle} role="note" className="callout">
+            <span style={iconStyle} aria-hidden="true">{currentStyle.icon}</span>
+            <div style={contentStyle} className="callout-content">
+                <span className="sr-only">{currentStyle.label}: </span>
+                {children}
             </div>
-          </span>
-        </div>
+        </aside>
     );
 };
 

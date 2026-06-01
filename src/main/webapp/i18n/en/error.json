@@ -121,8 +121,8 @@
             "notSupportedForTeams": "Practice mode is not supported for team exercises.",
             "programmingExercisesDisabled": "Practice mode for programming exercises is disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
-            "athenaProfileRequired": "Practice mode for text and modeling exercises is unavailable.",
-            "athenaProfileRequired_detail": "The Athena profile is not active.",
+            "athenaNotEnabled": "Practice mode for text and modeling exercises is unavailable.",
+            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
             "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
         },
         "feedbackRequest": {
@@ -130,8 +130,8 @@
             "unsupportedExerciseType": "This exercise type does not support feedback requests.",
             "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
-            "athenaProfileRequired": "Feedback requests for text and modeling exercises are unavailable.",
-            "athenaProfileRequired_detail": "The Athena profile is not active."
+            "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
+            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true)."
         },
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
@@ -298,6 +298,8 @@
             "tutorialFreePeriodInvalidOrder": "Tutorial group free period start date must be before tutorial group free period end date.",
             "tutorialFreePeriodOutOfBounds": "Tutorial group free periods must lie within the tutorial period."
         },
-        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
+        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
+        "buildConfigMissing": "The programming exercise build configuration is missing.",
+        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }

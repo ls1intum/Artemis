@@ -13,7 +13,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -21,24 +21,30 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { provideRouter } from '@angular/router';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { captureException } from '@sentry/angular';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
-jest.mock('@sentry/angular', () => ({
-    captureException: jest.fn(),
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+vi.mock('@sentry/angular', () => ({
+    captureException: vi.fn(),
 }));
 
 describe('QuizExamSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
 
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -63,7 +69,7 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.text = 'Short answer question text';
 
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 QuizExamSubmissionComponent,
                 MockComponent(DragAndDropQuestionComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -73,7 +79,7 @@ describe('QuizExamSubmissionComponent', () => {
                 MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
+            providers: [provideRouter([]), MockProvider(ArtemisQuizService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizExamSubmissionComponent);
@@ -82,11 +88,11 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const quizServiceSpy = jest.spyOn(quizService, 'randomizeOrder');
+        const quizServiceSpy = vi.spyOn(quizService, 'randomizeOrder');
 
         const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
         fixture.componentRef.setInput('studentSubmission', quizSubmission);
@@ -95,9 +101,9 @@ describe('QuizExamSubmissionComponent', () => {
 
         expect(fixture).toBeDefined();
         expect(quizServiceSpy).toHaveBeenCalledOnce();
-        expect(component.selectedAnswerOptions.has(1)).toBeTrue();
+        expect(component.selectedAnswerOptions.has(1)).toBe(true);
         expect(component.selectedAnswerOptions.size).toBe(1);
-        expect(component.dragAndDropMappings.has(2)).toBeTrue();
+        expect(component.dragAndDropMappings.has(2)).toBe(true);
         expect(component.dragAndDropMappings.size).toBe(1);
         expect(component.shortAnswerSubmittedTexts.size).toBe(0);
     });
@@ -138,11 +144,11 @@ describe('QuizExamSubmissionComponent', () => {
          * Change the isSynced value of studentSubmission to false when selection changed
          */
         component.onSelectionChanged();
-        expect(component.studentSubmission().isSynced).toBeFalse();
+        expect(component.studentSubmission().isSynced).toBe(false);
         /**
          * Return the negated value of isSynced when there are unsaved changes
          */
-        expect(component.hasUnsavedChanges()).toBeTrue();
+        expect(component.hasUnsavedChanges()).toBe(true);
     });
 
     it('should set answerOptions/mappings/submitted texts to empty array when not submitted answer', () => {
@@ -154,19 +160,19 @@ describe('QuizExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([]));
-        expect(component.selectedAnswerOptions.has(1)).toBeTrue();
+        expect(component.selectedAnswerOptions.has(1)).toBe(true);
         expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([]));
-        expect(component.dragAndDropMappings.has(2)).toBeTrue();
+        expect(component.dragAndDropMappings.has(2)).toBe(true);
 
         expect(component.shortAnswerSubmittedTexts.size).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.has(3)).toBeTrue();
+        expect(component.shortAnswerSubmittedTexts.has(3)).toBe(true);
     });
 
     it('should trigger navigation towards the corrensponding question of the quiz', () => {
         const QUIZ_QUESTION_ID = 'question1';
-        const scrollIntoViewSpy = jest.fn();
+        const scrollIntoViewSpy = vi.fn();
 
-        const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
+        const getElementByIdMock = vi.spyOn(document, 'getElementById').mockReturnValue({
             scrollIntoView: scrollIntoViewSpy,
         } as unknown as HTMLElement);
 
@@ -182,7 +188,7 @@ describe('QuizExamSubmissionComponent', () => {
 
     it('should capture exception when element is not found', () => {
         const questionId = 1;
-        jest.spyOn(document, 'getElementById').mockReturnValue(null);
+        vi.spyOn(document, 'getElementById').mockReturnValue(null);
 
         component.navigateToQuestion(questionId);
 
@@ -190,7 +196,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should highlight the correct quiz question', () => {
-        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
         const mockQuestion: QuizQuestion = {
             id: 1,
             type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -208,7 +214,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should not highlight if question is not found', () => {
-        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
         const quizConfiguration: QuizConfiguration = { quizQuestions: [] };
         fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
@@ -218,7 +224,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should not highlight if quizQuestions is undefined', () => {
-        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
         const quizConfiguration: QuizConfiguration = { quizQuestions: undefined };
         fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
@@ -296,7 +302,7 @@ describe('QuizExamSubmissionComponent', () => {
         fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [dragAndDropQuestion] });
         component.setSubmissionVersion(submissionVersion);
         fixture.detectChanges();
-        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveExerciseSpy = vi.spyOn(component, 'notifyTriggerSave');
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();

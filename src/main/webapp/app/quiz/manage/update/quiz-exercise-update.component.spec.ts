@@ -7,8 +7,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -29,10 +29,10 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
@@ -41,7 +41,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
@@ -1287,6 +1287,46 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 expect(comp.quizExercise.exerciseGroup).toEqual(exerciseGroup);
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalled();
+            });
+
+            it('should keep the edit screen visible after saving a not-yet-started quiz when the server response omits isEditable', () => {
+                // Server DTOs use @JsonInclude(NON_EMPTY), so create/update responses do not carry the isEditable flag.
+                // The component must recompute it client-side; otherwise the "quiz has started" banner appears incorrectly.
+                const savedResponse = new QuizExercise(course, undefined);
+                savedResponse.id = 456;
+                savedResponse.title = 'test';
+                savedResponse.duration = 600;
+                savedResponse.quizMode = QuizMode.SYNCHRONIZED;
+                savedResponse.status = QuizStatus.VISIBLE;
+                savedResponse.quizEnded = false;
+                savedResponse.quizBatches = [];
+                savedResponse.isAtLeastEditor = true;
+                savedResponse.isEditable = undefined;
+                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+
+                saveQuizWithPendingChangesCache();
+
+                expect(comp.quizExercise.isEditable).toBe(true);
+            });
+
+            it('should respect a server-provided isEditable=false flag after save (e.g. exam-date-aware)', () => {
+                // When the server authoritatively says the quiz is no longer editable (e.g. exam start date has passed),
+                // the client must not override it to true via the local check.
+                const savedResponse = new QuizExercise(course, undefined);
+                savedResponse.id = 456;
+                savedResponse.title = 'test';
+                savedResponse.duration = 600;
+                savedResponse.quizMode = QuizMode.SYNCHRONIZED;
+                savedResponse.status = QuizStatus.VISIBLE;
+                savedResponse.quizEnded = false;
+                savedResponse.quizBatches = [];
+                savedResponse.isAtLeastEditor = true;
+                savedResponse.isEditable = false;
+                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+
+                saveQuizWithPendingChangesCache();
+
+                expect(comp.quizExercise.isEditable).toBe(false);
             });
 
             it('should call alert service with specific error title if provided on save error', () => {
