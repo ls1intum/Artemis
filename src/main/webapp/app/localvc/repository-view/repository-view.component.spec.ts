@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -23,10 +24,19 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('RepositoryViewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;
     let mockDomainService: Partial<DomainService>;
@@ -60,9 +70,34 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         })
+            .overrideComponent(RepositoryViewComponent, {
+                remove: {
+                    imports: [
+                        CodeEditorContainerComponent,
+                        ProgrammingExerciseInstructionComponent,
+                        ButtonComponent,
+                        ResultComponent,
+                        CodeButtonComponent,
+                        ProgrammingExerciseStudentRepoDownloadComponent,
+                        ProgrammingExerciseInstructorRepoDownloadComponent,
+                        TranslateDirective,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockComponent(CodeEditorContainerComponent),
+                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(ButtonComponent),
+                        MockComponent(ResultComponent),
+                        MockComponent(CodeButtonComponent),
+                        MockComponent(ProgrammingExerciseStudentRepoDownloadComponent),
+                        MockComponent(ProgrammingExerciseInstructorRepoDownloadComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
@@ -84,6 +119,7 @@ describe('RepositoryViewComponent', () => {
     afterEach(() => {
         // in case it causes side effects in other tests
         delete (global as any).ResizeObserver;
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

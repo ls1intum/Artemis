@@ -1,6 +1,6 @@
 <div class="card-footer code-editor-status text-nowrap">
     <div id="commit_state">
-        @switch (commitState) {
+        @switch (commitState()) {
             @case (CommitState.UNDEFINED) {
                 <div>
                     <span ngbTooltip="{{ 'artemisApp.editor.changesUndefinedTooltip' | artemisTranslate }}">
