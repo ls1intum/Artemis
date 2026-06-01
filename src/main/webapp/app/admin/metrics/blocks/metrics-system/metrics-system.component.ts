@@ -1,12 +1,13 @@
 import { Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
-    imports: [NgbProgressbar, DecimalPipe, DatePipe],
+    imports: [ProgressBarModule, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {
     /**
@@ -18,6 +19,8 @@ export class MetricsSystemComponent {
      * boolean field saying if the metrics are in the process of being updated
      */
     updating = input<boolean>(false);
+
+    protected readonly toPercentage = toPercentage;
 
     convertMillisecondsToDuration(ms: number): string {
         const times = {

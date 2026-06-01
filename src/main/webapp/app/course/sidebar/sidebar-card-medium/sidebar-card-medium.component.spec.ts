@@ -30,12 +30,12 @@ describe('SidebarCardMediumComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardMediumComponent);
         component = fixture.componentInstance;
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             title: 'testTitle',
             id: 'testId',
             size: 'M',
-        };
-        component.itemSelected = true;
+        });
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.detectChanges();
     });
 
@@ -44,7 +44,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for easy difficulty', () => {
-        component.sidebarItem.difficulty = DifficultyLevel.EASY;
+        component.sidebarItem().difficulty = DifficultyLevel.EASY;
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
@@ -52,7 +52,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for medium difficulty', () => {
-        component.sidebarItem.difficulty = DifficultyLevel.MEDIUM;
+        component.sidebarItem().difficulty = DifficultyLevel.MEDIUM;
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
@@ -60,7 +60,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for hard difficulty', () => {
-        component.sidebarItem.difficulty = DifficultyLevel.HARD;
+        component.sidebarItem().difficulty = DifficultyLevel.HARD;
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
@@ -70,7 +70,7 @@ describe('SidebarCardMediumComponent', () => {
     it('should store target subroute and refresh on click when previously an item was selected', async () => {
         vi.spyOn(component, 'storeTargetComponentSubRoute');
         vi.spyOn(component, 'refreshChildComponent');
-        component.itemSelected = true;
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
@@ -86,7 +86,7 @@ describe('SidebarCardMediumComponent', () => {
     it('should store target subroute on click when previously no item was selected', async () => {
         vi.spyOn(component, 'storeTargetComponentSubRoute');
         vi.spyOn(component, 'refreshChildComponent');
-        component.itemSelected = false;
+        fixture.componentRef.setInput('itemSelected', false);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
