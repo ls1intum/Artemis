@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
@@ -46,9 +46,9 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     course: Course;
 
-    @Input() conversation: ConversationDTO;
+    readonly conversation = input.required<ConversationDTO>();
 
-    @Output() onUpdateSidebar = new EventEmitter<void>();
+    readonly onUpdateSidebar = output<void>();
 
     conversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
@@ -72,48 +72,50 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
-        this.conversationAsChannel = getAsChannelDTO(this.conversation);
+        this.conversationAsChannel = getAsChannelDTO(this.conversation());
         this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
     onArchiveClicked(event: MouseEvent) {
         event.stopPropagation();
-        if (!this.course.id || !this.conversation.id) {
+        const conversation = this.conversation();
+        if (!this.course.id || !conversation.id) {
             return;
         }
 
-        if (!this.conversation.isHidden && this.conversation.isFavorite) {
-            this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, false).subscribe({
+        if (!conversation.isHidden && conversation.isFavorite) {
+            this.conversationService.updateIsFavorite(this.course.id, conversation.id, false).subscribe({
                 next: () => {
-                    this.conversation.isFavorite = false;
+                    conversation.isFavorite = false;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         }
-        this.hide$.next(!this.conversation.isHidden);
+        this.hide$.next(!conversation.isHidden);
     }
 
     onFavoriteClicked($event: MouseEvent) {
         $event.stopPropagation();
-        if (!this.course.id || !this.conversation.id) {
+        const conversation = this.conversation();
+        if (!this.course.id || !conversation.id) {
             return;
         }
 
-        if (this.conversation.isHidden && !this.conversation.isFavorite) {
-            this.conversationService.updateIsHidden(this.course.id, this.conversation.id, false).subscribe({
+        if (conversation.isHidden && !conversation.isFavorite) {
+            this.conversationService.updateIsHidden(this.course.id, conversation.id, false).subscribe({
                 next: () => {
-                    this.conversation.isHidden = false;
+                    conversation.isHidden = false;
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         }
-        this.favorite$.next(!this.conversation.isFavorite);
+        this.favorite$.next(!conversation.isFavorite);
     }
 
     onMuteClicked($event: MouseEvent) {
         $event.stopPropagation();
-        this.mute$.next(!this.conversation.isMuted);
+        this.mute$.next(!this.conversation().isMuted);
     }
 
     openConversationDetailDialog(event: MouseEvent) {
@@ -122,7 +124,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             ...defaultFirstLayerDialogOptions,
             data: {
                 course: this.course,
-                activeConversation: this.conversation,
+                activeConversation: this.conversation(),
                 selectedTab: ConversationDetailTabs.SETTINGS,
             },
         });
@@ -132,18 +134,19 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
-                this.onUpdateSidebar.emit(undefined);
+                this.onUpdateSidebar.emit();
             });
     }
 
     private updateConversationIsFavorite() {
         this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isFavorite) => {
-            if (!this.course.id || !this.conversation.id) return;
+            const conversation = this.conversation();
+            if (!this.course.id || !conversation.id) return;
 
-            this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, isFavorite).subscribe({
+            this.conversationService.updateIsFavorite(this.course.id, conversation.id, isFavorite).subscribe({
                 next: () => {
-                    this.conversation.isFavorite = isFavorite;
-                    this.onUpdateSidebar.emit(undefined);
+                    conversation.isFavorite = isFavorite;
+                    this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -152,12 +155,13 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     private updateConversationIsHidden() {
         this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isHidden) => {
-            if (!this.course.id || !this.conversation.id) return;
+            const conversation = this.conversation();
+            if (!this.course.id || !conversation.id) return;
 
-            this.conversationService.updateIsHidden(this.course.id, this.conversation.id, isHidden).subscribe({
+            this.conversationService.updateIsHidden(this.course.id, conversation.id, isHidden).subscribe({
                 next: () => {
-                    this.conversation.isHidden = isHidden;
-                    this.onUpdateSidebar.emit(undefined);
+                    conversation.isHidden = isHidden;
+                    this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -166,12 +170,13 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     private updateConversationIsMuted() {
         this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
-            if (!this.course.id || !this.conversation.id) return;
+            const conversation = this.conversation();
+            if (!this.course.id || !conversation.id) return;
 
-            this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
+            this.conversationService.updateIsMuted(this.course.id, conversation.id, isMuted).subscribe({
                 next: () => {
-                    this.conversation.isMuted = isMuted;
-                    this.onUpdateSidebar.emit(undefined);
+                    conversation.isMuted = isMuted;
+                    this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

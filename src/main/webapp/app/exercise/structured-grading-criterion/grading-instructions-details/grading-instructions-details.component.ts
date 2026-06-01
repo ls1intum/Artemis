@@ -92,7 +92,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.changeDetector.detectChanges();
         this.criteria!.forEach((criterion) => {
             criterion.structuredGradingInstructions.forEach((instruction) => {
-                this.markdownEditors().at(index)!.markdown = this.generateInstructionText(instruction);
+                this.markdownEditors().at(index)!.setMarkdown(this.generateInstructionText(instruction));
                 index += 1;
             });
         });

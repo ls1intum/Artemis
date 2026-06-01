@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -46,7 +46,10 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     entityName: string;
     columns: Column<T>[];
 
-    @Input() public disabledIds: number[] = [];
+    // Keep the inherited `[disabledIds]` binding while preserving the mutable compatibility field used by legacy subclasses.
+    // eslint-disable-next-line @angular-eslint/no-input-rename
+    protected readonly disabledIdsInput = input<number[]>([], { alias: 'disabledIds' });
+    disabledIds: number[] = [];
 
     /**
      * Returns true if the component is opened via PrimeNG DialogService.
@@ -63,7 +66,17 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected readonly sort = new Subject<void>();
 
     // eslint-disable-next-line @angular-eslint/prefer-inject
-    protected constructor(protected pagingService?: PagingService<T>) {}
+    protected constructor(protected pagingService?: PagingService<T>) {
+        effect(() => {
+            // When opened via PrimeNG DialogService the `disabledIds` input is never bound (data arrives through
+            // DynamicDialogConfig and is applied imperatively in subclasses' ngOnInit). Only sync from the input on
+            // the template-binding path, otherwise this effect would run after ngOnInit and clobber the
+            // dialog-provided value back to the default [] (defeating e.g. same-course import exclusion).
+            if (!this.isOpenedAsDialog) {
+                this.disabledIds = this.disabledIdsInput();
+            }
+        });
+    }
 
     get page(): number {
         return this.state.page;

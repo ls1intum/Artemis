@@ -56,7 +56,7 @@ public class IrisMemoryResource {
      * @param memoryId the id of the memory to delete
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
      */
-    @DeleteMapping("user/memory/{memoryId}")
+    @DeleteMapping({ "user/memories/{memoryId}", "user/memory/{memoryId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteMemory(@PathVariable String memoryId) {
         var user = userRepository.getUser();
@@ -84,7 +84,7 @@ public class IrisMemoryResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the flattened memory DTO,
      *         or {@code 404 (Not Found)} if the memory does not exist
      */
-    @GetMapping("user/memory/{memoryId}")
+    @GetMapping({ "user/memories/{memoryId}", "user/memory/{memoryId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<MemirisMemoryWithRelationsDTO> getMemoryWithRelations(@PathVariable String memoryId) {
         var user = userRepository.getUser();

@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
