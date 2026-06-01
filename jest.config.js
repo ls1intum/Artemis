@@ -88,6 +88,7 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
+        '<rootDir>/src/main/webapp/**/*.ts',
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/**/*.module.ts', // ignore modules files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/**/*.route.ts', // ignore route files because they cannot be properly tested
@@ -124,11 +125,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/foundation/**', // foundation module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/**', // exercise module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
@@ -136,17 +133,12 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation/**', // participation module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise-scores module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/**', // filter-dropdown component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/**', // programming shared uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**', // programming diff report detail uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
-        '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
@@ -185,22 +177,14 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
         '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/', // exercise module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/editor/', // editor module uses Vitest (see vitest.config.ts)
-        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter uses Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
@@ -288,18 +272,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/editor/', // editor module migrated to Vitest
-        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module
-        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
-        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
-        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/exercise/', // exercise module
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
-        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component (Vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter (Vitest)
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
