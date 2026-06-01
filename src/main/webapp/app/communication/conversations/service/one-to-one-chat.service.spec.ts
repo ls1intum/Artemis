@@ -48,7 +48,7 @@ describe('OneToOneChatService', () => {
 
             const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats`);
             expect(req.request.method).toBe('POST');
-            expect(req.request.body).toEqual([loginOfChatPartner]);
+            expect(req.request.body).toEqual({ login: loginOfChatPartner });
             req.flush(mockResponse);
             expect(conversationServiceMock.convertDateFromServer).toHaveBeenCalled();
         });
@@ -67,9 +67,9 @@ describe('OneToOneChatService', () => {
                 expect(response.body).toEqual(mockResponse);
             });
 
-            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats/${userIdOfChatPartner}`);
+            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats`);
             expect(req.request.method).toBe('POST');
-            expect(req.request.body).toBeNull();
+            expect(req.request.body).toEqual({ userId: userIdOfChatPartner });
             req.flush(mockResponse);
 
             expect(conversationServiceMock.convertDateFromServer).toHaveBeenCalled();

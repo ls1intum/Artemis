@@ -851,8 +851,10 @@ Course Info Bar
     }
 }
 
-.diff-view-modal .modal-dialog {
-    max-width: 80vw;
+// The diff comparison renders in a PrimeNG dialog (.p-dialog), to which the `diff-view-modal` styleClass is
+// applied; the width itself is set via the dialog config. Cap it so it never exceeds the viewport.
+.diff-view-modal {
+    max-width: 95vw;
 }
 
 .warning-modal-window .modal-dialog {
@@ -1614,14 +1616,55 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 // Global search modal sizing
 .global-search-dialog {
     width: 100%;
-    max-width: 700px;
-    height: 60vh;
-    max-height: 600px;
-    // !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top"
-    margin-top: 15vh !important;
+    max-width: 800px;
+    height: 75vh;
+    max-height: 750px;
     overflow: hidden;
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
+}
+
+// Global search result description: reset styles for markdown rendered via innerHTML (outside component scope)
+.result-description {
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0;
+        padding: 0;
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+    }
+
+    ul,
+    ol {
+        margin: 0;
+        padding-left: 1.2em;
+    }
+
+    code {
+        font-size: 0.85em;
+        padding: 0.1em 0.3em;
+        background-color: var(--bs-tertiary-bg);
+        border-radius: 0.2em;
+    }
+
+    pre {
+        margin: 0;
+
+        code {
+            padding: 0;
+            background: none;
+        }
+    }
+
+    img {
+        display: none;
+    }
 }
 
 // ng-bootstrap typeahead: ensure long suggestion lists are scrollable
@@ -1629,4 +1672,32 @@ ngb-typeahead-window.dropdown-menu.show {
     max-height: min(40dvh, 22rem);
     overflow-y: auto !important;
     will-change: unset !important;
+}
+
+/* Iris inline answer — overrides that cannot be scoped inside the component */
+.iris-inline-answer {
+    a.iris-chip,
+    a.iris-chip:hover,
+    a.iris-chip:focus-visible {
+        text-decoration: none !important;
+    }
+
+    /* Strip the default dashed bubble styling when shown inside the card */
+    .thinking-bubble {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}
+
+/* Tighten paragraph spacing in the Iris markdown answer */
+.iris-answer-text {
+    p {
+        margin-bottom: 0.4rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 }

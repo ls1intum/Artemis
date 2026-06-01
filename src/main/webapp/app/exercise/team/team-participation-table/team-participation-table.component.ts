@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
@@ -13,19 +13,19 @@ import { Submission, SubmissionExerciseType, getLatestSubmissionResult, setLates
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -68,15 +68,15 @@ export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    @Input() team: Team;
-    @Input() course: Course;
-    @Input() exercise: Exercise;
-    @Input() isAdmin = false;
-    @Input() isTeamOwner = false;
+    readonly team = input.required<Team>();
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly isAdmin = input(false);
+    readonly isTeamOwner = input(false);
 
-    exercises: ExerciseForTeam[] = [];
-    submissions: Submission[] = [];
-    isLoading: boolean;
+    exercises = signal<ExerciseForTeam[]>([]);
+    submissions = signal<Submission[]>([]);
+    isLoading = signal<boolean>(false);
 
     // Icons
     faFolderOpen = faFolderOpen;
@@ -94,10 +94,10 @@ export class TeamParticipationTableComponent implements OnInit {
      * For the team owner tutor or instructors, the participations also contains the latest submission (for assessment)
      */
     loadAll() {
-        this.isLoading = true;
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe({
+        this.isLoading.set(true);
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
             next: (courseResponse) => {
-                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
+                const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return {
                         ...exercise,
                         isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
@@ -105,8 +105,9 @@ export class TeamParticipationTableComponent implements OnInit {
                         isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
                     };
                 });
-                this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
-                this.isLoading = false;
+                this.exercises.set(exercises);
+                this.submissions.set(exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!));
+                this.isLoading.set(false);
             },
             error: (error) => this.onError(error),
         });
@@ -162,7 +163,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     getAssessmentLink(exercise: Exercise, participation: Participation | undefined, submission: Submission | 'new' | undefined): string[] {
         const submissionUrlParameter: number | 'new' = submission === 'new' || submission == undefined ? 'new' : submission.id!;
-        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, undefined, undefined);
+        return getLinkToSubmissionAssessment(exercise.type!, this.course().id!, exercise.id!, participation?.id, submissionUrlParameter, undefined, undefined);
     }
 
     /**
@@ -212,6 +213,6 @@ export class TeamParticipationTableComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         onError(this.alertService, error);
-        this.isLoading = false;
+        this.isLoading.set(false);
     }
 }

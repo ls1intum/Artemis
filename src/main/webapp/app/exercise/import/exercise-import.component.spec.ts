@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { Injector } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormsModule } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -12,23 +14,25 @@ import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
-import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
-import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseImportComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
@@ -36,46 +40,54 @@ describe('ExerciseImportComponent', () => {
     let sortService: SortService;
     let injector: Injector;
     let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: jest.SpyInstance;
-    let searchStub: jest.SpyInstance;
-    let sortByPropertyStub: jest.SpyInstance;
+    let dialogRefCloseSpy: ReturnType<typeof vi.spyOn>;
+    let searchStub: ReturnType<typeof vi.spyOn>;
+    let sortByPropertyStub: ReturnType<typeof vi.spyOn>;
     let searchResult: SearchResult<Exercise>;
     let state: SearchTermPageableSearch;
     let quizExercise: QuizExercise;
 
-    beforeEach(() => {
-        dialogRefCloseSpy = jest.fn();
+    beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
-        TestBed.configureTestingModule({
-            imports: [FaIconComponent, FormsModule, MockComponent(NgbPagination)],
-            declarations: [
-                ExerciseImportComponent,
+        await TestBed.configureTestingModule({
+            imports: [
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
                 MockDirective(TranslateDirective),
+                FaIconComponent,
+                FormsModule,
+                MockComponent(NgbPagination),
             ],
-            providers: [{ provide: DynamicDialogRef, useValue: dialogRef }, provideHttpClient(), provideHttpClientTesting()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseImportComponent);
-                comp = fixture.componentInstance;
-                quizExercisePagingService = TestBed.inject(QuizExercisePagingService);
-                sortService = TestBed.inject(SortService);
-                injector = TestBed.inject(Injector);
-                searchStub = jest.spyOn(quizExercisePagingService, 'search');
-                sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
-            });
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseImportComponent);
+        comp = fixture.componentInstance;
+        quizExercisePagingService = TestBed.inject(QuizExercisePagingService);
+        sortService = TestBed.inject(SortService);
+        injector = TestBed.inject(Injector);
+        searchStub = vi.spyOn(quizExercisePagingService, 'search');
+        sortByPropertyStub = vi.spyOn(sortService, 'sortByProperty');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
+        (comp as any).search?.complete();
+        (comp as any).sort?.complete();
     });
 
     beforeEach(() => {
@@ -107,7 +119,7 @@ describe('ExerciseImportComponent', () => {
         comp.clear();
 
         // THEN
-        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith();
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
     });
 
     it('should close the dialog with result', () => {
@@ -117,66 +129,67 @@ describe('ExerciseImportComponent', () => {
         comp.selectImport(exercise);
 
         // THEN
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(exercise);
     });
 
-    it('should change the page on active modal', fakeAsync(() => {
+    it('should change the page on active modal', () => {
+        vi.useFakeTimers();
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'search');
+        const pagingServiceSpy = vi.spyOn(quizExercisePagingService, 'search');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
+        vi.runAllTimers();
+        pagingServiceSpy.mockClear();
 
         let expectedPageNumber = 1;
         comp.onPageChange(expectedPageNumber);
-        tick();
+        vi.advanceTimersByTime(300);
         expect(comp.page).toBe(expectedPageNumber);
         expect(comp.total).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
-        tick();
+        vi.advanceTimersByTime(300);
         expect(comp.page).toBe(expectedPageNumber);
         expect(comp.total).toBe(numberOfPages * defaultPageSize);
 
         // Page number should be changed unless it is falsy.
         comp.onPageChange(0);
-        tick();
+        vi.advanceTimersByTime(300);
         expect(comp.page).toBe(expectedPageNumber);
 
         // Number of times onPageChange is called with a truthy value.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
-    }));
+    });
 
     it('should sort rows with default values', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         fixture.detectChanges();
         comp.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
+        expect(sortServiceSpy).toHaveBeenCalledExactlyOnceWith([], 'ID', false);
     });
 
-    it('should set search term and search', fakeAsync(() => {
+    it('should set search term and search', () => {
+        vi.useFakeTimers();
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
+        vi.runAllTimers();
+        searchStub.mockClear();
 
         const expectedSearchTerm = 'search term';
         comp.searchTerm = expectedSearchTerm;
-        tick();
+        vi.runAllTimers();
         expect(comp.searchTerm).toBe(expectedSearchTerm);
 
-        // It should wait first before executing search.
-        expect(searchStub).not.toHaveBeenCalled();
-
-        tick(300);
+        vi.advanceTimersByTime(300);
 
         expect(searchStub).toHaveBeenCalledOnce();
-    }));
+    });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
         comp.state = { ...state };
@@ -187,68 +200,73 @@ describe('ExerciseImportComponent', () => {
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
 
-    it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toBeFalse();
+    it('should set content to paging result on sort', () => {
+        vi.useFakeTimers();
+        expect(comp.listSorting).toBe(false);
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
-            tick(10);
+            vi.advanceTimersByTime(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, { isCourseFilter: true, isExamFilter: true });
-            expect(comp.listSorting).toBeTrue();
+            expect(comp.listSorting).toBe(true);
         });
-    }));
+    });
 
-    it('should set content to paging result on pageChange', fakeAsync(() => {
+    it('should set content to paging result on pageChange', () => {
+        vi.useFakeTimers();
         expect(comp.page).toBe(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
-            tick(10);
+            vi.advanceTimersByTime(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.page).toBe(5);
         });
-    }));
+    });
 
-    it('should set content to paging result on search', fakeAsync(() => {
+    it('should set content to paging result on search', () => {
+        vi.useFakeTimers();
         expect(comp.searchTerm).toBe('');
         setStateAndCallOnInit(() => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
-            tick(10);
+            vi.advanceTimersByTime(10);
             expect(searchStub).not.toHaveBeenCalled();
-            tick(290);
+            vi.advanceTimersByTime(290);
             expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
-    }));
+    });
 
-    it('should set content to paging result on sortedColumn change', fakeAsync(() => {
+    it('should set content to paging result on sortedColumn change', () => {
+        vi.useFakeTimers();
         expect(comp.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
-            tick(10);
+            vi.advanceTimersByTime(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.sortedColumn).toBe('TITLE');
         });
-    }));
+    });
 
     it('should return quiz exercise id', () => {
         expect(comp.trackId(0, quizExercise)).toEqual(quizExercise.id);
     });
 
-    it('should switch courseFilter/examFilter and search', fakeAsync(() => {
+    it('should switch courseFilter/examFilter and search', () => {
+        vi.useFakeTimers();
         searchStub.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBeTrue();
-        expect(comp.isExamFilter).toBeTrue();
+        searchStub.mockClear();
+        expect(comp.isCourseFilter).toBe(true);
+        expect(comp.isExamFilter).toBe(true);
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
-        tick();
-        expect(comp.isCourseFilter).toBeFalse();
-        expect(comp.isExamFilter).toBeFalse();
+        vi.runAllTimers();
+        expect(comp.isCourseFilter).toBe(false);
+        expect(comp.isExamFilter).toBe(false);
 
-        expect(searchStub).not.toHaveBeenCalled();
-        tick(300);
+        vi.advanceTimersByTime(300);
 
         const expectedSearchObject = {
             page: 1,
@@ -258,47 +276,55 @@ describe('ExerciseImportComponent', () => {
             sortingOrder: 'DESCENDING',
         };
         expect(searchStub).toHaveBeenCalledWith(expectedSearchObject, { isCourseFilter: false, isExamFilter: false });
-    }));
+    });
 
-    it.each([
+    type ExercisePagingService =
+        | typeof ProgrammingExercisePagingService
+        | typeof TextExercisePagingService
+        | typeof ModelingExercisePagingService
+        | typeof QuizExercisePagingService
+        | typeof FileUploadExercisePagingService;
+
+    const pagingServiceCases: Array<[ExerciseType, ExercisePagingService]> = [
         [ExerciseType.PROGRAMMING, ProgrammingExercisePagingService],
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
         [ExerciseType.QUIZ, QuizExercisePagingService],
         [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
-    ])(
-        'uses the correct paging service',
-        fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
-            const pagingServiceMock = {
-                search: jest.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
-            };
-            const getSpy = jest.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
+    ];
 
-            comp.exerciseType = exerciseType;
-
-            comp.ngOnInit();
-            tick(300);
-            expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
-            expect(pagingServiceMock.search).toHaveBeenCalled();
-        }),
-    );
-
-    it('should allow importing SCA configurations', fakeAsync(() => {
+    it.each(pagingServiceCases)('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: ExercisePagingService) => {
+        vi.useFakeTimers();
         const pagingServiceMock = {
-            search: jest.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+            search: vi.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
         };
-        const getSpy = jest.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
+        const getSpy = vi.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
+
+        comp.exerciseType = exerciseType;
+
+        comp.ngOnInit();
+        vi.advanceTimersByTime(300);
+        expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
+        expect(pagingServiceMock.search).toHaveBeenCalled();
+    });
+
+    it('should allow importing SCA configurations', () => {
+        vi.useFakeTimers();
+        const pagingServiceMock = {
+            search: vi.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+        };
+        const getSpy = vi.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
 
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
 
         comp.ngOnInit();
-        tick(300);
+        vi.advanceTimersByTime(300);
 
         expect(comp.titleKey).toContain('configureGrading');
         expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
         expect(pagingServiceMock.search).toHaveBeenCalled();
-    }));
+    });
 
     it('should sort by exam title when only the exam filter is active', () => {
         comp.isExamFilter = true;

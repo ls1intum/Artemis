@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { Component, inject, input, output, viewChild } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,9 +7,9 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { orderBy } from 'lodash-es';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-exercise-search',
@@ -20,18 +20,18 @@ export class TeamExerciseSearchComponent {
     private courseService = inject(CourseManagementService);
     private translateService = inject(TranslateService);
 
-    @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
+    readonly ngbTypeahead = viewChild.required<NgbTypeahead>('instance');
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
-    @Input() course: Course;
-    @Input() ignoreExercises: Exercise[];
+    readonly course = input.required<Course>();
+    readonly ignoreExercises = input<Exercise[]>([]);
 
-    @Output() selectExercise = new EventEmitter<Exercise>();
-    @Output() searching = new EventEmitter<boolean>();
-    @Output() searchQueryTooShort = new EventEmitter<boolean>();
-    @Output() searchFailed = new EventEmitter<boolean>();
-    @Output() searchNoResults = new EventEmitter<string | undefined>();
+    readonly selectExercise = output<Exercise>();
+    readonly searching = output<boolean>();
+    readonly searchQueryTooShort = output<boolean>();
+    readonly searchFailed = output<boolean>();
+    readonly searchNoResults = output<string | undefined>();
 
     exercise: Exercise;
     exerciseOptions: Exercise[] = [];
@@ -64,7 +64,7 @@ export class TeamExerciseSearchComponent {
     }
 
     onSearch = (text$: Observable<string>) => {
-        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.ngbTypeahead.isPopupOpen()));
+        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.ngbTypeahead().isPopupOpen()));
         const inputFocus$ = this.focus$;
 
         return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
@@ -99,10 +99,19 @@ export class TeamExerciseSearchComponent {
      */
     loadExerciseOptions() {
         return this.courseService
-            .findWithExercises(this.course.id!)
+            .findWithExercises(this.course().id!)
             .pipe(map((courseResponse) => courseResponse.body!.exercises || []))
             .pipe(map((exercises) => exercises.filter((exercise) => exercise.teamMode)))
-            .pipe(map((exercises) => exercises.filter((exercise) => !this.ignoreExercises.map((e) => e.id).includes(exercise.id))))
+            .pipe(
+                map((exercises) =>
+                    exercises.filter(
+                        (exercise) =>
+                            !this.ignoreExercises()
+                                .map((e) => e.id)
+                                .includes(exercise.id),
+                    ),
+                ),
+            )
             .pipe(
                 tap((exerciseOptions) => {
                     this.exerciseOptions = exerciseOptions;

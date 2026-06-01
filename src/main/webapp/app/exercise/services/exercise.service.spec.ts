@@ -1,12 +1,14 @@
+import { expect, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -15,7 +17,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -26,9 +28,10 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseService;
     let httpMock: HttpTestingController;
     let artemisMarkdown: ArtemisMarkdownService;
@@ -107,10 +110,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.assessmentDueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
     });
 
     it('should validate dates', () => {
@@ -127,10 +130,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.assessmentDueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
     });
 
     it('should set errors on invalid due and assessment due dates', () => {
@@ -144,8 +147,8 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeTrue();
-        expect(exercise.assessmentDueDateError).toBeTrue();
+        expect(exercise.dueDateError).toBe(true);
+        expect(exercise.assessmentDueDateError).toBe(true);
     });
 
     it('should validate empty example solution publication date with assessment due date', () => {
@@ -162,10 +165,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.assessmentDueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.assessmentDueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
     });
 
     it('should validate empty example solution publication date', () => {
@@ -180,9 +183,9 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
     });
 
     it('should set error when due date is before release date', () => {
@@ -194,7 +197,7 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeTrue();
+        expect(exercise.dueDateError).toBe(true);
     });
 
     it('should set error when example solution publication date is before release date', () => {
@@ -209,8 +212,8 @@ describe('Exercise Service', () => {
         service.validateDate(exercise);
 
         expect(exercise.dueDateError).toBeFalsy();
-        expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(true);
     });
 
     it('should set error when example solution publication date is before due date', () => {
@@ -224,9 +227,9 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(true);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
     });
 
     it('should allow example solution publication date is before due date with a warning', () => {
@@ -242,9 +245,9 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
+        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(true);
     });
 
     it('should fill & empty example modeling solution', () => {
@@ -252,72 +255,70 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
     });
 
     it('should fill & empty example text solution', () => {
-        const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+        const artemisMarkdownSpy = vi.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
         let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
-        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
-        expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(textExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
     });
 
     it('should fill & empty example file upload solution', () => {
-        const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+        const artemisMarkdownSpy = vi.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
         let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
-        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
-        expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
+        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(fileUploadExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
     });
 
     it('should fill & empty example programming exercise solution', () => {
         let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().add(1, 'm') }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
-        expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
+        expect(exampleSolutionInfo.exampleSolutionPublished).toBe(false);
     });
 
     it('should determine is included in score string', () => {
         const translateService = TestBed.inject(TranslateService);
-        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         let callCount = 0;
         const result = service.isIncludedInScore({} as Exercise);
@@ -361,9 +362,9 @@ describe('Exercise Service', () => {
         const entityTitleService = TestBed.inject(EntityTitleService);
         const profileService = TestBed.inject(ProfileService);
 
-        const accountServiceSpy = jest.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
-        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setExerciseTitle');
-        const profileServiceSpy = jest.spyOn(profileService, 'getProfileInfo');
+        const accountServiceSpy = vi.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
+        const entityTitleServiceSpy = vi.spyOn(entityTitleService, 'setExerciseTitle');
+        const profileServiceSpy = vi.spyOn(profileService, 'getProfileInfo');
 
         const category = {
             color: '#6ae8ac',
@@ -387,11 +388,9 @@ describe('Exercise Service', () => {
         expect(processedExercise.releaseDate).toEqual(releaseDate);
         expect(processedExercise.startDate).toBeUndefined();
 
-        expect(accountServiceSpy).toHaveBeenCalledOnce();
-        expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
+        expect(accountServiceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: exerciseFromServer.id }));
 
-        expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
+        expect(entityTitleServiceSpy).toHaveBeenCalledExactlyOnceWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
@@ -446,7 +445,7 @@ describe('Exercise Service', () => {
     });
 
     it('should get exercise for example solution', () => {
-        const serviceSpy = jest.spyOn(service, 'processExerciseEntityResponse');
+        const serviceSpy = vi.spyOn(service, 'processExerciseEntityResponse');
 
         const exerciseId = 124;
 
@@ -468,8 +467,7 @@ describe('Exercise Service', () => {
 
         testRequest.flush(expectedReturnedExercise);
 
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(serviceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ body: expectedReturnedExercise }));
         expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
 

@@ -1,19 +1,22 @@
+import { Mock, expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import * as DownloadUtil from 'app/shared/util/download.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as DownloadUtil from 'app/foundation/util/download.util';
 import { of } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Submission Export Dialog Component', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
     let component: SubmissionExportDialogComponent;
 
@@ -33,7 +36,7 @@ describe('Submission Export Dialog Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            imports: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), SubmissionExportDialogComponent],
             providers: [
                 { provide: SubmissionExportService, useValue: MockProvider(SubmissionExportService) },
                 { provide: ExerciseService, useClass: MockExerciseService },
@@ -57,70 +60,63 @@ describe('Submission Export Dialog Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const findSpy = jest.spyOn(exerciseService, 'find');
+        const findSpy = vi.spyOn(exerciseService, 'find');
         component.ngOnInit();
 
-        expect(component.isLoading).toBeFalse();
-        expect(component.exportInProgress).toBeFalse();
+        expect(component.isLoading).toBe(false);
+        expect(component.exportInProgress).toBe(false);
         expect(component.submissionExportOptions).toEqual(submissionExportOptions);
         expect(component.exercise).toEqual({ id: exerciseId } as Exercise);
-        expect(findSpy).toHaveBeenCalledOnce();
-        expect(findSpy).toHaveBeenCalledWith(exerciseId);
+        expect(findSpy).toHaveBeenCalledExactlyOnceWith(exerciseId);
     });
 
     it('should handle export response', () => {
         const response: HttpResponse<Blob> = new HttpResponse();
-        const alertSpy = jest.spyOn(alertService, 'success');
-        const modalSpy = jest.spyOn(component.activeModal, 'dismiss');
-        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadZipFileFromResponse');
+        const alertSpy = vi.spyOn(alertService, 'success');
+        const modalSpy = vi.spyOn(component.activeModal, 'dismiss');
+        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadZipFileFromResponse');
 
         component.handleExportResponse(response);
 
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledWith(true);
-        expect(component.exportInProgress).toBeFalse();
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(response);
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(true);
+        expect(component.exportInProgress).toBe(false);
+        expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
     });
 
     it('should clear dialog', () => {
-        const modalSpy = jest.spyOn(component.activeModal, 'dismiss');
+        const modalSpy = vi.spyOn(component.activeModal, 'dismiss');
         component.clear();
 
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledWith('cancel');
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith('cancel');
     });
 
     describe('Exporting Submission', () => {
-        let exportSubmissionServiceMock: jest.Mock;
-        let handleExportResponseMock: jest.Mock;
+        let exportSubmissionServiceMock: Mock;
+        let handleExportResponseMock: Mock;
 
         beforeEach(() => {
-            handleExportResponseMock = jest.fn().mockReturnValue(of());
+            handleExportResponseMock = vi.fn().mockReturnValue(of());
             component.handleExportResponse = handleExportResponseMock;
         });
 
         it('should export submission', () => {
-            exportSubmissionServiceMock = jest.fn().mockReturnValue(of({ body: {} } as HttpResponse<Blob>));
+            exportSubmissionServiceMock = vi.fn().mockReturnValue(of({ body: {} } as HttpResponse<Blob>));
             submissionExportService.exportSubmissions = exportSubmissionServiceMock;
 
             component.exportSubmissions(exerciseId);
 
-            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
-            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, validExerciseType, submissionExportOptions);
-            expect(component.exportInProgress).toBeTrue();
-            expect(handleExportResponseMock).toHaveBeenCalledOnce();
-            expect(handleExportResponseMock).toHaveBeenCalledWith({ body: {} });
+            expect(exportSubmissionServiceMock).toHaveBeenCalledExactlyOnceWith(exerciseId, validExerciseType, submissionExportOptions);
+            expect(component.exportInProgress).toBe(true);
+            expect(handleExportResponseMock).toHaveBeenCalledExactlyOnceWith({ body: {} });
         });
 
         it('should handle error exporting submission for unsupported exercise types', () => {
-            exportSubmissionServiceMock = jest.fn().mockImplementation(() => {
+            exportSubmissionServiceMock = vi.fn().mockImplementation(() => {
                 throw Error('Export not implemented for exercise type ' + invalidExerciseType);
             });
             submissionExportService.exportSubmissions = exportSubmissionServiceMock;
@@ -130,8 +126,7 @@ describe('Submission Export Dialog Component', () => {
                 component.exportSubmissions(exerciseId);
             }).toThrow('Export not implemented for exercise type ' + invalidExerciseType);
 
-            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
-            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
+            expect(exportSubmissionServiceMock).toHaveBeenCalledExactlyOnceWith(exerciseId, invalidExerciseType, submissionExportOptions);
             expect(handleExportResponseMock).not.toHaveBeenCalled();
         });
     });

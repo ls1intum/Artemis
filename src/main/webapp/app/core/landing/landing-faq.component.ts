@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Accordion, AccordionContent, AccordionHeader, AccordionPanel } from 'primeng/accordion';
 import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 
@@ -88,15 +88,6 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             font-family: inherit;
         }
 
-        :host ::ng-deep .p-collapsible-enter-active {
-            animation-delay: 0.2s !important;
-            animation-fill-mode: both !important;
-        }
-
-        :host ::ng-deep .p-accordioncontent .p-motion.p-collapsible-enter-active .p-accordioncontent-content {
-            animation: faq-slide-down 220ms ease-out 0.2s both;
-        }
-
         :host ::ng-deep .p-accordionpanel-active .p-accordionheader {
             color: var(--body-color) !important;
         }
@@ -104,15 +95,6 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
         .faq-answer {
             margin: 0;
             font-family: inherit;
-        }
-
-        @keyframes faq-slide-down {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
         }
 
         @media (max-width: 1200px) {

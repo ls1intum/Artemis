@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -10,16 +10,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/course/request/course-request.model';
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { onError } from 'app/shared/util/global.utils';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { onError } from 'app/foundation/util/global.utils';
+import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
+import { getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
@@ -42,7 +42,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        NgbPagination,
+        PaginatorModule,
         CourseRequestFormComponent,
         DialogModule,
     ],
@@ -69,7 +69,7 @@ export class CourseRequestsComponent implements OnInit {
     readonly decidedRequests = signal<CourseRequest[]>([]);
     /** Total count of decided requests for pagination */
     readonly totalDecidedCount = signal(0);
-    /** Current page for decided requests (NgbPagination uses 1-indexed pages) */
+    /** Current page for decided requests (1-indexed; the PrimeNG paginator emits 0-indexed pages) */
     readonly decidedPage = signal(1);
     /** Page size for decided requests */
     readonly decidedPageSize = 20;
@@ -108,7 +108,7 @@ export class CourseRequestsComponent implements OnInit {
 
     load() {
         this.loading.set(true);
-        // NgbPagination is 1-indexed, but API is 0-indexed
+        // decidedPage is 1-indexed, but the API is 0-indexed
         this.courseRequestService.findAdminOverview(this.decidedPage() - 1, this.decidedPageSize).subscribe({
             next: (overview) => {
                 this.pendingRequests.set(overview.pendingRequests);
@@ -125,6 +125,12 @@ export class CourseRequestsComponent implements OnInit {
 
     onDecidedPageChange() {
         this.load();
+    }
+
+    /** Handles a PrimeNG paginator page change for the decided requests by converting the 0-indexed event page to the 1-indexed page and reloading. */
+    onDecidedPaginatorChange(event: PaginatorState): void {
+        this.decidedPage.set((event.page ?? 0) + 1);
+        this.onDecidedPageChange();
     }
 
     accept(request: CourseRequest) {

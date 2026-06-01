@@ -1,23 +1,26 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { HttpResponse } from '@angular/common/http';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 
 describe('Example Solution Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: ExampleSolutionComponent;
     let fixture: ComponentFixture<ExampleSolutionComponent>;
     let exerciseService: ExerciseService;
@@ -30,12 +33,12 @@ describe('Example Solution Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                ExampleSolutionComponent,
+            imports: [
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
+                ExampleSolutionComponent,
             ],
             providers: [
                 {
@@ -54,20 +57,18 @@ describe('Example Solution Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const exerciseServiceSpy = jest.spyOn(exerciseService, 'getExerciseForExampleSolution').mockReturnValue(of({ body: exercise } as HttpResponse<Exercise>));
+        const exerciseServiceSpy = vi.spyOn(exerciseService, 'getExerciseForExampleSolution').mockReturnValue(of({ body: exercise } as HttpResponse<Exercise>));
         const exampleSolutionInfo = { programmingExercise: { id: 1, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') } } as ExampleSolutionInfo;
 
-        const extractExampleSolutionInfoSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
+        const extractExampleSolutionInfoSpy = vi.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
         fixture.detectChanges();
-        expect(exerciseServiceSpy).toHaveBeenCalledOnce();
-        expect(exerciseServiceSpy).toHaveBeenCalledWith(exercise.id);
+        expect(exerciseServiceSpy).toHaveBeenCalledExactlyOnceWith(exercise.id);
 
-        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledOnce();
-        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledWith(exercise, artemisMarkdownService);
+        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledExactlyOnceWith(exercise, artemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toEqual(exampleSolutionInfo);
     });

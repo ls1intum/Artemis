@@ -133,8 +133,7 @@ describe('ExerciseMetadataConflictModalComponent', () => {
 
         component.applySelections();
 
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith({
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith({
             decisions: [
                 { field: 'title', useIncoming: false },
                 { field: 'shortName', useIncoming: true },

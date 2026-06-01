@@ -1,11 +1,13 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { MockFileUploadExerciseService } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -29,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Exercise detail common actions Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
     let fixture: ComponentFixture<NonProgrammingExerciseDetailCommonActionsComponent>;
 
@@ -36,13 +39,12 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
-                NonProgrammingExerciseDetailCommonActionsComponent,
+            imports: [
                 MockComponent(SubmissionExportButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExternalSubmissionButtonComponent),
                 MockRouterLinkDirective,
+                FaIconComponent,
             ],
             providers: [
                 MockProvider(TextExerciseService),
@@ -54,7 +56,7 @@ describe('Exercise detail common actions Component', () => {
                 MockProvider(ProfileService),
             ],
         }).compileComponents();
-        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({} as ProfileInfo);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({} as ProfileInfo);
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });
@@ -128,7 +130,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', false);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
 
         it('should return false for course exercise when user is not at least tutor', () => {
@@ -141,7 +143,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', false);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return false for exam exercise when user is only tutor', () => {
@@ -156,7 +158,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', true);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return true for exam exercise when user is at least instructor', () => {
@@ -171,7 +173,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', true);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
     });
 
@@ -180,9 +182,9 @@ describe('Exercise detail common actions Component', () => {
         const fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
         const modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
-        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteTextExerciseService = vi.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteModelingExerciseService = vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
         fixture.componentRef.setInput('course', course);
 

@@ -24,15 +24,15 @@ import {
     faUser,
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
 
 export interface AdminSidebarItem {
     routerLink: string;
@@ -51,7 +51,7 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, NgbTooltip, RouterLink, RouterLinkActive],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;

@@ -1,6 +1,6 @@
 import { LectureSearchResult } from './lecture-search-result.model';
 
 export interface IrisSearchResult {
-    answer: string;
+    answer: string | undefined;
     sources: LectureSearchResult[];
 }

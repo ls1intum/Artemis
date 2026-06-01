@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { UserSettingsDirective } from 'app/account/user/settings/directive/user-settings.directive';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { UserSettingsStructure } from 'app/account/user/settings/user-settings.model';

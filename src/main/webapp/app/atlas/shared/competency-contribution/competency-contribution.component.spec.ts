@@ -2,12 +2,12 @@ import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CompetencyContributionComponent } from './competency-contribution.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CarouselModule } from 'primeng/carousel';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';

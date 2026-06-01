@@ -15,7 +15,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -41,7 +41,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -68,17 +68,17 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AsPipe } from 'app/foundation/pipes/as.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -305,6 +305,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);
+    // While true, the view is force-kept at the bottom as new content (the echoed user
+    // message, the thinking bubble, the streamed response) arrives asynchronously after a
+    // send. It is set on send and cleared only by a genuine upward user gesture (wheel /
+    // touch) so the scroll handler's intermediate readings cannot un-pin us mid-stream.
+    private forcePinToBottom = false;
+    // Tracks whether the response stream has actually started since the last send, so the
+    // pin is not released during the initial gap before the first websocket update arrives.
+    private pinSawStreaming = false;
+    // requestAnimationFrame id for the active post-send pin scroll loop, if any.
+    private pinScrollRafId: number | undefined;
+    // requestAnimationFrame id and remaining-frame counter for the initial-load settle scroll.
+    private settleScrollRafId: number | undefined;
+    private settleScrollFrames = 0;
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
@@ -538,7 +551,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
             if (rawMessages.length !== this.previousMessageCount) {
-                if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
+                // Initial history load (e.g. after a page refresh): the batch lands at once and
+                // its content keeps growing the scroll height for several frames, so use the
+                // settling scroll to land exactly at the bottom instead of a tiny bit short.
+                const isInitialLoad = this.previousMessageCount === 0 && rawMessages.length > 0;
+                if (this.forcePinToBottom) {
+                    // Just sent a message: instant scroll so we stay glued to the bottom as
+                    // the echoed message / response grow the content (no smooth-scroll race).
+                    this.scrollToBottom('auto');
+                } else if (isInitialLoad && this.isScrolledToBottom()) {
+                    this.scrollToBottomSettled();
+                } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
                     this.scrollToBottom('smooth');
                 }
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
@@ -569,10 +592,35 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Scroll when thinking bubble appears, only if user is already at the bottom
+        // Release the post-send bottom pin once the response stream has settled. We only
+        // release after the exchange has actually started (a stage went active), so the
+        // initial gap between send and the first websocket update doesn't release early.
+        // A genuine upward gesture also releases it (see onMessagesUserScroll).
         effect(() => {
-            if (this.activeChatMessage() && this.isScrolledToBottom()) {
-                this.scrollToBottom('smooth');
+            const streaming = this.hasActiveStage() || !!this.activeChatMessage();
+            if (this.forcePinToBottom) {
+                if (streaming) {
+                    this.pinSawStreaming = true;
+                } else if (this.pinSawStreaming) {
+                    this.releasePinToBottom();
+                }
+            }
+        });
+
+        // Release the pin (and stop the RAF loop) if the send fails before the stream ever
+        // starts. Without a stage going active, pinSawStreaming stays false, so the settle
+        // effect above can never release — the loop would otherwise spin forever. This path
+        // only fires on a genuine error signal, never during the normal pre-stream gap.
+        effect(() => {
+            if (this.error() && this.forcePinToBottom && !this.pinSawStreaming) {
+                this.releasePinToBottom();
+            }
+        });
+
+        // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
+        effect(() => {
+            if (this.activeChatMessage() && (this.forcePinToBottom || this.isScrolledToBottom())) {
+                this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
             }
         });
 
@@ -602,6 +650,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }, 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+        this.destroyRef.onDestroy(() => this.releasePinToBottom());
+        this.destroyRef.onDestroy(() => {
+            if (this.settleScrollRafId !== undefined) {
+                window.cancelAnimationFrame(this.settleScrollRafId);
+                this.settleScrollRafId = undefined;
+            }
+        });
         this.destroyRef.onDestroy(() => {
             if (this.copyResetTimeoutId) {
                 clearTimeout(this.copyResetTimeoutId);
@@ -758,10 +813,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.chatService
                 .sendMessage(content)
                 .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe(() => {
-                    this.isLoading.set(false);
+                .subscribe({
+                    next: () => {
+                        this.isLoading.set(false);
+                    },
+                    error: () => {
+                        // Send failed before any stage started: release the bottom pin and stop
+                        // the RAF loop here, since no stream will arrive to settle it (the
+                        // pinSawStreaming release path never runs). Done only on the send error,
+                        // not during the normal pre-stream gap.
+                        this.isLoading.set(false);
+                        if (!this.pinSawStreaming) {
+                            this.releasePinToBottom();
+                        }
+                    },
                 });
             this.newMessageTextContent.set('');
+            // User explicitly sent a message: follow it to the bottom and keep the view
+            // pinned there while the echoed message, thinking bubble and streamed response
+            // arrive asynchronously via WebSocket. Pinning is released by a real upward
+            // gesture (see onMessagesUserScroll).
+            this.forcePinToBottom = true;
+            this.pinSawStreaming = false;
+            this.isScrolledToBottom.set(true);
+            this.scrollToBottom('auto');
+            // Keep following the bottom frame-by-frame as the message, thinking bubble and
+            // response render asynchronously, so the user is taken down as soon as they appear.
+            this.startPinScrollLoop();
         }
         this.resetChatBodyHeight();
     }
@@ -895,6 +973,65 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
+     * Scrolls to the true bottom and keeps re-applying it across a short settle window. Used on
+     * the initial history load, where message content (markdown, code blocks, KaTeX, images)
+     * keeps growing the scroll height for several frames after it first renders — a single
+     * scroll lands a little short, leaving the user just above the bottom.
+     */
+    private scrollToBottomSettled() {
+        // Restart the settle window if one is already running (e.g. suggestions appear shortly
+        // after the initial message batch) so a single loop always covers the latest growth.
+        this.settleScrollFrames = 0;
+        if (this.settleScrollRafId !== undefined) return;
+        const settle = () => {
+            const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+            if (messagesElement) {
+                messagesElement.scrollTop = messagesElement.scrollHeight;
+                this.isScrolledToBottom.set(true);
+            }
+            // Keep correcting for late layout growth; ~20 frames (~330ms) covers async rendering.
+            if (this.settleScrollFrames++ < 20) {
+                this.settleScrollRafId = window.requestAnimationFrame(settle);
+            } else {
+                this.settleScrollRafId = undefined;
+            }
+        };
+        this.settleScrollRafId = window.requestAnimationFrame(settle);
+    }
+
+    /**
+     * While the post-send pin is active, keep the view glued to the bottom on every animation
+     * frame. The user message, thinking bubble and streamed response all render asynchronously
+     * after onSend(); a single scroll call would run before they exist, so we follow the growing
+     * content frame-by-frame until the pin is released (gesture or stream settled).
+     */
+    private startPinScrollLoop() {
+        if (this.pinScrollRafId !== undefined) return;
+        const step = () => {
+            if (!this.forcePinToBottom) {
+                this.pinScrollRafId = undefined;
+                return;
+            }
+            const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+            if (messagesElement) {
+                messagesElement.scrollTop = messagesElement.scrollHeight;
+            }
+            this.pinScrollRafId = window.requestAnimationFrame(step);
+        };
+        this.pinScrollRafId = window.requestAnimationFrame(step);
+    }
+
+    /** Releases the post-send bottom pin and stops the frame-by-frame scroll loop. */
+    private releasePinToBottom() {
+        this.forcePinToBottom = false;
+        this.pinSawStreaming = false;
+        if (this.pinScrollRafId !== undefined) {
+            window.cancelAnimationFrame(this.pinScrollRafId);
+            this.pinScrollRafId = undefined;
+        }
+    }
+
+    /**
      * Accepts the permission to use the chat widget.
      */
     acceptPermission(decision: LLMSelectionDecision) {
@@ -997,8 +1134,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     checkChatScroll() {
         const messagesElement = this.messagesElement()?.nativeElement;
         if (!messagesElement) return;
+        // While pinned (just after a send), ignore intermediate scroll readings produced by
+        // programmatic scrolling and async content growth so they cannot un-pin the view.
+        if (this.forcePinToBottom) {
+            this.isScrolledToBottom.set(true);
+            return;
+        }
         const { scrollTop, scrollHeight, clientHeight } = messagesElement;
         this.isScrolledToBottom.set(scrollTop >= scrollHeight - clientHeight - 50);
+    }
+
+    /**
+     * Handles a genuine upward scroll gesture (wheel up or touch drag) from the user.
+     * Releases the post-send bottom pin so the user can freely scroll the history.
+     */
+    onMessagesUserScroll(event: WheelEvent | TouchEvent) {
+        if (!this.forcePinToBottom) return;
+        // Wheel up (deltaY < 0) or any touch drag means the user wants to leave the bottom.
+        if (event instanceof WheelEvent && event.deltaY >= 0) return;
+        this.releasePinToBottom();
+        this.checkChatScroll();
     }
 
     onSuggestionClick(suggestion: string) {

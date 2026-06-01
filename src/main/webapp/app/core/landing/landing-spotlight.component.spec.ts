@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LandingSpotlightComponent } from 'app/core/landing/landing-spotlight.component';
 import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SpotlightStep } from 'app/core/landing/landing-data';
 
 const IMAGE_STEP_DURATION = 5000;

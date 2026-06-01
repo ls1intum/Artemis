@@ -14,7 +14,7 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
+import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +23,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -648,6 +649,39 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should enforce the title maxlength on the short answer question input', () => {
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+    });
+
+    it('should show visual feedback when the short answer question title limit is reached', () => {
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
+
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
+    });
+
+    it('should show visual feedback when the re-evaluation short answer question title limit is reached', () => {
+        vi.advanceTimersToNextFrame();
+        fixture.componentRef.setInput('reEvaluationInProgress', true);
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title input');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title small');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
     });
 
     it('should return highest spot number', () => {

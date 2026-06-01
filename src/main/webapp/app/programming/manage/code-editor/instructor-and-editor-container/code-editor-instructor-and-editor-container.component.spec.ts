@@ -17,7 +17,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -36,7 +36,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
@@ -56,7 +56,8 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { WritableSignal, signal } from '@angular/core';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
@@ -92,6 +93,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ActivatedRoute, useValue: { params: of({}) } },
         { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
         { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+        { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: of({ confirmed: true }) })) } },
         { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({})) } },
@@ -670,8 +672,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
             expect(comp.isGeneratingCode()).toBeFalse();
-            // One modal from generateCode() confirmation and one from the "already running" error handler.
-            expect(openSpy).toHaveBeenCalledTimes(2);
+            expect(openSpy).toHaveBeenCalledOnce();
             expect(addAlertSpy).not.toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: AlertType.DANGER,

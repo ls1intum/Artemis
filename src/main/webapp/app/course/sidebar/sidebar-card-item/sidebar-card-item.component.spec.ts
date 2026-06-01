@@ -1,0 +1,112 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { MockComponent } from 'ng-mocks';
+import { SidebarCardSize } from 'app/foundation/types/sidebar';
+
+describe('SidebarCardItemComponent', () => {
+    setupTestBed({ zoneless: true });
+    let component: SidebarCardItemComponent;
+    let fixture: ComponentFixture<SidebarCardItemComponent>;
+    let sidebarItemMock: any;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [SidebarCardItemComponent, MockComponent(ProfilePictureComponent)],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(SidebarCardItemComponent);
+        component = fixture.componentInstance;
+
+        sidebarItemMock = {
+            title: 'testTitle',
+            id: 'testId',
+            size: 'M' as SidebarCardSize,
+            difficulty: DifficultyLevel.EASY,
+            type: 'oneToOneChat',
+            conversation: {
+                members: [
+                    { id: 2, name: 'RequestingUser', isRequestingUser: true },
+                    { id: 1, name: 'User1', isRequestingUser: false },
+                ],
+            } as OneToOneChatDTO,
+        };
+
+        fixture.componentRef.setInput('sidebarItem', sidebarItemMock);
+    });
+
+    it('should create', () => {
+        fixture.detectChanges();
+        expect(component).toBeTruthy();
+    });
+
+    it('should display item title', () => {
+        fixture.detectChanges();
+        const compiled = fixture.debugElement.nativeElement;
+        expect(compiled.querySelector('#test-sidebar-card-title').textContent).toContain(sidebarItemMock.title);
+    });
+
+    it('should format unreadCount correctly when count is less than 99', () => {
+        fixture.componentRef.setInput('unreadCount', 45);
+        fixture.detectChanges();
+        expect(component.formattedUnreadCount()).toBe('45');
+    });
+
+    it('should format unreadCount as "99+" when count exceeds 99', () => {
+        fixture.componentRef.setInput('unreadCount', 120);
+        fixture.detectChanges();
+        expect(component.formattedUnreadCount()).toBe('99+');
+    });
+
+    it('should derive the group icon for group chats without mutating the input', () => {
+        const groupItem = { ...sidebarItemMock, type: 'groupChat', icon: undefined };
+        fixture.componentRef.setInput('sidebarItem', groupItem);
+        fixture.detectChanges();
+        expect(component.displayIcon()).toBe(faPeopleGroup);
+        // the input object must not be mutated by the component
+        expect(groupItem.icon).toBeUndefined();
+    });
+
+    it('should set otherUser for one-to-one chat in extractMessageUser', () => {
+        fixture.detectChanges();
+        component.extractMessageUser();
+        expect(component.otherUser()).toEqual(sidebarItemMock.conversation.members[1]);
+    });
+
+    it('should display unread count and bold for non-muted conversations', () => {
+        fixture.componentRef.setInput('sidebarItem', {
+            ...sidebarItemMock,
+            conversation: { unreadMessagesCount: 5, isMuted: false },
+        });
+        fixture.componentRef.setInput('sidebarType', 'conversation');
+        fixture.componentRef.setInput('unreadCount', 5);
+        fixture.changeDetectorRef.detectChanges();
+
+        const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
+        expect(unreadCountElem?.textContent).toContain('5');
+
+        const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+        expect(titleElem?.classList).toContain('fw-bold');
+    });
+
+    it('should not display unread count or bold for muted conversations', () => {
+        fixture.componentRef.setInput('sidebarItem', {
+            ...sidebarItemMock,
+            conversation: { unreadMessagesCount: 5, isMuted: true },
+        });
+        fixture.componentRef.setInput('sidebarType', 'conversation');
+        fixture.componentRef.setInput('unreadCount', 5);
+        fixture.changeDetectorRef.detectChanges();
+
+        const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
+        expect(unreadCountElem).toBeNull();
+
+        const titleElem = fixture.nativeElement.querySelector('#test-sidebar-card-title');
+        expect(titleElem?.classList).not.toContain('fw-bold');
+    });
+});

@@ -14,7 +14,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { Range } from 'app/shared/util/utils';
+import { Range } from 'app/foundation/util/utils';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { Subscription, of } from 'rxjs';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
@@ -128,10 +128,8 @@ describe('Exercise Scores Component', () => {
 
             component.ngOnInit();
 
-            expect(findCourseSpy).toHaveBeenCalledOnce();
-            expect(findCourseSpy).toHaveBeenCalledWith(1);
-            expect(findExerciseSpy).toHaveBeenCalledOnce();
-            expect(findExerciseSpy).toHaveBeenCalledWith(2);
+            expect(findCourseSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(findExerciseSpy).toHaveBeenCalledExactlyOnceWith(2);
         });
     });
 
@@ -357,8 +355,7 @@ describe('Exercise Scores Component', () => {
 
             component.exportNames();
 
-            expect(resultServiceStub).toHaveBeenCalledOnce();
-            expect(resultServiceStub).toHaveBeenCalledWith(['participantName'], 'results-names.csv');
+            expect(resultServiceStub).toHaveBeenCalledExactlyOnceWith(['participantName'], 'results-names.csv');
         });
 
         it('should export names with team students format', () => {

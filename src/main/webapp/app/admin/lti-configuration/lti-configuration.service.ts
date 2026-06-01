@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 
 /**
  * DTO for creating and updating LTI platform configurations.
@@ -40,7 +40,7 @@ export class LtiConfigurationService {
      */
     addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<LtiPlatformConfiguration>> {
         const dto = this.toDTO(ltiPlatformConfiguration);
-        return this.http.post<LtiPlatformConfiguration>(`api/lti/admin/lti-platform`, dto, { observe: 'response' });
+        return this.http.post<LtiPlatformConfiguration>(`api/lti/admin/lti-platforms`, dto, { observe: 'response' });
     }
 
     /**
@@ -50,7 +50,7 @@ export class LtiConfigurationService {
      */
     updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<LtiPlatformConfiguration>> {
         const dto = this.toDTO(ltiPlatformConfiguration);
-        return this.http.put<LtiPlatformConfiguration>(`api/lti/admin/lti-platform`, dto, { observe: 'response' });
+        return this.http.put<LtiPlatformConfiguration>(`api/lti/admin/lti-platforms`, dto, { observe: 'response' });
     }
 
     private toDTO(config: LtiPlatformConfiguration): LtiPlatformConfigurationUpdateDTO {
@@ -71,10 +71,10 @@ export class LtiConfigurationService {
      * @param platformId The platform id.
      */
     deleteLtiPlatform(platformId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/lti/admin/lti-platform/${platformId}`, { observe: 'response' });
+        return this.http.delete<void>(`api/lti/admin/lti-platforms/${platformId}`, { observe: 'response' });
     }
 
     getLtiPlatformById(platformId: number): Observable<LtiPlatformConfiguration> {
-        return this.http.get<LtiPlatformConfiguration>(`api/lti/admin/lti-platform/${platformId}`);
+        return this.http.get<LtiPlatformConfiguration>(`api/lti/admin/lti-platforms/${platformId}`);
     }
 }

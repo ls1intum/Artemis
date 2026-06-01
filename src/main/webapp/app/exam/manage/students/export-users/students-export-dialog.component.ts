@@ -2,7 +2,7 @@ import { Component, InputSignal, ModelSignal, ViewEncapsulation, WritableSignal,
 import { FormsModule } from '@angular/forms';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';

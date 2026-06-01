@@ -5,7 +5,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, map, tap } from 'rxjs';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -23,7 +23,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     private accountService = inject(AccountService);
 
     public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
-    public resourceUrl = 'api/programming/programming-exercise/';
+    public resourceUrl = 'api/programming/programming-exercises/';
 
     getLatestResultWithFeedback(participationId: number, withSubmission = true): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
@@ -96,7 +96,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param commitId of the commit to get the files for
      */
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content/${commitId}`).pipe(
+        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -127,7 +127,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         if (participationId) {
             params['participationId'] = participationId;
         }
-        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
+        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}`, { params: params }).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)

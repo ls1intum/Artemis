@@ -19,7 +19,7 @@ export class TextEditorService {
     get(participationId: number, resultId?: number): Observable<StudentParticipation> {
         const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http
-            .get<StudentParticipation>(`api/text/text-editor/${participationId}`, { params })
+            .get<StudentParticipation>(`api/text/participations/${participationId}/text-editor`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 

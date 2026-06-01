@@ -1,20 +1,20 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TeamsExportButtonComponent } from '../teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from '../teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from '../team-update-dialog/team-update-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
@@ -52,23 +52,23 @@ export class TeamsComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;
     readonly ButtonSize = ButtonSize;
 
-    teams: Team[] = [];
+    teams = signal<Team[]>([]);
     teamCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
-    filteredTeamsSize = 0;
-    exercise: Exercise;
+    filteredTeamsSize = signal(0);
+    exercise = signal<Exercise | undefined>(undefined);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    isLoading: boolean;
+    isLoading = signal(false);
 
-    currentUser: User;
-    isAdmin = false;
+    currentUser = signal<User | undefined>(undefined);
+    isAdmin = signal(false);
 
     constructor() {
         this.accountService.identity().then((user: User) => {
-            this.currentUser = user;
-            this.isAdmin = this.accountService.isAdmin();
+            this.currentUser.set(user);
+            this.isAdmin.set(this.accountService.isAdmin());
         });
     }
 
@@ -92,13 +92,13 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     loadAll() {
         this.route.params.subscribe((params) => {
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
-                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser.id! : undefined;
+                this.exercise.set(exerciseResponse.body!);
+                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser()?.id : undefined;
                 this.teamService.findAllByExerciseId(params['exerciseId'], teamOwnerId).subscribe((teamsResponse) => {
-                    this.teams = teamsResponse.body!;
-                    this.isLoading = false;
+                    this.teams.set(teamsResponse.body!);
+                    this.isLoading.set(false);
                 });
             });
         });
@@ -152,7 +152,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param teams All teams that this exercise has now after the import
      */
     onTeamsImport(teams: Team[]) {
-        this.teams = teams;
+        this.teams.set(teams);
     }
 
     /**
@@ -161,7 +161,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param filteredTeamsSize Total number of teams after filters have been applied
      */
     handleTeamsSizeChange = (filteredTeamsSize: number) => {
-        this.filteredTeamsSize = filteredTeamsSize;
+        this.filteredTeamsSize.set(filteredTeamsSize);
     };
 
     /**
@@ -188,11 +188,12 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is added or updated
      */
     private upsertTeam(team: Team) {
-        const index = this.teams.findIndex((t) => t.id === team.id);
+        const teams = this.teams();
+        const index = teams.findIndex((t) => t.id === team.id);
         if (index === -1) {
-            this.teams = [...this.teams, team];
+            this.teams.set([...teams, team]);
         } else {
-            this.teams = Object.assign([], this.teams, { [index]: team });
+            this.teams.set(teams.map((t, i) => (i === index ? team : t)));
         }
     }
 
@@ -202,6 +203,6 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is deleted
      */
     private deleteTeam(team: Team) {
-        this.teams = this.teams.filter((t) => t.id !== team.id);
+        this.teams.set(this.teams().filter((t) => t.id !== team.id));
     }
 }
