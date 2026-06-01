@@ -24,10 +24,13 @@ import org.apache.commons.io.FileUtils;
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -380,7 +383,7 @@ public final class RepositoryExportTestUtil {
     /**
      * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
      * Returns the created commit for callers that need the hash.
-     * After pushing, waits for the bare repository to be fully ready to prevent race conditions on slow CI systems.
+     * After pushing, waits for the created commit to be visible in the bare repository to prevent race conditions on slow CI systems.
      */
     public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
         for (Map.Entry<String, String> e : files.entrySet()) {
@@ -392,15 +395,35 @@ public final class RepositoryExportTestUtil {
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
         pushCurrentBranch(repo);
 
-        // Wait for the bare repository to be fully ready for cloning operations
-        waitForBareRepositoryReady(repo);
+        // Wait for the exact commit, not just HEAD, to be available for commit-hash based lookups.
+        waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
 
         return commit;
     }
 
     private static void pushCurrentBranch(LocalRepository repo) throws Exception {
-        var branch = repo.workingCopyGitRepo.getRepository().getBranch();
-        repo.workingCopyGitRepo.push().setRemote("origin").setRefSpecs(new RefSpec("refs/heads/" + branch + ":refs/heads/" + branch)).call();
+        var repository = repo.workingCopyGitRepo.getRepository();
+        var branchRef = repository.getFullBranch();
+        if (branchRef == null || !branchRef.startsWith(Constants.R_HEADS)) {
+            throw new IllegalStateException("Working copy is not on a local branch: " + branchRef);
+        }
+
+        var branch = Repository.shortenRefName(branchRef);
+        var pushResults = repo.workingCopyGitRepo.push().setRemote("origin").setRefSpecs(new RefSpec(Constants.HEAD + ":" + Constants.R_HEADS + branch)).call();
+
+        var pushedRef = false;
+        for (var pushResult : pushResults) {
+            for (var update : pushResult.getRemoteUpdates()) {
+                pushedRef = true;
+                var status = update.getStatus();
+                if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new IllegalStateException("Could not push " + branch + " to origin: " + status + " " + update.getMessage());
+                }
+            }
+        }
+        if (!pushedRef) {
+            throw new IllegalStateException("Push of " + branch + " to origin did not update any remote refs");
+        }
     }
 
     /**
@@ -412,26 +435,22 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+        final ObjectId commitId;
+        try {
+            commitId = ObjectId.fromString(commitHash);
+        }
+        catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Expected a full 40-character commit hash", e);
+        }
+
         Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            // Check directly on the file system first — JGit can cache pack files / object database
-            // state per Repository instance, so a freshly-opened Git handle may still return null
-            // from resolve(...) immediately after a push. The loose-object path is updated atomically
-            // by JGit's push, so its presence is the authoritative signal that the commit landed.
-            if (commitHash == null || commitHash.length() != 40) {
-                return false;
-            }
-            Path looseObjectPath = repo.remoteBareGitRepoFile.toPath().resolve("objects").resolve(commitHash.substring(0, 2)).resolve(commitHash.substring(2));
-            if (Files.exists(looseObjectPath)) {
-                return true;
-            }
-            // Fallback for the case where the commit has already been packed (rare for fresh pushes).
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                var resolved = git.getRepository().resolve(commitHash);
-                if (resolved == null) {
+                var repository = git.getRepository();
+                if (!repository.getObjectDatabase().has(commitId)) {
                     return false;
                 }
-                try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                    revWalk.parseCommit(resolved);
+                try (RevWalk revWalk = new RevWalk(repository)) {
+                    revWalk.parseCommit(commitId);
                 }
                 return true;
             }
