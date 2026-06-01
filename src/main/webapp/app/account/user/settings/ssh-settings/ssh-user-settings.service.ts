@@ -73,7 +73,7 @@ export class SshUserSettingsService implements IASshUserSettingsService {
      * Retrieves a specific public SSH keys of a user
      */
     getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {
-        return this.http.get<UserSshPublicKey>(`api/programming/ssh-settings/public-key/${keyId}`);
+        return this.http.get<UserSshPublicKey>(`api/programming/ssh-settings/public-keys/${keyId}`);
     }
 
     /**
@@ -82,13 +82,13 @@ export class SshUserSettingsService implements IASshUserSettingsService {
      * @param userSshPublicKey The userSshPublicKey DTO containing the details for the new key which should be created
      */
     addNewSshPublicKey(userSshPublicKey: UserSshPublicKey): Observable<HttpResponse<UserSshPublicKey>> {
-        return this.http.post<UserSshPublicKey>('api/programming/ssh-settings/public-key', userSshPublicKey, { observe: 'response' });
+        return this.http.post<UserSshPublicKey>('api/programming/ssh-settings/public-keys', userSshPublicKey, { observe: 'response' });
     }
 
     /**
      * Sends a request to the server to delete the user's current SSH key
      */
     deleteSshPublicKey(keyId: number): Observable<void> {
-        return this.http.delete<void>(`api/programming/ssh-settings/public-key/${keyId}`);
+        return this.http.delete<void>(`api/programming/ssh-settings/public-keys/${keyId}`);
     }
 }

@@ -67,13 +67,13 @@ public class SshSettingsTestService {
         User user = userTestRepository.getUser();
 
         var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
 
         List<UserSshPublicKey> response = request.getList(requestPrefix + "public-keys", HttpStatus.OK, UserSshPublicKey.class);
         assertThat(response.size()).isEqualTo(1);
         UserSshPublicKey userKey = response.getFirst();
 
-        request.get(requestPrefix + "public-key/" + userKey.getId(), HttpStatus.OK, UserSshPublicKey.class);
+        request.get(requestPrefix + "public-keys/" + userKey.getId(), HttpStatus.OK, UserSshPublicKey.class);
     }
 
     // Test
@@ -83,7 +83,7 @@ public class SshSettingsTestService {
         User user = userTestRepository.getUser();
 
         var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
 
         var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
         assertThat(storedUserKey).isNotNull();
@@ -98,11 +98,11 @@ public class SshSettingsTestService {
 
         var validKey = createNewValidSSHKey(user, sshKey1);
         validKey.setLabel(null);
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
 
         var validKey2 = createNewValidSSHKey(user, sshKey2);
         validKey.setLabel("");
-        request.postWithResponseBody(requestPrefix + "public-key", validKey2, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey2, String.class, HttpStatus.OK);
 
         var storedUserKeys = userSshPublicKeyRepository.findAllByUserId(user.getId());
         assertThat(storedUserKeys.size()).isEqualTo(2);
@@ -116,8 +116,8 @@ public class SshSettingsTestService {
 
         var validKey = createNewValidSSHKey(user, sshKey1);
 
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.BAD_REQUEST);
     }
 
     // Test
@@ -127,10 +127,10 @@ public class SshSettingsTestService {
         User user = userTestRepository.getUser();
 
         var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
 
-        request.delete(requestPrefix + "public-key/3443", HttpStatus.FORBIDDEN);
-        request.get(requestPrefix + "public-key/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
+        request.delete(requestPrefix + "public-keys/3443", HttpStatus.FORBIDDEN);
+        request.get(requestPrefix + "public-keys/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
     }
 
     // Test
@@ -142,7 +142,7 @@ public class SshSettingsTestService {
         var userKey = createNewValidSSHKey(user, sshKey1);
         userKey.setPublicKey("Invalid Key");
 
-        request.postWithResponseBody(requestPrefix + "public-key", userKey, String.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(requestPrefix + "public-keys", userKey, String.class, HttpStatus.BAD_REQUEST);
     }
 
     // Test
@@ -153,14 +153,14 @@ public class SshSettingsTestService {
 
         var validKey = createNewValidSSHKey(user, sshKey1);
 
-        request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
+        request.postWithResponseBody(requestPrefix + "public-keys", validKey, String.class, HttpStatus.OK);
 
         var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
         assertThat(storedUserKey).isNotNull();
         assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
 
         // deleting the key should work correctly
-        request.delete(requestPrefix + "public-key/" + storedUserKey.getId(), HttpStatus.OK);
+        request.delete(requestPrefix + "public-keys/" + storedUserKey.getId(), HttpStatus.OK);
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
     }
 

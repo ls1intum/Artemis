@@ -54,7 +54,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job to cancel
      */
     cancelBuildJobInCourse(courseId: number, buildJobId: string): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`).pipe(
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}/cancel`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId} in course ${courseId}\n${err.message}`));
             }),
@@ -66,7 +66,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job to cancel
      */
     cancelBuildJob(buildJobId: string): Observable<void> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/cancel-job/${buildJobId}`).pipe(
+        return this.http.delete<void>(`${this.adminResourceUrl}/build-jobs/${buildJobId}/cancel`).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to cancel build job ${buildJobId}\n${err.message}`));
             }),
@@ -197,7 +197,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job
      */
     getBuildJobById(buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.adminResourceUrl}/build-job/${buildJobId}`);
+        return this.http.get<any>(`${this.adminResourceUrl}/build-jobs/${buildJobId}`);
     }
 
     /**
@@ -206,7 +206,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job
      */
     getBuildJobByIdForCourse(courseId: number, buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
     }
 
     /**
@@ -214,7 +214,7 @@ export class BuildOverviewService {
      * @param buildJobId
      */
     getBuildJobLogs(buildJobId: string): Observable<string> {
-        return this.http.get(`${this.resourceUrl}/build-log/${buildJobId}`, { responseType: 'text' }).pipe(
+        return this.http.get(`${this.resourceUrl}/build-jobs/${buildJobId}/build-log`, { responseType: 'text' }).pipe(
             catchError(() => {
                 return throwError(() => new Error('artemisApp.buildQueue.logs.errorFetchingLogs'));
             }),

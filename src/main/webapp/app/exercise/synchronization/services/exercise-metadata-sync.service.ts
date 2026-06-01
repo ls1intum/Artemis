@@ -350,7 +350,7 @@ export class ExerciseMetadataSyncService {
      */
     private async fetchSnapshot(exerciseId: number, versionId: number): Promise<ExerciseSnapshotDTO | undefined> {
         try {
-            return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/${exerciseId}/version/${versionId}`));
+            return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/exercises/${exerciseId}/versions/${versionId}`));
         } catch {
             this.alertService.warning('artemisApp.exercise.metadataSync.snapshotFetchFailed');
             return undefined;
