@@ -851,8 +851,10 @@ Course Info Bar
     }
 }
 
-.diff-view-modal .modal-dialog {
-    max-width: 80vw;
+// The diff comparison renders in a PrimeNG dialog (.p-dialog), to which the `diff-view-modal` styleClass is
+// applied; the width itself is set via the dialog config. Cap it so it never exceeds the viewport.
+.diff-view-modal {
+    max-width: 95vw;
 }
 
 .warning-modal-window .modal-dialog {
