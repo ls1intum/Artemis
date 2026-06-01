@@ -7,12 +7,12 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
-import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisChatSessionExportDTO;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.admin.organization.util;
 
-import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.Organization;
 
 /**
  * Factory for creating Organizations and related objects.

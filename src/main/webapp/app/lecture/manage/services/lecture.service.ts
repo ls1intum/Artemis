@@ -103,9 +103,9 @@ export class LectureService {
      * @param lectureId Lecture to be cloned and imported
      */
     import(courseId: number, lectureId: number): Observable<EntityResponseType> {
-        const params = new HttpParams().set('courseId', courseId);
+        const params = new HttpParams().set('courseId', courseId).set('sourceLectureId', lectureId);
         return this.http
-            .post<Lecture>(`${this.resourceUrl}/import/${lectureId}`, null, {
+            .post<Lecture>(`${this.resourceUrl}/import`, null, {
                 params,
                 observe: 'response',
             })
