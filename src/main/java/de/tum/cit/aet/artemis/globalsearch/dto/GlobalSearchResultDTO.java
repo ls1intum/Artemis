@@ -36,16 +36,16 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
      * @return the unified search result DTO, or {@code null} if the type discriminator is missing or unknown
      */
     public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
-            Set<Long> staffCourseIds, Map<Long, String> channelNameById) {
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds, Map<Long, String> channelNameById) {
         String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
         if (type == null) {
             return null;
         }
         return switch (type) {
-            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
+            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds);
             case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
-            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds);
+            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds, editorCourseIds);
             case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
@@ -56,7 +56,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
     }
 
     private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
-            Set<Long> staffCourseIds) {
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
         String badge = formatExerciseTypeBadge(exerciseType);
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
@@ -76,7 +76,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
             putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
             Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
-            if (courseId != null && staffCourseIds.contains(courseId)) {
+            if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+                metadata.put("isAtLeastEditor", true);
+            }
+            else if (courseId != null && staffCourseIds.contains(courseId)) {
                 metadata.put("isAtLeastTutor", true);
             }
         }
@@ -118,7 +121,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", metadata);
     }
 
-    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds) {
+    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
         putIfNotNull(metadata, "visibleDate", getString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
@@ -129,7 +132,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             metadata.put("testExam", testExam);
         }
         Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
-        if (courseId != null && staffCourseIds.contains(courseId)) {
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
             metadata.put("isAtLeastTutor", true);
         }
 

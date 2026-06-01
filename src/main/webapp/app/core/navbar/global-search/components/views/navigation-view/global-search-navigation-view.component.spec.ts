@@ -222,21 +222,31 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', '1']);
             });
 
-            it('should navigate to course-management for exam exercise when user is at least tutor', () => {
+            it('should navigate to exercise management for exam exercise when user is at least editor', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
                     badge: 'Programming',
-                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastTutor: true },
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
+            });
+
+            it('should navigate to assessment dashboard for exam exercise when user is tutor', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    badge: 'Programming',
+                    metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);
             });
 
             it('should navigate to exam page for exam exercise when user is a student', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3 },
+                    metadata: { courseId: 10, examId: 5 },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', 5]);
             });

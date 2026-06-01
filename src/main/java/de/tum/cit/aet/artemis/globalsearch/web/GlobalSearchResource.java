@@ -23,12 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -130,15 +132,18 @@ public class GlobalSearchResource {
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
+        Set<Long> editorCourseIds;
         if (filterResult.accessibleCoursesById() != null) {
             // Non-admin (or admin with courseId): reuse courses already fetched during filter building
             coursesById = filterResult.accessibleCoursesById();
             staffCourseIds = filterResult.staffCourseIds();
+            editorCourseIds = filterResult.editorCourseIds();
         }
         else {
             // Admin global search: result courses unknown until after query, fetch now
             coursesById = resolveCoursesById(rawResults);
             staffCourseIds = coursesById.keySet();
+            editorCourseIds = coursesById.keySet();
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
@@ -147,7 +152,7 @@ public class GlobalSearchResource {
         Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds,
                     channelNameById);
             if (dto != null) {
                 resultDTOs.add(dto);
@@ -263,7 +268,7 @@ public class GlobalSearchResource {
      * a redundant database round-trip. Both are {@code null} for admin-global (no courseId filter)
      * searches, where the result courses are unknown until after the Weaviate query.
      */
-    private record FilterBuildResult(Filter filter, boolean hasAccess, Map<Long, Course> accessibleCoursesById, Set<Long> staffCourseIds) {
+    private record FilterBuildResult(Filter filter, boolean hasAccess, Map<Long, Course> accessibleCoursesById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
     }
 
     /**
@@ -277,9 +282,9 @@ public class GlobalSearchResource {
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         if (authCheckService.isAdmin(user) && courseId == null) {
             if (!VALID_TYPES.equals(requestedTypes)) {
-                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null);
+                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
             }
-            return new FilterBuildResult(null, true, null, null);
+            return new FilterBuildResult(null, true, null, null, null);
         }
 
         List<Course> accessibleCourses;
@@ -291,7 +296,7 @@ public class GlobalSearchResource {
         else {
             accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
             if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false, null, null);
+                return new FilterBuildResult(null, false, null, null, null);
             }
         }
 
@@ -302,6 +307,7 @@ public class GlobalSearchResource {
             accessibleCoursesById.put(course.getId(), course);
         }
         Set<Long> staffCourseIds = new HashSet<>(roleSets.staffCourseIds());
+        Set<Long> editorCourseIds = new HashSet<>(roleSets.editorCourseIds());
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
@@ -369,12 +375,12 @@ public class GlobalSearchResource {
         }
 
         if (disjuncts.isEmpty()) {
-            return new FilterBuildResult(null, false, null, null);
+            return new FilterBuildResult(null, false, null, null, null);
         }
         if (disjuncts.size() == 1) {
-            return new FilterBuildResult(disjuncts.getFirst(), true, accessibleCoursesById, staffCourseIds);
+            return new FilterBuildResult(disjuncts.getFirst(), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
         }
-        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true, accessibleCoursesById, staffCourseIds);
+        return new FilterBuildResult(Filter.or(disjuncts.toArray(new Filter[0])), true, accessibleCoursesById, staffCourseIds, editorCourseIds);
     }
 
     /**
@@ -443,8 +449,13 @@ public class GlobalSearchResource {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
             // TAs: regular exercises always visible; exam exercises only after exam visible date
-            return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter.and(
-                    Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE).lte(now)));
+            // and only if non-programming or manual assessment is enabled (programming exercises
+            // with automatic-only assessment have no assessment dashboard for TAs)
+            Filter nonProgrammingOrManualAssessment = Filter.or(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()).not(),
+                    Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.AUTOMATIC.name()).not());
+            return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
+                    Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                            Filter.property(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE).lte(now), nonProgrammingOrManualAssessment));
         }
         // Students: released regular exercises OR exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),

@@ -284,14 +284,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToExercise(result: GlobalSearchResult, courseId: string) {
         const examId = result.metadata?.['examId'];
         const exerciseGroupId = result.metadata?.['exerciseGroupId'];
+        const isAtLeastEditor = result.metadata?.['isAtLeastEditor'];
         const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
 
-        const isTutorExamExercise = !!(examId && exerciseGroupId && isAtLeastTutor);
-        const isStudentExamExercise = !!examId && !isTutorExamExercise;
-
-        if (isTutorExamExercise) {
+        if (examId && isAtLeastEditor && exerciseGroupId) {
             this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
-        } else if (isStudentExamExercise) {
+        } else if (examId && isAtLeastTutor) {
+            this.navigateToExamExerciseAssessmentDashboard(courseId, examId, result);
+        } else if (examId) {
             this.navigateToStudentExamView(courseId, examId);
         } else {
             this.router.navigate(['/courses', courseId, 'exercises', result.id]);
@@ -301,6 +301,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
         const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
         this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
+    }
+
+    private navigateToExamExerciseAssessmentDashboard(courseId: string, examId: string, result: GlobalSearchResult) {
+        this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
