@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -395,7 +396,9 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users")
-    public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
+    public ResponseEntity<List<String>> deleteUsers(@RequestParam("login") List<String> loginsToDelete) {
+        // Copy into a mutable list since the @RequestParam-bound list may be immutable (protected/current users are removed below).
+        List<String> logins = new java.util.ArrayList<>(loginsToDelete);
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
 

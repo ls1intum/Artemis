@@ -2214,7 +2214,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.CONFLICT);
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
+    void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
         // Wire base repos via LocalVC
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -2222,13 +2222,12 @@ public class ProgrammingExerciseIntegrationTestService {
         var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
         RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
 
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        var queryParams = "?omitBinaries=true";
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content" + queryParams, HttpStatus.OK,
-                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content" + queryParams);
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content?omitBinaries=true", HttpStatus.OK,
+                String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").doesNotContainKey("B.jar");
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+    void testGetTemplateRepositoryFilesWithContent() throws Exception {
         // Wire base repos via LocalVC
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -2236,9 +2235,20 @@ public class ProgrammingExerciseIntegrationTestService {
         var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
         RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
 
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
-                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content");
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
+    }
+
+    void testGetSolutionRepositoryFilesWithContent() throws Exception {
+        // Wire base repos via LocalVC
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var solutionRepo = RepositoryExportTestUtil.createSolutionWorkingCopy(localVCLocalCITestService, programmingExercise);
+        RepositoryExportTestUtil.writeFilesAndPush(solutionRepo, Map.of("Solution.java", "solved", "Helper.java", "help"), "seed solution files");
+
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/solution-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("Solution.java", "solved").containsEntry("Helper.java", "help");
     }
 
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.

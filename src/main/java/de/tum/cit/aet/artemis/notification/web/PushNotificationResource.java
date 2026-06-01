@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,9 +37,9 @@ import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfigurationId;
+import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBodyDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
-import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -138,13 +139,14 @@ public class PushNotificationResource {
     /**
      * API Endpoint used by native clients to unregister for push notifications.
      *
-     * @param body contains information on which device token should be removed for what user
+     * @param token      the device token that should be removed for the current user
+     * @param deviceType the type of the device the token belongs to
      * @return HttpStatus as ResponseEntity
      */
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequestDTO body) {
-        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
+    public ResponseEntity<Void> unregister(@RequestParam String token, @RequestParam PushNotificationDeviceType deviceType) {
+        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), token, deviceType);
 
         if (!pushNotificationDeviceConfigurationRepository.existsById(deviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

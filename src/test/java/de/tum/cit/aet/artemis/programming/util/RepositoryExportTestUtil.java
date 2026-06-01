@@ -495,6 +495,18 @@ public final class RepositoryExportTestUtil {
         return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
     }
 
+    /**
+     * Creates and returns a working copy repository handle for the solution repo of the given exercise.
+     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
+     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
+     */
+    public static LocalRepository createSolutionWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
+            throws GitAPIException, IOException, URISyntaxException {
+        String projectKey = exercise.getProjectKey();
+        String solutionSlug = projectKey.toLowerCase() + "-solution";
+        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug));
+    }
+
     // ===========================================================================
     // Utilities for reducing code duplication across test suites
     // ===========================================================================

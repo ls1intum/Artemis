@@ -56,16 +56,14 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of();
 
     /**
-     * REST endpoints that still return {@link ModelAndView} instead of {@link ResponseEntity}, keyed as
+     * REST endpoints exempted from {@link #restEndpointsShouldNotReturnModelAndView()}, keyed as
      * {@code SimpleClassName#methodName}.
      * <p>
-     * {@code ModelAndView} is being phased out (see the {@code TODO}s in the listed endpoints): the two remaining
-     * usages are server-side {@code forward:} endpoints that should be migrated to a {@link ResponseEntity}-returning
-     * service call. {@link #restEndpointsShouldNotReturnModelAndView()} fails for any NEW {@code ModelAndView} return,
-     * so this baseline can only shrink. When an entry is migrated, remove it here; the goal is an empty set.
+     * This set is now <strong>empty</strong>: no REST endpoint returns {@link ModelAndView} anymore, so the type is
+     * fully forbidden and any new usage fails the build. Only add an entry here together with a documented plan to
+     * migrate it back to a {@link ResponseEntity}.
      */
-    private static final Set<String> MODEL_AND_VIEW_BASELINE = Set.of("ProgrammingExerciseRetrievalResource#redirectGetSolutionRepositoryFiles",
-            "ProgrammingExerciseRetrievalResource#redirectGetTemplateRepositoryFiles");
+    private static final Set<String> MODEL_AND_VIEW_BASELINE = Set.of();
 
     /** Method-name prefixes that contradict a {@code @GetMapping}: a GET handler must read, not mutate. */
     private static final Set<String> GET_FORBIDDEN_NAME_PREFIXES = Set.of("create", "add", "update", "delete", "remove", "save", "register", "import", "upload", "put", "patch");
@@ -74,11 +72,13 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Set<String> DELETE_FORBIDDEN_NAME_PREFIXES = Set.of("get", "list", "find", "fetch", "retrieve", "create", "add");
 
     /**
-     * DELETE endpoints that still declare a {@code @RequestBody}, keyed as {@code SimpleClassName#methodName}. Both pass
-     * a list/record of identifiers in the body; {@link #deleteEndpointsShouldNotDeclareRequestBody()} fails for any NEW
-     * DELETE-with-body endpoint, so this baseline can only shrink.
+     * DELETE endpoints exempted from {@link #deleteEndpointsShouldNotDeclareRequestBody()}, keyed as
+     * {@code SimpleClassName#methodName}.
+     * <p>
+     * This set is now <strong>empty</strong>: no DELETE endpoint declares a {@code @RequestBody} anymore. Only add an
+     * entry here together with a documented plan to move the payload off the request body (query/path parameters).
      */
-    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of("PushNotificationResource#unregister", "AdminUserResource#deleteUsers");
+    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of();
 
     @Test
     void shouldBeNamedResource() {
@@ -98,11 +98,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     @Test
     void allPublicMethodsShouldReturnResponseEntity() {
-        // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (legacy forwards).
-        // ModelAndView is additionally being phased out by restEndpointsShouldNotReturnModelAndView() (baseline -> 0);
-        // once MODEL_AND_VIEW_BASELINE is empty, the ModelAndView branch below can be dropped.
+        // REST controller methods must return ResponseEntity. ModelAndView is forbidden (see restEndpointsShouldNotReturnModelAndView).
         ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should()
-                .haveRawReturnType(ResponseEntity.class).orShould().haveRawReturnType(ModelAndView.class);
+                .haveRawReturnType(ResponseEntity.class);
         // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
         // We exclude the AthenaResource as it has endpoints that return void to forward requests from deprecated to the new endpoints
         JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class, AthenaResource.class);

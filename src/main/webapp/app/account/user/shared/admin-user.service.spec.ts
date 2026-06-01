@@ -218,8 +218,9 @@ describe('AdminUserService', () => {
                 expect(response.status).toBe(200);
             });
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: resourceUrl });
-            expect(req.request.body).toEqual(logins);
+            const req = httpMock.expectOne((request) => request.method === 'DELETE' && request.url === resourceUrl);
+            expect(req.request.body).toBeNull();
+            expect(req.request.params.getAll('login')).toEqual(logins);
             req.flush(null, { status: 200, statusText: 'OK' });
         });
     });
