@@ -21,7 +21,6 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
     programmingExercise.id = 456;
     programmingExercise.title = 'Exercise 1';
 
-    let comp: ProgrammingExerciseReEvaluateButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseReEvaluateButtonComponent>;
     let gradingService: ProgrammingExerciseGradingService;
 
@@ -31,7 +30,6 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseReEvaluateButtonComponent);
-        comp = fixture.componentInstance;
         gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
         fixture.componentRef.setInput('exercise', programmingExercise);
@@ -49,7 +47,5 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
 
         expect(gradingService.reEvaluate).toHaveBeenCalledOnce();
         expect(gradingService.reEvaluate).toHaveBeenCalledWith(programmingExercise.id);
-        // Suppress unused-variable warning for comp
-        expect(comp).not.toBeNull();
     });
 });

@@ -201,10 +201,8 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            // Lowered after moving the foundation, shared-ui, editor (markdown/monaco), plagiarism AND programming/shared
-            // modules out of Jest (now under Vitest). Each removed a set of well-covered files from the Jest denominator,
-            // dropping the aggregate. Re-measured after merging develop with this branch (full Jest coverage run):
-            // statements 82.37, branches 74.69, functions 68.49, lines 83.8. Each floor is set ~0.4-0.5pp below the measured actual.
+            // Floors drop as modules migrate out of Jest (each removes well-covered files from the denominator).
+            // Last full run: statements 82.37, branches 74.69, functions 68.49, lines 83.8 — floors set ~0.4-0.5pp below.
             statements: 81.9,
             branches: 72.9,
             functions: 68,

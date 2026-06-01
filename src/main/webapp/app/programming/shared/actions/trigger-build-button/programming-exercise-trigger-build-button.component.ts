@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
 import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -53,46 +53,49 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private previousParticipationId: number | undefined;
 
     constructor() {
+        // React only to participation changes (keyed on id). The body is untracked so reads like exercise() don't
+        // widen the effect's dependencies, and the per-participation subscriptions survive unrelated re-renders.
         effect(() => {
             const participation = this.participation();
-            // Mirror the previous ngOnChanges/hasParticipationChanged guard: with no participation, do nothing
-            // and tear down any stale subscriptions instead of dereferencing an undefined participation.
-            if (!participation?.id) {
-                this.previousParticipationId = undefined;
-                this.submissionSubscription?.unsubscribe();
-                this.resultSubscription?.unsubscribe();
-                this.participationBuildCanBeTriggered.set(false);
-                this.isBuilding.set(false);
-                this.participationHasLatestSubmissionWithoutResult.set(false);
-                return;
-            }
-            if (participation.id === this.previousParticipationId) {
-                return;
-            }
-            this.previousParticipationId = participation.id;
+            untracked(() => {
+                // No participation (e.g. an auxiliary repository binds an undefined participation): reset and tear down.
+                if (!participation?.id) {
+                    this.previousParticipationId = undefined;
+                    this.submissionSubscription?.unsubscribe();
+                    this.resultSubscription?.unsubscribe();
+                    this.participationBuildCanBeTriggered.set(false);
+                    this.isBuilding.set(false);
+                    this.participationHasLatestSubmissionWithoutResult.set(false);
+                    return;
+                }
+                if (participation.id === this.previousParticipationId) {
+                    return;
+                }
+                this.previousParticipationId = participation.id;
 
-            // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
-            if (hasDueDatePassed(this.exercise())) {
-                // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const allResults = participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const newestResult = allResults.length ? head(orderBy(allResults, ['id'], ['desc'])) : undefined;
-                this.lastResultIsManual.set(!!newestResult && isManualResult(newestResult));
-            }
-            // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
-            // or the due date is over.
-            const canBeTriggered =
-                !!participation.initializationState &&
-                [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(participation.initializationState);
-            this.participationBuildCanBeTriggered.set(canBeTriggered);
-            if (canBeTriggered) {
-                this.setupSubmissionSubscription();
-                this.setupResultSubscription();
-            } else {
-                this.submissionSubscription?.unsubscribe();
-                this.resultSubscription?.unsubscribe();
-                this.isBuilding.set(false);
-                this.participationHasLatestSubmissionWithoutResult.set(false);
-            }
+                // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
+                if (hasDueDatePassed(this.exercise())) {
+                    // If the last result was manual, the instructor might not want to override it with a new automatic result.
+                    const allResults = participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+                    const newestResult = allResults.length ? head(orderBy(allResults, ['id'], ['desc'])) : undefined;
+                    this.lastResultIsManual.set(!!newestResult && isManualResult(newestResult));
+                }
+                // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
+                // or the due date is over.
+                const canBeTriggered =
+                    !!participation.initializationState &&
+                    [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(participation.initializationState);
+                this.participationBuildCanBeTriggered.set(canBeTriggered);
+                if (canBeTriggered) {
+                    this.setupSubmissionSubscription();
+                    this.setupResultSubscription();
+                } else {
+                    this.submissionSubscription?.unsubscribe();
+                    this.resultSubscription?.unsubscribe();
+                    this.isBuilding.set(false);
+                    this.participationHasLatestSubmissionWithoutResult.set(false);
+                }
+            });
         });
     }
 

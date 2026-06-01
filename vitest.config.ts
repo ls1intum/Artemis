@@ -182,10 +182,7 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Tuned slightly below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
-                // Merge of develop (lines 88.8 / statements 88.7 / branches 73.7 / functions 86.2) with this branch
-                // (89.2 / 89.0 / 73.6 / 86.0): each floor is the lower of the two so the merged aggregate (develop's
-                // Vitest modules plus this branch's programming/shared additions) clears the gate.
+                // Floors set just below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
                 lines: 88.8,
                 statements: 88.7,
                 branches: 73.6,

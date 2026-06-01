@@ -84,7 +84,6 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
             data: { exerciseId: programmingExercise.id, dueDatePassed: false },
         });
 
-        // Simulate the user confirming the dialog.
         onClose.next(true);
 
         expect(triggerSpy).toHaveBeenCalledOnce();
@@ -101,7 +100,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
         button.click();
 
-        // Dismiss (undefined) — must NOT trigger the build.
+        // undefined == dialog dismissed
         onClose.next(undefined);
 
         expect(triggerSpy).not.toHaveBeenCalled();

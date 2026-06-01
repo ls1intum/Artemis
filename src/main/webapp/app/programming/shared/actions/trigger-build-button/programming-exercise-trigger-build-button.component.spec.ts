@@ -91,8 +91,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should not crash or enable triggering when no participation is provided (e.g. auxiliary repository)', () => {
         fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
-        // Intentionally leave `participation` unset — mirrors the instructor editor binding an undefined
-        // participation for an auxiliary repository. The effect must not dereference the missing participation.
+        // participation deliberately unset: the effect must not dereference the missing participation.
         expect(() => fixture.detectChanges()).not.toThrow();
         expect(comp.participationBuildCanBeTriggered()).toBe(false);
         expect(getTriggerButton()).toBeNull();

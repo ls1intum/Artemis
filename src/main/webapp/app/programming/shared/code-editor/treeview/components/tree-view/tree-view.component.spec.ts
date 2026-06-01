@@ -30,7 +30,6 @@ describe('TreeViewComponent', () => {
     it('should render the built-in default item template when itemTemplate is omitted', () => {
         const fixture = createGenericTestComponent('<treeview [items]="items" />', TestHostComponent) as ComponentFixture<TestHostComponent>;
         const label = fixture.debugElement.query(By.css('.form-check-label'));
-        expect(label).not.toBeNull();
         expect(label.nativeElement.textContent.trim()).toBe('Root item');
     });
 });
