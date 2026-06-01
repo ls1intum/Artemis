@@ -124,12 +124,11 @@ export default defineConfig({
             'src/main/webapp/app/exercise/team-submission-sync/**/*.spec.ts', // include team submission sync tests
             'src/main/webapp/app/exercise/unreferenced-feedback/**/*.spec.ts', // include unreferenced feedback tests
             'src/main/webapp/app/exercise/util/**/*.spec.ts', // include exercise util tests
+            'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
-            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
-            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
-            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
-            'src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-modal.component.spec.ts', // include git diff dialog tests
-            'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
+            'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
+            'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
             'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
             'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
             'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
@@ -238,11 +237,8 @@ export default defineConfig({
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
                 'src/main/webapp/app/notification/**/*.ts', // include all notification module for code coverage
                 'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
-                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
-                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
-                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
-                'src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component.ts', // include git diff dialog for code coverage
-                'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
+                'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
                 'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
                 'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
                 'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
@@ -259,10 +255,11 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
+                // Floors set just below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
                 lines: 88.8,
                 statements: 88.7,
-                branches: 73.7,
-                functions: 86.2,
+                branches: 73.6,
+                functions: 86.0,
             },
         },
     },

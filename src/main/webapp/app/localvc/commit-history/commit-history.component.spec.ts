@@ -1,4 +1,5 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -21,6 +22,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HttpResponse } from '@angular/common/http';
 
 describe('CommitHistoryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitHistoryComponent;
     let fixture: ComponentFixture<CommitHistoryComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
@@ -118,6 +121,10 @@ describe('CommitHistoryComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     function setupComponent() {
