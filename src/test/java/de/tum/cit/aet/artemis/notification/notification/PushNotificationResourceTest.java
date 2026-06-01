@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotifica
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBodyDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
+import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -118,5 +119,17 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         params.add("token", "Does not exist");
         params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
         request.delete("/api/notification/push_notification/unregister", HttpStatus.NOT_FOUND, params);
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldUnregisterWhenUsingDeprecatedRequestBody() throws Exception {
+        shouldRegisterTokenWhenCredentialsAreValid();
+
+        // Backwards compatibility: older (mobile) clients still pass the token and device type in the request body.
+        PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, body);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        assertThat(deviceConfigurations).isEmpty();
     }
 }

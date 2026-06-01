@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotifica
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBodyDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
+import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -138,15 +139,31 @@ public class PushNotificationResource {
 
     /**
      * API Endpoint used by native clients to unregister for push notifications.
+     * <p>
+     * The token and device type should be passed as query parameters. Passing them in a request body is
+     * <strong>deprecated</strong> and only kept temporarily for backwards compatibility with older mobile app versions;
+     * it will be removed once those clients have migrated (tracked in {@code DELETE_REQUEST_BODY_BASELINE}).
      *
-     * @param token      the device token that should be removed for the current user
-     * @param deviceType the type of the device the token belongs to
+     * @param token      the device token that should be removed for the current user (query parameter)
+     * @param deviceType the type of the device the token belongs to (query parameter)
+     * @param body       deprecated: the token and device type passed in the request body (older clients only)
      * @return HttpStatus as ResponseEntity
      */
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> unregister(@RequestParam String token, @RequestParam PushNotificationDeviceType deviceType) {
-        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), token, deviceType);
+    public ResponseEntity<Void> unregister(@RequestParam(required = false) String token, @RequestParam(required = false) PushNotificationDeviceType deviceType,
+            @RequestBody(required = false) PushNotificationUnregisterRequestDTO body) {
+        // Prefer the query parameters; fall back to the deprecated request body for older (mobile) clients.
+        String effectiveToken = token != null ? token : (body != null ? body.token() : null);
+        PushNotificationDeviceType effectiveDeviceType = deviceType != null ? deviceType : (body != null ? body.deviceType() : null);
+        if (effectiveToken == null || effectiveDeviceType == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (body != null) {
+            log.warn("Deprecated request body used to unregister a push-notification device; clients should pass 'token' and 'deviceType' as query parameters instead.");
+        }
+
+        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), effectiveToken, effectiveDeviceType);
 
         if (!pushNotificationDeviceConfigurationRepository.existsById(deviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

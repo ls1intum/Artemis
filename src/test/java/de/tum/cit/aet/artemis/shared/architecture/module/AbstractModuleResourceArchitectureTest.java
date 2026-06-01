@@ -75,10 +75,12 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      * DELETE endpoints exempted from {@link #deleteEndpointsShouldNotDeclareRequestBody()}, keyed as
      * {@code SimpleClassName#methodName}.
      * <p>
-     * This set is now <strong>empty</strong>: no DELETE endpoint declares a {@code @RequestBody} anymore. Only add an
-     * entry here together with a documented plan to move the payload off the request body (query/path parameters).
+     * {@code PushNotificationResource#unregister} accepts the token/device type as query parameters, but still also
+     * accepts a (deprecated) request body for backwards compatibility with older mobile clients that have not yet
+     * migrated. Remove this entry — and the {@code @RequestBody} parameter — once those clients are updated. Only add
+     * a new entry together with a documented plan to move the payload off the request body.
      */
-    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of();
+    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of("PushNotificationResource#unregister");
 
     @Test
     void shouldBeNamedResource() {
