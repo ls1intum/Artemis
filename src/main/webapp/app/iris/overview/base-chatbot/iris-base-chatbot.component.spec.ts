@@ -327,7 +327,7 @@ describe('IrisBaseChatbotComponent', () => {
         const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         await fixture.whenStable();
 
         // isolate scroll triggered by onSend from scrolls caused by session switch / effects
@@ -353,7 +353,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         await fixture.whenStable();
 
         // when – send, then simulate an intermediate (not-yet-at-bottom) scroll reading
@@ -381,7 +381,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         await fixture.whenStable();
 
         component.onSend();
@@ -409,7 +409,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         await fixture.whenStable();
 
         const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
@@ -458,7 +458,7 @@ describe('IrisBaseChatbotComponent', () => {
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         component.newMessageTextContent.set('Hello');
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         await fixture.whenStable();
 
         // when – send pins to the bottom, then an error arrives without any stage starting
@@ -606,7 +606,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // when – initial messages load
         component.isScrolledToBottom.set(true);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        chatService.resumeOrCreateCourseChat(123);
         component.ngAfterViewInit();
         await fixture.whenStable();
 

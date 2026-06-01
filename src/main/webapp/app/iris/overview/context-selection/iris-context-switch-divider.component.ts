@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisJsonMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';

@@ -7,7 +7,7 @@ import { IrisContextSwitchDividerComponent } from './iris-context-switch-divider
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisContextSwitchMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisJsonMessageContent, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideRouter } from '@angular/router';
