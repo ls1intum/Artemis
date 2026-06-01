@@ -221,16 +221,14 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            // Lowered (83 -> 82.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest)
-            // and merging develop, which dropped the global statements average to ~82.95.
-            statements: 82.5,
-            branches: 72.9,
             // Lowered after moving the foundation, shared-ui, editor (markdown/monaco) AND plagiarism modules out of
-            // Jest (now under Vitest). Each removed a set of well-covered functions from the Jest denominator.
-            // Re-measured after merging develop with this branch; see comment near the top of this block. Floor set
-            // just below the measured global functions average.
-            functions: 69,
-            lines: 84,
+            // Jest (now under Vitest). Each removed a set of well-covered files from the Jest denominator, dropping the
+            // aggregate. Re-measured after merging develop with this branch (full Jest coverage run): statements 82.37,
+            // branches 74.69, functions 68.49, lines 83.8. Each floor is set ~0.4-0.5pp below the measured actual.
+            statements: 81.9,
+            branches: 72.9,
+            functions: 68,
+            lines: 83.4,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
