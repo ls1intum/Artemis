@@ -276,14 +276,15 @@ public class GlobalSearchResource {
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         // Decide if the filters should be applied
+        boolean isAdmin = authCheckService.isAdmin(user);
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
-        if (authCheckService.isAdmin(user) && courseId == null && !needsCommFiltering) {
+        if (isAdmin && courseId == null && !needsCommFiltering) {
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null);
         }
         List<Course> accessibleCourses;
-        if (authCheckService.isAdmin(user) && courseId == null) {
+        if (isAdmin && courseId == null) {
             accessibleCourses = courseRepository.findAll();
         }
         else if (courseId != null) {
@@ -311,33 +312,59 @@ public class GlobalSearchResource {
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
-            Filter disjunct = buildExerciseDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
             }
+            else {
+                Filter disjunct = buildExerciseDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
+            }
+
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
-            Filter disjunct = buildLectureDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE));
+            }
+            else {
+                Filter disjunct = buildLectureDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
-            Filter disjunct = buildLectureUnitDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
+            }
+            else {
+                Filter disjunct = buildLectureUnitDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
-            Filter disjunct = buildExamDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXAM));
+            }
+            else {
+                Filter disjunct = buildExamDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
-            Filter disjunct = buildFaqDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.FAQ));
+            }
+            else {
+                Filter disjunct = buildFaqDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
             }
         }
         // Only search within courses where communication configuration is active
@@ -348,9 +375,14 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
-            Filter disjunct = buildCourseDisjunct(roleSets);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
+            if (isAdmin) {
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
+            }
+            else {
+                Filter disjunct = buildCourseDisjunct(roleSets);
+                if (disjunct != null) {
+                    disjuncts.add(disjunct);
+                }
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
