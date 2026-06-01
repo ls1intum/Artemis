@@ -121,17 +121,21 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
     /**
      * REST endpoints that intentionally perform authorization WITHOUT an Artemis annotation (a shared-secret token, an
-     * API key, an in-body API-key check, or a programmatic role check), keyed as {@code SimpleClassName#methodName}.
+     * API key, an in-body API-key check, or a programmatic role check), keyed as the fully qualified
+     * {@code com.example.SomeResource#methodName}. The fully qualified class name disambiguates controllers that share
+     * a simple name across packages, so an entry can never accidentally exempt a different endpoint.
      * <p>
      * {@link #everyRestEndpointMustBeAuthorized()} fails for any NEW unannotated endpoint, so this set can only shrink.
      * The clean way to remove an entry is to add the right annotation to the endpoint: {@code @EnforceNothing} for a
      * genuinely public endpoint (which must then move into a {@code ..web.open..} package), or {@code @ManualConfig}
      * when authorization is handled in the method body.
      */
-    private static final Set<String> UNAUTHENTICATED_ENDPOINT_BASELINE = Set.of("LegacyCalendarResource#getLegacyCalendarEventSubscriptionFile",
-            "CalendarResource#getCalendarEventSubscriptionFile", "SharingSupportResource#getConfig", "SharingSupportResource#isSharingEnabled",
-            "IrisTutorSuggestionSessionResource#getCurrentSessionOrCreateIfNotExists", "IrisTutorSuggestionSessionResource#createSessionForPost",
-            "ExerciseSharingResource#exportExerciseToSharing", "CompetencyResource#suggestCompetencies");
+    private static final Set<String> UNAUTHENTICATED_ENDPOINT_BASELINE = Set.of("de.tum.cit.aet.artemis.calendar.web.LegacyCalendarResource#getLegacyCalendarEventSubscriptionFile",
+            "de.tum.cit.aet.artemis.calendar.web.CalendarResource#getCalendarEventSubscriptionFile", "de.tum.cit.aet.artemis.core.web.SharingSupportResource#getConfig",
+            "de.tum.cit.aet.artemis.core.web.SharingSupportResource#isSharingEnabled",
+            "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#getCurrentSessionOrCreateIfNotExists",
+            "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#createSessionForPost",
+            "de.tum.cit.aet.artemis.programming.web.ExerciseSharingResource#exportExerciseToSharing", "de.tum.cit.aet.artemis.atlas.web.CompetencyResource#suggestCompetencies");
 
     /**
      * Every REST endpoint must declare an Artemis authorization annotation so authorization can never be silently
@@ -162,7 +166,7 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
                 if (!isEndpoint || isAuthorized(method)) {
                     return;
                 }
-                String key = method.getOwner().getSimpleName() + "#" + method.getName();
+                String key = method.getOwner().getFullName() + "#" + method.getName();
                 if (UNAUTHENTICATED_ENDPOINT_BASELINE.contains(key)) {
                     return;
                 }

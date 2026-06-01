@@ -122,6 +122,16 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER")
+    void shouldRejectBlankTokenAsBadRequest() throws Exception {
+        // A blank token (e.g. "...?token=&deviceType=FIREBASE") must be rejected rather than treated as a real token.
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("token", "");
+        params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void shouldUnregisterWhenUsingDeprecatedRequestBody() throws Exception {
         shouldRegisterTokenWhenCredentialsAreValid();

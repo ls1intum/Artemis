@@ -5,6 +5,7 @@ import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -56,8 +57,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of();
 
     /**
-     * REST endpoints exempted from {@link #restEndpointsShouldNotReturnModelAndView()}, keyed as
-     * {@code SimpleClassName#methodName}.
+     * REST endpoints exempted from {@link #restEndpointsShouldNotReturnModelAndView()}, keyed as the fully qualified
+     * {@code com.example.SomeResource#methodName} (the fully qualified class name disambiguates controllers that share
+     * a simple name across packages).
      * <p>
      * This set is now <strong>empty</strong>: no REST endpoint returns {@link ModelAndView} anymore, so the type is
      * fully forbidden and any new usage fails the build. Only add an entry here together with a documented plan to
@@ -72,15 +74,16 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Set<String> DELETE_FORBIDDEN_NAME_PREFIXES = Set.of("get", "list", "find", "fetch", "retrieve", "create", "add");
 
     /**
-     * DELETE endpoints exempted from {@link #deleteEndpointsShouldNotDeclareRequestBody()}, keyed as
-     * {@code SimpleClassName#methodName}.
+     * DELETE endpoints exempted from {@link #deleteEndpointsShouldNotDeclareRequestBody()}, keyed as the fully
+     * qualified {@code com.example.SomeResource#methodName} (the fully qualified class name disambiguates controllers
+     * that share a simple name across packages).
      * <p>
      * {@code PushNotificationResource#unregister} accepts the token/device type as query parameters, but still also
      * accepts a (deprecated) request body for backwards compatibility with older mobile clients that have not yet
      * migrated. Remove this entry — and the {@code @RequestBody} parameter — once those clients are updated. Only add
      * a new entry together with a documented plan to move the payload off the request body.
      */
-    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of("PushNotificationResource#unregister");
+    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of("de.tum.cit.aet.artemis.notification.web.PushNotificationResource#unregister");
 
     @Test
     void shouldBeNamedResource() {
@@ -319,9 +322,10 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     /**
      * REST endpoints must express the HTTP verb with the dedicated shortcut annotations
      * ({@code @GetMapping}/{@code @PostMapping}/{@code @PutMapping}/{@code @PatchMapping}/{@code @DeleteMapping}).
-     * {@code @RequestMapping} is reserved for the class-level path prefix and must never annotate an endpoint method —
-     * a method-level {@code @RequestMapping} would also silently bypass the kebab-case and entity-id-pairing rules
-     * above, which only iterate the five shortcut annotations.
+     * {@code @RequestMapping} is reserved for the class-level path prefix and must not annotate an endpoint method: a
+     * method-level {@code @RequestMapping} hides the HTTP verb from a quick read of the handler and may bind several
+     * verbs to one method, which the verb-specific rules ({@link #endpointMethodNamesShouldMatchTheirHttpVerb()} and
+     * the GET/DELETE request-body rules — these key off the concrete shortcut annotation) cannot reason about.
      */
     @Test
     void endpointsShouldUseHttpMethodShortcutAnnotations() {
@@ -370,14 +374,14 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
-                if (baseline.contains(method.getOwner().getSimpleName() + "#" + method.getName())) {
+                if (baseline.contains(method.getOwner().getFullName() + "#" + method.getName())) {
                     return;
                 }
-                for (var parameter : method.reflect().getParameters()) {
-                    if (parameter.isAnnotationPresent(RequestBody.class)) {
-                        events.add(violated(method, method.getFullName() + " declares a @RequestBody; " + rationale + "."));
-                        return;
-                    }
+                // Use ArchUnit's parameter-annotation model (no reflection / class loading), consistent with the rest of the suite.
+                boolean declaresRequestBody = method.getParameterAnnotations().stream().flatMap(Collection::stream)
+                        .anyMatch(annotation -> annotation.getRawType().isEquivalentTo(RequestBody.class));
+                if (declaresRequestBody) {
+                    events.add(violated(method, method.getFullName() + " declares a @RequestBody; " + rationale + "."));
                 }
             }
         };
@@ -463,7 +467,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
                 if (method.getRawReturnType().isEquivalentTo(ModelAndView.class)) {
-                    String key = method.getOwner().getSimpleName() + "#" + method.getName();
+                    String key = method.getOwner().getFullName() + "#" + method.getName();
                     if (!MODEL_AND_VIEW_BASELINE.contains(key)) {
                         events.add(violated(method, method.getFullName()
                                 + " returns ModelAndView; REST endpoints must return ResponseEntity. ModelAndView is being phased out (see MODEL_AND_VIEW_BASELINE)."));

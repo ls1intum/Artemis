@@ -346,8 +346,7 @@ public class ProgrammingExerciseRetrievalResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        participation.setProgrammingExercise(exercise);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
     }
 
     /**
@@ -370,8 +369,7 @@ public class ProgrammingExerciseRetrievalResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        participation.setProgrammingExercise(exercise);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
     }
 
     /**

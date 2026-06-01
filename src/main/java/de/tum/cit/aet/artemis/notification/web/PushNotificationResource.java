@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -154,9 +155,9 @@ public class PushNotificationResource {
     public ResponseEntity<Void> unregister(@RequestParam(required = false) String token, @RequestParam(required = false) PushNotificationDeviceType deviceType,
             @RequestBody(required = false) PushNotificationUnregisterRequestDTO body) {
         // Prefer the query parameters; fall back to the deprecated request body for older (mobile) clients.
-        String effectiveToken = token != null ? token : (body != null ? body.token() : null);
+        String effectiveToken = StringUtils.hasText(token) ? token : (body != null ? body.token() : null);
         PushNotificationDeviceType effectiveDeviceType = deviceType != null ? deviceType : (body != null ? body.deviceType() : null);
-        if (effectiveToken == null || effectiveDeviceType == null) {
+        if (!StringUtils.hasText(effectiveToken) || effectiveDeviceType == null) {
             return ResponseEntity.badRequest().build();
         }
         if (body != null) {
