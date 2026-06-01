@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('Navigation Util Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ArtemisNavigationUtilService;
 
     const router = new MockRouter();
@@ -26,12 +30,12 @@ describe('Navigation Util Service', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         router.navigate.mockRestore();
     });
 
     it('should go back', () => {
-        const backSpy = jest.spyOn(TestBed.inject(Location), 'back');
+        const backSpy = vi.spyOn(TestBed.inject(Location), 'back');
         // @ts-ignore
         service.onFirstPage = false;
 
@@ -66,11 +70,11 @@ describe('Navigation Util Service', () => {
         const route = ['course-management', 17];
         const queryParam = { filterOption: 30 };
         const urlTreeMock = { path: 'urlTreeMockTestValue' } as unknown as UrlTree;
-        const creationMock = jest.spyOn(router, 'createUrlTree');
+        const creationMock = vi.spyOn(router, 'createUrlTree');
         creationMock.mockReturnValue(urlTreeMock);
-        const serializationMock = jest.spyOn(router, 'serializeUrl');
+        const serializationMock = vi.spyOn(router, 'serializeUrl');
         serializationMock.mockReturnValue('serializationMockTestValue');
-        const windowStub = jest.spyOn(window, 'open').mockImplementation();
+        const windowStub = vi.spyOn(window, 'open').mockImplementation(() => null);
 
         service.routeInNewTab(['course-management', 17], queryParam);
 

@@ -17,8 +17,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
+import { CourseExamArchiveCompletedWithWarningsDialogComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -58,7 +58,6 @@ describe('Course Exam Archive Button Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useValue: { open: vi.fn(), close: vi.fn() } },
                 MockProvider(AlertService),
-                MockProvider(NgbModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -113,9 +112,9 @@ describe('Course Exam Archive Button Component', () => {
         it('should not display archiving and cleanup controls', () => {
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBe(false);
-            expect(comp.canCleanup()).toBe(false);
-            expect(comp.canDownloadArchive()).toBe(false);
+            expect(comp.canArchive()).toBeFalsy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
         });
     });
 
@@ -133,9 +132,9 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBe(false);
-            expect(comp.canCleanup()).toBe(false);
-            expect(comp.canDownloadArchive()).toBe(false);
+            expect(comp.canArchive()).toBeFalsy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
         });
     });
 
@@ -151,9 +150,9 @@ describe('Course Exam Archive Button Component', () => {
         it('should not display an archive course button', () => {
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBe(true);
-            expect(comp.canCleanup()).toBe(false);
-            expect(comp.canDownloadArchive()).toBe(false);
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
         });
     });
 
@@ -172,9 +171,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should not display an archive course button', () => {
-            expect(comp.canArchive()).toBe(true);
-            expect(comp.canCleanup()).toBe(true);
-            expect(comp.canDownloadArchive()).toBe(true);
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeTruthy();
+            expect(comp.canDownloadArchive()).toBeTruthy();
         });
 
         it('should cleanup archive for course', () => {
@@ -216,23 +215,30 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBe(false);
+            expect(comp.isBeingArchived()).toBeFalsy();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.course()).toBeDefined();
         });
 
         it('should display warning and reload course on archive complete with warnings', () => {
-            const modalService = TestBed.inject(NgbModal);
+            const dialogService = TestBed.inject(DialogService);
 
             vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
-            const ngModalRef: NgbModalRef = { result: Promise.resolve('') } as any;
-            vi.spyOn(modalService, 'open').mockReturnValue(ngModalRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open');
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBe(false);
+            expect(comp.isBeingArchived()).toBeFalsy();
             expect(comp.archiveWarnings()).toEqual(archiveState.message.split('\n'));
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                CourseExamArchiveCompletedWithWarningsDialogComponent,
+                expect.objectContaining({
+                    data: expect.objectContaining({
+                        warnings: archiveState.message.split('\n'),
+                    }),
+                }),
+            );
             expect(comp.course()).toBeDefined();
         });
     });
@@ -254,9 +260,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should display an archive and cleanup button', () => {
-            expect(comp.canArchive()).toBe(true);
-            expect(comp.canCleanup()).toBe(true);
-            expect(comp.canDownloadArchive()).toBe(true);
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeTruthy();
+            expect(comp.canDownloadArchive()).toBeTruthy();
         });
 
         it('should cleanup archive for exam', () => {
@@ -268,7 +274,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.cleanup();
 
             expect(cleanupStub).not.toHaveBeenCalled();
-            expect(comp.canCleanup()).toBe(true);
+            expect(comp.canCleanup()).toBeTruthy();
         });
 
         it('should download archive for exam', () => {
@@ -297,7 +303,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBe(false);
+            expect(comp.isBeingArchived()).toBeFalsy();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.exam()).toBeDefined();
         });

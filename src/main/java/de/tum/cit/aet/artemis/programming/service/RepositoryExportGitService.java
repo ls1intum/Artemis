@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 /**
  * Service for Git operations related to repository export functionality.
@@ -228,7 +228,7 @@ public class RepositoryExportGitService {
      * @param repository            the local repository
      * @param combinedExpected      whether to enforce that there is at most one student commit after the template commit
      * @param latestSetupCommitHash The commit hash of the latest setup commit in the student repository
-     * @throws de.tum.cit.aet.artemis.core.exception.GitException if verification fails
+     * @throws de.tum.cit.aet.artemis.programming.exception.GitException if verification fails
      */
     public void verifyAnonymizationOrThrow(Repository repository, boolean combinedExpected, String latestSetupCommitHash) {
         try (Git git = new Git(repository)) {

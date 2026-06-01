@@ -23,7 +23,7 @@ describe('Exif Utils', () => {
             mockImage.onload?.(new Event('load'));
             const result = await promise;
 
-            expect(result).toBe(true);
+            expect(result).toBeTruthy();
         });
 
         it('should resolve false if the browser does not support automatic image orientation', async () => {
@@ -42,7 +42,7 @@ describe('Exif Utils', () => {
             mockImage.onload?.(new Event('load'));
             const result = await promise;
 
-            expect(result).toBe(false);
+            expect(result).toBeFalsy();
         });
     });
 

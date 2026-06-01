@@ -1,16 +1,17 @@
+import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getBackgroundColorHue, getColorBrightness, getContrastingTextColor, isColorDark } from 'app/foundation/util/color.utils';
 import { deterministicRandomValueFromString } from 'app/foundation/util/text.utils';
 
-jest.mock('app/foundation/util/text.utils', () => ({
-    deterministicRandomValueFromString: jest.fn(),
+vi.mock('app/foundation/util/text.utils', () => ({
+    deterministicRandomValueFromString: vi.fn(),
 }));
 
 describe('color utils', () => {
     describe('getBackgroundColorHue', () => {
-        const mockDeterministic = deterministicRandomValueFromString as jest.Mock;
+        const mockDeterministic = deterministicRandomValueFromString as Mock;
 
         beforeEach(() => {
-            jest.clearAllMocks();
+            vi.clearAllMocks();
         });
 
         it('returns correct HSL using deterministicRandomValueFromString', () => {
@@ -24,7 +25,7 @@ describe('color utils', () => {
         it('uses Math.random when seed undefined', () => {
             mockDeterministic.mockReturnValue(0.25);
             const randomValue = 0.123456;
-            const mathRandomSpy = jest.spyOn(Math, 'random').mockReturnValue(randomValue);
+            const mathRandomSpy = vi.spyOn(Math, 'random').mockReturnValue(randomValue);
 
             const result = getBackgroundColorHue(undefined);
             expect(mathRandomSpy).toHaveBeenCalled();
@@ -52,15 +53,15 @@ describe('color utils', () => {
 
     describe('isColorDark', () => {
         it('returns true for dark colors', () => {
-            expect(isColorDark('#000000')).toBeTrue();
+            expect(isColorDark('#000000')).toBe(true);
         });
 
         it('returns false for light colors', () => {
-            expect(isColorDark('#FFFFFF')).toBeFalse();
+            expect(isColorDark('#FFFFFF')).toBe(false);
         });
 
         it('threshold at 128 returns false', () => {
-            expect(isColorDark('#808080')).toBeFalse();
+            expect(isColorDark('#808080')).toBe(false);
         });
     });
 
@@ -76,11 +77,11 @@ describe('color utils', () => {
 
     describe('edge cases for invalid color formats', () => {
         it('getColorBrightness returns NaN for invalid hex', () => {
-            expect(isNaN(getColorBrightness('GGGGGG'))).toBeTrue();
+            expect(isNaN(getColorBrightness('GGGGGG'))).toBe(true);
         });
 
         it('isColorDark returns false for NaN brightness', () => {
-            expect(isColorDark('GGGGGG')).toBeFalse();
+            expect(isColorDark('GGGGGG')).toBe(false);
         });
 
         it('getContrastingTextColor returns black for NaN brightness', () => {

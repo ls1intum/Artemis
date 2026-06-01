@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateAuthenticationException;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateAuthenticationException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.Authentication;
 import io.weaviate.client6.v1.api.WeaviateClient;
 

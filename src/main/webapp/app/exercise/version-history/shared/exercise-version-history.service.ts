@@ -41,7 +41,7 @@ export class ExerciseVersionHistoryService {
     getVersions(exerciseId: number, page: number, size: number): Observable<ExerciseVersionPage> {
         const params = new HttpParams().set('page', page).set('size', size);
         return this.http
-            .get<ExerciseVersionMetadataResponse[]>(`${this.resourceUrl}/${exerciseId}/versions`, {
+            .get<ExerciseVersionMetadataResponse[]>(`${this.resourceUrl}/exercises/${exerciseId}/versions`, {
                 params,
                 observe: 'response',
             })
@@ -65,7 +65,7 @@ export class ExerciseVersionHistoryService {
      * @returns an observable that emits the complete {@link ExerciseSnapshotDTO}
      */
     getSnapshot(exerciseId: number, versionId: number): Observable<ExerciseSnapshotDTO> {
-        return this.http.get<ExerciseSnapshotDTO>(`${this.resourceUrl}/${exerciseId}/version/${versionId}`);
+        return this.http.get<ExerciseSnapshotDTO>(`${this.resourceUrl}/exercises/${exerciseId}/versions/${versionId}`);
     }
 
     /** Converts a raw server response into a typed {@link ExerciseVersionMetadata} with a dayjs date. */
