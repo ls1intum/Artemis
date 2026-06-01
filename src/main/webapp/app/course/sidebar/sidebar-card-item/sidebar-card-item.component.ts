@@ -38,6 +38,15 @@ export class SidebarCardItemComponent {
     readonly shouldDisplayUnreadCount = computed<boolean>(() => !this.sidebarItem().conversation?.isMuted);
 
     /**
+     * The icon to display for the item. Group chats always use the group icon; all other items keep their own icon.
+     * Derived (instead of mutating the input) so the {@link sidebarItem} input stays immutable.
+     */
+    readonly displayIcon = computed(() => {
+        const item = this.sidebarItem();
+        return item.type === 'groupChat' ? this.faPeopleGroup : item.icon;
+    });
+
+    /**
      * Converts the unread count into a human-friendly string (e.g. '99+' if >99).
      */
     readonly formattedUnreadCount = computed<string>(() => {
@@ -52,8 +61,8 @@ export class SidebarCardItemComponent {
     }
 
     /**
-     * Extracts and stores the "other user" in case the item is a one-to-one chat.
-     * If it's a group chat, sets the group icon explicitly.
+     * Extracts and stores the "other user" in case the item is a one-to-one chat. The group-chat icon is derived
+     * reactively via {@link displayIcon} rather than mutating the input here.
      */
     extractMessageUser(): void {
         const sidebarItem = this.sidebarItem();
@@ -61,10 +70,6 @@ export class SidebarCardItemComponent {
             this.otherUser.set((sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser));
         } else {
             this.otherUser.set(undefined);
-        }
-
-        if (sidebarItem.type === 'groupChat') {
-            sidebarItem.icon = this.faPeopleGroup;
         }
     }
 

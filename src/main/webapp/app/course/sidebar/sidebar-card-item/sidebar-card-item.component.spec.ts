@@ -63,12 +63,13 @@ describe('SidebarCardItemComponent', () => {
         expect(component.formattedUnreadCount()).toBe('99+');
     });
 
-    it('should set group icon for group chats in extractMessageUser', () => {
+    it('should derive the group icon for group chats without mutating the input', () => {
+        const groupItem = { ...sidebarItemMock, type: 'groupChat', icon: undefined };
+        fixture.componentRef.setInput('sidebarItem', groupItem);
         fixture.detectChanges();
-        component.sidebarItem().type = 'groupChat';
-        component.sidebarItem().icon = undefined;
-        component.extractMessageUser();
-        expect(component.sidebarItem().icon).toBe(faPeopleGroup);
+        expect(component.displayIcon()).toBe(faPeopleGroup);
+        // the input object must not be mutated by the component
+        expect(groupItem.icon).toBeUndefined();
     });
 
     it('should set otherUser for one-to-one chat in extractMessageUser', () => {

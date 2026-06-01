@@ -97,8 +97,8 @@
                             [imageUrl]="addPublicFilePrefix(otherUser().imageUrl)"
                             [isEditable]="false"
                         />
-                    } @else if (item.icon) {
-                        <fa-icon [fixedWidth]="true" [icon]="item.icon" />
+                    } @else if (displayIcon()) {
+                        <fa-icon [fixedWidth]="true" [icon]="displayIcon()" />
                     }
                     {{ item.title }}
                 </span>
