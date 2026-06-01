@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -6,9 +7,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
+    setupTestBed({ zoneless: true });
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
@@ -190,7 +193,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const wrongGroup = groups.find((group) => group.name === 'wrong');
         const feedbackInGroup = wrongGroup!.members[0].feedbackReference;
@@ -203,7 +206,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const correctGroup = groups.find((group) => group.name === 'correct');
         const feedbackInGroup = correctGroup!.members[0].feedbackReference;

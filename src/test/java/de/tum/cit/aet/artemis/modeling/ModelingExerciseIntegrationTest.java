@@ -506,8 +506,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToImport.getCompetencyLinks().add(new CompetencyExerciseLink(competency, modelingExerciseToImport, 1));
         modelingExerciseToImport.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport,
-                ModelingExercise.class, HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExerciseToImport.getId(),
+                modelingExerciseToImport, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
                 "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(modelingExerciseToImport);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
@@ -540,8 +540,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
         modelingExercise.setCourse(course2);
-        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
+                ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
         importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
@@ -565,8 +565,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
-        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
+                ModelingExercise.class, HttpStatus.CREATED);
 
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNull();
@@ -584,7 +584,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(null);
         modelingExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -597,7 +598,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
     }
 
     @Test
@@ -610,7 +612,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course1);
         modelingExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -622,7 +625,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setExerciseGroup(exerciseGroup2);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
     }
 
     @Test
@@ -635,7 +639,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseTestRepository.save(modelingExercise);
         modelingExercise.setCourse(null);
 
-        request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -653,8 +658,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setCourse(course2);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
 
-        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise,
-                ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(),
+                modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
 
         ModelingExercise newModelingExerciseFromDatabase = modelingExerciseTestRepository.findById(newModelingExercise.getId()).orElseThrow();
@@ -841,8 +846,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseToBeImported.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
-                HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
+                ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
@@ -881,8 +886,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
         exerciseToBeImported.setChannelName("channelName-" + UUID.randomUUID().toString().substring(0, 8));
-        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
-                HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
+                ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
@@ -1197,8 +1202,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCourse(course2);
-        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
-                HttpStatus.CREATED);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), modelingExercise,
+                ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
 

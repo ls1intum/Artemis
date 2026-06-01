@@ -14,7 +14,7 @@ export class CourseDashboardService {
     public resourceUrl = 'api/atlas/metrics';
 
     getCourseMetricsForUser(courseId: number): Observable<HttpResponse<StudentMetrics>> {
-        return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(
+        return this.http.get<StudentMetrics>(`${this.resourceUrl}/courses/${courseId}/student`, { observe: 'response' }).pipe(
             map((response) => {
                 if (response.body) {
                     if (response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {
@@ -115,13 +115,13 @@ export class CourseDashboardService {
     private mapToLectureUnitType(type: string): LectureUnitType {
         // Discriminator values match the server-side LectureUnitType enum (@JsonValue) and the entity's @JsonSubTypes names.
         switch (type) {
-            case 'attachment':
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return LectureUnitType.ATTACHMENT_VIDEO;
-            case 'exercise':
+            case LectureUnitType.EXERCISE:
                 return LectureUnitType.EXERCISE;
-            case 'text':
+            case LectureUnitType.TEXT:
                 return LectureUnitType.TEXT;
-            case 'online':
+            case LectureUnitType.ONLINE:
                 return LectureUnitType.ONLINE;
             default:
                 throw new Error(`Unknown lecture unit type: ${type}`);

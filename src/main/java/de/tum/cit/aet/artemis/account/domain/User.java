@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;

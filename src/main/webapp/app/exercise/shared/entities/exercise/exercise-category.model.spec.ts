@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('ExerciseCategory', () => {

@@ -16,6 +16,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
@@ -273,6 +274,8 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                // ExamScoresComponent renders the real ExportButtonComponent, which injects PrimeNG DialogService.
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(

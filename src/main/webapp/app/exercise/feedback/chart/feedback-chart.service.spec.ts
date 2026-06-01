@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';

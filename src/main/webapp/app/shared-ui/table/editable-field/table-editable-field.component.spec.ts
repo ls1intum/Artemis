@@ -1,9 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
+import { vi } from 'vitest';
 
 describe('TableEditableFieldComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TableEditableFieldComponent;
     let fixture: ComponentFixture<TableEditableFieldComponent>;
     let debugElement: DebugElement;
@@ -20,35 +23,35 @@ describe('TableEditableFieldComponent', () => {
             });
     });
 
-    it('should render value as provided', fakeAsync(() => {
+    it('should render value as provided', async () => {
         const value = 'test';
 
-        comp.value = value;
+        fixture.componentRef.setInput('value', value);
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            expect(comp.inputValue).toEqual(value);
+        await fixture.whenStable();
 
-            const tableInput = debugElement.query(By.css(tableInputValue));
+        expect(comp.inputValue).toEqual(value);
 
-            expect(tableInput).not.toBeNull();
-            expect(tableInput.nativeElement.value).toEqual(value);
-        });
-    }));
+        const tableInput = debugElement.query(By.css(tableInputValue));
 
-    it('should show input and fire update event on enter', fakeAsync(() => {
+        expect(tableInput).not.toBeNull();
+        expect(tableInput.nativeElement.value).toEqual(value);
+    });
+
+    it('should show input and fire update event on enter', async () => {
         const value = 'test';
-        const fakeUpdateValue = jest.fn(() => {});
+        const fakeUpdateValue = vi.fn(() => {});
 
-        comp.value = value;
-        comp.onValueUpdate = fakeUpdateValue;
+        fixture.componentRef.setInput('value', value);
+        fixture.componentRef.setInput('onValueUpdate', fakeUpdateValue);
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            const tableInput = debugElement.query(By.css(tableInputValue));
-            expect(tableInput).not.toBeNull();
-            expect(tableInput.nativeElement.value).toEqual(value);
+        await fixture.whenStable();
 
-            tableInput.nativeElement.dispatchEvent(new Event('blur'));
-            expect(fakeUpdateValue.mock.calls).toHaveLength(1);
-        });
-    }));
+        const tableInput = debugElement.query(By.css(tableInputValue));
+        expect(tableInput).not.toBeNull();
+        expect(tableInput.nativeElement.value).toEqual(value);
+
+        tableInput.nativeElement.dispatchEvent(new Event('blur'));
+        expect(fakeUpdateValue).toHaveBeenCalledOnce();
+    });
 });

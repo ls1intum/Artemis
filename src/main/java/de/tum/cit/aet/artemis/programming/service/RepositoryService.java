@@ -41,7 +41,6 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -55,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 /**
  * Service that provides utilities for managing files in a git repository.

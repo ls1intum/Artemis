@@ -40,7 +40,7 @@ public class MetricsResource {
      * @param courseId the id of the course from which to get the metrics
      * @return the ResponseEntity with status 200 (OK) with body the student metrics for the course
      */
-    @GetMapping("course/{courseId}/student")
+    @GetMapping({ "courses/{courseId}/student", "course/{courseId}/student" })
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<StudentMetricsDTO> getCourseMetricsForUser(@PathVariable long courseId) {
         long start = System.nanoTime();

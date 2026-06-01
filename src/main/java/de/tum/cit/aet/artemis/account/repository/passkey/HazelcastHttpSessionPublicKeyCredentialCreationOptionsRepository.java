@@ -21,7 +21,7 @@ import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast

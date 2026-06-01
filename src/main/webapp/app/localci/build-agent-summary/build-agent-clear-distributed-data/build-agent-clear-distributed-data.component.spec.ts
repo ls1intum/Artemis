@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -12,17 +12,15 @@ describe('BuildAgentClearDistributedDataComponent', () => {
 
     let component: BuildAgentClearDistributedDataComponent;
     let fixture: ComponentFixture<BuildAgentClearDistributedDataComponent>;
-    const activeModal: NgbActiveModal = {
-        dismiss: vi.fn(),
+    const dialogRef = {
         close: vi.fn(),
-        update: vi.fn(),
     };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildAgentClearDistributedDataComponent],
             providers: [
-                { provide: NgbActiveModal, useValue: activeModal },
+                { provide: DynamicDialogRef, useValue: dialogRef },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -32,10 +30,10 @@ describe('BuildAgentClearDistributedDataComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should dismiss on cancel', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+    it('should close without a result on cancel', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.cancel();
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
+        expect(closeSpy).toHaveBeenCalledWith();
     });
 
     it('should have button enabled when confirmation text is correct', () => {
@@ -46,8 +44,8 @@ describe('BuildAgentClearDistributedDataComponent', () => {
         expect(component.buttonEnabled()).toBeTruthy();
     });
 
-    it('should close on confirm', () => {
-        const closeSpy = vi.spyOn(activeModal, 'close');
+    it('should close with true on confirm', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.confirm();
         expect(closeSpy).toHaveBeenCalledWith(true);
     });
