@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
-import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInput, MatChipInputEvent } from '@angular/material/chips';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CategorySelectorPrimengComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: CategorySelectorPrimengComponent;
     let fixture: ComponentFixture<CategorySelectorPrimengComponent>;
-    let emitSpy: jest.SpyInstance;
+    let emitSpy: ReturnType<typeof vi.spyOn>;
 
     const category1 = {
         color: '#6ae8ac',
@@ -50,25 +49,25 @@ describe('CategorySelectorPrimengComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MatAutocompleteModule, MatFormFieldModule, MatChipsModule, MatSelectModule, ReactiveFormsModule, FormsModule],
-            declarations: [CategorySelectorPrimengComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [CategorySelectorPrimengComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CategorySelectorPrimengComponent);
         comp = fixture.componentInstance;
 
-        emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
+        emitSpy = vi.spyOn(comp.selectedCategories, 'emit');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should remove category', () => {
         fixture.detectChanges();
         comp.categories = [category1, category2, category3];
         fixture.changeDetectorRef.detectChanges();
-        const cancelColorSelectorSpy = jest.spyOn(comp.colorSelector, 'cancelColorSelector');
+        const cancelColorSelectorSpy = vi.spyOn(comp.colorSelector, 'cancelColorSelector');
         comp.onItemRemove(category2);
 
         expect(comp.categories).toEqual([category1, category3]);
@@ -83,7 +82,7 @@ describe('CategorySelectorPrimengComponent', () => {
             clientY: 2,
         });
 
-        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
+        const openColorSelectorSpy = vi.spyOn(comp.colorSelector, 'openColorSelector').mockImplementation(() => undefined);
         comp.openColorSelector(mouseEvent, category5);
 
         expect(comp.selectedCategory).toEqual(category5);
