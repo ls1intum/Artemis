@@ -376,7 +376,7 @@ public class GlobalSearchResource {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
             if (isAdmin) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
+                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.COURSE));
             }
             else {
                 Filter disjunct = buildCourseDisjunct(roleSets);
