@@ -134,14 +134,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     /** Code Editor State Variables **/
     editorState: EditorState;
-    private _commitState: CommitState;
-    get commitState(): CommitState {
-        return this._commitState;
-    }
-    set commitState(next: CommitState) {
-        this._commitState = next;
-        this.onCommitStateChange.emit(next);
-    }
+    commitState: CommitState;
 
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
@@ -370,6 +363,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     onInlineFixCommitted(): void {
         this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+        this.onCommitStateChange.emit(this.commitState);
         this.onCommit.emit();
     }
 
