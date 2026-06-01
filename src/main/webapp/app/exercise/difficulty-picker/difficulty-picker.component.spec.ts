@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
@@ -17,13 +19,14 @@ const mockExercise: Exercise = {
     type: ExerciseType.PROGRAMMING,
 } as Exercise;
 describe('DifficultyPickerComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: DifficultyPickerComponent;
     let fixture: ComponentFixture<DifficultyPickerComponent>;
     // let mockExercise: Exercise;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [DifficultyPickerComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockPipe(ArtemisTranslatePipe), DifficultyPickerComponent],
             // Add any required imports here, e.g., FormsModule if you're using ngModel in the template
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
@@ -57,7 +60,7 @@ describe('DifficultyPickerComponent', () => {
     });
 
     it('should emit a change event when difficulty is set', () => {
-        jest.spyOn(component.ngModelChange, 'emit');
+        vi.spyOn(component.ngModelChange, 'emit');
         component.setDifficulty(DifficultyLevel.MEDIUM);
         expect(component.ngModelChange.emit).toHaveBeenCalled();
     });
