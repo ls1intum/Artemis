@@ -105,10 +105,10 @@ export class TeamComponent implements OnInit {
         }
     }
 
-    private onLoadError(error: any) {
+    private onLoadError = (error: any) => {
         this.alertService.error(error.message);
         this.isLoading = false;
-    }
+    };
 
     /**
      * Called when the team was updated by TeamUpdateButtonComponent
