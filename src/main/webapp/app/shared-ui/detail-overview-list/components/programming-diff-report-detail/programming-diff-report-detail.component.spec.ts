@@ -110,8 +110,16 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         expect(component.removedLineCount).toBe(8);
     });
 
-    it('should handle ngOnDestroy lifecycle method', () => {
-        // Test that ngOnDestroy doesn't throw when modalRef is undefined
-        expect(() => component.ngOnDestroy()).not.toThrow();
+    it('should close an open dialog on destroy', () => {
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        fixture.componentRef.setInput('detail', {
+            type: DetailType.ProgrammingDiffReport,
+            data: { repositoryDiffInformation: { totalLineChange: { addedLineCount: 1, removedLineCount: 0 } } },
+        } as ProgrammingDiffReportDetail);
+
+        component.showGitDiff();
+        component.ngOnDestroy();
+
+        expect(mockDialogRef.close).toHaveBeenCalledOnce();
     });
 });
