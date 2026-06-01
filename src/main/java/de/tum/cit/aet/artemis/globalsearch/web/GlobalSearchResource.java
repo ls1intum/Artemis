@@ -275,8 +275,14 @@ public class GlobalSearchResource {
      * </ul>
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
-        List<Course> accessibleCourses;
+        // Decide if the filters should be applied
+        boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
+                || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
+        if (authCheckService.isAdmin(user) && courseId == null && !needsCommFiltering) {
+            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null);
+        }
+        List<Course> accessibleCourses;
         if (authCheckService.isAdmin(user) && courseId == null) {
             accessibleCourses = courseRepository.findAll();
         }
