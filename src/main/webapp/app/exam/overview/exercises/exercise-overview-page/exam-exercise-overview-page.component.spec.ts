@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -6,17 +6,21 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamExerciseOverviewPageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
     let comp: ExamExerciseOverviewPageComponent;
     let studentExam: StudentExam;
@@ -53,13 +57,17 @@ describe('ExamExerciseOverviewPageComponent', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
     });
 
-    beforeEach(fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('should open the exercise', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp.onPageChanged, 'emit');
 
         comp.openExercise(studentExam.exercises![0]);
 

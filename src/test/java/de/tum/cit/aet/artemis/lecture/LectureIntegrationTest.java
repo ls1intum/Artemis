@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -158,7 +158,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
-        request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
+                HttpStatus.FORBIDDEN);
     }
 
     private void createChannelsForLectures(List<Lecture> lectures) {
@@ -261,6 +262,55 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
+        Course otherCourse = courseUtilService.addEmptyCourse("other-students", "other-tutors", "other-editors", "other-instructors");
+        Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
+        String originalDescription = otherLecture.getDescription();
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(otherLecture.getId(), "Malicious Update", "Updated from another course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "attacker-renamed-channel", LectureResource.SimpleLectureDTO.CourseDTO.from(course1));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.FORBIDDEN);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(otherLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalDescription);
+        assertThat(unchangedLecture.getTitle()).isEqualTo(otherLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
+        Course otherAuthorizedCourse = courseUtilService.addEmptyCourse();
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Mismatched Update", "Updated with mismatched course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "mismatched-channel",
+                LectureResource.SimpleLectureDTO.CourseDTO.from(otherAuthorizedCourse));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(originalLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalLecture.getDescription());
+        assertThat(unchangedLecture.getTitle()).isEqualTo(originalLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_nullCourseInBody_shouldReturnBadRequest() throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Null Course Update", "Updated with null course",
+                ZonedDateTime.now().plusMonths(3), ZonedDateTime.now().plusMonths(4), true, "null-course-channel", null);
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
+
+        Lecture unchangedLecture = lectureRepository.findByIdElseThrow(originalLecture.getId());
+        assertThat(unchangedLecture.getDescription()).isEqualTo(originalLecture.getDescription());
+        assertThat(unchangedLecture.getTitle()).isEqualTo(originalLecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
@@ -321,6 +371,36 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isEqualTo(de.tum.cit.aet.artemis.videosource.domain.VideoSourceType.YOUTUBE);
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_nonYoutubeUnit_bothFieldsNull() throws Exception {
+        attachmentVideoUnit.setVideoSource("https://live.rbg.tum.de/w/foo/123");
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
+                .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
+                .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
+        assertThat(attachmentUnitDTO.videoSourceType()).isNull();
+        assertThat(attachmentUnitDTO.youtubeVideoId()).isNull();
     }
 
     private void testGetLecture(Long lectureId) throws Exception {
@@ -486,7 +566,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
 
-        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null,
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         // load new lecture with its lecture units and attachments

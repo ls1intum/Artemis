@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
 import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';

@@ -17,9 +17,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationExecutionService;
@@ -70,14 +70,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION)).thenReturn("job-123");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null)).thenReturn("job-123");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
     }
 
     @Test
@@ -86,14 +86,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TEMPLATE)).thenReturn("job-456");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, false, null)).thenReturn("job-456");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-456");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TEMPLATE, false, null);
     }
 
     @Test
@@ -102,14 +102,14 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TESTS)).thenReturn("job-789");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.TESTS, false, null)).thenReturn("job-789");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-789");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.TESTS, false, null);
     }
 
     @Test
@@ -211,13 +211,13 @@ class HyperionCodeGenerationResourceTest {
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
-        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION)).thenReturn("job-exam-1");
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null)).thenReturn("job-exam-1");
 
         ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-exam-1");
-        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
     }
 
     @Test
@@ -236,7 +236,7 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody().jobId()).isEqualTo("job-check-1");
         assertThat(response.getBody().repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
     }
 
     @Test
@@ -252,6 +252,21 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNull();
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
+    }
+
+    @Test
+    void generateCode_withInitialAutoGeneration_forwardsFlagToJobService() {
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, true);
+
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(codeGenerationJobService.startJob(testUser, testExercise, null, RepositoryType.SOLUTION, true, null)).thenReturn("job-auto-1");
+
+        ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().jobId()).isEqualTo("job-auto-1");
+        verify(codeGenerationJobService).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, true, null);
     }
 }

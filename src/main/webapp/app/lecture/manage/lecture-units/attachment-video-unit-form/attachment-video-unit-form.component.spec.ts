@@ -4,12 +4,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -21,7 +21,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     setupTestBed({ zoneless: true });
@@ -403,7 +403,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://live.rbg.tum.de/w/test/26');
         expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
 
-        // Valid YouTube (parsable by js-video-url-parser)
+        // Valid YouTube (parsable by our video URL parser)
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
 
@@ -420,6 +420,28 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const ytWatch = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
         const ytEmbed = attachmentVideoUnitFormComponent.extractEmbeddedUrl(ytWatch);
         expect(ytEmbed).toBe('https://www.youtube.com/embed/8iU8LPEa4o0');
+    });
+
+    it('is backwards-compatible with persisted embed URLs (YouTube embed, TUM-Live video_only, Vimeo player)', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Persisted YouTube embed URL must remain valid and idempotent through extractEmbeddedUrl.
+        const storedYouTubeEmbed = 'https://www.youtube.com/embed/NWNufWyVcT0';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedYouTubeEmbed);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedYouTubeEmbed)).toBe(storedYouTubeEmbed);
+
+        // Persisted TUM-Live embed URL must remain valid and idempotent.
+        const storedTumLiveEmbed = 'https://live.rbg.tum.de/w/inhn0001/6233?video_only=1';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedTumLiveEmbed);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedTumLiveEmbed)).toBe(storedTumLiveEmbed);
+
+        // Persisted Vimeo player URL (with unlisted hash) must remain valid and fully idempotent — the `h=` parameter is required for unlisted-video playback, so the transform must preserve it.
+        const storedVimeoPlayer = 'https://player.vimeo.com/video/228795592?h=27bef101ce';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(storedVimeoPlayer);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+        expect(attachmentVideoUnitFormComponent.extractEmbeddedUrl(storedVimeoPlayer)).toBe(storedVimeoPlayer);
     });
 
     it('setEmbeddedVideoUrl: uses urlHelper and sets videoSource', () => {

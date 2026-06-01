@@ -38,6 +38,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterAll;
@@ -76,6 +80,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
@@ -85,18 +90,18 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.cit.aet.artemis.account.repository.CustomOrganizationRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
-import de.tum.cit.aet.artemis.core.repository.CustomOrganizationRepositoryImpl;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
@@ -159,6 +164,80 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testNoHibernateSecondLevelCacheAnnotation() {
+        String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
+                + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR "
+                + "#12578; further cleanup in PR #12579). Use Spring @Cacheable with explicit eviction for DTOs (see TitleCacheEvictionService for the canonical pattern). "
+                + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
+
+        ArchRule noClassLevelCache = noClasses().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noFieldLevelCache = noFields().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noMethodLevelCache = noMethods().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+
+        noClassLevelCache.check(productionClasses);
+        noFieldLevelCache.check(productionClasses);
+        noMethodLevelCache.check(productionClasses);
+    }
+
+    @Test
+    void testOrderColumnUsage() {
+        String reason = "Misuse of @OrderColumn caused production incidents #12574 and #12584. The unidirectional shape "
+                + "(@OneToMany + @JoinColumn + @OrderColumn) makes Hibernate DELETE+INSERT the entire child collection on every parent save, "
+                + "regenerating primary keys and breaking in-flight references. Required pattern: @OneToMany(mappedBy = \"...\") with the child "
+                + "owning the FK via @ManyToOne + @JoinColumn(name = \"...\"), an explicit @OrderColumn(name = \"...\"), and a "
+                + "@PrePersist/@PreUpdate hook on the parent that re-asserts child back-references. Prefer Set + @OrderBy on a domain field "
+                + "(see Lecture.lectureUnits) when the order can be derived from a domain attribute. "
+                + "Full rationale: documentation/docs/developer/guidelines/database.mdx → \"Ordered Collection with Duplicates (List)\".";
+
+        // Rule 1: @OrderColumn must not coexist with @JoinColumn on the same field. The parent's @OneToMany must use mappedBy
+        // and let the child @ManyToOne own the FK column. Carrying both annotations is the unidirectional shape that caused #12584.
+        ArchRule noUnidirectionalOrderColumn = noFields().that().areAnnotatedWith(OrderColumn.class).should().beAnnotatedWith(JoinColumn.class)
+                .because("@OrderColumn must not coexist with @JoinColumn on the same field. " + reason);
+
+        // Rule 2: every @OneToMany + @OrderColumn must have a non-empty mappedBy. Catches the same shape from the other side
+        // — fields that omit @JoinColumn but also omit mappedBy are still unidirectional and equally dangerous.
+        ArchRule oneToManyOrderColumnHasMappedBy = fields().that().areAnnotatedWith(OrderColumn.class).and().areAnnotatedWith(OneToMany.class).should(haveBidirectionalOneToMany())
+                .because("@OneToMany combined with @OrderColumn must specify mappedBy = \"...\" to be bidirectional. " + reason);
+
+        // Rule 3: @OrderColumn must have an explicit `name`. Relying on Hibernate's default-naming heuristic
+        // (e.g. <field>_order) is brittle across schema and Hibernate version changes.
+        ArchRule orderColumnHasExplicitName = fields().that().areAnnotatedWith(OrderColumn.class).should(haveOrderColumnNameSet())
+                .because("@OrderColumn must specify an explicit name attribute. " + reason);
+
+        noUnidirectionalOrderColumn.check(productionClasses);
+        oneToManyOrderColumnHasMappedBy.check(productionClasses);
+        orderColumnHasExplicitName.check(productionClasses);
+    }
+
+    private ArchCondition<JavaField> haveBidirectionalOneToMany() {
+        return new ArchCondition<>("have @OneToMany(mappedBy = \"...\") set") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                JavaAnnotation<?> annotation = findJavaAnnotation(field, OneToMany.class);
+                Object mappedBy = annotation.getProperties().get("mappedBy");
+                if (!(mappedBy instanceof String value) || value.isBlank()) {
+                    events.add(violated(field, field.getFullName() + " is annotated with @OneToMany + @OrderColumn but does not specify mappedBy"));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaField> haveOrderColumnNameSet() {
+        return new ArchCondition<>("have @OrderColumn(name = \"...\") set") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                JavaAnnotation<?> annotation = findJavaAnnotation(field, OrderColumn.class);
+                Object name = annotation.getProperties().get("name");
+                if (!(name instanceof String value) || value.isBlank()) {
+                    events.add(violated(field, field.getFullName() + " is annotated with @OrderColumn but does not specify an explicit name"));
+                }
+            }
+        };
     }
 
     @Test
@@ -291,6 +370,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
     }
 
+    /**
+     * Forbids {@code Class<>} fields (and the raw {@code Class} type) in DTO records and classes.
+     * <p>
+     * Exposing a {@code Class<? extends SomeEntity>} as a DTO component leaks the JVM/package layout
+     * over the wire: serializing it emits a fully-qualified class name, which couples every client
+     * (including stale tabs after a refactor) to internal Java package names. The replacement is a
+     * dedicated discriminator type — typically an {@code enum} whose values are stable JSON strings
+     * via {@code @JsonValue} (see {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseType} and
+     * {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitType}).
+     * <p>
+     * This rule only inspects <em>fields</em> (which includes synthesized record components). It does
+     * <em>not</em> flag {@code Class<>} parameters on JPQL-overloaded constructors that convert the
+     * raw entity class produced by Hibernate's {@code TYPE(...)} function into the canonical
+     * discriminator field — those are an internal mapping concern that never reaches the wire.
+     */
+    @Test
+    void testNoClassFieldsInDtos() {
+        ArchRule rule = noFields().that().areDeclaredInClassesThat().resideInAPackage("..dto..").should().haveRawType(Class.class).because(
+                "DTOs must not expose Class<> tokens; that leaks fully-qualified class names over the wire and couples clients to JVM package layout. Use a discriminator enum with @JsonValue instead (see ExerciseType, LectureUnitType).");
+        rule.check(productionClasses);
+    }
+
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
         return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_NULL)") {
 
@@ -330,9 +431,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoRestControllersImported() {
-        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
-                "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest" };
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
+                "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
+                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
+                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
+                "LegacyCalendarResource" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

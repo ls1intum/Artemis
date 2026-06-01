@@ -41,15 +41,15 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 /**
@@ -217,6 +217,20 @@ public class SecurityConfiguration {
     }
 
     /**
+     * Content Security Policy directives applied to every HTTP response.
+     *
+     * <p>
+     * Kept as a package-private constant so that unit tests can assert the exact policy without spinning up a full Spring Boot context.
+     * </p>
+     *
+     * <p>
+     * NOTE: Additional origins required by the YouTube IFrame API (e.g. {@code s.ytimg.com}) should be verified during manual testing (Task 18) and added here if
+     * the browser blocks them.
+     * </p>
+     */
+    static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:";
+
+    /**
      * Configures the {@link SecurityFilterChain} for the application, specifying security settings for HTTP requests.
      * <p>
      * This method uses a fluent API to configure {@link HttpSecurity} by:
@@ -253,14 +267,7 @@ public class SecurityConfiguration {
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(
-                        // Allow scripts only from the same origin.
-                        // 'unsafe-inline' and 'unsafe-eval' are necessary for Angular/Zone.js, but do NOT allow loading arbitrary external script files.
-                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-                        // Allow Web Workers to be created from your own origin ('self') AND from blob: URLs. Required because RxStomp creates its ticker
-                        // worker dynamically using a Blob -> blob: URL. Does NOT weaken main-page script loading.
-                        "worker-src 'self' blob:"
-                    )
+                    .policyDirectives(CSP_POLICY_DIRECTIVES)
                 )
                 // Prevents the website from being framed, avoiding clickjacking attacks.
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
@@ -280,9 +287,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
                     // Information and health endpoints do not need authentication
-                    .requestMatchers("/management/info", "/management/health").permitAll()
+                    .requestMatchers("/management/info", "/management/health", "/management/health/readiness", "/management/health/liveness").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
@@ -298,7 +305,8 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll() // Deprecated, to be removed Oct 2026
+                    .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
                     .requestMatchers("/git/**").permitAll();

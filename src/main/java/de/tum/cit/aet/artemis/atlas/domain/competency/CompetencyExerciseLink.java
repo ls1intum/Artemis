@@ -11,15 +11,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @Table(name = "competency_exercise")
 public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
 
@@ -27,6 +24,7 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     @JsonIgnore
     protected CompetencyExerciseId id = new CompetencyExerciseId();
 
+    @JsonIgnoreProperties("competencyLinks")
     @ManyToOne(optional = false)
     @MapsId("exerciseId")
     private Exercise exercise;

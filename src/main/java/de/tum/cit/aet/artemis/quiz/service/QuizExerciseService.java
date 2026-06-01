@@ -36,29 +36,28 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -68,6 +67,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -122,6 +122,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final Optional<QuizScheduleService> quizScheduleService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final QuizBatchService quizBatchService;
@@ -147,8 +149,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
+            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
@@ -157,6 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
@@ -257,8 +260,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<DragAndDropMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<DragAndDropMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : dndDTO.correctMappings()) {
             boolean mappingExists = existingMappings.stream()
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
@@ -270,7 +273,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
-                originalQuestion.getCorrectMappings().add(newMapping);
+                originalQuestion.addCorrectMapping(newMapping);
                 recalculationNecessary = true;
             }
         }
@@ -451,7 +454,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setSpot(spot);
         newMapping.setSolution(solution);
-        originalQuestion.getCorrectMappings().add(newMapping);
+        originalQuestion.addCorrectMapping(newMapping);
         return true;
     }
 
@@ -467,8 +470,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<ShortAnswerMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : saDTO.correctMappings()) {
             if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {
                 recalculationNecessary = true;
@@ -636,13 +639,27 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
+    /**
+     * Cancels the scheduled start of a quiz exercise both locally and across the cluster.
+     * <p>
+     * On nodes that run the scheduling profile the local scheduler entry is cleared synchronously
+     * so the calling node immediately observes the cancellation. The cluster-wide message is
+     * always published so all other nodes catch up regardless of profile.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose scheduled start should be canceled
+     */
     public void cancelScheduledQuiz(Long quizExerciseId) {
+        quizScheduleService.ifPresent(service -> service.cancelScheduledQuizStart(quizExerciseId));
         instanceMessageSendService.sendQuizExerciseStartCancel(quizExerciseId);
     }
 
     /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required.
-     * Does not save the quiz.
+     * Does not save the quiz — callers that want to persist the change are expected to either write the scalar fields
+     * explicitly (e.g. via {@link de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository#updateDueDate} and
+     * {@link de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository#clampBatchStartTimesForEndNow}, as the REST
+     * lifecycle handler does to avoid the full-graph cascade) or follow up with a full quiz update endpoint (as the
+     * re-evaluation tests do).
      *
      * @param quizExercise The quiz to end
      */
@@ -1217,13 +1234,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        QuizBatch synchronizedBatch = dto.quizBatch();
-        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dto.duration() == null) {
+        ZonedDateTime synchronizedBatchStartTime = dto.quizBatchStartTime();
+        if (synchronizedBatchStartTime == null || dto.duration() == null) {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatchStartTime,
+                synchronizedBatchStartTime.plusSeconds(dto.duration()), null, null));
     }
 
     /**

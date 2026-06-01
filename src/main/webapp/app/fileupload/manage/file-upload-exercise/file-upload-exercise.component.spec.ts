@@ -11,18 +11,19 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortService } from 'app/foundation/service/sort.service';
 
 describe('FileUploadExerciseComponent', () => {
     setupTestBed({ zoneless: true });
@@ -62,12 +63,7 @@ describe('FileUploadExerciseComponent', () => {
                         snapshot: { paramMap: convertToParamMap({ courseId: 123 }) },
                     },
                 },
-                {
-                    provide: AccountService,
-                    useValue: {
-                        setAccessRightsForExercise: vi.fn(),
-                    },
-                },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: EventManager,
                     useValue: {
@@ -114,13 +110,14 @@ describe('FileUploadExerciseComponent', () => {
 
         it('should set access rights for each loaded exercise', async () => {
             const accountService = TestBed.inject(AccountService);
+            const setAccessRightsSpy = vi.spyOn(accountService, 'setAccessRightsForExercise');
             const exercises = [createExercise(1, 'Exercise 1')];
             vi.spyOn(courseExerciseService, 'findAllFileUploadExercisesForCourse').mockReturnValue(of(new HttpResponse({ body: exercises })));
 
             component.ngOnInit();
             await fixture.whenStable();
 
-            expect(accountService.setAccessRightsForExercise).toHaveBeenCalled();
+            expect(setAccessRightsSpy).toHaveBeenCalled();
         });
 
         it('should handle error when loading exercises fails', async () => {

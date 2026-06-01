@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { Subject, of, throwError } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -19,10 +18,75 @@ import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagramV3 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
 import * as testClassDiagramV4 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
+import { DialogService } from 'primeng/dynamicdialog';
+
+function setupCanvasAndImageMocks() {
+    const createMockCanvas = () => {
+        const mockContext = {
+            drawImage: vi.fn(),
+            fillStyle: '',
+            fillRect: vi.fn(),
+            scale: vi.fn(),
+            globalCompositeOperation: 'source-over',
+        };
+
+        return {
+            style: { width: '', height: '' },
+            getContext: vi.fn().mockReturnValue(mockContext),
+            toBlob: vi.fn((callback: (blob: Blob | null) => void) => callback(new Blob(['PNG'], { type: 'image/png' }))),
+            width: 0,
+            height: 0,
+        } as unknown as HTMLCanvasElement;
+    };
+
+    // The createElement overload union contains a @deprecated entry for legacy elements like
+    // <applet>; the canvas-mocking pattern itself isn't deprecated, but TS-ESLint can't
+    // disambiguate the overloads when we hold a reference to the bound method.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    const originalCreateElement = document.createElement.bind(document);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        if (tagName === 'canvas') {
+            return createMockCanvas();
+        }
+        return originalCreateElement(tagName);
+    });
+
+    const originalImage = globalThis.Image;
+    class MockImage {
+        width = 100;
+        height = 100;
+        private _src = '';
+        onload: (() => void) | null = null;
+        onerror: ((error: Event | string) => void) | null = null;
+
+        get src() {
+            return this._src;
+        }
+
+        set src(value: string) {
+            this._src = value;
+            setTimeout(() => this.onload?.(), 0);
+        }
+    }
+
+    vi.stubGlobal('Image', MockImage as any);
+    const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    return {
+        cleanup: () => {
+            createElementSpy.mockRestore();
+            createObjectURLSpy.mockRestore();
+            revokeObjectURLSpy.mockRestore();
+            vi.unstubAllGlobals();
+            globalThis.Image = originalImage;
+        },
+    };
+}
 
 /**
  * RUTHLESS TEST SUITE: ApollonDiagramDetailComponent
@@ -45,23 +109,17 @@ describe('ApollonDiagramDetail Component', () => {
     let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
     let alertService: AlertService;
+    let cleanupCanvasAndImageMocks: (() => void) | undefined;
+    let dialogClose: Subject<any>;
 
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     const v3Model = testClassDiagramV3 as unknown as UMLModel;
     const v4Model = testClassDiagramV4 as unknown as UMLModel;
 
-    // Properly typed mock for modal service that actually invokes callbacks
-    const mockModalService = {
-        open: vi.fn().mockReturnValue({
-            componentInstance: {},
-            result: Promise.resolve(),
-            close: vi.fn(),
-        }),
+    const mockDialogService = {
+        open: vi.fn(() => ({ onClose: dialogClose })),
     };
-
-    globalThis.URL.createObjectURL = vi.fn(() => 'blob:test-url');
-    globalThis.URL.revokeObjectURL = vi.fn();
 
     beforeEach(async () => {
         const route = {
@@ -71,6 +129,8 @@ describe('ApollonDiagramDetail Component', () => {
 
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagramV3);
+        dialogClose = new Subject<any>();
+        mockDialogService.open.mockClear();
 
         await TestBed.configureTestingModule({
             imports: [ApollonDiagramDetailComponent],
@@ -80,7 +140,7 @@ describe('ApollonDiagramDetail Component', () => {
                 AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,
-                { provide: NgbModal, useValue: mockModalService },
+                { provide: DialogService, useValue: mockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -112,9 +172,12 @@ describe('ApollonDiagramDetail Component', () => {
             clip: { x: 0, y: 0, width: 100, height: 100 },
         });
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob(['PNG']));
+        cleanupCanvasAndImageMocks = setupCanvasAndImageMocks().cleanup;
     });
 
     afterEach(() => {
+        cleanupCanvasAndImageMocks?.();
+        cleanupCanvasAndImageMocks = undefined;
         vi.restoreAllMocks();
         vi.useRealTimers();
     });
@@ -201,7 +264,7 @@ describe('ApollonDiagramDetail Component', () => {
                     ...testClassDiagramV3,
                     interactive: {
                         elements: {},
-                        relationships: { 'rel-1': true },
+                        relationships: { '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd': true },
                     },
                 } as unknown as UMLModel;
 
@@ -484,17 +547,16 @@ describe('ApollonDiagramDetail Component', () => {
             fixture.componentInstance.isSaved = false;
             fixture.componentInstance.confirmExitDetailView(true);
 
-            expect(mockModalService.open).toHaveBeenCalledOnce();
+            expect(mockDialogService.open).toHaveBeenCalledOnce();
         });
 
-        it('should emit closeModal after modal confirmation', async () => {
+        it('should emit closeModal after dialog confirmation', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
             fixture.componentInstance.isSaved = false;
             fixture.componentInstance.confirmExitDetailView(true);
 
-            // Wait for modal promise to resolve
-            await Promise.resolve();
+            dialogClose.next({ confirmed: true });
 
             expect(emitSpy).toHaveBeenCalledOnce();
         });

@@ -8,13 +8,13 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -294,5 +294,31 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.filteredChannels).toHaveLength(1);
         expect(component.filteredChannels[0].name).toBe('General');
         expect(component.filteredUsers).toHaveLength(0);
+    });
+
+    it('should disable send button if message is too long', () => {
+        const longText = 'a'.repeat(component.maxContentLength + 1);
+        component.updateField(longText);
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+
+        expect(component.isMessageValid()).toBe(false);
+        expect(sendButton.disabled).toBe(true);
+    });
+
+    it('should enable send button if message is valid', () => {
+        const longText = 'a'.repeat(component.maxContentLength);
+        component.updateField(longText);
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+
+        expect(component.isMessageValid()).toBe(true);
+        expect(sendButton.disabled).toBe(false);
     });
 });

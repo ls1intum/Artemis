@@ -5,12 +5,12 @@ import { Observable, catchError, of, tap } from 'rxjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/course/shared/entities/course.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from 'app/programming/manage/services/programming-exercise-grading.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable()

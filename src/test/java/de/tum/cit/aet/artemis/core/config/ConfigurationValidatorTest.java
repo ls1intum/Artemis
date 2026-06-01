@@ -12,9 +12,9 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
 
 /**
  * Tests for ConfigurationValidator
@@ -45,7 +45,7 @@ class ConfigurationValidatorTest {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
-                openAiBaseUrl, gpuApiKey);
+                openAiBaseUrl, gpuApiKey, false, "http://localhost");
     }
 
     @Nested

@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Subject } from 'rxjs';
 import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
@@ -16,6 +16,7 @@ import {
     ReviewThreadSyncUpdateEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
@@ -69,11 +70,13 @@ describe('ExerciseReviewCommentService', () => {
 
     it('setExercise should clear thread state when exercise id changes', () => {
         service.threads.set([{ id: 1 } as any]);
+        service.selectedFeedbackThreadIds.set([1]);
 
         const changed = service.setExercise(42);
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
@@ -385,6 +388,7 @@ describe('ExerciseReviewCommentService', () => {
     it('toggleResolvedInContext should replace updated thread', () => {
         service.setExercise(3);
         service.threads.set([{ id: 7, resolved: false }] as any);
+        service.selectedFeedbackThreadIds.set([7]);
 
         service.toggleResolvedInContext(7, true);
 
@@ -394,6 +398,89 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({ id: 7, resolved: true });
 
         expect(service.threads()).toEqual([{ id: 7, resolved: true }] as any);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    it('toggleThreadFeedbackSelection should add and remove the selected thread id', () => {
+        service.toggleThreadFeedbackSelection(5);
+        expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+
+        service.toggleThreadFeedbackSelection(5);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    it('getSelectedFeedbackThreadIdsForRepository should keep only active matching threads in selection order', () => {
+        service.threads.set([
+            { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO, resolved: false, outdated: false },
+            { id: 1, targetType: CommentThreadLocationType.TEMPLATE_REPO, resolved: false, outdated: false },
+            { id: 2, targetType: CommentThreadLocationType.TEMPLATE_REPO, resolved: true, outdated: false },
+        ] as any);
+        service.selectedFeedbackThreadIds.set([2, 1, 3]);
+
+        const threadIds = service.getSelectedFeedbackThreadIdsForRepository(RepositoryType.TEMPLATE);
+
+        expect(threadIds).toEqual([1]);
+    });
+
+    it('toggleGroupResolvedInContext should replace all updated group threads', () => {
+        service.setExercise(3);
+        service.threads.set([
+            { id: 7, groupId: 50, resolved: false },
+            { id: 8, groupId: 50, resolved: false },
+            { id: 9, resolved: false },
+        ] as any);
+
+        service.toggleGroupResolvedInContext(50, true);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-thread-groups/50/resolved');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ resolved: true });
+        req.flush([
+            { id: 7, groupId: 50, resolved: true },
+            { id: 8, groupId: 50, resolved: true },
+        ]);
+
+        expect(service.threads()).toEqual([
+            { id: 7, groupId: 50, resolved: true },
+            { id: 8, groupId: 50, resolved: true },
+            { id: 9, resolved: false },
+        ] as any);
+    });
+
+    it('markInlineFixAppliedInContext should update matching consistency comment', () => {
+        service.setExercise(3);
+        service.threads.set([
+            {
+                id: 7,
+                comments: [
+                    {
+                        id: 12,
+                        threadId: 7,
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                            suggestedFix: { applied: false },
+                        },
+                    },
+                ],
+            },
+        ] as any);
+
+        service.markInlineFixAppliedInContext(12);
+
+        const req = httpMock.expectOne('api/exercise/exercises/3/review-comments/12/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        req.flush({
+            id: 12,
+            threadId: 7,
+            content: {
+                contentType: CommentContentType.CONSISTENCY_CHECK,
+                text: 'issue',
+                suggestedFix: { applied: true },
+            },
+        });
+
+        expect((service.threads() as any)[0].comments[0].content.suggestedFix.applied).toBe(true);
     });
 
     it('createThread should send POST request', () => {
@@ -451,6 +538,15 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({});
     });
 
+    it('updateThreadGroupResolvedState should send PUT request', () => {
+        service.updateThreadGroupResolvedState(4, 15, true).subscribe();
+
+        const req = httpMock.expectOne('api/exercise/exercises/4/review-thread-groups/15/resolved');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({ resolved: true });
+        req.flush([]);
+    });
+
     it('updateUserCommentContent should send PUT request', () => {
         const payload = { contentType: CommentContentType.USER, text: 'update' } as any;
 
@@ -459,6 +555,15 @@ describe('ExerciseReviewCommentService', () => {
         const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9');
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual(payload);
+        req.flush({});
+    });
+
+    it('markConsistencyInlineFixApplied should send PUT request', () => {
+        service.markConsistencyInlineFixApplied(8, 9).subscribe();
+
+        const req = httpMock.expectOne('api/exercise/exercises/8/review-comments/9/inline-fix/applied');
+        expect(req.request.method).toBe('PUT');
+        expect(req.request.body).toEqual({});
         req.flush({});
     });
 
@@ -511,6 +616,26 @@ describe('ExerciseReviewCommentService', () => {
         const result = service.replaceThreadInThreads(threads, updatedThread);
 
         expect(result.find((t: any) => t.id === 2)?.resolved).toBe(true);
+    });
+
+    it('replaceThreadsInThreads should replace matching threads and keep others', () => {
+        const threads = [
+            { id: 1, resolved: false },
+            { id: 2, resolved: false },
+            { id: 3, resolved: false },
+        ] as any;
+        const updatedThreads = [
+            { id: 1, resolved: true },
+            { id: 3, resolved: true },
+        ] as any;
+
+        const result = service.replaceThreadsInThreads(threads, updatedThreads);
+
+        expect(result).toEqual([
+            { id: 1, resolved: true },
+            { id: 2, resolved: false },
+            { id: 3, resolved: true },
+        ] as any);
     });
 
     it('appendThreadToThreads should append new thread', () => {

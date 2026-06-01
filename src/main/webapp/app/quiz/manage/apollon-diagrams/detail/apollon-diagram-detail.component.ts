@@ -1,23 +1,25 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/free-solid-svg-icons';
 import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -30,7 +32,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private elementRef = inject(ElementRef);
     private ngZone = inject(NgZone);
     private changeDetectorRef = inject(ChangeDetectorRef);
@@ -48,6 +50,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     apollonDiagram = signal<ApollonDiagram | undefined>(undefined);
     apollonEditor?: ApollonEditor;
+    private lastSavedModelJson = '';
 
     isSaved = true;
 
@@ -64,24 +67,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * v4 format: model.nodes/edges are arrays - in v4 ALL elements are considered interactive
      */
     get hasInteractive(): boolean {
-        if (!this.apollonEditor) {
-            return false;
-        }
-        const model = this.apollonEditor.model as any;
-
-        // v3 format: check interactive.elements/relationships
-        if (model.interactive) {
-            const elements = model.interactive.elements ?? {};
-            const relationships = model.interactive.relationships ?? {};
-            return Object.values(elements).some(Boolean) || Object.values(relationships).some(Boolean);
-        }
-
-        // v4 format: nodes and edges are ARRAYS - if there are any elements, they're interactive
-        if (Array.isArray(model.nodes)) {
-            return model.nodes.length > 0 || (model.edges?.length ?? 0) > 0;
-        }
-
-        return false;
+        return hasQuizRelevantElements(this.apollonEditor?.model);
     }
 
     /** Whether some elements are selected in the apollon editor. */
@@ -114,7 +100,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
                 this.apollonDiagram.set(diagram);
 
-                const model: UMLModel = diagram.jsonRepresentation ? JSON.parse(diagram.jsonRepresentation) : undefined;
+                const model: UMLModel | undefined = diagram.jsonRepresentation ? importDiagram(JSON.parse(diagram.jsonRepresentation)) : undefined;
+                this.lastSavedModelJson = model ? JSON.stringify(model) : '';
                 this.initializeApollonEditor(model);
                 this.setAutoSaveTimer();
             },
@@ -141,18 +128,22 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * Initializes Apollon Editor with UML Model
      * @param initialModel
      */
-    initializeApollonEditor(initialModel: UMLModel) {
+    initializeApollonEditor(initialModel?: UMLModel) {
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
 
         const diagram = this.apollonDiagram();
-        this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, {
+        const editorOptions = {
             mode: ApollonMode.Modelling,
+            view: ApollonView.Modelling,
+            readonly: false,
             model: initialModel,
             type: diagram?.diagramType,
             locale: this.translateService.getCurrentLang() as Locale,
-        });
+            availableViews: [ApollonView.Modelling, ApollonView.Highlight],
+        } as ConstructorParameters<typeof ApollonEditor>[1];
+        this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
         // Wrap callback in NgZone.run() because Apollon's React/Zustand store fires outside Angular's zone.
@@ -160,7 +151,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         // leaving template bindings like [disabled]="!hasInteractive" stale.
         this.apollonEditor.subscribeToModelChange((newModel) => {
             this.ngZone.run(() => {
-                this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
+                this.isSaved = JSON.stringify(newModel) === this.lastSavedModelJson;
                 this.changeDetectorRef.markForCheck();
             });
         });
@@ -181,6 +172,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram()?.title });
+            this.lastSavedModelJson = JSON.stringify(umlModel);
+            this.apollonDiagram.set(updatedDiagram);
             this.isSaved = true;
             this.setAutoSaveTimer();
             return true;
@@ -197,15 +190,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     confirmExitDetailView(closeModal: boolean) {
         if (!this.isSaved) {
-            const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent, {
-                size: 'lg',
-                backdrop: 'static',
+            const dialogRef = openConfirmAutofocusDialog(this.dialogService, {
+                title: 'artemisApp.apollonDiagram.detail.exitConfirm.title',
+                text: 'artemisApp.apollonDiagram.detail.exitConfirm.question',
+                translateText: true,
             });
-            modalRef.componentInstance.title = 'artemisApp.apollonDiagram.detail.exitConfirm.title';
-            modalRef.componentInstance.text = 'artemisApp.apollonDiagram.detail.exitConfirm.question';
-            modalRef.componentInstance.textIsMarkdown = false;
-            modalRef.componentInstance.translateText = true;
-            modalRef.result.then(() => this.exitDetailView(closeModal));
+            dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+                if (result?.confirmed) {
+                    this.exitDetailView(closeModal);
+                }
+            });
         } else {
             this.exitDetailView(closeModal);
         }
@@ -273,6 +267,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const svg = await this.apollonEditor.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
+            svgMode: 'compat',
         });
         const png = await convertRenderedSVGToPNG(svg);
         this.download(png);

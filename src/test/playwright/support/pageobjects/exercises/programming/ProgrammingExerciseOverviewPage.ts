@@ -41,7 +41,7 @@ export class ProgrammingExerciseOverviewPage {
         // Try up to 6 full navigations over ~90s (each with 15s wait for score to appear)
         for (let attempt = 0; attempt < 6; attempt++) {
             await this.page.goto(url);
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
             try {
                 await expect(resultScore).toContainText(textPattern, { timeout: 15000 });
                 return; // Success
@@ -52,7 +52,7 @@ export class ProgrammingExerciseOverviewPage {
 
         // Final attempt with longer timeout
         await this.page.goto(url);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         await expect(resultScore).toContainText(textPattern, { timeout: 30000 });
     }
 
@@ -83,8 +83,35 @@ export class ProgrammingExerciseOverviewPage {
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
-        await this.page.locator('.https-or-ssh-button').click();
-        await this.page.locator(gitCloneMethodSelector[cloneMethod]).click();
+
+        // The popover loads SSH-key / token status asynchronously after it opens (see
+        // code-button.component: getCachedSshKeys / getVcsAccessToken run in ngOnInit). As those
+        // signals resolve, the `@if` alert blocks appear/disappear, the popover height changes and
+        // ngb repositions it — so the `.https-or-ssh-button` toggle and the dropdown options
+        // re-render and briefly detach. Under heavy multi-node load this churn window is long
+        // enough that a single click races a detach ("element is not stable" / "element was
+        // detached from the DOM"). Retry the toggle + option selection as a unit, re-finding the
+        // elements each attempt and only re-toggling when the dropdown is not already open.
+        const toggle = this.page.locator('.https-or-ssh-button');
+        const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
+        const maxAttempts = 5;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                await toggle.waitFor({ state: 'visible', timeout: 15_000 });
+                if (!(await cloneMethodOption.isVisible())) {
+                    await toggle.click({ timeout: 10_000 });
+                }
+                await cloneMethodOption.waitFor({ state: 'visible', timeout: 10_000 });
+                await cloneMethodOption.click({ timeout: 10_000 });
+                return;
+            } catch (error) {
+                if (attempt === maxAttempts - 1) {
+                    throw error;
+                }
+                // Give the popover a moment to finish its async-driven re-render before retrying.
+                await this.page.waitForTimeout(1_000);
+            }
+        }
     }
 
     async getCloneUrl() {

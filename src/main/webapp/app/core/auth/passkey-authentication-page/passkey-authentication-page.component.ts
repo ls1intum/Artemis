@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { faArrowUpRightFromSquare, faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 
@@ -59,7 +59,13 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     }
 
     async signInWithPasskey() {
-        await this.webauthnService.loginWithPasskey();
+        try {
+            await this.webauthnService.loginWithPasskey();
+        } catch {
+            // Error alerts are already handled inside loginWithPasskey().
+            // User cancellation (NotAllowedError) is silently re-thrown — just stop here.
+            return;
+        }
         await this.accountService.identity(true);
 
         if (this.accountService.isUserLoggedInWithApprovedPasskey()) {

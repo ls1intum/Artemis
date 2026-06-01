@@ -1,14 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,10 +25,10 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
 
     readonly alertType = 'info';
-    courseId: number;
-    exam: Exam;
-    exerciseGroup: ExerciseGroup;
-    isSaving = false;
+    courseId!: number;
+    exam!: Exam;
+    exerciseGroup!: ExerciseGroup;
+    isSaving = signal(false);
     // Icons
     faBan = faBan;
     faSave = faSave;
@@ -49,7 +49,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
      * Update the exercise group if an id is set.
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.exerciseGroup.id !== undefined) {
             this.subscribeToSaveResponse(this.exerciseGroupService.update(this.courseId, this.exam.id!, this.exerciseGroup));
         } else {
@@ -70,12 +70,12 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.previousState();
     }
 
     private onSaveError(error: HttpErrorResponse) {
         onError(this.alertService, error);
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

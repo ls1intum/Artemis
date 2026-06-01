@@ -8,44 +8,44 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { EMPTY, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
-import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { ScienceService } from 'app/shared/science/science.service';
-import * as DownloadUtils from 'app/shared/util/download.util';
+import { ScienceService } from 'app/foundation/science/science.service';
+import * as DownloadUtils from 'app/foundation/util/download.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { FileService } from 'app/shared/service/file.service';
-import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+import { FileService } from 'app/foundation/service/file.service';
+import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
@@ -354,6 +354,106 @@ describe('CourseLectureDetailsComponent', () => {
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
         expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
+    });
+
+    describe('ensureValidDeepLinkTargets', () => {
+        it('should preserve timestamp for unit with only video', () => {
+            const videoUnit = new AttachmentVideoUnit();
+            videoUnit.id = 100;
+            videoUnit.videoSource = 'https://example.com/video.mp4';
+            videoUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [videoUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(100);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
+
+        it('should preserve page for unit with only PDF', () => {
+            const pdfUnit = new AttachmentVideoUnit();
+            pdfUnit.id = 101;
+            pdfUnit.attachment = new Attachment();
+            pdfUnit.attachment.link = '/path/to/slides.pdf';
+            pdfUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [pdfUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(101);
+            courseLecturesDetailsComponent.targetPdfPage.set(5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(5);
+        });
+
+        it('should preserve timestamp when unit has both video and PDF', () => {
+            const unitWithBoth = new AttachmentVideoUnit();
+            unitWithBoth.id = 102;
+            unitWithBoth.videoSource = 'https://example.com/video.mp4';
+            unitWithBoth.attachment = new Attachment();
+            unitWithBoth.attachment.link = '/path/to/slides.pdf';
+            unitWithBoth.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [unitWithBoth];
+            courseLecturesDetailsComponent.targetUnitId.set(102);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
+
+        it('should preserve timestamp for unit with only YouTube video', () => {
+            const youtubeUnit = new AttachmentVideoUnit();
+            youtubeUnit.id = 103;
+            youtubeUnit.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(103);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(30);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
+        });
+
+        it('should preserve timestamp and page for unit with both YouTube video and PDF', () => {
+            const youtubeUnitWithPdf = new AttachmentVideoUnit();
+            youtubeUnitWithPdf.id = 104;
+            youtubeUnitWithPdf.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnitWithPdf.attachment = new Attachment();
+            youtubeUnitWithPdf.attachment.link = '/path/to/slides.pdf';
+            youtubeUnitWithPdf.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnitWithPdf];
+            courseLecturesDetailsComponent.targetUnitId.set(104);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(60);
+            courseLecturesDetailsComponent.targetPdfPage.set(7);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(60);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(7);
+        });
+
+        it('should clear timestamp for unit with neither video source nor YouTube video ID', () => {
+            const unitWithoutVideo = new AttachmentVideoUnit();
+            unitWithoutVideo.id = 105;
+            unitWithoutVideo.attachment = new Attachment();
+            unitWithoutVideo.attachment.link = '/path/to/document.pdf';
+            unitWithoutVideo.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [unitWithoutVideo];
+            courseLecturesDetailsComponent.targetUnitId.set(105);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+        });
     });
 });
 

@@ -40,11 +40,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
@@ -255,12 +255,30 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testBuildAgentJobCancelled() {
-        // High timeout to ensure that the job is not finished before it is canceled. This will not affect the test runtime since the job is canceled.
+    void testBuildAgentJobCancelled() throws InterruptedException {
+        // Two latches drive deterministic ordering:
+        // - containerStartedLatch lets the test know the build has entered container start, so
+        // it can publish the cancellation only after the job is mid-execution.
+        // - testCompletedLatch keeps the mock blocked for the rest of the test so the build does
+        // not race ahead to SUCCESSFUL while the cancellation propagates. The test releases it
+        // in a finally block so the worker thread always exits cleanly.
+        CountDownLatch containerStartedLatch = new CountDownLatch(1);
+        CountDownLatch testCompletedLatch = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(5000);
+            containerStartedLatch.countDown();
+            try {
+                // The cancellation logic interrupts the executor thread, which propagates here. A
+                // long safety timeout prevents this thread from blocking forever if cancellation
+                // never lands.
+                if (!testCompletedLatch.await(30, TimeUnit.SECONDS)) {
+                    // Timed out — return so the worker can finish and the test can fail cleanly.
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             return null;
         }).when(startContainerCmd).exec();
 
@@ -268,19 +286,27 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
-        await().atMost(30, TimeUnit.SECONDS).pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        // Wait for the build agent to enter the container start. Combined with the buildStartDate
+        // check this guarantees the job is mid-execution when we publish the cancellation.
+        assertThat(containerStartedLatch.await(30, TimeUnit.SECONDS)).as("container start should be reached within 30s").isTrue();
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
         canceledBuildJobsTopic.publish(queueItem.id());
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var resultQueueItem = resultQueue.poll();
-            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
-                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
-        });
+        try {
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var resultQueueItem = resultQueue.poll();
+                return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                        && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
+            });
+        }
+        finally {
+            // Always release the worker thread so it does not linger past the end of the test.
+            testCompletedLatch.countDown();
+        }
     }
 
     @Test

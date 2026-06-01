@@ -1,20 +1,21 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import dayjs from 'dayjs/esm';
-import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
-import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
-import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
-import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
-import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
-import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
+import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/editor/monaco-editor/model/actions/code-block.action';
+import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
+import { UnorderedListAction } from 'app/editor/monaco-editor/model/actions/unordered-list.action';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -23,11 +24,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
     imports: [FormsModule, TranslateDirective, MarkdownEditorMonacoComponent, ExamLiveEventComponent, FaIconComponent],
 })
-export class ExamLiveAnnouncementCreateModalComponent {
-    private activeModal = inject(NgbActiveModal);
+export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private examManagementService = inject(ExamManagementService);
 
-    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
+    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
     courseId: number;
     examId: number;
@@ -42,6 +44,18 @@ export class ExamLiveAnnouncementCreateModalComponent {
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
+
+    ngOnInit(): void {
+        const data = this.dialogConfig?.data;
+        if (data) {
+            if (data.courseId !== undefined) {
+                this.courseId = data.courseId;
+            }
+            if (data.examId !== undefined) {
+                this.examId = data.examId;
+            }
+        }
+    }
 
     submitAnnouncement() {
         this.status = 'submitting';
@@ -70,6 +84,6 @@ export class ExamLiveAnnouncementCreateModalComponent {
      * Closes the modal by dismissing it
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 }

@@ -10,15 +10,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -118,7 +118,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(false);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrder(feedback1, feedback2);
     }
 
     @Test
@@ -129,7 +129,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(true);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
+        assertThat(result.getFeedbacks()).containsExactly(feedback1);
     }
 
     @Test

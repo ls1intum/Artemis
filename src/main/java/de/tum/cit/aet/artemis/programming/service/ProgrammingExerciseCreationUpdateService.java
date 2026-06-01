@@ -28,16 +28,19 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -51,9 +54,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Service
 @Profile(PROFILE_CORE)
@@ -102,6 +103,8 @@ public class ProgrammingExerciseCreationUpdateService {
     private final ParticipationRepository participationRepository;
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
+    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
@@ -175,6 +178,7 @@ public class ProgrammingExerciseCreationUpdateService {
         if (programmingExercise.getBuildConfig() == null) {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
+        validateProblemStatementLength(programmingExercise.getProblemStatement());
         if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);
         }
@@ -314,6 +318,7 @@ public class ProgrammingExerciseCreationUpdateService {
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
             @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
             @Nullable String originalProblemStatement) throws JsonProcessingException {
+        validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
@@ -406,7 +411,7 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
-
+        validateProblemStatementLength(problemStatement);
         String oldProblemStatement = programmingExercise.getProblemStatement();
         // Trim the problem statement and convert whitespace-only strings to null
         String trimmedProblemStatement = problemStatement != null ? problemStatement.trim() : null;
@@ -495,6 +500,13 @@ public class ProgrammingExerciseCreationUpdateService {
                     return false;
                 }
             }
+        }
+    }
+
+    private void validateProblemStatementLength(@Nullable String problemStatement) {
+        if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
+                    "problemStatementTooLong");
         }
     }
 }

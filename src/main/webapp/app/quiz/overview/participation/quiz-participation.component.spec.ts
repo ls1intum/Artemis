@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -15,7 +15,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -23,20 +23,20 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
@@ -502,8 +502,9 @@ describe('QuizParticipationComponent - live mode', () => {
     it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
         component.submission.submitted = true;
         component.remainingTimeSeconds = -100;
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
@@ -511,8 +512,9 @@ describe('QuizParticipationComponent - live mode', () => {
         component.remainingTimeSeconds = -1;
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
@@ -520,8 +522,9 @@ describe('QuizParticipationComponent - live mode', () => {
         component.remainingTimeSeconds = -1;
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(false);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(false);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
@@ -530,8 +533,9 @@ describe('QuizParticipationComponent - live mode', () => {
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
         component.submission.submissionDate = dayjs();
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
@@ -540,8 +544,51 @@ describe('QuizParticipationComponent - live mode', () => {
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
         component.submission.id = 42;
+        component.syncSubmitState();
 
-        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+        expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
+    });
+
+    it('should not show missed deadline message when student submitted', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: true }] } } as HttpResponse<StudentParticipation>),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
+    });
+
+    it('should not show missed deadline message when student effectively submitted', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+        component.remainingTimeSeconds = -1;
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
+    });
+
+    it('should not show missed deadline message when deadline has not passed', () => {
+        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
+            of({ body: { exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        );
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).not.toBeNull();
     });
 });
 

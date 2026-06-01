@@ -19,27 +19,33 @@ import {
     viewChildren,
 } from '@angular/core';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { Subscription, firstValueFrom, timeout } from 'rxjs';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
-import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { EditorPosition } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import {
+    getFirstCommentByCreatedDateThenId,
+    isReviewCommentsSupportedRepository,
+    mapRepositoryToThreadLocationType,
+    matchesSelectedRepository,
+} from 'app/exercise/review/review-comment-utils';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
@@ -108,6 +114,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    readonly onSavedFiles = output<{ [fileName: string]: string | undefined }>();
+    readonly onInlineFixCommitted = output<void>();
     readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
@@ -549,7 +557,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         );
     }
 
-    private scheduleReviewCommentRenderForSelectedFile(): void {
+    public scheduleReviewCommentRenderForSelectedFile(): void {
         if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
             this.pendingReviewRenderFile = undefined;
             return;
@@ -729,8 +737,13 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
                 getThreadLine: (thread) => this.getReviewThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
+                showFeedbackAction: (thread) =>
+                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                    thread.targetType === CommentThreadLocationType.TEST_REPO,
             });
         }
         return this.reviewCommentManager;
@@ -742,6 +755,45 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     private getReviewThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    private persistInlineFixApplication(thread: CommentThread): void {
+        const commentId = this.getConsistencyCommentId(thread);
+        const fileName = this.selectedFile();
+        if (!commentId || !fileName) {
+            return;
+        }
+
+        const currentText = this.editor().getText();
+        this.repositoryFileService
+            .updateFiles([{ fileName, fileContent: currentText }], true)
+            .pipe(take(1))
+            .subscribe({
+                next: (saveResult) => {
+                    if ('error' in saveResult) {
+                        this.onError.emit('saveFailed');
+                        return;
+                    }
+                    this.onSavedFiles.emit({ [fileName]: undefined });
+                    this.onInlineFixCommitted.emit();
+                    this.exerciseReviewCommentService.markInlineFixAppliedInContext(commentId);
+                },
+                error: (error: Error) => {
+                    if (error.message === ConnectionError.message) {
+                        this.onError.emit('saveFailed' + error.message);
+                    } else {
+                        this.onError.emit('saveFailed');
+                    }
+                },
+            });
+    }
+
+    private getConsistencyCommentId(thread: CommentThread): number | undefined {
+        const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+        return firstComment.id;
     }
 
     clearReviewCommentDrafts(): void {

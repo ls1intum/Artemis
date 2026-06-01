@@ -16,13 +16,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
@@ -84,6 +84,13 @@ public class QuizBatchService {
 
         var quizBatch = new QuizBatch();
         quizBatch.setQuizExercise(quizExercise);
+        // Reassigning the PersistentSet on a managed QuizExercise looks dangerous (orphanRemoval=true on quizBatches
+        // would normally trigger DELETE + INSERT through Hibernate's collection-replace handling), but it is safe in
+        // the existing call shape because (a) the REST handler is not @Transactional and OSIV is off, so the managed
+        // quizExercise reference does not survive past the next repository call boundary and the dirty reassignment is
+        // never flushed, and (b) the pre-replacement set is empty, so no orphan rows would be removed even if a flush
+        // happened. Callers that introduce a method-level @Transactional around this flow must persist the new batch
+        // explicitly (e.g. via quizBatchRepository.save(batch)) instead of relying on the cascade.
         quizExercise.setQuizBatches(Set.of(quizBatch));
         return quizBatch;
     }

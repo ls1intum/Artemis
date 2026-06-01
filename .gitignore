@@ -93,7 +93,7 @@ out/
 /build/
 
 ######################
-# NPM
+# Package manager
 ######################
 .npm/
 .cache/
@@ -101,6 +101,8 @@ out/
 .yarnrc
 yarn.lock
 yarn-error.log
+.pnpm-store/
+.pnpm-debug.log
 
 ######################
 # Package Files
@@ -243,6 +245,8 @@ deferredEagerBeanInstantiationViolations.dot
 # Fast local E2E runner
 ######################
 /.e2e-local/
+/.e2e-local-multinode-fast/
+/.e2e-local-multinode/
 
 ######################
 # Claude Code
@@ -256,3 +260,9 @@ deferredEagerBeanInstantiationViolations.dot
 /src/test/playwright/monocart-report
 /venv/
 /src/test/playwright/test-exercise-repos
+/docker/playwright-multinode-arch-override.yml
+
+######################
+# Local planning notes
+######################
+/docs/superpowers/plans/

@@ -42,8 +42,8 @@
             class="ms-auto flex-shrink-0"
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"
-            [hasPractice]="hasParticipation()"
-            [hasBoth]="hasBothParticipations()"
+            [hasPractice]="hasPracticeSubmission()"
+            [hasGraded]="hasGradedSubmission()"
         />
     </div>
 </div>

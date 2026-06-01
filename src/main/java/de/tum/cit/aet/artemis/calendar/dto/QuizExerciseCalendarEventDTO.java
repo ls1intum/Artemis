@@ -1,0 +1,23 @@
+package de.tum.cit.aet.artemis.calendar.dto;
+
+import java.time.ZonedDateTime;
+
+import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+
+/**
+ * A DTO primarily used to retrieve data about {@link QuizExercise}s that are needed to create {@link CalendarEventDTO}s.
+ *
+ * @param quizBatchStartTime the start time of the (single) synchronized quiz batch, or {@code null} for non-synchronized
+ *                               quizzes — extracted directly instead of embedding the {@code QuizBatch} entity
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record QuizExerciseCalendarEventDTO(long originEntityId, @NotNull QuizMode quizMode, @NotNull String title, @Nullable ZonedDateTime releaseDate,
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime quizBatchStartTime, @Nullable Integer duration) {
+}

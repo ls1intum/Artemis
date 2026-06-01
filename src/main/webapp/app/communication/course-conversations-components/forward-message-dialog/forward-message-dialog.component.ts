@@ -2,25 +2,25 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, 
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
-import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
-import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
-import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
-import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
-import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
-import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/editor/monaco-editor/model/actions/code-block.action';
+import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
+import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { catchError, map, of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MetisService } from 'app/communication/service/metis.service';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
@@ -28,6 +28,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 
 interface CombinedOption {
     id: number;
@@ -44,8 +45,8 @@ interface CombinedOption {
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    channels = signal<(ChannelDTO | GroupChatDTO)[] | []>([]);
-    users = signal<UserPublicInfoDTO[] | []>([]);
+    channels = signal<(ChannelDTO | GroupChatDTO)[]>([]);
+    users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
@@ -67,6 +68,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
+    readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
@@ -270,6 +272,12 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     /** Returns true if any users or channels are selected */
     hasSelections(): boolean {
         return this.selectedChannels.length > 0 || this.selectedUsers.length > 0;
+    }
+
+    /** Returns true if the message content is valid, i.e. does not exceed the max length */
+    isMessageValid(): boolean {
+        const content = this.newPost.content ?? '';
+        return content.length <= this.maxContentLength;
     }
 
     /** Sets input focus and opens dropdown */

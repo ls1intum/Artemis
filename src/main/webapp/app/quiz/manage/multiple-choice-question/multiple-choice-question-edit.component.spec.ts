@@ -5,11 +5,11 @@ import { By } from '@angular/platform-browser';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
-import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
 import { MockResizeObserver } from 'src/test/javascript/spec/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,10 +17,10 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
+import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 
 // Mock monaco-editor module
 vi.mock('monaco-editor', () => ({
@@ -315,7 +315,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should trigger delete button', () => {
         const spy = vi.spyOn(component, 'deleteQuestion');
-        const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
+        const deleteButton = fixture.debugElement.query(By.css(`.question-action-btn--delete`));
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
     });
@@ -330,10 +330,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
         component.markdownEditor()!.inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
-        component.markdownEditor()!['monacoEditor'] = {
+        const mockEditor = {
             setText: vi.fn(),
             clearLineDecorationsHoverButton: vi.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
+        Object.defineProperty(component.markdownEditor()!, 'monacoEditor', {
+            value: () => mockEditor,
+            configurable: true,
+        });
 
         const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();

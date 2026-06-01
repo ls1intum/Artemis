@@ -1,9 +1,12 @@
 .gitignore
 api.base.service.ts
+api/calendarApi.service.ts
+api/globalSearchApi.service.ts
 api/hyperionCodeGenerationApi.service.ts
 api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
 api/hyperionQuizQuestionGenerationApi.service.ts
+api/legacyCalendarApi.service.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
@@ -12,8 +15,7 @@ configuration.ts
 encoder.ts
 model/artifactLocation.ts
 model/bloomRadar.ts
-model/buildPhase.ts
-model/buildPlanPhases.ts
+model/calendarEvent.ts
 model/channel.ts
 model/checklistActionRequest.ts
 model/checklistActionResponse.ts
@@ -29,8 +31,7 @@ model/createOrUpdateTutorialGroupRequest.ts
 model/createOrUpdateTutorialGroupSessionRequest.ts
 model/difficultyAssessment.ts
 model/examSeat.ts
-model/generatedQuizAnswerOption.ts
-model/generatedQuizQuestion.ts
+model/globalSearchResult.ts
 model/inferredCompetency.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
@@ -41,10 +42,14 @@ model/problemStatementRewriteResponse.ts
 model/problemStatementTargetedRefinementRequest.ts
 model/qualityIssue.ts
 model/qualityIssueLocation.ts
+model/quizQuestionBulkRefinementRequest.ts
+model/quizQuestionBulkRefinementResponse.ts
 model/quizQuestionGenerationRequest.ts
 model/quizQuestionGenerationResponse.ts
+model/quizQuestionRefinementFailure.ts
 model/quizQuestionRefinementRequest.ts
 model/quizQuestionRefinementResponse.ts
+model/quizQuestionRefinementSuccess.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts

@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
@@ -167,12 +167,8 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/student-exams',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exams.component').then((m) => m.StudentExamsComponent),
-        data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.examManagement.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':examId/students',
+        pathMatch: 'full',
     },
     {
         path: ':examId/grading',

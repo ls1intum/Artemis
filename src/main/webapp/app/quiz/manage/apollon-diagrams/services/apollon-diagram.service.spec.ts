@@ -6,6 +6,8 @@ import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UMLDiagramType } from '@tumaet/apollon';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 const resourceUrl = 'api/modeling';
 
@@ -18,7 +20,7 @@ describe('ApollonDiagramService', () => {
     let httpTestingController: HttpTestingController;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
+            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService, { provide: AccountService, useClass: MockAccountService }],
         }).compileComponents();
 
         apollonDiagramService = TestBed.inject(ApollonDiagramService);
@@ -33,7 +35,7 @@ describe('ApollonDiagramService', () => {
 
     it('should create a diagram', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -52,7 +54,7 @@ describe('ApollonDiagramService', () => {
 
     it('should update a diagram', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -72,7 +74,7 @@ describe('ApollonDiagramService', () => {
     it('should find a diagram', () => {
         // Set up
         const diagramId = 1;
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams/${diagramId}`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -92,7 +94,7 @@ describe('ApollonDiagramService', () => {
     it('should delete a diagram', () => {
         // Set up
         const diagramId = 1;
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams/${diagramId}`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<void>;
@@ -111,7 +113,7 @@ describe('ApollonDiagramService', () => {
 
     it('should get diagrams by course', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = [apollonDiagram];
 
         let response: HttpResponse<ApollonDiagram[]>;

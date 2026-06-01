@@ -32,6 +32,10 @@ export interface ApollonModelData {
     // v3 format (legacy)
     elements?: Record<string, V3Element>;
     relationships?: Record<string, V3Element>;
+    interactive?: {
+        elements?: Record<string, boolean>;
+        relationships?: Record<string, boolean>;
+    };
 }
 
 /**
@@ -82,6 +86,23 @@ export function getModelEdges(model: UMLModel | ApollonModelData | undefined): A
     return Array.isArray(collection) ? collection : Object.values(collection);
 }
 
+function getNestedNodeElements(model: UMLModel | ApollonModelData | undefined): Array<{ id: string; [key: string]: unknown }> {
+    return getModelNodes(model).flatMap((node) => {
+        const data = node.data as Record<string, unknown> | undefined;
+        const nestedCollections = [data?.attributes, data?.methods, data?.actionRows];
+
+        return nestedCollections.flatMap((collection) => {
+            if (!Array.isArray(collection)) {
+                return [];
+            }
+
+            return collection.filter(
+                (item): item is { id: string; [key: string]: unknown } => !!item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string',
+            );
+        });
+    });
+}
+
 /**
  * Counts the total number of elements (nodes + edges) in an Apollon model.
  *
@@ -111,8 +132,46 @@ export function isModelEmpty(model: UMLModel | ApollonModelData | undefined): bo
  */
 export function getModelElementIds(model: UMLModel | ApollonModelData | undefined): Set<string> {
     const nodeIds = getModelNodes(model).map((node) => node.id);
+    const nestedNodeElementIds = getNestedNodeElements(model).map((element) => element.id);
     const edgeIds = getModelEdges(model).map((edge) => edge.id);
-    return new Set([...nodeIds, ...edgeIds]);
+    return new Set([...nodeIds, ...nestedNodeElementIds, ...edgeIds]);
+}
+
+export function hasExplicitInteractiveConfig(model: UMLModel | ApollonModelData | undefined): boolean {
+    return !!(model as ApollonModelData | undefined)?.interactive;
+}
+
+export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelData | undefined): string[] | undefined {
+    if (!model) {
+        return undefined;
+    }
+
+    const interactive = (model as ApollonModelData).interactive;
+    if (!interactive) {
+        return undefined;
+    }
+
+    const validIds = getModelElementIds(model);
+    const elementIds = Object.entries(interactive.elements ?? {})
+        .filter(([id, included]) => included && validIds.has(id))
+        .map(([id]) => id);
+    const relationshipIds = Object.entries(interactive.relationships ?? {})
+        .filter(([id, included]) => included && validIds.has(id))
+        .map(([id]) => id);
+
+    return [...elementIds, ...relationshipIds];
+}
+
+export function getQuizRelevantElementIds(model: UMLModel | ApollonModelData | undefined): string[] {
+    if (!model) {
+        return [];
+    }
+
+    if (hasExplicitInteractiveConfig(model)) {
+        return getExplicitInteractiveElementIds(model) ?? [];
+    }
+
+    return [...getModelElementIds(model)];
 }
 
 /**
@@ -124,4 +183,8 @@ export function getModelElementIds(model: UMLModel | ApollonModelData | undefine
  */
 export function hasModelElements(model: UMLModel | ApollonModelData | undefined): boolean {
     return getModelNodes(model).length > 0;
+}
+
+export function hasQuizRelevantElements(model: UMLModel | ApollonModelData | undefined): boolean {
+    return getQuizRelevantElementIds(model).length > 0;
 }

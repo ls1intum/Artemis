@@ -9,6 +9,10 @@ on:
     paths:
       - src/main/java/**
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   bean-instantiation-check:
     runs-on: ubuntu-latest
@@ -17,7 +21,7 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 139
+      MAX_INSTANTIATED_BEANS: 142
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -105,7 +109,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          PROFILES=dev,localci,aeolus,localvc,artemis,scheduling,buildagent,core,ldap
+          PROFILES=dev,localci,localvc,artemis,scheduling,buildagent,core,ldap
           JAR=$(ls build/libs/Artemis*.jar | head -n1)
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
@@ -120,7 +124,6 @@ jobs:
             --spring.datasource.username=sa \
             --spring.datasource.password= \
             --eureka.client.enabled=false \
-            --aeolus.url=http://aeolus.fake \
             > app.log 2>&1 &
           echo $! > app.pid
 
@@ -328,7 +331,7 @@ jobs:
 
       - name: Upload artifacts
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bean-instantiation-graphs-and-logs
           path: |

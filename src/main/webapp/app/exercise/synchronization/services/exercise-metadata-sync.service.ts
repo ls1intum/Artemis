@@ -5,7 +5,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
     ExerciseEditorSyncEvent,
@@ -14,7 +14,7 @@ import {
     ExerciseEditorSyncTarget,
     ExerciseNewVersionAlertEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import {
     ExerciseMetadataConflictModalComponent,
@@ -350,7 +350,7 @@ export class ExerciseMetadataSyncService {
      */
     private async fetchSnapshot(exerciseId: number, versionId: number): Promise<ExerciseSnapshotDTO | undefined> {
         try {
-            return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/${exerciseId}/version/${versionId}`));
+            return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/exercises/${exerciseId}/versions/${versionId}`));
         } catch {
             this.alertService.warning('artemisApp.exercise.metadataSync.snapshotFetchFailed');
             return undefined;

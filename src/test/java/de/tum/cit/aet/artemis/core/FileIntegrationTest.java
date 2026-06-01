@@ -38,10 +38,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -197,7 +197,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        request.get("/api/core/files/attachments/lecture/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        request.get("/api/core/files/attachments/lectures/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
     }
 
     @Test
@@ -289,7 +289,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private PDDocument retrieveMergeResult(Lecture lecture) throws Exception {
-        byte[] receivedFile = request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/merge-pdf", HttpStatus.OK, byte[].class);
+        byte[] receivedFile = request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
         return Loader.loadPDF(receivedFile);
@@ -384,7 +384,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Long courseId = lecture.getCourse().getId();
         Long attachmentVideoUnitId = attachmentVideoUnit.getId();
 
-        request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
+        request.get("/api/core/files/courses/" + courseId + "/attachment-video-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
     }
 
     @Test
@@ -427,8 +427,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
         String unsanitizedFilename = "AttachmentUnit_2025-05-10T12-10-34_" + unsanitizedName + ".pdf";
-        String url = isTutor ? "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename
-                : "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/" + unsanitizedFilename;
+        String url = isTutor ? "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename
+                : "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
@@ -493,7 +493,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
@@ -514,7 +514,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
@@ -535,7 +535,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         Attachment attachment = createLectureAttachmentWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/lecture/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+        String url = "/api/core/files/attachments/lectures/" + attachment.getLecture().getId() + "/" + attachment.getName() + ".pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.LECTURE_ATTACHMENT)))
@@ -557,7 +557,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);
@@ -575,7 +575,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         tempFile.toFile().deleteOnExit();
 
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithTempFile(tempFile);
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/dummy.pdf";
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/dummy.pdf";
 
         try (MockedStatic<FilePathConverter> filePathServiceMock = Mockito.mockStatic(FilePathConverter.class)) {
             filePathServiceMock.when(() -> FilePathConverter.fileSystemPathForExternalUri(Mockito.any(URI.class), Mockito.eq(FilePathType.ATTACHMENT_UNIT))).thenReturn(tempFile);

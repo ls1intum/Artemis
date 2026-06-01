@@ -13,13 +13,14 @@ import {
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
 import {
     BONUS_GRADE_KEY,
     EMAIL_KEY,
@@ -35,7 +36,7 @@ import {
     PLAGIARISM_VERDICT_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
-} from 'app/shared/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -43,13 +44,17 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamScoresComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
@@ -236,7 +241,7 @@ describe('ExamScoresComponent', () => {
         },
     ];
 
-    let findExamScoresSpy: jest.SpyInstance;
+    let findExamScoresSpy: ReturnType<typeof vi.spyOn>;
 
     const examScoreStudent1 = new ScoresDTO();
     examScoreStudent1.studentId = studentResult1.userId;
@@ -263,12 +268,14 @@ describe('ExamScoresComponent', () => {
         studentResults: [studentResult1, studentResult2, studentResult3],
     } as ExamScoreDTO;
 
-    global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
-    global.URL.revokeObjectURL = jest.fn(() => '');
+    global.URL.createObjectURL = vi.fn(() => 'http://some.test.com');
+    global.URL.revokeObjectURL = vi.fn(() => '');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                // ExamScoresComponent renders the real ExportButtonComponent, which injects PrimeNG DialogService.
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(
@@ -301,33 +308,33 @@ describe('ExamScoresComponent', () => {
         examService = TestBed.inject(ExamManagementService);
         gradingService = TestBed.inject(GradingService);
         const participationScoreService = TestBed.inject(ParticipantScoresService);
-        findExamScoresSpy = jest
+        findExamScoresSpy = vi
             .spyOn(participationScoreService, 'findExamScores')
             .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should not log error on sentry when correct participant score calculation', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
-        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('should log error on sentry when missing participant score calculation', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
-        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should log error on sentry when wrong points calculation', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = cloneDeep(examScoreStudent1);
         cs1.pointsAchieved = 99;
         const cs2 = cloneDeep(examScoreStudent2);
@@ -335,13 +342,13 @@ describe('ExamScoresComponent', () => {
         const cs3 = cloneDeep(examScoreStudent3);
         cs3.pointsAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should log error on sentry when wrong score calculation', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = cloneDeep(examScoreStudent1);
         cs1.scoreAchieved = 99;
         const cs2 = cloneDeep(examScoreStudent2);
@@ -349,17 +356,18 @@ describe('ExamScoresComponent', () => {
         const cs3 = cloneDeep(examScoreStudent3);
         cs3.scoreAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = jest.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
     it('should make duplicated titles unique', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
 
         const newExerciseGroup = new ExerciseGroup();
         newExerciseGroup.title = 'group';
         newExerciseGroup.id = 2;
+        (newExerciseGroup as unknown as { containedExercises: never[] }).containedExercises = [];
         examScoreDTO.exerciseGroups.push(newExerciseGroup);
         fixture.detectChanges();
 
@@ -372,8 +380,8 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should have correct entries', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
         fixture.detectChanges();
 
         expectCorrectExamScoreDto(comp, examScoreDTO);
@@ -435,7 +443,7 @@ describe('ExamScoresComponent', () => {
         // expect correct average points for exercises
         expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
-            let averageExPoints = 0;
+            let averageExPoints: number;
             let exInfo;
             if (exResult.exerciseId === 11) {
                 // result for ex 1_1
@@ -454,8 +462,8 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should skip not submitted exams', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
 
@@ -517,7 +525,7 @@ describe('ExamScoresComponent', () => {
         // expect correct average points for exercises
         expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
-            let averageExPoints = 0;
+            let averageExPoints: number;
             let exInfo;
             if (exResult.exerciseId === 11) {
                 // result for ex 1_1
@@ -537,13 +545,13 @@ describe('ExamScoresComponent', () => {
 
     it('should generate csv correctly', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
         comp.gradingScale = gradingScale;
         comp.gradingScale.gradeSteps = [gradeStep1];
         comp.gradingScaleExists = true;
 
-        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
+        const exportAsCsvStub = vi.spyOn(comp, 'exportAsCsv');
         // create csv
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
@@ -600,32 +608,30 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should initialize correctly with bonus grades and plagiarism', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(
             of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
         );
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
         expect(comp.hasBonus).toEqual(BonusStrategy.GRADES_DISCRETE);
-        expect(comp.hasPlagiarismVerdicts).toBeTrue();
-        expect(comp.hasPlagiarismVerdictsInBonusSource).toBeTrue();
+        expect(comp.hasPlagiarismVerdicts).toBe(true);
+        expect(comp.hasPlagiarismVerdictsInBonusSource).toBe(true);
         expect(comp.gradesWithBonus).toEqual(finalGrades);
     });
 
     it('should initialize correctly with bonus points', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })),
-        );
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })));
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
         expect(comp.hasBonus).toEqual(BonusStrategy.POINTS);
-        expect(comp.hasPlagiarismVerdicts).toBeFalse();
-        expect(comp.hasPlagiarismVerdictsInBonusSource).toBeFalse();
+        expect(comp.hasPlagiarismVerdicts).toBe(false);
+        expect(comp.hasPlagiarismVerdictsInBonusSource).toBe(false);
         expect(comp.gradesWithBonus).toEqual(finalGrades);
     });
 
     it('should generate csv correctly with bonus grades and plagiarism', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(
             of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
         );
         fixture.detectChanges();
@@ -633,7 +639,7 @@ describe('ExamScoresComponent', () => {
         comp.gradingScale.gradeSteps = [gradeStep1];
         comp.gradingScaleExists = true;
 
-        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
+        const exportAsCsvStub = vi.spyOn(comp, 'exportAsCsv');
         // create csv
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
@@ -702,7 +708,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should export as csv', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
 
         const testOptions: CsvExportOptions = {
@@ -717,15 +723,15 @@ describe('ExamScoresComponent', () => {
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
-        jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
-        jest.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => steps);
-        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => steps);
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).toBeTrue();
+        expect(comp.gradingScaleExists).toBe(true);
         expect(comp.gradingScale).toEqual(gradingScale);
-        expect(comp.isBonus).toBeFalse();
+        expect(comp.isBonus).toBe(false);
     });
 
     it('should filter non-empty submissions', () => {
@@ -738,19 +744,19 @@ describe('ExamScoresComponent', () => {
         comp.examScoreDTO = examScoreDTO;
         comp.aggregatedExamResults = new AggregatedExamResult();
         comp.course = { accuracyOfScores: 1 };
-        jest.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).toBeTrue();
+        expect(comp.filterForNonEmptySubmissions).toBe(true);
     });
 
     describe('test table filtering', () => {
         const examScoreDTOOnePassing = examScoreDTO;
         examScoreDTOOnePassing.studentResults[0].hasPassed = true;
         it('should set table state correctly if non empty submissions filter is activated', () => {
-            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.filterForNonEmptySubmissions = false;
             comp.ngOnInit();
 
@@ -795,8 +801,8 @@ describe('ExamScoresComponent', () => {
         });
 
         it('should set table state correctly if only submitted exams filter is activated', () => {
-            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.filterForSubmittedExams = false;
             comp.ngOnInit();
 
@@ -841,8 +847,8 @@ describe('ExamScoresComponent', () => {
         });
 
         it('should set table state correctly if both exams are activated', () => {
-            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
-            jest.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.ngOnInit();
             comp.filterForNonEmptySubmissions = false;
             comp.filterForSubmittedExams = false;
@@ -891,25 +897,25 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should toggle median correctly', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         comp.isBonus = false;
         fixture.detectChanges();
 
-        expect(comp.showPassedMedian).toBeTrue();
+        expect(comp.showPassedMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBeFalse();
+        expect(comp.showPassedMedian).toBe(false);
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.showOverallMedian).toBeTrue();
+        expect(comp.showOverallMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBeTrue();
-        expect(comp.showOverallMedian).toBeFalse();
+        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showOverallMedian).toBe(false);
     });
 
     it('should return data label correctly if noOfExamsFiltered is 0', () => {

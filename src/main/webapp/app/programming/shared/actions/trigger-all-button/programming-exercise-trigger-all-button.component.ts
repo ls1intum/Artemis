@@ -2,14 +2,14 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
@@ -22,13 +22,16 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     template: `
         <jhi-button
             id="trigger-all-button"
-            class="ms-3"
             [disabled]="disabled"
+            [btnSize]="btnSize"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
+            [tooltipPlacement]="TooltipPlacement.BOTTOM"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [shouldToggle]="shouldToggle"
+            [toggleBreakpoint]="toggleBreakpoint"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
         />
@@ -42,8 +45,14 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    TooltipPlacement = TooltipPlacement;
     @Input() exercise: ProgrammingExercise;
     @Input() disabled = false;
+    @Input() btnSize = ButtonSize.MEDIUM;
+    @Input() shouldToggle = false;
+    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
+
     @Output() onBuildTriggered = new EventEmitter();
     isTriggeringBuildAll = false;
     // Icons

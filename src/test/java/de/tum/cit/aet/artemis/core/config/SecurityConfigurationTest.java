@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -12,11 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.CorsFilter;
 
+import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 class SecurityConfigurationTest {
@@ -82,5 +83,13 @@ class SecurityConfigurationTest {
         // Then: Validation should throw IllegalStateException
         assertThatThrownBy(() -> securityConfiguration.validatePasskeyAllowedOriginConfiguration()).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Token validity in seconds for passkey must be greater than 0");
+    }
+
+    @Test
+    void testCspPolicyDirectives_scriptSrc_shouldAllowYouTubeIFrameApiOrigin() {
+        // The YouTube IFrame API is loaded from https://www.youtube.com.
+        // The CSP script-src directive must explicitly allow this origin so the browser
+        // does not block the IFrame API script tag on lecture-unit pages.
+        assertThat(SecurityConfiguration.CSP_POLICY_DIRECTIVES).contains("script-src").contains("https://www.youtube.com");
     }
 }

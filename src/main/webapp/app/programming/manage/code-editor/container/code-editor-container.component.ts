@@ -16,18 +16,18 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
@@ -355,6 +355,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             this.onError('saveFailed');
         }
         this.monacoEditor?.storeAnnotations(savedFiles);
+    }
+
+    /**
+     * Applies commit-state transitions after a successful inline-fix apply commit.
+     * Keeps UNCOMMITTED_CHANGES if new edits appeared while the commit request was in flight.
+     */
+    onInlineFixCommitted(): void {
+        this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+        this.onCommitStateChange.emit(this.commitState);
+        this.onCommit.emit();
     }
 
     /**

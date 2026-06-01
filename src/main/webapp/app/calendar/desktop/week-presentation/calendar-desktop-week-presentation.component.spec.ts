@@ -1,0 +1,64 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
+import { signal } from '@angular/core';
+import { CalendarDesktopWeekPresentationComponent } from './calendar-desktop-week-presentation.component';
+import { CalendarEventsPerDaySectionComponent } from 'app/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
+import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+
+describe('CalendarDesktopWeekPresentationComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<CalendarDesktopWeekPresentationComponent>;
+
+    const startOfMonday = dayjs('2025-05-05');
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CalendarDesktopWeekPresentationComponent,
+                MockComponent(CalendarDayBadgeComponent),
+                MockComponent(CalendarEventsPerDaySectionComponent),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        eventMap: signal(new Map()),
+                        subscriptionToken: signal(undefined),
+                        eventFilterOptions: [],
+                        includedEventFilterOptions: signal([]),
+                        reloadEvents: vi.fn(),
+                        toggleEventFilterOption: vi.fn(),
+                        loadEventsForCurrentMonth: vi.fn(),
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CalendarDesktopWeekPresentationComponent);
+
+        fixture.componentRef.setInput('firstDayOfCurrentWeek', startOfMonday);
+        fixture.detectChanges();
+    });
+
+    it('should render 7 day-info divs for each weekday', () => {
+        const dayInfoElements = fixture.debugElement.queryAll(By.css('.day-info'));
+        expect(dayInfoElements).toHaveLength(7);
+    });
+});

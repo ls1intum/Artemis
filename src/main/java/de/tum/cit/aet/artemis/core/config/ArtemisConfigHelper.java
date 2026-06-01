@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
@@ -166,16 +169,6 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @param environment the Spring environment
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @param environment the Spring environment
@@ -183,6 +176,46 @@ public class ArtemisConfigHelper {
      */
     public boolean isLtiEnabled(Environment environment) {
         return getPropertyOrExitArtemis(LTI_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Athena module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Athena module is enabled, false otherwise
+     */
+    public boolean isAthenaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(ATHENA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Apollon module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Apollon module is enabled, false otherwise
+     */
+    public boolean isApollonEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(APOLLON_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if LDAP-based user synchronization is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if LDAP is enabled, false otherwise
+     */
+    public boolean isLdapEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LDAP_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if SAML2-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if SAML2 is enabled, false otherwise
+     */
+    public boolean isSaml2Enabled(Environment environment) {
+        return getPropertyOrExitArtemis(SAML2_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -255,14 +288,23 @@ public class ArtemisConfigHelper {
                 enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
             }
         }
-        if (isNebulaEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_NEBULA);
-        }
         if (isSharingEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
         }
         if (isLtiEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+        if (isAthenaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATHENA);
+        }
+        if (isApollonEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_APOLLON);
+        }
+        if (isLdapEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LDAP);
+        }
+        if (isSaml2Enabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SAML2);
         }
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);

@@ -5,11 +5,11 @@ import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,11 +20,8 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { User } from 'app/core/user/user.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
@@ -32,9 +29,8 @@ describe('HomeComponent', () => {
 
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
-    let accountService: AccountService;
     let loginService: LoginService;
-    let localStorageService: LocalStorageService;
+    let webauthnService: WebauthnService;
 
     let router: MockRouter;
 
@@ -70,12 +66,10 @@ describe('HomeComponent', () => {
             })
             .compileComponents();
 
-        localStorageService = TestBed.inject(LocalStorageService);
-        localStorageService.clear();
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
-        accountService = TestBed.inject(AccountService);
         loginService = TestBed.inject(LoginService);
+        webauthnService = TestBed.inject(WebauthnService);
         fixture.detectChanges();
     });
 
@@ -153,59 +147,94 @@ describe('HomeComponent', () => {
         expect(loginSpy).toHaveBeenCalled();
     });
 
-    describe('openSetupPasskeyModal', () => {
-        it('should not open the modal if passkey feature is disabled', () => {
+    describe('loginWithPasskey', () => {
+        it('should handle login success', async () => {
+            const loginWithPasskeySpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await component.loginWithPasskey();
+
+            expect(loginWithPasskeySpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should restart passkey autofill after user aborts passkey login', async () => {
+            const cancellationError = new DOMException('User cancelled', 'NotAllowedError');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(cancellationError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).resolves.toBeUndefined();
+
+            expect(prefillPasskeysSpy).toHaveBeenCalledOnce();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+
+        it('should rethrow non-abort passkey login errors', async () => {
+            const networkError = new Error('Network error');
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(networkError);
+            const prefillPasskeysSpy = vi.spyOn(component, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await expect(component.loginWithPasskey()).rejects.toThrow(networkError);
+
+            expect(prefillPasskeysSpy).not.toHaveBeenCalled();
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('prefillPasskeysIfPossible', () => {
+        it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
+            component.isPasskeyEnabled = true;
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledOnce();
+            expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+        });
+
+        it('should not call startConditionalMediation if passkey is disabled', async () => {
             component.isPasskeyEnabled = false;
-            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
 
-            component.openSetupPasskeyModal();
+            await component.prefillPasskeysIfPossible();
 
-            expect(component.showPasskeyModal()).toBe(false);
+            expect(startSpy).not.toHaveBeenCalled();
         });
 
-        it('should not open the modal if the user has already registered a passkey', () => {
+        it('should not call startConditionalMediation if conditional mediation is unavailable', async () => {
             component.isPasskeyEnabled = true;
-            accountService.userIdentity.set({ askToSetupPasskey: false } as User);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: vi.fn().mockResolvedValue(false),
+            };
 
-            component.openSetupPasskeyModal();
+            await component.prefillPasskeysIfPossible();
 
-            expect(component.showPasskeyModal()).toBe(false);
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(startSpy).not.toHaveBeenCalled();
         });
 
-        it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
+        it('should not throw if PublicKeyCredential is undefined', async () => {
             component.isPasskeyEnabled = true;
+            (window as any).PublicKeyCredential = undefined;
 
-            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-
-            component.openSetupPasskeyModal();
-
-            expect(component.showPasskeyModal()).toBe(true);
+            await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
         });
+    });
 
-        it('should return early if the user disabled the reminder for the current timeframe', () => {
-            component.isPasskeyEnabled = true;
-            const futureDate = new Date();
-            futureDate.setDate(futureDate.getDate() + 1);
-            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
+    describe('ngOnDestroy', () => {
+        it('should stop conditional mediation on destroy', () => {
+            const stopSpy = vi.spyOn(webauthnService, 'stopConditionalMediation');
 
-            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+            component.ngOnDestroy();
 
-            component.openSetupPasskeyModal();
-
-            expect(component.showPasskeyModal()).toBe(false);
-        });
-
-        it('should not return early if the reminder date is in the past', () => {
-            component.isPasskeyEnabled = true;
-            const dateInPast = new Date();
-            dateInPast.setDate(dateInPast.getDate() - 10);
-            localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
-
-            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-
-            component.openSetupPasskeyModal();
-
-            expect(component.showPasskeyModal()).toBe(true);
+            expect(stopSpy).toHaveBeenCalledOnce();
         });
     });
 });

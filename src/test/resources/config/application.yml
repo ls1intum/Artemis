@@ -111,12 +111,6 @@ artemis:
     iris:
         enabled: false
 
-    # Nebula configuration for tests
-    nebula:
-        enabled: true
-        url: http://localhost:8080 # dummy URL for tests
-        secret-token: test-secret # dummy secret for tests
-
     # Theia configuration for tests
     theia:
         enabled: true
@@ -184,7 +178,7 @@ spring:
             hibernate.order_updates: true
             hibernate.query.fail_on_pagination_over_collection_fetch: true # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
-            # L2 cache disabled in tests (hazelcast-hibernate53 is incompatible with Hibernate 7.x; JCache bridge requires running Hazelcast instance)
+            # Hibernate L2 cache is disabled cluster-wide; see documentation/docs/developer/guidelines/caching.mdx.
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
             # modify batch size as necessary
@@ -360,9 +354,6 @@ jhipster:
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
-
-aeolus:
-    url: http://mock-aeolus-url:8090
 
 # Eureka configuration
 eureka:

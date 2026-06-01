@@ -1,8 +1,8 @@
-import { Component, OnChanges, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, viewChild } from '@angular/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -11,10 +11,10 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/programming/shared/entities/programming-submission-policy-status';
-import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import {
@@ -52,7 +52,7 @@ import { CommitState, DomainType, EditorState } from 'app/programming/shared/cod
         ProgrammingExerciseInstructionComponent,
     ],
 })
-export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private domainService = inject(DomainService);
 
     exerciseType = ExerciseType.PROGRAMMING;
@@ -95,16 +95,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
+    constructor() {
+        super();
+        effect(() => {
+            // react when the studentParticipation input changes (replaces ngOnChanges)
+            this.studentParticipation();
+            this.setSubmissionCountAndLockIfNeeded();
+        });
+    }
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
         this.updateDomain();
-        this.setSubmissionCountAndLockIfNeeded();
-    }
-
-    ngOnChanges() {
         this.setSubmissionCountAndLockIfNeeded();
     }
 

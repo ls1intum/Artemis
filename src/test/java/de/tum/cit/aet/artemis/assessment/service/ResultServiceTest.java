@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -25,8 +26,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -140,8 +140,10 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
-        // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
+        // filterFeedbackForClient must order feedbacks by FeedbackType (manual first, then manual_unreferenced,
+        // automatic_adapted, automatic). Assert the exact order so a future regression in the comparator fails here.
+        assertThat(resultService.filterFeedbackForClient(result)).extracting(Feedback::getType).containsExactly(FeedbackType.MANUAL, FeedbackType.MANUAL_UNREFERENCED,
+                FeedbackType.AUTOMATIC_ADAPTED, FeedbackType.AUTOMATIC);
     }
 
     @Test

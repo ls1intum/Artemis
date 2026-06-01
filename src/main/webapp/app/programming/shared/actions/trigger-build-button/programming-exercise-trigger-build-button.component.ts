@@ -3,10 +3,10 @@ import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
@@ -32,6 +32,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     @Input() exercise: ProgrammingExercise;
     @Input() participation: Participation;
     @Input() btnSize = ButtonSize.SMALL;
+    @Input() title = '';
 
     participationBuildCanBeTriggered: boolean;
     // This only works correctly when the provided participation includes its latest result.

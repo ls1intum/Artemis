@@ -1,17 +1,17 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DurationPipe } from 'app/shared/pipes/duration.pipe';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 
@@ -32,9 +32,13 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     @Input() exercise: ProgrammingExercise;
+    @Input() shouldToggle = false;
+    @Input() toggleBreakpoint: 'md' | 'xl' = 'xl';
 
     hasFailedSubmissions = false;
     hasBuildingSubmissions = false;

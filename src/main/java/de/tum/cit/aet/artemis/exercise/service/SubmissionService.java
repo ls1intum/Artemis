@@ -22,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
@@ -34,15 +36,13 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -425,10 +425,10 @@ public class SubmissionService {
      *
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
-     * @return the list of newly created feedbacks
+     * @return the set of newly created feedbacks
      */
-    public List<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
-        List<Feedback> oldFeedback = oldResult.getFeedbacks();
+    public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
+        Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
         return newResult.getFeedbacks();
     }
@@ -439,7 +439,7 @@ public class SubmissionService {
      * @param result    the result to copy feedback to
      * @param feedbacks the feedbacks which are copied
      */
-    private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
+    private void copyFeedbackToResult(Result result, Collection<Feedback> feedbacks) {
         if (feedbacks == null) {
             return;
         }

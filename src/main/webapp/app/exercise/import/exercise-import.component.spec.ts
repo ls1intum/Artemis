@@ -14,13 +14,13 @@ import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
-import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -269,30 +269,36 @@ describe('ExerciseImportComponent', () => {
     ])(
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
-            const getSpy = jest.spyOn(injector, 'get');
-            // This is needed for `.toHaveBeenCalledWith` to work properly:
-            getSpy.mockImplementation(() => undefined);
+            const pagingServiceMock = {
+                search: jest.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+            };
+            const getSpy = jest.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
 
             comp.exerciseType = exerciseType;
 
             comp.ngOnInit();
+            tick(300);
             expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
+            expect(pagingServiceMock.search).toHaveBeenCalled();
         }),
     );
 
-    it('should allow importing SCA configurations', () => {
-        const getSpy = jest.spyOn(injector, 'get');
-        // This is needed for `.toHaveBeenCalledWith` to work properly:
-        getSpy.mockImplementation(() => undefined);
+    it('should allow importing SCA configurations', fakeAsync(() => {
+        const pagingServiceMock = {
+            search: jest.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+        };
+        const getSpy = jest.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
 
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
 
         comp.ngOnInit();
+        tick(300);
 
         expect(comp.titleKey).toContain('configureGrading');
         expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
-    });
+        expect(pagingServiceMock.search).toHaveBeenCalled();
+    }));
 
     it('should sort by exam title when only the exam filter is active', () => {
         comp.isExamFilter = true;

@@ -7,15 +7,15 @@ import { PasskeyAuthenticationPageComponent } from './passkey-authentication-pag
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { User } from 'app/core/user/user.model';
+import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { User } from 'app/account/user/user.model';
 import { By } from '@angular/platform-browser';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective } from 'ng-mocks';
 
@@ -179,6 +179,17 @@ describe('PasskeyAuthenticationPageComponent', () => {
             await component.signInWithPasskey();
 
             expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('global.menu.admin.usedPasskeyIsNotSuperAdminApproved');
+            expect(redirectSpy).not.toHaveBeenCalled();
+        });
+
+        it('should silently return when loginWithPasskey throws (e.g., user cancellation)', async () => {
+            vi.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+            const identitySpy = vi.spyOn(accountService, 'identity');
+            const redirectSpy = vi.spyOn(component, 'redirectToOriginalUrlOrHome');
+
+            await component.signInWithPasskey();
+
+            expect(identitySpy).not.toHaveBeenCalled();
             expect(redirectSpy).not.toHaveBeenCalled();
         });
 

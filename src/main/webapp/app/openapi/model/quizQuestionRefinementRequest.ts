@@ -7,14 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 
 
 /**
  * Request to refine an existing quiz question using a user prompt
  */
 export interface QuizQuestionRefinementRequest { 
-    question: GeneratedQuizQuestion;
     /**
      * User instructions describing how the question should be changed
      */

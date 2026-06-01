@@ -1,11 +1,29 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
-import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { JsonPipe } from '@angular/common';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    HostListener,
+    OnChanges,
+    OnInit,
+    SimpleChanges,
+    ViewEncapsulation,
+    computed,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -13,45 +31,62 @@ import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { round } from 'app/shared/util/utils';
-import { onError } from 'app/shared/util/global.utils';
+import { round } from 'app/foundation/util/utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faArrowLeft, faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import {
+    faArrowLeft,
+    faCircleNotch,
+    faClock,
+    faExclamationCircle,
+    faFloppyDisk,
+    faGear,
+    faGraduationCap,
+    faPaperPlane,
+    faPlus,
+    faWandMagicSparkles,
+    faWrench,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { JsonPipe, NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -68,23 +103,25 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
-        ExerciseTitleChannelNameComponent,
+        ExerciseTitleChannelNamePrimengComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
-        DifficultyPickerComponent,
-        FormDateTimePickerComponent,
+        CategorySelectorPrimengComponent,
         ButtonComponent,
-        IncludedInOverallScorePickerComponent,
-        CompetencySelectionComponent,
+        CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
         FaIconComponent,
-        NgClass,
-        JsonPipe,
         ArtemisTranslatePipe,
         RouterLink,
         ButtonModule,
+        TextareaModule,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
+        FormDateTimePickerComponent,
         QuizAiGenerationModalComponent,
+        JsonPipe,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -93,6 +130,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private quizExerciseService = inject(QuizExerciseService);
     private router = inject(Router);
     private translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
     private exerciseService = inject(ExerciseService);
     private alertService = inject(AlertService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -102,10 +140,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private calendarService = inject(CalendarService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+    private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     aiGenerationModalVisible = false;
+
+    // Global refinement FAB
+    isRefinementFabOpen = signal(false);
+    isGlobalRefining = signal(false);
+    globalRefinementPrompt = signal('');
+    private globalRefinementSubscription?: Subscription;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -150,9 +196,61 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faExclamationCircle = faExclamationCircle;
     faArrowLeft = faArrowLeft;
     faWrench = faWrench;
+    faWandMagicSparkles = faWandMagicSparkles;
+    faPaperPlane = faPaperPlane;
+    faGear = faGear;
+    faClock = faClock;
+    faGraduationCap = faGraduationCap;
+    faFloppyDisk = faFloppyDisk;
+    faCircleNotch = faCircleNotch;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
+
+    readonly quizModeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.synchronized'), value: QuizMode.SYNCHRONIZED },
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.batched'), value: QuizMode.BATCHED },
+            { label: this.translateService.instant('artemisApp.quizExercise.quizMode.individual'), value: QuizMode.INDIVIDUAL },
+        ];
+    });
+
+    readonly difficultyOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.exercise.noLevel'), value: null },
+            { label: this.translateService.instant('artemisApp.exercise.easy'), value: DifficultyLevel.EASY },
+            { label: this.translateService.instant('artemisApp.exercise.medium'), value: DifficultyLevel.MEDIUM },
+            { label: this.translateService.instant('artemisApp.exercise.hard'), value: DifficultyLevel.HARD },
+        ];
+    });
+
+    readonly scoreOptionsCourse = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreYes'), value: IncludedInOverallScore.INCLUDED_COMPLETELY },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreBonus'), value: IncludedInOverallScore.INCLUDED_AS_BONUS },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreNo'), value: IncludedInOverallScore.NOT_INCLUDED },
+        ];
+    });
+
+    readonly scoreOptionsExam = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreYes'), value: IncludedInOverallScore.INCLUDED_COMPLETELY },
+            { label: this.translateService.instant('artemisApp.quizExercise.includedInScoreBonus'), value: IncludedInOverallScore.INCLUDED_AS_BONUS },
+        ];
+    });
+
+    readonly randomizeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.exercise.yes'), value: true },
+            { label: this.translateService.instant('artemisApp.exercise.no'), value: false },
+        ];
+    });
+
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
@@ -307,7 +405,73 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     canShowAiGenerationButton(): boolean {
-        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+        return this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
+    /**
+     * Returns true when the global refinement FAB should be shown:
+     * Hyperion must be active, the quiz must be editable
+     * and contain at least one multiple-choice question.
+     */
+    get hasMcQuestionsForRefinement(): boolean {
+        return (
+            this.hyperionEnabled &&
+            !this.isImport &&
+            !this.isExamMode &&
+            !!this.quizExercise?.isEditable &&
+            (this.quizExercise?.quizQuestions?.some((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) ?? false)
+        );
+    }
+
+    /** Submits the global refinement on Enter, but allows Shift+Enter to insert a newline. */
+    onGlobalRefinementEnterKey(event: Event): void {
+        if (!(event as KeyboardEvent).shiftKey) {
+            event.preventDefault();
+            this.submitGlobalRefinement();
+        }
+    }
+
+    /** Cancels any running global refinement request and hides the refinement FAB. */
+    closeRefinementFab(): void {
+        this.globalRefinementSubscription?.unsubscribe();
+        this.globalRefinementSubscription = undefined;
+        this.isGlobalRefining.set(false);
+        this.globalRefinementPrompt.set('');
+        this.isRefinementFabOpen.set(false);
+    }
+
+    /**
+     * Submits the global refinement prompt to Hyperion for all multiple-choice questions in the quiz.
+     * On success, applies refined content to each question via the list-edit child component.
+     */
+    submitGlobalRefinement(): void {
+        const prompt = this.globalRefinementPrompt().trim();
+        this.quizQuestionListEditComponent().parseAllQuestions();
+        const mcQuestions = (this.quizExercise?.quizQuestions ?? []).filter((q) => q.type === QuizQuestionType.MULTIPLE_CHOICE) as MultipleChoiceQuestion[];
+        if (!prompt || this.isGlobalRefining() || !mcQuestions.length || !this.courseId) {
+            return;
+        }
+        this.isGlobalRefining.set(true);
+        this.globalRefinementSubscription = this.quizAiGenerationService
+            .refineAllMultipleChoiceQuestions(this.courseId, mcQuestions, prompt)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => this.isGlobalRefining.set(false)),
+            )
+            .subscribe({
+                next: (results) => {
+                    const failedCount = mcQuestions.length - results.size;
+                    if (failedCount > 0) {
+                        this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
+                    }
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.globalRefinementPrompt.set('');
+                    this.isRefinementFabOpen.set(false);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.refinementFailed');
+                },
+            });
     }
 
     appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
@@ -598,8 +762,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        // Respect the server-provided isEditable flag (accounts for exam dates), combined with local check
-        this.quizExercise.isEditable = this.quizExercise.isEditable && isQuizEditable(this.quizExercise);
+        // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
+        // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
+        // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.
+        this.quizExercise.isEditable = this.quizExercise.isEditable ?? isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(this.quizExercise);
         this.changeDetector.detectChanges();

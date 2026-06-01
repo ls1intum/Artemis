@@ -13,7 +13,7 @@ jest.mock('y-monaco', () => ({
         destroy: jest.fn(),
     })),
 }));
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
@@ -26,13 +26,13 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -40,10 +40,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { editor } from 'test/helpers/mocks/mock-monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { signal } from '@angular/core';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -53,6 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
+    let exerciseReviewCommentService: ExerciseReviewCommentService;
 
     let subscribeForTestCaseSpy: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
@@ -120,6 +125,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
+                MockProvider(ExerciseReviewCommentService, { threads: signal([]), markInlineFixAppliedInContext: jest.fn() }),
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
@@ -142,6 +148,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                exerciseReviewCommentService = TestBed.inject(ExerciseReviewCommentService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
@@ -165,10 +172,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // Set up mock for markdownEditorMonaco using the mock-monaco-editor helper
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         // Trigger ngAfterViewInit manually since the ViewChild is now set
@@ -232,10 +239,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -264,10 +271,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -290,10 +297,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         const mockEditor = editor.create();
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getModel: () => mockEditor.getModel(),
                 getEditor: () => mockEditor,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         comp.ngAfterViewInit();
@@ -441,7 +448,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
         const setAnnotationsStub = jest.fn();
         // The component is mocked, so we need to set the monacoEditor property to a mock object.
-        comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
+        comp.markdownEditorMonaco = { monacoEditor: () => ({ setAnnotations: setAnnotationsStub }) } as unknown as MarkdownEditorMonacoComponent;
 
         const analysis = new Map();
         analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
@@ -478,6 +485,24 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new problem statement');
         expect(problemStatementSavedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should prefer current editor content when saving the problem statement', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('live editor value'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
     });
 
     it('should log an error on save', () => {
@@ -646,12 +671,74 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 
+    it('should persist problem statement and mark inline fix as applied', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('live editor value'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+        (exerciseReviewCommentService.threads as any).set([
+            {
+                id: 10,
+                comments: [
+                    {
+                        id: 20,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        createdDate: '2024-01-01T00:00:00Z',
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                        },
+                    },
+                ],
+            },
+        ]);
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).toHaveBeenCalledExactlyOnceWith(20);
+    });
+
+    it('should ignore inline fix application while instructions are already saving', () => {
+        comp.savingInstructions = true;
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).not.toHaveBeenCalled();
+    });
+
+    it('should delegate diff-mode refinement actions to the markdown editor', () => {
+        const updateProblemStatementSpy = jest.spyOn(comp, 'updateProblemStatement');
+        const applyRefinedContent = jest.fn();
+        const revertAll = jest.fn();
+        comp.markdownEditorMonaco = {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('reverted content'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.applyRefinedContent('refined content');
+        comp.revertAll();
+
+        expect(applyRefinedContent).toHaveBeenCalledExactlyOnceWith('refined content');
+        expect(revertAll).toHaveBeenCalledOnce();
+        expect(updateProblemStatementSpy).toHaveBeenCalledExactlyOnceWith('reverted content');
+    });
+
     it('should get current content from editor', () => {
         const mockGetText = jest.fn().mockReturnValue('editor content');
         comp.markdownEditorMonaco = {
-            monacoEditor: {
+            monacoEditor: () => ({
                 getText: mockGetText,
-            },
+            }),
         } as unknown as MarkdownEditorMonacoComponent;
 
         const content = comp.getCurrentContent();
@@ -669,7 +756,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should return undefined when monacoEditor is not available for getCurrentContent', () => {
-        comp.markdownEditorMonaco = {} as unknown as MarkdownEditorMonacoComponent;
+        comp.markdownEditorMonaco = { monacoEditor: () => undefined } as unknown as MarkdownEditorMonacoComponent;
 
         const content = comp.getCurrentContent();
 
@@ -722,10 +809,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             jest.spyOn(mockEditorInstance, 'getModel').mockReturnValue(mockModel);
 
             comp.markdownEditorMonaco = {
-                monacoEditor: {
+                monacoEditor: () => ({
                     getModel: () => mockModel,
                     getEditor: () => mockEditorInstance,
-                },
+                }),
             } as unknown as MarkdownEditorMonacoComponent;
 
             return { mockModel, setValueSpy, setEOLSpy };
