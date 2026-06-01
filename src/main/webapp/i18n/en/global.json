@@ -90,8 +90,7 @@
             "irisAnswerShowLess": "Show less",
             "irisAnswerMore": "more",
             "irisAnswerThinking": "Iris is thinking…",
-            "irisCollapseSources": "Show fewer sources",
-            "irisAiBadge": "AI"
+            "irisCollapseSources": "Show fewer sources"
         },
         "menu": {
             "home": "Home",

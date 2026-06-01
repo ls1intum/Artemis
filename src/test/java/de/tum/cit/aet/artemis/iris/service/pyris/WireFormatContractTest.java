@@ -25,7 +25,7 @@ class WireFormatContractTest {
 
     @Test
     void outboundWebhookUsesCamelCaseVideoSourceType() throws Exception {
-        var dto = new PyrisLectureUnitWebhookDTO("", 0, null, 1L, "name", 2L, "lecture", 3L, "course", "desc", "url", "https://x", VideoSourceType.YOUTUBE);
+        var dto = new PyrisLectureUnitWebhookDTO("", 0, null, 1L, "name", 2L, "lecture", 3L, "course", "desc", "url", "https://x", VideoSourceType.YOUTUBE, null);
         String json = mapper.writeValueAsString(dto);
         assertThat(json).contains("\"videoSourceType\":\"YOUTUBE\"");
         assertThat(json).doesNotContain("video_source_type");

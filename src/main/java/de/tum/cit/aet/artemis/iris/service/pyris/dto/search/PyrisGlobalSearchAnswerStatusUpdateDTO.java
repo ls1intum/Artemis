@@ -20,5 +20,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * </ol>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisGlobalSearchAnswerStatusUpdateDTO(List<PyrisStageDTO> stages, @Nullable String answer, @Nullable List<PyrisLectureSearchResultDTO> sources) {
+public record PyrisGlobalSearchAnswerStatusUpdateDTO(List<PyrisStageDTO> stages, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
 }

@@ -1,18 +1,35 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCalendarCheck,
+    faCheckDouble,
+    faChevronUp,
+    faFile,
+    faFilePdf,
+    faFileUpload,
+    faFileVideo,
+    faFont,
+    faHashtag,
+    faKeyboard,
+    faProjectDiagram,
+    faQuestion,
+    faQuestionCircle,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
+import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { catchError, of, switchMap, timer } from 'rxjs';
+import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 
 /** Delay in ms after a new result before measuring the rendered answer height. */
 const ANSWER_MEASURE_DELAY_MS = 60;
@@ -57,15 +74,55 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
     protected readonly faChevronUp = faChevronUp;
-    protected readonly faFile = faFile;
 
-    protected readonly SOURCE_ICONS: Partial<Record<string, IconDefinition>> = {
+    private readonly SOURCE_ICONS: Record<string, IconDefinition> = {
         lecture_unit_slide: faFilePdf,
         lecture_unit_slide_video: faFileVideo,
         lecture_unit_video: faVideo,
+        faq: faQuestionCircle,
+        exam: faCalendarCheck,
+        channel: faHashtag,
+        lecture: faBook,
     };
 
-    protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
+    private readonly EXERCISE_TYPE_ICONS: Record<string, IconDefinition> = {
+        programming: faKeyboard,
+        modeling: faProjectDiagram,
+        text: faFont,
+        'file-upload': faFileUpload,
+        quiz: faCheckDouble,
+    };
+
+    protected iconFor(source: GlobalSearchSource): IconDefinition {
+        if (source.sourceType === 'exercise') {
+            return source.exerciseType ? (this.EXERCISE_TYPE_ICONS[source.exerciseType] ?? faQuestion) : faQuestion;
+        }
+        return this.SOURCE_ICONS[source.sourceType] ?? faFile;
+    }
+
+    protected linkFor(source: GlobalSearchSource): string[] {
+        if (source.lectureUnit) return [source.lectureUnit.link];
+        const cid = String(source.course.id);
+        const eid = String(source.entityId);
+        switch (source.sourceType) {
+            case 'exercise':
+                return ['/courses', cid, 'exercises', eid];
+            case 'faq':
+                return ['/courses', cid, 'faq'];
+            case 'exam':
+                return ['/courses', cid, 'exams', eid];
+            case 'channel':
+                return ['/courses', cid, 'communication'];
+            default:
+                return ['/courses', cid];
+        }
+    }
+
+    protected queryParamsFor(source: GlobalSearchSource): Record<string, unknown> {
+        if (source.lectureUnit) return source.lectureUnit.queryParams;
+        if (source.sourceType === 'channel') return { conversationId: String(source.entityId) };
+        return {};
+    }
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
@@ -90,25 +147,22 @@ export class GlobalSearchIrisAnswerComponent {
 
         // Iris answer pipeline — runs alongside the main search.
         // ask() emits multiple values: first a thinking update, then the final result.
-        // The outer switchMap ensures every new searchQuery emission immediately cancels
-        // both the debounce timer and any in-flight ask() subscription, so a stale
-        // WebSocket update from a superseded run can never reach the subscriber.
-        // State is reset at the top of the outer switchMap — before the debounce window —
-        // so the UI clears on every keystroke even if the request has not fired yet.
+        // tap() runs before debounceTime so stale state is cleared immediately on every
+        // keystroke rather than waiting for the debounce window to expire.
+        // switchMap cancels the previous ask() subscription on every new debounced query.
         toObservable(this.searchQuery)
             .pipe(
-                switchMap((query) => {
+                tap(() => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
+                }),
+                debounceTime(IRIS_ANSWER_DEBOUNCE_MS),
+                switchMap((query) => {
                     if (!query.trim()) {
                         return of(undefined);
                     }
-                    // timer(X) waits X ms before emitting, giving the outer switchMap time to cancel
-                    // it on the next keystroke. Unlike of(query).pipe(debounceTime(X)), timer does not
-                    // complete immediately — debounceTime flushes instantly when its source completes,
-                    // which would bypass the debounce window entirely.
-                    return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(switchMap(() => this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)))));
+                    return this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)));
                 }),
                 takeUntilDestroyed(),
             )

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
@@ -26,7 +26,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
+import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
@@ -40,8 +40,8 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
 // Increment this constant when adding a new action button.
 export const NAV_ACTION_COUNT = 1;
 
-/** Keyboard-navigation index of the lecture-search action button. */
-export const LECTURE_SEARCH_ACTION_INDEX = 0;
+/** Keyboard-navigation index of the Iris inline-answer action button. */
+export const IRIS_ANSWER_ACTION_INDEX = 0;
 
 @Component({
     selector: 'jhi-global-search-navigation-view',
@@ -63,6 +63,7 @@ export const LECTURE_SEARCH_ACTION_INDEX = 0;
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
+    private readonly cdr = inject(ChangeDetectorRef);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -71,7 +72,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
-    readonly activeFilters = input<string[]>([]);
+    readonly activeFilters = input<SearchEntityType[]>([]);
 
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
@@ -84,7 +85,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly overlay = inject(SearchOverlayService);
 
     protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
-    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
+    protected readonly IRIS_ANSWER_ACTION_INDEX = IRIS_ANSWER_ACTION_INDEX;
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
@@ -107,6 +108,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     constructor() {
         super();
+        // The toolbar button opens the dialog by changing a signal in a sibling component tree.
+        // Angular's signal propagation only marks this component's parent dirty, not this OnPush
+        // child. Force a check whenever the overlay opens so artemisTranslate re-evaluates with
+        // the translations that loaded after this component was first rendered (with visible=false).
+        effect(() => {
+            if (this.overlay.isOpen()) {
+                this.cdr.markForCheck();
+            }
+        });
         effect(() => {
             const idx = this.selectedIndex();
             const items = this.selectableItems();
@@ -358,7 +368,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const buttonCount = this.actionButtonCount();
 
         // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
+        if (this.showLectureButton() && this.irisEnabled() && idx === IRIS_ANSWER_ACTION_INDEX) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
             return;
