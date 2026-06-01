@@ -798,7 +798,30 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         SearchResultPageDTO<QuizExerciseForSearchDTO> searchResult = request.getSearchResult("/api/quiz/quiz-exercises", OK, QuizExerciseForSearchDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
 
-        assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.id() == exerciseId).hasSize(1);
+        QuizExerciseForSearchDTO match = searchResult.getResultsOnPage().stream().filter(quiz -> quiz.id() == exerciseId).findFirst().orElseThrow();
+        assertThat(match.type()).isEqualTo("quiz");
+        assertThat(match.course()).isNotNull();
+        assertThat(match.course().title()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(match.exerciseGroup()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchDTOShapeForExamQuiz() throws Exception {
+        QuizExercise examQuiz = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(2));
+        long examQuizId = examQuiz.getId();
+
+        var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(examQuizId));
+        SearchResultPageDTO<QuizExerciseForSearchDTO> searchResult = request.getSearchResult("/api/quiz/quiz-exercises", OK, QuizExerciseForSearchDTO.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
+
+        QuizExerciseForSearchDTO match = searchResult.getResultsOnPage().stream().filter(quiz -> quiz.id() == examQuizId).findFirst().orElseThrow();
+        assertThat(match.type()).isEqualTo("quiz");
+        assertThat(match.course()).isNull();
+        assertThat(match.exerciseGroup()).isNotNull();
+        assertThat(match.exerciseGroup().exam()).isNotNull();
+        assertThat(match.exerciseGroup().exam().course()).isNotNull();
+        assertThat(match.exerciseGroup().exam().course().title()).isEqualTo(examQuiz.getCourseViaExerciseGroupOrCourseMember().getTitle());
     }
 
     @Test
