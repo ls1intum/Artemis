@@ -14,6 +14,12 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissionA, PlagiarismSubmissionDTO submissionB, Set<PlagiarismMatchDTO> matches, double similarity,
         PlagiarismStatus status) {
 
+    /**
+     * Maps a plagiarism comparison entity to the DTO used by the split view.
+     *
+     * @param comparison the plagiarism comparison entity
+     * @return the DTO representation
+     */
     public static PlagiarismComparisonDTO fromComparison(PlagiarismComparison comparison) {
         if (comparison == null) {
             return null;

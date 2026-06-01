@@ -15,6 +15,31 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 public record PlagiarismCaseExerciseDTO(Long id, String title, ExerciseType type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId, String examTitle,
         Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
 
+    /**
+     * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function.
+     *
+     * @param id                                                             the exercise id
+     * @param title                                                          the exercise title
+     * @param type                                                           the concrete exercise entity class
+     * @param dueDate                                                        the exercise due date
+     * @param courseId                                                       the course id
+     * @param courseTitle                                                    the course title
+     * @param examId                                                         the exam id
+     * @param examTitle                                                      the exam title
+     * @param continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod the response period configured for continuous plagiarism control cases
+     */
+    public PlagiarismCaseExerciseDTO(Long id, String title, Class<? extends Exercise> type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId, String examTitle,
+            Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+        this(id, title, ExerciseType.getExerciseTypeFromClass(type), dueDate, courseId, courseTitle, examId, examTitle,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod);
+    }
+
+    /**
+     * Maps an exercise entity to the plagiarism case exercise DTO.
+     *
+     * @param exercise the exercise entity
+     * @return the DTO representation
+     */
     public static PlagiarismCaseExerciseDTO fromExercise(Exercise exercise) {
         if (exercise == null) {
             return null;

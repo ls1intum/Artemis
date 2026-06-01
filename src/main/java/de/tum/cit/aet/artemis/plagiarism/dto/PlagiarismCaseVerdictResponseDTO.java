@@ -11,6 +11,12 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 public record PlagiarismCaseVerdictResponseDTO(PlagiarismVerdict verdict, String verdictMessage, int verdictPointDeduction, PlagiarismCaseUserDTO verdictBy,
         ZonedDateTime verdictDate) {
 
+    /**
+     * Maps the verdict part of a plagiarism case entity to the response DTO returned after saving a verdict.
+     *
+     * @param plagiarismCase the plagiarism case entity
+     * @return the DTO representation
+     */
     public static PlagiarismCaseVerdictResponseDTO ofVerdict(PlagiarismCase plagiarismCase) {
         if (plagiarismCase == null) {
             return null;

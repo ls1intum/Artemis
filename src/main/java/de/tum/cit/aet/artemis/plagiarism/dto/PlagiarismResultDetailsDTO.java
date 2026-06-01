@@ -13,6 +13,12 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> comparisons, long duration, List<Integer> similarityDistribution, Instant createdDate,
         String createdBy) {
 
+    /**
+     * Maps a plagiarism result entity to the DTO returned by plagiarism result endpoints.
+     *
+     * @param plagiarismResult the plagiarism result entity
+     * @return the DTO representation
+     */
     public static PlagiarismResultDetailsDTO fromResult(PlagiarismResult plagiarismResult) {
         if (plagiarismResult == null) {
             return null;
