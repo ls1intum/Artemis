@@ -12,7 +12,7 @@ import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-questio
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
-import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD, MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
@@ -103,6 +103,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     readonly questionMoveDown = output<void>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+    // Existing quiz validation rejects titles whose length reaches the shared threshold.
+    readonly MAX_QUESTION_TITLE_LENGTH = MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1;
 
     questionEditorText = '';
     showVisualMode: boolean;
@@ -182,6 +184,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
+    }
+
+    isQuestionTitleLengthLimitReached(): boolean {
+        return (this.shortAnswerQuestion.title?.length ?? 0) >= this.MAX_QUESTION_TITLE_LENGTH;
     }
 
     /**
