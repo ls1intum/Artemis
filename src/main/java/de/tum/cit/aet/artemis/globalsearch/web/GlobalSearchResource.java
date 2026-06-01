@@ -424,7 +424,7 @@ public class GlobalSearchResource {
 
     /**
      * Builds the exercise type disjunct. Editors see all exercises in their courses; teaching assistants
-     * see regular exercises unconditionally and exam exercises only after the exam's visible date; students see
+     * see regular exercises unconditionally and exam exercises only after the exam ends; students see
      * released regular exercises and exam exercises after the exam starts.
      *
      * @param roleSets the per-course role classification for the current user
@@ -448,14 +448,14 @@ public class GlobalSearchResource {
     private static Filter exerciseAccessFilter(Role role) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
-            // TAs: regular exercises always visible; exam exercises only after exam visible date
+            // TAs: regular exercises always visible; exam exercises only after exam end date
             // and only if non-programming or manual assessment is enabled (programming exercises
             // with automatic-only assessment have no assessment dashboard for TAs)
             Filter nonProgrammingOrManualAssessment = Filter.or(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()).not(),
                     Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.AUTOMATIC.name()).not());
             return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
                     Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                            Filter.property(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE).lte(now), nonProgrammingOrManualAssessment));
+                            Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now), nonProgrammingOrManualAssessment));
         }
         // Students: released regular exercises OR exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
