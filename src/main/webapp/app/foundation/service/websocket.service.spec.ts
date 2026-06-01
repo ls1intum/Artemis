@@ -7,27 +7,33 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { RxStompState } from '@stomp/rx-stomp';
 import { BehaviorSubject, EMPTY, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-const constructedRxStompClients: any[] = [];
-const watchMock = jest.fn();
+// vi.mock is hoisted above imports, so any value its factory references must be created via vi.hoisted().
+const { constructedRxStompClients, watchMock, captureExceptionMock } = vi.hoisted(() => ({
+    constructedRxStompClients: [] as any[],
+    watchMock: vi.fn(),
+    captureExceptionMock: vi.fn(),
+}));
 
-jest.mock('@stomp/rx-stomp', () => {
-    const { RxStompState: ActualRxStompState, ReconnectionTimeMode: ActualReconnectionTimeMode } = jest.requireActual('@stomp/rx-stomp');
+vi.mock('@stomp/rx-stomp', async () => {
+    const { RxStompState: ActualRxStompState, ReconnectionTimeMode: ActualReconnectionTimeMode } = await vi.importActual<typeof import('@stomp/rx-stomp')>('@stomp/rx-stomp');
     return {
         TickerStrategy: { Worker: 'worker-ticker' },
         RxStompState: ActualRxStompState,
         ReconnectionTimeMode: ActualReconnectionTimeMode,
-        RxStomp: jest.fn().mockImplementation(() => {
+        RxStomp: vi.fn().mockImplementation(function () {
             const client = {
-                configure: jest.fn(),
-                activate: jest.fn(),
-                deactivate: jest.fn(),
-                publish: jest.fn(),
+                configure: vi.fn(),
+                activate: vi.fn(),
+                deactivate: vi.fn(),
+                publish: vi.fn(),
                 watch: watchMock,
-                connected: jest.fn().mockReturnValue(true),
+                connected: vi.fn().mockReturnValue(true),
                 connectionState$: new BehaviorSubject<RxStompState>(ActualRxStompState.CLOSED),
                 stompClient: {
-                    unsubscribe: jest.fn(),
+                    unsubscribe: vi.fn(),
                     onConnect: undefined as (() => void) | undefined,
                     onStompError: undefined,
                     onWebSocketClose: undefined,
@@ -40,22 +46,23 @@ jest.mock('@stomp/rx-stomp', () => {
     };
 });
 
-const captureExceptionMock = jest.fn();
-jest.mock('@sentry/angular', () => ({
+vi.mock('@sentry/angular', () => ({
     captureException: (...args: any[]) => captureExceptionMock(...args),
 }));
 
 const baseMessage: IMessage = {
     body: '',
     headers: {},
-    ack: jest.fn(),
-    nack: jest.fn(),
+    ack: vi.fn(),
+    nack: vi.fn(),
     command: '',
     binaryBody: new Uint8Array(),
     isBinaryBody: false,
 };
 
 describe('WebsocketService', () => {
+    setupTestBed({ zoneless: true });
+
     let websocketService: WebsocketService;
 
     beforeEach(() => {
@@ -70,7 +77,7 @@ describe('WebsocketService', () => {
 
     afterEach(() => {
         websocketService.ngOnDestroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('connects, configures, activates, and emits connection state on successful connect', async () => {
@@ -89,7 +96,7 @@ describe('WebsocketService', () => {
     it('disconnects gracefully and updates connection state', () => {
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
-        rxStomp.connected = jest.fn().mockReturnValue(true);
+        rxStomp.connected = vi.fn().mockReturnValue(true);
 
         let latestState: ConnectionState | undefined;
         websocketService.connectionState.subscribe((state) => (latestState = state));
@@ -102,13 +109,13 @@ describe('WebsocketService', () => {
     });
 
     it('reports connection status via isConnected', () => {
-        expect(websocketService.isConnected()).toBeFalse();
+        expect(websocketService.isConnected()).toBe(false);
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
-        rxStomp.connected = jest.fn().mockReturnValue(true);
-        expect(websocketService.isConnected()).toBeTrue();
-        rxStomp.connected = jest.fn().mockReturnValue(false);
-        expect(websocketService.isConnected()).toBeFalse();
+        rxStomp.connected = vi.fn().mockReturnValue(true);
+        expect(websocketService.isConnected()).toBe(true);
+        rxStomp.connected = vi.fn().mockReturnValue(false);
+        expect(websocketService.isConnected()).toBe(false);
     });
 
     it('returns EMPTY observable when subscribing without a channel', async () => {
@@ -117,12 +124,12 @@ describe('WebsocketService', () => {
         await new Promise<void>((resolve) => {
             obs.subscribe({ complete: () => (completed = true) }).add(() => resolve());
         });
-        expect(completed).toBeTrue();
+        expect(completed).toBe(true);
         expect(watchMock).not.toHaveBeenCalled();
     });
 
     it('returns EMPTY when no client is available after connect attempt', () => {
-        jest.spyOn(websocketService, 'connect').mockImplementation(() => {
+        vi.spyOn(websocketService, 'connect').mockImplementation(() => {
             (websocketService as any).rxStomp = undefined;
         });
         const result = websocketService.subscribe('/topic/test');
@@ -157,7 +164,7 @@ describe('WebsocketService', () => {
     });
 
     it('reports decompression errors and propagates them', async () => {
-        const decodeSpy = jest.spyOn(WebsocketService as any, 'decodeAndDecompress').mockImplementation(() => {
+        const decodeSpy = vi.spyOn(WebsocketService as any, 'decodeAndDecompress').mockImplementation(() => {
             throw new Error('boom');
         });
         const message: IMessage = { ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } };
@@ -174,7 +181,7 @@ describe('WebsocketService', () => {
     it('send does nothing when disconnected', () => {
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
-        rxStomp.connected = jest.fn().mockReturnValue(false);
+        rxStomp.connected = vi.fn().mockReturnValue(false);
         websocketService.send('/test', { data: 'test' });
         expect(rxStomp.publish).not.toHaveBeenCalled();
     });
@@ -182,7 +189,7 @@ describe('WebsocketService', () => {
     it('sends uncompressed payloads when below threshold', () => {
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
-        rxStomp.connected = jest.fn().mockReturnValue(true);
+        rxStomp.connected = vi.fn().mockReturnValue(true);
 
         websocketService.send('/test', { data: 'abc' });
 
@@ -196,9 +203,9 @@ describe('WebsocketService', () => {
     it('sends compressed payloads and falls back if compression fails', () => {
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
-        rxStomp.connected = jest.fn().mockReturnValue(true);
+        rxStomp.connected = vi.fn().mockReturnValue(true);
 
-        const compressSpy = jest.spyOn(WebsocketService as any, 'compressAndEncode').mockReturnValue('compressed');
+        const compressSpy = vi.spyOn(WebsocketService as any, 'compressAndEncode').mockReturnValue('compressed');
         websocketService.send('/test', { data: 'x'.repeat(2000) });
         expect(compressSpy).toHaveBeenCalled();
         expect(rxStomp.publish).toHaveBeenCalledWith({
@@ -207,7 +214,7 @@ describe('WebsocketService', () => {
             headers: COMPRESSION_HEADER,
         });
 
-        const errorSpy = jest.spyOn(WebsocketService as any, 'compressAndEncode').mockImplementation(() => {
+        const errorSpy = vi.spyOn(WebsocketService as any, 'compressAndEncode').mockImplementation(() => {
             throw new Error('compress fail');
         });
         websocketService.send('/test', { data: 'x'.repeat(2000) });
@@ -236,13 +243,13 @@ describe('WebsocketService', () => {
     });
 
     it('delegates ngOnDestroy to disconnect', () => {
-        const disconnectSpy = jest.spyOn(websocketService, 'disconnect');
+        const disconnectSpy = vi.spyOn(websocketService, 'disconnect');
         websocketService.ngOnDestroy();
         expect(disconnectSpy).toHaveBeenCalled();
     });
 
     it('delays non-OPEN connection states by 5 seconds', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
 
@@ -260,19 +267,19 @@ describe('WebsocketService', () => {
         expect(stateChanges).toHaveLength(0);
 
         // After 4 seconds, still no change
-        jest.advanceTimersByTime(4000);
+        vi.advanceTimersByTime(4000);
         expect(stateChanges).toHaveLength(0);
 
         // After 5 seconds total, the CLOSED state should be emitted
-        jest.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(1000);
         expect(stateChanges).toHaveLength(1);
         expect(stateChanges[0]).toEqual(new ConnectionState(false, true));
 
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('cancels delayed non-OPEN state if connection recovers within 5 seconds', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
 
@@ -290,7 +297,7 @@ describe('WebsocketService', () => {
         expect(stateChanges).toHaveLength(0);
 
         // After 3 seconds, connection recovers
-        jest.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(3000);
         expect(stateChanges).toHaveLength(0);
 
         rxStomp.connectionState$.next(RxStompState.OPEN);
@@ -300,9 +307,9 @@ describe('WebsocketService', () => {
         expect(stateChanges[0]).toEqual(new ConnectionState(true, true));
 
         // Even after 5 more seconds, no CLOSED state should have been emitted
-        jest.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(5000);
         expect(stateChanges).toHaveLength(1);
 
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 });

@@ -1,10 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_COMMUNICATION } from '../constants/input.constants';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 
 describe('FileUploaderService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: FileUploaderService;
     let httpMock: HttpTestingController;
 

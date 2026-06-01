@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -34,6 +35,14 @@ export interface CsvExportOptions {
     decimalSeparator: CsvDecimalSeparator;
 }
 
+interface ExportDialogCancelledResult {
+    cancelled: true;
+}
+
+export type ExportDialogCloseResult = CsvExportOptions | undefined | ExportDialogCancelledResult;
+
+export const isExportDialogCancelledResult = (result: ExportDialogCloseResult): result is ExportDialogCancelledResult => !!result && 'cancelled' in result;
+
 @Component({
     selector: 'jhi-csv-export-modal',
     templateUrl: './export-modal.component.html',
@@ -54,7 +63,7 @@ export interface CsvExportOptions {
     ],
 })
 export class ExportModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
     private translateService = inject(TranslateService);
 
     readonly CsvFieldSeparator = CsvFieldSeparator;
@@ -118,7 +127,7 @@ export class ExportModalComponent implements OnInit {
      * Dismisses the csv export options modal
      */
     cancel() {
-        this.activeModal.dismiss();
+        this.dialogRef.close({ cancelled: true } satisfies ExportDialogCancelledResult);
     }
 
     /**
@@ -127,10 +136,10 @@ export class ExportModalComponent implements OnInit {
     onFinish() {
         if (this.activeTab === 1) {
             // Excel export
-            this.activeModal.close();
+            this.dialogRef.close();
         } else {
             // CSV export
-            this.activeModal.close(this.options);
+            this.dialogRef.close(this.options);
         }
     }
 }

@@ -1,9 +1,12 @@
-import { TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageComponent, ImageLoadingStatus } from './image.component';
+import { vi } from 'vitest';
 
 describe('ImageComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: any;
     let component: ImageComponent;
     let httpMock: HttpTestingController;
@@ -11,8 +14,8 @@ describe('ImageComponent', () => {
     const testLocalImageURL = 'blob:mock';
 
     beforeAll(() => {
-        global.URL.createObjectURL = jest.fn(() => testLocalImageURL);
-        global.URL.revokeObjectURL = jest.fn();
+        global.URL.createObjectURL = vi.fn(() => testLocalImageURL);
+        global.URL.revokeObjectURL = vi.fn();
     });
 
     beforeEach(async () => {
@@ -31,7 +34,7 @@ describe('ImageComponent', () => {
     });
 
     it('should emit SUCCESS when image loads and bind src attribute', async () => {
-        const loadingStatusSpy = jest.fn();
+        const loadingStatusSpy = vi.fn();
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/test-image.png');
@@ -49,38 +52,34 @@ describe('ImageComponent', () => {
         expect(imageElement.getAttribute('src')).toBe(testLocalImageURL);
     });
 
-    it('should emit SUCCESS when retryLoadImage is called after error', fakeAsync(() => {
-        const reloadSpy = jest.spyOn<any, any>(component['imageResource'], 'reload').mockImplementation(() => {
+    it('should emit SUCCESS when retryLoadImage is called after error', async () => {
+        const reloadSpy = vi.spyOn<any, any>(component['imageResource'], 'reload').mockImplementation(() => {
             component['rawLocalImageUrl'] = testLocalImageURL;
             (component['imageResource'] as any).hasValue = () => true;
             (component['imageResource'] as any).value = () => testLocalImageURL;
             (component as any).updateLoadingStatusDependingOnIf(true, false, false);
             (component as any).updateLoadingStatusDependingOnIf(false, false, true);
         });
-        const loadingStatusSpy = jest.fn();
+        const loadingStatusSpy = vi.fn();
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/error-image.png');
         fixture.changeDetectorRef.detectChanges();
-        tick();
-
-        // First request fails
         const requestOne = httpMock.expectOne('/error-image.png');
         requestOne.error(new ProgressEvent('Network error'));
-        // Manually trigger retry (simulates user action or programmatic retry)
+
         component.retryLoadImage();
-        flushMicrotasks();
-        tick();
+        await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(reloadSpy).toHaveBeenCalledOnce();
+        expect(reloadSpy).toHaveBeenCalled();
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.LOADING);
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
-    }));
+    });
 
     it('should reload when retryLoadImage is called', async () => {
-        const reloadSpy = jest.spyOn<any, any>(component['imageResource'], 'reload');
-        const statusSpy = jest.fn();
+        const reloadSpy = vi.spyOn<any, any>(component['imageResource'], 'reload');
+        const statusSpy = vi.fn();
         component.loadingStatus.subscribe(statusSpy);
 
         fixture.componentRef.setInput('src', '/reload-image.png');
@@ -105,7 +104,7 @@ describe('ImageComponent', () => {
     });
 
     it('should have src and alt attributes unset while no value is available', () => {
-        const loadingStatusSpy = jest.fn();
+        const loadingStatusSpy = vi.fn();
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/delayed-image.png');
@@ -116,10 +115,10 @@ describe('ImageComponent', () => {
 
         const img: HTMLImageElement = fixture.nativeElement.querySelector('img');
 
-        expect(img.hasAttribute('src')).toBeFalse();
+        expect(img.hasAttribute('src')).toBeFalsy();
         expect(img.getAttribute('src')).toBeNull();
 
-        expect(img.hasAttribute('alt')).toBeFalse();
+        expect(img.hasAttribute('alt')).toBeFalsy();
         expect(img.getAttribute('alt')).toBeNull();
 
         request.flush(new Blob(['x'], { type: 'image/png' }));
