@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,7 +16,8 @@ import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortaw
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -49,6 +50,7 @@ export type PlagiarismCheckState = {
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
+        DialogModule,
         FormsModule,
         PlagiarismSidebarComponent,
         PlagiarismDetailsComponent,
@@ -64,7 +66,6 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private inspectorService = inject(PlagiarismInspectorService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
-    private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
 
     /**
@@ -147,6 +148,11 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * Whether all plagiarism comparisons should be deleted. If this is true, comparisons with the status "approved" or "denied" will also be deleted
      */
     deleteAllPlagiarismComparisons = false;
+
+    /**
+     * Controls the visibility of the clean-up confirmation dialog.
+     */
+    readonly cleanUpModalVisible = signal(false);
 
     readonly FeatureToggle = FeatureToggle;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -482,14 +488,17 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Open a modal that requires the user's confirmation.
-     * @param content the modal content
+     * Open the dialog that requires the user's confirmation before cleaning up plagiarism results.
      */
-    openCleanUpModal(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
-            if (result === 'confirm') {
-                this.cleanUpPlagiarism();
-            }
-        });
+    openCleanUpModal() {
+        this.cleanUpModalVisible.set(true);
+    }
+
+    /**
+     * Confirm the clean-up: close the dialog and trigger the clean-up.
+     */
+    confirmCleanUp() {
+        this.cleanUpModalVisible.set(false);
+        this.cleanUpPlagiarism();
     }
 }
