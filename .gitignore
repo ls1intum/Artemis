@@ -261,5 +261,3 @@ deferredEagerBeanInstantiationViolations.dot
 /venv/
 /src/test/playwright/test-exercise-repos
 /docker/playwright-multinode-arch-override.yml
-
-/math-dnd
