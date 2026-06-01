@@ -595,6 +595,17 @@ describe('GlobalSearchModalComponent', () => {
 
             expect((component as any).selectedIndex()).toBe(-1);
         });
+
+        it('should increment selectedIndex by exactly 1 when a DOM keydown event fires (no double-handling)', () => {
+            (component as any).selectedIndex.set(-1);
+
+            // Dispatch a real DOM event so that both the @HostListener and any template
+            // forwarding paths have a chance to fire — only one should handle it.
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true });
+            fixture.nativeElement.dispatchEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(0);
+        });
     });
 
     describe('Context Filters', () => {

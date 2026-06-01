@@ -255,10 +255,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject.next({ query, filters: this.activeFilters() });
     }
 
-    protected onSearchKeyDown(event: KeyboardEvent) {
-        this.handleKeyboardEvent(event);
-    }
-
     /**
      * Called by the search-input component when Backspace is pressed on an empty input.
      * Removes filters in reverse order: type filters first, then course filter.
