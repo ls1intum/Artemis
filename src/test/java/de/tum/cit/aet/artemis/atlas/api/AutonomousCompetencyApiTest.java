@@ -44,7 +44,7 @@ class AutonomousCompetencyApiTest {
 
     @Test
     void notifyLectureUnitChange_recordsAccumulator() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
 
         api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
 
@@ -53,7 +53,7 @@ class AutonomousCompetencyApiTest {
 
     @Test
     void notifyLectureUnitChange_toggleOff_doesNothing() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(false);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(false);
 
         api.notifyLectureUnitChange(COURSE_ID, LECTURE_UNIT_ID);
 

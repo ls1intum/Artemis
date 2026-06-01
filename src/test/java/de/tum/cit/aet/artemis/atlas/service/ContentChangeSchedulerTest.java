@@ -62,7 +62,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_toggleDisabled_noWork() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(false);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(false);
 
         scheduler.tick();
 
@@ -72,7 +72,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_dueCourseWithTwoExercises_runsBothAndBroadcastsSummary() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
         when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
@@ -96,7 +96,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_lockHeldByAnotherTick_skipsCourse() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(false);
 
@@ -109,7 +109,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_lectureUnitOnlyBatch_drainsButDoesNotOrchestrate() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
         when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(), Set.of(99L))));
@@ -123,7 +123,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_inProgressResult_requeuesAndExcludesFromSummary() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
         when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
@@ -144,7 +144,7 @@ class ContentChangeSchedulerTest {
 
     @Test
     void tick_perExerciseException_countsAsFailure() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
         when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));

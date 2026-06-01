@@ -49,7 +49,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_toggleEnabled_recordsAccumulator() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
@@ -59,7 +59,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_toggleDisabled_doesNothing() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(false);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(false);
         ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
@@ -69,7 +69,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_examExercise_filtered() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         ExerciseGroup group = new ExerciseGroup();
@@ -82,7 +82,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_nonProgrammingExercise_filtered() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         Course course = new Course();
         course.setId(COURSE_ID);
         TextExercise exercise = new TextExercise();
@@ -96,7 +96,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_nullExercise_safe() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(null));
 
@@ -105,7 +105,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
     @Test
     void onExerciseVersionCreated_dedupedByAccumulator() {
-        when(featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         ProgrammingExercise exercise = courseExercise();
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));

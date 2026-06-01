@@ -44,7 +44,7 @@ public class AutonomousCompetencyApi extends AbstractAtlasApi {
      * @param lectureUnitId id of the lecture unit that was just created or updated
      */
     public void notifyLectureUnitChange(long courseId, long lectureUnitId) {
-        if (!featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)) {
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasAgent)) {
             return;
         }
         accumulator.record(courseId, lectureUnitId, true);

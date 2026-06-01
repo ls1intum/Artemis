@@ -102,7 +102,7 @@ artemis:
       model: gpt-5.4
       temperature: 1.0
       reasoning-effort: medium
-      # Automatic competency orchestration (Feature.AutomaticCompetencyManagement). Disabled by default;
+      # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
       # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
       debounce-window-seconds: 300

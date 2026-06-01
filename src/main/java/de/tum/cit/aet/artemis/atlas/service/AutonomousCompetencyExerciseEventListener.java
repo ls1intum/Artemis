@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * text, quiz, modeling, file upload) triggers the debounce pipeline without bespoke wiring per
  * resource.
  * <p>
- * Everything is gated behind the {@link Feature#AutomaticCompetencyManagement} toggle, which is
+ * Everything is gated behind the {@link Feature#AtlasAgent} toggle, which is
  * disabled by default — instructors can opt in per-instance via the feature-toggle admin UI. Exam
  * exercises are skipped because competency management is scoped to course content only.
  */
@@ -56,7 +56,7 @@ public class AutonomousCompetencyExerciseEventListener {
     @Async
     public void onExerciseVersionCreated(ExerciseVersionCreatedEvent event) {
         SecurityUtils.setAuthorizationObject();
-        if (!featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)) {
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasAgent)) {
             return;
         }
         Exercise exercise = event.exercise();

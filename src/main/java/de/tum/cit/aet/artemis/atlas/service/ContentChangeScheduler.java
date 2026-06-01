@@ -77,7 +77,7 @@ public class ContentChangeScheduler {
     @Scheduled(fixedRateString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}", initialDelayString = "${artemis.atlas.orchestrator.scheduler-rate-ms:30000}")
     public void tick() {
         SecurityUtils.setAuthorizationObject();
-        if (!featureToggleService.isFeatureEnabled(Feature.AutomaticCompetencyManagement)) {
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasAgent)) {
             return;
         }
         Set<Long> dueCourses;

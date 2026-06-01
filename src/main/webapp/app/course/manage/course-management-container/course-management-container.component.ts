@@ -185,7 +185,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             });
 
         this.featureToggleService
-            .getFeatureToggleActive(FeatureToggle.AutomaticCompetencyManagement)
+            .getFeatureToggleActive(FeatureToggle.AtlasAgent)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.autoOrchestrationActive = isActive;
