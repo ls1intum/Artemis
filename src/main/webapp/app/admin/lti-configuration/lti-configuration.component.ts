@@ -119,9 +119,12 @@ export class LtiConfigurationComponent implements OnInit {
         this.transition();
     }
 
-    /** Sets the active tab, coercing the PrimeNG tabs model value (string | number | undefined) to a number. */
+    /** Sets the active tab, coercing the PrimeNG tabs model value (string | number | undefined) to a number; ignores non-numeric values so the active tab is never set to NaN. */
     setActiveTab(value: string | number | undefined): void {
-        this.activeTab.set(Number(value));
+        const tab = Number(value);
+        if (!Number.isNaN(tab)) {
+            this.activeTab.set(tab);
+        }
     }
 
     /**

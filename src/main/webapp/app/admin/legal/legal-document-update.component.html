@@ -13,19 +13,19 @@
         <div>
             @if (!unsavedChanges() && !isSaving()) {
                 <div>
-                    <fa-icon [icon]="faCheckCircle" class="text-success me-1" pTooltip="{{ 'artemisApp.legal.savedTooltip' | artemisTranslate }}" />
+                    <fa-icon [icon]="faCheckCircle" class="text-success me-1" [pTooltip]="'artemisApp.legal.savedTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.saved"></span>
                 </div>
             }
             @if (unsavedChanges() && !isSaving()) {
                 <div>
-                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" pTooltip="{{ 'artemisApp.legal.unsavedTooltip' | artemisTranslate }}" />
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [pTooltip]="'artemisApp.legal.unsavedTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.unsaved"></span>
                 </div>
             }
             @if (isSaving()) {
                 <div>
-                    <fa-icon [icon]="faCircleNotch" class="me-1" pTooltip="{{ 'artemisApp.legal.savingTooltip' | artemisTranslate }}" />
+                    <fa-icon [icon]="faCircleNotch" class="me-1" [pTooltip]="'artemisApp.legal.savingTooltip' | artemisTranslate" />
                     <span class="text-info" jhiTranslate="artemisApp.legal.saving"></span>
                 </div>
             }

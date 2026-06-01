@@ -16,7 +16,7 @@
                 <div>Committed : {{ entry.value.committed / 1048576 | number: '1.0-0' }}M</div>
                 @if (entry.value.max !== -1) {
                     <p-progressbar [value]="toPercentage(entry.value.used, entry.value.max)" [showValue]="false" color="var(--bs-success, #28a745)">
-                        <ng-template #content>{{ (entry.value.used * 100) / entry.value.max | number: '1.0-0' }}%</ng-template>
+                        <ng-template #content>{{ toPercentage(entry.value.used, entry.value.max) | number: '1.0-0' }}%</ng-template>
                     </p-progressbar>
                 }
             </div>

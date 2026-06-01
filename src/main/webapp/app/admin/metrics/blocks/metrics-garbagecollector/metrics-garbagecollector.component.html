@@ -13,7 +13,7 @@
                     color="var(--bs-success, #28a745)"
                 >
                     <ng-template #content>
-                        {{ (100 * garbageCollectorMetrics()['jvm.gc.live.data.size']) / garbageCollectorMetrics()['jvm.gc.max.data.size'] | number: '1.0-2' }}%
+                        {{ toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size']) | number: '1.0-2' }}%
                     </ng-template>
                 </p-progressbar>
             </div>
@@ -33,7 +33,7 @@
                 color="var(--bs-success, #28a745)"
             >
                 <ng-template #content>
-                    {{ (100 * garbageCollectorMetrics()['jvm.gc.memory.promoted']) / garbageCollectorMetrics()['jvm.gc.memory.allocated'] | number: '1.0-2' }}%
+                    {{ toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated']) | number: '1.0-2' }}%
                 </ng-template>
             </p-progressbar>
         </div>

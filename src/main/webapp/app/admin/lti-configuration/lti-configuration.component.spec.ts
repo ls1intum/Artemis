@@ -90,6 +90,12 @@ describe('LtiConfigurationComponent', () => {
             component.setActiveTab('1');
             expect(component.activeTab()).toBe(1);
         });
+
+        it('ignores a non-numeric value and keeps the current tab (never sets NaN)', () => {
+            component.setActiveTab(2);
+            component.setActiveTab(undefined);
+            expect(component.activeTab()).toBe(2);
+        });
     });
 
     it('should create', () => {
