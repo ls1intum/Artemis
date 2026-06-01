@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlConfigBuilder;

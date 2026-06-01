@@ -25,7 +25,7 @@ export class IrisMemoriesHttpService {
      * The returned DTO includes learnings and connections associated with the memory.
      */
     getUserMemory(memoryId: string): Observable<MemirisMemoryWithRelationsDTO> {
-        return this.http.get<MemirisMemoryWithRelationsDTO>(`${this.apiPrefix}/memory/${encodeURIComponent(memoryId)}`);
+        return this.http.get<MemirisMemoryWithRelationsDTO>(`${this.apiPrefix}/memories/${encodeURIComponent(memoryId)}`);
     }
 
     /**
@@ -33,7 +33,7 @@ export class IrisMemoriesHttpService {
      * The operation is idempotent; deleting a missing memory results in a server-side 404.
      */
     deleteUserMemory(memoryId: string): Observable<void> {
-        return this.http.delete<void>(`${this.apiPrefix}/memory/${encodeURIComponent(memoryId)}`);
+        return this.http.delete<void>(`${this.apiPrefix}/memories/${encodeURIComponent(memoryId)}`);
     }
 
     /**

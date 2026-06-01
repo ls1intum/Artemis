@@ -54,7 +54,7 @@ export class RatingService {
             params = params.set('sort', sort);
         }
 
-        return this.http.get<RatingListItem[]>(`api/assessment/course/${courseId}/rating`, { params, observe: 'response' }).pipe(
+        return this.http.get<RatingListItem[]>(`api/assessment/courses/${courseId}/rating`, { params, observe: 'response' }).pipe(
             map((response: HttpResponse<RatingListItem[]>) => {
                 const totalCount = parseInt(response.headers.get('X-Total-Count') ?? '0', 10);
                 const totalPages = Math.ceil(totalCount / size);

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { ProgrammingTestStatusDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -15,5 +15,5 @@ import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/ma
 export class ProgrammingTestStatusDetailComponent {
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
-    @Input({ required: true }) detail: ProgrammingTestStatusDetail;
+    detail = input.required<ProgrammingTestStatusDetail>();
 }

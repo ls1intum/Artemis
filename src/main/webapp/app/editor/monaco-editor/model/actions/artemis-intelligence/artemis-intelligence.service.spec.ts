@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -28,26 +30,28 @@ import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
 import { HyperionFaqApiService } from 'app/openapi/api/hyperionFaqApi.service';
 
 describe('ArtemisIntelligenceService', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let alertService: AlertService;
     let translateService: TranslateService;
 
     const monacoEditorComponent = {
-        addLineWidget: jest.fn(),
+        addLineWidget: vi.fn(),
     } as unknown as MonacoEditorComponent;
 
     const mockAlertService = {
-        success: jest.fn(),
+        success: vi.fn(),
     };
 
     const mockHyperionFaqApiService = {
-        rewriteFaq: jest.fn(),
+        rewriteFaq: vi.fn(),
     };
 
     const mockHyperionProblemStatementApiService = {
-        rewriteProblemStatement: jest.fn(),
-        checkExerciseConsistency: jest.fn(),
+        rewriteProblemStatement: vi.fn(),
+        checkExerciseConsistency: vi.fn(),
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -139,7 +143,7 @@ describe('ArtemisIntelligenceService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('rewrite', () => {
@@ -237,9 +241,10 @@ describe('ArtemisIntelligenceService', () => {
 
             mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
-            service.consistencyCheck(exerciseId).subscribe(() => {
-                expect(service.isLoading()).toBeFalsy();
-            });
+            // The synchronous observable resets the loading flag in finalize() after the value is delivered, so the
+            // state is asserted once the (synchronous) subscription has completed rather than inside the next handler.
+            service.consistencyCheck(exerciseId).subscribe();
+            expect(service.isLoading()).toBeFalsy();
         });
 
         it('matches correct repositories', () => {

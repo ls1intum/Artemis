@@ -197,7 +197,7 @@ export class QuizExerciseService {
      * @param quizBatchId the id of the quiz batch that should be started
      */
     startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
-        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' });
+        return this.http.put<QuizBatch>(`api/quiz/quiz-batches/${quizBatchId}/start-batch`, null, { observe: 'response' });
     }
 
     /**

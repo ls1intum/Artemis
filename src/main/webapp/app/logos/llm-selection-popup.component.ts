@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, output } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,7 +24,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private router = inject(Router);
 
-    @Output() choice = new EventEmitter<LLMModalResult>();
+    readonly choice = output<LLMModalResult>();
 
     isVisible = false;
     currentSelection?: LLMSelectionDecision;

@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.core.dto.export.UserLearnerProfileExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.UserLearnerProfileExportDTO;
 
 /**
  * Service for creating learner profile data exports for GDPR compliance.

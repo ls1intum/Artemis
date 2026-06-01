@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2, inject, input, output } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { NgStyle } from '@angular/common';
 
@@ -39,8 +39,8 @@ export class ColorSelectorComponent implements OnInit {
     colorSelectorPosition: Coordinates;
     showColorSelector = false;
     height = 220;
-    @Input() tagColors: string[] = DEFAULT_COLORS;
-    @Output() selectedColor = new EventEmitter<string>();
+    tagColors = input<string[]>(DEFAULT_COLORS);
+    selectedColor = output<string>();
 
     /**
      * set default position on init

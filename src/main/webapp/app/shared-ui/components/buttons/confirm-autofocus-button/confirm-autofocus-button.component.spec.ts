@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -8,22 +7,32 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TemplateRef } from '@angular/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
+import { ConfirmAutofocusModalResult } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 
 describe('ConfirmAutofocusButtonComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ConfirmAutofocusButtonComponent>;
     let comp: ConfirmAutofocusButtonComponent;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
+    let onClose: Subject<ConfirmAutofocusModalResult | undefined>;
+    let dialogRef: DynamicDialogRef;
 
     beforeEach(() => {
+        onClose = new Subject<ConfirmAutofocusModalResult | undefined>();
+        dialogRef = { onClose } as unknown as DynamicDialogRef;
         TestBed.configureTestingModule({
             imports: [ConfirmAutofocusButtonComponent],
-            providers: [NgbModal, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ConfirmAutofocusButtonComponent);
         comp = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
     });
 
     it('should create', () => {
@@ -32,11 +41,11 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
     describe('default values', () => {
         it('should have default disabled as false', () => {
-            expect(comp.disabled()).toBe(false);
+            expect(comp.disabled()).toBeFalsy();
         });
 
         it('should have default isLoading as false', () => {
-            expect(comp.isLoading()).toBe(false);
+            expect(comp.isLoading()).toBeFalsy();
         });
 
         it('should have default btnType as PRIMARY', () => {
@@ -84,17 +93,10 @@ describe('ConfirmAutofocusButtonComponent', () => {
     });
 
     describe('onOpenConfirmationModal', () => {
-        let mockModalRef: Partial<NgbModalRef>;
+        const dialogData = () => vi.mocked(dialogService.open).mock.calls[0][1]?.data as Record<string, unknown>;
 
-        beforeEach(() => {
-            mockModalRef = {
-                componentInstance: {},
-                result: Promise.resolve(),
-            };
-        });
-
-        it('should open modal with plain text', async () => {
-            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        it('should open modal with plain text', () => {
+            const openSpy = vi.spyOn(dialogService, 'open');
             fixture.componentRef.setInput('confirmationText', 'Plain text content');
             fixture.componentRef.setInput('confirmationTitle', 'Test Title');
             fixture.componentRef.setInput('textIsMarkdown', false);
@@ -103,13 +105,13 @@ describe('ConfirmAutofocusButtonComponent', () => {
             comp.onOpenConfirmationModal();
 
             expect(openSpy).toHaveBeenCalledOnce();
-            expect(mockModalRef.componentInstance!.text).toBe('Plain text content');
-            expect(mockModalRef.componentInstance!.textIsMarkdown).toBe(false);
-            expect(mockModalRef.componentInstance!.title).toBe('Test Title');
+            expect(dialogData().text).toBe('Plain text content');
+            expect(dialogData().textIsMarkdown).toBeFalsy();
+            expect(dialogData().title).toBe('Test Title');
         });
 
-        it('should open modal with markdown text', async () => {
-            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        it('should open modal with markdown text', () => {
+            const openSpy = vi.spyOn(dialogService, 'open');
             fixture.componentRef.setInput('confirmationText', '**Bold text**');
             fixture.componentRef.setInput('confirmationTitle', 'Test Title');
             fixture.componentRef.setInput('textIsMarkdown', true);
@@ -118,41 +120,42 @@ describe('ConfirmAutofocusButtonComponent', () => {
             comp.onOpenConfirmationModal();
 
             expect(openSpy).toHaveBeenCalledOnce();
-            expect(mockModalRef.componentInstance!.textIsMarkdown).toBe(true);
+            expect(dialogData().textIsMarkdown).toBeTruthy();
+            expect(dialogData().text).toContain('<strong>Bold text</strong>');
         });
 
         it('should set translateText to true when specified', () => {
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(dialogService, 'open');
             fixture.componentRef.setInput('translateText', true);
             fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.translateText).toBe(true);
+            expect(dialogData().translateText).toBeTruthy();
         });
 
         it('should set translateText to false when not specified', () => {
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(dialogService, 'open');
             fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.translateText).toBe(false);
+            expect(dialogData().translateText).toBeFalsy();
         });
 
         it('should pass titleTranslationParams to modal', () => {
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(dialogService, 'open');
             const params = { name: 'Test' };
             fixture.componentRef.setInput('confirmationTitleTranslationParams', params);
             fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.titleTranslationParams).toEqual(params);
+            expect(dialogData().titleTranslationParams).toEqual(params);
         });
 
         it('should pass content ref to modal', () => {
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(dialogService, 'open');
 
             const mockContent = {} as TemplateRef<any>;
 
@@ -161,29 +164,25 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.contentRef).toBe(mockContent);
+            expect(dialogData().contentRef).toBe(mockContent);
         });
 
-        it('should emit onConfirm when modal is confirmed', async () => {
-            mockModalRef.result = Promise.resolve();
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        it('should emit onConfirm when modal is confirmed', () => {
+            vi.spyOn(dialogService, 'open');
             const confirmSpy = vi.spyOn(comp.onConfirm, 'emit');
 
             comp.onOpenConfirmationModal();
-            await mockModalRef.result;
+            onClose.next({ confirmed: true });
 
             expect(confirmSpy).toHaveBeenCalled();
         });
 
-        it('should emit onCancel when modal is dismissed', async () => {
-            mockModalRef.result = Promise.reject('dismissed');
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+        it('should emit onCancel when modal is dismissed', () => {
+            vi.spyOn(dialogService, 'open');
             const cancelSpy = vi.spyOn(comp.onCancel, 'emit');
 
             comp.onOpenConfirmationModal();
-
-            // Wait for the rejection to be handled
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            onClose.next(undefined);
 
             expect(cancelSpy).toHaveBeenCalled();
         });
