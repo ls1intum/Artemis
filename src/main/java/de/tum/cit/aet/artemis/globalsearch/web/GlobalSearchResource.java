@@ -327,9 +327,10 @@ public class GlobalSearchResource {
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
+
             // When the exam filter is active, also include exercises that belong to exams
-            // (skip if exercise type is already explicitly requested — it covers all exercises)
-            if (!requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+            boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+            if (!isExerciseTypeAlreadyRequested) {
                 Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets);
                 if (examExerciseDisjunct != null) {
                     disjuncts.add(examExerciseDisjunct);
@@ -415,8 +416,14 @@ public class GlobalSearchResource {
         return Role.STUDENT;
     }
 
-    // -- Exercise disjunct --
-
+    /**
+     * Builds the exercise type disjunct. Editors see all exercises in their courses; teaching assistants
+     * see regular exercises unconditionally and exam exercises only after the exam ends; students see
+     * released regular exercises and exam exercises after the exam starts.
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching exercises the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildExerciseDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
@@ -447,8 +454,13 @@ public class GlobalSearchResource {
         return Filter.or(releasedRegularExercises, startedExamExercises);
     }
 
-    // -- Lecture disjunct --
-
+    /**
+     * Builds the lecture type disjunct. All users with course access can see lectures in their courses
+     * (no additional visibility constraints).
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching lectures the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildLectureDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
@@ -456,8 +468,13 @@ public class GlobalSearchResource {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
-    // -- LectureUnit disjunct --
-
+    /**
+     * Builds the lecture unit type disjunct. Staff members (editors, instructors, TAs) see all lecture
+     * units in their courses; students only see lecture units whose release date has passed or is unset.
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching lecture units the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
@@ -472,8 +489,15 @@ public class GlobalSearchResource {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);
     }
 
-    // -- Exam exercise disjunct (exercises belonging to exams, included when exam filter is active) --
-
+    /**
+     * Builds the exam exercise disjunct. This is used when the exam type filter is active but the exercise
+     * type filter is not, to include exercises belonging to exams in the results. Applies the same
+     * role-based visibility rules as {@link #buildExerciseDisjunct(CourseRoleSets)} but restricts
+     * results to exam exercises only ({@code is_exam_exercise = true}).
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching exam exercises the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildExamExerciseDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
@@ -492,8 +516,13 @@ public class GlobalSearchResource {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), combined);
     }
 
-    // -- Exam disjunct --
-
+    /**
+     * Builds the exam type disjunct. Staff members (editors, instructors, TAs) see all exams in their
+     * courses; students only see exams whose visible date has passed.
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching exams the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildExamDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
@@ -508,8 +537,13 @@ public class GlobalSearchResource {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXAM), combined);
     }
 
-    // -- FAQ disjunct --
-
+    /**
+     * Builds the FAQ type disjunct. Staff members (editors, instructors, TAs) see all FAQs in their
+     * courses; students only see FAQs with state {@code ACCEPTED}.
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching FAQs the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildFaqDisjunct(CourseRoleSets roleSets) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
@@ -523,8 +557,13 @@ public class GlobalSearchResource {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.FAQ), combined);
     }
 
-    // -- Channel disjunct --
-
+    /**
+     * Builds the channel type disjunct. All users with course access can see channels that are either
+     * course-wide or public within their courses.
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching channels the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildChannelDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
@@ -535,8 +574,13 @@ public class GlobalSearchResource {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
     }
 
-    // -- Course disjunct --
-
+    /**
+     * Builds the course type disjunct. Users see courses they have access to (no additional
+     * visibility constraints beyond course membership).
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching courses the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildCourseDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
@@ -544,8 +588,13 @@ public class GlobalSearchResource {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.COURSE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
-    // -- Post disjunct --
-
+    /**
+     * Builds the post type disjunct. Posts are only indexed for public channels, so course membership
+     * is sufficient for access (no additional channel-level visibility check needed).
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching posts the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildPostDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
@@ -554,8 +603,13 @@ public class GlobalSearchResource {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
-    // -- Answer Post disjunct --
-
+    /**
+     * Builds the answer post type disjunct. Answer posts are only indexed for public channels, so
+     * course membership is sufficient for access (no additional channel-level visibility check needed).
+     *
+     * @param roleSets the per-course role classification for the current user
+     * @return a filter matching answer posts the user may access, or {@code null} if no courses qualify
+     */
     private Filter buildAnswerPostDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
@@ -571,8 +625,10 @@ public class GlobalSearchResource {
         for (String type : types) {
             typeFilters.add(typeEquals(type));
         }
-        // When exam is requested but exercise is not, also include exam exercises
-        if (types.contains(SearchableEntitySchema.TypeValues.EXAM) && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+
+        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM)
+                && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE);
+        if (isExamRequestedButExercisesAreNotIncludedYet) {
             typeFilters.add(Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true)));
         }
         if (typeFilters.size() == 1) {
