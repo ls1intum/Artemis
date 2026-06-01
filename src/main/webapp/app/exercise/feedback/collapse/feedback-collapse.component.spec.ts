@@ -1,10 +1,13 @@
+import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackCollapseComponent } from 'app/exercise/feedback/collapse/feedback-collapse.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FeedbackCollapseComponent', () => {
+    setupTestBed({ zoneless: true });
     /*
      * Same value as in feedback-collapse.component.ts
      */
@@ -68,9 +71,9 @@ describe('FeedbackCollapseComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.toggleCollapse();
-        expect(component.isCollapsed).toBeFalse();
+        expect(component.isCollapsed).toBe(false);
         component.toggleCollapse();
-        expect(component.isCollapsed).toBeTrue();
+        expect(component.isCollapsed).toBe(true);
     });
 
     const getFeedbackItem = (text: string, hasLongFeedbackText = false): FeedbackItem => {

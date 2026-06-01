@@ -1,6 +1,10 @@
+import { expect, vi } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
@@ -9,13 +13,26 @@ import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.com
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 describe('ExerciseImportTabsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseImportTabsComponent>;
     let comp: ExerciseImportTabsComponent;
 
     beforeEach(() => {
+        TestBed.overrideComponent(ExerciseImportTabsComponent, {
+            remove: { imports: [ExerciseImportComponent, ExerciseImportFromFileComponent, HelpIconComponent] },
+            add: { imports: [MockComponent(ExerciseImportComponent), MockComponent(ExerciseImportFromFileComponent), MockComponent(HelpIconComponent)] },
+        });
         TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockComponent(ExerciseImportFromFileComponent), MockComponent(HelpIconComponent), MockComponent(ExerciseImportComponent), FormsModule],
-            declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
+            imports: [
+                ExerciseImportTabsComponent,
+                MockDirective(TranslateDirective),
+                NgbNavModule,
+                MockComponent(ExerciseImportFromFileComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(ExerciseImportComponent),
+                FormsModule,
+            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -25,7 +42,7 @@ describe('ExerciseImportTabsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should show first tab when opened', () => {
