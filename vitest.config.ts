@@ -71,7 +71,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
-            'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/editor/**/*.spec.ts', // include all editor module tests (markdown/monaco editor)
             'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
@@ -145,7 +145,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
-                'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/editor/**/*.ts', // include all editor module for code coverage
                 'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
@@ -181,12 +181,14 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Lowered ~0.5pp below current actuals to absorb further Jest→Vitest
-                // migration drift. Re-tune when migration completes.
-                lines: 89.6,
-                statements: 89.4,
+                // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
+                // Re-tune when migration completes. Adjusted when the editor module (markdown/monaco editor)
+                // moved from Jest to Vitest, which shifted the aggregate by ~0.2pp on lines/functions/statements
+                // (branches rose). Actuals at that point: lines 89.41, statements 89.21, branches 73.83, functions 87.17.
+                lines: 89.2,
+                statements: 89.0,
                 branches: 73.6,
-                functions: 87.4,
+                functions: 87.0,
             },
         },
     },
