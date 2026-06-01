@@ -126,6 +126,7 @@
                 "semiAutomaticallyAssessedSubmissions": "Zeige nur Abgaben, die mit automatischer Assistenz bewertet wurden"
             },
             "feedbackSuggestions": {
+                "automaticAssessmentAvailable": "Teile dieser Abgabe wurden automatisch bewertet. Bitte überprüfe und bestätige die Bewertung.",
                 "generativeAIAssessmentAvailable": "Feedback-Vorschläge wurden von KI generiert und können Fehler enthalten. Überprüfe wichtige Informationen.",
                 "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…"

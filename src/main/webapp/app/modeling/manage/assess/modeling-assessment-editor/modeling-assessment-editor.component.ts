@@ -269,7 +269,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
         // Load after isLoading=false so the page is interactive while AI suggestions fetch.
-        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+        const automaticFeedbackCount = this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
+        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }

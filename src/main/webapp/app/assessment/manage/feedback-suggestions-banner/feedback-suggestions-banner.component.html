@@ -1,3 +1,8 @@
+@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
+    <p-message severity="info" class="d-flex align-items-center gap-1">
+        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
+    </p-message>
+}
 @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
     <p-message severity="info" class="d-flex align-items-center gap-1">
         <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
