@@ -80,8 +80,7 @@ describe('FilterDropdownComponent', () => {
 
             component.filterChange.emit('SUCCESSFUL');
 
-            expect(emitSpy).toHaveBeenCalledOnce();
-            expect(emitSpy).toHaveBeenCalledWith('SUCCESSFUL');
+            expect(emitSpy).toHaveBeenCalledExactlyOnceWith('SUCCESSFUL');
         });
 
         it('should emit allValue when resetting filter', () => {

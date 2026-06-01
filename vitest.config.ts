@@ -46,6 +46,7 @@ export default defineConfig({
             'src/main/webapp/app/localvc/**/*.spec.ts', // include localvc tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
+            'src/main/webapp/app/exercise/**/*.spec.ts', // include exercise tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts', // include tutorial group tests
             'src/main/webapp/app/quiz/**/*.spec.ts', // include quiz tests
             'src/main/webapp/app/lecture/**/*.spec.ts', // include lecture tests
@@ -122,6 +123,7 @@ export default defineConfig({
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
                 'src/main/webapp/app/text/**/*.ts', // include text module for code coverage
+                'src/main/webapp/app/exercise/**/*.ts', // include exercise for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts', // include tutorial group for code coverage
                 'src/main/webapp/app/lti/**/*.ts', // include lti for code coverage
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
@@ -181,10 +183,10 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                lines: 88.7,
-                statements: 88.5,
-                branches: 73.2,
-                functions: 86.0,
+                lines: 88.8,
+                statements: 88.7,
+                branches: 73.7,
+                functions: 86.2,
             },
         },
     },
