@@ -6,7 +6,7 @@ import { LandingSocialProofComponent } from 'app/core/landing/landing-social-pro
 import { LandingFeaturesComponent } from 'app/core/landing/landing-features.component';
 import { LandingFaqComponent } from 'app/core/landing/landing-faq.component';
 import { LandingFooterComponent } from 'app/core/landing/landing-footer.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-landing',

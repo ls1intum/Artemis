@@ -19,6 +19,6 @@ export class PasswordService {
      * @returns Observable that completes on success, or errors with HTTP 400 if current password is incorrect
      */
     changePassword(newPassword: string, currentPassword: string): Observable<void> {
-        return this.http.post<void>('api/core/account/change-password', { currentPassword, newPassword });
+        return this.http.post<void>('api/account/change-password', { currentPassword, newPassword });
     }
 }

@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { DataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 
 describe('AdminDataExportCreateModalComponent', () => {

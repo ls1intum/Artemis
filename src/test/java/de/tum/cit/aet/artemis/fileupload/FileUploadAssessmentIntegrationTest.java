@@ -94,7 +94,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
         assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
 
-        Course course = request.get("/api/core/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
+        Course course = request.get("/api/course/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
                 HttpStatus.OK, Course.class);
         Exercise exercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);

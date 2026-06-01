@@ -4,7 +4,7 @@ import { CourseGroup } from 'app/course/shared/entities/course.model';
 import { TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupTutorsService {

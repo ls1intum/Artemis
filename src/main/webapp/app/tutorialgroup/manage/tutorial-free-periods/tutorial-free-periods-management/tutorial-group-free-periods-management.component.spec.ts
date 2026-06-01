@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, input } from '@angular/core';
+import { Component, EmbeddedViewRef, input } from '@angular/core';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
@@ -27,6 +27,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 @Component({
     selector: 'jhi-tutorial-group-free-periods-table',
@@ -59,6 +60,25 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let thirdOfJanuaryPeriod: TutorialGroupFreePeriod;
 
     const router = new MockRouter();
+
+    // Embedded views created by renderTitleBarActions() are tracked so they can be destroyed after each test.
+    let titleBarActionViews: EmbeddedViewRef<unknown>[] = [];
+
+    /**
+     * The "Add New Free Period" button is projected into the shared course title bar via the `*titleBarActions`
+     * directive, so it is not part of the component's own DOM. This renders the registered actions template the
+     * same way `jhi-course-title-bar` would and returns the projected button element.
+     */
+    function renderTitleBarActions(): HTMLElement {
+        const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
+        expect(actionsTemplate).toBeDefined();
+        const view = actionsTemplate!.createEmbeddedView({});
+        titleBarActionViews.push(view);
+        view.detectChanges();
+        // The `*titleBarActions` directive sits directly on the button, so the embedded view's first root node is it.
+        return view.rootNodes[0] as HTMLElement;
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TutorialGroupFreePeriodsManagementComponent, OwlNativeDateTimeModule],
@@ -113,6 +133,8 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     afterEach(() => {
+        titleBarActionViews.forEach((view) => view.destroy());
+        titleBarActionViews = [];
         vi.restoreAllMocks();
     });
 
@@ -125,7 +147,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         vi.spyOn(component, 'createFreePeriodDialog').mockReturnValue(mockCreateDialog);
         const openDialogSpy = vi.spyOn(component, 'openCreateFreePeriodDialog');
 
-        const button = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
+        const button = renderTitleBarActions();
         button.click();
 
         await fixture.whenStable();

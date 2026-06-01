@@ -67,7 +67,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildPhasesTemplateFile(String templateKey, int expectedPhases) throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertBuildPlanPhasesAreCorrect(buildPlanPhases, expectedPhases);
     }
@@ -75,13 +75,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
-        request.get("/api/programming/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/FACT", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/FACT", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(FACT_DOCKER_IMAGE);
     }
@@ -89,7 +89,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/GCC", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(C_DOCKER_IMAGE);
     }

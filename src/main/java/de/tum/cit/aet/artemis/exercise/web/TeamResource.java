@@ -431,14 +431,17 @@ public class TeamResource {
      * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
      *
      * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
-     * @param sourceExerciseId      the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @param sourceExerciseIdQuery the exercise id of the exercise from which to copy the teams (= source exercise) (provided as a query parameter; preferred)
+     * @param sourceExerciseIdPath  the exercise id of the exercise from which to copy the teams (= source exercise) (provided as a legacy path variable; deprecated)
      * @param importStrategyType    the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PutMapping("exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
+    @PutMapping({ "exercises/{exerciseId}/teams/import-from-exercise", "exercises/{exerciseId}/teams/import-from-exercise/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
-            @RequestParam TeamImportStrategyType importStrategyType) {
+    public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable("exerciseId") long destinationExerciseId,
+            @RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestParam TeamImportStrategyType importStrategyType) {
+        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();

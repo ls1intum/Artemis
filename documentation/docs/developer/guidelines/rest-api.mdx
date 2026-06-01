@@ -195,6 +195,10 @@ public class ExerciseResource {
   <strong>Critical:</strong> DTOs must NEVER contain references to <code>@Entity</code> types as fields. This includes direct entity references, collections of entities (List, Set, Map), or any nested structure containing entities. Wrapping an entity inside a DTO defeats the entire purpose of using DTOs.
 </Callout>
 
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical:</strong> DTOs must NEVER expose <code>Class&lt;...&gt;</code> tokens as fields (including record components). Serializing a <code>Class</code> writes the fully-qualified JVM class name into the JSON payload, which couples every client to internal Java package layout — a class rename then silently breaks consumers (including cached stale browser tabs). When a DTO needs to express "which kind of entity does this row represent", use a dedicated discriminator <strong>enum</strong> with <code>@JsonValue</code> (see <em>Discriminator Enums for Entity-Type Fields</em> below). <code>Class&lt;...&gt;</code> may still appear as a parameter on an internal JPQL-overloaded constructor that converts to the canonical enum — that's an internal mapping concern and never reaches the wire.
+</Callout>
+
 DTOs must be pure data containers with only:
 - Primitive types and their wrappers (String, Long, Integer, Boolean, etc.)
 - Date/time types (ZonedDateTime, Instant, LocalDate, etc.)
@@ -374,6 +378,63 @@ public ResponseEntity<QuizQuestionDTO> createQuestion(@RequestBody @Valid QuizQu
 ```
 
 
+### Discriminator Enums for Entity-Type Fields
+
+When a DTO needs to expose *which concrete subclass* of an entity inheritance hierarchy a row represents (for example, the result of Hibernate's `TYPE(...)` JPQL function over an `@Inheritance` hierarchy), do **not** expose `Class<? extends SomeEntity>` as a DTO component. Serializing a `Class` writes its fully-qualified JVM name into the JSON payload, which couples every client (including cached stale browser tabs after a refactor) to the internal Java package layout — a class rename then silently breaks consumers.
+
+Instead, define a discriminator **enum** whose `@JsonValue` produces the exact string the entity's `@JsonSubTypes` already emits, and expose that enum on the DTO. The canonical examples in Artemis are `ExerciseType` and `LectureUnitType`:
+
+```java
+public enum ExerciseType {
+
+    TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz");
+
+    private final String value;
+
+    ExerciseType(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
+
+    public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
+        return switch (exerciseClass.getSimpleName()) {
+            case "TextExercise" -> TEXT;
+            case "ProgrammingExercise" -> PROGRAMMING;
+            // ...
+            default -> throw new IllegalArgumentException("Unknown exercise class: " + exerciseClass.getName());
+        };
+    }
+}
+```
+
+The enum's JSON values must match the entity's `@JsonSubTypes` `name` exactly. A client reading `Exercise.type` then sees the same string regardless of whether the source is the entity or a DTO — and a stable string contract survives package renames.
+
+When the DTO is populated from a JPQL `SELECT NEW ... TYPE(e) ...` projection, add an **overloaded record constructor** that accepts the raw entity class and converts it via the enum helper. This keeps the canonical record component (the field that serialization observes) as the enum, while the JPQL projection continues to compile unchanged:
+
+```java
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ExerciseInformationDTO(long id, ..., ExerciseType type, ...) {
+
+    /**
+     * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function
+     * and maps it to the {@link ExerciseType} discriminator used by the canonical record component.
+     */
+    public ExerciseInformationDTO(long id, ..., Class<? extends Exercise> type, ...) {
+        this(id, ..., ExerciseType.getExerciseTypeFromClass(type), ...);
+    }
+}
+```
+
+The overloaded constructor takes `Class<>` as a *parameter*, not as a *field*, so it does not violate the "no `Class<>` in DTOs" rule — that rule (and the architecture test enforcing it) targets record components and declared fields only.
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>Wire-format compatibility:</strong> Migrating an existing DTO from <code>Class&lt;...&gt;</code> to a discriminator enum is a <strong>breaking change</strong> for any consumer that reads the old fully-qualified-class-name strings. Update every client mapper at the network boundary (e.g. <code>mapToExerciseType</code> in <code>CourseDashboardService</code>) and verify external consumers (e.g. Pyris) in the same release.
+</Callout>
+
 ### Architecture Test Enforcement
 
 We enforce DTO usage through architecture tests that verify:
@@ -381,8 +442,9 @@ We enforce DTO usage through architecture tests that verify:
 1. **No entity return types:** REST controllers must not return `@Entity` types directly
 2. **No entity input types:** `@RequestBody` and `@RequestPart` parameters must not be `@Entity` types
 3. **No entity fields in DTOs:** DTO classes must not contain fields that reference `@Entity` types (prevents lazy wrapper pattern)
+4. **No `Class<>` fields in DTOs:** DTO classes (in any `..dto..` package) must not declare fields of raw type `java.lang.Class` — i.e. no `Class<? extends X>` or raw `Class` record components. Use a discriminator enum (see *Discriminator Enums for Entity-Type Fields* above). Enforced by `ArchitectureTest#testNoClassFieldsInDtos`.
 
-These tests run as part of CI and will fail if violations are introduced. Current violation counts are tracked per module with the goal of reducing them to zero.
+These tests run as part of CI and will fail if violations are introduced. Rules 1–3 are tracked per module with the goal of reducing the count to zero (see `AbstractModuleEntityUsageArchitectureTest`); rule 4 is a global zero-tolerance rule.
 
 ## REST Controller Best Practices
 
@@ -404,6 +466,66 @@ These tests run as part of CI and will fail if violations are introduced. Curren
 * Use consistent routes that start with `courses`, `exercises`, `participations`, `exams`, or `lectures` to simplify access control
 * When defining a new route, all subroutes should be addressable (e.g., if your new route is `exercises/{exerciseId}/statistics`, then both `exercises/{exerciseId}` and `exercises` should be addressable)
 * For alternative representations that send extra data (e.g., for assessment), specify the reason at the end of the route: `participations/{participationId}/for-assessment`
+
+### Path Structure: `module / collection / {id}`
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical Rule (enforced by architecture tests):</strong> A path variable that identifies an entity must always be paired with its collection. The canonical shape is <code>api/&lt;module&gt;/&lt;collection&gt;/&#123;&lt;collection&#8209;singular&gt;Id&#125;</code> — for example <code>api/course/courses/&#123;courseId&#125;</code> or <code>api/exam/courses/&#123;courseId&#125;/exams/&#123;examId&#125;</code>.
+</Callout>
+
+Each REST path is built from these kinds of segments, in this order:
+
+1. **Module** — the path always starts with the server module name (the package/folder under `de.tum.cit.aet.artemis`, e.g. `course`, `exam`, `programming`). `api/course/...` *is* the API of the course module. Enforced by `AbstractModuleResourceArchitectureTest#shouldCorrectlyUseRequestMappingAnnotations`.
+2. **Collection (plural) + id (singular)** — after the module there is always a resource collection in **plural** (`courses`, `exercises`, `exams`, `lectures`, …). An id that narrows the collection to a single element must immediately follow its collection and **match its name exactly**: `courses/{courseId}`, `exercises/{exerciseId}`, `exams/{examId}`. Never place a bare id directly after the module (`api/notification/{courseId}` ❌) or after another id — an id must always be preceded by its matching plural collection. Enforced by `AbstractModuleResourceArchitectureTest#restPathVariablesMustBePairedWithTheirCollection`.
+3. **Query parameters (optional)** — use query parameters to further filter, search, or paginate when the value is **not** part of the resource hierarchy (e.g. `.../users/search?loginOrName=foo&roles=students`). Prefer a query parameter over a path segment when the entity is only a filter and not a parent of the addressed resource.
+
+| ❌ Avoid | ✅ Use |
+|---------|--------|
+| `api/notification/{courseId}/settings` (id after module) | `api/notification/courses/{courseId}/settings` |
+| `api/atlas/learning-path/{learningPathId}` (singular collection) | `api/atlas/learning-paths/{learningPathId}` |
+| `api/exercise/{exerciseId}/versions` (id after module) | `api/exercise/exercises/{exerciseId}/versions` |
+| `api/account/account/profile-picture` (module name repeated as resource) | `api/account/profile-picture` |
+
+Subtype collections are allowed when the id is the supertype id, because the collection ends with the matching plural: `api/programming/programming-exercises/{exerciseId}` ✅ (`programming-exercises` ends with `exercises`, the plural of `exerciseId`).
+
+#### Common violations and how to fix each
+
+Every violation falls into one of these patterns. Each example is a real path from the Artemis API; pick the fix that matches your case and keep the old path as a deprecated alias (see below).
+
+| Pattern | ❌ Before | ✅ After | How |
+|---------|-----------|---------|-----|
+| **Singular collection** | `api/programming/auxiliary-repository/{auxiliaryRepositoryId}` | `api/programming/auxiliary-repositories/{auxiliaryRepositoryId}` | Pluralize the collection so it is the plural of the id stem. |
+| **Floating id** (id straight after the module, or after another id) | `api/notification/{courseId}/settings` | `api/notification/courses/{courseId}/settings` | Insert the matching plural collection before the id. |
+| **Key entity not at the end** (operation modeled as a collection) | `api/programming/repository/{participationId}/files` | `api/programming/participations/{participationId}/repository/files` | Reorder so the id pairs with its real collection; the operation/sub-resource (`repository`, `text-editor`) comes after. |
+| **Source / qualified id as a path segment** | `api/programming/programming-exercises/import/{sourceExerciseId}` | `api/programming/programming-exercises/import?sourceExerciseId={id}` *(or)* `api/programming/programming-exercises/{sourceExerciseId}/import` | If the id is only a parameter of the action, make it a query parameter; if it identifies a real parent resource, nest the action under that resource. |
+| **Collection name ≠ id name** | `api/account/passkey/{credentialId}` | `api/account/passkeys/{passkeyId}` *(or)* `api/account/credentials/{credentialId}` | Rename either the collection or the id so they match exactly — an API naming decision; do not leave them divergent. |
+
+The arch rule reports the *first* unpaired id on a path, so fixing one segment can surface a second (e.g. pluralizing `tutorial-groups-configuration` revealed that the nested `tutorial-free-periods/{tutorialGroupFreePeriodId}` collection still mismatches its id). Re-run the test after each fix.
+
+#### Migrating a path without breaking clients
+
+Mobile apps (iOS, Android) and the VS Code extension consume these paths and cannot be updated in lockstep, so **never remove or rename a path outright**. Map the canonical path *and* the old path on the same handler — canonical first, legacy second — so the old one keeps working as a deprecated alias:
+
+```java
+// Class-level: the canonical prefix carries the collection; the legacy prefix stays unchanged.
+@RequestMapping({ "api/notification/courses/", "api/communication/notification/" })
+
+// Method-level (single class prefix): list the canonical path first, the legacy path second.
+@GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
+```
+
+The first entry is the canonical successor; every later entry is a deprecated alias. For class-level dual prefixes, `LegacyApiPathDeprecationInterceptor` automatically tags responses served under a legacy prefix with `Deprecation`, `Sunset`, and `Link: <successor>; rel="successor-version"` headers. Record the deprecated prefix in the module's `*LegacyRestPaths` class (annotated `@Deprecated(forRemoval = true)`) so the eventual cleanup is mechanical.
+
+<Callout variant={CalloutVariant.info}>
+  The exemption set <code>AbstractModuleResourceArchitectureTest#PATH_VARIABLE_COLLECTION_BASELINE</code> is now <strong>empty</strong>: every REST controller path conforms, so the convention is fully enforced and any new violation fails the build. Only add an entry there together with a documented follow-up plan to migrate it (keeping the old path as a deprecated alias).
+</Callout>
+
+#### Further reading
+
+These conventions follow widely adopted industry REST guidelines:
+- [Zalando RESTful API Guidelines — *Pluralize resource names* &amp; *Identify resources and sub-resources via path segments*](https://opensource.zalando.com/restful-api-guidelines/#resources)
+- [Microsoft Azure REST API Guidelines — *Resource paths*](https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md)
+- [Google API Improvement Proposals — AIP-122 *Resource names*](https://google.aip.dev/122)
 
 ### Controller Method Guidelines
 

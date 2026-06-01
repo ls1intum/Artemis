@@ -26,9 +26,13 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -89,16 +93,18 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         return conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
     }
 
-    Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
+    PostResponseDTO postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
         long[] conversationIds = new long[] { conversationId };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, conversationIds, null, null, false, false, false, null, null);
         var requestingUser = userRepository.getUser();
 
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
+        CreatePostDTO postToCreate = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), false, new CreatePostConversationDTO(conversationId));
 
-        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        assertThat(createdPost.getConversation().getId()).isEqualTo(conversationId);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToCreate, PostResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(createdPost.conversation().id()).isEqualTo(conversationId);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;
     }
@@ -199,8 +205,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
 
     GroupChatDTO createGroupChat(String... userLoginsWithoutPrefix) throws Exception {
         var loginsWithPrefix = Arrays.stream(userLoginsWithoutPrefix).map(login -> testPrefix + login).toArray(String[]::new);
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
-                HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(Arrays.stream(loginsWithPrefix).toList()), GroupChatDTO.class, HttpStatus.CREATED);
         this.resetWebsocketMock();
         return chat;
     }

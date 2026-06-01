@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 

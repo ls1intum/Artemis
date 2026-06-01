@@ -42,7 +42,7 @@ import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-competencies/standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { DialogService } from 'primeng/dynamicdialog';

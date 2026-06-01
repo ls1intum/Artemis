@@ -18,11 +18,11 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
-import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisChatSessionExportDTO;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisMessageExportDTO;
 
 /**
  * Service for creating Iris (AI tutor) data exports for GDPR compliance.

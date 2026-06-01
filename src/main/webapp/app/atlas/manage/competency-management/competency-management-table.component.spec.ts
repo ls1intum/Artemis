@@ -5,7 +5,7 @@ import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';

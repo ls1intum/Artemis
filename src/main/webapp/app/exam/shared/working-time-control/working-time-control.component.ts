@@ -2,10 +2,10 @@ import { Component, effect, inject, input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { round } from 'app/shared/util/utils';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { round } from 'app/foundation/util/utils';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-working-time-control',

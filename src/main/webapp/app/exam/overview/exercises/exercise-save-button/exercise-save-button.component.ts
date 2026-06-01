@@ -2,8 +2,8 @@ import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { facSaveSuccess } from 'app/shared/icons/icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { facSaveSuccess } from 'app/foundation/icons/icons';
 
 @Component({
     selector: 'jhi-exercise-save-button',
