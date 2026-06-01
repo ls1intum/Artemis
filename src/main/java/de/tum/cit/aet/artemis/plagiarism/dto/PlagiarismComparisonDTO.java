@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
@@ -39,10 +37,9 @@ public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissio
             return null;
         }
 
-        Set<PlagiarismMatchDTO> matches = null;
-        if (comparisonWithSubmissionA.getMatches() != null && Hibernate.isInitialized(comparisonWithSubmissionA.getMatches())) {
-            matches = comparisonWithSubmissionA.getMatches().stream().map(PlagiarismMatchDTO::fromMatch).collect(Collectors.toSet());
-        }
+        Set<PlagiarismMatchDTO> matches = comparisonWithSubmissionA.getMatches() != null
+                ? comparisonWithSubmissionA.getMatches().stream().map(PlagiarismMatchDTO::fromMatch).collect(Collectors.toSet())
+                : null;
 
         return new PlagiarismComparisonDTO(comparisonWithSubmissionA.getId(), PlagiarismSubmissionDTO.fromSubmission(comparisonWithSubmissionA.getSubmissionA()),
                 PlagiarismSubmissionDTO.fromSubmission(comparisonWithSubmissionB != null ? comparisonWithSubmissionB.getSubmissionB() : null), matches,
