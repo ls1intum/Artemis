@@ -42,7 +42,7 @@ export class SearchInputComponent {
     searchKeyDown = output<KeyboardEvent>();
     filterRemoved = output<SearchEntityType>();
     courseFilterRemoved = output<void>();
-    /** Emitted when Backspace is pressed while the input is empty. */
+    /** Emitted when Backspace is pressed while the cursor is at the beginning of the input. */
     backspaceOnEmpty = output<void>();
 
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
@@ -82,9 +82,10 @@ export class SearchInputComponent {
     }
 
     protected onKeyDown(event: KeyboardEvent) {
-        // Detect backspace on empty input directly from the DOM element,
+        // Detect backspace at the beginning of the input directly from the DOM element,
         // which is always up-to-date (unlike the signal that may lag during keydown).
-        if (event.key === 'Backspace' && this.searchInputElement()?.nativeElement.value === '') {
+        const el = this.searchInputElement()?.nativeElement;
+        if (event.key === 'Backspace' && el && el.selectionStart === 0 && el.selectionEnd === 0) {
             this.backspaceOnEmpty.emit();
         }
         this.searchKeyDown.emit(event);
