@@ -192,11 +192,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
 
+    private static readonly COMMUNICATION_FILTER_TYPES: ReadonlySet<SearchEntityType> = new Set(['channel', 'post', 'answer_post']);
+
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
         lectures: ['lecture'],
         exams: ['exam'],
-        communication: ['channel'],
+        communication: ['channel', 'post', 'answer_post'],
         faq: ['faq'],
         faqs: ['faq'],
     };
@@ -290,7 +292,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected removeFilter(filterType: SearchEntityType) {
-        const newFilters = this.activeFilters().filter((f) => f !== filterType);
+        const isCommunicationType = GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(filterType);
+        const newFilters = isCommunicationType
+            ? this.activeFilters().filter((f) => !GlobalSearchModalComponent.COMMUNICATION_FILTER_TYPES.has(f))
+            : this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
     }

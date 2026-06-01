@@ -11,7 +11,7 @@
                 </button>
             </span>
         }
-        @for (filter of activeFilters(); track filter) {
+        @for (filter of displayFilters(); track filter) {
             <span class="filter-chip search-filter-chip me-2" [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: getFilterLabel(filter) }">
                 <span class="filter-chip-label">{{ getFilterLabel(filter) }}</span>
                 <button type="button" class="filter-chip-remove" (click)="onFilterRemove(filter)" aria-label="Remove" tabindex="-1">
