@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -392,15 +393,15 @@ public class AdminUserResource {
     /**
      * Delete users: deletes the provided users
      *
-     * @param logins user logins to delete
+     * @param loginsToDelete user logins to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users")
     public ResponseEntity<List<String>> deleteUsers(@RequestParam("login") List<String> loginsToDelete) {
         // Copy into a mutable list since the @RequestParam-bound list may be immutable (protected/current users are removed below).
-        List<String> logins = new java.util.ArrayList<>(loginsToDelete);
+        List<String> logins = new ArrayList<>(loginsToDelete);
         log.debug("REST request to delete {} users", logins.size());
-        List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
+        List<String> deletedUsers = Collections.synchronizedList(new ArrayList<>());
 
         // Remove protected users from the list
         logins.remove(IRIS_BOT_LOGIN);
