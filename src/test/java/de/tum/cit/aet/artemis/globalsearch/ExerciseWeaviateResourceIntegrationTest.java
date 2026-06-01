@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -103,6 +105,10 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     private TextExercise endedExamExercise;
 
+    private ProgrammingExercise endedExamAutoAssessmentProgrammingExercise;
+
+    private ProgrammingExercise endedExamSemiAutoAssessmentProgrammingExercise;
+
     private Lecture lecture;
 
     static boolean isWeaviateEnabled() {
@@ -158,6 +164,22 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         endedExamExercise.setTitle(SEARCH_PREFIX + " Ended Exam Exercise");
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
+        // Create an exam programming exercise with AUTOMATIC assessment (default) in the ended exam
+        var autoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+        autoAssessmentExerciseGroup = exerciseGroupRepository.save(autoAssessmentExerciseGroup);
+        endedExamAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(autoAssessmentExerciseGroup);
+        endedExamAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " AutoAssess ExamProg");
+        endedExamAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        endedExamAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamAutoAssessmentProgrammingExercise);
+
+        // Create an exam programming exercise with SEMI_AUTOMATIC assessment in the ended exam
+        var semiAutoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+        semiAutoAssessmentExerciseGroup = exerciseGroupRepository.save(semiAutoAssessmentExerciseGroup);
+        endedExamSemiAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(semiAutoAssessmentExerciseGroup);
+        endedExamSemiAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " SemiAutoAssess ExamProg");
+        endedExamSemiAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        endedExamSemiAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamSemiAutoAssessmentProgrammingExercise);
+
         // Create a lecture in the same course
         lecture = lectureUtilService.createLecture(course);
         lecture.setTitle(SEARCH_PREFIX + " Test Lecture");
@@ -169,6 +191,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(notStartedExamExercise));
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(ongoingExamExercise));
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(endedExamExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(endedExamAutoAssessmentProgrammingExercise));
+        searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(endedExamSemiAutoAssessmentProgrammingExercise));
         searchableEntityWeaviateService.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
 
         // Wait for all entities to be indexed AND BM25-searchable.
@@ -181,11 +205,13 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             assertExerciseExistsInWeaviate(weaviateService, notStartedExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, ongoingExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, endedExamExercise);
+            assertExerciseExistsInWeaviate(weaviateService, endedExamAutoAssessmentProgrammingExercise);
+            assertExerciseExistsInWeaviate(weaviateService, endedExamSemiAutoAssessmentProgrammingExercise);
             assertLectureExistsInWeaviate(weaviateService, lecture);
 
-            // Verify BM25 inverted index is ready by checking that a keyword search finds all 6 items
+            // Verify BM25 inverted index is ready by checking that a keyword search finds all 8 items
             var bm25Results = collection.query.bm25(SEARCH_PREFIX, b -> b.limit(10).queryProperties(SearchableEntitySchema.Properties.TITLE));
-            assertThat(bm25Results.objects()).hasSizeGreaterThanOrEqualTo(6);
+            assertThat(bm25Results.objects()).hasSizeGreaterThanOrEqualTo(8);
         });
     }
 
@@ -380,55 +406,126 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     class ExamExerciseMetadataFlagTests {
 
         /**
-         * Staff users (TA, editor, instructor) should see {@code isAtLeastTutor: true} in the metadata
-         * of ended exam exercises so the client can route them to the course-management view.
+         * Editors/instructors should see {@code isAtLeastEditor: true} in the metadata
+         * of ended exam exercises so the client can route them to the exercise management page.
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testInstructorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+        void testInstructorReceivesIsAtLeastEditorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
-            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
+            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastEditor", true);
+            assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-        void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testEditorReceivesIsAtLeastEditorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
 
             assertThat(endedExamResult).isPresent();
-            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
-        }
-
-        /**
-         * Students should NOT receive the {@code isAtLeastTutor} flag; the client falls back to
-         * the student exercise route for their ended-exam exercise results.
-         */
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentDoesNotReceiveIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
-            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
-            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
-
-            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastEditor", true);
             assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
         }
 
         /**
-         * The {@code isAtLeastTutor} flag must NOT appear on regular (non-exam) exercises
-         * regardless of role, since those never need the course-management routing branch.
+         * Tutors should see {@code isAtLeastTutor: true} (not {@code isAtLeastEditor}) so the
+         * client routes them to the assessment dashboard instead of the exercise management page.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
+
+            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).containsEntry("isAtLeastTutor", true);
+            assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+        }
+
+        /**
+         * Students should NOT receive the {@code isAtLeastTutor} or {@code isAtLeastEditor} flag.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentDoesNotReceiveStaffFlagsOnEndedExamExercise() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
+
+            assertThat(endedExamResult).isPresent();
+            assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
+            assertThat(endedExamResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+        }
+
+        /**
+         * Neither flag should appear on regular (non-exam) exercises regardless of role.
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testIsAtLeastTutorFlagAbsentOnRegularExercise() throws Exception {
+        void testStaffFlagsAbsentOnRegularExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var regularResult = results.stream().filter(r -> (SEARCH_PREFIX + " Released Exercise").equals(r.title())).findFirst();
 
             assertThat(regularResult).isPresent();
             assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
+            assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+        }
+    }
+
+    @Nested
+    class TutorExamProgrammingExerciseAssessmentTypeTests {
+
+        /**
+         * Tutors must NOT see exam programming exercises with automatic-only assessment,
+         * since there is no assessment dashboard for them to use.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorCannotSeeExamProgrammingExerciseWithAutomaticAssessment() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " AutoAssess ExamProg");
+        }
+
+        /**
+         * Tutors CAN see exam programming exercises with semi-automatic (manual) assessment.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorCanSeeExamProgrammingExerciseWithSemiAutomaticAssessment() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " SemiAutoAssess ExamProg");
+        }
+
+        /**
+         * Editors can see all exam programming exercises regardless of assessment type.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testEditorCanSeeAllExamProgrammingExercises() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " AutoAssess ExamProg", SEARCH_PREFIX + " SemiAutoAssess ExamProg");
+        }
+
+        /**
+         * Tutors CAN still see non-programming exam exercises (text, modeling, etc.)
+         * regardless of their assessment type.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorCanSeeNonProgrammingExamExercises() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
         }
     }
 
