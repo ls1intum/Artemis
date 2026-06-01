@@ -12,7 +12,7 @@ package de.tum.cit.aet.artemis.notification.config;
  * <p>
  * TODO: Remove this class together with all its references (REST controllers, interceptor map) once
  * external clients (mobile apps, cached webapp bundles) have migrated. Target sunset: 2026-09-30 —
- * keep in sync with {@link LegacyNotificationPathDeprecationInterceptor#SUNSET_DATE}.
+ * keep in sync with {@code LegacyApiPathDeprecationInterceptor#SUNSET_DATE}.
  */
 public final class NotificationLegacyRestPaths {
 
@@ -22,6 +22,18 @@ public final class NotificationLegacyRestPaths {
      */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String COMMUNICATION_PREFIX = "api/communication/";
+
+    /**
+     * Legacy class-level prefix used by the course-notification resources (CourseNotificationResource,
+     * UserCourseNotificationSettingResource, UserCourseNotificationStatusResource). It folds in the
+     * former {@code notification/} resource segment so the canonical paths drop the confusing
+     * {@code api/notification/notification/...} duplication: the successor paths are now
+     * {@code api/notification/courses/...} (e.g. {@code api/notification/courses/info},
+     * {@code api/notification/courses/{courseId}/settings}) while the legacy
+     * {@code api/communication/notification/...} paths are unchanged.
+     */
+    @Deprecated(forRemoval = true, since = "9.3")
+    public static final String COMMUNICATION_NOTIFICATION_PREFIX = "api/communication/notification/";
 
     /**
      * Legacy class-level prefix from when {@code PublicSystemNotificationResource} lived in the core

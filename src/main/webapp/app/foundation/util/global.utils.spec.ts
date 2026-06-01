@@ -2,18 +2,22 @@ import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
+import { type Mocked, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal, isErrorAlert, onError } from 'app/foundation/util/global.utils';
 
 describe('GlobalUtils', () => {
+    setupTestBed({ zoneless: true });
+
     describe('onError', () => {
-        let mockAlertService: jest.Mocked<AlertService>;
+        let mockAlertService: Mocked<AlertService>;
 
         beforeEach(() => {
             mockAlertService = {
-                error: jest.fn(),
-                addAlert: jest.fn(),
-            } as unknown as jest.Mocked<AlertService>;
+                error: vi.fn(),
+                addAlert: vi.fn(),
+            } as unknown as Mocked<AlertService>;
         });
 
         it('should show error.http.400 for status 400', () => {
@@ -109,7 +113,7 @@ describe('GlobalUtils', () => {
 
             const result = isErrorAlert(error);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should return false when error does not have errorKey', () => {
@@ -121,13 +125,13 @@ describe('GlobalUtils', () => {
 
             const result = isErrorAlert(error);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false when error is null', () => {
             const result = isErrorAlert(null);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false when error.error is undefined', () => {
@@ -135,7 +139,7 @@ describe('GlobalUtils', () => {
 
             const result = isErrorAlert(error);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false when errorKey is empty string', () => {
@@ -147,7 +151,7 @@ describe('GlobalUtils', () => {
 
             const result = isErrorAlert(error);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should return false when errorKey is null', () => {
@@ -159,7 +163,7 @@ describe('GlobalUtils', () => {
 
             const result = isErrorAlert(error);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
@@ -176,7 +180,7 @@ describe('GlobalUtils', () => {
                         provide: TranslateService,
                         useValue: {
                             onLangChange: langChangeSubject.asObservable(),
-                            getCurrentLang: jest.fn().mockReturnValue('en'),
+                            getCurrentLang: vi.fn().mockReturnValue('en'),
                         },
                     },
                 ],

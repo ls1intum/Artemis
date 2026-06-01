@@ -37,7 +37,7 @@ describe('SidebarCardItemComponent', () => {
             } as OneToOneChatDTO,
         };
 
-        component.sidebarItem = sidebarItemMock;
+        fixture.componentRef.setInput('sidebarItem', sidebarItemMock);
     });
 
     it('should create', () => {
@@ -54,40 +54,38 @@ describe('SidebarCardItemComponent', () => {
     it('should format unreadCount correctly when count is less than 99', () => {
         fixture.componentRef.setInput('unreadCount', 45);
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(component.formattedUnreadCount).toBe('45');
+        expect(component.formattedUnreadCount()).toBe('45');
     });
 
     it('should format unreadCount as "99+" when count exceeds 99', () => {
         fixture.componentRef.setInput('unreadCount', 120);
         fixture.detectChanges();
-        component.ngOnInit();
-        expect(component.formattedUnreadCount).toBe('99+');
+        expect(component.formattedUnreadCount()).toBe('99+');
     });
 
-    it('should set group icon for group chats in extractMessageUser', () => {
+    it('should derive the group icon for group chats without mutating the input', () => {
+        const groupItem = { ...sidebarItemMock, type: 'groupChat', icon: undefined };
+        fixture.componentRef.setInput('sidebarItem', groupItem);
         fixture.detectChanges();
-        component.sidebarItem.type = 'groupChat';
-        component.sidebarItem.icon = undefined;
-        component.extractMessageUser();
-        expect(component.sidebarItem.icon).toBe(faPeopleGroup);
+        expect(component.displayIcon()).toBe(faPeopleGroup);
+        // the input object must not be mutated by the component
+        expect(groupItem.icon).toBeUndefined();
     });
 
     it('should set otherUser for one-to-one chat in extractMessageUser', () => {
         fixture.detectChanges();
         component.extractMessageUser();
-        expect(component.otherUser).toEqual(sidebarItemMock.conversation.members[1]);
+        expect(component.otherUser()).toEqual(sidebarItemMock.conversation.members[1]);
     });
 
     it('should display unread count and bold for non-muted conversations', () => {
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             ...sidebarItemMock,
             conversation: { unreadMessagesCount: 5, isMuted: false },
-        };
-        component.sidebarType = 'conversation';
+        });
+        fixture.componentRef.setInput('sidebarType', 'conversation');
         fixture.componentRef.setInput('unreadCount', 5);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnInit();
 
         const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
         expect(unreadCountElem?.textContent).toContain('5');
@@ -97,14 +95,13 @@ describe('SidebarCardItemComponent', () => {
     });
 
     it('should not display unread count or bold for muted conversations', () => {
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             ...sidebarItemMock,
             conversation: { unreadMessagesCount: 5, isMuted: true },
-        };
-        component.sidebarType = 'conversation';
+        });
+        fixture.componentRef.setInput('sidebarType', 'conversation');
         fixture.componentRef.setInput('unreadCount', 5);
         fixture.changeDetectorRef.detectChanges();
-        component.ngOnInit();
 
         const unreadCountElem = fixture.nativeElement.querySelector('.unread-count');
         expect(unreadCountElem).toBeNull();

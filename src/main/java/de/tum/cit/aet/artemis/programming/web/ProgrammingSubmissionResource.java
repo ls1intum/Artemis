@@ -129,7 +129,7 @@ public class ProgrammingSubmissionResource {
      *         not available.
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
-    @PostMapping("programming-submissions/{participationId}/trigger-build")
+    @PostMapping({ "participations/{participationId}/trigger-build", "programming-submissions/{participationId}/trigger-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
@@ -170,7 +170,7 @@ public class ProgrammingSubmissionResource {
      *         build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
+    @PostMapping({ "participations/{participationId}/trigger-failed-build", "programming-submissions/{participationId}/trigger-failed-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
@@ -19,8 +19,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
@@ -266,8 +265,8 @@ describe('BuildQueueComponent', () => {
         buildAgentAddress: undefined,
         buildDurationFilterLowerBound: undefined,
         buildDurationFilterUpperBound: undefined,
-        buildStartDateFilterFrom: undefined,
-        buildStartDateFilterTo: undefined,
+        buildSubmissionDateFilterFrom: undefined,
+        buildSubmissionDateFilterTo: undefined,
         status: undefined,
         appliedFilters: new Map<string, boolean>(),
         areDatesValid: true,
@@ -275,7 +274,7 @@ describe('BuildQueueComponent', () => {
         numberOfAppliedFilters: 0,
     };
 
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(async () => {
         // Set default return values for all methods
@@ -298,7 +297,7 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 {
                     provide: BuildAgentsService,
@@ -314,7 +313,7 @@ describe('BuildQueueComponent', () => {
 
         fixture = TestBed.createComponent(BuildOverviewComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
     });
 
     beforeEach(() => {
@@ -586,24 +585,20 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should correctly set filterModal values', () => {
-        const modalRef = {
-            componentInstance: {
-                finishedBuildJobFilter: undefined,
-                buildAgentAddress: undefined,
-                finishedBuildJobs: undefined,
-            },
-            result: Promise.resolve('close'),
-        } as NgbModalRef;
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const onClose = new Subject<FinishedBuildJobFilter | undefined>();
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         component.finishedBuildJobs.set(mockFinishedJobs);
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
         component.openFilterModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
-        expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
-        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs());
-        expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
+        const dialogConfig = openSpy.mock.calls[0][1] as {
+            data?: { finishedBuildJobFilter?: FinishedBuildJobFilter; finishedBuildJobs?: FinishedBuildJob[]; buildAgentFilterable?: boolean };
+        };
+        expect(dialogConfig?.data?.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
+        expect(dialogConfig?.data?.finishedBuildJobs).toEqual(component.finishedBuildJobs());
+        expect(dialogConfig?.data?.buildAgentFilterable).toBeTruthy();
     });
 
     describe('BuildOverviewComponent Download Logs', () => {
@@ -647,7 +642,7 @@ describe('BuildQueueComponent', () => {
                 configurable: true,
             });
 
-            component.viewBuildLogs(undefined, buildJobId);
+            component.viewBuildLogs(buildJobId);
             component.downloadBuildLogs();
 
             expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
@@ -676,7 +671,7 @@ describe('BuildQueueComponent', () => {
                 configurable: true,
             });
 
-            component.viewBuildLogs(undefined, buildJobId);
+            component.viewBuildLogs(buildJobId);
             component.downloadBuildLogs();
 
             expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), `${buildJobId}.log`);
