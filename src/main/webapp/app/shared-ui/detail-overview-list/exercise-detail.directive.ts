@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, Input, OnDestroy, OnInit, Type, ViewContainerRef, inject } from '@angular/core';
+import { ComponentRef, Directive, OnDestroy, OnInit, Type, ViewContainerRef, inject, input } from '@angular/core';
 import { Detail, ShownDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/shared-ui/detail-overview-list/components/text-detail/text-detail.component';
@@ -17,15 +17,16 @@ import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview
 export class ExerciseDetailDirective implements OnInit, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);
 
-    @Input() detail: Detail;
+    detail = input<Detail>();
 
     private componentRef: ComponentRef<any>;
 
     ngOnInit() {
-        if (!this.isShownDetail()) {
+        const detail = this.detail();
+        if (!this.isShownDetail(detail)) {
             return;
         }
-        this.detail = this.detail as ShownDetail;
+        const shownDetail = detail as ShownDetail;
 
         const detailTypeToComponent: {
             [key in DetailType]?: Type<
@@ -51,10 +52,10 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ExerciseCategories]: ExerciseCategoriesDetailComponent,
         };
 
-        const detailComponent = detailTypeToComponent[this.detail.type];
+        const detailComponent = detailTypeToComponent[shownDetail.type];
         if (detailComponent) {
             this.componentRef = this.viewContainerRef.createComponent(detailComponent);
-            this.assignAttributes();
+            this.assignAttributes(shownDetail);
         }
     }
 
@@ -65,13 +66,13 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
     /**
      * @return false if the detail is a {@link NotShownDetail}
      */
-    private isShownDetail(): boolean {
-        return !!this.detail;
+    private isShownDetail(detail: Detail | undefined): boolean {
+        return !!detail;
     }
 
-    private assignAttributes() {
+    private assignAttributes(detail: ShownDetail) {
         if (this.componentRef) {
-            this.componentRef.setInput('detail', this.detail);
+            this.componentRef.setInput('detail', detail);
         }
     }
 }

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+/* eslint-disable @typescript-eslint/no-deprecated */
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
@@ -10,13 +12,13 @@ import { TranslateService } from '@ngx-translate/core';
 const CHANNEL_NAME_PREFIX = '-- -!?-p --()';
 
 describe('TitleChannelNameComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: TitleChannelNameComponent;
     let fixture: ComponentFixture<TitleChannelNameComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
+            imports: [FormsModule, TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
             providers: [NgForm, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -25,23 +27,21 @@ describe('TitleChannelNameComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should display title and channel name input fields with correct content', fakeAsync(() => {
+    it('should display title and channel name input fields with correct content', async () => {
         fixture.componentRef.setInput('title', 'Test');
         fixture.componentRef.setInput('channelName', 'test');
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
-        fixture.whenStable().then(() => {
-            const titleInput = fixture.debugElement.query(By.css('#field_title'));
-            expect(titleInput).not.toBeNull();
-            expect(titleInput.nativeElement.value).toBe(component.title);
+        const titleInput = fixture.debugElement.query(By.css('#field_title'));
+        expect(titleInput).not.toBeNull();
+        expect(titleInput.nativeElement.value).toBe(component.title());
 
-            const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
-            expect(channelNameInput).not.toBeNull();
-            expect(channelNameInput.nativeElement.value).toBe(component.channelName);
-        });
-    }));
+        const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
+        expect(channelNameInput).not.toBeNull();
+        expect(channelNameInput.nativeElement.value).toBe(component.channelName());
+    });
 
     it('should only display title input field if channel name is hidden', () => {
         fixture.componentRef.setInput('hideChannelName', true);
@@ -76,54 +76,54 @@ describe('TitleChannelNameComponent', () => {
         expect(component.channelNamePrefix()).toBe('');
     });
 
-    it('init channel name based on prefix and title', fakeAsync(() => {
+    it('init channel name based on prefix and title', async () => {
         fixture.componentRef.setInput('title', 'Test');
         fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
 
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.channelName()).toBe('prefix-test');
-    }));
+    });
 
-    it('init channel name based on prefix if title is undefined', fakeAsync(() => {
+    it('init channel name based on prefix if title is undefined', async () => {
         fixture.componentRef.setInput('channelNamePrefix', 'prefix-');
 
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.channelName()).toBe('prefix-');
-    }));
+    });
 
-    it('remove special characters and trailing hyphens from channel name on init with non-empty title', fakeAsync(() => {
+    it('remove special characters and trailing hyphens from channel name on init with non-empty title', async () => {
         fixture.componentRef.setInput('title', '-- -  t--=*+ -- ');
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.channelName()).toBe('-p-t');
-    }));
+    });
 
-    it("don't remove trailing hyphens from channel name on init with empty title", fakeAsync(() => {
+    it("don't remove trailing hyphens from channel name on init with empty title", async () => {
         fixture.componentRef.setInput('title', '');
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
 
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.channelName()).toBe('-p-');
-    }));
+    });
 
-    it("don't remove trailing hyphens from channel name on init with undefined title", fakeAsync(() => {
+    it("don't remove trailing hyphens from channel name on init with undefined title", async () => {
         fixture.componentRef.setInput('title', undefined);
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX + '-');
 
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.channelName()).toBe('-p-');
-    }));
+    });
 
     it('remove trailing hyphens from channel name on title edit', () => {
         fixture.componentRef.setInput('channelNamePrefix', CHANNEL_NAME_PREFIX);
