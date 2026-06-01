@@ -253,13 +253,11 @@ export default defineConfig({
             ],
             thresholds: {
                 // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
-                // Re-tune when migration completes. Adjusted when the editor module (markdown/monaco editor)
-                // moved from Jest to Vitest, which shifted the aggregate by ~0.2pp on lines/functions/statements
-                // (branches rose). Actuals at that point: lines 89.41, statements 89.21, branches 73.83, functions 87.17.
-                lines: 89.2,
-                statements: 89.0,
-                branches: 73.6,
-                functions: 87.0,
+                // Re-tune when migration completes.
+                lines: 86.6,
+                statements: 86.5,
+                branches: 71.0,
+                functions: 83.8,
             },
         },
     },
