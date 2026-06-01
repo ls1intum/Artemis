@@ -418,7 +418,7 @@ public class GlobalSearchResource {
 
     /**
      * Builds the exercise type disjunct. Editors see all exercises in their courses; teaching assistants
-     * see regular exercises unconditionally and exam exercises only after the exam ends; students see
+     * see regular exercises unconditionally and exam exercises only after the exam's visible date; students see
      * released regular exercises and exam exercises after the exam starts.
      *
      * @param roleSets the per-course role classification for the current user
@@ -442,9 +442,9 @@ public class GlobalSearchResource {
     private static Filter exerciseAccessFilter(Role role) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
-            // TAs: regular exercises always visible; exam exercises only after exam end
-            return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
-                    .and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now)));
+            // TAs: regular exercises always visible; exam exercises only after exam visible date
+            return Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter.and(
+                    Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE).lte(now)));
         }
         // Students: released regular exercises OR exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
@@ -517,8 +517,8 @@ public class GlobalSearchResource {
     }
 
     /**
-     * Builds the exam type disjunct. Staff members (editors, instructors, TAs) see all exams in their
-     * courses; students only see exams whose visible date has passed.
+     * Builds the exam type disjunct. Editors and instructors see all exams in their courses;
+     * teaching assistants and students only see exams whose visible date has passed.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exams the user may access, or {@code null} if no courses qualify
@@ -526,11 +526,14 @@ public class GlobalSearchResource {
     private Filter buildExamDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+        if (!roleSets.editorCourseIds().isEmpty()) {
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
         }
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+        List<Long> visibleDateGatedCourseIds = new ArrayList<>(roleSets.taCourseIds().size() + roleSets.studentCourseIds().size());
+        visibleDateGatedCourseIds.addAll(roleSets.taCourseIds());
+        visibleDateGatedCourseIds.addAll(roleSets.studentCourseIds());
+        if (!visibleDateGatedCourseIds.isEmpty()) {
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, visibleDateGatedCourseIds),
                     Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now)));
         }
         Filter combined = combineOr(subBranches);
