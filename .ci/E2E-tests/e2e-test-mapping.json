@@ -21,9 +21,21 @@
         "e2e/lecture/",
         "e2e/Login.spec.ts",
         "e2e/Logout.spec.ts",
+        "e2e/Passkey.spec.ts",
+        "e2e/PasskeyReminderPersistence.spec.ts",
         "e2e/SystemHealth.spec.ts"
     ],
     "mappings": {
+        "account": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/account/",
+                "src/main/webapp/app/account/"
+            ],
+            "testPaths": [
+                "e2e/Passkey.spec.ts",
+                "e2e/PasskeyReminderPersistence.spec.ts"
+            ]
+        },
         "atlas": {
             "sourcePaths": [
                 "src/main/java/de/tum/cit/aet/artemis/atlas/",
