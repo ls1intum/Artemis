@@ -17,14 +17,14 @@ export interface DeimosBatchTriggerResponse {
 export class DeimosService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/programming';
+    private resourceUrl = 'api/deimos';
 
     triggerCourseBatch(courseId: number, from: Dayjs, to: Dayjs): Observable<DeimosBatchTriggerResponse> {
-        return this.http.post<DeimosBatchTriggerResponse>(`${this.resourceUrl}/courses/${courseId}/deimos/batch`, this.createRequest(from, to));
+        return this.http.post<DeimosBatchTriggerResponse>(`${this.resourceUrl}/courses/${courseId}/analysis-runs`, this.createRequest(from, to));
     }
 
     triggerExerciseBatch(exerciseId: number, from: Dayjs, to: Dayjs): Observable<DeimosBatchTriggerResponse> {
-        return this.http.post<DeimosBatchTriggerResponse>(`${this.resourceUrl}/programming-exercises/${exerciseId}/deimos/batch`, this.createRequest(from, to));
+        return this.http.post<DeimosBatchTriggerResponse>(`${this.resourceUrl}/programming-exercises/${exerciseId}/analysis-runs`, this.createRequest(from, to));
     }
 
     private createRequest(from: Dayjs, to: Dayjs): DeimosBatchRequest {

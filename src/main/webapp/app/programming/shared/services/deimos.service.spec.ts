@@ -35,7 +35,7 @@ describe('DeimosService', () => {
             responseBody = response;
         });
 
-        const request = httpMock.expectOne('api/programming/courses/42/deimos/batch');
+        const request = httpMock.expectOne('api/deimos/courses/42/analysis-runs');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ from: from.toISOString(), to: to.toISOString() });
         request.flush(triggerResponse);
@@ -49,7 +49,7 @@ describe('DeimosService', () => {
             responseBody = response;
         });
 
-        const request = httpMock.expectOne('api/programming/programming-exercises/99/deimos/batch');
+        const request = httpMock.expectOne('api/deimos/programming-exercises/99/analysis-runs');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ from: from.toISOString(), to: to.toISOString() });
         request.flush(triggerResponse);

@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.deimos.service.DeimosBatchService;
 @ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
 @Lazy
 @RestController
-@RequestMapping("api/programming")
+@RequestMapping("api/deimos/")
 @FeatureToggle(Feature.Deimos)
 public class DeimosResource implements DeimosBatchApi {
 
@@ -42,17 +42,17 @@ public class DeimosResource implements DeimosBatchApi {
     }
 
     @Override
-    @PostMapping("courses/{course-id}/deimos/batch")
+    @PostMapping("courses/{courseId}/analysis-runs")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerCourseBatch(@PathVariable("course-id") long courseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
+    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerCourseBatch(@PathVariable long courseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.accepted().body(deimosBatchService.triggerCourseBatch(courseId, request, user));
     }
 
     @Override
-    @PostMapping("programming-exercises/{exercise-id}/deimos/batch")
+    @PostMapping("programming-exercises/{exerciseId}/analysis-runs")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerExerciseBatch(@PathVariable("exercise-id") long exerciseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
+    public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerExerciseBatch(@PathVariable long exerciseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.accepted().body(deimosBatchService.triggerExerciseBatch(exerciseId, request, user));
     }
