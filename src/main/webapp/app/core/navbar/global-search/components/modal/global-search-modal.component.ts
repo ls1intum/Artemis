@@ -377,6 +377,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected navigateTo(view: SearchView) {
+        if (view === SearchView.Lecture) {
+            // TODO lecture search should support filters aswell
+            this.removeCourseFilter();
+        }
         this.currentView.set(view);
         this.selectedIndex.set(-1);
     }
