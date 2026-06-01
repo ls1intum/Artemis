@@ -1,10 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/foundation/types/exercise-filter';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,8 +12,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
-import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { vi } from 'vitest';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', undefined), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 5, type: ExerciseType.TEXT } as Exercise;
 const EXERCISE_2 = {
@@ -71,14 +68,14 @@ const POINTS_FILTER: RangeFilter = {
 };
 
 describe('ExerciseFilterModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseFilterModalComponent;
     let fixture: ComponentFixture<ExerciseFilterModalComponent>;
     let activeModal: NgbActiveModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(FontAwesomeModule), FaIconComponent],
-            declarations: [ExerciseFilterModalComponent, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(RangeSliderComponent)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseFilterModalComponent],
             providers: [
                 MockProvider(NgbActiveModal),
                 {
@@ -135,8 +132,8 @@ describe('ExerciseFilterModalComponent', () => {
 
     describe('should close modal', () => {
         it('with button in upper right corner on click', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
-            const closeModalSpy = jest.spyOn(component, 'closeModal');
+            const closeSpy = vi.spyOn(activeModal, 'close');
+            const closeModalSpy = vi.spyOn(component, 'closeModal');
 
             const closeButton = fixture.debugElement.query(By.css('.btn-close'));
             expect(closeButton).not.toBeNull();
@@ -147,8 +144,8 @@ describe('ExerciseFilterModalComponent', () => {
         });
 
         it('with button in lower right corner on click', () => {
-            const closeSpy = jest.spyOn(activeModal, 'close');
-            const closeModalSpy = jest.spyOn(component, 'closeModal');
+            const closeSpy = vi.spyOn(activeModal, 'close');
+            const closeModalSpy = vi.spyOn(component, 'closeModal');
 
             const cancelButton = fixture.debugElement.query(By.css('button[jhiTranslate="entity.action.cancel"]'));
             expect(cancelButton).not.toBeNull();
@@ -161,38 +158,38 @@ describe('ExerciseFilterModalComponent', () => {
 
     describe('select category', () => {
         it('should mark a category as selected when category is found', () => {
-            expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
-            const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
+            expect(component.categoryFilter?.options[0].searched).toBe(false); // if it is not false in the beginning we do not test anything here
+            const onSelectItemSpy = vi.spyOn(component, 'onSelectItem');
 
             component.model = 'category1';
             // Simulate selecting an item
             const event = {
                 item: component.selectableCategoryOptions[0],
-                preventDefault: jest.fn(),
+                preventDefault: vi.fn(),
             };
             component.onSelectItem(event);
             fixture.changeDetectorRef.detectChanges();
 
             expect(onSelectItemSpy).toHaveBeenCalledOnce();
-            expect(component.categoryFilter?.options[0].searched).toBeTrue();
+            expect(component.categoryFilter?.options[0].searched).toBe(true);
             expect(component.model).toBeUndefined(); // Clear the input field after selection
         });
 
         it('should not change category filter when no item is provided', () => {
-            expect(component.categoryFilter?.options[0].searched).toBeFalse(); // if it is not false in the beginning we do not test anything here
-            const onSelectItemSpy = jest.spyOn(component, 'onSelectItem');
+            expect(component.categoryFilter?.options[0].searched).toBe(false); // if it is not false in the beginning we do not test anything here
+            const onSelectItemSpy = vi.spyOn(component, 'onSelectItem');
 
             component.model = 'categoryThatIsNotDefinedAndSearchedViaEnter';
             const event = {
                 item: undefined,
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
             };
             component.onSelectItem(event);
             fixture.changeDetectorRef.detectChanges();
 
             expect(onSelectItemSpy).toHaveBeenCalledOnce();
-            expect(component.categoryFilter?.options[0].searched).toBeFalse();
+            expect(component.categoryFilter?.options[0].searched).toBe(false);
             expect(component.model).toBe('categoryThatIsNotDefinedAndSearchedViaEnter');
         });
     });
@@ -206,19 +203,19 @@ describe('ExerciseFilterModalComponent', () => {
         component.difficultyFilter!.options[1].checked = false;
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
-        const resetFilterSpy = jest.spyOn(component, 'clearFilter');
+        const resetFilterSpy = vi.spyOn(component, 'clearFilter');
 
         const resetButton = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"]'));
         expect(resetButton).not.toBeNull();
         resetButton.nativeElement.click();
 
         expect(resetFilterSpy).toHaveBeenCalledOnce();
-        expect(component.categoryFilter!.options[0].searched).toBeFalse();
-        expect(component.categoryFilter!.options[1].searched).toBeFalse();
-        expect(component.typeFilter!.options[0].checked).toBeFalse();
-        expect(component.typeFilter!.options[1].checked).toBeFalse();
-        expect(component.difficultyFilter!.options[0].checked).toBeFalse();
-        expect(component.difficultyFilter!.options[1].checked).toBeFalse();
+        expect(component.categoryFilter!.options[0].searched).toBe(false);
+        expect(component.categoryFilter!.options[1].searched).toBe(false);
+        expect(component.typeFilter!.options[0].checked).toBe(false);
+        expect(component.typeFilter!.options[1].checked).toBe(false);
+        expect(component.difficultyFilter!.options[0].checked).toBe(false);
+        expect(component.difficultyFilter!.options[1].checked).toBe(false);
         expect(component.achievablePoints!.filter.selectedMax).toBe(component.achievablePoints?.filter.generalMax);
         expect(component.achievedScore!.filter.selectedMin).toBe(component.achievedScore?.filter.generalMin);
     });
@@ -238,9 +235,9 @@ describe('ExerciseFilterModalComponent', () => {
         component.achievablePoints!.filter.selectedMax = 10;
         component.achievedScore!.filter.selectedMin = 10;
 
-        const filterAppliedEmitSpy = jest.spyOn(component.filterApplied, 'emit');
-        const applyFilterSpy = jest.spyOn(component, 'applyFilter');
-        const closeModalSpy = jest.spyOn(component, 'closeModal');
+        const filterAppliedEmitSpy = vi.spyOn(component.filterApplied, 'emit');
+        const applyFilterSpy = vi.spyOn(component, 'applyFilter');
+        const closeModalSpy = vi.spyOn(component, 'closeModal');
         const applyButton = fixture.debugElement.query(By.css('button[jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"]'));
         expect(applyButton).not.toBeNull();
         applyButton.nativeElement.click();
