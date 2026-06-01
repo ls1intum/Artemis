@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -22,16 +24,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('ExerciseImportFromFileComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseImportFromFileComponent;
     let fixture: ComponentFixture<ExerciseImportFromFileComponent>;
     let dialogRef: DynamicDialogRef;
     let alertService: AlertService;
-    let alertServiceSpy: jest.SpyInstance;
+    let alertServiceSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(HelpIconComponent), ButtonComponent, FaIconComponent],
-            declarations: [ExerciseImportFromFileComponent, MockDirective(TranslateDirective)],
+            imports: [MockDirective(TranslateDirective), MockComponent(HelpIconComponent), ButtonComponent, FaIconComponent],
             providers: [MockProvider(DynamicDialogRef), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(FeatureToggleService)],
         }).compileComponents();
 
@@ -45,14 +47,13 @@ describe('ExerciseImportFromFileComponent', () => {
 
     it('should close the dialog with result', () => {
         // GIVEN
-        const dialogRefSpy = jest.spyOn(dialogRef, 'close');
+        const dialogRefSpy = vi.spyOn(dialogRef, 'close');
         const exercise = { id: undefined } as ProgrammingExercise;
         // WHEN
         component.openImport(exercise);
 
         // THEN
-        expect(dialogRefSpy).toHaveBeenCalledOnce();
-        expect(dialogRefSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefSpy).toHaveBeenCalledExactlyOnceWith(exercise);
     });
 
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
@@ -60,7 +61,7 @@ describe('ExerciseImportFromFileComponent', () => {
         'should raise error alert if not supported exercise type',
         async (exerciseType: ExerciseType) => {
             // GIVEN
-            const alertServiceSpy = jest.spyOn(alertService, 'error');
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
             component.exerciseType = exerciseType;
             fixture.changeDetectorRef.detectChanges();
             component.fileForImport = (await generateValidTestZipFileWithExerciseType(exerciseType)) as File;
@@ -71,15 +72,14 @@ describe('ExerciseImportFromFileComponent', () => {
             await fixture.whenStable();
             fixture.changeDetectorRef.detectChanges();
             // THEN
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
+            expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
             expect(component.exercise).toBeUndefined();
         },
     );
 
     it('should raise error alert if not one json file at the root level', async () => {
         //
-        alertServiceSpy = jest.spyOn(alertService, 'error');
+        alertServiceSpy = vi.spyOn(alertService, 'error');
         fixture.changeDetectorRef.detectChanges();
         component.fileForImport = (await generateTestZipFileWithoutJsonFile()) as File;
         await assertErrorAlertIsRaisedWithoutOneValidJsonFile();
@@ -88,7 +88,7 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 
     it('should raise error alert if exercise type does not match exercise type of imported exercise', async () => {
-        alertServiceSpy = jest.spyOn(alertService, 'error');
+        alertServiceSpy = vi.spyOn(alertService, 'error');
         fixture.changeDetectorRef.detectChanges();
         component.exerciseType = ExerciseType.TEXT;
         component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
@@ -99,12 +99,11 @@ describe('ExerciseImportFromFileComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
 
     it('should set exercise attributes and open import dialog', async () => {
-        const openImportSpy = jest.spyOn(component, 'openImport');
+        const openImportSpy = vi.spyOn(component, 'openImport');
         component.exerciseType = ExerciseType.PROGRAMMING;
         component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
         await fixture.whenStable();
@@ -117,8 +116,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(component.exercise.id).toBeUndefined();
         expect(component.exercise.zipFileForImport).toBe(component.fileForImport);
         expect(component.exercise).toMatchObject({ type: 'programming', id: undefined, title: 'Test exercise' });
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(component.exercise);
     });
 
     it('should load build configs in the old format', async () => {
@@ -139,7 +137,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled()).toBeTrue();
+        expect(uploadButton.componentInstance.disabled()).toBe(true);
     });
 
     it('should enable upload button once file is selected', () => {
@@ -147,7 +145,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled()).toBeFalse();
+        expect(uploadButton.componentInstance.disabled()).toBe(false);
     });
 
     async function assertErrorAlertIsRaisedWithoutOneValidJsonFile() {
@@ -158,14 +156,13 @@ describe('ExerciseImportFromFileComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
         alertServiceSpy.mockClear();
     }
 
     it('should raise error alert when more than one file is selected', () => {
         // GIVEN
-        alertServiceSpy = jest.spyOn(alertService, 'error');
+        alertServiceSpy = vi.spyOn(alertService, 'error');
         const file = new File([''], 'test.zip', { type: 'application/zip' });
         const file2 = new File([''], 'test2.zip', { type: 'application/zip' });
         const event = {
@@ -176,14 +173,13 @@ describe('ExerciseImportFromFileComponent', () => {
         // WHEN
         component.setFileForExerciseImport(event);
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileCountError');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.fileCountError');
         expect(component.fileForImport).toBeUndefined();
     });
 
     it('should raise error alert when not a zip file is selected', () => {
         // GIVEN
-        alertServiceSpy = jest.spyOn(alertService, 'error');
+        alertServiceSpy = vi.spyOn(alertService, 'error');
         const file = new File([''], 'test.txt', { type: 'application/zip' });
         const event = {
             target: {
@@ -193,14 +189,13 @@ describe('ExerciseImportFromFileComponent', () => {
         // WHEN
         component.setFileForExerciseImport(event);
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
         expect(component.fileForImport).toBeUndefined();
     });
 
     it('should set file for import if no errors occur', () => {
         // GIVEN
-        alertServiceSpy = jest.spyOn(alertService, 'error');
+        alertServiceSpy = vi.spyOn(alertService, 'error');
         const file = new File([''], 'test.zip', { type: 'application/zip' });
         const event = {
             target: {
@@ -230,7 +225,7 @@ describe('ExerciseImportFromFileComponent', () => {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
 
         component.fileForImport = zipBlob as any;
-        const openImportSpy = jest.spyOn(component, 'openImport');
+        const openImportSpy = vi.spyOn(component, 'openImport');
         await fixture.whenStable();
 
         // WHEN
@@ -253,8 +248,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(importedEx.categories![1].category).toBe('Issue');
         expect(importedEx.categories![1].color).toBe('#691b0b');
 
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(importedEx);
     });
 
     // Ensures backward compatibility when old exercise JSONs do not contain 'categories' field.
@@ -274,7 +268,7 @@ describe('ExerciseImportFromFileComponent', () => {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
 
         component.fileForImport = zipBlob as any;
-        const openImportSpy = jest.spyOn(component, 'openImport');
+        const openImportSpy = vi.spyOn(component, 'openImport');
         await fixture.whenStable();
 
         // WHEN
@@ -289,8 +283,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(importedEx.categories).toBeUndefined();
 
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(importedEx);
     });
 });
 

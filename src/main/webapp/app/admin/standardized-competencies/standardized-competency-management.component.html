@@ -51,7 +51,7 @@
                                     [icon]="faEye"
                                     [fixedWidth]="true"
                                     (click)="selectKnowledgeArea(knowledgeArea)"
-                                    [ngbTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
+                                    [pTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
                                 />
                             </div>
                         </ng-template>
@@ -60,7 +60,7 @@
                                 <fa-icon
                                     class="me-2"
                                     [icon]="getIcon(competency.taxonomy)"
-                                    [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                    [pTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                                     [fixedWidth]="true"
                                 />
                                 <h6 class="mb-0">{{ competency.title }}</h6>
@@ -121,7 +121,7 @@
     }
 </div>
 
-<!-- Cancel confirmation dialog (replaces NgbModal + ConfirmAutofocusModalComponent) -->
+<!-- Cancel confirmation dialog (replaced the legacy ng-bootstrap confirm modal) -->
 <p-dialog
     [(visible)]="confirmDialogVisible"
     [modal]="true"
