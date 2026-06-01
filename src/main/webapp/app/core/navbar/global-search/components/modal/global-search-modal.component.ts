@@ -182,6 +182,16 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
      * Exams include 'exercise' because exams contain exercises.
      */
+    /**
+     * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`),
+     * optionally capturing a tab segment (e.g. `exercises`, `lectures`).
+     *
+     * Capture groups:
+     *  1. `courseId` — the numeric course identifier
+     *  2. `tabSegment` (optional) — the first path segment after the course ID (stops at `/`, `?`, or `#`)
+     */
+    private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
+
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
         lectures: ['lecture'],
@@ -199,8 +209,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private applyContextFilters(): void {
         const url = this.router.url;
-        // Match /courses/:courseId or /course-management/:courseId and optionally /:tab
-        const match = url.match(/\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/);
+        const match = url.match(GlobalSearchModalComponent.COURSE_URL_PATTERN);
         if (!match) {
             return;
         }
