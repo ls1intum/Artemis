@@ -14,6 +14,9 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismSubmissionForCaseDTO;
 
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
@@ -34,44 +37,100 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase
+            SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO(
+                plagiarismCase.id,
+                new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseExerciseDTO(
+                    exercise.id,
+                    exercise.title,
+                    TYPE(exercise),
+                    exercise.dueDate,
+                    COALESCE(course.id, examCourse.id),
+                    COALESCE(course.title, examCourse.title),
+                    exam.id,
+                    exam.title,
+                    plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod
+                ),
+                student.id,
+                student.login,
+                student.name,
+                student.visibleRegistrationNumber,
+                post.id,
+                post.creationDate,
+                plagiarismCase.verdict,
+                plagiarismCase.verdictDate,
+                verdictBy.id,
+                verdictBy.login,
+                verdictBy.name,
+                verdictBy.visibleRegistrationNumber,
+                COUNT(DISTINCT plagiarismSubmission.id),
+                plagiarismCase.createdByContinuousPlagiarismControl
+            )
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.verdictBy
-                LEFT JOIN FETCH plagiarismCase.exercise exercise
-                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH plagiarismCase.post post
-                LEFT JOIN FETCH post.answers answers
-                LEFT JOIN FETCH answers.author
-                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
-            WHERE plagiarismCase.exercise.course.id = :courseId
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.verdictBy verdictBy
+                LEFT JOIN plagiarismCase.exercise exercise
+                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                LEFT JOIN plagiarismCase.post post
+                LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
+            WHERE exercise.course.id = :courseId
+            GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
+                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
             """)
-    List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);
+    List<PlagiarismCaseOverviewDTO> findOverviewDtosByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT DISTINCT plagiarismCase
+            SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO(
+                plagiarismCase.id,
+                new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseExerciseDTO(
+                    exercise.id,
+                    exercise.title,
+                    TYPE(exercise),
+                    exercise.dueDate,
+                    COALESCE(course.id, examCourse.id),
+                    COALESCE(course.title, examCourse.title),
+                    exam.id,
+                    exam.title,
+                    plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod
+                ),
+                student.id,
+                student.login,
+                student.name,
+                student.visibleRegistrationNumber,
+                post.id,
+                post.creationDate,
+                plagiarismCase.verdict,
+                plagiarismCase.verdictDate,
+                verdictBy.id,
+                verdictBy.login,
+                verdictBy.name,
+                verdictBy.visibleRegistrationNumber,
+                COUNT(DISTINCT plagiarismSubmission.id),
+                plagiarismCase.createdByContinuousPlagiarismControl
+            )
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.verdictBy
-                LEFT JOIN FETCH plagiarismCase.exercise exercise
-                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH plagiarismCase.post post
-                LEFT JOIN FETCH post.answers answers
-                LEFT JOIN FETCH answers.author
-                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
-            WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.verdictBy verdictBy
+                LEFT JOIN plagiarismCase.exercise exercise
+                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                LEFT JOIN plagiarismCase.post post
+                LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
+            WHERE exam.id = :examId
+            GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
+                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
             """)
-    List<PlagiarismCase> findByExamIdWithPlagiarismSubmissionsAndComparison(@Param("examId") Long examId);
+    List<PlagiarismCaseOverviewDTO> findOverviewDtosByExamId(@Param("examId") Long examId);
 
     @Query("""
             SELECT plagiarismCase
@@ -166,44 +225,74 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
-            SELECT plagiarismCase
+            SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO(
+                plagiarismCase.id,
+                new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseExerciseDTO(
+                    exercise.id,
+                    exercise.title,
+                    TYPE(exercise),
+                    exercise.dueDate,
+                    COALESCE(course.id, examCourse.id),
+                    COALESCE(course.title, examCourse.title),
+                    exam.id,
+                    exam.title,
+                    plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod
+                ),
+                student.id,
+                student.login,
+                student.name,
+                student.visibleRegistrationNumber,
+                post.id,
+                post.creationDate,
+                plagiarismCase.verdict,
+                plagiarismCase.verdictDate,
+                verdictBy.id,
+                verdictBy.login,
+                verdictBy.name,
+                verdictBy.visibleRegistrationNumber,
+                COUNT(DISTINCT plagiarismSubmission.id),
+                plagiarismCase.createdByContinuousPlagiarismControl,
+                plagiarismCase.verdictMessage,
+                plagiarismCase.verdictPointDeduction
+            )
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.verdictBy
-                LEFT JOIN FETCH plagiarismCase.post post
-                LEFT JOIN FETCH post.answers answers
-                LEFT JOIN FETCH answers.author
-                LEFT JOIN FETCH plagiarismCase.exercise exercise
-                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.verdictBy verdictBy
+                LEFT JOIN plagiarismCase.exercise exercise
+                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                LEFT JOIN plagiarismCase.post post
+                LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE plagiarismCase.id = :plagiarismCaseId
+            GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
+                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl, plagiarismCase.verdictMessage,
+                plagiarismCase.verdictPointDeduction
             """)
-    Optional<PlagiarismCase> findByIdWithFullDetailsForDTO(@Param("plagiarismCaseId") long plagiarismCaseId);
+    Optional<PlagiarismCaseDetailDTO> findDetailDtoById(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
-            SELECT plagiarismCase
-            FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.verdictBy
-                LEFT JOIN FETCH plagiarismCase.post post
-                LEFT JOIN FETCH post.answers answers
-                LEFT JOIN FETCH answers.author
-                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-                LEFT JOIN FETCH plagiarismCase.exercise e
-                LEFT JOIN FETCH e.plagiarismDetectionConfig
-                LEFT JOIN FETCH e.course
-                LEFT JOIN FETCH e.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
-                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison
-            WHERE plagiarismCase.id = :plagiarismCaseId
+            SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismSubmissionForCaseDTO(
+                plagiarismSubmission.id,
+                plagiarismSubmission.submissionId,
+                plagiarismSubmission.studentLogin,
+                plagiarismSubmission.size,
+                plagiarismSubmission.score,
+                new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonSummaryDTO(
+                    plagiarismComparison.id,
+                    plagiarismComparison.similarity,
+                    plagiarismComparison.status
+                )
+            )
+            FROM PlagiarismSubmission plagiarismSubmission
+                JOIN plagiarismSubmission.plagiarismComparison plagiarismComparison
+            WHERE plagiarismSubmission.plagiarismCase.id = :plagiarismCaseId
             """)
-    Optional<PlagiarismCase> findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(@Param("plagiarismCaseId") long plagiarismCaseId);
+    List<PlagiarismSubmissionForCaseDTO> findSubmissionDtosByPlagiarismCaseId(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
             SELECT plagiarismCase
@@ -218,12 +307,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
         return getValueElseThrow(findByIdWithPlagiarismSubmissions(plagiarismCaseId), plagiarismCaseId);
     }
 
-    default PlagiarismCase findByIdWithFullDetailsForDTOElseThrow(long plagiarismCaseId) {
-        return getValueElseThrow(findByIdWithFullDetailsForDTO(plagiarismCaseId), plagiarismCaseId);
-    }
-
-    default PlagiarismCase findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(long plagiarismCaseId) {
-        return getValueElseThrow(findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(plagiarismCaseId), plagiarismCaseId);
+    default PlagiarismCaseDetailDTO findDetailDtoByIdElseThrow(long plagiarismCaseId) {
+        return getArbitraryValueElseThrow(findDetailDtoById(plagiarismCaseId), String.valueOf(plagiarismCaseId));
     }
 
     /**

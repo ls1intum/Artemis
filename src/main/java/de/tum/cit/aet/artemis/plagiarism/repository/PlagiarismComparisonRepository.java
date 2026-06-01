@@ -34,10 +34,6 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
                 LEFT JOIN FETCH comparison.submissionB submissionB
                 LEFT JOIN FETCH comparison.plagiarismResult result
                 LEFT JOIN FETCH result.exercise exercise
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissions(@Param("comparisonId") long comparisonId);
@@ -51,12 +47,6 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
             FROM PlagiarismComparison comparison
                 LEFT JOIN FETCH comparison.submissionA submissionA
                 LEFT JOIN FETCH submissionA.elements elementsA
-                LEFT JOIN FETCH comparison.plagiarismResult result
-                LEFT JOIN FETCH result.exercise exercise
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
@@ -76,6 +66,23 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
 
     default PlagiarismComparison findByIdWithSubmissionsStudentsAndElementsBElseThrow(long comparisonId) {
         return getValueElseThrow(findByIdWithSubmissionsAndElementsB(comparisonId), comparisonId);
+    }
+
+    @Query("""
+            SELECT COALESCE(course.id, examCourse.id)
+            FROM PlagiarismComparison comparison
+                JOIN comparison.plagiarismResult result
+                JOIN result.exercise exercise
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+            WHERE comparison.id = :comparisonId
+            """)
+    Optional<Long> findCourseIdById(@Param("comparisonId") long comparisonId);
+
+    default Long findCourseIdByIdElseThrow(long comparisonId) {
+        return getArbitraryValueElseThrow(findCourseIdById(comparisonId), String.valueOf(comparisonId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })
