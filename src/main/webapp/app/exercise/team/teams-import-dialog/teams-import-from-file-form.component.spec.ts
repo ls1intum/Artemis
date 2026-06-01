@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -11,6 +13,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsImportFromFileFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamsImportFromFileFormComponent;
     let fixture: ComponentFixture<TeamsImportFromFileFormComponent>;
     let changeDetector: ChangeDetectorRef;
@@ -25,6 +28,7 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [TeamsImportFromFileFormComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -39,7 +43,7 @@ describe('TeamsImportFromFileFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('importing file', () => {
@@ -48,7 +52,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         });
 
         it('should convert and call teamsChanged with converted teams', () => {
-            const setImportStub = jest.spyOn(comp, 'setImportFile');
+            const setImportStub = vi.spyOn(comp, 'setImportFile');
             const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
             expect(setImportStub).toHaveBeenCalledOnce();
@@ -66,20 +70,20 @@ describe('TeamsImportFromFileFormComponent', () => {
     });
 
     describe('onFileLoadImport', () => {
-        let convertTeamsStub: jest.SpyInstance;
+        let convertTeamsStub: ReturnType<typeof vi.spyOn>;
         let teams: Team[];
         let reader: FileReader;
-        let getElementStub: jest.SpyInstance;
+        let getElementStub: ReturnType<typeof vi.spyOn>;
         const element = document.createElement('input');
         let control = { ...element, value: 'test' };
 
         beforeEach(() => {
             resetComponent();
-            convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
+            convertTeamsStub = vi.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
             control = { ...element, value: 'test' };
             // @ts-ignore
-            getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
+            getElementStub = vi.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
         it('should parse json file and send converted teams', () => {
@@ -95,7 +99,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toBeFalse();
+            expect(comp.loading).toBe(false);
             expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
@@ -118,11 +122,11 @@ describe('TeamsImportFromFileFormComponent', () => {
     });
 
     describe('setImportFile', () => {
-        let changeDetectorDetectChangesSpy: jest.SpyInstance;
+        let changeDetectorDetectChangesSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
             resetComponent();
-            changeDetectorDetectChangesSpy = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+            changeDetectorDetectChangesSpy = vi.spyOn(changeDetector.constructor.prototype, 'detectChanges');
         });
 
         it('should set import file correctly', () => {

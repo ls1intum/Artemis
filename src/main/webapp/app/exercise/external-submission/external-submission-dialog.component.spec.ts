@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -14,6 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Dialog', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
     let component: ExternalSubmissionDialogComponent;
     let externalSubmissionService: ExternalSubmissionService;
@@ -21,11 +24,12 @@ describe('External Submission Dialog', () => {
 
     beforeEach(() => {
         activeModal = {
-            dismiss: jest.fn(),
-            close: jest.fn(),
-            update: jest.fn(),
+            dismiss: vi.fn(),
+            close: vi.fn(),
+            update: vi.fn(),
         };
         TestBed.configureTestingModule({
+            imports: [ExternalSubmissionDialogComponent],
             providers: [
                 { provide: NgbActiveModal, useValue: activeModal },
                 MockProvider(EventManager),
@@ -42,12 +46,12 @@ describe('External Submission Dialog', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should get initial result on init', () => {
         const result = new Result();
-        const extServiceSpy = jest.spyOn(externalSubmissionService, 'generateInitialManualResult').mockReturnValue(result);
+        const extServiceSpy = vi.spyOn(externalSubmissionService, 'generateInitialManualResult').mockReturnValue(result);
         component.ngOnInit();
         expect(extServiceSpy).toHaveBeenCalledOnce();
         expect(component.result).toBe(result);
@@ -55,8 +59,7 @@ describe('External Submission Dialog', () => {
 
     it('should dismiss the modal on clear', () => {
         component.clear();
-        expect(activeModal.dismiss).toHaveBeenCalledOnce();
-        expect(activeModal.dismiss).toHaveBeenCalledWith('cancel');
+        expect(activeModal.dismiss).toHaveBeenCalledExactlyOnceWith('cancel');
     });
 
     it('should save feedback correctly', () => {
@@ -66,10 +69,10 @@ describe('External Submission Dialog', () => {
         component.student = { id: 3 } as User;
 
         const subject: Subject<HttpResponse<Result>> = new Subject<HttpResponse<Result>>();
-        const createMock = jest.spyOn(externalSubmissionService, 'create').mockReturnValue(subject.asObservable());
+        const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(subject.asObservable());
 
         const eventManager = TestBed.inject(EventManager);
-        const eventManagerSpy = jest.spyOn(eventManager, 'broadcast').mockImplementation();
+        const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation(() => undefined);
 
         component.feedbacks = [new Feedback(), new Feedback()];
 
@@ -78,33 +81,30 @@ describe('External Submission Dialog', () => {
 
         component.save();
 
-        expect(component.isSaving).toBeTrue();
+        expect(component.isSaving).toBe(true);
         expect(result.feedbacks).toBe(component.feedbacks);
-        expect(result.feedbacks).toSatisfyAll((feedback) => feedback.type === FeedbackType.MANUAL);
-        expect(createMock).toHaveBeenCalledOnce();
-        expect(createMock).toHaveBeenCalledWith(component.exercise, component.student, result);
+        expect(result.feedbacks).toSatisfy((feedbacks: Feedback[]) => feedbacks.every((feedback: Feedback) => feedback.type === FeedbackType.MANUAL));
+        expect(createMock).toHaveBeenCalledExactlyOnceWith(component.exercise, component.student, result);
         expect(activeModal.close).not.toHaveBeenCalled();
 
         subject.next(new HttpResponse<Result>({ body: result }));
 
-        expect(activeModal.close).toHaveBeenCalledOnce();
-        expect(activeModal.close).toHaveBeenCalledWith(result);
-        expect(component.isSaving).toBeFalse();
-        expect(eventManagerSpy).toHaveBeenCalledOnce();
-        expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
+        expect(activeModal.close).toHaveBeenCalledExactlyOnceWith(result);
+        expect(component.isSaving).toBe(false);
+        expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
     it('should set isSaving to false on saveError', () => {
         component.result = new Result();
         component.isSaving = true;
 
-        const createMock = jest.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const onSaveErrorSpy = jest.spyOn(component, 'onSaveError');
+        const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const onSaveErrorSpy = vi.spyOn(component, 'onSaveError');
 
         component.save();
         expect(createMock).toHaveBeenCalledOnce();
         expect(onSaveErrorSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBeFalse();
+        expect(component.isSaving).toBe(false);
     });
 
     it('should add a new feedback on pushFeedback and remove last on popFeedback', () => {
