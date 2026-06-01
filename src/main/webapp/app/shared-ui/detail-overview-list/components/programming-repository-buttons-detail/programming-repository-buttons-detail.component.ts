@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { ProgrammingRepositoryButtonsDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { RouterModule } from '@angular/router';
@@ -11,5 +11,5 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programm
     imports: [NoDataComponent, RouterModule, CodeButtonComponent, ProgrammingExerciseInstructorRepoDownloadComponent],
 })
 export class ProgrammingRepositoryButtonsDetailComponent {
-    @Input() detail: ProgrammingRepositoryButtonsDetail;
+    detail = input.required<ProgrammingRepositoryButtonsDetail>();
 }

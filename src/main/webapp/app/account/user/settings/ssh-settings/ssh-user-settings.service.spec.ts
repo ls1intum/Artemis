@@ -144,7 +144,7 @@ describe('SshUserSettingsService', () => {
                 expect(response.body).toEqual(userSshPublicKey);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/programming/ssh-settings/public-key' });
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/programming/ssh-settings/public-keys' });
             req.flush(userSshPublicKey);
 
             expect(req.request.method).toBe('POST');
@@ -162,7 +162,7 @@ describe('SshUserSettingsService', () => {
             const keyId = 1;
             sshUserSettingsService.getSshPublicKey(keyId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/programming/ssh-settings/public-key/${keyId}` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/programming/ssh-settings/public-keys/${keyId}` });
             req.flush({});
             expect(req.request.method).toBe('GET');
         });
@@ -172,7 +172,7 @@ describe('SshUserSettingsService', () => {
 
             sshUserSettingsService.deleteSshPublicKey(keyId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: `api/programming/ssh-settings/public-key/${keyId}` });
+            const req = httpMock.expectOne({ method: 'DELETE', url: `api/programming/ssh-settings/public-keys/${keyId}` });
             req.flush(null);
         });
     });

@@ -158,7 +158,7 @@ public class CompetencyResource {
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
-        Competency competency = toCompetency(competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competencyValidator.checkForCreation(competency);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -185,7 +185,7 @@ public class CompetencyResource {
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> competencies)
             throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
-        var competencyEntities = competencies.stream().map(this::toCompetency).toList();
+        var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
         for (Competency competency : competencyEntities) {
             competencyValidator.checkForCreation(competency);
         }
@@ -333,7 +333,7 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> updateCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) {
         log.debug("REST request to update Competency : {}", competencyRequest);
-        Competency competency = toCompetency(competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competencyValidator.checkForUpdate(competency);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -416,10 +416,6 @@ public class CompetencyResource {
             log.error("Error while suggesting competency relations", e);
             throw new BadRequestAlertException("Error suggesting competency relations: " + e.getMessage(), ENTITY_NAME, "suggestionError");
         }
-    }
-
-    private Competency toCompetency(CourseCompetencyRequestDTO competencyRequest) {
-        return CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
     }
 
     /**

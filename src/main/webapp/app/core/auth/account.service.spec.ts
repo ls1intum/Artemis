@@ -578,7 +578,7 @@ describe('AccountService', () => {
         it('should delete user VCS access token', () => {
             accountService.deleteUserVcsAccessToken().subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/account/user-vcs-access-token' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
             req.flush(null);
         });
 
@@ -589,7 +589,7 @@ describe('AccountService', () => {
                 expect(response.status).toBe(200);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
             req.flush({ status: 200 });
         });
 
@@ -601,7 +601,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(token);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/account/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush(token);
         });
 
@@ -611,7 +611,7 @@ describe('AccountService', () => {
 
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush(token);
         });
     });
@@ -763,7 +763,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(userToSave);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/account' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
             req.flush(userToSave);
         });
     });
@@ -950,7 +950,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.flush({});
 
             expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
@@ -961,7 +961,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.flush({});
 
             expect(accountService.userIdentity()).toBeUndefined();
@@ -972,7 +972,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.error(new ProgressEvent('error'));
 
             // User should remain unchanged

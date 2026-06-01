@@ -425,7 +425,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
+    @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
@@ -607,7 +607,7 @@ public class StudentExamResource {
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/test-run")
+    @PostMapping({ "courses/{courseId}/exams/{examId}/test-runs", "courses/{courseId}/exams/{examId}/test-run" })
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
@@ -668,7 +668,7 @@ public class StudentExamResource {
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
+    @DeleteMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}", "courses/{courseId}/exams/{examId}/test-run/{testRunId}" })
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);

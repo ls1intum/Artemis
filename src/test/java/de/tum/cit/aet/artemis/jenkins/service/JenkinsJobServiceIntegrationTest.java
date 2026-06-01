@@ -20,7 +20,7 @@ import org.mockito.MockedStatic;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
-import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 

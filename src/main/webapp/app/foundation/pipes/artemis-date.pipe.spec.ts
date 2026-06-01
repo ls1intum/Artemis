@@ -1,12 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
+import 'dayjs/esm/locale/de';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
 
 describe('ArtemisDatePipe', () => {
+    setupTestBed({ zoneless: true });
+
     let pipe: ArtemisDatePipe;
     let translateService: TranslateService;
     const dateTime = dayjs().year(2020).month(3).date(14).hour(9).minute(27).second(3); // 2020-03-14 09:27:03

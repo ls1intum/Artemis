@@ -118,7 +118,7 @@ describe('CourseTitleBarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('h5'));
         const translateDirective = titleElement.injector.get(TranslateDirective);
 
-        expect(translateDirective.jhiTranslate).toBe('custom.translation.key');
+        expect(translateDirective.jhiTranslate()).toBe('custom.translation.key');
     });
 
     it('should render content through ng-content', () => {

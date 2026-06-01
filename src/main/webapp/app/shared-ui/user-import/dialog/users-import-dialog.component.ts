@@ -1,5 +1,5 @@
-import { Component, OnDestroy, ViewChild, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
 import { HttpResponse } from '@angular/common/http';
@@ -39,8 +39,6 @@ export class UsersImportDialogComponent implements OnDestroy {
     readonly ActionType = ActionType;
     readonly dialogVisible = signal<boolean>(false);
     readonly importCompleted = output<void>();
-
-    @ViewChild('importForm', { static: false }) importForm: NgForm;
 
     courseId = input<number>();
     courseGroup = input<string>();
