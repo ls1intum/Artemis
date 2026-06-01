@@ -11,7 +11,6 @@ import {
     Feedback,
 } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 
@@ -27,7 +26,7 @@ interface FeedbackTypeConfig {
     standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule],
+    imports: [NgClass, FaIconComponent, TooltipModule],
 })
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -45,7 +44,7 @@ export class UnifiedFeedbackComponent {
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'alert-success' },
-        needs_revision: { icon: faMessage, alertClass: 'alert-secondary' },
+        needs_revision: { icon: faMessage, alertClass: 'alert-primary' },
         not_attempted: { icon: faTimes, alertClass: 'alert-secondary' },
         non_compliant: { icon: faTimes, alertClass: 'alert-danger' },
     };
