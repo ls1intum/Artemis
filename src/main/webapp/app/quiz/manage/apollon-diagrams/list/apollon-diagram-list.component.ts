@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/create-form/apollon-diagram-create-form.component';
@@ -28,7 +28,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private sortService = inject(SortService);
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
@@ -112,11 +112,26 @@ export class ApollonDiagramListComponent {
      * Opens dialog for creating a new diagram
      */
     openCreateDiagramDialog(courseId: number) {
-        const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
-        const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
-        // class diagram is the default value and can be changed by the user in the creation dialog
-        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
-        modalRef.result.then((diagram) => this.handleOpenDialogClick(diagram.id));
+        const ref = this.dialogService.open(ApollonDiagramCreateFormComponent, {
+            width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            // class diagram is the default value and can be changed by the user in the creation dialog
+            data: { apollonDiagram: new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId) },
+        });
+        ref?.onClose.subscribe((diagram: ApollonDiagram | undefined) => {
+            if (diagram) {
+                this.handleOpenDialogClick(diagram.id!);
+            }
+        });
     }
 
     handleOpenDialogClick(apollonDiagramId: number) {

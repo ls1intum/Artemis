@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
+import { Subject } from 'rxjs';
 import { QuizExercisePopupService } from './quiz-exercise-popup.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -16,7 +17,7 @@ describe('QuizExercisePopupService', () => {
     setupTestBed({ zoneless: true });
 
     let service: QuizExercisePopupService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let router: Router;
 
     const course = { id: 123 } as Course;
@@ -29,110 +30,131 @@ describe('QuizExercisePopupService', () => {
         studentAssignedTeamIdComputed: false,
     };
 
+    /** Creates a dialog-ref mock backed by a controllable onClose subject. */
+    const createDialogRefMock = () => {
+        const onClose = new Subject<unknown>();
+        return { ref: { onClose } as unknown as DynamicDialogRef, onClose };
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [QuizExercisePopupService, MockProvider(NgbModal), MockProvider(Router)],
+            providers: [QuizExercisePopupService, MockProvider(DialogService), MockProvider(Router)],
         });
 
         service = TestBed.inject(QuizExercisePopupService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         router = TestBed.inject(Router);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should be created', () => {
         expect(service).toBeTruthy();
     });
 
-    it('should open modal and set quiz exercise and files', async () => {
+    it('should open the dialog and pass the quiz exercise and files via data', async () => {
         const files = new Map<string, File>();
         files.set('test.png', new File([''], 'test.png'));
 
-        const mockModalRef = {
-            componentInstance: {} as Record<string, unknown>,
-            result: Promise.resolve('re-evaluate'),
-        } as NgbModalRef;
-
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const { ref, onClose } = createDialogRefMock();
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        const result = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        const result = await service.open(MockModalComponent, quizExercise, files);
 
-        expect(result).toBe(mockModalRef);
-        expect(modalService.open).toHaveBeenCalledWith(MockModalComponent, { size: 'lg', backdrop: 'static' });
-        expect(mockModalRef.componentInstance['quizExercise']).toBe(quizExercise);
-        expect(mockModalRef.componentInstance['files']).toBe(files);
+        expect(result).toBe(ref);
+        // Assert the full dialog-option contract (preserving the original NgbModal { size: 'lg', backdrop: 'static' } fidelity):
+        // width 50rem == 'lg', dismissableMask: false == backdrop: 'static', plus the modal/closeOnEscape/draggable/resizable/showHeader pins.
+        expect(openSpy).toHaveBeenCalledWith(MockModalComponent, {
+            width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: { quizExercise, files },
+        });
 
-        // Wait for promise to resolve
-        await mockModalRef.result;
+        // re-evaluate result navigates to the quiz exercises overview
+        onClose.next('re-evaluate');
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management/' + course.id + '/quiz-exercises']);
     });
 
     it('should navigate to quiz exercises on re-evaluate result', async () => {
         const files = new Map<string, File>();
-        const mockModalRef = {
-            componentInstance: {} as Record<string, unknown>,
-            result: Promise.resolve('re-evaluate'),
-        } as NgbModalRef;
-
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const { ref, onClose } = createDialogRefMock();
+        vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
-        await mockModalRef.result;
+        onClose.next('re-evaluate');
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management/123/quiz-exercises']);
     });
 
     it('should clear popup outlet on other result', async () => {
         const files = new Map<string, File>();
-        const mockModalRef = {
-            componentInstance: {} as Record<string, unknown>,
-            result: Promise.resolve('other'),
-        } as NgbModalRef;
-
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const { ref, onClose } = createDialogRefMock();
+        vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
-        await mockModalRef.result;
+        onClose.next('other');
         expect(navigateSpy).toHaveBeenCalledWith([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
     });
 
-    it('should clear popup outlet on modal dismiss', async () => {
+    it('should clear popup outlet on dialog dismiss', async () => {
         const files = new Map<string, File>();
-        const mockModalRef = {
-            componentInstance: {} as Record<string, unknown>,
-            result: Promise.reject('dismiss'),
-        } as NgbModalRef;
-
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const { ref, onClose } = createDialogRefMock();
+        vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
-        // Wait for rejection to be handled
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        onClose.next(undefined);
         expect(navigateSpy).toHaveBeenCalledWith([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
     });
 
-    it('should return existing modal ref if already open', async () => {
+    it('should return existing dialog ref if already open', async () => {
         const files = new Map<string, File>();
-        const mockModalRef = {
-            componentInstance: {} as Record<string, unknown>,
-            result: new Promise(() => {}), // Never resolves
-        } as NgbModalRef;
+        const { ref } = createDialogRefMock();
 
-        vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(ref);
 
-        const firstResult = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
-        const secondResult = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        const firstResult = await service.open(MockModalComponent, quizExercise, files);
+        const secondResult = await service.open(MockModalComponent, quizExercise, files);
 
         expect(firstResult).toBe(secondResult);
-        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should clear the cached dialog ref on re-evaluate close so a subsequent open creates a new dialog', async () => {
+        const files = new Map<string, File>();
+        const first = createDialogRefMock();
+        const second = createDialogRefMock();
+
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValueOnce(first.ref).mockReturnValueOnce(second.ref);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        const firstResult = await service.open(MockModalComponent, quizExercise, files);
+        expect(firstResult).toBe(first.ref);
+        expect(openSpy).toHaveBeenCalledOnce();
+
+        // Closing via the 're-evaluate' path must clear the cached singleton ref.
+        first.onClose.next('re-evaluate');
+
+        const secondResult = await service.open(MockModalComponent, quizExercise, files);
+        expect(secondResult).toBe(second.ref);
+        expect(secondResult).not.toBe(firstResult);
+        expect(openSpy).toHaveBeenCalledTimes(2);
     });
 });
