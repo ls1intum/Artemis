@@ -328,35 +328,9 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Athena functionality.
-     */
-    public static final String PROFILE_ATHENA = "athena";
-
-    /**
-     * The name of the Spring profile used for Athena functionality.
-     */
-    public static final String PROFILE_APOLLON = "apollon";
-
-    /**
-     * The name of the Spring profile used for the external Aeolus system.
-     */
-    public static final String PROFILE_AEOLUS = "aeolus";
-
-    /**
      * The name of the Spring profile used for the external CI system Hades.
      */
     public static final String PROFILE_HADES = "hades";
-
-    /**
-     * The name of the Spring profile used for the external LDAP system.
-     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
-     */
-    public static final String PROFILE_LDAP = "ldap";
-
-    /**
-     * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
-     */
-    public static final String PROFILE_SAML2 = "saml2";
 
     /**
      * The name of the Spring profile used for activating the scheduling functionality.

@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
+import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
@@ -35,11 +43,21 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final HadesService hadesService;
 
+    private final LocalCIBuildConfigurationService buildConfigService;
+
+    private final BuildPhaseEvaluationService buildPhaseEvaluationService;
+
+    private final BuildPhasesTemplateService buildPhasesTemplateService;
+
     @Autowired
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public HadesTriggerService(HadesService hadesService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+    public HadesTriggerService(HadesService hadesService, LocalCIBuildConfigurationService buildConfigService, BuildPhaseEvaluationService buildPhaseEvaluationService,
+            BuildPhasesTemplateService buildPhasesTemplateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hadesService = hadesService;
+        this.buildConfigService = buildConfigService;
+        this.buildPhaseEvaluationService = buildPhaseEvaluationService;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -52,9 +70,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             Long exerciseID = participation.getProgrammingExercise().getId();
             Long participationID = participation.getId();
 
-            programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(participation.getProgrammingExercise());
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exerciseID).orElseThrow();
-            String buildScript = buildConfig.getBuildScript();
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository
+                    .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
+            String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
             // Create the submission repository DTO
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), null, null, null);
@@ -90,5 +108,17 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
         log.warn("Triggering with of a specific commitHash is not supported. Triggering build while ignoring option.");
         triggerBuild(participation);
+    }
+
+    public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
+        Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
+
+        final boolean isMissingDefaultPhases = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null;
+        final List<BuildPhaseDTO> phases = isMissingDefaultPhases ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().phases();
+
+        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+
+        return buildConfigService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
@@ -20,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
  * Service for evaluating build phase conditions at build trigger time.
  * Determines which phases are active based on their conditions and the participation's due date.
  */
-@Profile(PROFILE_LOCALCI)
+@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
 @Lazy
 @Service
 public class BuildPhaseEvaluationService {
