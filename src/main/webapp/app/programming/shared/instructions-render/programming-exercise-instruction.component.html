@@ -1,9 +1,10 @@
 @if (!isLoading) {
     <div class="instructions__content border-0">
-        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise" [latestResult]="latestResultValue" [participation]="participation" [tasks]="tasks" />
-        <!-- problem statement update & difference highlighter -->
-        @if (exercise && exercise.exerciseGroup) {
-            <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />
+        <jhi-programming-exercise-instructions-step-wizard [exercise]="exercise()" [latestResult]="latestResultValue" [participation]="participation()" [tasks]="tasks" />
+        @if (exercise(); as exercise) {
+            @if (exercise.exerciseGroup) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="renderUpdatedProblemStatement()" />
+            }
         }
         <!-- Empty state when problem statement is not available -->
         @if (!renderedMarkdown && !isLoading) {

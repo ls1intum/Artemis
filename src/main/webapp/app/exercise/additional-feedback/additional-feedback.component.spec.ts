@@ -1,22 +1,21 @@
-import { expect } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockProvider } from 'ng-mocks';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AdditionalFeedbackComponent', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<AdditionalFeedbackComponent>;
     let comp: AdditionalFeedbackComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockPipe(ArtemisTranslatePipe), FaIconComponent],
+            imports: [AdditionalFeedbackComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LocaleConversionService, {

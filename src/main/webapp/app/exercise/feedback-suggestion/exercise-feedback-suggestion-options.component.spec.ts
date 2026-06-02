@@ -75,6 +75,17 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.modulesAvailable()).toBe(false);
     });
 
+    it('should reset feedbackSuggestionModule to initial when due date change disables inputs', async () => {
+        fixture.componentRef.setInput('exercise', makeExercise({ feedbackSuggestionModule: 'initial-module' }));
+        fixture.detectChanges();
+        component.ngOnInit();
+        component.exercise().feedbackSuggestionModule = 'changed-module';
+        fixture.componentRef.setInput('dueDate', pastDueDate);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.exercise().feedbackSuggestionModule).toBe('initial-module');
+    });
+
     it('inputControlsDisabled returns false for text exercise with future due date', () => {
         expect(component.inputControlsDisabled()).toBe(false);
     });

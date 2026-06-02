@@ -1,19 +1,18 @@
-import { expect, vi } from 'vitest';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { Component } from '@angular/core';
-import { MockProvider } from 'ng-mocks';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exercise Update Warning Service', () => {
     setupTestBed({ zoneless: true });
+
     let updateWarningService: ExerciseUpdateWarningService;
     let loadExerciseSpy: ReturnType<typeof vi.spyOn>;
     let openSpy: ReturnType<typeof vi.spyOn>;
@@ -29,13 +28,10 @@ describe('Exercise Update Warning Service', () => {
     let backupExercise: Exercise;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [MockProvider(NgbModal, { open: vi.fn().mockReturnValue({ componentInstance: {} } as NgbModalRef) })],
-        });
         updateWarningService = TestBed.inject(ExerciseUpdateWarningService);
 
         loadExerciseSpy = vi.spyOn(updateWarningService, 'loadExercise');
-        openSpy = vi.spyOn(updateWarningService, 'open').mockReturnValue({} as NgbModalRef);
+        openSpy = vi.spyOn(updateWarningService, 'open').mockReturnValue(undefined!);
 
         updateWarningService.instructionDeleted = false;
         updateWarningService.creditChanged = false;
@@ -170,7 +166,8 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.usageCountChanged).toBe(false);
         expect(updateWarningService.immediateReleaseWarning).toBe('');
 
-        expect(loadExerciseSpy).toHaveBeenCalledExactlyOnceWith(exercise, backupExercise);
+        expect(loadExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(openSpy).not.toHaveBeenCalled();
     });
 
@@ -179,8 +176,9 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, false);
 
-        expect(loadExerciseSpy).toHaveBeenCalledExactlyOnceWith(exercise, backupExercise);
+        expect(loadExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledTimes(1);
     });
 });
