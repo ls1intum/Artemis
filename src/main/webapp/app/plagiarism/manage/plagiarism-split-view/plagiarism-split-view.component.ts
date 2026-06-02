@@ -106,30 +106,38 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.exercise) {
-            const exercise = changes.exercise.currentValue;
+            const exercise = changes.exercise.currentValue as Exercise | PlagiarismCaseExercise | undefined;
 
-            this.isProgrammingOrTextExercise.set(exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT);
+            this.isProgrammingOrTextExercise.set(exercise?.type === ExerciseType.PROGRAMMING || exercise?.type === ExerciseType.TEXT);
         }
 
-        if (changes.comparison) {
-            this.plagiarismCasesService
-                .getPlagiarismComparisonForSplitView(this.getCourseIdForExercise()!, changes.comparison.currentValue.id)
-                .subscribe((resp: HttpResponse<PlagiarismComparison>) => {
-                    const plagiarismComparison = resp.body!;
-                    const sortByStudentLogin = this.sortByStudentLogin();
-                    if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
-                        this.swapSubmissions(plagiarismComparison);
-                    }
-                    this.plagiarismComparison.set(plagiarismComparison);
-                    if (this.isProgrammingOrTextExercise()) {
-                        this.parseTextMatches(plagiarismComparison);
-                    }
-                });
+        if (changes.comparison || changes.exercise) {
+            this.fetchComparisonIfReady(changes.comparison?.currentValue, changes.exercise?.currentValue);
         }
     }
 
-    private getCourseIdForExercise(): number | undefined {
-        const exercise = this.exercise();
+    private fetchComparisonIfReady(changedComparison?: PlagiarismComparison | PlagiarismComparisonSummary, changedExercise?: Exercise | PlagiarismCaseExercise): void {
+        const comparison = changedComparison ?? this.comparison();
+        const courseId = this.getCourseIdForExercise(changedExercise);
+        if (courseId === undefined || comparison?.id === undefined) {
+            return;
+        }
+
+        this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
+            const plagiarismComparison = resp.body!;
+            const sortByStudentLogin = this.sortByStudentLogin();
+            if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
+                this.swapSubmissions(plagiarismComparison);
+            }
+            this.plagiarismComparison.set(plagiarismComparison);
+            if (this.isProgrammingOrTextExercise()) {
+                this.parseTextMatches(plagiarismComparison);
+            }
+        });
+    }
+
+    private getCourseIdForExercise(changedExercise?: Exercise | PlagiarismCaseExercise): number | undefined {
+        const exercise = changedExercise ?? this.exercise();
         if (!exercise) {
             return undefined;
         }
