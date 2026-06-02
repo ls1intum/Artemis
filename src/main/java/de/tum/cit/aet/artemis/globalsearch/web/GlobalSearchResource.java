@@ -9,6 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -77,10 +78,11 @@ public class GlobalSearchResource {
 
     private final ChannelRepository channelRepository;
 
-    private final StudentExamApi studentExamRepository;
+    private final Optional<StudentExamApi> studentExamRepository;
 
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository, StudentExamApi studentExamRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
+            Optional<StudentExamApi> studentExamRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -286,11 +288,12 @@ public class GlobalSearchResource {
     }
 
     private StudentExamInfo fetchStudentExamInfo(long userId, List<Long> studentCourseIds) {
-        if (studentCourseIds.isEmpty()) {
+        if (studentCourseIds.isEmpty() || studentExamRepository.isEmpty()) {
             return null;
         }
-        Set<Long> registeredExamIds = studentExamRepository.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
-        Set<Long> assignedExerciseIds = studentExamRepository.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, studentCourseIds);
+        StudentExamApi api = studentExamRepository.get();
+        Set<Long> registeredExamIds = api.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
+        Set<Long> assignedExerciseIds = api.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, studentCourseIds);
         return new StudentExamInfo(registeredExamIds, assignedExerciseIds);
     }
 
