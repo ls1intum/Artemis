@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -174,8 +175,18 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         var comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 PlagiarismComparisonDTO.class);
-        assertThat(comparison.submissionA().studentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
-        assertThat(comparison.submissionB().studentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
+        assertThat(List.of(comparison.submissionA().studentLogin(), comparison.submissionB().studentLogin())).as("should anonymize plagiarism comparison")
+                .containsExactlyInAnyOrder("Your submission", "Other submission");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPlagiarismComparisonsForSplitView_studentWithNullSubmissionLogin_forbidden() throws Exception {
+        plagiarismComparison1.getSubmissionA().setStudentLogin(null);
+        plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.FORBIDDEN,
+                plagiarismComparison1.getClass());
     }
 
     @Test

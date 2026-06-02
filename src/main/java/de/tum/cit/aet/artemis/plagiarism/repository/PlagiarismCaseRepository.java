@@ -231,6 +231,18 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
+            SELECT COALESCE(course.id, examCourse.id)
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.exercise exercise
+                LEFT JOIN exercise.course course
+                LEFT JOIN exercise.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+                LEFT JOIN exam.course examCourse
+            WHERE plagiarismCase.id = :plagiarismCaseId
+            """)
+    Optional<Long> findCourseIdById(@Param("plagiarismCaseId") long plagiarismCaseId);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO(
                 plagiarismCase.id,
                 new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseExerciseDTO(
@@ -311,6 +323,10 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
         return getValueElseThrow(findByIdWithPlagiarismSubmissions(plagiarismCaseId), plagiarismCaseId);
+    }
+
+    default Long findCourseIdByIdElseThrow(long plagiarismCaseId) {
+        return getArbitraryValueElseThrow(findCourseIdById(plagiarismCaseId), String.valueOf(plagiarismCaseId));
     }
 
     default PlagiarismCaseDetailDTO findDetailDtoByIdElseThrow(long plagiarismCaseId) {

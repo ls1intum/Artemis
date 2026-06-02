@@ -154,11 +154,11 @@ public class PlagiarismResource {
      * @param userLogin   of the student asking to see their plagiarism comparison.
      */
     private void checkStudentAccess(PlagiarismSubmission submissionA, PlagiarismSubmission submissionB, String userLogin) {
-        if (submissionA.getStudentLogin().equals(userLogin)) {
+        if (Objects.equals(submissionA.getStudentLogin(), userLogin)) {
             submissionA.setStudentLogin(YOUR_SUBMISSION);
             submissionB.setStudentLogin(OTHER_SUBMISSION);
         }
-        else if (submissionB.getStudentLogin().equals(userLogin)) {
+        else if (Objects.equals(submissionB.getStudentLogin(), userLogin)) {
             submissionA.setStudentLogin(OTHER_SUBMISSION);
             submissionB.setStudentLogin(YOUR_SUBMISSION);
         }

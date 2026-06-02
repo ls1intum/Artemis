@@ -149,9 +149,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
                 PlagiarismCaseOverviewDTO.class);
         assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").extracting(PlagiarismCaseOverviewDTO::id)
                 .containsExactlyInAnyOrderElementsOf(coursePlagiarismCases.stream().map(PlagiarismCase::getId).toList());
-        assertThat(plagiarismCasesResponse.getFirst().plagiarismSubmissionCount()).as("should include the number of submissions").isEqualTo(2);
-        assertThat(plagiarismCasesResponse.getFirst().exercise().id()).as("should include exercise summary").isEqualTo(textExercise.getId());
-        assertThat(plagiarismCasesResponse.getFirst().student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
+        assertThat(plagiarismCasesResponse).allSatisfy(plagiarismCase -> {
+            assertThat(plagiarismCase.plagiarismSubmissionCount()).as("should include the number of submissions").isEqualTo(2);
+            assertThat(plagiarismCase.exercise().id()).as("should include exercise summary").isEqualTo(textExercise.getId());
+            assertThat(plagiarismCase.student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
+        });
     }
 
     @Test
@@ -184,6 +186,16 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetPlagiarismCaseForInstructor_wrongCourse() throws Exception {
+        var examPlagiarismCase = examPlagiarismCases.getFirst();
+        assertThat(examTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isNotEqualTo(course.getId());
+
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + examPlagiarismCase.getId() + "/for-instructor", HttpStatus.CONFLICT,
+                PlagiarismCaseDetailDTO.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCasesForExamForInstructor_forbidden_student() throws Exception {
         request.getList("/api/plagiarism/courses/1/exams/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
@@ -211,8 +223,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
                 HttpStatus.OK, PlagiarismCaseOverviewDTO.class);
         assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").extracting(PlagiarismCaseOverviewDTO::id)
                 .containsExactlyInAnyOrderElementsOf(examPlagiarismCases.stream().map(PlagiarismCase::getId).toList());
-        assertThat(plagiarismCasesResponse.getFirst().exercise().examId()).as("should include exam summary").isEqualTo(exam.getId());
-        assertThat(plagiarismCasesResponse.getFirst().student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
+        assertThat(plagiarismCasesResponse).allSatisfy(plagiarismCase -> {
+            assertThat(plagiarismCase.exercise().examId()).as("should include exam summary").isEqualTo(exam.getId());
+            assertThat(plagiarismCase.student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
+        });
     }
 
     @Test
@@ -255,6 +269,20 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict warning").isEqualTo(PlagiarismVerdict.WARNING);
         assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should update plagiarism case verdict message").isEqualTo("This is a warning!");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSavePlagiarismCaseVerdict_wrongCourse() throws Exception {
+        var examPlagiarismCase = examPlagiarismCases.getFirst();
+        var plagiarismVerdictDTO = new PlagiarismVerdictDTO(WARNING, "This is a warning!", 0);
+        assertThat(examTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isNotEqualTo(course.getId());
+
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + examPlagiarismCase.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.CONFLICT);
+
+        var unchangedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(examPlagiarismCase.getId());
+        assertThat(unchangedPlagiarismCase.getVerdict()).as("should not update plagiarism case verdict for a different course").isNull();
+        assertThat(unchangedPlagiarismCase.getVerdictMessage()).as("should not update plagiarism case verdict message for a different course").isNull();
     }
 
     @Test
