@@ -520,7 +520,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     });
 
     it('should set isLoading false and emit an error if loadFiles fails', () => {
-        const isCleanSubject = new Subject<{ isClean: boolean }>();
+        const isCleanSubject = new Subject<{ repositoryStatus: string }>();
         const getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
         const onErrorSpy = vi.spyOn(comp.onError, 'emit');
         getStatusStub.mockReturnValue(isCleanSubject);
@@ -529,7 +529,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBe(true);
         expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
-        isCleanSubject.next({ isClean: true });
+        isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getRepositoryContentSubject.error('fatal error');
 
         fixture.detectChanges();

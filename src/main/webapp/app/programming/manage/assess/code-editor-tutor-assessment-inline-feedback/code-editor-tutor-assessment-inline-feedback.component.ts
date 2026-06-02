@@ -151,7 +151,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine()}`;
+        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
     }
 
     /**

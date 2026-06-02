@@ -30,11 +30,22 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      */
     removeAuxiliaryRepository() {
         const programmingExercise = this.programmingExercise();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const auxRepoIndex = programmingExercise.auxiliaryRepositories?.indexOf(this.row())!;
-        programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
+        const auxiliaryRepositories = programmingExercise.auxiliaryRepositories;
+        if (!auxiliaryRepositories) {
+            return;
+        }
+        const row = this.row();
+        // Locate the row either by reference or by id, so a -1 from indexOf cannot accidentally remove the last repository.
+        let auxRepoIndex = auxiliaryRepositories.indexOf(row);
+        if (auxRepoIndex === -1 && row.id !== undefined) {
+            auxRepoIndex = auxiliaryRepositories.findIndex((repository) => repository.id === row.id);
+        }
+        if (auxRepoIndex === -1) {
+            return;
+        }
+        auxiliaryRepositories.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
         this.onRefresh.emit(undefined);
         // This activates the angular change detection
-        programmingExercise.auxiliaryRepositories = [...programmingExercise.auxiliaryRepositories!];
+        programmingExercise.auxiliaryRepositories = [...auxiliaryRepositories];
     }
 }

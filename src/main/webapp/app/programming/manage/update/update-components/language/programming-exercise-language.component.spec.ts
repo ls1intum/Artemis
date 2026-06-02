@@ -71,6 +71,6 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
         comp.programmingExercise().allowOnlineIde = true;
         fixture.detectChanges();
-        expect(comp.programmingExerciseTheiaComponent()).not.toBeNull();
+        expect(comp.programmingExerciseTheiaComponent()).toBeDefined();
     });
 });

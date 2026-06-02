@@ -38,10 +38,11 @@
                     @for (error of inconsistencies; let index = $index; track index) {
                         <tr>
                             <td>
-                                <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
-                                    <span>{{ error.programmingExercise!.title }}</span>
-                                </a>
-                                @if (error.programmingExerciseCourseId === undefined) {
+                                @if (error.programmingExerciseCourseId !== undefined) {
+                                    <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
+                                        <span>{{ error.programmingExercise!.title }}</span>
+                                    </a>
+                                } @else {
                                     <span>{{ error.programmingExercise!.title }}</span>
                                 }
                             </td>

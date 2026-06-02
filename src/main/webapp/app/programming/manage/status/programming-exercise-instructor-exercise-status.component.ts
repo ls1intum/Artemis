@@ -64,7 +64,10 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
                     .subscribeForLatestResultOfParticipation(templateParticipation.id!, false, exercise?.id)
                     .pipe(
                         filter((result) => !!result),
-                        tap((result) => (templateParticipation.submissions!.last()!.results = [result!])),
+                        // Read the current participation from the signal at emit time so that a new
+                        // instance carrying the same id (which does not trigger a re-subscription)
+                        // still receives the update that findIssues() subsequently reads.
+                        tap((result) => (this.templateParticipation()!.submissions!.last()!.results = [result!])),
                         tap(() => this.findIssues()),
                     )
                     .subscribe();
@@ -79,7 +82,10 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
                     .subscribeForLatestResultOfParticipation(solutionParticipation.id!, false, exercise?.id)
                     .pipe(
                         filter((result) => !!result),
-                        tap((result) => (solutionParticipation.submissions!.last()!.results = [result!])),
+                        // Read the current participation from the signal at emit time so that a new
+                        // instance carrying the same id (which does not trigger a re-subscription)
+                        // still receives the update that findIssues() subsequently reads.
+                        tap((result) => (this.solutionParticipation()!.submissions!.last()!.results = [result!])),
                         tap(() => this.findIssues()),
                     )
                     .subscribe();

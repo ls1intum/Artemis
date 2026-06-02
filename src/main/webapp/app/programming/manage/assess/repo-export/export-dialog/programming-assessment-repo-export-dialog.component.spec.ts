@@ -34,8 +34,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let repoExportService: ProgrammingAssessmentRepoExportService;
     let dialogRef: DynamicDialogRef;
 
-    global.URL.createObjectURL = vi.fn(() => 'http://some.test.com');
-    global.URL.revokeObjectURL = vi.fn(() => '');
+    vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => 'http://some.test.com');
+    vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
     const exerciseId = 42;
     const participationIdList = [1];
@@ -130,7 +130,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.participantIdentifierList = 'ab12cde, cd34efg';
         comp.ngOnInit();
 
-        const copyOfExportOptions = { ...comp.repositoryExportOptions };
+        const copyOfExportOptions = Object.assign({}, comp.repositoryExportOptions);
 
         const httpResponse = createBlobHttpResponse();
         const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));

@@ -170,7 +170,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
 
     updateSubmissionFromView(): void {
         // Note: we just save here and do not commit, because this can lead to problems!
-        this.codeEditorContainer().actions()?.onSave();
+        // Use a non-null assertion (instead of optional chaining) to preserve the original throw-on-missing
+        // contract: a missing actions component must surface as an error rather than silently dropping the save.
+        this.codeEditorContainer().actions()!.onSave();
     }
 
     updateViewFromSubmission(): void {

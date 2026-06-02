@@ -39,6 +39,10 @@ export class ConsistencyCheckComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         const exercisesToCheck = this.exercisesToCheck();
+        if (exercisesToCheck.length === 0) {
+            this.isLoading = false;
+            return;
+        }
         let exercisesRemaining = exercisesToCheck.length;
         exercisesToCheck.forEach((exercise) => {
             const course = getCourseId(exercise);

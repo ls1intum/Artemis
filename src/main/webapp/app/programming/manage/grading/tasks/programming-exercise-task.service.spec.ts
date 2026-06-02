@@ -129,7 +129,7 @@ describe('ProgrammingExerciseTask Service', () => {
     let tasks: ProgrammingExerciseTask[];
     let testCases: ProgrammingExerciseTestCase[];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -149,12 +149,13 @@ describe('ProgrammingExerciseTask Service', () => {
         updateTestCasesStub = vi.spyOn(gradingService, 'updateTestCase');
         resetTestCasesStub = vi.spyOn(gradingService, 'resetTestCases');
 
-        firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics)).then(() => {
-            tasks = service.updateTasks();
-            testCases = tasks.flatMap(({ testCases }) => testCases);
-        });
+        const configured = firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics));
 
         httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush(serverSideTasks);
+
+        await configured;
+        tasks = service.updateTasks();
+        testCases = tasks.flatMap(({ testCases }) => testCases);
     });
 
     afterEach(() => vi.restoreAllMocks());

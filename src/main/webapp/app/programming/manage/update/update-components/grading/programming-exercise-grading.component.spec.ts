@@ -204,7 +204,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
             if (selector === 'jhi-grading-instructions-details' && isVisible) {
                 // setInput with a fresh exercise reference so the signal-driven template re-evaluates under zoneless.
                 exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                fixture.componentRef.setInput('programmingExercise', { ...exercise } as ProgrammingExercise);
+                fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
                 fixture.detectChanges(false);
                 const instructionsField = fixture.debugElement.nativeElement.querySelector(selector);
                 expect(instructionsField).not.toBeNull();
@@ -271,7 +271,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
                 extraCondition: () => {
                     exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                    fixture.componentRef.setInput('programmingExercise', { ...exercise } as ProgrammingExercise);
+                    fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
                     editFieldRecord[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
                     fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord });
                 },

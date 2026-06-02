@@ -48,7 +48,7 @@ export class ProgrammingExerciseGradingDirtyWarningComponent {
             if (!programmingExerciseId) {
                 return;
             }
-            this.hasUpdatedGradingConfig.set(undefined);
+            this.hasUpdatedGradingConfig.set(this.hasUpdatedGradingConfigInitialValue());
             const subscription = this.programmingExerciseWebsocketService
                 .getTestCaseState(programmingExerciseId)
                 .pipe(

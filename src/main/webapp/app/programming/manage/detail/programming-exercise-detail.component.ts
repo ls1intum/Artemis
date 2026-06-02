@@ -23,7 +23,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -205,6 +205,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    private consistencyCheckDialogRef?: DynamicDialogRef;
+
     exerciseDetailSections: DetailOverviewSection[];
 
     private diffRunId = 0;
@@ -247,6 +249,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.consistencyCheckDialogRef?.close();
     }
 
     /**
@@ -787,13 +790,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        this.dialogService.open(ConsistencyCheckComponent, {
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            header: this.translateService.instant('artemisApp.consistencyCheck.title'),
-            data: { exercisesToCheck: Array.of(exercise) },
-        });
+        this.consistencyCheckDialogRef =
+            this.dialogService.open(ConsistencyCheckComponent, {
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+                data: { exercisesToCheck: Array.of(exercise) },
+            }) ?? undefined;
     }
 
     async triggerAtlasOrchestrator() {
