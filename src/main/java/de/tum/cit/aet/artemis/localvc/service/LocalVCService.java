@@ -119,6 +119,11 @@ public class LocalVCService extends AbstractVersionControlService {
         return Files.exists(projectPath);
     }
 
+    @Override
+    protected boolean repositoryExists(LocalVCRepositoryUri repositoryUri) {
+        return Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath));
+    }
+
     /**
      * Create a new project
      *
