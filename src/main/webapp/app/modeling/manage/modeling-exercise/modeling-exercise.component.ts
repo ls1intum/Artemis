@@ -71,7 +71,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 this.modelingExercises = res.body!;
                 // reconnect exercise with course
                 this.modelingExercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.selectedExercises = [];
                 });

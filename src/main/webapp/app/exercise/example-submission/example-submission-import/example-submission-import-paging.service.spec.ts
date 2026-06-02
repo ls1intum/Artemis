@@ -1,7 +1,5 @@
-import { expect } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -12,9 +10,12 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Example Submission Import Paging Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: ExampleSubmissionImportPagingService;
     let httpMock: HttpTestingController;
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -25,6 +25,7 @@ describe('HeaderExercisePageWithDetails', () => {
     setupTestBed({ zoneless: true });
 
     let component: HeaderExercisePageWithDetailsComponent;
+    let fixture: ComponentFixture<HeaderExercisePageWithDetailsComponent>;
 
     let exam: Exam;
     let exercise: ProgrammingExercise;
@@ -44,13 +45,13 @@ describe('HeaderExercisePageWithDetails', () => {
             providers: [],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
+        fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
         component = fixture.componentInstance;
 
         exercise = new ProgrammingExercise(undefined, undefined);
         exercise.dueDate = undefined;
         exercise.assessmentType = AssessmentType.AUTOMATIC;
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         exam = new Exam();
         participation = new StudentParticipation(ParticipationType.PROGRAMMING);
@@ -70,7 +71,7 @@ describe('HeaderExercisePageWithDetails', () => {
         const categories = [category];
         exercise.categories = categories;
         exam.endDate = dayjs().subtract(1, 'day');
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
 
         component.ngOnInit();
 
@@ -96,7 +97,7 @@ describe('HeaderExercisePageWithDetails', () => {
         exercise.startDate = undefined;
         exercise.dueDate = dayjs().subtract(2, 'days');
         participation.individualDueDate = dayjs().add(1, 'day');
-        component.studentParticipation = participation;
+        fixture.componentRef.setInput('studentParticipation', participation);
         component.ngOnInit();
         expect(component.dueDate).toEqual(participation.individualDueDate);
         expect(component.nextRelevantDate).toBeUndefined();
@@ -109,7 +110,7 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
-        component.course = { maxComplaintTimeDays: 7 } as Course;
+        fixture.componentRef.setInput('course', { maxComplaintTimeDays: 7 } as Course);
         const submission = { results: [{ rated: true, completionDate: dayjs() }] } as ProgrammingSubmission;
         participation.submissions = [submission];
         component.ngOnInit();
@@ -156,20 +157,20 @@ describe('HeaderExercisePageWithDetails', () => {
 
     it('should set the icon according to the exam end date', () => {
         exam.endDate = dayjs().subtract(1, 'day');
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate).toEqual(exam.endDate);
         expect(component.nextRelevantDateStatusBadge).toBe('bg-danger');
 
         exam.publishResultsDate = dayjs().add(12, 'hours');
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate).toEqual(exam.publishResultsDate);
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         exam.publishResultsDate = dayjs().subtract(12, 'hours');
         exam.endDate = dayjs().add(1, 'day');
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate).toEqual(exam.endDate);
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
@@ -178,7 +179,7 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should not set a due date in exam mode as no individual due dates exist', () => {
         exercise.dueDate = dayjs();
         exam.endDate = dayjs().add(1, 'day');
-        component.exam = exam;
+        fixture.componentRef.setInput('exam', exam);
 
         component.ngOnInit();
 
@@ -205,9 +206,10 @@ describe('HeaderExercisePageWithDetails', () => {
         ],
     ])('should count number of submissions correctly', (submissions: Submission[], expectedNumber: number) => {
         participation.submissions = submissions;
-        component.studentParticipation = participation;
-        component.submissionPolicy = new LockRepositoryPolicy();
-        component.submissionPolicy.active = true;
+        fixture.componentRef.setInput('studentParticipation', participation);
+        const submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.active = true;
+        fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
         component.ngOnChanges();
 

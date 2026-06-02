@@ -7,5 +7,6 @@
     name="notificationText"
     id="field_notification_text"
     (change)="onInputChanged()"
-    [(ngModel)]="notificationText"
+    [ngModel]="currentNotificationText()"
+    (ngModelChange)="currentNotificationText.set($event)"
 />
