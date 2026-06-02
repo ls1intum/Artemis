@@ -259,6 +259,11 @@ export class QuizQuestionListEditComponent {
     async importApollonDragAndDropQuestion() {
         const ref = this.dialogService.open(ApollonDiagramImportDialogComponent, {
             width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,

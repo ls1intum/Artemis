@@ -443,6 +443,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             await component.addQuestions(questions);
 
             expect(openDialogSpy).toHaveBeenCalledOnce();
+            // The confirm dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+            expect(openDialogSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ width: '50rem', breakpoints: { '850px': '95vw' } }));
         });
 
         it('should emit onQuestionsAdded when all questions are valid', async () => {

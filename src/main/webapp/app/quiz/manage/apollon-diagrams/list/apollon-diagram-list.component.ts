@@ -114,6 +114,9 @@ export class ApollonDiagramListComponent {
     openCreateDiagramDialog(courseId: number) {
         const ref = this.dialogService.open(ApollonDiagramCreateFormComponent, {
             width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,

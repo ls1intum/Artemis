@@ -11,6 +11,7 @@ import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/quiz/manage/apollon-diagrams/list/apollon-diagram-list.component';
+import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/create-form/apollon-diagram-create-form.component';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -105,6 +106,8 @@ describe('ApollonDiagramList Component', () => {
         fixture.componentInstance.openCreateDiagramDialog(course.id!);
 
         expect(openDialogSpy).toHaveBeenCalledOnce();
+        // The dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+        expect(openDialogSpy).toHaveBeenCalledWith(ApollonDiagramCreateFormComponent, expect.objectContaining({ width: '50rem', breakpoints: { '850px': '95vw' } }));
 
         // dismiss (undefined) must not open a diagram
         onClose.next(undefined);

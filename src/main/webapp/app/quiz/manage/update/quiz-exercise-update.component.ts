@@ -257,6 +257,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     readonly defaultSecondLayerDialogOptions = {
         width: '40rem',
+        breakpoints: {
+            '768px': '95vw',
+        },
         modal: true,
         closable: true,
         closeOnEscape: true,

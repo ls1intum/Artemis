@@ -58,6 +58,21 @@ describe('QuizQuestionListEditComponent', () => {
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
+    it('should open the Apollon import dialog with responsive breakpoints that keep it within the viewport', async () => {
+        const dialogService = TestBed.inject(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+
+        await component.importApollonDragAndDropQuestion();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+                width: '80rem',
+                breakpoints: { '1400px': '75vw', '1200px': '85vw', '992px': '95vw' },
+            }),
+        );
+    });
+
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = vi.spyOn(component.onQuestionAdded, 'emit');
         component.addDragAndDropQuestion();

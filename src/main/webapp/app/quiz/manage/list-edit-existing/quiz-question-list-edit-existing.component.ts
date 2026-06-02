@@ -279,6 +279,9 @@ export class QuizQuestionListEditExistingComponent {
         if (invalidQuizQuestions.length > 0) {
             const ref = this.dialogService.open(QuizConfirmImportInvalidQuestionsModalComponent, {
                 width: '50rem',
+                breakpoints: {
+                    '850px': '95vw',
+                },
                 modal: true,
                 closable: true,
                 closeOnEscape: true,

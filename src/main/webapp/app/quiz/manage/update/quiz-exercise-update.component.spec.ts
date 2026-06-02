@@ -1892,7 +1892,12 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
                     GenericConfirmationDialogComponent,
-                    expect.objectContaining({ data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }) }),
+                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                    expect.objectContaining({
+                        width: '40rem',
+                        breakpoints: { '768px': '95vw' },
+                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                    }),
                 );
 
                 // confirm

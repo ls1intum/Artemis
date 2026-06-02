@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { By } from '@angular/platform-browser';
+import { Dialog } from 'primeng/dialog';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,9 +16,7 @@ describe('QuizScoringInfoModalComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideTemplate(QuizScoringInfoModalComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(QuizScoringInfoModalComponent);
         component = fixture.componentInstance;
@@ -42,5 +42,12 @@ describe('QuizScoringInfoModalComponent', () => {
         component.open();
 
         expect(component.isVisible()).toBe(true);
+    });
+
+    it('should configure a responsive breakpoint so the 50rem dialog stays within narrow viewports', () => {
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
     });
 });

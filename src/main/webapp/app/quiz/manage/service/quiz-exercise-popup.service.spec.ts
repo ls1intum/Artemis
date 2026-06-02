@@ -70,6 +70,9 @@ describe('QuizExercisePopupService', () => {
         // width 50rem == 'lg', dismissableMask: false == backdrop: 'static', plus the modal/closeOnEscape/draggable/resizable/showHeader pins.
         expect(openSpy).toHaveBeenCalledWith(MockModalComponent, {
             width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,

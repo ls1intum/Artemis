@@ -34,6 +34,9 @@ export class QuizExercisePopupService {
     quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef | undefined {
         const ref = this.dialogService.open(component, {
             width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,
