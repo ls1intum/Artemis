@@ -13,6 +13,8 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -25,7 +27,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [ProgrammingExerciseInstructionService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                ProgrammingExerciseInstructionService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);
