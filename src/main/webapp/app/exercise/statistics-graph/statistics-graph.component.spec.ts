@@ -1,5 +1,4 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
@@ -37,13 +36,12 @@ describe('StatisticsGraphComponent', () => {
 
     it('should initialize', () => {
         let graphData: number[];
-        component.graphType = Graphs.SUBMISSIONS;
-        component.statisticsView = StatisticsView.ARTEMIS;
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.ARTEMIS);
         let arrayLength = 0;
         const getChartDataMock = vi.spyOn(service, 'getChartData');
 
         for (const span of Object.values(SpanType)) {
-            component.currentSpan = span;
             switch (span) {
                 case SpanType.DAY:
                     arrayLength = 24;
@@ -67,40 +65,39 @@ describe('StatisticsGraphComponent', () => {
             }
             getChartDataMock.mockReturnValue(of(graphData));
 
-            const changes = { currentSpan: { currentValue: span } as SimpleChange };
-            component.ngOnChanges(changes);
+            fixture.componentRef.setInput('currentSpan', span);
+            fixture.detectChanges();
 
             expect(component.dataForSpanType).toEqual(graphData);
             graphData.forEach((data, index) => {
                 expect(component.ngxData[index].value).toBe(data);
             });
-            expect(component.currentSpan).toEqual(span);
+            expect(component.currentSpan()).toEqual(span);
         }
     });
 
     it('should initialize after changes', () => {
-        component.graphType = Graphs.SUBMISSIONS;
-        component.currentSpan = SpanType.WEEK;
-        component.statisticsView = StatisticsView.COURSE;
-        component.entityId = 1;
-        const changes = { currentSpan: { currentValue: SpanType.DAY } as SimpleChange };
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.COURSE);
+        fixture.componentRef.setInput('entityId', 1);
+        fixture.componentRef.setInput('currentSpan', SpanType.DAY);
         const graphData = [];
         for (let i = 0; i < 24; i++) {
             graphData[i] = i + 1;
         }
 
-        component.ngOnChanges(changes);
+        fixture.detectChanges();
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([...graphData]);
 
         expect(component.dataForSpanType).toEqual(graphData);
-        expect(component.currentSpan).toEqual(SpanType.DAY);
+        expect(component.currentSpan()).toEqual(SpanType.DAY);
     });
 
     it('should switch time span', () => {
-        component.graphType = Graphs.SUBMISSIONS;
-        component.currentSpan = SpanType.WEEK;
-        component.statisticsView = StatisticsView.ARTEMIS;
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('currentSpan', SpanType.WEEK);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.ARTEMIS);
         const graphData = [1, 2, 3, 4, 5, 6, 8];
         vi.spyOn(service, 'getChartData').mockReturnValue(of(graphData));
 

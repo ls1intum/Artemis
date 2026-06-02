@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
@@ -37,9 +37,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     readonly chartCategoryFilter = inject(ChartCategoryFilter);
 
-    @Input() exerciseAverageScores: CourseManagementStatisticsModel[];
-    @Input() courseAverage: number;
-    @Input() courseId: number;
+    readonly exerciseAverageScores = input.required<CourseManagementStatisticsModel[]>();
+    readonly courseAverage = input.required<number>();
+    readonly courseId = input.required<number>();
+
+    /** the input scores ordered ascending by average score; the working set the chart and filters operate on */
+    private orderedScores: CourseManagementStatisticsModel[] = [];
 
     // Html properties
     LEFT = false;
@@ -89,14 +92,14 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.includeAllIntervals();
-        this.exerciseAverageScores = this.orderAverageScores(this.exerciseAverageScores);
+        this.orderedScores = this.orderAverageScores(this.exerciseAverageScores());
         this.setUpColorDistribution();
-        this.exerciseTypeFilter.initializeFilterOptions(this.exerciseAverageScores);
-        this.chartCategoryFilter.setupCategoryFilter(this.exerciseAverageScores);
-        this.setupChart(this.exerciseAverageScores);
-        this.currentlyDisplayableExercises = this.exerciseAverageScores;
-        this.exerciseScoresFilteredByPerformanceInterval = this.exerciseAverageScores;
-        this.currentSize = this.exerciseAverageScores.length;
+        this.exerciseTypeFilter.initializeFilterOptions(this.orderedScores);
+        this.chartCategoryFilter.setupCategoryFilter(this.orderedScores);
+        this.setupChart(this.orderedScores);
+        this.currentlyDisplayableExercises = this.orderedScores;
+        this.exerciseScoresFilteredByPerformanceInterval = this.orderedScores;
+        this.currentSize = this.orderedScores.length;
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
@@ -128,7 +131,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
         // a workaround in order to prevent false navigation. If more than one exercise is matching, no routing is done
         if (dataEntry) {
-            const route = ['course-management', this.courseId, '', dataEntry.exerciseId, 'exercise-statistics'];
+            const route = ['course-management', this.courseId(), '', dataEntry.exerciseId, 'exercise-statistics'];
             let type = dataEntry.exerciseType.toLowerCase();
             if (type === ExerciseType.QUIZ) {
                 route[4] = 'quiz-point-statistic';
@@ -209,10 +212,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * These are exclusive, which means that both boundary values are excluded by the lowest and best third accordingly
      */
     private setUpColorDistribution(): void {
-        if (!this.exerciseAverageScores || this.exerciseAverageScores.length === 0) {
+        if (this.orderedScores.length === 0) {
             return;
         }
-        const averageScores = this.exerciseAverageScores.map((exercise) => exercise.averageScore);
+        const averageScores = this.orderedScores.map((exercise) => exercise.averageScore);
         const thirdSize = Math.floor(averageScores.length / 3);
         const highestScoreInLowestThird = averageScores[Math.max(thirdSize - 1, 0)];
         const allScoresAboveLowestThird = averageScores.filter((score) => score > highestScoreInLowestThird);
@@ -248,7 +251,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             // if only this interval is selected, reselecting it leads to selecting all intervals
             if (this.numberOfSelectedIntervals === 1) {
                 this.includeAllIntervals();
-                this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.exerciseAverageScores);
+                this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.orderedScores);
             } else {
                 this.deselectAllOtherIntervals(interval);
             }
@@ -297,7 +300,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
                 filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore > this.bestThirdLowerBoundary;
             }
         }
-        return this.exerciseAverageScores.filter(filterFunction);
+        return this.orderedScores.filter(filterFunction);
     }
 
     /**
@@ -305,7 +308,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * @param exerciseModels the array that should be ordered
      */
     private orderAverageScores(exerciseModels: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
-        return exerciseModels.sort((exercise1, exercise2) => exercise1.averageScore - exercise2.averageScore);
+        return [...exerciseModels].sort((exercise1, exercise2) => exercise1.averageScore - exercise2.averageScore);
     }
 
     /**
