@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -7,22 +7,22 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
@@ -34,11 +34,11 @@ import { FileUploadExamSubmissionComponent } from '../exercises/file-upload/file
 import { TextExamSubmissionComponent } from '../exercises/text/text-exam-submission.component';
 import { ModelingExamSubmissionComponent } from '../exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from '../exercises/programming/programming-exam-submission.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import {
@@ -47,19 +47,19 @@ import {
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
-import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -109,8 +109,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
 
-    @ViewChildren(ExamSubmissionComponent)
-    currentPageComponents: QueryList<ExamSubmissionComponent>;
+    readonly currentPageComponents = viewChildren(ExamSubmissionComponent);
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -303,7 +302,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentPageComponents.find(
+        return this.currentPageComponents().find(
             (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
     }
@@ -927,7 +926,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.currentPageComponents()
+            .filter((component) => component.hasUnsavedChanges())
+            .forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {

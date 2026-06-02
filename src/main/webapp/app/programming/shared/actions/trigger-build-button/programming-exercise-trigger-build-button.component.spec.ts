@@ -1,8 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -12,11 +14,10 @@ import { Subject, of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -25,6 +26,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TriggerBuildButtonSpec', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentTriggerBuildButtonComponent>;
     let debugElement: DebugElement;
@@ -32,8 +35,8 @@ describe('TriggerBuildButtonSpec', () => {
 
     let getLatestPendingSubmissionSubject: Subject<ProgrammingSubmissionStateObj>;
 
-    let triggerBuildSpy: jest.SpyInstance;
-    let triggerFailedBuildSpy: jest.SpyInstance;
+    let triggerBuildSpy: ReturnType<typeof vi.spyOn>;
+    let triggerFailedBuildSpy: ReturnType<typeof vi.spyOn>;
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
@@ -70,15 +73,15 @@ describe('TriggerBuildButtonSpec', () => {
                 submissionService = TestBed.inject(ProgrammingSubmissionService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
-                jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+                vi.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
 
-                triggerBuildSpy = jest.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
-                triggerFailedBuildSpy = jest.spyOn(submissionService, 'triggerFailedBuild').mockReturnValue(of());
+                triggerBuildSpy = vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
+                triggerFailedBuildSpy = vi.spyOn(submissionService, 'triggerFailedBuild').mockReturnValue(of());
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const getTriggerButton = () => {
@@ -86,12 +89,20 @@ describe('TriggerBuildButtonSpec', () => {
         return triggerButton ? triggerButton.nativeElement : null;
     };
 
-    it('should not show the trigger button if there is no pending submission and no build is running', () => {
-        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        comp.exercise = { id: 4 } as ProgrammingExercise;
+    it('should not crash or enable triggering when no participation is provided (e.g. auxiliary repository)', () => {
+        fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
+        // participation deliberately unset: the effect must not dereference the missing participation.
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(comp.participationBuildCanBeTriggered()).toBe(false);
+        expect(getTriggerButton()).toBeNull();
+    });
 
-        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
-        fixture.changeDetectorRef.detectChanges();
+    it('should not show the trigger button if there is no pending submission and no build is running', () => {
+        const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 4 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
+
+        fixture.detectChanges();
 
         // Button should not show if there is no failed submission.
         let triggerButton = getTriggerButton();
@@ -101,28 +112,29 @@ describe('TriggerBuildButtonSpec', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
             submission: undefined,
-            participationId: comp.participation.id!,
+            participationId: newParticipation.id!,
         });
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeDefined();
     });
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
-        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        comp.exercise = { id: 5 } as ProgrammingExercise;
+        const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 5 } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
 
-        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
+        fixture.detectChanges();
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
             submission: undefined,
-            participationId: comp.participation.id!,
+            participationId: newParticipation.id!,
         });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         let triggerButton = getTriggerButton();
-        expect(triggerButton.disabled).toBeFalse();
+        expect(triggerButton.disabled).toBe(false);
 
         // Click the button to start a build.
         triggerButton.click();
@@ -133,20 +145,20 @@ describe('TriggerBuildButtonSpec', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission,
-            participationId: comp.participation.id!,
+            participationId: newParticipation.id!,
         });
-        expect(comp.isBuilding).toBeTrue();
-        fixture.changeDetectorRef.detectChanges();
-        expect(triggerButton.disabled).toBeTrue();
+        expect(comp.isBuilding()).toBe(true);
+        fixture.detectChanges();
+        expect(triggerButton.disabled).toBe(true);
 
         // Now the server signals that the build is done, the button should now be removed.
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: undefined,
-            participationId: comp.participation.id!,
+            participationId: newParticipation.id!,
         });
-        expect(comp.isBuilding).toBeFalse();
-        fixture.changeDetectorRef.detectChanges();
+        expect(comp.isBuilding()).toBe(false);
+        fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeNull();
     });
@@ -155,12 +167,12 @@ describe('TriggerBuildButtonSpec', () => {
         gradedResult1.assessmentType = AssessmentType.AUTOMATIC;
         gradedResult2.assessmentType = AssessmentType.MANUAL;
 
-        comp.participation = { ...participation, results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED };
-        comp.exercise = { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise;
+        const newParticipation = { ...participation, results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED };
+        fixture.componentRef.setInput('exercise', { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', newParticipation);
 
-        triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
-        expect(comp.lastResultIsManual).toBeTrue();
+        expect(comp.lastResultIsManual()).toBe(true);
     });
 });

@@ -1,0 +1,24 @@
+<div class="modal-header">
+    <h4 class="modal-title">{{ data.title | artemisTranslate: data.titleTranslationParams }}</h4>
+    <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="cancel()"></button>
+</div>
+<div class="modal-body">
+    @if (data.textIsMarkdown) {
+        <div [innerHTML]="data.text"></div>
+    }
+    @if (!data.textIsMarkdown) {
+        @if (data.translateText) {
+            <p style="white-space: pre-line">{{ data.text | artemisTranslate }}</p>
+        }
+        @if (!data.translateText) {
+            <p style="white-space: pre-line">{{ data.text }}</p>
+        }
+    }
+    @if (data.contentRef) {
+        <ng-container [ngTemplateOutlet]="data.contentRef" />
+    }
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
+    <button #confirmButton type="button" class="btn btn-danger" (click)="confirm()" jhiTranslate="global.form.confirm" [disabled]="data.confirmDisabled"></button>
+</div>

@@ -21,7 +21,7 @@ import {
 import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValuesEqual } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
  * Creates a mock DynamicDialogRef whose onClose Subject can be resolved or completed externally.
@@ -59,7 +59,7 @@ describe('ExerciseMetadataSyncService', () => {
     };
 
     const flushSnapshot = (exerciseId: number, versionId: number, snapshot: ExerciseSnapshotDTO) => {
-        const req = httpMock.expectOne(`api/exercise/${exerciseId}/version/${versionId}`);
+        const req = httpMock.expectOne(`api/exercise/exercises/${exerciseId}/versions/${versionId}`);
         expect(req.request.method).toBe('GET');
         req.flush(snapshot);
     };
@@ -140,8 +140,7 @@ describe('ExerciseMetadataSyncService', () => {
         service.initialize(context);
         service.initialize(context);
 
-        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledOnce();
-        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledWith();
+        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledExactlyOnceWith();
 
         service.destroy();
 
@@ -374,7 +373,7 @@ describe('ExerciseMetadataSyncService', () => {
         emitAlert(createAlert(106, ['title']));
         emitAlert(createAlert(107, ['title']));
 
-        const first = httpMock.expectOne('api/exercise/1/version/106');
+        const first = httpMock.expectOne('api/exercise/exercises/1/versions/106');
         first.flush('network-failure', { status: 500, statusText: 'Server Error' });
         await flushPromises();
 
@@ -391,7 +390,7 @@ describe('ExerciseMetadataSyncService', () => {
         service.initialize(context);
         emitAlert(createAlert(130, ['title']));
 
-        const req = httpMock.expectOne('api/exercise/1/version/130');
+        const req = httpMock.expectOne('api/exercise/exercises/1/versions/130');
         req.flush('error', { status: 404, statusText: 'Not Found' });
         await flushPromises();
 
@@ -415,7 +414,7 @@ describe('ExerciseMetadataSyncService', () => {
         flushSnapshot(1, 108, { id: 1, title: 'incoming-v108' });
         await flushPromises();
 
-        httpMock.expectNone('api/exercise/1/version/109');
+        httpMock.expectNone('api/exercise/exercises/1/versions/109');
         expect(dialogService.open).toHaveBeenCalledOnce();
 
         firstMock.onClose.next({ decisions: [{ field: 'title', useIncoming: false }] });
@@ -541,7 +540,7 @@ describe('ExerciseMetadataSyncService', () => {
         service.destroy();
 
         // Cancel the pending request to satisfy httpMock.verify()
-        const pendingReq = httpMock.expectOne('api/exercise/1/version/150');
+        const pendingReq = httpMock.expectOne('api/exercise/exercises/1/versions/150');
         pendingReq.flush('cancelled', { status: 0, statusText: 'Cancelled' });
         await flushPromises();
 
@@ -609,7 +608,7 @@ describe('ExerciseMetadataSyncService', () => {
         emitAlert(createAlert(161, ['title']));
 
         // Flush the stale snapshot for exercise 1
-        const staleReq = httpMock.expectOne('api/exercise/1/version/160');
+        const staleReq = httpMock.expectOne('api/exercise/exercises/1/versions/160');
         staleReq.flush('cancelled', { status: 0, statusText: 'Cancelled' });
         await flushPromises();
 

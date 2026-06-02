@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -14,8 +14,8 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -23,6 +23,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -76,19 +77,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 ShortAnswerQuestionEditComponent,
             ],
             providers: [
-                MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        })
-            .overrideComponent(ShortAnswerQuestionEditComponent, {
-                set: {
-                    providers: [MockProvider(NgbModal)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
     });
@@ -381,14 +375,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
     });
 
-    it('should open', () => {
-        const content = {};
-        const modalService = fixture.debugElement.injector.get(NgbModal);
-        const modalSpy = vi.spyOn(modalService, 'open');
-        component.open(content);
-        expect(modalSpy).toHaveBeenCalledOnce();
-    });
-
     it('should add spot to cursor and increase the spot number', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
@@ -520,7 +506,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             getText: vi.fn().mockReturnValue('Question text [-option 1]'),
         };
         const mockQuestionEditor = {
-            monacoEditor: mockMonacoEditor,
+            monacoEditor: () => mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
         // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals
@@ -648,6 +634,39 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should enforce the title maxlength on the short answer question input', () => {
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+    });
+
+    it('should show visual feedback when the short answer question title limit is reached', () => {
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
+
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
+    });
+
+    it('should show visual feedback when the re-evaluation short answer question title limit is reached', () => {
+        vi.advanceTimersToNextFrame();
+        fixture.componentRef.setInput('reEvaluationInProgress', true);
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title input');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title small');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
     });
 
     it('should return highest spot number', () => {

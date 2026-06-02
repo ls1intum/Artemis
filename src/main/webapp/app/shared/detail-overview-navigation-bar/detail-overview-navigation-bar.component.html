@@ -1,9 +1,0 @@
-<nav class="mt-3">
-    <div class="nav-link-container">
-        @for (headline of sectionHeadlines; track headline) {
-            <a (click)="scrollToView(headline.id)">
-                {{ headline.translationKey | artemisTranslate }}
-            </a>
-        }
-    </div>
-</nav>

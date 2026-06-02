@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',
@@ -38,7 +38,7 @@ export class AddAuxiliaryRepositoryButtonComponent {
         newAuxiliaryRepository.name = '';
         newAuxiliaryRepository.checkoutDirectory = '';
         this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
-        this.onRefresh.emit();
+        this.onRefresh.emit(undefined);
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }
 }

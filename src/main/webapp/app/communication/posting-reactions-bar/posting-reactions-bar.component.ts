@@ -3,13 +3,13 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
 import { faArrowRight, faBookmark, faCheck, faEnvelopeOpenText, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
@@ -24,17 +24,17 @@ import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import dayjs from 'dayjs/esm';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MetisConversationService } from '../service/metis-conversation.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -569,7 +569,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
                             // Create new conversation if necessary
                             if (userLogins.length > 0) {
-                                let newConversation: Conversation | undefined = undefined;
+                                let newConversation: Conversation | undefined;
 
                                 if (userLogins.length === 1) {
                                     // Direct message

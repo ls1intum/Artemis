@@ -1,9 +1,9 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
@@ -35,7 +35,13 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     playerFailed = output<void>();
 
     protected readonly playerVars = { origin: typeof window !== 'undefined' ? window.location.origin : undefined };
+    protected readonly startSeconds = computed(() => {
+        const timestamp = this.initialTimestamp();
+        return timestamp !== undefined && Number.isFinite(timestamp) && timestamp >= 0 ? Math.floor(timestamp) : undefined;
+    });
     protected readonly currentSegmentIndex = signal<number>(-1);
+
+    playerComponent = viewChild(YouTubePlayer);
 
     /** FontAwesome icon for the resizer grip */
     protected readonly faGripLinesVertical = faGripLinesVertical;
@@ -45,13 +51,15 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
-    private youtubePlayer: { getCurrentTime: () => number; seekTo: (s: number, allowSeekAhead: boolean) => void } | null = null;
+    private youtubePlayer: Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'> | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
     private interactInstance: ReturnType<typeof interact> | undefined;
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
+    private lastInitialTimestamp: number | undefined;
+    protected readonly isResizing = signal<boolean>(false);
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -61,6 +69,25 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
             if (segments.length > 0 && this.youtubePlayer) {
                 this.updateCurrentSegment(this.youtubePlayer.getCurrentTime());
             }
+        });
+
+        // Keep YouTube deeplinks aligned with late query-param updates as well.
+        effect(() => {
+            const timestamp = this.startSeconds();
+            const playerComponent = this.playerComponent();
+
+            if (timestamp === undefined) {
+                this.lastInitialTimestamp = undefined;
+                return;
+            }
+
+            if (!playerComponent || this.lastInitialTimestamp === timestamp) {
+                return;
+            }
+
+            this.lastInitialTimestamp = timestamp;
+            playerComponent.seekTo(timestamp, true);
+            this.updateCurrentSegment(timestamp);
         });
     }
 
@@ -80,6 +107,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.interactInstance?.unset();
         if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
         this.resizeObserver?.disconnect();
+        this.isResizing.set(false);
     }
 
     private initializeResizer(): void {
@@ -91,6 +119,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
         this.interactInstance = interact(resizerEl).draggable({
             listeners: {
+                start: () => {
+                    this.isResizing.set(true);
+                },
                 move: (event) => {
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const minWidth = 300;
@@ -110,6 +141,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
                     const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
                     videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
                     videoColumnEl.style.width = '';
+                },
+                end: () => {
+                    this.isResizing.set(false);
                 },
             },
             cursorChecker: () => 'col-resize',
@@ -161,12 +195,14 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
 
     onPlayerReady(event: any): void {
         this.clearReadiness();
-        // The @angular/youtube-player exposes the player via the component instance;
-        // in tests we inject a stub directly into `youtubePlayer`. Production:
-        this.youtubePlayer = this.youtubePlayer ?? event?.target ?? null;
-        const initial = this.initialTimestamp();
+        // Use the Angular wrapper when available so seek calls can be queued reliably.
+        this.youtubePlayer = this.playerComponent() ?? this.youtubePlayer ?? event?.target ?? null;
+        const initial = this.startSeconds();
         if (initial !== undefined && this.youtubePlayer) {
-            this.youtubePlayer.seekTo(initial, true);
+            if (!this.playerComponent() && this.lastInitialTimestamp !== initial) {
+                this.lastInitialTimestamp = initial;
+                this.youtubePlayer.seekTo(initial, true);
+            }
             this.updateCurrentSegment(initial);
         } else if (this.youtubePlayer) {
             this.updateCurrentSegment(this.youtubePlayer.getCurrentTime());

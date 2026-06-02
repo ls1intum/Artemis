@@ -25,19 +25,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -342,6 +343,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setStartDate(dto.startDate());
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setAssessmentType(dto.assessmentType());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // Only set boolean values if they are explicitly provided (not null)
@@ -418,11 +420,17 @@ public class ProgrammingExerciseUpdateResource {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null) {
+        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormatOrNull(dto.buildPlanConfiguration())) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
+            buildConfig.setBuildScript(null);
         }
-        if (dto.buildScript() != null) {
-            buildConfig.setBuildScript(dto.buildScript());
+        else {
+            if (dto.buildPlanConfiguration() != null) {
+                buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
+            }
+            if (dto.buildScript() != null) {
+                buildConfig.setBuildScript(dto.buildScript());
+            }
         }
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());

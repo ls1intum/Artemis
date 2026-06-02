@@ -1,3 +1,33 @@
+account:
+  - account
+  - user-management
+  - authority
+  - passkey
+  - authentication
+  - authorization
+  - login
+  - registration
+  - password
+  - user
+  - token
+  - conduct agreement
+  - caseSensitive: false
+
+admin:
+  - admin
+  - sbom
+  - vulnerability
+  - cleanup
+  - data export
+  - telemetry
+  - organization management
+  - imprint
+  - privacy statement
+  - audit
+  - legal document
+  - rate limit
+  - caseSensitive: false
+
 assessment:
   - assessment
   - bonus
@@ -33,6 +63,12 @@ buildagent:
   - build result
   - caseSensitive: false
 
+calendar:
+  - calendar
+  - subscription
+  - ical
+  - caseSensitive: false
+
 communication:
   - communication
   - conversation
@@ -46,20 +82,18 @@ communication:
   - caseSensitive: false
 
 core:
-  - user-management
-  - authority
-  - data export
   - migration
-  - caseSensitive: false
-  - passkey
   - security
-  - authentication
-  - authorization
-  - login
-  - registration
-  - password
-  - user
-  - token
+  - caseSensitive: false
+
+course:
+  - course
+  - enrollment
+  - course request
+  - course archive
+  - course material import
+  - course management
+  - caseSensitive: false
 
 exam:
   - exam
@@ -82,6 +116,12 @@ exercise:
 fileupload:
   - fileupload
   - upload
+  - caseSensitive: false
+
+globalsearch:
+  - global search
+  - globalsearch
+  - weaviate
   - caseSensitive: false
 
 iris:
@@ -128,7 +168,6 @@ programming:
   - \b(?<!\S)git(?!\S)\b
   - \b(?<!\S)ide(?!\S)\b
   - submission policy
-  - aeolus
   - penalty
   - auxilary
   - commit
@@ -151,4 +190,11 @@ text:
 
 tutorialgroup:
   - tutorialgroup
+  - caseSensitive: false
+
+videosource:
+  - videosource
+  - video source
+  - tum live
+  - tum-live
   - caseSensitive: false

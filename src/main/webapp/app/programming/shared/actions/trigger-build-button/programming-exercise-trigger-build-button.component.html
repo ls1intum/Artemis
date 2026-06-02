@@ -1,12 +1,14 @@
-@if (participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)) {
+@if (participationBuildCanBeTriggered() && (showForSuccessfulSubmissions() || participationHasLatestSubmissionWithoutResult())) {
     <jhi-button
-        [btnSize]="btnSize"
-        [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
+        [btnSize]="btnSize()"
+        [btnType]="participationHasLatestSubmissionWithoutResult() ? ButtonType.ERROR : ButtonType.PRIMARY"
         [icon]="faRedo"
-        [disabled]="isRetrievingBuildStatus"
-        [isLoading]="isBuilding"
+        [title]="title()"
+        [shouldToggle]="!!title()"
+        [disabled]="isRetrievingBuildStatus()"
+        [isLoading]="isBuilding()"
         (onClick)="triggerBuild($event)"
-        [tooltip]="participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
+        [tooltip]="participationHasLatestSubmissionWithoutResult() ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
         [featureToggle]="FeatureToggle.ProgrammingExercises"
     />
 }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -18,7 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -54,7 +55,7 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_sendsStartedAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, cleanup);
+        service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, true, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-1"), payloadCaptor.capture());
@@ -64,16 +65,18 @@ class HyperionCodeGenerationTaskServiceTest {
         assertThat(payload.exerciseId()).isEqualTo(7L);
         assertThat(payload.repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         assertThat(payload.message()).isEqualTo("Started");
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.SOLUTION), any(HyperionCodeGenerationEventPublisher.class));
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.SOLUTION), eq(true), isNull(),
+                any(HyperionCodeGenerationEventPublisher.class));
         verify(cleanup).run();
     }
 
     @Test
     void runJobAsync_whenExecutionFails_sendsErrorAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
-        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), any());
+        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), isNull(),
+                any());
 
-        service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, cleanup);
+        service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket, times(2)).send(eq("student1"), eq("code-generation/jobs/job-2"), payloadCaptor.capture());
@@ -89,10 +92,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenExecutionCompletesWithPartialOutcome_sendsDonePayloadWithCompletionStatusAndAttempts() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, cleanup);
+        service.runJobAsync("job-3", user, exercise, 1L, RepositoryType.TESTS, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), eq(false), isNull(), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
@@ -117,10 +120,10 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenPublisherSendsFileUpdate_forwardsIterationInPayload() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, cleanup);
+        service.runJobAsync("job-4", user, exercise, 1L, RepositoryType.TEMPLATE, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), isNull(), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().fileUpdated("src/main/java/App.java", RepositoryType.TEMPLATE, 2);

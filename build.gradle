@@ -40,7 +40,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.1.3"
+version = "9.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -56,7 +56,7 @@ wrapper {
 node {
     download = true
     version = "${node_version}"
-    npmVersion = "${npm_version}"
+    pnpmVersion = "${pnpm_version}"
 }
 
 apply from: "gradle/liquibase.gradle"
@@ -102,10 +102,11 @@ gitProperties {
 }
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs
-// thymeleaf 3.1.4.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q
-// tomcat 11.0.21: GHSA-h9fx-5mv3-gmh6, GHSA-6q54-28g2-vpgm, GHSA-55j7-cm8x-wvmh
-ext["thymeleaf.version"] = "3.1.4.RELEASE"
-ext["tomcat.version"] = "11.0.21"
+// thymeleaf 3.1.5.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
+// tomcat 11.0.22: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
+//                 GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
+ext["thymeleaf.version"] = "3.1.5.RELEASE"
+ext["tomcat.version"] = "11.0.22"
 
 configurations {
     mockitoAgent
@@ -198,8 +199,14 @@ dependencies {
 
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
-    // Required by Spring cloud
-    // Cannot org.apache.httpcomponents to later version due to compatibility issues
+    // Required by Spring cloud.
+    // Pinned to 5.5.1: not vulnerable to CVE-2026-40542 / GHSA-v468-qcjx-r72w (vulnerable range >= 5.6-alpha1, < 5.6.1).
+    // The CVE affects the SCRAM-SHA-256 authentication scheme that was first introduced in 5.6; that code path does not
+    // exist in 5.5.x, and Artemis does not use SCRAM-SHA-256 anywhere. A transitive request for httpclient5:5.6 from
+    // io.weaviate:client6 (and httpclient5:5.5.2 from httpclient5-cache via the Spring BOM / Shibboleth) is resolved
+    // down to 5.5.1 by this explicit pin.
+    // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
+    // reverted in PR #12652.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
@@ -458,6 +465,10 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.28.0"
+    implementation "org.webjars.npm:katex:0.16.44"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.28.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.28.0"
+
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
@@ -566,6 +577,28 @@ dependencyManagement {
     }
 }
 
+// Force every Netty module pulled in transitively (via Spring Boot, Spring AI, reactor-netty,
+// azure-core-http-netty, …) to the patched netty_version release. This addresses several
+// high/medium-severity advisories in 4.2.x <= 4.2.12 (HTTP smuggling, decompression bombs,
+// DNS codec input-validation bypass, epoll RST DoS, HTTP/3 QPACK unbounded allocation, etc.).
+// mockitoAgent is excluded because it is the Mockito inline-mock instrumentation jar, resolved
+// very early during configuration; mutating its resolutionStrategy after that point fails the build.
+configurations.matching { it.name != 'mockitoAgent' }.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "io.netty" && !details.requested.name.startsWith("netty-tcnative")) {
+            details.useVersion("${netty_version}")
+            details.because("Patched Netty release; pre-${netty_version} contains multiple high-severity CVEs.")
+        }
+        // Force every io.opentelemetry module (BOM-managed by Spring Boot at 1.55.x and pulled in
+        // directly by micrometer-tracing-bridge-otel) up to the patched line. Pre-1.62.0 has
+        // GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C Baggage propagation).
+        if (details.requested.group == "io.opentelemetry") {
+            details.useVersion("${opentelemetry_version}")
+            details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
+        }
+    }
+}
+
 // Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.
 // Redirect old artifact names (used by Zonky and Spring Boot BOM) to the new ones.
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
@@ -593,10 +626,11 @@ tasks.register("stage") {
     dependsOn "bootWar"
 }
 
-// Set the npm cache (used in the Dockerfile)
-tasks.register("npmSetCacheDockerfile", NpmTask) {
-    args = ["set", "cache", "/opt/artemis/.npm"]
+// Set the pnpm store directory (used in the Dockerfile for build-time caching).
+tasks.register("pnpmSetCacheDockerfile", PnpmTask) {
+    args = ["config", "set", "store-dir", "/opt/artemis/.pnpm-store"]
 }
+
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
@@ -652,4 +686,4 @@ tasks.named("dependencyUpdates").configure {
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
-// 16) Generate SBOM (Software Bill of Materials):  ./gradlew cyclonedxBom -x webapp
+// 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

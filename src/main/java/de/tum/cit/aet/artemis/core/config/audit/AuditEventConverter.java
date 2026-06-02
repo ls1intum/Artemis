@@ -16,7 +16,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 
 @Profile(PROFILE_CORE)
 @Component

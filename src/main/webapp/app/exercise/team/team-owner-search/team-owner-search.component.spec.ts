@@ -1,14 +1,17 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Owner Search Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamOwnerSearchComponent;
     let fixture: ComponentFixture<TeamOwnerSearchComponent>;
     let courseService: CourseManagementService;
@@ -28,8 +31,12 @@ describe('Team Owner Search Component', () => {
         courseService = TestBed.inject(CourseManagementService);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should initialize with team owner', () => {
-        comp.team = { owner };
+        fixture.componentRef.setInput('team', { owner });
 
         fixture.detectChanges();
 
@@ -40,16 +47,16 @@ describe('Team Owner Search Component', () => {
     });
 
     it('should search on input change and find a matching result', () => {
-        const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
-        const searchingSpy = jest.spyOn(comp.searching, 'emit');
-        const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
+        const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
+        const searchingSpy = vi.spyOn(comp.searching, 'emit');
+        const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = owner.login!;
 
-        comp.course = { id: 1 };
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
@@ -68,16 +75,16 @@ describe('Team Owner Search Component', () => {
     });
 
     it('should search on input change and find no result', () => {
-        const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
-        const searchingSpy = jest.spyOn(comp.searching, 'emit');
-        const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
+        const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
+        const searchingSpy = vi.spyOn(comp.searching, 'emit');
+        const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = 'SearchText';
 
-        comp.course = { id: 1 };
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
@@ -97,12 +104,12 @@ describe('Team Owner Search Component', () => {
     });
 
     it('should handle error when loading owner options', () => {
-        const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
+        const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
         courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
 
-        comp.course = { id: 1 };
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));
@@ -110,7 +117,7 @@ describe('Team Owner Search Component', () => {
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
-        expect(comp.ownerOptionsLoaded).toBeFalse();
+        expect(comp.ownerOptionsLoaded).toBe(false);
         expect(loadOwnerOptionsResult).toBeUndefined();
     });
 });

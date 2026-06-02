@@ -41,16 +41,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -64,6 +62,8 @@ import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -298,7 +298,7 @@ public class FileResource {
      * @param questionId ID of the drag and drop question, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/drag-and-drop/backgrounds/{questionId}/*")
+    @GetMapping({ "files/drag-and-drop/questions/{questionId}/backgrounds/*", "files/drag-and-drop/backgrounds/{questionId}/*" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
@@ -368,7 +368,7 @@ public class FileResource {
      * @param courseId ID of the course, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/course/icons/{courseId}/*")
+    @GetMapping({ "files/courses/{courseId}/icons/*", "files/course/icons/{courseId}/*" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
         log.debug("REST request to get icon for course : {}", courseId);
@@ -383,7 +383,7 @@ public class FileResource {
      * @param userId ID of the user the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/user/profile-pictures/{userId}/*")
+    @GetMapping({ "files/users/{userId}/profile-pictures/*", "files/user/profile-pictures/{userId}/*" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
         log.debug("REST request to get profile picture for user : {}", userId);
@@ -412,7 +412,7 @@ public class FileResource {
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/exam-user/signatures/{examUserId}/*")
+    @GetMapping({ "files/exam-users/{examUserId}/signatures/*", "files/exam-user/signatures/{examUserId}/*" })
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
@@ -430,7 +430,7 @@ public class FileResource {
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/exam-user/{examUserId}/*")
+    @GetMapping({ "files/exam-users/{examUserId}/*", "files/exam-user/{examUserId}/*" })
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
@@ -450,7 +450,7 @@ public class FileResource {
      * @param requestHeaders request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/lecture/{lectureId}/{attachmentName}")
+    @GetMapping({ "files/attachments/lectures/{lectureId}/{attachmentName}", "files/attachments/lecture/{lectureId}/{attachmentName}" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String attachmentName, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get lecture attachment : {}", attachmentName);
@@ -479,7 +479,7 @@ public class FileResource {
      * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
-    @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
+    @GetMapping({ "files/attachments/lectures/{lectureId}/merge-pdf", "files/attachments/lecture/{lectureId}/merge-pdf" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
@@ -523,7 +523,7 @@ public class FileResource {
      * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
+    @GetMapping({ "files/attachments/attachment-video-units/{attachmentVideoUnitId}/*", "files/attachments/attachment-unit/{attachmentVideoUnitId}/*" })
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
@@ -550,7 +550,7 @@ public class FileResource {
      * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
+    @GetMapping({ "files/courses/{courseId}/attachment-video-units/{attachmentVideoUnitId}", "files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}" })
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for editors", attachmentVideoUnitId);
@@ -593,7 +593,8 @@ public class FileResource {
      * @param slideNumber           the slideNumber of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}")
+    @GetMapping({ "files/attachments/attachment-video-units/{attachmentVideoUnitId}/slide/{slideNumber}",
+            "files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentVideoUnitAttachmentSlide(@PathVariable Long attachmentVideoUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide {} in attachment video unit {}", slideNumber, attachmentVideoUnitId);
@@ -663,7 +664,7 @@ public class FileResource {
      * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*")
+    @GetMapping({ "files/attachments/attachment-video-units/{attachmentVideoUnitId}/student/*", "files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*" })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentVideoUnitStudentVersion(@PathVariable long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the student version of attachment video unit : {}", attachmentVideoUnitId);

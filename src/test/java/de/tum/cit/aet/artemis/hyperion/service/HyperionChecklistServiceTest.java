@@ -21,11 +21,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
@@ -378,6 +378,125 @@ class HyperionChecklistServiceTest {
         assertThat(response.updatedProblemStatement()).isEqualTo(updatedStatement);
         // Summary should reference the target difficulty level
         assertThat(response.summary()).contains("MEDIUM");
+    }
+
+    @Test
+    void analyzeChecklist_handlesJsonWrappedInCodeBlock() {
+        // Simulate LLM wrapping JSON in markdown code fences — the most common failure mode
+        String competenciesJson = """
+                ```json
+                {
+                    "competencies": [
+                        {
+                            "knowledgeAreaShortTitle": "SE",
+                            "competencyTitle": "Software Testing",
+                            "taxonomyLevel": "APPLY",
+                            "confidence": 0.9,
+                            "rank": 1,
+                            "isLikelyPrimary": true
+                        }
+                    ]
+                }
+                ```
+                """;
+        String difficultyJson = """
+                ```json
+                {
+                    "suggested": "MEDIUM",
+                    "confidence": 0.8,
+                    "reasoning": "Moderate complexity.",
+                    "taskCount": 5,
+                    "testCount": 10
+                }
+                ```
+                """;
+        String qualityJson = """
+                ```json
+                {
+                    "issues": [
+                        {
+                            "category": "CLARITY",
+                            "severity": "LOW",
+                            "description": "Minor ambiguity",
+                            "suggestedFix": "Clarify wording",
+                            "impactOnLearners": "Slight confusion"
+                        }
+                    ]
+                }
+                ```
+                """;
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt p = invocation.getArgument(0);
+            String text = p.getContents();
+            if (text.contains("1 to 5 most relevant learning goals")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
+            }
+            else if (text.contains("suggest the appropriate difficulty level")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(difficultyJson))));
+            }
+            else if (text.contains("problem statement for quality issues")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
+            }
+            throw new AssertionError("Unexpected prompt: " + text);
+        });
+
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "MEDIUM", "JAVA", 1L);
+
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.inferredCompetencies()).hasSize(1);
+        assertThat(response.inferredCompetencies().getFirst().competencyTitle()).isEqualTo("Software Testing");
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.MEDIUM);
+        assertThat(response.qualityIssues()).hasSize(1);
+        assertThat(response.qualityIssues().getFirst().category()).isEqualTo(QualityIssueCategory.CLARITY);
+    }
+
+    @Test
+    void analyzeChecklist_handlesJsonWithLeadingText() {
+        // Simulate LLM adding explanatory text before the JSON
+        String competenciesJson = "Here is the analysis:\n" + """
+                {
+                    "competencies": [
+                        {
+                            "knowledgeAreaShortTitle": "DS",
+                            "competencyTitle": "Data Structures",
+                            "taxonomyLevel": "APPLY",
+                            "confidence": 0.85,
+                            "rank": 1,
+                            "isLikelyPrimary": true
+                        }
+                    ]
+                }
+                """;
+        String difficultyJson = "Based on my analysis:\n{\"suggested\": \"EASY\", \"confidence\": 0.9, \"reasoning\": \"Simple.\", \"taskCount\": 2, \"testCount\": 4}";
+        String qualityJson = "No major issues:\n{\"issues\": []}";
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt p = invocation.getArgument(0);
+            String text = p.getContents();
+            if (text.contains("1 to 5 most relevant learning goals")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
+            }
+            else if (text.contains("suggest the appropriate difficulty level")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(difficultyJson))));
+            }
+            else if (text.contains("problem statement for quality issues")) {
+                return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
+            }
+            throw new AssertionError("Unexpected prompt: " + text);
+        });
+
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
+
+        ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.inferredCompetencies()).hasSize(1);
+        assertThat(response.inferredCompetencies().getFirst().competencyTitle()).isEqualTo("Data Structures");
+        assertThat(response.difficultyAssessment().suggested()).isEqualTo(SuggestedDifficulty.EASY);
+        assertThat(response.qualityIssues()).isEmpty();
     }
 
     @Test

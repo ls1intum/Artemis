@@ -851,12 +851,100 @@ Course Info Bar
     }
 }
 
-.diff-view-modal .modal-dialog {
-    max-width: 80vw;
+// The diff comparison renders in a PrimeNG dialog (.p-dialog), to which the `diff-view-modal` styleClass is
+// applied; the width itself is set via the dialog config. Cap it so it never exceeds the viewport.
+.diff-view-modal {
+    max-width: 95vw;
 }
 
 .warning-modal-window .modal-dialog {
     width: 50%;
+}
+
+.iris-onboarding-dialog {
+    // Allow clicks to pass through the PrimeNG dialog wrapper to the page beneath.
+    // The onboarding component manages its own pointer-events on backdrops, tooltips, and modals.
+    // !important is required because PrimeNG applies pointer-events: auto as an inline style
+    // on the .p-dialog root element (see inlineStyles.root in primeng-dialog.mjs).
+    pointer-events: none !important;
+
+    // Cover the full screen
+    max-width: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+
+    // Neutralize the PrimeNG .p-dialog inner wrapper so it doesn't act as an opaque frame.
+    // Without this, the dialog background (white/surface) covers the page beneath the overlay,
+    // making the "transparent hole" in the spotlight reveal the dialog background instead of the page.
+    &.p-dialog,
+    .p-dialog {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        overflow: visible !important;
+    }
+
+    .p-dialog-header {
+        display: none !important;
+    }
+
+    .p-dialog-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        pointer-events: none;
+        overflow: visible;
+    }
+}
+
+.iris-onboarding-mask {
+    background: transparent !important;
+    pointer-events: none !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+}
+
+// Cross-component button styling for onboarding modal (replaces ::ng-deep)
+.iris-onboarding-dialog .actions jhi-button button {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.iris-onboarding-dialog .tooltip-footer jhi-button button {
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+}
+
+// Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
+// (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
+// the user's clicks reach the real UI element; PrimeNG overlays opened from that target must
+// rise above the active target so their dropdowns aren't clipped by the spotlight.
+$iris-onboarding-active-target-z-index: 1053;
+$iris-onboarding-overlay-z-index: 1060;
+
+body[data-onboarding-active-step='1'] [data-onboarding-target='context-selector'],
+body[data-onboarding-active-step='2'] [data-onboarding-target='suggestion-chips'],
+body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
+    position: relative;
+    z-index: $iris-onboarding-active-target-z-index;
+}
+
+// PrimeNG p-select overlay (appended to body) during the context selector step.
+body[data-onboarding-active-step='1'] > .p-select-overlay {
+    z-index: $iris-onboarding-overlay-z-index !important;
 }
 
 .connection-status {
@@ -1499,14 +1587,55 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 // Global search modal sizing
 .global-search-dialog {
     width: 100%;
-    max-width: 700px;
-    height: 60vh;
-    max-height: 600px;
-    // !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top"
-    margin-top: 15vh !important;
+    max-width: 800px;
+    height: 75vh;
+    max-height: 750px;
     overflow: hidden;
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
+}
+
+// Global search result description: reset styles for markdown rendered via innerHTML (outside component scope)
+.result-description {
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0;
+        padding: 0;
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+    }
+
+    ul,
+    ol {
+        margin: 0;
+        padding-left: 1.2em;
+    }
+
+    code {
+        font-size: 0.85em;
+        padding: 0.1em 0.3em;
+        background-color: var(--bs-tertiary-bg);
+        border-radius: 0.2em;
+    }
+
+    pre {
+        margin: 0;
+
+        code {
+            padding: 0;
+            background: none;
+        }
+    }
+
+    img {
+        display: none;
+    }
 }
 
 // ng-bootstrap typeahead: ensure long suggestion lists are scrollable
@@ -1514,4 +1643,32 @@ ngb-typeahead-window.dropdown-menu.show {
     max-height: min(40dvh, 22rem);
     overflow-y: auto !important;
     will-change: unset !important;
+}
+
+/* Iris inline answer — overrides that cannot be scoped inside the component */
+.iris-inline-answer {
+    a.iris-chip,
+    a.iris-chip:hover,
+    a.iris-chip:focus-visible {
+        text-decoration: none !important;
+    }
+
+    /* Strip the default dashed bubble styling when shown inside the card */
+    .thinking-bubble {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}
+
+/* Tighten paragraph spacing in the Iris markdown answer */
+.iris-answer-text {
+    p {
+        margin-bottom: 0.4rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 }

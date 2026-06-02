@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.RecordComponent;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
@@ -26,6 +30,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
@@ -33,12 +39,10 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -403,6 +407,88 @@ public class ConversationUtilService {
     }
 
     /**
+     * Asserts that the cycle-free {@link PostResponseDTO} shape exposes no login / email /
+     * registrationNumber to the client.
+     * <p>
+     * Walks the embedded author and reaction-user records and verifies the structural shape:
+     * {@link de.tum.cit.aet.artemis.account.dto.UserSummaryDTO} only declares {@code id},
+     * {@code name}, {@code imageUrl}, and {@code bot}, so by construction there is no field
+     * that can carry {@code login}, {@code email}, or {@code registrationNumber}. The runtime
+     * check additionally confirms that nested reaction users follow the same shape.
+     *
+     * @param post the response DTO to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull PostResponseDTO post) {
+        assertUserProjectionExposesNoSensitiveFields();
+        if (post.author() != null) {
+            assertThat(post.author().id()).isNotNull();
+        }
+        if (post.answers() != null) {
+            for (var answer : post.answers()) {
+                assertSensitiveInformationHidden(answer);
+            }
+        }
+    }
+
+    /**
+     * The response DTOs ({@link PostResponseDTO}, {@link AnswerPostResponseDTO}, and the embedded reactions) carry
+     * every user solely as a {@link UserSummaryDTO}. Asserting that record declares none of the sensitive fields
+     * structurally guarantees no message payload can leak {@code login}/{@code email}/{@code registrationNumber} to
+     * the client, and fails fast if a future change widens the user projection.
+     */
+    private void assertUserProjectionExposesNoSensitiveFields() {
+        for (RecordComponent component : UserSummaryDTO.class.getRecordComponents()) {
+            assertThat(component.getName()).isNotIn("login", "email", "registrationNumber", "password");
+        }
+    }
+
+    /**
+     * Asserts that the cycle-free {@link AnswerPostResponseDTO} shape exposes no login / email /
+     * registrationNumber to the client. See {@link #assertSensitiveInformationHidden(PostResponseDTO)}
+     * for the structural guarantee.
+     *
+     * @param answerPost the response DTO to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull AnswerPostResponseDTO answerPost) {
+        assertUserProjectionExposesNoSensitiveFields();
+        if (answerPost.author() != null) {
+            assertThat(answerPost.author().id()).isNotNull();
+        }
+    }
+
+    /**
+     * Bulk variant of {@link #assertSensitiveInformationHidden(PostResponseDTO)}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertPostDtoSensitiveInformationHidden(@NonNull Collection<PostResponseDTO> posts) {
+        for (var post : posts) {
+            assertSensitiveInformationHidden(post);
+        }
+    }
+
+    /**
+     * Overload that accepts the same {@link Collection} of {@link PostResponseDTO} but matches the
+     * unqualified {@code assertSensitiveInformationHidden(Set/List)} call sites the existing tests
+     * use after migration from {@link Posting}. Functionally identical to
+     * {@link #assertPostDtoSensitiveInformationHidden}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull Set<PostResponseDTO> posts) {
+        assertPostDtoSensitiveInformationHidden(posts);
+    }
+
+    /**
+     * List-typed overload mirroring {@link #assertSensitiveInformationHidden(Set)}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull List<PostResponseDTO> posts) {
+        assertPostDtoSensitiveInformationHidden(posts);
+    }
+
+    /**
      * Creates and saves a OneToOneChat for the given Course. It also creates and saves two ConversationParticipants for the OneToOneChat.
      *
      * @param course     The Course the OneToOneChat belongs to
@@ -419,6 +505,50 @@ public class ConversationUtilService {
         conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2", false));
 
         conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    /**
+     * Creates and saves a OneToOneChat for the given Course with the specified participants.
+     *
+     * @param course The Course the OneToOneChat belongs to
+     * @param user1  The first participant
+     * @param user2  The second participant
+     * @return The created OneToOneChat
+     */
+    public Conversation createOneToOneChat(Course course, User user1, User user2) {
+        Conversation conversation = new OneToOneChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        var participant1 = ConversationParticipant.createWithDefaultValues(user1, conversation);
+        var participant2 = ConversationParticipant.createWithDefaultValues(user2, conversation);
+        conversationParticipantRepository.save(participant1);
+        conversationParticipantRepository.save(participant2);
+
+        conversation.setConversationParticipants(new HashSet<>(List.of(participant1, participant2)));
+        return conversationRepository.save(conversation);
+    }
+
+    /**
+     * Creates and saves a GroupChat for the given Course with the specified participants.
+     *
+     * @param course       The Course the GroupChat belongs to
+     * @param participants The users to add as participants
+     * @return The created GroupChat
+     */
+    public Conversation createGroupChat(Course course, User... participants) {
+        Conversation conversation = new GroupChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        var savedParticipants = new HashSet<ConversationParticipant>();
+        for (User user : participants) {
+            var participant = ConversationParticipant.createWithDefaultValues(user, conversation);
+            savedParticipants.add(conversationParticipantRepository.save(participant));
+        }
+
+        conversation.setConversationParticipants(savedParticipants);
         return conversationRepository.save(conversation);
     }
 

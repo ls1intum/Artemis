@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 
 describe('PdfPreviewDateBoxComponent', () => {

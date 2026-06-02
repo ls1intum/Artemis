@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
 
@@ -10,12 +11,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 @MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractBaseProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
+    @Size(max = 255)
     @Column(name = "repository_url")
     private String repositoryUri;
 

@@ -54,8 +54,6 @@
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Action",
             "actions": {
-                "askIrisTitle": "Ask Iris",
-                "askIrisDescription": "Chat with Iris AI assistant",
                 "lectureSearchTitle": "Lecture Search",
                 "lectureSearchDescription": "Search through lecture content and slides"
             },
@@ -65,30 +63,35 @@
                 "lecturesTitle": "Lecture Details",
                 "lecturesDescription": "View lecture content and units",
                 "communicationTitle": "Communication",
-                "communicationDescription": "Chat with classmates and instructors",
-                "irisTitle": "Dashboard with Iris",
-                "irisDescription": "Chat with Iris AI assistant",
-                "usersTitle": "User Management",
-                "usersDescription": "Manage users and permissions",
-                "statisticsTitle": "Statistics",
-                "statisticsDescription": "View course statistics and analytics",
-                "calendarTitle": "Calendar",
-                "calendarDescription": "View your schedule and deadlines"
+                "communicationDescription": "Search channels and messages",
+                "faqsTitle": "FAQs",
+                "faqsDescription": "Search frequently asked questions",
+                "examsTitle": "Exams",
+                "examsDescription": "Search exams across your courses",
+                "coursesTitle": "Courses",
+                "coursesDescription": "Search courses you are enrolled in"
+            },
+            "types": {
+                "filter": "#Filter",
+                "feature": "Feature",
+                "course": "Course"
             },
             "results": {
                 "due": "Due: {{ date }}",
                 "point": "point",
-                "points": "points"
+                "points": "points",
+                "examExercise": "Exam",
+                "reply": "Reply"
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
             "searchFailed": "Search failed. Please try again.",
-            "askIris": "Ask Iris AI",
-            "askIrisDescription": "Get an AI-generated answer from your lecture content",
-            "irisAnswerTitle": "Iris AI Answer",
-            "irisAnswerSources": "Sources",
-            "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
-            "continueInIris": "Continue conversation in Iris"
+            "irisAnswerShowMore": "Show more",
+            "irisAnswerShowLess": "Show less",
+            "irisAnswerMore": "more",
+            "irisAnswerThinking": "Iris is thinking…",
+            "irisCollapseSources": "Show fewer sources",
+            "irisAiBadge": "AI"
         },
         "menu": {
             "home": "Home",

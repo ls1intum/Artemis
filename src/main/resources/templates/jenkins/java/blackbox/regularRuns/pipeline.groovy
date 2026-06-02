@@ -236,6 +236,10 @@ private void staticCodeAnalysis() {
  * Called by Jenkins.
  */
 void postBuildTasks() {
+    sh '''
+    sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/customFeedbacks/*.json || true
+    '''
+
     // we do not actually have any JUnit-XMLs => no action needed
     /*
     sh '''

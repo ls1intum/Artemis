@@ -119,8 +119,8 @@ public class SpringAIConfiguration {
     @Lazy
     @ConditionalOnClass({ OpenAIClientBuilder.class, AzureOpenAIClientBuilderCustomizer.class, NettyAsyncHttpClientBuilder.class })
     public AzureOpenAIClientBuilderCustomizer azureOpenAiClientTimeoutCustomizer(@Value("${spring.ai.azure.openai.client.connect-timeout:30s}") Duration connectTimeout,
-            @Value("${spring.ai.azure.openai.client.read-timeout:5m}") Duration readTimeout,
-            @Value("${spring.ai.azure.openai.client.response-timeout:5m}") Duration responseTimeout) {
+            @Value("${spring.ai.azure.openai.client.read-timeout:15m}") Duration readTimeout,
+            @Value("${spring.ai.azure.openai.client.response-timeout:15m}") Duration responseTimeout) {
         return clientBuilder -> {
             HttpClient httpClient = new NettyAsyncHttpClientBuilder().connectTimeout(connectTimeout).readTimeout(readTimeout).responseTimeout(responseTimeout).build();
             clientBuilder.httpClient(httpClient);

@@ -1,23 +1,23 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/create-form/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { SortService } from 'app/foundation/service/sort.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -28,7 +28,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private sortService = inject(SortService);
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
@@ -112,11 +112,26 @@ export class ApollonDiagramListComponent {
      * Opens dialog for creating a new diagram
      */
     openCreateDiagramDialog(courseId: number) {
-        const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
-        const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
-        // class diagram is the default value and can be changed by the user in the creation dialog
-        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
-        modalRef.result.then((diagram) => this.handleOpenDialogClick(diagram.id));
+        const ref = this.dialogService.open(ApollonDiagramCreateFormComponent, {
+            width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            // class diagram is the default value and can be changed by the user in the creation dialog
+            data: { apollonDiagram: new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId) },
+        });
+        ref?.onClose.subscribe((diagram: ApollonDiagram | undefined) => {
+            if (diagram) {
+                this.handleOpenDialogClick(diagram.id!);
+            }
+        });
     }
 
     handleOpenDialogClick(apollonDiagramId: number) {

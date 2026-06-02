@@ -75,7 +75,10 @@ export class CourseManagementExercisesPage {
             await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         } catch {
             await this.page.reload();
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
+            // Re-assert after the reload so a still-present card surfaces as a real test failure
+            // instead of being silently swallowed by the catch.
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         }
     }
 
@@ -153,6 +156,7 @@ export class CourseManagementExercisesPage {
     }
 
     async openExerciseParticipations(exerciseId: number) {
+        await this.waitForExerciseCardAttached(exerciseId);
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
     }
 
@@ -169,8 +173,31 @@ export class CourseManagementExercisesPage {
     }
 
     async openExerciseTeams(exerciseId: number) {
-        const exerciseElement = this.getExercise(exerciseId);
-        const teamsButton = exerciseElement.locator('.btn', { hasText: 'Teams' });
+        await this.waitForExerciseCardAttached(exerciseId);
+        const teamsButton = this.getExercise(exerciseId).locator('.btn', { hasText: 'Teams' });
         await teamsButton.click();
+    }
+
+    /**
+     * Wait for the given exercise card to be attached, reloading once if necessary.
+     * Under heavy parallel multi-node load, the exercise-list GET that the page issues
+     * on first render occasionally returns an empty list right after a sibling create —
+     * the freshly-created exercise has not yet become visible through the routed node
+     * (eventual visibility across the load-balancer + caches). A single reload re-issues
+     * the GET and reliably surfaces the card on the second attempt.
+     */
+    private async waitForExerciseCardAttached(exerciseId: number): Promise<void> {
+        const card = this.getExercise(exerciseId);
+        const attachedWithin = async (timeout: number): Promise<boolean> =>
+            card
+                .waitFor({ state: 'attached', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (await attachedWithin(15_000)) {
+            return;
+        }
+        await this.page.reload();
+        await this.page.waitForLoadState('load');
+        await card.waitFor({ state: 'attached', timeout: 60_000 });
     }
 }

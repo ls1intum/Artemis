@@ -6,8 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { AgentChatModalComponent } from './agent-chat-modal.component';
 import { AgentChatResponse, AgentChatService, AgentHistoryMessage } from '../services/agent-chat.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatMessage, CompetencyMappingViewModel, ExerciseMappingPreviewViewModel } from 'app/atlas/shared/entities/chat-message.model';
 import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -16,8 +16,7 @@ import { ElementRef, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatModalComponent', () => {
@@ -81,7 +80,8 @@ describe('AgentChatModalComponent', () => {
             imports: [AgentChatModalComponent, FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (value: string) => `translated:${value}`)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbActiveModal, useClass: MockNgbActiveModalService },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
+                { provide: DynamicDialogConfig, useValue: { data: { courseId: 123 } } },
                 { provide: AgentChatService, useValue: mockAgentChatService },
                 { provide: CompetencyService, useValue: mockCompetencyService },
             ],
@@ -573,8 +573,8 @@ describe('AgentChatModalComponent', () => {
 
     describe('Modal interaction', () => {
         it('should close modal when closeModal is called', () => {
-            const activeModalService = TestBed.inject(NgbActiveModal);
-            const closeSpy = vi.spyOn(activeModalService, 'close');
+            const dialogRef = TestBed.inject(DynamicDialogRef);
+            const closeSpy = vi.spyOn(dialogRef, 'close');
             component['closeModal']();
 
             expect(closeSpy).toHaveBeenCalled();

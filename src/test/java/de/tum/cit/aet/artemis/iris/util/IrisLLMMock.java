@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.iris.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 
 public final class IrisLLMMock {
 

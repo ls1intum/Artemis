@@ -22,10 +22,12 @@
             def localVcsPath = "${rootDir}/local-vcs-repos"
 
             jvmArgs = [
-                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,aeolus,theia,dev,localci,localvc",
+                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web",
+                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web",
                 "-Dartemis.hyperion.enabled=true",
+                "-Dartemis.weaviate.enabled=true",
+                "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",
                 "-Dspringdoc.api-docs.enabled=true",
                 "-Dspringdoc.pre-loading-enabled=true",
@@ -48,7 +50,6 @@
                 "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
                 "--spring.datasource.username=sa",
                 "--spring.datasource.password=",
-                "--aeolus.url=http://aeolus.fake",
                 "--artemis.version-control.local-vcs-repo-path=${localVcsPath}"
             ])
         }
@@ -102,6 +103,11 @@
             flattenDiscriminatorAllOfBackReferences(prunedSpecificationMap)
 
             outputFile.text = yamlParser.dump(prunedSpecificationMap)
+            // SnakeYAML's dump() converts double-quoted strings to single quotes.
+            // The version line must use double quotes for update_version.sh --check.
+            outputFile.text = outputFile.text.replaceFirst(
+                /(?m)^(  version: )'([^']+)'$/, '$1"$2"'
+            )
             println "✔ Pruned specification written to ${outputFile}"
         }
     }

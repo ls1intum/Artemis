@@ -1,13 +1,13 @@
-import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, model, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -15,16 +15,16 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { UpperCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -53,7 +53,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     studentSubmission = model.required<FileUploadSubmission>();
     exercise = input.required<FileUploadExercise>();
-    problemStatementHtml: SafeHtml;
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     submittedFileName: string;
     submittedFileExtension: string;
@@ -74,7 +74,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     ngOnInit() {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -83,7 +83,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
+        this.problemStatementHtml.set(newProblemStatementHtml);
         this.changeDetectorReference.detectChanges();
     }
 

@@ -7,7 +7,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 
 import { provideHttpClient } from '@angular/common/http';
-import { Language } from 'app/core/course/shared/entities/course.model';
+import { Language } from 'app/course/shared/entities/course.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -74,7 +74,7 @@ describe('TextEditorService', () => {
             expect(participation.id).toBe(participationId);
         });
 
-        const req = httpMock.expectOne('api/text/text-editor/123');
+        const req = httpMock.expectOne('api/text/participations/123/text-editor');
         expect(req.request.method).toBe('GET');
         expect(req.request.params.keys()).toHaveLength(0);
         req.flush(mockParticipation);
@@ -92,7 +92,7 @@ describe('TextEditorService', () => {
             expect(participation.id).toBe(participationId);
         });
 
-        const req = httpMock.expectOne(`api/text/text-editor/123?resultId=${resultId}`);
+        const req = httpMock.expectOne(`api/text/participations/123/text-editor?resultId=${resultId}`);
         expect(req.request.method).toBe('GET');
         expect(req.request.params.get('resultId')).toBe(resultId.toString());
         req.flush(mockParticipation);

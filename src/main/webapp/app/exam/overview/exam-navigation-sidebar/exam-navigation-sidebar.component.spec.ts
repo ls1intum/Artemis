@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -16,9 +16,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
+import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamNavigationSidebarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;
@@ -27,6 +31,8 @@ describe('ExamNavigationSidebarComponent', () => {
     const mockExamExerciseUpdateService = {
         currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
     };
+
+    let exercises: Exercise[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,7 +51,7 @@ describe('ExamNavigationSidebarComponent', () => {
         repositoryService = TestBed.inject(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
-        comp.exercises = [
+        exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -58,56 +64,60 @@ describe('ExamNavigationSidebarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
+        fixture.componentRef.setInput('exercises', exercises);
     });
 
-    beforeEach(fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
         fixture.detectChanges();
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     it('should update the submissions onInit if their CommitState is UNCOMMITTED_CHANGES to isSynced false, if not in initial session', () => {
         // Given
         // Create an exam session, which is not an initial session.
-        comp.examSessions = [{ initialSession: false } as ExamSession];
-        const exerciseToBeSynced = comp.exercises[0];
-        jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
+        fixture.componentRef.setInput('examSessions', [{ initialSession: false } as ExamSession]);
+        const exerciseToBeSynced = exercises[0];
+        vi.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeTrue();
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBe(true);
         comp.ngOnInit();
 
         // Then
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeFalse();
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBe(false);
     });
 
     it('should change the exercise', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
-        jest.spyOn(comp, 'setExerciseButtonStatus');
+        vi.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
 
         const exerciseIndex = 1;
         const force = false;
 
         comp.changePage(false, exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
-        jest.spyOn(comp.onPageChanged, 'emit');
-        jest.spyOn(comp, 'setExerciseButtonStatus');
+        vi.spyOn(comp.onPageChanged, 'emit');
+        vi.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
 
         const exerciseIndex = 5;
         const force = false;
 
         comp.changePage(false, exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toBe(0);
+        expect(comp.exerciseIndex()).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
@@ -119,7 +129,7 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission active', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
@@ -127,7 +137,7 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should set the exercise button status for submitted submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
         const result = comp.setExerciseButtonStatus(0);
 
@@ -136,7 +146,7 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission saved', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(0);
         expect(comp.icon).toEqual(facSaveSuccess);
@@ -144,7 +154,7 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
         const result = comp.setExerciseButtonStatus(1);
 
@@ -152,82 +162,82 @@ describe('ExamNavigationSidebarComponent', () => {
     });
 
     it('should get the exercise button tooltip without submission', () => {
-        const result = comp.getExerciseButtonTooltip(comp.exercises[1]);
+        const result = comp.getExerciseButtonTooltip(exercises[1]);
 
         expect(result).toBe('synced');
     });
 
     it('should get the exercise button tooltip with submitted and synced submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('submitted');
     });
 
     it('should get the exercise button tooltip with submitted submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
+        exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = {};
+        exercises[0].studentParticipations![0].submissions![0] = {};
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with synced submission', () => {
-        comp.exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
+        exercises[0].studentParticipations![0].submissions![0] = { isSynced: true };
 
-        const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
+        const result = comp.getExerciseButtonTooltip(exercises[0]);
 
         expect(result).toBe('notSubmitted');
     });
 
     it('should navigate to other Exercise', () => {
         const updatedExerciseId = 2;
-        jest.spyOn(comp, 'changeExerciseById');
+        vi.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
 
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
-        comp.examTimeLineView = true;
-        comp.exerciseIndex = 0;
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(0)).toBe('synced saved');
         expect(comp.icon).toEqual(facSaveSuccess);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
-        comp.examTimeLineView = true;
-        comp.exerciseIndex = 0;
+        fixture.componentRef.setInput('examTimeLineView', true);
+        fixture.componentRef.setInput('exerciseIndex', 0);
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(facSaveSuccess);
     });
 
     it('should toggle sidebar based on isCollapsed', () => {
-        comp.isCollapsed = true;
+        comp.isCollapsed.set(true);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.collapsed')).not.toBeNull();
 
-        comp.isCollapsed = false;
+        comp.isCollapsed.set(false);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.collapsed')).toBeNull();
     });
 
     it('should call toggleCollapseState when clicking on collapse', () => {
-        comp.isCollapsed = false;
-        const toggleCollapseStateStub = jest.spyOn(comp, 'toggleCollapseState');
+        comp.isCollapsed.set(false);
+        const toggleCollapseStateStub = vi.spyOn(comp, 'toggleCollapseState');
         fixture.changeDetectorRef.detectChanges();
         const actionItem = fixture.nativeElement.querySelector('#test-collapse');
         actionItem.click();
         expect(toggleCollapseStateStub).toHaveBeenCalled();
-        expect(comp.isCollapsed).toBeTrue();
+        expect(comp.isCollapsed()).toBe(true);
     });
 
     it('should toggle collapse state on Control+M keydown event', () => {
@@ -235,7 +245,7 @@ describe('ExamNavigationSidebarComponent', () => {
             key: 'm',
             ctrlKey: true,
         });
-        const toggleCollapseStateSpy = jest.spyOn(comp, 'toggleCollapseState');
+        const toggleCollapseStateSpy = vi.spyOn(comp, 'toggleCollapseState');
         fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(toggleCollapseStateSpy).toHaveBeenCalled();
@@ -246,7 +256,7 @@ describe('ExamNavigationSidebarComponent', () => {
             key: 'm',
             ctrlKey: true,
         });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
         fixture.changeDetectorRef.detectChanges();
         window.dispatchEvent(event);
         expect(preventDefaultSpy).toHaveBeenCalled();

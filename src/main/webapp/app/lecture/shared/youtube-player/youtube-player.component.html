@@ -1,10 +1,11 @@
-<div class="video-wrapper" #videoWrapper>
+<div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
     <div class="video-column" #videoColumn>
         <youtube-player
             [videoId]="videoId()"
             [disableCookies]="true"
             [disablePlaceholder]="true"
             [playerVars]="playerVars"
+            [startSeconds]="startSeconds()"
             (ready)="onPlayerReady($event)"
             (stateChange)="onStateChange($event)"
             (error)="onPlayerError($event)"

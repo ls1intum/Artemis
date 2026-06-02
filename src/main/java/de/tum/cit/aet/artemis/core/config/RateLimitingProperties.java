@@ -39,6 +39,18 @@ public class RateLimitingProperties {
      */
     private Integer authenticationRequestsPerMinute;
 
+    /**
+     * Requests per minute for the problem-statement rendering endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
+     */
+    private Integer problemStatementRenderingRequestsPerMinute;
+
+    /**
+     * Requests per minute for the AI search pipeline endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AI_SEARCH_PIPELINE}.
+     */
+    private Integer aiSearchPipelineRequestsPerMinute;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -61,5 +73,21 @@ public class RateLimitingProperties {
 
     public void setAuthenticationRequestsPerMinute(Integer authenticationRequestsPerMinute) {
         this.authenticationRequestsPerMinute = authenticationRequestsPerMinute;
+    }
+
+    public Integer getProblemStatementRenderingRequestsPerMinute() {
+        return problemStatementRenderingRequestsPerMinute;
+    }
+
+    public void setProblemStatementRenderingRequestsPerMinute(Integer problemStatementRenderingRequestsPerMinute) {
+        this.problemStatementRenderingRequestsPerMinute = problemStatementRenderingRequestsPerMinute;
+    }
+
+    public Integer getAiSearchPipelineRequestsPerMinute() {
+        return aiSearchPipelineRequestsPerMinute;
+    }
+
+    public void setAiSearchPipelineRequestsPerMinute(Integer aiSearchPipelineRequestsPerMinute) {
+        this.aiSearchPipelineRequestsPerMinute = aiSearchPipelineRequestsPerMinute;
     }
 }

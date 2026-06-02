@@ -1,0 +1,110 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
+import dayjs from 'dayjs/esm';
+import { of } from 'rxjs';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { vi } from 'vitest';
+
+describe('StatisticsGraphComponent', () => {
+    setupTestBed({ zoneless: true });
+    let fixture: ComponentFixture<StatisticsGraphComponent>;
+    let component: StatisticsGraphComponent;
+    let service: StatisticsService;
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StatisticsGraphComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting(), provideNoopAnimationsForTests()],
+        }).compileComponents();
+        fixture = TestBed.createComponent(StatisticsGraphComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(StatisticsService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should initialize', () => {
+        let graphData: number[];
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.ARTEMIS);
+        let arrayLength = 0;
+        const getChartDataMock = vi.spyOn(service, 'getChartData');
+
+        for (const span of Object.values(SpanType)) {
+            switch (span) {
+                case SpanType.DAY:
+                    arrayLength = 24;
+                    break;
+                case SpanType.WEEK:
+                    arrayLength = 7;
+                    break;
+                case SpanType.MONTH:
+                    arrayLength = dayjs().diff(dayjs().subtract(1, 'months'), 'days');
+                    break;
+                case SpanType.QUARTER:
+                    arrayLength = 12;
+                    break;
+                case SpanType.YEAR:
+                    arrayLength = 12;
+                    break;
+            }
+            graphData = [];
+            for (let i = 0; i < arrayLength; i++) {
+                graphData[i] = i + 1;
+            }
+            getChartDataMock.mockReturnValue(of(graphData));
+
+            fixture.componentRef.setInput('currentSpan', span);
+            fixture.detectChanges();
+
+            expect(component.dataForSpanType).toEqual(graphData);
+            graphData.forEach((data, index) => {
+                expect(component.ngxData[index].value).toBe(data);
+            });
+            expect(component.currentSpan()).toEqual(span);
+        }
+    });
+
+    it('should initialize after changes', () => {
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.COURSE);
+        fixture.componentRef.setInput('entityId', 1);
+        fixture.componentRef.setInput('currentSpan', SpanType.DAY);
+        const graphData = [];
+        for (let i = 0; i < 24; i++) {
+            graphData[i] = i + 1;
+        }
+
+        fixture.detectChanges();
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([...graphData]);
+
+        expect(component.dataForSpanType).toEqual(graphData);
+        expect(component.currentSpan()).toEqual(SpanType.DAY);
+    });
+
+    it('should switch time span', () => {
+        fixture.componentRef.setInput('graphType', Graphs.SUBMISSIONS);
+        fixture.componentRef.setInput('currentSpan', SpanType.WEEK);
+        fixture.componentRef.setInput('statisticsView', StatisticsView.ARTEMIS);
+        const graphData = [1, 2, 3, 4, 5, 6, 8];
+        vi.spyOn(service, 'getChartData').mockReturnValue(of(graphData));
+
+        fixture.detectChanges();
+
+        component.switchTimeSpan(true);
+
+        expect(component.dataForSpanType).toEqual(graphData);
+    });
+});

@@ -1,4 +1,4 @@
-import { Component, OnInit, Type, inject } from '@angular/core';
+import { Component, OnInit, Type, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -6,17 +6,17 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import {
     faAngleDown,
     faAngleUp,
@@ -35,18 +35,18 @@ import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import { LowerCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -80,21 +80,21 @@ export class ExerciseGroupsComponent implements OnInit {
     private router = inject(Router);
     private profileService = inject(ProfileService);
 
-    courseId: number;
-    course: Course;
-    examId: number;
-    exam: Exam;
-    exerciseGroups?: ExerciseGroup[];
+    courseId!: number;
+    course = signal<Course | undefined>(undefined);
+    examId!: number;
+    exam!: Exam;
+    exerciseGroups: ExerciseGroup[] | undefined = undefined;
     dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
-    latestIndividualEndDate?: dayjs.Dayjs;
-    exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
+    latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
+    exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
 
-    localCIEnabled = true;
-    textExerciseEnabled = false;
-    modelingExerciseEnabled = false;
-    fileUploadExerciseEnabled = false;
+    localCIEnabled = signal(true);
+    textExerciseEnabled = signal(false);
+    modelingExerciseEnabled = signal(false);
+    fileUploadExerciseEnabled = signal(false);
     disabledExerciseTypes: string[] = [];
 
     // Icons
@@ -122,23 +122,23 @@ export class ExerciseGroupsComponent implements OnInit {
             next: ([examRes, examInfoDTO]) => {
                 this.exam = examRes.body!;
                 this.exerciseGroups = this.exam.exerciseGroups;
-                this.course = this.exam.course!;
-                this.latestIndividualEndDate = examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined;
+                this.course.set(this.exam.course!);
+                this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
                 this.setupExerciseGroupToExerciseTypesDict();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
-        this.modelingExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
-        this.fileUploadExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
-        if (!this.textExerciseEnabled) {
+        this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
+        this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
+        this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
+        if (!this.textExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
-        if (!this.modelingExerciseEnabled) {
+        if (!this.modelingExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.MODELING);
         }
-        if (!this.fileUploadExerciseEnabled) {
+        if (!this.fileUploadExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
     }
@@ -195,7 +195,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 this.exerciseGroups = this.exerciseGroups!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId);
-                this.exerciseGroupToExerciseTypesDict.delete(exerciseGroupId);
+                const dict = new Map(this.exerciseGroupToExerciseTypesDict());
+                dict.delete(exerciseGroupId);
+                this.exerciseGroupToExerciseTypesDict.set(dict);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -299,19 +301,18 @@ export class ExerciseGroupsComponent implements OnInit {
      * E.g. in case programming exercises are present, the user must decide whether they want to delete the build plans.
      */
     setupExerciseGroupToExerciseTypesDict() {
-        this.exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
-        if (!this.exerciseGroups) {
-            return;
-        } else {
+        const dict = new Map<number, ExerciseType[]>();
+        if (this.exerciseGroups) {
             for (const exerciseGroup of this.exerciseGroups) {
-                this.exerciseGroupToExerciseTypesDict.set(exerciseGroup.id!, []);
+                dict.set(exerciseGroup.id!, []);
                 if (exerciseGroup.exercises) {
                     for (const exercise of exerciseGroup.exercises) {
-                        this.exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)!.push(exercise.type!);
+                        dict.get(exerciseGroup.id!)!.push(exercise.type!);
                     }
                 }
             }
         }
+        this.exerciseGroupToExerciseTypesDict.set(dict);
     }
 
     /**

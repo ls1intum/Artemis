@@ -22,13 +22,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 /**
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
@@ -122,6 +123,9 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         }
         else if (entity instanceof Exam exam) {
             evictIdFromCache("examTitle", exam.getId());
+        }
+        else if (entity instanceof TutorialGroup tutorialGroup) {
+            evictIdFromCache("tutorialGroupTitle", tutorialGroup.getId());
         }
         else if (entity instanceof ExerciseGroup exerciseGroup) {
             if (!Hibernate.isInitialized(exerciseGroup.getExercises())) {

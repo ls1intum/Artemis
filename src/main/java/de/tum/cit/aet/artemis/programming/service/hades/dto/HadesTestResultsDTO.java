@@ -13,11 +13,11 @@ import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestSuiteDTO;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestSuiteDTO;
 
 public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @JsonProperty("uuid") UUID UUID,
         @JsonProperty("assignmentRepoBranchName") String assignmentRepoBranchName, @JsonProperty("assignmentRepoCommitHash") String assignmentRepoCommitHash,

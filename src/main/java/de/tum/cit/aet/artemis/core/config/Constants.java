@@ -77,6 +77,14 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    // Maximum length for course and programming exercise short names. The combined value appears twice in
+    // student repository URLs ({base}/git/{COURSE+EXERCISE}/{course+exercise}-{login}.git) and the slug must fit
+    // in NAME_MAX (255 bytes) and the participation.repository_url column (varchar(255)).
+    // NOTE: keep these values in sync with input.constants.ts.
+    public static final int COURSE_SHORT_NAME_MAX_LENGTH = 24;
+
+    public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
@@ -463,6 +471,31 @@ public final class Constants {
     public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
+     * The name of the module feature used for Athena (LLM-based automatic assessment) functionality.
+     */
+    public static final String MODULE_FEATURE_ATHENA = "athena";
+
+    /**
+     * The name of the module feature used for Apollon (UML modeling conversion) functionality.
+     */
+    public static final String MODULE_FEATURE_APOLLON = "apollon";
+
+    /**
+     * The name of the module feature used for synchronizing user details from an external LDAP system.
+     */
+    public static final String MODULE_FEATURE_LDAP = "ldap";
+
+    /**
+     * The name of the module feature used for SAML2-based single sign-on, see {@link de.tum.cit.aet.artemis.account.security.SAML2Service}.
+     */
+    public static final String MODULE_FEATURE_SAML2 = "saml2";
+
+    /**
+     * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
+     */
+    public static final String SAML2_PROPERTIES_PREFIX = "saml2";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -536,6 +569,26 @@ public final class Constants {
      * The name of the property used to enable or disable LTI functionality.
      */
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Athena functionality.
+     */
+    public static final String ATHENA_ENABLED_PROPERTY_NAME = "artemis.athena.enabled";
+
+    /**
+     * The name of the property used to enable or disable Apollon functionality.
+     */
+    public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
+
+    /**
+     * The name of the property used to enable or disable LDAP-based user synchronization.
+     */
+    public static final String LDAP_ENABLED_PROPERTY_NAME = "artemis.user-management.ldap.enabled";
+
+    /**
+     * The name of the property used to enable or disable SAML2-based single sign-on.
+     */
+    public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
 
     /**
      * The name of the property used to enable or disable Theia functionality.

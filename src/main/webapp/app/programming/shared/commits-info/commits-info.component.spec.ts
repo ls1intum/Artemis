@@ -1,9 +1,12 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Signal } from '@angular/core';
 
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
@@ -15,11 +18,22 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
+/**
+ * Typed view onto the protected `groupedCommits` computed signal so the spec can read it
+ * without a blanket `(component as any)` cast. The shape mirrors the component declaration.
+ */
+type CommitsInfoInternals = CommitsInfoComponent & {
+    groupedCommits: Signal<{ key: string; commits: CommitInfo[]; date: string }[]>;
+};
+const internals = (c: CommitsInfoComponent): CommitsInfoInternals => c as CommitsInfoInternals;
+
 describe('CommitsInfoComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitsInfoComponent;
     let fixture: ComponentFixture<CommitsInfoComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let programmingExerciseParticipationServiceSpy: jest.SpyInstance;
+    let programmingExerciseParticipationServiceSpy: ReturnType<typeof vi.spyOn>;
 
     const commitInfo1 = {
         hash: '123',
@@ -62,7 +76,7 @@ describe('CommitsInfoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [CommitsInfoComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ProgrammingExerciseParticipationService),
                 { provide: ProfileService, useClass: MockProfileService },
@@ -75,20 +89,20 @@ describe('CommitsInfoComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-        programmingExerciseParticipationServiceSpy = jest
+        programmingExerciseParticipationServiceSpy = vi
             .spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation')
             .mockReturnValue(of([commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6] as CommitInfo[]));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call participation service to retrieve commits onInit if no commits are passed as input, group commits by push, and sort the grouped commits descending by timestamp', () => {
-        component.participationId = 1;
+        fixture.componentRef.setInput('participationId', 1);
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect((component as any).groupedCommits).toEqual([
+        expect(internals(component).groupedCommits()).toEqual([
             {
                 key: 'no-result',
                 commits: [commitInfo6, commitInfo5],
@@ -108,8 +122,27 @@ describe('CommitsInfoComponent', () => {
     });
 
     it('should do nothing onInit if commits are passed as input', () => {
-        component.commits = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
+        fixture.componentRef.setInput('commits', [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }]);
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should populate groupedCommits from the commits input via internalCommits before any service fetch', () => {
+        // Exercise the full input -> internalCommits -> groupedCommits flow. This is the chain the
+        // template binds against (@for over groupedCommits()), so verifying these three signals
+        // together verifies that an input change reaches the rendered grouping.
+        fixture.componentRef.setInput('commits', [commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6]);
+        component.ngOnInit();
+
+        // Service must not be called because the input already provided commits.
+        expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
+        // Three groups expected: 'no-result' for the latest tail (commits 5 and 6), '2021-01-04-author'
+        // (commits 3 and 4, terminated by commit4.result), and '2021-01-02-author' (commits 1 and 2,
+        // terminated by commit2.result). Output is reversed so the newest group comes first.
+        expect(internals(component).groupedCommits()).toEqual([
+            { key: 'no-result', commits: [commitInfo6, commitInfo5], date: '2021-01-06' },
+            { key: '2021-01-04-author', commits: [commitInfo4, commitInfo3], date: '2021-01-04' },
+            { key: '2021-01-02-author', commits: [commitInfo2, commitInfo1], date: '2021-01-02' },
+        ]);
     });
 });

@@ -1,4 +1,4 @@
-import { Range, round } from 'app/shared/util/utils';
+import { Range, round } from 'app/foundation/util/utils';
 
 export class TutorIssue {
     constructor(

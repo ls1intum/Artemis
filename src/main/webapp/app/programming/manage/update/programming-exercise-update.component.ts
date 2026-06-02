@@ -1,10 +1,10 @@
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
@@ -15,7 +15,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
     EXERCISE_TITLE_NAME_PATTERN,
@@ -29,7 +29,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
-} from 'app/shared/constants/input.constants';
+} from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -37,10 +37,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
-import { AeolusService } from 'app/programming/shared/services/aeolus.service';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -48,23 +47,24 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { FileService } from 'app/shared/service/file.service';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { FileService } from 'app/foundation/service/file.service';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -102,7 +102,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
-    private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
@@ -244,7 +243,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
-    public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
@@ -408,12 +406,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
-                this.programmingExercise.buildConfig.windfile = undefined;
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             }
-            this.programmingExercise.customizeBuildPlanWithAeolus = language === ProgrammingLanguage.EMPTY;
+            this.programmingExercise.customizeBuildPlan = language === ProgrammingLanguage.EMPTY;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -544,9 +541,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
-            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -630,9 +624,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
             this.customBuildPlansSupported = PROFILE_LOCALCI;
-        }
-        if (this.profileService.isProfileActive(PROFILE_AEOLUS)) {
-            this.customBuildPlansSupported = PROFILE_AEOLUS;
         }
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
@@ -890,22 +881,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private saveExerciseWithOptions(emptyRepositories: boolean) {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
-            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
-        }
-
-        if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile || this.isImportFromSharing) {
-            // Try phases-based serialization first (from the build phases editor)
+        if (this.programmingExercise.customizeBuildPlan) {
             const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
             if (phasesJSON) {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
-            } else if (this.programmingExercise.buildConfig?.windfile) {
-                // Fallback to windfile serialization
-                this.programmingExercise.buildConfig.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig.windfile);
+            } else {
+                this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             }
-        } else {
+            this.programmingExercise.buildConfig!.buildScript = undefined;
+        } else if (!this.isImportFromFile && !this.isImportFromSharing) {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.windfile = undefined;
+            this.programmingExercise.buildConfig!.buildScript = undefined;
         }
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
@@ -1046,22 +1032,29 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.onSaveSuccess(exercise);
             return;
         }
+        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate([
-                'course-management',
-                courseId,
-                'exams',
-                exercise.exerciseGroup.exam.id,
-                'exercise-groups',
-                exercise.exerciseGroup.id,
-                'programming-exercises',
-                exercise.id,
-                'code-editor',
-                RepositoryType.TEMPLATE,
-                exercise.templateParticipation.id,
-            ]);
+            this.router.navigate(
+                [
+                    'course-management',
+                    courseId,
+                    'exams',
+                    exercise.exerciseGroup.exam.id,
+                    'exercise-groups',
+                    exercise.exerciseGroup.id,
+                    'programming-exercises',
+                    exercise.id,
+                    'code-editor',
+                    RepositoryType.TEMPLATE,
+                    exercise.templateParticipation.id,
+                ],
+                navigationExtras,
+            );
         } else {
-            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id]);
+            this.router.navigate(
+                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
+                navigationExtras,
+            );
         }
     }
 
@@ -1256,9 +1249,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateGradingSection(validationErrorReasons);
         this.validateBuildPhaseNames(validationErrorReasons);
 
         return validationErrorReasons;
+    }
+
+    private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
+        if (this.exerciseGradingComponent?.formValid === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
+                translateValues: {},
+            });
+        }
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
@@ -1287,7 +1290,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
-        if (!this.programmingExercise.customizeBuildPlanWithAeolus || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
             return;
         }
 
@@ -1568,6 +1571,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         resetProgrammingForImport(this.programmingExercise);
 
+        this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!; // avoid detecting language as changed
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
         // we need to get it from the history object as setting the programming language

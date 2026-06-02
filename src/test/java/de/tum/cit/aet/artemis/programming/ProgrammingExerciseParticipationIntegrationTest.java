@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -60,7 +61,6 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -894,7 +894,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             commitToRepository(programmingExerciseWithAuxRepo.getTestRepositoryUri(), Map.of("tests/ExampleTest.java", "class Tests {}"), testsCommitMessage);
             AuxiliaryRepository auxiliaryRepository = ensureAuxiliaryRepositoryConfigured();
             commitToRepository(auxiliaryRepository.getRepositoryUri(), Map.of("auxiliary/Example.md", "Aux repo"), auxiliaryCommitMessage);
-            PATH_PREFIX = "/api/programming/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
+            PATH_PREFIX = "/api/programming/programming-exercises/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
         }
 
         @Test
@@ -966,7 +966,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         Map<String, String> seededFiles = Map.of("README.md", "Instructor view", "src/App.java", "class App {}\n");
         var commit = commitToParticipationRepository(participation, seededFiles, "Seed instructor files");
 
-        var files = request.getMap("/api/programming/programming-exercise-participations/" + participation.getId() + "/files-content/" + commit.getName(), HttpStatus.OK,
+        var files = request.getMap("/api/programming/programming-exercise-participations/" + participation.getId() + "/files-content?commitId=" + commit.getName(), HttpStatus.OK,
                 String.class, String.class);
         assertThat(files).isNotEmpty();
         assertThat(files).containsEntry("README.md", "Instructor view");
@@ -1010,7 +1010,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             solutionCommitHash = commitToRepository(programmingExercise.getSolutionRepositoryUri(), Map.of("solution/Example.java", "class SolutionDetail {}"),
                     "Solution detail commit").getName();
 
-            basePath = "/api/programming/programming-exercise/" + programmingExercise.getId() + "/files-content-commit-details/";
+            basePath = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details?commitId=";
         }
 
         @Test
@@ -1022,21 +1022,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnForParticipation() throws Exception {
-            var files = request.getMap(basePath + studentCommitHash + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
+            var files = request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnFilesForTemplateRepository() throws Exception {
-            var files = request.getMap(basePath + templateCommitHash + "?repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class);
+            var files = request.getMap(basePath + templateCommitHash + "&repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("template/Example.java", "class TemplateDetail {}");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnFilesForSolutionRepository() throws Exception {
-            var files = request.getMap(basePath + solutionCommitHash + "?repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class);
+            var files = request.getMap(basePath + solutionCommitHash + "&repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("solution/Example.java", "class SolutionDetail {}");
         }
 
@@ -1157,7 +1157,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 FileUtils.writeStringToFile(filePath.toFile(), entry.getValue(), StandardCharsets.UTF_8);
             }
             git.add().addFilepattern(".").call();
-            RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage(message).call();
+            RevCommit commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(git).setMessage(message).call();
             git.push().call();
             return commit;
         }

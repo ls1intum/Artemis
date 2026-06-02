@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -10,6 +10,7 @@ describe('IncludedInScoreBadge', () => {
     setupTestBed({ zoneless: true });
 
     let component: IncludedInScoreBadgeComponent;
+    let fixture: ComponentFixture<IncludedInScoreBadgeComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -17,7 +18,7 @@ describe('IncludedInScoreBadge', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
+        fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
         component = fixture.componentInstance;
     });
 
@@ -29,7 +30,7 @@ describe('IncludedInScoreBadge', () => {
     });
 
     it('should show a warning badge if the score is included as bonus', () => {
-        component.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_AS_BONUS);
         component.ngOnChanges();
         component.ngOnInit();
 
@@ -37,7 +38,7 @@ describe('IncludedInScoreBadge', () => {
     });
 
     it('should show a success badge if the score is fully included', () => {
-        component.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_COMPLETELY);
         component.ngOnChanges();
         component.ngOnInit();
 
@@ -45,7 +46,7 @@ describe('IncludedInScoreBadge', () => {
     });
 
     it('should show a danger badge if the score is not included', () => {
-        component.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.NOT_INCLUDED);
         component.ngOnChanges();
         component.ngOnInit();
 

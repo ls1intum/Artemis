@@ -44,7 +44,7 @@ public class ProgrammingSubmission extends Submission {
     // Only present if buildFailed == true.
     // No @Cache: written asynchronously by the CI callback; NONSTRICT caused partial log reads from other nodes, same class of bug as #12574.
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "build_log_entries_order")
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 

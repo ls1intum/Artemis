@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -44,6 +44,7 @@ export class ContextSelectionComponent {
     private readonly chatService = inject(IrisChatService);
 
     readonly disabled = input<boolean>(false);
+    readonly contextChanged = output<void>();
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 
@@ -133,6 +134,7 @@ export class ContextSelectionComponent {
             .find((o) => o.value === value);
         if (option) {
             this.chatService.switchToNewSession(option.mode, option.entityId);
+            this.contextChanged.emit();
         }
     }
 }

@@ -27,22 +27,6 @@
                 "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam ohne Server-Neustart."
             },
             "profiles": {
-                "athena": {
-                    "name": "Athena (KI-Bewertung)",
-                    "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
-                },
-                "apollon": {
-                    "name": "Apollon (Modellierung)",
-                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
-                },
-                "ldap": {
-                    "name": "LDAP-Authentifizierung",
-                    "description": "Aktiviert LDAP-basierte Authentifizierung für die Benutzeranmeldung über institutionelle Verzeichnisdienste."
-                },
-                "saml2": {
-                    "name": "SAML2-Authentifizierung",
-                    "description": "Aktiviert SAML2-basiertes Single Sign-On (SSO) über Identitätsanbieter."
-                },
                 "localci": {
                     "name": "Lokale CI",
                     "description": "Aktiviert das lokale Continuous-Integration-System zum Bauen und Testen von Programmierabgaben."
@@ -50,10 +34,6 @@
                 "buildagent": {
                     "name": "Integrierter Build-Agent",
                     "description": "Aktiviert den integrierten Build-Agent auf dem Server-Knoten für Local CI, wodurch keine separaten Build-Agent-Knoten benötigt werden."
-                },
-                "aeolus": {
-                    "name": "Aeolus (Build-Pläne)",
-                    "description": "Aktiviert Aeolus für die dynamische Build-Plan-Generierung und -Anpassung für Programmieraufgaben."
                 },
                 "jenkins": {
                     "name": "Jenkins CI",
@@ -112,6 +92,22 @@
                 "lti": {
                     "name": "LTI-Integration",
                     "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
+                },
+                "athena": {
+                    "name": "Athena (KI-Bewertung)",
+                    "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
+                },
+                "apollon": {
+                    "name": "Apollon (Modellierung)",
+                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
+                },
+                "ldap": {
+                    "name": "LDAP-Authentifizierung & Synchronisation",
+                    "description": "Aktiviert die LDAP-basierte Authentifizierung und Benutzersynchronisation zur Überprüfung von Anmeldedaten und zum Laden von Benutzerdetails aus institutionellen Verzeichnisdiensten."
+                },
+                "saml2": {
+                    "name": "SAML2-Authentifizierung",
+                    "description": "Aktiviert SAML2-basiertes Single Sign-On (SSO) über Identitätsanbieter."
                 },
                 "passkey": {
                     "name": "Passkey-Authentifizierung",

@@ -27,6 +27,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         receiveBroadcastedMessage = vi.fn();
 
+        broadcastFullState = vi.fn();
+
         destroy = vi.fn(() => {
             this._destroyed = true;
             this._subscriptions.clear();
@@ -62,7 +64,7 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -341,6 +343,19 @@ describe('ModelingEditorComponent', () => {
         const finalExplanation = 'Final Explanation';
         component.explanation.set(finalExplanation);
         expect(component.explanation()).toBe(finalExplanation);
+    });
+
+    it('broadcastFullState should delegate to the Apollon editor and no-op when not yet mounted', async () => {
+        // Before ngAfterViewInit: editor is not yet mounted; calling must be a safe no-op
+        expect(() => component.broadcastFullState()).not.toThrow();
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.detectChanges();
+        await component.ngAfterViewInit();
+
+        const editor = component['apollonEditor'] as any;
+        component.broadcastFullState();
+        expect(editor.broadcastFullState).toHaveBeenCalledOnce();
     });
 
     it('should subscribe to model change patches and emit them.', async () => {
