@@ -1,16 +1,12 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span jhiTranslate="artemisApp.submission.createExternal"></span>
-            ({{ exercise.title }})
-        </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
     <div class="modal-body">
-        @if (exercise.gradingInstructions) {
+        <div class="mb-3">
+            <h5 class="mb-0">{{ exercise().title }}</h5>
+        </div>
+        @if (exercise().gradingInstructions) {
             <div class="form-group">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions"></h3>
-                <span [innerHTML]="exercise.gradingInstructions | htmlForMarkdown"></span>
+                <span [innerHTML]="exercise().gradingInstructions | htmlForMarkdown"></span>
             </div>
         }
         <div class="form-group">
@@ -73,10 +69,16 @@
                         </div>
                         <div class="form-group row align-items-end">
                             <div class="col-md-6">
-                                <label for="feedbackErrorText" class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
+                                <label for="feedbackErrorText{{ i }}" class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
                                     Feedback #{{ i + 1 }} Detail Text
                                 </label>
-                                <textarea type="text" class="form-control" id="feedbackErrorText" name="feedbackErrorText{{ i }}" [(ngModel)]="feedback.detailText"></textarea>
+                                <textarea
+                                    type="text"
+                                    class="form-control"
+                                    id="feedbackErrorText{{ i }}"
+                                    name="feedbackErrorText{{ i }}"
+                                    [(ngModel)]="feedback.detailText"
+                                ></textarea>
                             </div>
                             <div class="checkbox col-md-6">
                                 <label class="artemis-label form-check">
@@ -106,9 +108,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="clear()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
         <button type="submit" [disabled]="editForm.invalid || isSaving" class="btn btn-primary">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>

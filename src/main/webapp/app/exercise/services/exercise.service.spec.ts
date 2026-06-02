@@ -1,7 +1,7 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -32,6 +32,7 @@ import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: ExerciseService;
     let httpMock: HttpTestingController;
     let artemisMarkdown: ArtemisMarkdownService;
@@ -272,7 +273,8 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
-        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(textExercise.exampleSolution);
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
@@ -289,7 +291,8 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
-        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(fileUploadExercise.exampleSolution);
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
@@ -388,9 +391,11 @@ describe('Exercise Service', () => {
         expect(processedExercise.releaseDate).toEqual(releaseDate);
         expect(processedExercise.startDate).toBeUndefined();
 
-        expect(accountServiceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: exerciseFromServer.id }));
+        expect(accountServiceSpy).toHaveBeenCalledOnce();
+        expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
 
-        expect(entityTitleServiceSpy).toHaveBeenCalledExactlyOnceWith(exerciseFromServer);
+        expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
@@ -467,7 +472,8 @@ describe('Exercise Service', () => {
 
         testRequest.flush(expectedReturnedExercise);
 
-        expect(serviceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
         expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
 
