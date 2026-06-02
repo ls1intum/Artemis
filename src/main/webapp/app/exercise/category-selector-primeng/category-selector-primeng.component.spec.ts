@@ -65,12 +65,12 @@ describe('CategorySelectorPrimengComponent', () => {
 
     it('should remove category', () => {
         fixture.detectChanges();
-        comp.categories = [category1, category2, category3];
+        fixture.componentRef.setInput('categories', [category1, category2, category3]);
         fixture.changeDetectorRef.detectChanges();
-        const cancelColorSelectorSpy = vi.spyOn(comp.colorSelector, 'cancelColorSelector');
+        const cancelColorSelectorSpy = vi.spyOn(comp.colorSelector(), 'cancelColorSelector');
         comp.onItemRemove(category2);
 
-        expect(comp.categories).toEqual([category1, category3]);
+        expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
         expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
@@ -82,7 +82,7 @@ describe('CategorySelectorPrimengComponent', () => {
             clientY: 2,
         });
 
-        const openColorSelectorSpy = vi.spyOn(comp.colorSelector, 'openColorSelector').mockImplementation(() => undefined);
+        const openColorSelectorSpy = vi.spyOn(comp.colorSelector(), 'openColorSelector').mockImplementation(() => undefined);
         comp.openColorSelector(mouseEvent, category5);
 
         expect(comp.selectedCategory).toEqual(category5);
@@ -90,95 +90,94 @@ describe('CategorySelectorPrimengComponent', () => {
     });
 
     it('should select color for category', () => {
-        comp.categories = [category1, category2, category3];
+        fixture.componentRef.setInput('categories', [category1, category2, category3]);
         comp.selectedCategory = category2;
         comp.onSelectedColor('#fff');
         const expected = { category: 'category2', color: '#fff' };
 
         expect(comp.selectedCategory).toEqual(expected);
-        expect(comp.categories).toEqual([category1, expected, category3]);
+        expect(comp.selectedCategoryItems()).toEqual([category1, expected, category3]);
         expect(emitSpy).toHaveBeenCalledWith([category1, expected, category3]);
     });
 
     it('should create new item on select', () => {
-        comp.categories = [category6];
-        comp.existingCategories = [category6, category7, category8];
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.componentRef.setInput('existingCategories', [category6, category7, category8]);
         fixture.changeDetectorRef.detectChanges();
         const event = { option: { value: 'category9' } } as MatAutocompleteSelectedEvent;
         comp.onItemSelect(event);
 
-        const categoryColor = comp.categories[1].color;
-        expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
+        const categoryColor = comp.selectedCategoryItems()[1].color;
+        expect(comp.selectedCategoryItems()).toEqual([category6, { category: 'category9', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
-        expect(comp.categoryInput.nativeElement.value).toBe('');
+        expect(comp.categoryInput().nativeElement.value).toBe('');
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should not create new item on select', () => {
-        comp.categories = [category6];
-        comp.existingCategories = [category7, category8];
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.componentRef.setInput('existingCategories', [category7, category8]);
         fixture.changeDetectorRef.detectChanges();
         const event = { option: { value: 'category7' } } as MatAutocompleteSelectedEvent;
         comp.onItemSelect(event);
 
-        expect(comp.categories).toEqual([category6, category7]);
+        expect(comp.selectedCategoryItems()).toEqual([category6, category7]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category7]);
-        expect(comp.categoryInput.nativeElement.value).toBe('');
+        expect(comp.categoryInput().nativeElement.value).toBe('');
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should not create duplicate item on add', () => {
-        comp.categories = [category6];
+        fixture.componentRef.setInput('categories', [category6]);
         fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
         comp.onItemAdd(event);
 
-        expect(comp.categories).toEqual([category6]);
+        expect(comp.selectedCategoryItems()).toEqual([category6]);
         expect(emitSpy).not.toHaveBeenCalled();
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should save exiting category on add', () => {
-        comp.categories = [category6];
-        comp.existingCategories = [category7, category8];
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.componentRef.setInput('existingCategories', [category7, category8]);
         fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category8', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
         comp.onItemAdd(event);
 
-        expect(comp.categories).toEqual([category6, category8]);
+        expect(comp.selectedCategoryItems()).toEqual([category6, category8]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category8]);
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should create new item on add for existing categories', () => {
-        comp.categories = [category6];
-        comp.existingCategories = [];
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category9', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
         comp.onItemAdd(event);
 
-        const categoryColor = comp.categories[1].color;
-        expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
+        const categoryColor = comp.selectedCategoryItems()[1].color;
+        expect(comp.selectedCategoryItems()).toEqual([category6, { category: 'category9', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should create new item on add for empty categories', () => {
-        comp.existingCategories = [];
+        fixture.componentRef.setInput('existingCategories', []);
         fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
         comp.onItemAdd(event);
 
-        const categoryColor = comp.categories[0].color;
-        expect(comp.categories).toEqual([{ category: 'category6', color: categoryColor }]);
+        const categoryColor = comp.selectedCategoryItems()[0].color;
+        expect(comp.selectedCategoryItems()).toEqual([{ category: 'category6', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([{ category: 'category6', color: categoryColor }]);
         expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should set categories for autocomplete on changes', () => {
-        comp.existingCategories = [category3, category4, category5];
-        comp.categories = [category3];
-        comp.ngOnChanges();
+        fixture.componentRef.setInput('existingCategories', [category3, category4, category5]);
+        fixture.componentRef.setInput('categories', [category3]);
 
         let result;
         comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
@@ -186,9 +185,8 @@ describe('CategorySelectorPrimengComponent', () => {
     });
 
     it('should filter categories for autocomplete on changes', () => {
-        comp.existingCategories = [category3, category4, category5];
-        comp.categories = [category3];
-        comp.ngOnChanges();
+        fixture.componentRef.setInput('existingCategories', [category3, category4, category5]);
+        fixture.componentRef.setInput('categories', [category3]);
 
         let result;
         comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));

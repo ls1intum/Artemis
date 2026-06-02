@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { round } from 'app/foundation/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
@@ -16,18 +16,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);
 
-    @Input()
-    averageScoreOfExercise: number | undefined;
-    @Input()
-    scoreDistribution: number[] | undefined;
-    @Input()
-    numberOfExerciseScores: number | undefined;
-    @Input()
-    exerciseType: ExerciseType;
-    @Input()
-    courseId: number;
-    @Input()
-    exerciseId: number;
+    readonly averageScoreOfExercise = input<number>();
+    readonly scoreDistribution = input<number[]>();
+    readonly numberOfExerciseScores = input<number>();
+    readonly exerciseType = input<ExerciseType>();
+    readonly courseId = input<number>();
+    readonly exerciseId = input<number>();
 
     // ngx
     ngxData: any[] = [];
@@ -49,10 +43,11 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     private initializeChart(): void {
         this.barChartLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
-        if (this.numberOfExerciseScores && this.numberOfExerciseScores > 0) {
+        const numberOfExerciseScores = this.numberOfExerciseScores();
+        if (numberOfExerciseScores && numberOfExerciseScores > 0) {
             this.relativeChartData = [];
-            for (const value of this.scoreDistribution!) {
-                this.relativeChartData.push(round((value * 100) / this.numberOfExerciseScores));
+            for (const value of this.scoreDistribution() ?? []) {
+                this.relativeChartData.push(round((value * 100) / numberOfExerciseScores));
             }
         } else {
             this.relativeChartData = new Array(10).fill(0);
@@ -67,7 +62,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      */
     lookUpAbsoluteValue(bucket: string) {
         const index = this.barChartLabels.indexOf(bucket);
-        return this.scoreDistribution![index];
+        return this.scoreDistribution()?.[index];
     }
 
     /**
@@ -76,7 +71,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      */
     selectChartBar(event: any): void {
         const index = this.barChartLabels.indexOf(event.name);
-        const route = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
+        const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
         this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: index } });
     }
 }

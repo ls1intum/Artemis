@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, ViewEncapsulation, input, linkedSignal, output, viewChild } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
@@ -42,57 +42,56 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
         ArtemisTranslatePipe,
     ],
 })
-export class CategorySelectorComponent implements OnChanges {
+export class CategorySelectorComponent {
     protected readonly faTimes = faTimes;
     protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
     private readonly COLOR_SELECTOR_HEIGHT = 150;
 
-    /** the selected categories, which can be manipulated by the user in the UI */
-    @Input() categories: ExerciseCategory[] | FaqCategory[];
+    /** the selected categories passed in by the parent */
+    readonly categories = input<ExerciseCategory[] | FaqCategory[]>();
     /** the existing categories used for auto-completion, might include duplicates */
-    @Input() existingCategories: ExerciseCategory[] | FaqCategory[];
+    readonly existingCategories = input<ExerciseCategory[] | FaqCategory[]>();
 
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
-    @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement>;
-    @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
+    /** local working copy the user manipulates in the UI; re-seeds whenever the parent passes new categories */
+    readonly selectedCategoryItems = linkedSignal<ExerciseCategory[] | FaqCategory[]>(() => this.categories() ?? []);
 
-    @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
+    readonly colorSelector = viewChild.required(ColorSelectorComponent);
+    readonly categoryInput = viewChild.required<ElementRef<HTMLInputElement>>('categoryInput');
+    readonly autocompleteTrigger = viewChild.required(MatAutocompleteTrigger);
+
+    readonly selectedCategories = output<ExerciseCategory[]>();
 
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
-    uniqueCategoriesForAutocomplete: Observable<string[]>;
 
     categoryCtrl = new FormControl<string | undefined>(undefined);
 
-    ngOnChanges() {
-        this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(
-            startWith(undefined),
-            map((userInput: string | undefined) => (userInput ? this.filterCategories(userInput) : this.existingCategoriesAsStringArray().slice())),
-            // remove duplicated values
-            map((categories: string[]) => [...new Set(categories)]),
-            // remove categories that have already been selected in the exercise
-            map((categories: string[]) => categories.filter((category) => !this.categoriesAsStringArray().includes(category.toLowerCase()))),
-        );
-    }
+    // The autocomplete pipeline reads the latest signal values lazily on each emission, so it only needs to be created once.
+    readonly uniqueCategoriesForAutocomplete: Observable<string[]> = this.categoryCtrl.valueChanges.pipe(
+        startWith(undefined),
+        map((userInput: string | undefined) => (userInput ? this.filterCategories(userInput) : this.existingCategoriesAsStringArray().slice())),
+        // remove duplicated values
+        map((categories: string[]) => [...new Set(categories)]),
+        // remove categories that have already been selected in the exercise
+        map((categories: string[]) => categories.filter((category) => !this.categoriesAsStringArray().includes(category.toLowerCase()))),
+    );
 
     private categoriesAsStringArray(): string[] {
-        if (!this.categories) {
-            return [];
-        }
-        return this.categories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
+        return this.selectedCategoryItems().map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     private existingCategoriesAsStringArray(): string[] {
-        if (!this.existingCategories) {
+        const existingCategories = this.existingCategories();
+        if (!existingCategories) {
             return [];
         }
-        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
+        return existingCategories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     // if the user types in something, we need to filter for the matching categories
     private filterCategories(value: string): string[] {
         const filterValue = value.toLowerCase();
-        return this.existingCategories.filter((category) => category.category!.toLowerCase().includes(filterValue)).map((category) => category.category!.toLowerCase());
+        return (this.existingCategories() ?? []).filter((category) => category.category!.toLowerCase().includes(filterValue)).map((category) => category.category!.toLowerCase());
     }
 
     /**
@@ -102,7 +101,7 @@ export class CategorySelectorComponent implements OnChanges {
      */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
-        this.colorSelector.openColorSelector(event, undefined, this.COLOR_SELECTOR_HEIGHT);
+        this.colorSelector().openColorSelector(event, undefined, this.COLOR_SELECTOR_HEIGHT);
     }
 
     /**
@@ -111,13 +110,9 @@ export class CategorySelectorComponent implements OnChanges {
      */
     onSelectedColor(selectedColor: string): void {
         this.selectedCategory.color = selectedColor;
-        this.categories = this.categories.map((category) => {
-            if (category.category === this.selectedCategory.category) {
-                return this.selectedCategory;
-            }
-            return category;
-        });
-        this.selectedCategories.emit(this.categories);
+        const updated = this.selectedCategoryItems().map((category) => (category.category === this.selectedCategory.category ? this.selectedCategory : category));
+        this.selectedCategoryItems.set(updated);
+        this.selectedCategories.emit(updated);
     }
 
     /**
@@ -137,17 +132,14 @@ export class CategorySelectorComponent implements OnChanges {
             if (!category.color) {
                 category.color = this.chooseRandomColor();
             }
-            if (this.categories) {
-                this.categories.push(category);
-            } else {
-                this.categories = [category];
-            }
-            this.selectedCategories.emit(this.categories);
+            const updated = [...this.selectedCategoryItems(), category];
+            this.selectedCategoryItems.set(updated);
+            this.selectedCategories.emit(updated);
         }
         // Clear the input value
         event.chipInput!.clear();
         this.categoryCtrl.setValue(null);
-        this.autocompleteTrigger.closePanel();
+        this.autocompleteTrigger().closePanel();
     }
 
     private createCategory(categoryString: string): ExerciseCategory {
@@ -170,15 +162,16 @@ export class CategorySelectorComponent implements OnChanges {
                 category = this.createCategory(categoryString);
             }
 
-            this.categories.push(category);
-            this.selectedCategories.emit(this.categories);
+            const updated = [...this.selectedCategoryItems(), category];
+            this.selectedCategoryItems.set(updated);
+            this.selectedCategories.emit(updated);
         }
-        this.categoryInput.nativeElement.value = '';
+        this.categoryInput().nativeElement.value = '';
         this.categoryCtrl.setValue(null);
     }
 
     private findExistingCategory(categoryString: string): ExerciseCategory | undefined {
-        return this.existingCategories.find((existingCategory) => existingCategory.category?.toLowerCase() === categoryString.toLowerCase());
+        return (this.existingCategories() ?? []).find((existingCategory) => existingCategory.category?.toLowerCase() === categoryString.toLowerCase());
     }
 
     /**
@@ -186,8 +179,9 @@ export class CategorySelectorComponent implements OnChanges {
      * @param {ExerciseCategory} categoryToRemove
      */
     onItemRemove(categoryToRemove: ExerciseCategory): void {
-        this.colorSelector.cancelColorSelector();
-        this.categories = this.categories.filter((exerciseCategory) => exerciseCategory.category !== categoryToRemove.category);
-        this.selectedCategories.emit(this.categories);
+        this.colorSelector().cancelColorSelector();
+        const updated = this.selectedCategoryItems().filter((exerciseCategory) => exerciseCategory.category !== categoryToRemove.category);
+        this.selectedCategoryItems.set(updated);
+        this.selectedCategories.emit(updated);
     }
 }
