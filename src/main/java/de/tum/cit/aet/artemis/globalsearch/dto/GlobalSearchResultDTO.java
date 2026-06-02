@@ -69,19 +69,22 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
         putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
 
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
         Long examId = getLong(properties, SearchableEntitySchema.Properties.EXAM_ID);
         if (examId != null) {
             metadata.put("examId", examId);
             Long exerciseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
             Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
             putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
-            Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
-            if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
-                metadata.put("isAtLeastEditor", true);
-            }
-            else if (courseId != null && staffCourseIds.contains(courseId)) {
-                metadata.put("isAtLeastTutor", true);
-            }
+        }
+
+        // Role metadata: used by the frontend to route tutors to the assessment dashboard
+        // and editors to the exercise details page
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastTutor", true);
         }
 
         if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {

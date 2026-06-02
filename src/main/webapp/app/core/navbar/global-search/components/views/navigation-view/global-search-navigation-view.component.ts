@@ -288,12 +288,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const isAtLeastTutor = result.metadata?.['isAtLeastTutor'];
 
         if (examId && isAtLeastEditor && exerciseGroupId) {
+            // Editors/instructors: exam exercise details page
             this.navigateToExamExerciseDetailsPage(courseId, examId, exerciseGroupId, result);
         } else if (examId && isAtLeastTutor) {
-            this.navigateToExamExerciseAssessmentDashboard(courseId, examId, result);
+            // Tutors: exam exercise assessment dashboard
+            this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
         } else if (examId) {
-            this.navigateToStudentExamView(courseId, examId);
+            // Students: student exam view
+            this.router.navigate(['/courses', courseId, 'exams', examId]);
         } else {
+            // Students: student exercise view
             this.router.navigate(['/courses', courseId, 'exercises', result.id]);
         }
     }
@@ -301,10 +305,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToExamExerciseDetailsPage(courseId: string, examId: string, exerciseGroupId: string, result: GlobalSearchResult) {
         const typeSegment = (result.badge?.toLowerCase().replace(/ /g, '-') ?? 'text') + '-exercises';
         this.router.navigate(['/course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, typeSegment, result.id]);
-    }
-
-    private navigateToExamExerciseAssessmentDashboard(courseId: string, examId: string, result: GlobalSearchResult) {
-        this.router.navigate(['/course-management', courseId, 'exams', examId, 'assessment-dashboard', result.id]);
     }
 
     private navigateToStudentExamView(courseId: string, examId: string) {
@@ -323,16 +323,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     private navigateToExam(result: GlobalSearchResult, courseId: string) {
+        const isAtLeastEditor = !!result.metadata?.['isAtLeastEditor'];
         const isAtLeastTutor = !!result.metadata?.['isAtLeastTutor'];
-        if (isAtLeastTutor) {
-            this.navigateToExamDetailsPage(courseId, result.id!);
+        if (isAtLeastEditor) {
+            this.router.navigate(['/course-management', courseId, 'exams', result.id]);
+        } else if (isAtLeastTutor) {
+            this.router.navigate(['/course-management', courseId, 'exams', result.id, 'assessment-dashboard']);
         } else {
             this.navigateToStudentExamView(courseId, result.id!);
         }
-    }
-
-    private navigateToExamDetailsPage(courseId: string, examId: string) {
-        this.router.navigate(['/course-management', courseId, 'exams', examId]);
     }
 
     private navigateToChannel(courseId: string, channelId: string) {
