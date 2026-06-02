@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -82,7 +82,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -139,9 +139,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     hasPendingChanges = false;
 
     // listener, will get notified upon loading of feedback
-    @Output() onFeedbackLoaded = new EventEmitter();
+    readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
+    readonly overrideNextSubmission = input<(submissionId: number) => any>();
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -338,13 +338,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile The file that has been selected in the editor.
      */
     highlightChangedLines(selectedFile: string) {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        const codeEditorContainer = this.codeEditorContainer();
+        if (selectedFile && codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
+                const lastLine = codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], codeEditorContainer.getText());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
@@ -374,7 +375,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private highlightLines(firstLine: number, lastLine: number) {
         // We add 1 to make the lines 1-based.
-        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
+        this.codeEditorContainer()!.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**
@@ -463,8 +464,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 }
 
                 // if override set, skip navigation
-                if (this.overrideNextSubmission) {
-                    this.overrideNextSubmission(response.id!);
+                const overrideNextSubmission = this.overrideNextSubmission();
+                if (overrideNextSubmission) {
+                    overrideNextSubmission(response.id!);
                     return;
                 }
 

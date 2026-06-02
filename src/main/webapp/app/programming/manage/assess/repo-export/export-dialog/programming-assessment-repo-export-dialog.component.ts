@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
 import { HttpResponse } from '@angular/common/http';
@@ -14,6 +14,15 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+interface ProgrammingAssessmentRepoExportDialogData {
+    programmingExercises: ProgrammingExercise[];
+    // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
+    // Priority: participationId >> participantIdentifier.
+    participationIdList?: number[];
+    participantIdentifierList?: string; // TODO: Should be a list and not a comma separated string.
+    singleParticipantMode?: boolean;
+}
+
 @Component({
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
@@ -22,15 +31,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private alertService = inject(AlertService);
 
-    @Input() programmingExercises: ProgrammingExercise[];
+    private readonly data = this.dialogConfig.data as ProgrammingAssessmentRepoExportDialogData | undefined;
+
+    programmingExercises: ProgrammingExercise[] = this.data?.programmingExercises ?? [];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
     // Priority: participationId >> participantIdentifier.
-    @Input() participationIdList: number[];
-    @Input() participantIdentifierList: string; // TODO: Should be a list and not a comma separated string.
-    @Input() singleParticipantMode = false;
+    participationIdList: number[] = this.data?.participationIdList ?? [];
+    participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
+    singleParticipantMode = this.data?.singleParticipantMode ?? false;
     readonly FeatureToggle = FeatureToggle;
     exportInProgress: boolean;
     repositoryExportOptions: RepositoryExportOptions;
@@ -60,7 +72,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     }
 
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     exportRepos() {
@@ -77,7 +89,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                         next: this.handleExportRepoResponseSuccess,
                         error: () => this.handleExportRepoResponseError(exercise.id!),
                     })
-                    .add(() => this.activeModal.dismiss(true));
+                    .add(() => this.dialogRef.close(true));
                 return;
             }
             const participantIdentifierList = this.repositoryExportOptions.exportAllParticipants ? ['ALL'] : this.participantIdentifierList.split(',').map((e) => e.trim());
@@ -88,7 +100,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                     next: this.handleExportRepoResponseSuccess,
                     error: () => this.handleExportRepoResponseError(exercise.id!),
                 })
-                .add(() => this.activeModal.dismiss(true));
+                .add(() => this.dialogRef.close(true));
         });
     }
 

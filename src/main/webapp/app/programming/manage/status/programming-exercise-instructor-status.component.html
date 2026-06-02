@@ -1,4 +1,5 @@
-@if (participationType === ProgrammingExerciseParticipationType.TEMPLATE && latestResult && latestResult.score! > 0) {
+@let result = latestResult();
+@if (participationType() === ProgrammingExerciseParticipationType.TEMPLATE && result && result.score! > 0) {
     <fa-icon
         id="instructor-status-template"
         [icon]="faExclamationTriangle"
@@ -6,7 +7,7 @@
         [ngbTooltip]="'artemisApp.programmingExercise.status.templateFulfillsTest' | artemisTranslate"
     />
 }
-@if (participationType === ProgrammingExerciseParticipationType.SOLUTION && latestResult && !latestResult.successful) {
+@if (participationType() === ProgrammingExerciseParticipationType.SOLUTION && result && !result.successful) {
     <fa-icon
         id="instructor-status-solution"
         [icon]="faExclamationTriangle"

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -5,6 +7,8 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('FeedbackDetailChannelModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeedbackDetailChannelModalComponent>;
     let component: FeedbackDetailChannelModalComponent;
     let activeModal: NgbActiveModal;
@@ -29,30 +33,30 @@ describe('FeedbackDetailChannelModalComponent', () => {
             taskName: 'Task 1',
             errorCategory: 'StudentError',
         } as any);
-        fixture.componentInstance.isConfirmModalOpen.set(false);
+        component.isConfirmModalOpen.set(false);
         fixture.detectChanges();
     });
 
     it('should initialize form and inputs', () => {
         expect(component.feedbackDetail().detailTexts).toStrictEqual(['Sample feedback']);
         expect(component.form).toBeDefined();
-        expect(component.form.valid).toBeFalse();
+        expect(component.form.valid).toBe(false);
     });
 
     it('should call activeModal.close when closeModal is triggered', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const closeSpy = vi.spyOn(activeModal, 'close');
         component.closeModal();
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     it('should call activeModal.dismiss when dismissModal is triggered', () => {
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
         component.dismissModal();
         expect(dismissSpy).toHaveBeenCalledOnce();
     });
 
     it('should open confirmation modal and emit formSubmitted on successful confirmation', async () => {
-        jest.spyOn(component, 'handleModal').mockResolvedValue(true);
+        vi.spyOn(component, 'handleModal').mockResolvedValue(true);
 
         component.form.setValue({
             name: 'channel',
@@ -61,10 +65,10 @@ describe('FeedbackDetailChannelModalComponent', () => {
             isAnnouncementChannel: false,
         });
 
-        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const formSubmittedSpy = vi.spyOn(component.formSubmitted, 'emit');
         await component.submitForm(false);
 
-        expect(component.isConfirmModalOpen()).toBeFalse();
+        expect(component.isConfirmModalOpen()).toBe(false);
         expect(formSubmittedSpy).toHaveBeenCalledExactlyOnceWith({
             channelDto: expect.objectContaining({
                 creationDate: undefined,
@@ -100,8 +104,8 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should call handleModal and proceed if confirmed', async () => {
-        jest.spyOn(component, 'handleModal').mockResolvedValue(true);
-        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+        vi.spyOn(component, 'handleModal').mockResolvedValue(true);
+        const formSubmittedSpy = vi.spyOn(component.formSubmitted, 'emit');
 
         component.form.setValue({
             name: 'channel',
@@ -125,9 +129,9 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should not proceed if modal is dismissed', async () => {
-        jest.spyOn(component, 'handleModal').mockResolvedValue(false);
+        vi.spyOn(component, 'handleModal').mockResolvedValue(false);
 
-        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const formSubmittedSpy = vi.spyOn(component.formSubmitted, 'emit');
 
         component.form.setValue({
             name: 'channel',
@@ -143,7 +147,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should not open confirmation modal if form is invalid', async () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
+        const modalSpy = vi.spyOn(modalService, 'open');
         await component.submitForm(true);
         expect(modalSpy).not.toHaveBeenCalledOnce();
     });

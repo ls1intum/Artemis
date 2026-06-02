@@ -1,4 +1,6 @@
-import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { Observable, Subject, of } from 'rxjs';
@@ -16,35 +18,35 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExerciseGradingTasksTableComponent', () => {
-    let fixture;
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ProgrammingExerciseGradingTasksTableComponent>;
     let comp: ProgrammingExerciseGradingTasksTableComponent;
     let taskService: ProgrammingExerciseTaskService;
-    let taskServiceUpdateTasksStub: jest.SpyInstance;
+    let taskServiceUpdateTasksStub: ReturnType<typeof vi.spyOn>;
 
     const gradingStatistics = {} as ProgrammingExerciseGradingStatistics;
     const exercise = { id: 1 } as ProgrammingExercise;
     const course = { id: 2 } as Course;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            declarations: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
+        TestBed.configureTestingModule({
+            imports: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseGradingTasksTableComponent);
-                comp = fixture.componentInstance;
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseGradingTasksTableComponent);
+        comp = fixture.componentInstance;
 
-                comp.gradingStatisticsObservable = of(gradingStatistics);
-                comp.exercise = exercise;
-                comp.course = course;
-                taskService = TestBed.inject(ProgrammingExerciseTaskService);
-                taskServiceUpdateTasksStub = jest.spyOn(taskService, 'updateTasks');
-            });
+        fixture.componentRef.setInput('gradingStatisticsObservable', of(gradingStatistics));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('course', course);
+        taskService = TestBed.inject(ProgrammingExerciseTaskService);
+        taskServiceUpdateTasksStub = vi.spyOn(taskService, 'updateTasks');
     });
 
     it('should pass parameters to the task service and configure it', () => {
-        const taskServiceConfigureStub = jest.spyOn(taskService, 'configure').mockReturnValue(of([]));
+        taskServiceUpdateTasksStub.mockReturnValue([]);
+        const taskServiceConfigureStub = vi.spyOn(taskService, 'configure').mockReturnValue(of([]));
 
         comp.ngOnInit();
 
@@ -65,7 +67,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     it('should pass inactive test case toggle to the task service and update the components tasks', () => {
         comp.tasks = [{ taskName: 'task1' }] as ProgrammingExerciseTask[];
         const inactiveTasks = [{ taskName: 'updatedTask' }] as ProgrammingExerciseTask[];
-        const taskServiceToggleIgnoreInactiveStub = jest.spyOn(taskService, 'toggleIgnoreInactive').mockReturnValue();
+        const taskServiceToggleIgnoreInactiveStub = vi.spyOn(taskService, 'toggleIgnoreInactive').mockReturnValue();
         taskServiceUpdateTasksStub.mockReturnValue(inactiveTasks);
 
         comp.toggleShowInactiveTestsShown();
@@ -76,30 +78,31 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
     it('should pass saving to the service', () => {
         const subject = new Subject();
-        const taskServiceSaveTestCasesStub = jest.spyOn(taskService, 'saveTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTestCase[]>);
+        const taskServiceSaveTestCasesStub = vi.spyOn(taskService, 'saveTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTestCase[]>);
 
         comp.saveTestCases();
 
-        expect(comp.isSaving).toBeTruthy();
+        expect(comp.isSaving).toBe(true);
         expect(taskServiceSaveTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
-        expect(comp.isSaving).toBeFalsy();
+        expect(comp.isSaving).toBe(false);
     });
 
     it('should pass reset to the task and update tasks', () => {
         const subject = new Subject();
-        const taskServiceResetTestCasesStub = jest.spyOn(taskService, 'resetTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTask[]>);
+        taskServiceUpdateTasksStub.mockReturnValue([]);
+        const taskServiceResetTestCasesStub = vi.spyOn(taskService, 'resetTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTask[]>);
 
         comp.resetTestCases();
 
-        expect(comp.isSaving).toBeTruthy();
+        expect(comp.isSaving).toBe(true);
         expect(taskServiceResetTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
-        expect(comp.isSaving).toBeFalsy();
+        expect(comp.isSaving).toBe(false);
         expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
     });
 

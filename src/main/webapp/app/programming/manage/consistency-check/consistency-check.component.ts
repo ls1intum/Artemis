@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,17 +10,24 @@ import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
+interface ConsistencyCheckData {
+    exercisesToCheck: ProgrammingExercise[];
+}
+
 @Component({
     selector: 'jhi-consistency-check',
     templateUrl: './consistency-check.component.html',
     imports: [TranslateDirective, FaIconComponent, RouterLink],
 })
 export class ConsistencyCheckComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private alertService = inject(AlertService);
 
-    @Input() exercisesToCheck: ProgrammingExercise[];
+    private readonly data = this.dialogConfig.data as ConsistencyCheckData | undefined;
+
+    readonly exercisesToCheck = signal<ProgrammingExercise[]>(this.data?.exercisesToCheck ?? []);
 
     inconsistencies: ConsistencyCheckError[] = [];
     isLoading = true;
@@ -31,8 +38,9 @@ export class ConsistencyCheckComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        let exercisesRemaining = this.exercisesToCheck.length;
-        this.exercisesToCheck.forEach((exercise) => {
+        const exercisesToCheck = this.exercisesToCheck();
+        let exercisesRemaining = exercisesToCheck.length;
+        exercisesToCheck.forEach((exercise) => {
             const course = getCourseId(exercise);
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
                 next: (inconsistencies) => {
@@ -51,6 +59,6 @@ export class ConsistencyCheckComponent implements OnInit {
     }
 
     closeModal() {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 }

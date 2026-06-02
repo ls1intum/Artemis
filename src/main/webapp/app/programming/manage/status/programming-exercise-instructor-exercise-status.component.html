@@ -1,13 +1,14 @@
-@if (issues.length) {
+@let currentIssues = issues();
+@if (currentIssues.length) {
     <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" [ngbTooltip]="tooltipContent" />
 } @else {
     <fa-icon [icon]="faCheckCircle" size="2x" class="text-success" />
 }
 <ng-template #tooltipContent>
-    @if (issues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)) {
+    @if (currentIssues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)) {
         <div jhiTranslate="artemisApp.programmingExercise.status.templateFulfillsTest"></div>
     }
-    @if (issues.includes(ProgrammingExerciseIssues.SOLUTION_FAILING)) {
+    @if (currentIssues.includes(ProgrammingExerciseIssues.SOLUTION_FAILING)) {
         <div jhiTranslate="artemisApp.programmingExercise.status.solutionFailsTest"></div>
     }
 </ng-template>

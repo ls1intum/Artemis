@@ -1,5 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -12,29 +12,36 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, KeyValuePipe, TranslateDirective],
 })
-export class ProgrammingExerciseTheiaComponent implements OnChanges {
+export class ProgrammingExerciseTheiaComponent {
     private theiaService = inject(TheiaService);
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
 
     programmingLanguage?: ProgrammingLanguage;
     theiaImages = {};
 
-    ngOnChanges(changes: SimpleChanges) {
-        if ((changes.programmingExerciseCreationConfig || changes.programmingExercise) && this.shouldReloadTemplate()) {
-            this.loadTheiaImages();
-        }
+    constructor() {
+        // Replicates the previous ngOnChanges behavior: whenever either input changes, reload the
+        // Theia images if (and only if) the programming language differs from the one last loaded.
+        // Reading both inputs registers the effect as a dependency on each of them.
+        effect(() => {
+            this.programmingExercise();
+            this.programmingExerciseCreationConfig();
+            if (this.shouldReloadTemplate()) {
+                this.loadTheiaImages();
+            }
+        });
     }
 
     onTheiaImageChange(theiaImage: string) {
-        if (this.programmingExercise.buildConfig) {
-            this.programmingExercise.buildConfig.theiaImage = theiaImage;
+        if (this.programmingExercise().buildConfig) {
+            this.programmingExercise().buildConfig!.theiaImage = theiaImage;
         }
     }
 
     shouldReloadTemplate(): boolean {
-        return this.programmingExercise.programmingLanguage !== this.programmingLanguage;
+        return this.programmingExercise().programmingLanguage !== this.programmingLanguage;
     }
 
     /**
@@ -42,8 +49,8 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
      * @private
      */
     resetImageSelection() {
-        if (this.programmingExercise.buildConfig) {
-            this.programmingExercise.buildConfig.theiaImage = undefined;
+        if (this.programmingExercise().buildConfig) {
+            this.programmingExercise().buildConfig!.theiaImage = undefined;
         }
     }
 
@@ -52,11 +59,12 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
      * @private
      */
     loadTheiaImages() {
-        if (!this.programmingExercise || !this.programmingExercise.programmingLanguage) {
+        const programmingExercise = this.programmingExercise();
+        if (!programmingExercise || !programmingExercise.programmingLanguage) {
             return;
         }
 
-        this.programmingLanguage = this.programmingExercise.programmingLanguage;
+        this.programmingLanguage = programmingExercise.programmingLanguage;
 
         this.theiaService.getTheiaImages(this.programmingLanguage).subscribe({
             next: (images) => {
@@ -70,8 +78,8 @@ export class ProgrammingExerciseTheiaComponent implements OnChanges {
                 this.theiaImages = images;
 
                 // Set the first image as default if none is selected
-                if (this.programmingExercise && this.programmingExercise.buildConfig && !this.programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
-                    this.programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
+                if (programmingExercise.buildConfig && !programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
+                    programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
                 }
             },
             error: () => {

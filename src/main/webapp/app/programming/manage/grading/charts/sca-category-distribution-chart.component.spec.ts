@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,13 +8,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('SCA category distribution chart', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
 
-    let instantSpy: jest.SpyInstance;
-    let routingStub: jest.SpyInstance;
+    let instantSpy: ReturnType<typeof vi.spyOn>;
+    let routingStub: ReturnType<typeof vi.spyOn>;
 
     const category1 = {
         id: 1,
@@ -51,23 +56,27 @@ describe('SCA category distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+        });
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
         component = fixture.componentInstance;
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+        routingStub = vi.spyOn(routingService, 'routeInNewTab').mockImplementation(() => {});
 
         const translationService = TestBed.inject(TranslateService);
-        instantSpy = jest.spyOn(translationService, 'instant');
+        instantSpy = vi.spyOn(translationService, 'instant');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should process the categories correctly', () => {
-        component.exercise = programmingExercerise;
-        component.categories = [category1, category2, category3, category4];
+        fixture.componentRef.setInput('exercise', programmingExercerise);
+        fixture.componentRef.setInput('categories', [category1, category2, category3, category4]);
 
-        component.categoryIssuesMap = {
+        fixture.componentRef.setInput('categoryIssuesMap', {
             category1: {
                 '0': 0,
                 '1': 1,
@@ -76,9 +85,9 @@ describe('SCA category distribution chart', () => {
                 '0': 0,
                 '1': 4,
             },
-        } as CategoryIssuesMap;
+        } as CategoryIssuesMap);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         const categoryNames = ['category1', 'category2', 'category3', 'category4'];
         const penalties = [0, 0, 50, 50];
@@ -112,10 +121,10 @@ describe('SCA category distribution chart', () => {
             maxPenalty: 1,
         } as StaticCodeAnalysisCategory;
 
-        component.exercise = programmingExercerise;
-        component.categories = [negativeCategory];
+        fixture.componentRef.setInput('exercise', programmingExercerise);
+        fixture.componentRef.setInput('categories', [negativeCategory]);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.ngxData[0].series[0].name).toBe('negative category');
         expect(component.ngxData[0].series[0].value).toBe(0);
@@ -147,14 +156,14 @@ describe('SCA category distribution chart', () => {
 
     describe('test chart interaction', () => {
         let event: any;
-        let emitStub: jest.SpyInstance;
-        beforeEach(() => (emitStub = jest.spyOn(component.scaCategoryFilter, 'emit').mockImplementation()));
-        afterEach(() => jest.restoreAllMocks());
+        let emitStub: ReturnType<typeof vi.spyOn>;
+        beforeEach(() => (emitStub = vi.spyOn(component.scaCategoryFilter, 'emit').mockImplementation(() => {})));
+        afterEach(() => vi.restoreAllMocks());
 
         it('should delegate the user correctly', () => {
             programmingExercerise.course = { id: 7 };
             programmingExercerise.id = 10;
-            component.exercise = programmingExercerise;
+            fixture.componentRef.setInput('exercise', programmingExercerise);
             const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
             event = {};
 
@@ -169,7 +178,7 @@ describe('SCA category distribution chart', () => {
             component.onSelect(event);
 
             expect(emitStub).toHaveBeenCalledWith(77);
-            expect(component.tableFiltered).toBeTrue();
+            expect(component.tableFiltered).toBe(true);
         });
 
         it('should reset the table correctly', () => {
@@ -178,7 +187,7 @@ describe('SCA category distribution chart', () => {
             component.resetTableFilter();
 
             expect(emitStub).toHaveBeenCalledWith(-5);
-            expect(component.tableFiltered).toBeFalse();
+            expect(component.tableFiltered).toBe(false);
         });
     });
 });

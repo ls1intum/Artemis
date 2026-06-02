@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,14 +12,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseLanguageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseLanguageComponent>;
     let comp: ProgrammingExerciseLanguageComponent;
 
-    let theiaServiceMock!: { getTheiaImages: jest.Mock };
+    let theiaServiceMock!: { getTheiaImages: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         theiaServiceMock = {
-            getTheiaImages: jest.fn(),
+            getTheiaImages: vi.fn(),
         };
         TestBed.configureTestingModule({
             providers: [
@@ -32,48 +36,41 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseLanguageComponent);
-                comp = fixture.componentInstance;
-                comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-
-                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-                    programmingLanguage: true,
-                    projectType: true,
-                    withExemplaryDependency: true,
-                    packageName: true,
-                    enableStaticCodeAnalysis: true,
-                    sequentialTestRuns: true,
-                    customizeBuildScript: true,
-                });
-            });
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseLanguageComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+            programmingLanguage: true,
+            projectType: true,
+            withExemplaryDependency: true,
+            packageName: true,
+            enableStaticCodeAnalysis: true,
+            sequentialTestRuns: true,
+            customizeBuildScript: true,
+        });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
-        tick();
         expect(comp).not.toBeNull();
-    }));
+    });
 
-    it('should not load TheiaComponent when online IDE is not allowed', fakeAsync(() => {
-        comp.programmingExercise.allowOnlineIde = false;
+    it('should not load TheiaComponent when online IDE is not allowed', () => {
+        comp.programmingExercise().allowOnlineIde = false;
         fixture.detectChanges();
-        tick();
-        expect(comp.programmingExerciseTheiaComponent).toBeUndefined();
-    }));
+        expect(comp.programmingExerciseTheiaComponent()).toBeUndefined();
+    });
 
-    it('should load TheiaComponent when online IDE is allowed', fakeAsync(() => {
+    it('should load TheiaComponent when online IDE is allowed', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
-        comp.programmingExercise.allowOnlineIde = true;
+        comp.programmingExercise().allowOnlineIde = true;
         fixture.detectChanges();
-        tick();
-        expect(comp.programmingExerciseTheiaComponent).not.toBeNull();
-    }));
+        expect(comp.programmingExerciseTheiaComponent()).not.toBeNull();
+    });
 });

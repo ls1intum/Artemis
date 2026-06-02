@@ -1,28 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ActivatedRoute } from '@angular/router';
-import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { Observable, of, throwError } from 'rxjs';
-import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { CommitDetailsViewComponent } from 'app/programming/manage/commit-details-view/commit-details-view.component';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock the diff.utils module to avoid Monaco Editor issues in tests
-jest.mock('app/programming/shared/utils/diff.utils', () => ({
-    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
-    processRepositoryDiff: jest.fn().mockImplementation((leftFiles, rightFiles) => {
+// Mock the diff.utils module to avoid Monaco Editor issues in tests — must be hoisted above imports.
+vi.mock('app/programming/shared/utils/diff.utils', async () => ({
+    ...(await vi.importActual<typeof import('app/programming/shared/utils/diff.utils')>('app/programming/shared/utils/diff.utils')),
+    processRepositoryDiff: vi.fn().mockImplementation((leftFiles, rightFiles) => {
         // Handle the case where files are undefined (when repository fetch fails)
         if (!leftFiles || !rightFiles) {
             return Promise.resolve(undefined);
@@ -76,7 +57,40 @@ jest.mock('app/programming/shared/utils/diff.utils', () => ({
     }),
 }));
 
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { ActivatedRoute } from '@angular/router';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import dayjs from 'dayjs/esm';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Observable, of, throwError } from 'rxjs';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { CommitDetailsViewComponent } from 'app/programming/manage/commit-details-view/commit-details-view.component';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
+import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+/**
+ * Typed view onto the protected `fetchParticipationRepoFiles` method so the spec can invoke it
+ * without a blanket `(component as any)` cast.
+ */
+type CommitDetailsViewInternals = CommitDetailsViewComponent & {
+    fetchParticipationRepoFiles(): void;
+};
+const internals = (c: CommitDetailsViewComponent): CommitDetailsViewInternals => c as CommitDetailsViewInternals;
+
 describe('CommitDetailsViewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
@@ -193,12 +207,12 @@ describe('CommitDetailsViewComponent', () => {
 
     beforeEach(async () => {
         // Mock ResizeObserver before TestBed configuration
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
 
         await TestBed.configureTestingModule({
-            declarations: [CommitDetailsViewComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(GitDiffReportComponent)],
+            imports: [CommitDetailsViewComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockComponent(GitDiffReportComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 {
@@ -210,7 +224,22 @@ describe('CommitDetailsViewComponent', () => {
                     useClass: MockProgrammingExerciseService,
                 },
             ],
-        }).compileComponents();
+        })
+            // Swap the real, heavy git-diff-report child for a mock so the eager zoneless render does
+            // not pull in Monaco / its own dependencies.
+            .overrideComponent(CommitDetailsViewComponent, {
+                remove: {
+                    imports: [GitDiffReportComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+                },
+                add: {
+                    imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe)],
+                },
+            })
+            .compileComponents();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     function setupComponent(throwErrorWhenRetrievingCommitHistory = false) {
@@ -219,16 +248,16 @@ describe('CommitDetailsViewComponent', () => {
         activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
         const errorObservable = throwError(() => new Error('Error'));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockCommits),
         );
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
         );
 
@@ -255,7 +284,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle commits for template participation', () => {
@@ -273,7 +302,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle new repository files for commit with template', async () => {
@@ -281,7 +310,7 @@ describe('CommitDetailsViewComponent', () => {
         component = fixture.componentInstance;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
@@ -291,7 +320,7 @@ describe('CommitDetailsViewComponent', () => {
         component.previousCommit = commit1;
         component.currentCommit = commit2;
 
-        (component as any).fetchParticipationRepoFiles();
+        internals(component).fetchParticipationRepoFiles();
 
         await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -302,7 +331,7 @@ describe('CommitDetailsViewComponent', () => {
 
         // Expect participationRepoFilesSubscription to be unsubscribed
         // Note: paramSub is not tested here because ngOnInit() was not called
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 
     it('should handle files for template commit', () => {
@@ -315,21 +344,21 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.currentCommit).toEqual(commit1);
         expect(component.previousCommit).toEqual(commit1);
-        expect(component.isTemplate).toBeTrue();
+        expect(component.isTemplate).toBe(true);
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 
     it('should handle new commits', () => {
         setupComponent();
 
-        const programmingExerciseParticipationServiceSpy = jest.spyOn(
+        const programmingExerciseParticipationServiceSpy = vi.spyOn(
             programmingExerciseParticipationService,
             'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any,
         );
@@ -347,8 +376,8 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 
     it('should handle error when retrieving commit info', () => {
@@ -359,20 +388,20 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         expect(component.commits).toEqual([]);
-        expect(component.errorWhileFetching).toBeTrue();
+        expect(component.errorWhileFetching).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should fetch repository files', () => {
         setupComponent();
 
         // Set up fresh mocks for this specific test
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
@@ -388,14 +417,14 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 
     it('should handle error when fetching left repository files', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
             }),
@@ -408,14 +437,14 @@ describe('CommitDetailsViewComponent', () => {
 
         expect(component.leftCommitFileContentByPath).toEqual(new Map<string, string>());
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetching).toBeTrue();
+        expect(component.errorWhileFetching).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 
     it('should handle error when fetching right repository files', () => {
@@ -426,7 +455,7 @@ describe('CommitDetailsViewComponent', () => {
         let callCount = 0;
 
         // Mock the service to return an error the second time it is called
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockImplementation(() => {
+        vi.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView').mockImplementation(() => {
             if (callCount === 0) {
                 callCount++;
                 return of(mockLeftCommitFileContentByPath);
@@ -443,13 +472,13 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnInit();
 
         expect(component.rightCommitFileContentByPath).toEqual(new Map<string, string>());
-        expect(component.errorWhileFetching).toBeTrue();
+        expect(component.errorWhileFetching).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationRepoFilesSubscription?.closed).toBe(true);
     });
 });

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
@@ -10,6 +12,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
@@ -17,40 +21,39 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     const codeLine = 1;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
+        TestBed.configureTestingModule({
+            imports: [CodeEditorTutorAssessmentInlineFeedbackComponent, MockModule(NgbTooltipModule)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
-        })
-            .compileComponents()
-            .then(() => {
-                // Ignore console errors
-                console.error = () => {
-                    return false;
-                };
-                fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
-                comp = fixture.componentInstance;
-                // @ts-ignore
-                comp.feedback = undefined;
-                comp.readOnly = false;
-                comp.selectedFile = fileName;
-                comp.codeLine = codeLine;
-                sgiService = TestBed.inject(StructuredGradingCriterionService);
-            });
+        });
+        fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
+        comp = fixture.componentInstance;
+        // No feedback bound -> working copy defaults to a fresh Feedback (viewOnly = false), mirroring the original setter.
+        fixture.componentRef.setInput('feedback', undefined);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('selectedFile', fileName);
+        fixture.componentRef.setInput('codeLine', codeLine);
+        sgiService = TestBed.inject(StructuredGradingCriterionService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should update feedback and emit to parent', () => {
-        const onUpdateFeedbackSpy = jest.spyOn(comp.onUpdateFeedback, 'emit');
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
         comp.updateFeedback();
 
-        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
-        expect(comp.feedback.type).toBe(FeedbackType.MANUAL);
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(comp.currentFeedback().type).toBe(FeedbackType.MANUAL);
 
         expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
     });
 
     it('should enable edit feedback and emit to parent', () => {
-        const onEditFeedbackSpy = jest.spyOn(comp.onEditFeedback, 'emit');
+        const onEditFeedbackSpy = vi.fn();
+        comp.onEditFeedback.subscribe(onEditFeedbackSpy);
         comp.editFeedback(codeLine);
 
         expect(onEditFeedbackSpy).toHaveBeenCalledOnce();
@@ -58,7 +61,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should cancel feedback and emit to parent', () => {
-        const onCancelFeedbackSpy = jest.spyOn(comp.onCancelFeedback, 'emit');
+        const onCancelFeedbackSpy = vi.fn();
+        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
         comp.cancelFeedback();
 
         expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
@@ -66,35 +70,37 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should delete feedback and emit to parent', () => {
-        const onDeleteFeedbackSpy = jest.spyOn(comp.onDeleteFeedback, 'emit');
+        const onDeleteFeedbackSpy = vi.fn();
+        comp.onDeleteFeedback.subscribe(onDeleteFeedbackSpy);
         comp.deleteFeedback();
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.currentFeedback());
     });
 
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         // Fake call as a DragEvent cannot be created programmatically
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
-            comp.feedback.gradingInstruction = instruction;
-            comp.feedback.credits = instruction.credits;
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
         });
         // Call spy function with empty event
         comp.updateFeedbackOnDrop(new Event(''));
 
-        expect(comp.feedback.gradingInstruction).toEqual(instruction);
-        expect(comp.feedback.credits).toEqual(instruction.credits);
-        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(comp.currentFeedback().gradingInstruction).toEqual(instruction);
+        expect(comp.currentFeedback().credits).toEqual(instruction.credits);
+        expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
     });
 
     it('should count feedback with one credit as positive', () => {
-        comp.feedback = new Feedback();
-        comp.feedback.credits = 1;
+        const feedbackWithCredit = new Feedback();
+        feedbackWithCredit.credits = 1;
+        fixture.componentRef.setInput('feedback', feedbackWithCredit);
 
         comp.updateFeedback();
 
-        expect(comp.feedback.positive).toBeTrue();
+        expect(comp.currentFeedback().positive).toBe(true);
     });
 
     it('should display the feedback text properly', () => {
@@ -132,10 +138,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should not display credits and icons for non-graded feedback suggestions', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
-        } as Feedback;
+        } as Feedback);
         fixture.detectChanges();
 
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
@@ -143,11 +149,11 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should display credits and icons for graded feedback', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             credits: 1,
             type: FeedbackType.AUTOMATIC,
             text: 'feedback',
-        } as Feedback;
+        } as Feedback);
         fixture.detectChanges();
 
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
@@ -156,28 +162,28 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should use the correct translation key for non-graded feedback', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
-        } as Feedback;
+        } as Feedback);
         fixture.detectChanges();
 
         const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
         expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
         const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 
     it('should use the correct translation key for graded feedback', () => {
-        comp.feedback = {
+        fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
             text: 'feedback',
-        } as Feedback;
+        } as Feedback);
         fixture.detectChanges();
 
         const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
         expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
         const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 });

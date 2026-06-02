@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -10,7 +10,6 @@ import { findLatestResult } from 'app/foundation/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -21,33 +20,40 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     templateUrl: './programming-exercise-instructor-status.component.html',
     imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructorStatusComponent implements OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
     ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
-    @Input()
-    participationType: ProgrammingExerciseParticipationType;
-    @Input()
-    participation: SolutionProgrammingExerciseParticipation | TemplateProgrammingExerciseParticipation | Participation;
-    @Input()
-    exercise: ProgrammingExercise;
+    readonly participationType = input<ProgrammingExerciseParticipationType>();
+    readonly participation = input<SolutionProgrammingExerciseParticipation | TemplateProgrammingExerciseParticipation | Participation>();
+    readonly exercise = input<ProgrammingExercise>();
 
-    latestResult?: Result;
+    protected readonly latestResult = signal<Result | undefined>(undefined);
     resultSubscription: Subscription;
+
+    // Tracks the id of the participation the current subscription belongs to, so that the
+    // subscription is only re-created when the participation actually changes (mirrors the
+    // previous hasParticipationChanged guard, which also reacted to the first undefined -> value change).
+    private subscribedParticipationId?: number;
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
-    /**
-     * When the participation changes, get the latestResult from it and setup the result subscription for new results.
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges) {
-        if (hasParticipationChanged(changes)) {
-            this.latestResult = findLatestResult(getAllResultsOfAllSubmissions(this.participation.submissions));
+    constructor() {
+        // When the participation changes, get the latestResult from it and setup the result subscription for new results.
+        effect(() => {
+            const participation = this.participation();
+            if (!participation) {
+                return;
+            }
+            if (this.subscribedParticipationId === participation.id) {
+                return;
+            }
+            this.subscribedParticipationId = participation.id;
+            this.latestResult.set(findLatestResult(getAllResultsOfAllSubmissions(participation.submissions)));
             this.updateResultSubscription();
-        }
+        });
     }
 
     /**
@@ -60,9 +66,9 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
         }
 
         this.resultSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, false, this.exercise.id)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, false, this.exercise()?.id)
             .pipe(filter((result) => !!result))
-            .subscribe((result) => (this.latestResult = result));
+            .subscribe((result) => this.latestResult.set(result));
     }
 
     /**

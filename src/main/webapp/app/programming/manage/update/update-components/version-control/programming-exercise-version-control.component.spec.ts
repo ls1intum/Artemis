@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +9,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseVersionControlComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseVersionControlComponent>;
     let comp: ProgrammingExerciseVersionControlComponent;
     let componentRef: ComponentRef<ProgrammingExerciseVersionControlComponent>;
@@ -34,14 +38,14 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
     it('should create', () => {
         expect(comp).toBeDefined();
         expect(comp.programmingExercise()).toEqual(programmingExercise);
-        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeFalse();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBe(false);
     });
 
     it('should update allowBranching attribute when checking the option', () => {
         const checkbox = fixture.debugElement.query(By.css('#field_allowBranching'));
         checkbox.triggerEventHandler('change', { target: { checked: true } });
         fixture.detectChanges();
-        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeTrue();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBe(true);
     });
 
     it('should update allowBranching attribute when unchecking the option', () => {
@@ -49,7 +53,7 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
         const checkbox = fixture.debugElement.query(By.css('#field_allowBranching'));
         checkbox.triggerEventHandler('change', { target: { checked: false } });
         fixture.detectChanges();
-        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeFalse();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBe(false);
     });
 
     it('should show regex input field when checking the allowBranching option', () => {

@@ -213,7 +213,7 @@ describe('CodeEditorInstructorIntegration', () => {
     const initContainer = (exercise: ProgrammingExercise, routeParams?: any) => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId: 1, ...routeParams });
-        expect(comp.codeEditorContainer).toBeUndefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(comp.loadingState).toBe(comp.LOADING_STATE.INITIALIZING);
@@ -259,7 +259,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
 
         containerFixture.detectChanges();
-        expect(comp.codeEditorContainer.grid).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
 
         checkIfRepositoryIsCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
@@ -270,13 +270,13 @@ describe('CodeEditorInstructorIntegration', () => {
         // Once called by each build-output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(2);
 
-        expect(comp.codeEditorContainer.grid).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.fileBrowser).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.actions).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.fileBrowser()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.actions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.templateParticipation);
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);
@@ -299,7 +299,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.selectedRepository).toBeUndefined();
 
         containerFixture.changeDetectorRef.detectChanges();
-        expect(comp.codeEditorContainer).toBeUndefined();
+        expect(comp.codeEditorContainer()).toBeUndefined();
     });
 
     it('should load test repository if specified in url', () => {
@@ -328,21 +328,21 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.changeDetectorRef.detectChanges();
 
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.templateParticipation);
         expect(comp.resultComp()).toBeUndefined();
-        expect(comp.codeEditorContainer.buildOutput).toBeUndefined();
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeUndefined();
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
         expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
         expect(comp.selectedParticipation).toEqual(exercise.solutionParticipation);
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.solutionParticipation);
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput().participation()).toEqual(exercise.solutionParticipation);
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.solutionParticipation);
     };
 
@@ -386,11 +386,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(comp.selectedRepository).toBe(RepositoryType.ASSIGNMENT);
         expect(comp.selectedParticipation).toEqual(exercise.studentParticipations[0]);
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.studentParticipations[0]);
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput().participation()).toEqual(exercise.studentParticipations[0]);
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.studentParticipations[0]);
 
         // New select solution repository

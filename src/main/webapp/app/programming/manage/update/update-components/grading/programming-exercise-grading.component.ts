@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, inject, input, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -49,16 +49,16 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    @Input() importOptions: ImportOptions;
+    programmingExercise = input.required<ProgrammingExercise>();
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
-    @ViewChild(ProgrammingExerciseUpdateTimelineComponent) lifecycleComponent?: ProgrammingExerciseUpdateTimelineComponent;
-    @ViewChild('maxScore') maxScoreField?: NgModel;
-    @ViewChild('bonusPoints') bonusPointsField?: NgModel;
-    @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
+    submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
+    lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);
+    maxScoreField = viewChild<NgModel>('maxScore');
+    bonusPointsField = viewChild<NgModel>('bonusPoints');
+    maxPenaltyField = viewChild<NgModel>('maxPenalty');
 
     formValidSignal = signal<boolean>(false);
 
@@ -71,11 +71,11 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     editPolicyUrl: string;
 
     ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.maxScoreField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.bonusPointsField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.maxPenaltyField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent()?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.lifecycleComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
     }
 
@@ -87,63 +87,64 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     calculateFormStatus() {
         const newFormValidValue = Boolean(
-            this.maxScoreField?.valid &&
-            this.bonusPointsField?.valid &&
-            (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
-            !this.submissionPolicyUpdateComponent?.invalid &&
-            this.lifecycleComponent?.formValid,
+            this.maxScoreField()?.valid &&
+            this.bonusPointsField()?.valid &&
+            (this.maxPenaltyField()?.valid || !this.programmingExercise().staticCodeAnalysisEnabled) &&
+            !this.submissionPolicyUpdateComponent()?.invalid &&
+            this.lifecycleComponent()?.formValid,
         );
 
         this.formValidSignal.set(newFormValidValue);
         this.formValid = newFormValidValue;
-        this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
+        this.formEmpty = this.lifecycleComponent()?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
     }
 
     getGradingSummary() {
         const summary = [];
 
-        if (!this.programmingExercise.maxPoints) {
+        const programmingExercise = this.programmingExercise();
+        if (!programmingExercise.maxPoints) {
             return '';
         }
 
-        const exerciseType = this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonusExercise' : 'normalExercise';
-        const assessmentType = this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'assessmentAutomatic' : 'assessmentSemiautomatic';
+        const exerciseType = programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonusExercise' : 'normalExercise';
+        const assessmentType = programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'assessmentAutomatic' : 'assessmentSemiautomatic';
         const replacements = {
             exerciseType: this.translateService.instant(this.translationBasePath + exerciseType),
-            maxPoints: this.programmingExercise.maxPoints.toString(),
-            bonusPoints: (this.programmingExercise.bonusPoints ?? 0).toString(),
+            maxPoints: programmingExercise.maxPoints.toString(),
+            bonusPoints: (programmingExercise.bonusPoints ?? 0).toString(),
             assessmentType: this.translateService.instant(this.translationBasePath + assessmentType),
-            submissionLimit: this.programmingExercise.submissionPolicy?.submissionLimit,
-            exceedingPenalty: this.programmingExercise.submissionPolicy?.exceedingPenalty,
-            maxPenalty: ((this.programmingExercise.maxPoints * (this.programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
+            submissionLimit: programmingExercise.submissionPolicy?.submissionLimit,
+            exceedingPenalty: programmingExercise.submissionPolicy?.exceedingPenalty,
+            maxPenalty: ((programmingExercise.maxPoints * (programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
         };
 
         summary.push(this.translateService.instant(this.translationBasePath + 'points'));
 
-        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+        if (programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
             summary.push(this.translateService.instant(this.translationBasePath + 'noBonus'));
-        } else if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        } else if (programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
             summary.push(this.translateService.instant(this.translationBasePath + 'bonus'));
         }
 
-        if (this.programmingExercise.assessmentType) {
+        if (programmingExercise.assessmentType) {
             summary.push(this.translateService.instant(this.translationBasePath + 'assessment'));
         }
 
-        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.LOCK_REPOSITORY) {
-            if (this.programmingExercise.submissionPolicy.submissionLimit) {
+        if (programmingExercise.submissionPolicy?.type === SubmissionPolicyType.LOCK_REPOSITORY) {
+            if (programmingExercise.submissionPolicy.submissionLimit) {
                 summary.push(this.translateService.instant(this.translationBasePath + 'lockedSubmission'));
             }
-        } else if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
-            if (this.programmingExercise.submissionPolicy.submissionLimit && this.programmingExercise.submissionPolicy.exceedingPenalty) {
+        } else if (programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+            if (programmingExercise.submissionPolicy.submissionLimit && programmingExercise.submissionPolicy.exceedingPenalty) {
                 summary.push(this.translateService.instant(this.translationBasePath + 'penaltySubmission'));
             }
         } else {
             summary.push(this.translateService.instant(this.translationBasePath + 'unrestrictedSubmission'));
         }
 
-        if (this.programmingExercise.staticCodeAnalysisEnabled) {
+        if (programmingExercise.staticCodeAnalysisEnabled) {
             summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisEnabled'));
         } else {
             summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisDisabled'));
@@ -163,12 +164,13 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     }
 
     private setEditPolicyPageLink(): void {
+        const programmingExercise = this.programmingExercise();
         const linkParts = [
             'course-management',
-            getCourseFromExercise(this.programmingExercise)?.id,
-            ...(this.programmingExercise?.exerciseGroup?.exam ? ['exams', this.programmingExercise.exerciseGroup.exam.id] : []),
+            getCourseFromExercise(programmingExercise)?.id,
+            ...(programmingExercise?.exerciseGroup?.exam ? ['exams', programmingExercise.exerciseGroup.exam.id] : []),
             'programming-exercises',
-            this.programmingExercise.id,
+            programmingExercise.id,
             'grading',
             'submission-policy',
         ];

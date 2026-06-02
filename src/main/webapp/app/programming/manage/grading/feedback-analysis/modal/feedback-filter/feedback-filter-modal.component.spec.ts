@@ -1,12 +1,19 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackFilterModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('FeedbackFilterModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeedbackFilterModalComponent>;
     let component: FeedbackFilterModalComponent;
     let localStorageService: LocalStorageService;
@@ -14,8 +21,14 @@ describe('FeedbackFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), RangeSliderComponent, FeedbackFilterModalComponent],
-            providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), remove: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
+            imports: [RangeSliderComponent, FeedbackFilterModalComponent],
+            providers: [
+                { provide: LocalStorageService, useValue: { store: vi.fn(), remove: vi.fn(), retrieve: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                NgbActiveModal,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackFilterModalComponent);
@@ -44,9 +57,9 @@ describe('FeedbackFilterModalComponent', () => {
     });
 
     it('should call localStorage store when applying filters', () => {
-        const storeSpy = jest.spyOn(localStorageService, 'store');
-        const emitSpy = jest.spyOn(component.filterApplied, 'emit');
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const storeSpy = vi.spyOn(localStorageService, 'store');
+        const emitSpy = vi.spyOn(component.filterApplied, 'emit');
+        const closeSpy = vi.spyOn(activeModal, 'close');
 
         component.filters.occurrence = [component.minCount(), component.maxCount()];
         component.filters.errorCategories = ['Student Error', 'Ares Error'];
@@ -61,9 +74,9 @@ describe('FeedbackFilterModalComponent', () => {
     });
 
     it('should clear filters and reset them correctly', () => {
-        const removeSpy = jest.spyOn(localStorageService, 'remove');
-        const emitSpy = jest.spyOn(component.filterApplied, 'emit');
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const removeSpy = vi.spyOn(localStorageService, 'remove');
+        const emitSpy = vi.spyOn(component.filterApplied, 'emit');
+        const closeSpy = vi.spyOn(activeModal, 'close');
 
         component.clearFilter();
 
@@ -115,7 +128,7 @@ describe('FeedbackFilterModalComponent', () => {
     });
 
     it('should dismiss modal when closeModal is called', () => {
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
         component.closeModal();
         expect(dismissSpy).toHaveBeenCalledOnce();
     });

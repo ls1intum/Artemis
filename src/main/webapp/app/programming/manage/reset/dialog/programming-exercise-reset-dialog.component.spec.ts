@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -11,15 +13,17 @@ import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseResetDialogComponent;
     let fixture: ComponentFixture<ProgrammingExerciseResetDialogComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     const exerciseId = 42;
     const programmingExercise = new ProgrammingExercise(new Course(), undefined);
@@ -28,14 +32,17 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     programmingExercise.releaseDate = dayjs();
     programmingExercise.dueDate = dayjs().add(7, 'days');
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
+
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 LocalStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(NgbActiveModal),
+                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: DynamicDialogConfig, useValue: { data: { programmingExercise } } },
                 provideHttpClient(),
             ],
         }).compileComponents();
@@ -46,28 +53,29 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         // stubs
-        jest.spyOn(programmingExerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<ProgrammingExercise>));
+        vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<ProgrammingExercise>));
 
-        comp.programmingExercise = programmingExercise;
+        await fixture.whenStable();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should close the modal dialog', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        jest.spyOn(activeModal, 'dismiss').mockImplementation();
+    it('should read the programming exercise from the dialog config data', () => {
+        expect(comp.programmingExercise).toBe(programmingExercise);
+    });
 
+    it('should close the dialog', () => {
         comp.clear();
 
-        expect(activeModal.dismiss).toHaveBeenCalledWith('cancel');
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
     });
 
     it('resetProgrammingExercise should make the correct service call and call handleResetResponse()', () => {
         const resetResponse = of('');
-        jest.spyOn(programmingExerciseService, 'reset').mockReturnValue(resetResponse);
-        jest.spyOn(comp, 'handleResetResponse').mockImplementation();
+        vi.spyOn(programmingExerciseService, 'reset').mockReturnValue(resetResponse);
+        vi.spyOn(comp, 'handleResetResponse').mockImplementation(() => {});
 
         comp.programmingExercise.id = exerciseId;
         comp.programmingExerciseResetOptions = {
@@ -81,19 +89,17 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     });
 
     describe('handleResetResponse', () => {
-        it('should show the correct success message and dismiss the active modal', () => {
-            const activeModal = TestBed.inject(NgbActiveModal);
+        it('should show the correct success message and close the dialog', () => {
             const alertService = TestBed.inject(AlertService);
-            jest.spyOn(activeModal, 'dismiss').mockImplementation();
-            jest.spyOn(alertService, 'success').mockImplementation();
+            vi.spyOn(alertService, 'success').mockImplementation(() => undefined as any);
 
             comp.handleResetResponse();
 
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.reset.successMessage');
-            expect(activeModal.dismiss).toHaveBeenCalledWith(true);
+            expect(dialogRefCloseSpy).toHaveBeenCalledWith(true);
         });
 
-        it('should not be called when there is an error in the reset response', fakeAsync(() => {
+        it('should not be called when there is an error in the reset response', () => {
             const errorResponse = throwError(
                 () =>
                     new HttpErrorResponse({
@@ -104,16 +110,14 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
-            jest.spyOn(programmingExerciseService, 'reset').mockReturnValue(errorResponse);
-            jest.spyOn(comp, 'handleResetResponse').mockImplementation();
+            vi.spyOn(programmingExerciseService, 'reset').mockReturnValue(errorResponse);
+            vi.spyOn(comp, 'handleResetResponse').mockImplementation(() => {});
 
             comp.resetProgrammingExercise();
 
-            tick();
-
             expect(comp.handleResetResponse).not.toHaveBeenCalled();
-            expect(comp.resetInProgress).toBeFalse();
-        }));
+            expect(comp.resetInProgress).toBe(false);
+        });
     });
 
     describe('canSubmit', () => {
@@ -127,27 +131,27 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         });
 
         it('should return true when confirmation text is filled correctly and at least one option is selected', () => {
-            expect(comp.canSubmit).toBeTrue();
+            expect(comp.canSubmit).toBe(true);
         });
 
         it('should return false when confirmation text is empty', () => {
             comp.confirmText = '';
-            expect(comp.canSubmit).toBeFalse();
+            expect(comp.canSubmit).toBe(false);
         });
 
         it('should return false when confirmation text is not filled correctly', () => {
             comp.confirmText = 'Incorrect Name';
-            expect(comp.canSubmit).toBeFalse();
+            expect(comp.canSubmit).toBe(false);
         });
 
         it('should return false when confirmation text is filled correctly, but no option is selected', () => {
             comp.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults = false;
-            expect(comp.canSubmit).toBeFalse();
+            expect(comp.canSubmit).toBe(false);
         });
 
         it('should return false when reset is in progress', () => {
             comp.resetInProgress = true;
-            expect(comp.canSubmit).toBeFalse();
+            expect(comp.canSubmit).toBe(false);
         });
     });
 
@@ -158,7 +162,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 recreateBuildPlans: false,
             };
 
-            expect(comp.hasSelectedOptions).toBeFalse();
+            expect(comp.hasSelectedOptions).toBe(false);
         });
 
         it.each`
@@ -171,7 +175,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 recreateBuildPlans: false,
             };
             comp.programmingExerciseResetOptions[option as keyof ProgrammingExerciseResetOptions] = true;
-            expect(comp.hasSelectedOptions).toBeTrue();
+            expect(comp.hasSelectedOptions).toBe(true);
         });
     });
 });

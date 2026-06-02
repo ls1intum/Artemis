@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -41,7 +41,7 @@ export enum LOADING_STATE {
     template: '',
 })
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
     private router = inject(Router);
     private exerciseService = inject(ProgrammingExerciseService);
@@ -239,8 +239,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.initializeProperties();
+        if (this.codeEditorContainer() != undefined) {
+            this.codeEditorContainer()!.initializeProperties();
         }
         this.teardownFileBinding();
         this.fileSyncService.reset();
@@ -326,8 +326,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Always use this method for changing the editor content to save file modifications.
      */
     saveChangesAndSelectDomain(domain: DomainChange) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.actions.onSave();
+        if (this.codeEditorContainer() != undefined) {
+            this.codeEditorContainer()!.actions()?.onSave();
         }
         this.domainService.setDomain(domain);
     }
@@ -425,7 +425,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
 
-        const monacoComponent = this.codeEditorContainer?.monacoEditor;
+        const monacoComponent = this.codeEditorContainer()?.monacoEditor?.();
         if (!monacoComponent || monacoComponent.binaryFileSelected()) {
             return;
         }

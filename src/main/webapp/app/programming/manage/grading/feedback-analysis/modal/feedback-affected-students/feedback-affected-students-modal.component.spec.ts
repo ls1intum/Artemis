@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
@@ -6,7 +8,18 @@ import { TranslateModule } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import '@angular/localize/init';
 
+/**
+ * Typed view onto the protected `loadAffected` method so the spec can invoke it
+ * without a blanket `(component as any)` cast.
+ */
+type ModalInternals = AffectedStudentsModalComponent & {
+    loadAffected(): Promise<void>;
+};
+const internals = (c: AffectedStudentsModalComponent): ModalInternals => c as ModalInternals;
+
 describe('AffectedStudentsModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<AffectedStudentsModalComponent>;
     let component: AffectedStudentsModalComponent;
     const feedbackDetailMock: FeedbackDetail = {
@@ -34,7 +47,7 @@ describe('AffectedStudentsModalComponent', () => {
                 {
                     provide: FeedbackAnalysisService,
                     useValue: {
-                        getParticipationForFeedbackDetailText: jest.fn().mockReturnValue(participationMock),
+                        getParticipationForFeedbackDetailText: vi.fn().mockReturnValue(participationMock),
                     },
                 },
             ],
@@ -48,13 +61,16 @@ describe('AffectedStudentsModalComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should handle error when loadAffected fails', async () => {
-        jest.spyOn(component.feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValue(Promise.reject(new Error('Error loading data')));
-        const alertServiceSpy = jest.spyOn(component.alertService, 'error');
-        jest.spyOn(console, 'error').mockImplementation(() => {});
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-        // @ts-expect-error
-        await component.loadAffected();
+    it('should handle error when loadAffected fails', async () => {
+        vi.spyOn(component.feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValue(Promise.reject(new Error('Error loading data')));
+        const alertServiceSpy = vi.spyOn(component.alertService, 'error');
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        await internals(component).loadAffected();
 
         expect(component.participation()).toEqual([]);
         expect(alertServiceSpy).toHaveBeenCalled();

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
@@ -10,7 +12,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
-import { QueryList } from '@angular/core';
+import { Signal, signal } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
@@ -21,7 +23,24 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
+/**
+ * Typed view onto the component's view-query signals so the spec can stub the child components/form
+ * controls that would otherwise only become available after a real render, without a blanket
+ * `(component as any)` cast. Each property mirrors the component's declaration and is reassigned with a
+ * plain `signal(...)` (a `WritableSignal` is assignable to the declared `Signal<...>` field).
+ */
+type InformationInternals = ProgrammingExerciseInformationComponent & {
+    checkoutSolutionRepositoryField: Signal<NgModel | undefined>;
+    recreateBuildPlansField: Signal<NgModel | undefined>;
+    updateTemplateFilesField: Signal<NgModel | undefined>;
+    tableEditableFields: Signal<readonly TableEditableFieldComponent[]>;
+    programmingExerciseEditCheckoutDirectories: Signal<ProgrammingExerciseEditCheckoutDirectoriesComponent | undefined>;
+};
+const internals = (c: ProgrammingExerciseInformationComponent): InformationInternals => c as InformationInternals;
+
 describe('ProgrammingExerciseInformationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
     let comp: ProgrammingExerciseInformationComponent;
 
@@ -36,7 +55,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
         fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
         comp = fixture.componentInstance;
 
@@ -53,34 +72,40 @@ describe('ProgrammingExerciseInformationComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
-    }));
+    });
 
     it('should should calculate Form Sections correctly', () => {
-        const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
+        const calculateFormValidSpy = vi.spyOn(comp, 'calculateFormValid');
         const editableField = {
             editingInput: {
                 valueChanges: new Subject(),
                 valid: true,
             },
         } as unknown as TableEditableFieldComponent;
-        comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.tableEditableFields = { changes: new Subject<any>() } as any as QueryList<TableEditableFieldComponent>;
-        comp.programmingExerciseEditCheckoutDirectories = { formValidChanges: new Subject() } as ProgrammingExerciseEditCheckoutDirectoriesComponent;
+        const checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const programmingExerciseEditCheckoutDirectories = { formValidChanges: new Subject() } as ProgrammingExerciseEditCheckoutDirectoriesComponent;
+
+        // Stub the view-query signals so registerInputFields() wires up the valueChanges subscriptions.
+        internals(comp).checkoutSolutionRepositoryField = signal(checkoutSolutionRepositoryField);
+        internals(comp).recreateBuildPlansField = signal(recreateBuildPlansField);
+        internals(comp).updateTemplateFilesField = signal(updateTemplateFilesField);
+        internals(comp).tableEditableFields = signal([editableField]);
+        internals(comp).programmingExerciseEditCheckoutDirectories = signal(programmingExerciseEditCheckoutDirectories);
+
         comp.ngAfterViewInit();
-        (comp.tableEditableFields.changes as Subject<any>).next({ toArray: () => [editableField] } as any as QueryList<TableEditableFieldComponent>);
-        (comp.checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
-        (comp.recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
-        (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
+        (checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
+        (recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
+        (updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
-        comp.programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
+        programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
         expect(calculateFormValidSpy).toHaveBeenCalledTimes(5);
     });
 

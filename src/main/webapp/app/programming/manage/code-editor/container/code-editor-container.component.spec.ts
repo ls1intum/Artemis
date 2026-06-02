@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
@@ -12,7 +14,7 @@ import {
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TranslateService, TranslateStore } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -29,18 +31,23 @@ import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRe
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 class MockFileService {
-    updateFileReferences = jest.fn((refs) => refs);
-    updateFileReference = jest.fn((file) => file);
+    updateFileReferences = vi.fn((refs) => refs);
+    updateFileReference = vi.fn((file) => file);
 }
 
 const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
 
 describe('CodeEditorContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CodeEditorContainerComponent;
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
     let fileService: MockFileService;
     let reviewCommentService: { threads: WritableSignal<any[]> };
+    let monacoEditorStub: any;
+    let gridStub: any;
+    let fileBrowserStub: any;
 
     beforeEach(async () => {
         reviewCommentService = {
@@ -50,8 +57,7 @@ describe('CodeEditorContainerComponent', () => {
             imports: [CodeEditorContainerComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: TranslateStore, useValue: {} },
-                { provide: AlertService, useValue: { error: jest.fn() } as any },
+                { provide: AlertService, useValue: { error: vi.fn() } as any },
                 { provide: CodeEditorFileService, useClass: MockFileService },
                 { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             ],
@@ -68,24 +74,28 @@ describe('CodeEditorContainerComponent', () => {
 
         fixture.componentRef.setInput('participation', {} as Participation);
 
-        component.monacoEditor = {
-            onFileChange: jest.fn(),
-            storeAnnotations: jest.fn(),
-            getText: jest.fn().mockReturnValue('content'),
-            getNumberOfLines: jest.fn().mockReturnValue(3),
-            highlightLines: jest.fn(),
-            editor: jest.fn().mockReturnValue({ revealLine: jest.fn() }),
-        } as any;
-        component.grid = { toggleCollapse: jest.fn() } as any;
+        // grid, fileBrowser and monacoEditor are now viewChild() signals; in the template-less
+        // spec they never resolve, so we stub them by reassigning the signal with a callable.
+        monacoEditorStub = {
+            onFileChange: vi.fn(),
+            storeAnnotations: vi.fn(),
+            getText: vi.fn().mockReturnValue('content'),
+            getNumberOfLines: vi.fn().mockReturnValue(3),
+            highlightLines: vi.fn(),
+            editor: vi.fn().mockReturnValue({ revealLine: vi.fn() }),
+        };
+        gridStub = { toggleCollapse: vi.fn() };
+        (component as any).monacoEditor = () => monacoEditorStub;
+        (component as any).grid = () => gridStub;
     });
 
-    afterEach(() => jest.clearAllMocks());
+    afterEach(() => vi.clearAllMocks());
 
     it('should initialize defaults', () => {
         expect(component.editorState).toBe(EditorState.CLEAN);
         expect(component.commitState).toBe(CommitState.UNDEFINED);
         expect(component.unsavedFiles).toEqual({});
-        expect(component.isProblemStatementVisible()).toBeTrue();
+        expect(component.isProblemStatementVisible()).toBe(true);
     });
 
     it('should update file badges when feedback suggestions change', () => {
@@ -272,7 +282,7 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should handle new file creation', () => {
-        const onFileChanged = jest.fn();
+        const onFileChanged = vi.fn();
         component.onFileChanged.subscribe(onFileChanged);
 
         component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/main/App.java'), false]);
@@ -280,13 +290,13 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.selectedFile).toBe('src/main/App.java');
         expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
         expect(onFileChanged).toHaveBeenCalled();
-        expect((component.monacoEditor as any).onFileChange).toHaveBeenCalled();
+        expect(monacoEditorStub.onFileChange).toHaveBeenCalled();
     });
 
     it('should update references on rename and mark unsaved state', () => {
         component.unsavedFiles = { 'old/File.java': 'x' };
         component.selectedFile = 'old/File.java';
-        const onFileChanged = jest.fn();
+        const onFileChanged = vi.fn();
         component.onFileChanged.subscribe(onFileChanged);
         fileService.updateFileReferences.mockReturnValue({ 'new/File.java': 'x' });
         fileService.updateFileReference.mockReturnValue('new/File.java');
@@ -312,7 +322,7 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should update unsaved files and notify on content change', () => {
-        const onFileChanged = jest.fn();
+        const onFileChanged = vi.fn();
         component.onFileChanged.subscribe(onFileChanged);
 
         component.onFileContentChange({ fileName: 'src/main/App.java', text: 'new content' });
@@ -322,13 +332,13 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should not mark file unsaved while initial file sync is pending', () => {
-        const onFileChanged = jest.fn();
+        const onFileChanged = vi.fn();
         component.onFileChanged.subscribe(onFileChanged);
         fixture.componentRef.setInput('fileSyncService', {
             fileTreeChange$: fileTreeChange$.asObservable(),
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => true),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => true),
         } as any);
         fixture.detectChanges();
 
@@ -339,13 +349,13 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should mark file unsaved after initial file sync finished', () => {
-        const onFileChanged = jest.fn();
+        const onFileChanged = vi.fn();
         component.onFileChanged.subscribe(onFileChanged);
         fixture.componentRef.setInput('fileSyncService', {
             fileTreeChange$: fileTreeChange$.asObservable(),
-            isInitialized: jest.fn(() => true),
-            isFileOpen: jest.fn(() => true),
-            isFileAwaitingInitialSync: jest.fn(() => false),
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
         } as any);
         fixture.detectChanges();
 
@@ -370,14 +380,14 @@ describe('CodeEditorContainerComponent', () => {
 
         expect(component.unsavedFiles).toEqual({ 'b.java': 'y' });
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.editor.errors.saveFailed', { connectionIssue: '' });
-        expect((component.monacoEditor as any).storeAnnotations).toHaveBeenCalledWith(['a.java']);
+        expect(monacoEditorStub.storeAnnotations).toHaveBeenCalledWith(['a.java']);
     });
 
     it('should set commit state to clean and emit events after inline-fix commit when no unsaved files remain', () => {
         component.unsavedFiles = {};
         component.commitState = CommitState.UNCOMMITTED_CHANGES;
-        const commitStateSpy = jest.fn();
-        const commitSpy = jest.fn();
+        const commitStateSpy = vi.fn();
+        const commitSpy = vi.fn();
         component.onCommitStateChange.subscribe(commitStateSpy);
         component.onCommit.subscribe(commitSpy);
 
@@ -391,7 +401,7 @@ describe('CodeEditorContainerComponent', () => {
     it('should keep uncommitted state after inline-fix commit when new unsaved files exist', () => {
         component.unsavedFiles = { 'src/main/App.java': 'local changes' };
         component.commitState = CommitState.UNCOMMITTED_CHANGES;
-        const commitStateSpy = jest.fn();
+        const commitStateSpy = vi.fn();
         component.onCommitStateChange.subscribe(commitStateSpy);
 
         component.onInlineFixCommitted();
@@ -409,7 +419,7 @@ describe('CodeEditorContainerComponent', () => {
 
     it('should propagate error messages and include connection details', () => {
         const translate = TestBed.inject(TranslateService);
-        const instantSpy = jest.spyOn(translate, 'instant');
+        const instantSpy = vi.spyOn(translate, 'instant');
 
         component.onError(`test${ConnectionError.message}`);
 
@@ -424,7 +434,7 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.getNumberOfLines()).toBe(3);
 
         component.highlightLines(1, 3);
-        expect((component.monacoEditor as any).highlightLines).toHaveBeenCalledWith(1, 3);
+        expect(monacoEditorStub.highlightLines).toHaveBeenCalledWith(1, 3);
     });
 
     it('should toggle collapsable elements', () => {
@@ -432,7 +442,7 @@ describe('CodeEditorContainerComponent', () => {
 
         component.onToggleCollapse(event, CollapsableCodeEditorElement.BuildOutput);
 
-        expect(component.grid.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
+        expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
     });
 
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
@@ -449,22 +459,22 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should guard deactivation when unsaved files exist', () => {
-        const event = { preventDefault: jest.fn() } as any;
+        const event = { preventDefault: vi.fn() } as any;
 
         component.unsavedFiles = { 'src/main/App.java': 'x' };
-        expect(component.canDeactivate()).toBeFalse();
+        expect(component.canDeactivate()).toBe(false);
         expect(component.unloadNotification(event)).toBe('pendingChanges');
         expect(event.preventDefault).toHaveBeenCalled();
 
         component.unsavedFiles = {};
         event.preventDefault.mockClear();
-        expect(component.unloadNotification(event)).toBeTrue();
+        expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {
-        const ed = component.monacoEditor.editor();
-        const revealSpy = jest.spyOn(ed, 'revealLine');
+        const ed = monacoEditorStub.editor();
+        const revealSpy = vi.spyOn(ed, 'revealLine');
 
         component.jumpToLine(12);
 
@@ -472,7 +482,7 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('fileLoad should emit onFileLoad', () => {
-        const spy = jest.fn();
+        const spy = vi.fn();
         component.onFileLoad.subscribe(spy);
 
         component.fileLoad('src/main/App.java');
@@ -489,14 +499,15 @@ describe('CodeEditorContainerComponent', () => {
 
         /**
          * Helper: sets the fileSyncService input, runs detectChanges (which triggers the effect
-         * and resets @ViewChild to undefined because the template is ''), then re-assigns the
-         * fileBrowser mock so the subscription handler can delegate to it.
+         * and leaves the fileBrowser viewChild unresolved because the template is ''), then
+         * re-assigns the fileBrowser signal stub so the subscription handler can delegate to it.
          */
         function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
             fixture.componentRef.setInput('fileSyncService', syncService);
             fixture.detectChanges();
-            // @ViewChild is undefined in template-less tests; re-assign after detectChanges
-            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+            // viewChild() is unresolved in template-less tests; re-assign the signal after detectChanges
+            fileBrowserStub = { handleFileChange: vi.fn() };
+            (component as any).fileBrowser = () => fileBrowserStub;
         }
 
         it('should subscribe to fileTreeChange$ when fileSyncService is set', () => {
@@ -510,7 +521,7 @@ describe('CodeEditorContainerComponent', () => {
                 timestamp: 1,
             });
 
-            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'src/New.java'), true);
+            expect(fileBrowserStub.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'src/New.java'), true);
         });
 
         it('should handle remote FILE_DELETED by delegating to fileBrowser', () => {
@@ -524,7 +535,7 @@ describe('CodeEditorContainerComponent', () => {
                 timestamp: 1,
             });
 
-            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new DeleteFileChange(FileType.FILE, 'src/Old.java'), true);
+            expect(fileBrowserStub.handleFileChange).toHaveBeenCalledWith(new DeleteFileChange(FileType.FILE, 'src/Old.java'), true);
         });
 
         it('should handle remote FILE_RENAMED by delegating to fileBrowser', () => {
@@ -539,7 +550,7 @@ describe('CodeEditorContainerComponent', () => {
                 timestamp: 1,
             });
 
-            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new RenameFileChange(FileType.FILE, 'src/Old.java', 'src/New.java'), true);
+            expect(fileBrowserStub.handleFileChange).toHaveBeenCalledWith(new RenameFileChange(FileType.FILE, 'src/Old.java', 'src/New.java'), true);
         });
 
         it('should map FOLDER fileType correctly', () => {
@@ -553,7 +564,7 @@ describe('CodeEditorContainerComponent', () => {
                 timestamp: 1,
             });
 
-            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FOLDER, 'src/newpkg'), true);
+            expect(fileBrowserStub.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FOLDER, 'src/newpkg'), true);
         });
 
         it('should unsubscribe from previous sync service when a new one is set', () => {
@@ -571,7 +582,7 @@ describe('CodeEditorContainerComponent', () => {
                 fileType: 'FILE',
                 timestamp: 1,
             });
-            expect(component.fileBrowser.handleFileChange).not.toHaveBeenCalled();
+            expect(fileBrowserStub.handleFileChange).not.toHaveBeenCalled();
 
             // New stream should work
             newFileTreeChange$.next({
@@ -581,7 +592,7 @@ describe('CodeEditorContainerComponent', () => {
                 fileType: 'FILE',
                 timestamp: 1,
             });
-            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'new-stream.java'), true);
+            expect(fileBrowserStub.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'new-stream.java'), true);
         });
     });
 
@@ -589,7 +600,8 @@ describe('CodeEditorContainerComponent', () => {
         function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
             fixture.componentRef.setInput('fileSyncService', syncService);
             fixture.detectChanges();
-            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+            fileBrowserStub = { handleFileChange: vi.fn() };
+            (component as any).fileBrowser = () => fileBrowserStub;
         }
 
         it('remote FILE_CREATED does not change selectedFile', () => {

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/programming/manage/grading/charts/test-case-distribution-chart.component';
@@ -7,23 +9,26 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('Test case distribution chart', () => {
+    setupTestBed({ zoneless: true });
+
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
     let component: TestCaseDistributionChartComponent;
     let fixture: ComponentFixture<TestCaseDistributionChartComponent>;
 
-    let instantSpy: jest.SpyInstance;
-    let routingStub: jest.SpyInstance;
+    let instantSpy: ReturnType<typeof vi.spyOn>;
+    let routingStub: ReturnType<typeof vi.spyOn>;
 
     const configureComponent = (testCases: ProgrammingExerciseTestCase[]) => {
         configureProgrammingExercise();
-        component.testCases = testCases;
+        fixture.componentRef.setInput('testCases', testCases);
     };
     const configureProgrammingExercise = () => {
         programmingExercise.maxPoints = 10;
         programmingExercise.bonusPoints = 0;
-        component.exercise = programmingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
     };
 
     const testCase = {
@@ -68,24 +73,28 @@ describe('Test case distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+        });
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
         component = fixture.componentInstance;
 
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        routingStub = jest.spyOn(routingService, 'routeInNewTab');
+        routingStub = vi.spyOn(routingService, 'routeInNewTab');
 
         const translationService = TestBed.inject(TranslateService);
-        instantSpy = jest.spyOn(translationService, 'instant');
+        instantSpy = vi.spyOn(translationService, 'instant');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should handle no test cases appropriately', () => {
         configureProgrammingExercise();
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.testCases).toEqual([]);
+        expect(component.processedTestCases()).toEqual([]);
 
         expect(component.ngxWeightData[0].series).toHaveLength(0);
         expect(component.ngxWeightData[1].series).toHaveLength(0);
@@ -93,18 +102,18 @@ describe('Test case distribution chart', () => {
     });
 
     it('should process the test cases correctly', () => {
+        testCase.weight = 1;
         configureComponent([testCase]);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.ngxWeightData[0].series[0].name).toBe('test case');
         expect(component.ngxWeightData[0].series[0].value).toBe(100);
         expect(component.ngxWeightData[1].series[0].name).toBe('test case');
         expect(component.ngxWeightData[1].series[0].value).toBe(100);
 
-        component.testCases.push(testCase2);
-
-        component.ngOnChanges();
+        fixture.componentRef.setInput('testCases', [testCase, testCase2]);
+        fixture.detectChanges();
 
         expect(component.ngxWeightData).toHaveLength(2);
         expect(component.ngxWeightData[0].series).toHaveLength(2);
@@ -116,7 +125,8 @@ describe('Test case distribution chart', () => {
         expect(component.ngxWeightData[1].series[1].value).toBe(60);
 
         testCase.weight = 1.5;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('testCases', [testCase, testCase2]);
+        fixture.detectChanges();
 
         expect(component.ngxWeightData[0].series[0].value).toBe(50);
         expect(component.ngxWeightData[0].series[1].value).toBe(50);
@@ -130,12 +140,12 @@ describe('Test case distribution chart', () => {
         testCase.weight = 1;
         configureComponent([testCase, testCase4]);
         programmingExercise.bonusPoints = 2;
-        component.testCaseStatsMap = testMap;
-        component.totalParticipations = 1;
+        fixture.componentRef.setInput('testCaseStatsMap', testMap);
+        fixture.componentRef.setInput('totalParticipations', 1);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
-        expect(component.testCaseStatsMap['test case 4'].numPassed).toBe(3);
+        expect(testMap['test case 4'].numPassed).toBe(3);
         expect(component.ngxPointsData[0].series[0].name).toBe('test case');
         expect(component.ngxPointsData[0].series[0].value).toBe(0);
         expect(component.ngxPointsData[0].series[1].name).toBe('test case 4');
@@ -146,7 +156,7 @@ describe('Test case distribution chart', () => {
         configureComponent([invisileTestCase]);
         programmingExercise.bonusPoints = 2;
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.ngxWeightData[0].series).toHaveLength(0);
         expect(component.ngxWeightData[1].series).toHaveLength(0);
@@ -165,7 +175,7 @@ describe('Test case distribution chart', () => {
         } as ProgrammingExerciseTestCase;
         configureComponent([negativeTestCase]);
 
-        component.ngOnChanges();
+        fixture.detectChanges();
 
         expect(component.ngxWeightData[0].series[0].value).toBe(0);
         expect(component.ngxWeightData[1].series[0].value).toBe(0);
@@ -175,7 +185,7 @@ describe('Test case distribution chart', () => {
     it('should delegate the user correctly if clicked on points chart', () => {
         programmingExercise.id = 4;
         programmingExercise.course = { id: 42 };
-        component.exercise = programmingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
         const expectedUrl = ['course-management', 42, 'programming-exercises', 4, 'exercise-statistics'];
 
         component.onSelectPoints();
@@ -185,27 +195,28 @@ describe('Test case distribution chart', () => {
 
     it('should emit the correct test case id if clicked on weight and bonus chart', () => {
         const event = { id: 5 };
-        const emitStub = jest.spyOn(component.testCaseRowFilter, 'emit').mockImplementation();
+        const emitStub = vi.spyOn(component.testCaseRowFilter, 'emit').mockImplementation(() => {});
 
         component.onSelectWeight(event);
 
         expect(emitStub).toHaveBeenCalledWith(5);
-        expect(component.tableFiltered).toBeTrue();
+        expect(component.tableFiltered).toBe(true);
     });
 
     it('should reset table correctly', () => {
         component.tableFiltered = true;
-        const emitStub = jest.spyOn(component.testCaseRowFilter, 'emit').mockImplementation();
+        const emitStub = vi.spyOn(component.testCaseRowFilter, 'emit').mockImplementation(() => {});
 
         component.resetTableFilter();
 
         expect(emitStub).toHaveBeenCalledWith(-5);
-        expect(component.tableFiltered).toBeFalse();
+        expect(component.tableFiltered).toBe(false);
     });
 
     it('should update the translation', () => {
         const prefix = 'artemisApp.programmingExercise.configureGrading.charts.';
         const labels = ['testCaseWeights.weight', 'testCaseWeights.weightAndBonus', 'testCasePoints.points'];
+        instantSpy.mockClear();
         component.ngxWeightData = [
             { name: '', series: [] },
             { name: '', series: [] },

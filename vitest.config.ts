@@ -70,17 +70,12 @@ export default defineConfig({
             'src/main/webapp/app/shared-ui/**/*.spec.ts', // include shared-ui module tests
             'src/main/webapp/app/foundation/**/*.spec.ts', // include all foundation tests (migrated to Vitest)
             'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
-            'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
-            'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
+            'src/main/webapp/app/programming/**/*.spec.ts', // include entire programming module tests (signals+vitest migration)
             'src/main/webapp/app/editor/**/*.spec.ts', // include all editor module tests (markdown/monaco editor)
-            'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.spec.ts', // include programming exercise component tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
-            'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
-            'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
-            'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include communication module tests
             'src/main/webapp/app/notification/**/*.spec.ts', // include notification module tests
             'src/main/webapp/app/exercise/additional-feedback/**/*.spec.ts', // include additional feedback tests
@@ -126,7 +121,6 @@ export default defineConfig({
             'src/main/webapp/app/exercise/util/**/*.spec.ts', // include exercise util tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
-            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
             'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
             'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
             'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
@@ -182,10 +176,7 @@ export default defineConfig({
                 'src/main/webapp/app/shared-ui/**/*.ts', // include shared-ui module for code coverage
                 'src/main/webapp/app/foundation/**/*.ts', // include all foundation for code coverage
                 'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
-                'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
-                'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
                 'src/main/webapp/app/editor/**/*.ts', // include all editor module for code coverage
-                'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.ts', // include programming exercise component for code coverage
                 'src/main/webapp/app/exercise/additional-feedback/**/*.ts', // include additional feedback for code coverage
                 'src/main/webapp/app/exercise/assessment-progress-label/**/*.ts', // include assessment progress label for code coverage
                 'src/main/webapp/app/exercise/course-exercises/**/*.ts', // include course exercise service for code coverage
@@ -230,14 +221,11 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/unreferenced-feedback/**/*.ts', // include unreferenced feedback for code coverage
                 'src/main/webapp/app/exercise/util/**/*.ts', // include exercise util for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
-                'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
-                'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
-                'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
                 'src/main/webapp/app/notification/**/*.ts', // include all notification module for code coverage
                 'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
-                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
+                'src/main/webapp/app/programming/**/*.ts', // include entire programming module for code coverage
                 'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
                 'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
                 'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage

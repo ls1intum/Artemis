@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
@@ -8,14 +10,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserDeleteComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorFileBrowserDeleteComponent>;
     let comp: CodeEditorFileBrowserDeleteComponent;
-    let activeModal: { dismiss: jest.Mock };
-    let repositoryFileService: { deleteFile: jest.Mock };
+    let activeModal: { dismiss: ReturnType<typeof vi.fn> };
+    let repositoryFileService: { deleteFile: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
-        activeModal = { dismiss: jest.fn() };
-        repositoryFileService = { deleteFile: jest.fn().mockReturnValue(of(undefined)) };
+        activeModal = { dismiss: vi.fn() };
+        repositoryFileService = { deleteFile: vi.fn().mockReturnValue(of(undefined)) };
 
         await TestBed.configureTestingModule({
             imports: [CodeEditorFileBrowserDeleteComponent],
@@ -35,8 +39,12 @@ describe('CodeEditorFileBrowserDeleteComponent', () => {
         comp = fixture.componentInstance;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should delete a file and notify the parent', () => {
-        const parent = { onFileDeleted: jest.fn() };
+        const parent = { onFileDeleted: vi.fn() };
         comp.setInputs({ fileNameToDelete: 'src/Test.java', parent, fileType: FileType.FILE });
         fixture.detectChanges();
 
@@ -49,7 +57,7 @@ describe('CodeEditorFileBrowserDeleteComponent', () => {
     });
 
     it('should close the modal without deleting for problem statement', () => {
-        const parent = { onFileDeleted: jest.fn() };
+        const parent = { onFileDeleted: vi.fn() };
         comp.setInputs({ fileNameToDelete: 'ignored', parent, fileType: FileType.PROBLEM_STATEMENT });
         fixture.detectChanges();
 

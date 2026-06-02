@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
@@ -15,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockProvider } from 'ng-mocks';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const createBlobHttpResponse = () => {
@@ -25,13 +27,15 @@ const createBlobHttpResponse = () => {
 };
 
 describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ProgrammingAssessmentRepoExportDialogComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
     let exerciseService: ExerciseService;
     let repoExportService: ProgrammingAssessmentRepoExportService;
+    let dialogRef: DynamicDialogRef;
 
-    global.URL.createObjectURL = jest.fn(() => 'http://some.test.com');
-    global.URL.revokeObjectURL = jest.fn(() => '');
+    global.URL.createObjectURL = vi.fn(() => 'http://some.test.com');
+    global.URL.revokeObjectURL = vi.fn(() => '');
 
     const exerciseId = 42;
     const participationIdList = [1];
@@ -42,13 +46,24 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     programmingExercise.dueDate = dayjs().add(7, 'days');
 
     beforeEach(() => {
+        const mockDialogRef = {
+            close: vi.fn(),
+        };
+        const dialogConfigData = {
+            programmingExercises: [programmingExercise],
+            participationIdList,
+            singleParticipantMode,
+        };
+
         return TestBed.configureTestingModule({
             imports: [FormDateTimePickerComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 LocalStorageService,
-                MockProvider(NgbActiveModal),
+                { provide: DynamicDialogRef, useValue: mockDialogRef },
+                { provide: DynamicDialogConfig, useValue: { data: dialogConfigData } },
+                MockProvider(ExerciseService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -61,18 +76,15 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 comp = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
                 repoExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
+                dialogRef = TestBed.inject(DynamicDialogRef);
 
                 // stubs
-                jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
-
-                comp.programmingExercises = [programmingExercise];
-                comp.participationIdList = participationIdList;
-                comp.singleParticipantMode = singleParticipantMode;
+                vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('test initialization', () => {
@@ -85,34 +97,35 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(comp.programmingExercises[0]).toEqual(programmingExercise);
     });
 
-    it('Export a repo by participations should download a zipped file', fakeAsync(() => {
+    it('Export a repo by participations should download a zipped file', async () => {
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
-        tick();
-        expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
-        expect(comp.repositoryExportOptions.anonymizeRepository).toBeTrue();
-        expect(comp.exportInProgress).toBeFalse();
+        await fixture.whenStable();
+        expect(comp.repositoryExportOptions.addParticipantName).toBeFalsy();
+        expect(comp.repositoryExportOptions.anonymizeRepository).toBeTruthy();
+        expect(comp.exportInProgress).toBeFalsy();
         expect(exportReposStub).toHaveBeenCalledOnce();
-    }));
+        expect(dialogRef.close).toHaveBeenCalledWith(true);
+    });
 
-    it('Export a repo by participant identifiers should download a zipped file', fakeAsync(() => {
+    it('Export a repo by participant identifiers should download a zipped file', async () => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ALL';
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
-        tick();
-        expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
-        expect(comp.exportInProgress).toBeFalse();
+        await fixture.whenStable();
+        expect(comp.repositoryExportOptions.addParticipantName).toBeFalsy();
+        expect(comp.exportInProgress).toBeFalsy();
         expect(exportReposStub).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('Should not change the ExportOptions during export', fakeAsync(() => {
+    it('Should not change the ExportOptions during export', async () => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ab12cde, cd34efg';
         comp.ngOnInit();
@@ -120,29 +133,35 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const copyOfExportOptions = { ...comp.repositoryExportOptions };
 
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
-        tick();
+        await fixture.whenStable();
         expect(comp.repositoryExportOptions).toEqual(copyOfExportOptions);
         expect(exportReposStub).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('Export of multiple repos download multiple files', fakeAsync(() => {
+    it('Export of multiple repos download multiple files', async () => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
         programmingExercise2.isAtLeastInstructor = true;
         comp.programmingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
-        tick();
-        expect(comp.exportInProgress).toBeFalse();
+        await fixture.whenStable();
+        expect(comp.exportInProgress).toBeFalsy();
         expect(exportReposStub).toHaveBeenCalledTimes(2);
-    }));
+    });
+
+    it('should close the dialog when cleared', () => {
+        fixture.detectChanges();
+        comp.clear();
+        expect(dialogRef.close).toHaveBeenCalled();
+    });
 
     describe('Export a repo with excludePracticeSubmissions as true', () => {
         const httpResponse = createBlobHttpResponse();
@@ -152,21 +171,21 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
             comp.repositoryExportOptions.excludePracticeSubmissions = true;
         });
 
-        it('should call exportReposByParticipations with correct options', fakeAsync(() => {
+        it('should call exportReposByParticipations with correct options', async () => {
             comp.participationIdList = participationIdList;
-            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+            const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
             comp.exportRepos();
-            tick();
+            await fixture.whenStable();
             expect(exportReposStub).toHaveBeenCalledExactlyOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
-        }));
+        });
 
-        it('should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
+        it('should call exportReposByParticipantIdentifiers with correct options', async () => {
             comp.participationIdList = [];
             comp.participantIdentifierList = 'ALL';
-            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+            const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
             comp.exportRepos();
-            tick();
+            await fixture.whenStable();
             expect(exportReposStub).toHaveBeenCalledExactlyOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
-        }));
+        });
     });
 });

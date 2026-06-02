@@ -1,21 +1,4 @@
-import {
-    AfterViewInit,
-    Component,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
-    effect,
-    inject,
-    input,
-    model,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, input, model, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -78,14 +61,14 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         RemoveKeysPipe,
     ],
 })
-export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {
     protected readonly ProjectType = ProjectType;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faPlus = faPlus;
     protected readonly PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isImport = input.required<boolean>();
     isExamMode = input.required<boolean>();
     programmingExercise = input.required<ProgrammingExercise>();
@@ -96,13 +79,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isAuxiliaryRepositoryInputValid = model.required<boolean>();
 
     exerciseTitleChannelComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
+    tableEditableFields = viewChildren(TableEditableFieldComponent);
 
     shortNameField = viewChild<NgModel>('shortName');
-    @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
-    @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
-    @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
-    @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
+    checkoutSolutionRepositoryField = viewChild<NgModel>('checkoutSolutionRepository');
+    recreateBuildPlansField = viewChild<NgModel>('recreateBuildPlans');
+    updateTemplateFilesField = viewChild<NgModel>('updateTemplateFiles');
+    programmingExerciseEditCheckoutDirectories = viewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent);
 
     private readonly exerciseService = inject(ExerciseService);
     private readonly alertService = inject(AlertService);
@@ -127,6 +110,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isLocalCIEnabled = true;
 
     constructor() {
+        effect(() => {
+            // Mirror the former ngOnChanges(programmingExercise): seed the working title from the bound exercise.
+            this.exerciseTitle.set(this.programmingExercise().title);
+        });
+
         effect(() => {
             this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
         });
@@ -162,12 +150,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.registerInputFields();
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExercise) {
-            this.exerciseTitle.set(this.programmingExercise().title);
-        }
-    }
-
     ngOnDestroy(): void {
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
@@ -178,13 +160,14 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
-        this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
-            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
-        });
+        this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.recreateBuildPlansField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.updateTemplateFilesField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories()?.formValidChanges.subscribe(() => this.calculateFormValid()));
+        // viewChildren() is a signal of the current list; subscribe directly. Re-registration when the
+        // list changes is driven by the registerInputFieldsWhenChildComponentsAreReady effect, which reads
+        // tableEditableFields() and re-invokes this method.
+        this.tableEditableFields().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
 
         this.exerciseTitleChannelComponent()
             .titleChannelNameComponent()
@@ -224,11 +207,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     areAuxiliaryRepositoriesValid(): boolean {
         const areAuxiliaryRepositoriesValid =
             (every(
-                this.tableEditableFields?.map((field) => field.editingInput?.valid),
+                this.tableEditableFields().map((field) => field.editingInput?.valid),
                 Boolean,
             ) &&
-                !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
-                !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames) ||
+                !this.programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories &&
+                !this.programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) ||
             !this.programmingExercise().auxiliaryRepositories?.length;
 
         const isAuxRepoEditingPossibleInCurrentEditMode = !this.isSimpleMode() || this.isEditFieldDisplayedRecord().addAuxiliaryRepository;
@@ -242,31 +225,32 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     isUpdateTemplateFilesValid(): boolean {
         return (
-            this.updateTemplateFilesField?.valid ||
-            !this.programmingExerciseCreationConfig.isImportFromExistingExercise ||
+            this.updateTemplateFilesField()?.valid ||
+            !this.programmingExerciseCreationConfig().isImportFromExistingExercise ||
             this.programmingExercise().projectType === ProjectType.PLAIN_GRADLE ||
             this.programmingExercise().projectType === ProjectType.GRADLE_GRADLE
         );
     }
 
     isRecreateBuildPlansValid(): boolean {
-        return this.recreateBuildPlansField?.valid || !this.programmingExerciseCreationConfig.isImportFromExistingExercise;
+        return this.recreateBuildPlansField()?.valid || !this.programmingExerciseCreationConfig().isImportFromExistingExercise;
     }
 
     isCheckoutSolutionRepositoryValid(): boolean {
         return Boolean(
-            this.checkoutSolutionRepositoryField?.valid ||
+            this.checkoutSolutionRepositoryField()?.valid ||
             this.programmingExercise().id ||
             !this.programmingExercise().programmingLanguage ||
-            !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
+            !this.programmingExerciseCreationConfig().checkoutSolutionRepositoryAllowed,
         );
     }
 
     areCheckoutPathsValid(): boolean {
+        const programmingExerciseEditCheckoutDirectories = this.programmingExerciseEditCheckoutDirectories();
         return Boolean(
-            !this.programmingExerciseEditCheckoutDirectories ||
-            (this.programmingExerciseEditCheckoutDirectories.formValid &&
-                this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
+            !programmingExerciseEditCheckoutDirectories ||
+            (programmingExerciseEditCheckoutDirectories.formValid &&
+                programmingExerciseEditCheckoutDirectories.areValuesUnique([
                     this.programmingExercise().buildConfig?.assignmentCheckoutPath,
                     this.programmingExercise().buildConfig?.testCheckoutPath,
                     this.programmingExercise().buildConfig?.solutionCheckoutPath,
@@ -302,6 +286,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     private registerInputFieldsWhenChildComponentsAreReady() {
         this.shortNameField(); // triggers effect on change
+        this.tableEditableFields(); // re-register when the set of auxiliary-repository fields changes
         this.registerInputFields();
     }
 
@@ -316,7 +301,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private generateShortNameWhenInSimpleMode() {
-        const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
+        const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig().isEdit;
         if (shouldNotGenerateShortName) {
             this.isShortNameFromAdvancedMode.set(this.isShortNameFieldValid());
             return;

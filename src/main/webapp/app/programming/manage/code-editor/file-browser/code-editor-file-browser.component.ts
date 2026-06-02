@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -131,8 +131,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
         });
     }
 
-    @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
-    @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
+    status = viewChild<CodeEditorStatusComponent>('status');
+    treeview = viewChild<TreeViewComponent<string>>('treeview');
     participation = input<Participation>();
     showEditorInstructions = input(true);
     selectedFile = input<string | undefined>();
@@ -168,8 +168,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     collapsed = false;
 
-    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
-    @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
+    renamingInput = viewChild<ElementRef>('renamingInput');
+    creatingInput = viewChild<ElementRef>('creatingInput');
 
     // Triple: [filePath, fileName, fileType]
     renamingFile?: [string, string, FileType];

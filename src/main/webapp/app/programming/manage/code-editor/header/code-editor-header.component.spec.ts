@@ -1,9 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 
 import { MAX_TAB_SIZE } from 'app/editor/monaco-editor/monaco-editor.component';
 
 describe('CodeEditorHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorHeaderComponent>;
     let comp: CodeEditorHeaderComponent;
 
@@ -11,12 +15,9 @@ describe('CodeEditorHeaderComponent', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorHeaderComponent);
-                comp = fixture.componentInstance;
-            });
+        });
+        fixture = TestBed.createComponent(CodeEditorHeaderComponent);
+        comp = fixture.componentInstance;
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {
@@ -33,14 +34,15 @@ describe('CodeEditorHeaderComponent', () => {
         expect(comp.tabSize()).toBe(MAX_TAB_SIZE);
     });
 
-    it('should notify when the tab size was validated', fakeAsync(() => {
+    it('should notify when the tab size was validated', () => {
+        let emitted: number | undefined;
         comp.onValidateTabSize.subscribe((tabSize) => {
-            expect(tabSize).toBe(5);
+            emitted = tabSize;
         });
 
         fixture.componentRef.setInput('tabSize', 5);
         comp.validateTabSize();
 
-        tick();
-    }));
+        expect(emitted).toBe(5);
+    });
 });

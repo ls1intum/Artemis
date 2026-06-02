@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -7,25 +9,24 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AddAuxiliaryRepositoryButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: AddAuxiliaryRepositoryButtonComponent;
     let fixture: ComponentFixture<AddAuxiliaryRepositoryButtonComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
             providers: [provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AddAuxiliaryRepositoryButtonComponent);
-                comp = fixture.componentInstance;
+        });
+        fixture = TestBed.createComponent(AddAuxiliaryRepositoryButtonComponent);
+        comp = fixture.componentInstance;
 
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-            });
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -34,12 +35,12 @@ describe('AddAuxiliaryRepositoryButtonComponent', () => {
     });
 
     it('should add auxiliary repository', () => {
-        const initialLength = comp.programmingExercise.auxiliaryRepositories?.length || 0;
-        const onRefreshSpy = jest.spyOn(comp.onRefresh, 'emit');
+        const initialLength = comp.programmingExercise().auxiliaryRepositories?.length || 0;
+        const onRefreshSpy = vi.spyOn(comp.onRefresh, 'emit');
 
         comp.addAuxiliaryRepositoryRow();
 
-        expect(comp.programmingExercise.auxiliaryRepositories?.length).toBe(initialLength + 1);
+        expect(comp.programmingExercise().auxiliaryRepositories?.length).toBe(initialLength + 1);
         expect(onRefreshSpy).toHaveBeenCalledOnce();
     });
 });

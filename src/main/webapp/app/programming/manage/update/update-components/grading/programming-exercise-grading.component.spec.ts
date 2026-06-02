@@ -1,4 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -21,9 +24,23 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
+/**
+ * Typed view onto the `viewChild` signals so the spec can stub them without a blanket
+ * `(comp as any)` cast. The shapes mirror the component declaration.
+ */
+type GradingInternals = ProgrammingExerciseGradingComponent & {
+    submissionPolicyUpdateComponent: Signal<SubmissionPolicyUpdateComponent | undefined>;
+    lifecycleComponent: Signal<ProgrammingExerciseUpdateTimelineComponent | undefined>;
+};
+const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
+
 describe('ProgrammingExerciseGradingComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
     let comp: ProgrammingExerciseGradingComponent;
+    let exercise: ProgrammingExercise;
+    let editFieldRecord: Record<ProgrammingExerciseInputField, boolean>;
 
     const route = {
         queryParams: of({}),
@@ -42,14 +59,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(ProgrammingExerciseGradingComponent);
         comp = fixture.componentInstance;
 
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.importOptions = { recreateBuildPlans: false, updateTemplate: false, setTestCaseVisibilityToAfterDueDate: false };
-        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
+        fixture.componentRef.setInput('importOptions', { recreateBuildPlans: false, updateTemplate: false, setTestCaseVisibilityToAfterDueDate: false });
+        editFieldRecord = {
             includeExerciseInCourseScoreCalculation: true,
             points: true,
             bonusPoints: true,
@@ -57,89 +74,80 @@ describe('ProgrammingExerciseGradingComponent', () => {
             timeline: true,
             assessmentInstructions: true,
             presentationScore: true,
-        });
+        } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', editFieldRecord);
 
-        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise = new ProgrammingExercise(undefined, undefined);
         exercise.maxPoints = 10;
         exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         exercise.assessmentType = AssessmentType.AUTOMATIC;
         exercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
         exercise.staticCodeAnalysisEnabled = true;
 
-        comp.programmingExercise = exercise;
+        fixture.componentRef.setInput('programmingExercise', exercise);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
-    }));
+    });
 
-    it('should create a grading summary', fakeAsync(() => {
+    it('should create a grading summary', () => {
         fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            const result = comp.getGradingSummary();
-            expect(result).not.toBe('');
-        });
-    }));
+        const result = comp.getGradingSummary();
+        expect(result).not.toBe('');
+    });
 
-    it('should create a grading summary for a bonus exercise with semiautomatic assessment', fakeAsync(() => {
-        comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
-        comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.programmingExercise.bonusPoints = undefined;
+    it('should create a grading summary for a bonus exercise with semiautomatic assessment', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.bonusPoints = undefined;
 
         fixture.detectChanges(false);
 
-        fixture.whenStable().then(() => {
-            const result = comp.getGradingSummary();
-            expect(result).not.toBe('');
-        });
-    }));
+        const result = comp.getGradingSummary();
+        expect(result).not.toBe('');
+    });
 
-    it('should create a grading summary with exceeding penalty', fakeAsync(() => {
-        comp.programmingExercise.submissionPolicy = {
+    it('should create a grading summary with exceeding penalty', () => {
+        exercise.submissionPolicy = {
             type: SubmissionPolicyType.SUBMISSION_PENALTY,
             exceedingPenalty: 10,
             submissionLimit: 5,
         };
-        comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
+        exercise.maxStaticCodeAnalysisPenalty = 5;
 
         fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            const result = comp.getGradingSummary();
-            expect(result).not.toBe('');
-        });
-    }));
+        const result = comp.getGradingSummary();
+        expect(result).not.toBe('');
+    });
 
-    it('should create a grading summary with locked repositories and disabled code analysis', fakeAsync(() => {
-        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 };
-        comp.programmingExercise.staticCodeAnalysisEnabled = false;
+    it('should create a grading summary with locked repositories and disabled code analysis', () => {
+        exercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 };
+        exercise.staticCodeAnalysisEnabled = false;
 
         fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            const result = comp.getGradingSummary();
-            expect(result).not.toBe('');
-        });
-    }));
+        const result = comp.getGradingSummary();
+        expect(result).not.toBe('');
+    });
 
-    it('should not create a grading summary when there are no points', fakeAsync(() => {
-        comp.programmingExercise.maxPoints = undefined;
+    it('should not create a grading summary when there are no points', () => {
+        exercise.maxPoints = undefined;
 
         fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            const result = comp.getGradingSummary();
-            expect(result).toBe('');
-        });
-    }));
+        const result = comp.getGradingSummary();
+        expect(result).toBe('');
+    });
 
-    it('should return replacement for grading summary key', fakeAsync(() => {
+    it('should return replacement for grading summary key', () => {
         fixture.detectChanges();
 
         const replacements = {
@@ -149,9 +157,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const replacedString = comp.replacePlaceholder('"exerciseType"', 'exerciseType', replacements);
 
         expect(replacedString).toBe('replacedType');
-    }));
+    });
 
-    it('should not return replacement for unknown grading summary key', fakeAsync(() => {
+    it('should not return replacement for unknown grading summary key', () => {
         fixture.detectChanges();
 
         const replacements = {
@@ -161,18 +169,20 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const replacedString = comp.replacePlaceholder('"exerciseType2"', 'exerciseType2', replacements);
 
         expect(replacedString).toBe('"exerciseType2"');
-    }));
+    });
 
     it('should update form section calculation', () => {
-        const calculateFormStatusSpy = jest.spyOn(comp, 'calculateFormStatus');
+        const calculateFormStatusSpy = vi.spyOn(comp, 'calculateFormStatus');
 
-        comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
-        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseUpdateTimelineComponent;
+        const submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as unknown as SubmissionPolicyUpdateComponent;
+        const lifecycleComponent = { formValidChanges: new Subject() } as unknown as ProgrammingExerciseUpdateTimelineComponent;
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue(submissionPolicyUpdateComponent);
+        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue(lifecycleComponent);
 
         comp.ngAfterViewInit();
 
-        (comp.submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
-        comp.lifecycleComponent.formValidChanges.next(false);
+        (submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
+        lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
     });
@@ -192,7 +202,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 fixture.detectChanges(false);
             }
             if (selector === 'jhi-grading-instructions-details' && isVisible) {
-                comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                // setInput with a fresh exercise reference so the signal-driven template re-evaluates under zoneless.
+                exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                fixture.componentRef.setInput('programmingExercise', { ...exercise } as ProgrammingExercise);
                 fixture.detectChanges(false);
                 const instructionsField = fixture.debugElement.nativeElement.querySelector(selector);
                 expect(instructionsField).not.toBeNull();
@@ -217,7 +229,8 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 it('should NOT be displayed', () => {
                     extraCondition?.();
                     fixture.detectChanges(false);
-                    comp.isEditFieldDisplayedRecord()[field] = false;
+                    // setInput with a fresh record reference so the signal-driven @if re-evaluates under zoneless.
+                    fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, [field]: false });
                     checkFieldVisibility(selector, false, true);
                 });
             });
@@ -257,8 +270,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 selector: 'jhi-grading-instructions-details',
                 field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
                 extraCondition: () => {
-                    comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                    comp.isEditFieldDisplayedRecord()[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
+                    exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                    fixture.componentRef.setInput('programmingExercise', { ...exercise } as ProgrammingExercise);
+                    editFieldRecord[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
+                    fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord });
                 },
             },
             {

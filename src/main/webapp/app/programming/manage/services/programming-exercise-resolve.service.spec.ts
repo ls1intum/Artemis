@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
@@ -8,12 +10,15 @@ import { HttpResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 describe('ProgrammingExerciseResolve', () => {
+    setupTestBed({ zoneless: true });
+
     let resolver: ProgrammingExerciseResolve;
-    let mockProgrammingExerciseService: jest.Mocked<ProgrammingExerciseService>;
+    let findSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
+        findSpy = vi.fn();
         const programmingExerciseServiceSpy = {
-            find: jest.fn(),
+            find: findSpy,
         };
 
         TestBed.configureTestingModule({
@@ -21,7 +26,6 @@ describe('ProgrammingExerciseResolve', () => {
         });
 
         resolver = TestBed.inject(ProgrammingExerciseResolve);
-        mockProgrammingExerciseService = TestBed.inject(ProgrammingExerciseService) as jest.Mocked<ProgrammingExerciseService>;
     });
 
     it('should be created', () => {
@@ -37,7 +41,7 @@ describe('ProgrammingExerciseResolve', () => {
             body: mockExercise,
         });
 
-        mockProgrammingExerciseService.find.mockReturnValue(of(mockResponse));
+        findSpy.mockReturnValue(of(mockResponse));
 
         const route = {
             params: { exerciseId: exerciseId },
@@ -45,7 +49,7 @@ describe('ProgrammingExerciseResolve', () => {
 
         const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toEqual(mockExercise);
-        expect(mockProgrammingExerciseService.find).toHaveBeenCalledWith(exerciseId, true);
+        expect(findSpy).toHaveBeenCalledWith(exerciseId, true);
     });
 
     it('should return new programming exercise when exerciseId is not provided', async () => {
@@ -56,7 +60,7 @@ describe('ProgrammingExerciseResolve', () => {
         const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toBeInstanceOf(ProgrammingExercise);
         expect(result?.id).toBeUndefined();
-        expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();
+        expect(findSpy).not.toHaveBeenCalled();
     });
 
     it('should return new programming exercise when exerciseId is undefined', async () => {
@@ -67,6 +71,6 @@ describe('ProgrammingExerciseResolve', () => {
         const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toBeInstanceOf(ProgrammingExercise);
         expect(result?.id).toBeUndefined();
-        expect(mockProgrammingExerciseService.find).not.toHaveBeenCalled();
+        expect(findSpy).not.toHaveBeenCalled();
     });
 });

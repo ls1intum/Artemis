@@ -1,8 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock y-monaco to avoid needing the full Monaco API in tests. The component transitively imports the
+// editable-instruction editor, which pulls in y-monaco's deep `monaco-editor/esm/...` import; that subpath
+// escapes the `monaco-editor` alias in vitest.config and breaks dependency resolution. Stubbing the module
+// here (mirrors programming-exercise-editable-instruction.component.spec.ts) avoids the import entirely.
+vi.mock('y-monaco', () => ({
+    // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
+    MonacoBinding: vi.fn(function (this: any) {
+        this.destroy = vi.fn();
+    }),
+}));
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -18,8 +34,32 @@ import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemSta
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+
+/**
+ * Typed view onto the private `currentAiOperationSubscription` field of the AI operations helper so the
+ * spec can assert subscription teardown without a blanket `(component as any)` cast.
+ */
+type AiOpsInternals = ProblemStatementAiOperationsHelper & {
+    currentAiOperationSubscription: Subscription | undefined;
+};
+const aiOpsInternals = (c: ProgrammingExerciseProblemComponent): AiOpsInternals => c.aiOps as AiOpsInternals;
+
+/**
+ * Typed accessor that overrides the `editableInstructions` viewChild signal with a stub for tests that
+ * need a controllable editor instance. The viewChild is exposed as a callable signal, so the stub mirrors
+ * that shape.
+ */
+type EditableInstructionsHolder = ProgrammingExerciseProblemComponent & {
+    editableInstructions: () => ProgrammingExerciseEditableInstructionComponent | undefined;
+};
+const setEditableInstructions = (c: ProgrammingExerciseProblemComponent, stub: Partial<ProgrammingExerciseEditableInstructionComponent>): void => {
+    (c as EditableInstructionsHolder).editableInstructions = () => stub as ProgrammingExerciseEditableInstructionComponent;
+};
 
 describe('ProgrammingExerciseProblemComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
     let comp: ProgrammingExerciseProblemComponent;
 
@@ -29,15 +69,15 @@ describe('ProgrammingExerciseProblemComponent', () => {
     } as ActivatedRoute;
 
     const mockHyperionApiService = {
-        generateProblemStatement: jest.fn(),
-        refineProblemStatementGlobally: jest.fn(),
-        refineProblemStatementTargeted: jest.fn(),
+        generateProblemStatement: vi.fn(),
+        refineProblemStatementGlobally: vi.fn(),
+        refineProblemStatementTargeted: vi.fn(),
     };
 
     const mockAlertService = {
-        success: jest.fn(),
-        error: jest.fn(),
-        warning: jest.fn(),
+        success: vi.fn(),
+        error: vi.fn(),
+        warning: vi.fn(),
     };
 
     beforeEach(() => {
@@ -67,8 +107,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize and store exercise', () => {
@@ -146,7 +186,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBe(false);
     });
 
     it('should handle empty generation response', () => {
@@ -181,24 +221,24 @@ describe('ProgrammingExerciseProblemComponent', () => {
             42,
             expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
         );
-        expect(comp.showDiff()).toBeTrue();
+        expect(comp.showDiff()).toBe(true);
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementSuccess');
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBe(false);
     });
 
     it('should revert refinement and close diff', () => {
         comp.showDiff.set(true);
         // Mock editableInstructions as a callable (signal/viewChild) returning the mock
         const mockEditableInstructions = {
-            revertAll: jest.fn(),
-            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+            revertAll: vi.fn(),
+            getCurrentContent: vi.fn().mockReturnValue('Reverted content'),
         };
-        (comp as any).editableInstructions = () => mockEditableInstructions;
+        setEditableInstructions(comp, mockEditableInstructions);
 
         comp.revertAllChanges();
 
         expect(mockEditableInstructions.revertAll).toHaveBeenCalled();
-        expect(comp.showDiff()).toBeFalse();
+        expect(comp.showDiff()).toBe(false);
     });
 
     it('should cancel generation and reset states', () => {
@@ -206,7 +246,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.cancelAiOperation();
 
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBe(false);
     });
 
     it('should handle onInstructionChange and emit problemStatementChange', () => {
@@ -214,7 +254,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        const emitSpy = jest.spyOn(comp.problemStatementChange, 'emit');
+        const emitSpy = vi.spyOn(comp.problemStatementChange, 'emit');
 
         comp.onInstructionChange('New problem statement');
 
@@ -226,7 +266,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const emitSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
+        const emitSpy = vi.spyOn(comp.programmingExerciseChange, 'emit');
 
         const mockLink = new CompetencyExerciseLink({ id: 1, title: 'Test' } as any, programmingExercise, 1);
         comp.onCompetencyLinksChange([mockLink]);
@@ -242,7 +282,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = ''; // Empty, should trigger generate
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const generateSpy = jest.spyOn(comp.aiOps, 'generateProblemStatement');
+        const generateSpy = vi.spyOn(comp.aiOps, 'generateProblemStatement');
 
         comp.userPrompt.set('Test');
         comp.handleProblemStatementAction();
@@ -261,7 +301,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.templateLoaded.set(true);
         comp.aiOps.templateProblemStatement.set('Different template');
 
-        const refineSpy = jest.spyOn(comp.aiOps, 'refineProblemStatement');
+        const refineSpy = vi.spyOn(comp.aiOps, 'refineProblemStatement');
 
         comp.userPrompt.set('Improve this');
         comp.handleProblemStatementAction();
@@ -271,7 +311,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should return translated placeholder', () => {
         const translateService = TestBed.inject(TranslateService);
-        translateService.instant = jest.fn().mockReturnValue('Translated placeholder');
+        translateService.instant = vi.fn().mockReturnValue('Translated placeholder');
 
         const result = comp.getTranslatedPlaceholder();
 
@@ -286,13 +326,13 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
 
         // Mock editableInstructions to return refined content
-        const mockEditable = { getCurrentContent: jest.fn().mockReturnValue('Refined content'), revertAll: jest.fn() };
-        (comp as any).editableInstructions = () => mockEditable;
+        const mockEditable = { getCurrentContent: vi.fn().mockReturnValue('Refined content'), revertAll: vi.fn() };
+        setEditableInstructions(comp, mockEditable);
 
         comp.showDiff.set(true);
         comp.closeDiffView();
 
-        expect(comp.showDiff()).toBeFalse();
+        expect(comp.showDiff()).toBe(false);
         expect(exercise.problemStatement).toBe('Refined content');
     });
 
@@ -308,7 +348,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.templateProblemStatement.set('Different template');
 
         // shouldShowGenerateButton should be false for existing content that differs from template
-        expect(comp.shouldShowGenerateButton()).toBeFalse();
+        expect(comp.shouldShowGenerateButton()).toBe(false);
     });
 
     it('should handle inline refinement successfully', () => {
@@ -345,7 +385,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             }),
         );
 
-        expect(comp.showDiff()).toBeTrue();
+        expect(comp.showDiff()).toBe(true);
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
     });
 
@@ -408,7 +448,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.onInlineRefinement(event);
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBe(false);
     });
 
     it('should handle inline refinement with empty response', () => {
@@ -460,7 +500,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBe(false);
     });
 
     it('should not refine when userPrompt is empty', () => {
@@ -504,18 +544,18 @@ describe('ProgrammingExerciseProblemComponent', () => {
     });
 
     it('should cancel active subscription on cancelAiOperation', () => {
-        const mockSubscription = { unsubscribe: jest.fn() };
-        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
+        const mockSubscription = { unsubscribe: vi.fn() };
+        aiOpsInternals(comp).currentAiOperationSubscription = mockSubscription as any;
 
         comp.cancelAiOperation();
 
         expect(mockSubscription.unsubscribe).toHaveBeenCalled();
-        expect((comp.aiOps as any)['currentAiOperationSubscription']).toBeUndefined();
+        expect(aiOpsInternals(comp).currentAiOperationSubscription).toBeUndefined();
     });
 
     it('should unsubscribe on destroy', () => {
-        const mockSubscription = { unsubscribe: jest.fn() };
-        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
+        const mockSubscription = { unsubscribe: vi.fn() };
+        aiOpsInternals(comp).currentAiOperationSubscription = mockSubscription as any;
 
         comp.ngOnDestroy();
 
@@ -533,7 +573,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.templateLoaded.set(true);
         comp.aiOps.currentProblemStatement.set('Template content');
 
-        expect(comp.shouldShowGenerateButton()).toBeTrue();
+        expect(comp.shouldShowGenerateButton()).toBe(true);
     });
 
     it('should show refine button when problem statement differs from template', () => {
@@ -546,7 +586,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.templateLoaded.set(true);
         comp.aiOps.currentProblemStatement.set('Custom content');
 
-        expect(comp.shouldShowGenerateButton()).toBeFalse();
+        expect(comp.shouldShowGenerateButton()).toBe(false);
     });
 
     it('should NOT show generate button when template loading fails and existing content is present', () => {
@@ -558,15 +598,15 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.aiOps.templateLoaded.set(false);
         comp.aiOps.currentProblemStatement.set('Existing content');
 
-        expect(comp.shouldShowGenerateButton()).toBeFalse();
+        expect(comp.shouldShowGenerateButton()).toBe(false);
     });
 
     it('should handle onInstructionChange', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         fixture.componentRef.setInput('programmingExercise', exercise);
 
-        const problemStatementSpy = jest.spyOn(comp.problemStatementChange, 'emit');
-        const programmingExerciseSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
+        const problemStatementSpy = vi.spyOn(comp.problemStatementChange, 'emit');
+        const programmingExerciseSpy = vi.spyOn(comp.programmingExerciseChange, 'emit');
 
         comp.onInstructionChange('Updated statement');
 
@@ -579,7 +619,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
     it('should delegate onChecklistActionDiffRequest to aiOps.applyChecklistActionDiff', () => {
         fixture.detectChanges();
 
-        const applyChecklistSpy = jest.spyOn(comp.aiOps, 'applyChecklistActionDiff').mockImplementation(() => {});
+        const applyChecklistSpy = vi.spyOn(comp.aiOps, 'applyChecklistActionDiff').mockImplementation(() => {});
 
         comp.onChecklistActionDiffRequest('Proposed content');
 

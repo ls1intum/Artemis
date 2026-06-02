@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,14 +17,16 @@ import { firstValueFrom, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseTask Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingExerciseTaskService;
 
-    let alertService;
-    let gradingService;
-    let alertErrorStub: jest.SpyInstance;
-    let alertSuccessStub: jest.SpyInstance;
-    let updateTestCasesStub: jest.SpyInstance;
-    let resetTestCasesStub: jest.SpyInstance;
+    let alertService: AlertService;
+    let gradingService: ProgrammingExerciseGradingService;
+    let alertErrorStub: ReturnType<typeof vi.spyOn>;
+    let alertSuccessStub: ReturnType<typeof vi.spyOn>;
+    let updateTestCasesStub: ReturnType<typeof vi.spyOn>;
+    let resetTestCasesStub: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/programming/programming-exercises';
     let httpMock: HttpTestingController;
@@ -134,32 +138,32 @@ describe('ProgrammingExerciseTask Service', () => {
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 MockProvider(AlertService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingExerciseTaskService);
-                httpMock = TestBed.inject(HttpTestingController);
-                alertService = TestBed.inject(AlertService);
-                alertSuccessStub = jest.spyOn(alertService, 'success');
-                alertErrorStub = jest.spyOn(alertService, 'error');
-                gradingService = TestBed.inject(ProgrammingExerciseGradingService);
-                updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
-                resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
+        });
 
-                firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics)).then(() => {
-                    tasks = service.updateTasks();
-                    testCases = tasks.flatMap(({ testCases }) => testCases);
-                });
+        service = TestBed.inject(ProgrammingExerciseTaskService);
+        httpMock = TestBed.inject(HttpTestingController);
+        alertService = TestBed.inject(AlertService);
+        alertSuccessStub = vi.spyOn(alertService, 'success');
+        alertErrorStub = vi.spyOn(alertService, 'error');
+        gradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        updateTestCasesStub = vi.spyOn(gradingService, 'updateTestCase');
+        resetTestCasesStub = vi.spyOn(gradingService, 'resetTestCases');
 
-                httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush(serverSideTasks);
-            });
+        firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics)).then(() => {
+            tasks = service.updateTasks();
+            testCases = tasks.flatMap(({ testCases }) => testCases);
+        });
+
+        httpMock.expectOne(`${resourceUrl}/${exercise.id}/tasks-with-unassigned-test-cases`).flush(serverSideTasks);
     });
 
+    afterEach(() => vi.restoreAllMocks());
+
     it('should get tasks from server', () => {
-        expect(service.currentTasks).not.toBeEmpty();
-        expect(service.tasks).not.toBeEmpty();
-        expect(tasks).not.toBeEmpty();
-        expect(testCases).not.toBeEmpty();
+        expect(service.currentTasks).not.toHaveLength(0);
+        expect(service.tasks).not.toHaveLength(0);
+        expect(tasks).not.toHaveLength(0);
+        expect(testCases).not.toHaveLength(0);
     });
 
     it('should create correct task options from test cases', () => {
@@ -221,7 +225,7 @@ describe('ProgrammingExerciseTask Service', () => {
         tasks = service.updateTasks();
         const testCases = tasks.flatMap(({ testCases }) => testCases);
 
-        expect(testCases).toSatisfyAll((test) => test.active);
+        expect(testCases.every((test) => test.active)).toBe(true);
     });
 
     it('should handle inactive test cases correctly if they are not ignored', () => {
@@ -229,7 +233,7 @@ describe('ProgrammingExerciseTask Service', () => {
         tasks = service.updateTasks();
         const testCases = tasks.flatMap(({ testCases }) => testCases);
 
-        expect(testCases.filter((testCase) => testCase.active)).not.toBeEmpty();
+        expect(testCases.filter((testCase) => testCase.active)).not.toHaveLength(0);
     });
 
     it('should update test resulting points correctly', () => {
@@ -298,13 +302,13 @@ describe('ProgrammingExerciseTask Service', () => {
     });
 
     it('should correctly detect unsaved changes', () => {
-        expect(service.hasUnsavedChanges()).toBeFalse();
+        expect(service.hasUnsavedChanges()).toBe(false);
 
         const testCase = testCases.find(({ id }) => id === 1)!;
         testCase.weight = 10;
         testCase.changed = true;
 
-        expect(service.hasUnsavedChanges()).toBeTrue();
+        expect(service.hasUnsavedChanges()).toBe(true);
     });
 
     it('should remove tasks with only duplicated tests cases', () => {
@@ -356,7 +360,7 @@ describe('ProgrammingExerciseTask Service', () => {
 
     it('should handle unconfigured service in hasUnsavedChanges', () => {
         const freshService = TestBed.inject(ProgrammingExerciseTaskService);
-        expect(freshService.hasUnsavedChanges()).toBeFalse();
+        expect(freshService.hasUnsavedChanges()).toBe(false);
     });
 
     it('should update task points correctly when updateTasks is called', () => {

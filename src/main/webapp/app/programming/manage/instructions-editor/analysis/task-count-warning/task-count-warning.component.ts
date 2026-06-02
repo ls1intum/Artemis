@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -12,6 +12,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class TaskCountWarningComponent {
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faCheckCircle = faCheckCircle;
-    @Input() advisedMaxNumOfTasks = 15;
-    @Input() numOfTasks: number;
+    readonly advisedMaxNumOfTasks = input<number>(15);
+    readonly numOfTasks = input.required<number>();
 }

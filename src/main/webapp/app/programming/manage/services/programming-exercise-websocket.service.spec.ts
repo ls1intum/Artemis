@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
@@ -9,6 +11,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 
 describe('ProgrammingExerciseWebsocketService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingExerciseWebsocketService;
     let websocketService: WebsocketService;
     let topicSubject: Subject<boolean>;
@@ -24,7 +28,7 @@ describe('ProgrammingExerciseWebsocketService', () => {
         websocketService = TestBed.inject(WebsocketService);
 
         topicSubject = new Subject<boolean>();
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(topicSubject.asObservable());
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(topicSubject.asObservable());
     });
 
     it('should subscribe to the test-cases-changed topic and emit values', async () => {
@@ -33,7 +37,7 @@ describe('ProgrammingExerciseWebsocketService', () => {
 
         topicSubject.next(true);
 
-        expect(await next).toBeTrue();
+        expect(await next).toBe(true);
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/programming-exercises/7/test-cases-changed');
     });
 
@@ -64,7 +68,7 @@ describe('ProgrammingExerciseWebsocketService', () => {
             });
             scoped = TestBed.inject(ProgrammingExerciseWebsocketService);
             scopedWs = TestBed.inject(WebsocketService);
-            jest.spyOn(scopedWs, 'subscribe').mockReturnValue(new Subject<boolean>().asObservable());
+            vi.spyOn(scopedWs, 'subscribe').mockReturnValue(new Subject<boolean>().asObservable());
         });
 
         it('should tear down subscriptions and complete subjects on logout', () => {
@@ -74,7 +78,7 @@ describe('ProgrammingExerciseWebsocketService', () => {
 
             authState.next(undefined);
 
-            expect(completed).toBeTrue();
+            expect(completed).toBe(true);
             // After reset, getTestCaseState should re-subscribe via the websocket service.
             scoped.getTestCaseState(7);
             expect(scopedWs.subscribe).toHaveBeenCalledTimes(2);

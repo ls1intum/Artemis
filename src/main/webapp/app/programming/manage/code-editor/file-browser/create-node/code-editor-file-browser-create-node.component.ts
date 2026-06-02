@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -17,7 +17,7 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     faFile = faFile;
     faFolder = faFolder;
 
-    @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
+    readonly creatingInput = viewChild.required<ElementRef>('creatingInput');
 
     createFileType = input.required<FileType>();
     folder = input.required<string>();
@@ -33,6 +33,6 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.creatingInput.nativeElement.focus();
+        this.creatingInput().nativeElement.focus();
     }
 }

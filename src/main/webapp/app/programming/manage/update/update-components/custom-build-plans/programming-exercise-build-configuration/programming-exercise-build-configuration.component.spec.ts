@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
@@ -13,8 +15,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExercise Docker Image', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseBuildConfigurationComponent;
-    let fixture: any;
+    let fixture: ComponentFixture<ProgrammingExerciseBuildConfigurationComponent>;
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -42,7 +46,7 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should update build values', () => {
@@ -56,7 +60,7 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should set profile values', () => {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: undefined,
             buildTimeoutMax: undefined,
             buildTimeoutDefault: undefined,
@@ -73,7 +77,7 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.memory).toBeUndefined();
         expect(comp.memorySwap).toBeUndefined();
 
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: 0,
             buildTimeoutMax: 360,
             buildTimeoutDefault: 60,
@@ -89,7 +93,7 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.memory).toBe(1024);
         expect(comp.memorySwap).toBe(2048);
 
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: 100,
             buildTimeoutMax: 20,
             buildTimeoutDefault: 10,
@@ -163,7 +167,7 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.envVars).toEqual([['key', 'value']]);
     });
 
-    it('should show warning when network none is selected', fakeAsync(() => {
+    it('should show warning when network none is selected', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();
         comp.onNetworkChange('none');
@@ -171,9 +175,9 @@ describe('ProgrammingExercise Docker Image', () => {
 
         const warning = fixture.nativeElement.querySelector('.alert-warning');
         expect(warning).not.toBeNull();
-    }));
+    });
 
-    it('should show no warning when a network other than none is selected', fakeAsync(() => {
+    it('should show no warning when a network other than none is selected', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();
         comp.onNetworkChange('default');
@@ -181,15 +185,15 @@ describe('ProgrammingExercise Docker Image', () => {
 
         const warning = fixture.nativeElement.querySelector('.alert-warning');
         expect(warning).toBeNull();
-    }));
+    });
 
     it('should set supported languages', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
         comp.setIsLanguageSupported();
-        expect(comp.isLanguageSupported).toBeFalse();
+        expect(comp.isLanguageSupported).toBe(false);
 
         programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();
-        expect(comp.isLanguageSupported).toBeTrue();
+        expect(comp.isLanguageSupported).toBe(true);
     });
 });

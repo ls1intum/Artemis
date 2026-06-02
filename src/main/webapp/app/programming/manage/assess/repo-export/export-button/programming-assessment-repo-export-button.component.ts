@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnDestroy, inject, input, output } from '@angular/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -11,47 +12,62 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     selector: 'jhi-programming-assessment-repo-export',
     template: `
         <jhi-button
-            [disabled]="!programmingExercises"
+            [disabled]="!programmingExercises()"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [icon]="faDownload"
-            [title]="singleParticipantMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
+            [title]="singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
         />
     `,
     imports: [ButtonComponent],
 })
-export class ProgrammingAssessmentRepoExportButtonComponent {
-    private modalService = inject(NgbModal);
+export class ProgrammingAssessmentRepoExportButtonComponent implements OnDestroy {
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+    private dialogRef?: DynamicDialogRef;
 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() participationIdList: number[];
-    @Input() participantIdentifierList: string; // comma separated
-    @Input() singleParticipantMode = false;
-    @Input() programmingExercises: ProgrammingExercise[];
+    readonly participationIdList = input<number[]>();
+    readonly participantIdentifierList = input<string>(); // comma separated
+    readonly singleParticipantMode = input(false);
+    readonly programmingExercises = input<ProgrammingExercise[]>();
 
-    @Output() buttonPressed = new EventEmitter<void>();
+    readonly buttonPressed = output<void>();
 
     // Icons
     faDownload = faDownload;
 
+    ngOnDestroy() {
+        this.dialogRef?.close();
+    }
+
     /**
-     * Stops the propagation of the mouse event and updates the component instance
-     * of the modalRef with this instance's values
+     * Stops the propagation of the mouse event and opens the repo export dialog,
+     * passing this instance's values through the dialog config data.
      * @param {MouseEvent} event - Mouse event
      */
     openRepoExportDialog(event: MouseEvent) {
-        this.buttonPressed.emit(undefined);
+        this.buttonPressed.emit();
         event.stopPropagation();
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.programmingExercises = this.programmingExercises;
-        modalRef.componentInstance.participationIdList = this.participationIdList;
-        modalRef.componentInstance.participantIdentifierList = this.participantIdentifierList;
-        modalRef.componentInstance.singleParticipantMode = this.singleParticipantMode;
+        this.dialogRef =
+            this.dialogService.open(ProgrammingAssessmentRepoExportDialogComponent, {
+                header: this.translateService.instant('entity.exportRepos.title'),
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                width: '50rem',
+                data: {
+                    programmingExercises: this.programmingExercises(),
+                    participationIdList: this.participationIdList(),
+                    participantIdentifierList: this.participantIdentifierList(),
+                    singleParticipantMode: this.singleParticipantMode(),
+                },
+            }) ?? undefined;
     }
 }

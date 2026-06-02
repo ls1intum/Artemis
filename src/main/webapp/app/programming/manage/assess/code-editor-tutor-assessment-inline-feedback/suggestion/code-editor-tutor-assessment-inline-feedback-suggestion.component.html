@@ -1,25 +1,30 @@
+@let currentFeedback = feedback();
 <div class="inline-feedback-suggestion alert p-1 mb-0 border rounded">
-    <jhi-feedback-suggestion-badge [feedback]="feedback" />
+    <jhi-feedback-suggestion-badge [feedback]="currentFeedback" />
     <div class="container flex-container px-4">
         <div class="row left-section">
             <div class="col-auto ps-0">
                 <h5 class="d-inline">
-                    <span class="badge" [class.bg-success]="feedback.credits! > 0" [class.bg-danger]="feedback.credits! < 0" [class.bg-warning]="feedback.credits === 0">{{
-                        roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P'
-                    }}</span>
+                    <span
+                        class="badge"
+                        [class.bg-success]="currentFeedback.credits! > 0"
+                        [class.bg-danger]="currentFeedback.credits! < 0"
+                        [class.bg-warning]="currentFeedback.credits === 0"
+                        >{{ roundScoreSpecifiedByCourseSettings(currentFeedback.credits, course()) + 'P' }}</span
+                    >
                 </h5>
             </div>
             <div class="col ps-0 pt-1 suggested-content">
                 <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestion"></h6>
-                <p [innerHTML]="buildFeedbackTextForReview(feedback, false)" class="mt-2"></p>
+                <p [innerHTML]="buildFeedbackTextForReview(currentFeedback, false)" class="mt-2"></p>
             </div>
         </div>
         <div class="row right-section ml-2">
-            <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
+            <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(currentFeedback)">
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
             </button>
-            <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
+            <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(currentFeedback)">
                 <fa-icon [icon]="faTrash" />
                 <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
             </button>

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -24,15 +26,17 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorBuildOutputComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorBuildOutputComponent;
     let fixture: ComponentFixture<CodeEditorBuildOutputComponent>;
     let debugElement: DebugElement;
     let codeEditorBuildLogService: CodeEditorBuildLogService;
     let participationWebsocketService: ParticipationWebsocketService;
     let resultService: ResultService;
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getBuildLogsStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
+    let getBuildLogsStub: ReturnType<typeof vi.spyOn>;
+    let getFeedbackDetailsForResultStub: ReturnType<typeof vi.spyOn>;
 
     const buildLogs = [
         {
@@ -81,7 +85,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
+            imports: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
@@ -89,24 +93,21 @@ describe('CodeEditorBuildOutputComponent', () => {
                 MockProvider(CodeEditorSubmissionService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                codeEditorBuildLogService = TestBed.inject(CodeEditorBuildLogService);
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                resultService = TestBed.inject(ResultService);
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                getBuildLogsStub = jest.spyOn(codeEditorBuildLogService, 'getBuildLogs');
-                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-                jest.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());
-            });
+        });
+        fixture = TestBed.createComponent(CodeEditorBuildOutputComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        codeEditorBuildLogService = TestBed.inject(CodeEditorBuildLogService);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        resultService = TestBed.inject(ResultService);
+        subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        getBuildLogsStub = vi.spyOn(codeEditorBuildLogService, 'getBuildLogs');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        vi.spyOn(TestBed.inject(CodeEditorSubmissionService), 'getBuildingState').mockReturnValue(of());
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should setup result websocket, fetch result details and build logs on participation change', () => {
@@ -121,13 +122,15 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result);
-        expect(getBuildLogsStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
+        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
+        expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBeNull();
@@ -162,7 +165,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
@@ -185,11 +188,13 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
+        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
+        expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBeNull();
@@ -211,11 +216,13 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
+        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
+        expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBeNull();

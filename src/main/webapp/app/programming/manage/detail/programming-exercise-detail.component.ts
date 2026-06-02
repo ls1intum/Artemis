@@ -21,8 +21,9 @@ import {
     faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -108,7 +109,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -786,8 +787,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+        this.dialogService.open(ConsistencyCheckComponent, {
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+            data: { exercisesToCheck: Array.of(exercise) },
+        });
     }
 
     async triggerAtlasOrchestrator() {

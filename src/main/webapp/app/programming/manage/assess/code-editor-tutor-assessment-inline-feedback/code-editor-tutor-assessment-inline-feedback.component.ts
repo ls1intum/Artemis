@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
@@ -54,32 +54,41 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
-    @Input() get feedback(): Feedback {
-        return this._feedback;
-    }
+    readonly feedback = input<Feedback>();
 
-    set feedback(feedback: Feedback | undefined) {
-        this._feedback = feedback || new Feedback();
-        this.oldFeedback = cloneDeep(this.feedback);
-        this.viewOnly = !!feedback;
-    }
+    /**
+     * The feedback currently displayed/edited. It is seeded from the {@link feedback} input (defaulting to a fresh
+     * {@link Feedback} when none is provided) and can be reassigned internally (e.g. when the user cancels an edit).
+     * Using a {@link linkedSignal} preserves the original setter behavior: whenever the bound input changes, the
+     * working copy resets to the new value.
+     */
+    readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
 
-    private _feedback: Feedback;
+    readonly selectedFile = input.required<string>();
 
-    @Input() selectedFile: string;
-    @Input() codeLine: number;
-    @Input() readOnly: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() course?: Course;
-    @ViewChild('detailText') textareaRef: ElementRef;
+    readonly codeLine = input.required<number>();
 
-    @Output() onUpdateFeedback = new EventEmitter<Feedback>();
-    @Output() onCancelFeedback = new EventEmitter<number>();
-    @Output() onDeleteFeedback = new EventEmitter<Feedback>();
-    @Output() onEditFeedback = new EventEmitter<number>();
+    readonly readOnly = input.required<boolean>();
+    readonly highlightDifferences = input<boolean>();
+    readonly course = input<Course>();
+    readonly textareaRef = viewChild<ElementRef>('detailText');
 
-    viewOnly: boolean;
-    oldFeedback: Feedback;
+    readonly onUpdateFeedback = output<Feedback>();
+    readonly onCancelFeedback = output<number>();
+    readonly onDeleteFeedback = output<Feedback>();
+    readonly onEditFeedback = output<number>();
+
+    /**
+     * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
+     * feedback was bound via the input and resets accordingly when the input changes.
+     */
+    readonly viewOnly = linkedSignal<boolean>(() => !!this.feedback());
+
+    /**
+     * Snapshot of the feedback used to restore state when the user cancels an edit. Reset whenever the input changes.
+     */
+    readonly oldFeedback = linkedSignal<Feedback>(() => cloneDeep(this.feedback() ?? new Feedback()));
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -87,18 +96,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
     updateFeedback() {
-        this.feedback.type = this.MANUAL;
-        this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
-        if (Feedback.isFeedbackSuggestion(this.feedback)) {
-            Feedback.updateFeedbackTypeOnChange(this.feedback);
+        const feedback = this.currentFeedback();
+        feedback.type = this.MANUAL;
+        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
+        if (Feedback.isFeedbackSuggestion(feedback)) {
+            Feedback.updateFeedbackTypeOnChange(feedback);
         } else {
-            this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
+            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
-        this.viewOnly = true;
-        if (this.feedback.credits && this.feedback.credits > 0) {
-            this.feedback.positive = true;
+        this.viewOnly.set(true);
+        if (feedback.credits && feedback.credits > 0) {
+            feedback.positive = true;
         }
-        this.onUpdateFeedback.emit(this.feedback);
+        this.onUpdateFeedback.emit(feedback);
     }
 
     /**
@@ -106,16 +116,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Otherwise, the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
-        this.feedback = this.oldFeedback;
-        this.viewOnly = this.feedback.type === this.MANUAL;
-        this.onCancelFeedback.emit(this.codeLine);
+        const restored = this.oldFeedback();
+        this.currentFeedback.set(restored);
+        this.oldFeedback.set(cloneDeep(restored));
+        this.viewOnly.set(restored.type === this.MANUAL);
+        this.onCancelFeedback.emit(this.codeLine());
     }
 
     /**
      * Deletes feedback after confirmation and emits to parent component
      */
     deleteFeedback() {
-        this.onDeleteFeedback.emit(this.feedback);
+        this.onDeleteFeedback.emit(this.currentFeedback());
         this.dialogErrorSource.next('');
     }
 
@@ -124,11 +136,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
-        this.viewOnly = false;
+        this.viewOnly.set(false);
         // Save the old feedback in case the user cancels later
-        this.oldFeedback = cloneDeep(this.feedback);
+        this.oldFeedback.set(cloneDeep(this.currentFeedback()));
         this.onEditFeedback.emit(line);
-        setTimeout(() => (this.textareaRef.nativeElement as HTMLTextAreaElement).focus());
+        setTimeout(() => (this.textareaRef()?.nativeElement as HTMLTextAreaElement | undefined)?.focus());
     }
 
     /**
@@ -136,9 +148,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * @param event Drop event with SGI data
      */
     updateFeedbackOnDrop(event: Event) {
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.feedback, event);
-        this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
-        this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine}`;
+        const feedback = this.currentFeedback();
+        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
+        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine()}`;
     }
 
     /**

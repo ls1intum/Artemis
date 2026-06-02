@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -88,16 +88,16 @@ enum ScaChartBarTitle {
     `,
     imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
-export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
+export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
     private navigationUtilsService = inject(ArtemisNavigationUtilService);
 
-    @Input() categories: StaticCodeAnalysisCategory[];
-    @Input() categoryIssuesMap?: CategoryIssuesMap;
-    @Input() exercise: ProgrammingExercise;
+    readonly categories = input.required<StaticCodeAnalysisCategory[]>();
+    readonly categoryIssuesMap = input<CategoryIssuesMap>();
+    readonly exercise = input.required<ProgrammingExercise>();
 
-    @Output() categoryColorsChange = new EventEmitter<{ [key: string]: string }>();
-    @Output() scaCategoryFilter = new EventEmitter<number>();
+    readonly categoryColorsChange = output<{ [key: string]: string }>();
+    readonly scaCategoryFilter = output<number>();
 
     readonly scaChartBarTitle = ScaChartBarTitle;
 
@@ -111,21 +111,29 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         translateService.onLangChange.subscribe(() => {
             this.updateTranslations();
         });
+
+        effect(() => {
+            this.computeChartData();
+        });
     }
 
-    ngOnChanges() {
+    private computeChartData(): void {
+        const categories = this.categories();
+        const categoryIssuesMap = this.categoryIssuesMap();
+        const exercise = this.exercise();
+
         this.ngxData = [];
         this.ngxColors.domain = [];
         // update colors for category table
         const categoryColors: { [key: string]: string } = {};
-        const categoryPenalties = this.categories
+        const categoryPenalties = categories
             .map((category) => ({
                 ...category,
                 penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
                 maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
             }))
             .map((category) => {
-                const issuesMap = this.categoryIssuesMap ? this.categoryIssuesMap[category.name] || {} : {};
+                const issuesMap = categoryIssuesMap ? categoryIssuesMap[category.name] || {} : {};
 
                 // total number of issues in this category
                 const issuesSum = Object.entries(issuesMap).reduce((sum, [issues, students]) => sum + parseInt(issues, 10) * students, 0);
@@ -135,8 +143,8 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
                     .map(([issues, students]) => students * Math.min(parseInt(issues, 10) * category.penalty, category.maxPenalty))
                     .reduce((sum, penaltyPoints) => sum + penaltyPoints, 0);
 
-                if ((this.exercise.maxStaticCodeAnalysisPenalty || Infinity) < penaltyPointsSum) {
-                    penaltyPointsSum = this.exercise.maxStaticCodeAnalysisPenalty!;
+                if ((exercise.maxStaticCodeAnalysisPenalty || Infinity) < penaltyPointsSum) {
+                    penaltyPointsSum = exercise.maxStaticCodeAnalysisPenalty!;
                 }
 
                 return { category, issues: issuesSum || 0, penaltyPoints: penaltyPointsSum };
@@ -157,7 +165,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
             const penaltyScore = totalPenalty > 0 ? Math.max((Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100, 0) : 0;
             const issuesScore = totalIssues > 0 ? Math.max((element.issues / totalIssues) * 100, 0) : 0;
             const penaltyPoints = totalPenaltyPoints > 0 ? Math.max((element.penaltyPoints / totalPenaltyPoints) * 100, 0) : 0;
-            const color = getColor(index / this.categories.length, 50);
+            const color = getColor(index / categories.length, 50);
 
             penalty.series.push({ name: element.category.name, value: penaltyScore, issues: issuesScore, points: penaltyPoints, isPenalty: true, id: element.category.id });
             issue.series.push({ name: element.category.name, value: issuesScore, penalty: penaltyScore, points: penaltyPoints });
@@ -182,7 +190,8 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      */
     onSelect(event: any): void {
         if (!event.isPenalty) {
-            this.navigationUtilsService.routeInNewTab(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'scores']);
+            const exercise = this.exercise();
+            this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'scores']);
         } else {
             this.tableFiltered = true;
             this.scaCategoryFilter.emit(event.id);

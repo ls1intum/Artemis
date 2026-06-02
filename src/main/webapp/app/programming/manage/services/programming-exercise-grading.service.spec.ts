@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -10,12 +12,14 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseGradingService', () => {
+    setupTestBed({ zoneless: true });
+
     let websocketService: WebsocketService;
     let httpService: HttpClient;
     let exercise1TestCaseSubject: Subject<Result>;
     let exercise2TestCaseSubject: Subject<Result>;
-    let subscribeStub: jest.SpyInstance;
-    let getStub: jest.SpyInstance;
+    let subscribeStub: ReturnType<typeof vi.spyOn>;
+    let getStub: ReturnType<typeof vi.spyOn>;
 
     let gradingService: ProgrammingExerciseGradingService;
 
@@ -36,46 +40,44 @@ describe('ProgrammingExerciseGradingService', () => {
     const exercise1Topic = `/topic/programming-exercises/${exercise1.id}/test-cases`;
     const exercise2Topic = `/topic/programming-exercises/${exercise2.id}/test-cases`;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                websocketService = TestBed.inject(WebsocketService);
-                httpService = TestBed.inject(HttpClient);
-                gradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        }).compileComponents();
 
-                subscribeStub = jest.spyOn(websocketService, 'subscribe');
-                getStub = jest.spyOn(httpService, 'get');
+        websocketService = TestBed.inject(WebsocketService);
+        httpService = TestBed.inject(HttpClient);
+        gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
-                exercise1TestCaseSubject = new Subject();
-                exercise2TestCaseSubject = new Subject();
-                subscribeStub.mockImplementation((arg1) => {
-                    switch (arg1) {
-                        case exercise1Topic:
-                            return exercise1TestCaseSubject.asObservable();
-                        case exercise2Topic:
-                            return exercise2TestCaseSubject.asObservable();
-                    }
-                    return new Subject().asObservable();
-                });
-                getStub.mockImplementation((arg1) => {
-                    switch (arg1) {
-                        case `${gradingService.resourceUrl}/${exercise1.id}/test-cases`:
-                            return of(testCases1);
-                        case `${gradingService.resourceUrl}/${exercise2.id}/test-cases`:
-                            return of(testCases2);
-                    }
-                });
-            });
+        subscribeStub = vi.spyOn(websocketService, 'subscribe');
+        getStub = vi.spyOn(httpService, 'get');
+
+        exercise1TestCaseSubject = new Subject();
+        exercise2TestCaseSubject = new Subject();
+        subscribeStub.mockImplementation((arg1) => {
+            switch (arg1) {
+                case exercise1Topic:
+                    return exercise1TestCaseSubject.asObservable();
+                case exercise2Topic:
+                    return exercise2TestCaseSubject.asObservable();
+            }
+            return new Subject().asObservable();
+        });
+        getStub.mockImplementation((arg1) => {
+            switch (arg1) {
+                case `${gradingService.resourceUrl}/${exercise1.id}/test-cases`:
+                    return of(testCases1);
+                case `${gradingService.resourceUrl}/${exercise2.id}/test-cases`:
+                    return of(testCases2);
+            }
+        });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should fetch the test cases via REST call if there is nothing stored yet for a given exercise', () => {

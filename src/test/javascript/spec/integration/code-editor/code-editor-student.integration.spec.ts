@@ -204,8 +204,8 @@ describe('CodeEditorStudentIntegration', () => {
         // Repository should be locked because due date has passed and it's not practice mode
         expect(container.repositoryIsLocked).toBeTrue();
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
-        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeTrue();
-        expect(container.codeEditorContainer.actions.disableActions).toBeTrue();
+        expect(container.codeEditorContainer()!.fileBrowser()!.disableActions).toBeTrue();
+        expect(container.codeEditorContainer()!.actions()!.disableActions).toBeTrue();
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {

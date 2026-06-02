@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evaluate-button/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
@@ -11,15 +11,15 @@ import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/sh
 @Component({
     selector: 'jhi-programming-exercise-configure-grading-actions',
     template: `
-        <jhi-programming-exercise-re-evaluate-button [exercise]="exercise" [disabled]="isSaving" />
-        <jhi-programming-exercise-trigger-all-button [exercise]="exercise" [disabled]="isSaving" (onBuildTriggered)="onBuildTriggered.emit()" />
+        <jhi-programming-exercise-re-evaluate-button [exercise]="exercise()" [disabled]="isSaving()" />
+        <jhi-programming-exercise-trigger-all-button [exercise]="exercise()" [disabled]="isSaving()" (onBuildTriggered)="onBuildTriggered.emit()" />
     `,
     imports: [ProgrammingExerciseReEvaluateButtonComponent, ProgrammingExerciseTriggerAllButtonComponent],
 })
 export class ProgrammingExerciseConfigureGradingActionsComponent {
-    @Input() exercise: ProgrammingExercise;
-    @Input() hasUpdatedGradingConfig: boolean;
-    @Input() isSaving: boolean;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly hasUpdatedGradingConfig = input.required<boolean>();
+    readonly isSaving = input.required<boolean>();
 
-    @Output() onBuildTriggered = new EventEmitter();
+    readonly onBuildTriggered = output();
 }

@@ -8,7 +8,7 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * must not be reintroduced in these modules.
  */
 // TODO: Add other modules here once they have been fully migrated to Angular signal-based APIs.
-// Still pending (legacy decorators remain): exercise, programming.
+// Still pending (legacy decorators remain): exercise.
 const MIGRATED_MODULES = [
     'account',
     'admin',
@@ -32,6 +32,7 @@ const MIGRATED_MODULES = [
     'modeling',
     'notification',
     'plagiarism',
+    'programming',
     'quiz',
     'shared-ui',
     'sharing',

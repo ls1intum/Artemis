@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDestroy, ViewChild, input } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -36,14 +36,14 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    @Input({ required: true }) programmingExercise: ProgrammingExercise;
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild('select') selectLanguageField: NgModel;
-    @ViewChild('packageName') packageNameField?: NgModel;
-    @ViewChild(ProgrammingExerciseCustomBuildPlanComponent) programmingExerciseCustomBuildPlanComponent?: ProgrammingExerciseCustomBuildPlanComponent;
-    @ViewChild(ProgrammingExerciseTheiaComponent) programmingExerciseTheiaComponent?: ProgrammingExerciseTheiaComponent;
+    readonly selectLanguageField = viewChild<NgModel>('select');
+    readonly packageNameField = viewChild<NgModel>('packageName');
+    readonly programmingExerciseCustomBuildPlanComponent = viewChild(ProgrammingExerciseCustomBuildPlanComponent);
+    readonly programmingExerciseTheiaComponent = viewChild(ProgrammingExerciseTheiaComponent);
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -62,20 +62,21 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
 
     ngAfterViewInit() {
-        this.fieldSubscriptions.push(this.selectLanguageField.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
+        this.fieldSubscriptions.push(this.selectLanguageField()?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
     }
 
     ngAfterViewChecked() {
-        if (!(this.packageNameField?.valueChanges as EventEmitter<string>)?.observed) {
-            this.fieldSubscriptions.push(this.packageNameField?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
+        const packageNameField = this.packageNameField();
+        if (!(packageNameField?.valueChanges as EventEmitter<string>)?.observed) {
+            this.fieldSubscriptions.push(packageNameField?.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));
         }
 
-        const dockerImageField = this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField();
+        const dockerImageField = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.dockerImageField();
         if (!(dockerImageField?.valueChanges as EventEmitter<string>)?.observed) {
             this.fieldSubscriptions.push(dockerImageField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
 
-        const timeoutField = this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField();
+        const timeoutField = this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.timeoutField();
         if (!(timeoutField?.valueChanges as EventEmitter<number>)?.observed) {
             this.fieldSubscriptions.push(timeoutField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
@@ -88,31 +89,33 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     }
 
     calculateFormValid() {
+        const selectLanguageField = this.selectLanguageField();
         const isPackageNameValid = this.isPackageNameValid();
         const isCustomBuildPlanValid = this.isCustomBuildPlanValid();
-        this.formValid = Boolean((this.selectLanguageField.isDisabled || this.selectLanguageField.valid) && isPackageNameValid && isCustomBuildPlanValid);
+        this.formValid = Boolean((selectLanguageField?.isDisabled || selectLanguageField?.valid) && isPackageNameValid && isCustomBuildPlanValid);
         this.formValidChanges.next(this.formValid);
     }
 
     isPackageNameValid(): boolean {
+        const packageNameField = this.packageNameField();
         return Boolean(
-            !this.programmingExercise.programmingLanguage ||
-            !this.programmingExerciseCreationConfig.packageNameRequired ||
-            this.programmingExercise.projectType === ProjectType.XCODE ||
-            this.packageNameField?.isDisabled ||
-            this.packageNameField?.valid,
+            !this.programmingExercise().programmingLanguage ||
+            !this.programmingExerciseCreationConfig().packageNameRequired ||
+            this.programmingExercise().projectType === ProjectType.XCODE ||
+            packageNameField?.isDisabled ||
+            packageNameField?.valid,
         );
     }
 
     isCustomBuildPlanValid(): boolean {
-        if (!this.programmingExercise.customizeBuildPlan) {
+        if (!this.programmingExercise().customizeBuildPlan) {
             return true;
         }
 
-        if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
+        if (this.programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
             return (
-                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField()?.valid ?? false) &&
-                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField()?.valid ?? false)
+                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.dockerImageField()?.valid ?? false) &&
+                (this.programmingExerciseCustomBuildPlanComponent()?.programmingExerciseDockerImageComponent()?.timeoutField()?.valid ?? false)
             );
         }
 

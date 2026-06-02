@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -33,9 +33,9 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private taskService = inject(ProgrammingExerciseTaskService);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() course: Course;
-    @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly course = input.required<Course>();
+    readonly gradingStatisticsObservable = input.required<Observable<ProgrammingExerciseGradingStatistics>>();
 
     // Icons
     faAngleDown = faAngleDown;
@@ -59,8 +59,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     ngOnInit(): void {
         this.allTasksExpandedSubject = new Subject();
-        this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
+        this.gradingStatisticsObservable().subscribe((gradingStatistics) => {
+            this.taskService.configure(this.exercise(), this.course(), gradingStatistics).subscribe(this.updateTasks);
         });
 
         this.currentSort = {
@@ -68,7 +68,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             descending: true,
         };
 
-        this.isExamExercise = isExamExercise(this.exercise);
+        this.isExamExercise = isExamExercise(this.exercise());
     }
 
     updateTasks = () => {

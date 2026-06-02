@@ -1,7 +1,7 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseWebsocketService } from 'app/programming/manage/services/programming-exercise-websocket.service';
 import { tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-grading-dirty-warning',
     template: `
-        @if (hasUpdatedGradingConfig) {
+        @if (hasUpdatedGradingConfig()) {
             <fa-icon
                 [icon]="faExclamationTriangle"
                 class="text-warning"
@@ -26,62 +26,39 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     `,
     imports: [FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseGradingDirtyWarningComponent {
     private programmingExerciseWebsocketService = inject(ProgrammingExerciseWebsocketService);
+    private destroyRef = inject(DestroyRef);
 
-    @Input() programmingExerciseId: number;
-    @Input() hasUpdatedGradingConfigInitialValue: boolean;
+    readonly programmingExerciseId = input.required<number>();
+    readonly hasUpdatedGradingConfigInitialValue = input.required<boolean>();
 
-    hasUpdatedGradingConfig?: boolean;
-    testCaseStateSubscription: Subscription;
+    protected readonly hasUpdatedGradingConfig = signal<boolean | undefined>(undefined);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
-    /**
-     * Set the initial updated test case value on the first change of the property.
-     * Subscribe for the test case state. This component is only visible if the programming exercise has updated (= dirty) test cases.
-     *
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges) {
-        // When the programming exercise changes, both set the hasUpdatedTestCases property to undefined and set up a subscription.
-        if (this.programmingExerciseId && changes.programmingExerciseId.previousValue !== this.programmingExerciseId) {
-            this.hasUpdatedGradingConfig = undefined;
-            this.unsubscribeSubscriptions();
-            this.testCaseStateSubscription = this.programmingExerciseWebsocketService
-                .getTestCaseState(this.programmingExerciseId)
+    constructor() {
+        // When the programming exercise changes, reset the updated-grading-config state and (re-)subscribe
+        // to the test case state. This component is only visible if the programming exercise has updated
+        // (= dirty) test cases. The effect re-runs only when the id signal changes, matching the previous
+        // ngOnChanges `previousValue !== current` guard; onCleanup unsubscribes the previous subscription.
+        effect((onCleanup) => {
+            const programmingExerciseId = this.programmingExerciseId();
+            if (!programmingExerciseId) {
+                return;
+            }
+            this.hasUpdatedGradingConfig.set(undefined);
+            const subscription = this.programmingExerciseWebsocketService
+                .getTestCaseState(programmingExerciseId)
                 .pipe(
                     tap((hasUpdatedTestCases: boolean) => {
-                        this.hasUpdatedGradingConfig = hasUpdatedTestCases;
+                        this.hasUpdatedGradingConfig.set(hasUpdatedTestCases);
                     }),
+                    takeUntilDestroyed(this.destroyRef),
                 )
                 .subscribe();
-        }
-        // On the first change of the updatedTestCasesInitialValue property, use it to initialize hasUpdatedTestCases.
-        if (
-            changes.hasUpdatedTestCasesInitialValue &&
-            changes.hasUpdatedTestCasesInitialValue.currentValue !== undefined &&
-            changes.hasUpdatedTestCasesInitialValue.isFirstChange()
-        ) {
-            this.hasUpdatedGradingConfig = this.hasUpdatedGradingConfigInitialValue;
-        }
-    }
-
-    /**
-     * Angular life cycle hook
-     * in this case if there is a subscription for the TestCaseState, unsubscribe
-     */
-    ngOnDestroy(): void {
-        this.unsubscribeSubscriptions();
-    }
-
-    /**
-     * If there is an existing subscription, unsubscribe.
-     */
-    private unsubscribeSubscriptions() {
-        if (this.testCaseStateSubscription) {
-            this.testCaseStateSubscription.unsubscribe();
-        }
+            onCleanup(() => subscription.unsubscribe());
+        });
     }
 }

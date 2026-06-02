@@ -1,4 +1,4 @@
-@if (numOfTasks > advisedMaxNumOfTasks) {
+@if (numOfTasks() > advisedMaxNumOfTasks()) {
     <div id="instruction_analysis_num-of-tasks-issues" class="editable-instruction-container__status__item">
         <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="tasksTooltipContent" />
         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.issues"></span>
@@ -11,9 +11,9 @@
 }
 <ng-template #tasksTooltipContent>
     <div class="text-start w-100">
-        @if (numOfTasks > advisedMaxNumOfTasks) {
+        @if (numOfTasks() > advisedMaxNumOfTasks()) {
             <div class="text-start">
-                <span jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.numOfTasks" [translateValues]="{ number: numOfTasks, limit: advisedMaxNumOfTasks }"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.tasksAnalysis.numOfTasks" [translateValues]="{ number: numOfTasks(), limit: advisedMaxNumOfTasks() }"></span>
             </div>
         }
     </div>

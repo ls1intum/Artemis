@@ -1,5 +1,5 @@
-@if (activeTab === 'code-analysis') {
-    <button id="import-configuration-button" class="btn btn-primary ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving">
+@if (activeTab() === 'code-analysis') {
+    <button id="import-configuration-button" class="btn btn-primary ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving()">
         <fa-icon [icon]="faCopy" />
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.import"></span>
     </button>
@@ -9,12 +9,12 @@
     class="btn btn-primary ms-3 my-3"
     jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
     (click)="onSave.emit()"
-    [disabled]="isSaving || !hasUnsavedChanges"
+    [disabled]="isSaving() || !hasUnsavedChanges()"
 ></button>
 <button
     id="reset-table-button"
     class="btn btn-secondary ms-3 my-1"
     (click)="onReset.emit()"
-    [disabled]="isSaving"
+    [disabled]="isSaving()"
     jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
 ></button>
