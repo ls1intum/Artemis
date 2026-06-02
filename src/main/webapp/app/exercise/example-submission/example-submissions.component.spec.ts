@@ -1,73 +1,79 @@
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ResultComponent } from 'app/exercise/result/result.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, of, throwError } from 'rxjs';
+import { MockProvider } from 'ng-mocks';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 import { AccountService } from 'app/core/auth/account.service';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Example Submission Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let alertService: AlertService;
+    let exercise: Exercise;
+    let dialogCloseSubject: Subject<Submission | undefined>;
+    let dialogRef: DynamicDialogRef;
 
-    const exampleSubmission1 = { id: 1 } as ExampleSubmission;
-    const exampleSubmission2 = { id: 2 } as ExampleSubmission;
-
-    const exercise: Exercise = {
+    const createExercise = (): Exercise => ({
         id: 1,
         type: ExerciseType.TEXT,
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
-        exampleSubmissions: [exampleSubmission1, exampleSubmission2],
-    };
-
-    const route = { data: of({ exercise }), children: [] } as any as ActivatedRoute;
+        exampleSubmissions: [{ id: 1 } as ExampleSubmission, { id: 2 } as ExampleSubmission],
+    });
 
     beforeEach(() => {
+        exercise = createExercise();
+        const route = { data: of({ exercise }), children: [] } as any as ActivatedRoute;
+        dialogCloseSubject = new Subject<Submission | undefined>();
+        dialogRef = {
+            close: vi.fn(),
+            onClose: dialogCloseSubject.asObservable(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
-            declarations: [ExampleSubmissionsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
-                MockProvider(NgbModal),
-                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExampleSubmissionsComponent);
-                component = fixture.componentInstance;
-                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-                modalService = TestBed.inject(NgbModal);
-                alertService = TestBed.inject(AlertService);
-            });
+            .overrideTemplate(ExampleSubmissionsComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExampleSubmissionsComponent);
+        component = fixture.componentInstance;
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        dialogService = TestBed.inject(DialogService);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
+        dialogCloseSubject.complete();
     });
 
     it('should initialize the component', () => {
@@ -77,23 +83,22 @@ describe('Example Submission Component', () => {
     });
 
     it('should delete an example submission', () => {
-        // GIVEN
         component.exercise = exercise;
-        const deleteStub = jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        component.createdExampleAssessment = [false, false];
+        const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-        // WHEN
         component.deleteExampleSubmission(0);
 
-        // THEN
         expect(deleteStub).toHaveBeenCalledOnce();
         expect(exercise.exampleSubmissions).toHaveLength(1);
     });
 
     it('should catch an error on delete', () => {
         component.exercise = exercise;
-        jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
+        component.createdExampleAssessment = [false, false];
+        vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
 
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -110,7 +115,7 @@ describe('Example Submission Component', () => {
         } as ExampleSubmission;
         exercise.exampleSubmissions = [exampleTextSubmission];
 
-        const getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
+        const getSubmissionSizeSpy = vi.spyOn(exampleSubmissionService, 'getSubmissionSize');
 
         component.exercise = exercise;
         component.ngOnInit();
@@ -119,26 +124,23 @@ describe('Example Submission Component', () => {
         expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not open import modal', () => {
+    it('should not import when the import dialog closes without a submission', () => {
         component.exercise = exercise;
-        const componentInstance = { exercise: Exercise };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        const importStub = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
+        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
+        dialogCloseSubject.next(undefined);
 
-        expect(modalServiceStub).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledOnce();
         expect(importStub).not.toHaveBeenCalled();
     });
 
-    it('should close open modals on component destroy', () => {
-        const modalServiceStub = jest.spyOn(modalService, 'hasOpenModals').mockReturnValue(true);
-        const modalServiceDismissSpy = jest.spyOn(modalService, 'dismissAll');
+    it('should close the import dialog on component destroy', () => {
+        component.exercise = exercise;
 
+        component.openImportModal();
         component.ngOnDestroy();
 
-        expect(modalServiceStub).toHaveBeenCalledOnce();
-        expect(modalServiceDismissSpy).toHaveBeenCalledOnce();
+        expect(dialogRef.close).toHaveBeenCalledOnce();
     });
 });

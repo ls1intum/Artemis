@@ -11,6 +11,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
@@ -26,6 +27,7 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;
 
     private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
     private dialogRef?: DynamicDialogRef;
 
     detail = input.required<ProgrammingDiffReportDetail>();
@@ -56,9 +58,13 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
 
         this.dialogRef =
             this.dialogService.open(GitDiffReportModalComponent, {
+                header: this.translateService.instant('artemisApp.programmingExercise.diffReport.title'),
                 modal: true,
-                closable: false,
+                closable: true,
+                closeOnEscape: true,
                 dismissableMask: false,
+                // Render the comparison wide so side-by-side diffs are readable without horizontal scrolling.
+                width: '90vw',
                 styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
                 data: {
                     repositoryDiffInformation,

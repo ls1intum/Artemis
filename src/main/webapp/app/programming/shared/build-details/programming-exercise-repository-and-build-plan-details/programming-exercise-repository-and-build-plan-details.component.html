@@ -34,8 +34,8 @@
                     "
                 />
 
-                @if (programmingExercise?.auxiliaryRepositories?.length) {
-                    @for (auxiliaryRepository of programmingExercise!.auxiliaryRepositories; track auxiliaryRepository) {
+                @if (programmingExercise().auxiliaryRepositories?.length) {
+                    @for (auxiliaryRepository of programmingExercise().auxiliaryRepositories; track auxiliaryRepository) {
                         <ng-container
                             *ngTemplateOutlet="
                                 repositoryBadge;
@@ -50,7 +50,7 @@
             </ul>
         </div>
     </div>
-    @if (!isLocalCIEnabled) {
+    @if (!isLocalCIEnabled()) {
         <div class="col-auto rounded pt-1 pb-1 preview-box">
             <div>
                 <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
@@ -79,7 +79,7 @@
                 />
             </ul>
         </div>
-    } @else if (checkoutDirectories) {
+    } @else if (checkoutDirectories(); as checkoutDirectories) {
         <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-submission-build-plan">
             <div>
                 <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.submissionBuildPlan"></span>
@@ -87,7 +87,7 @@
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
                 [checkoutDirectories]="checkoutDirectories.submissionBuildPlanCheckoutDirectories"
-                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
+                [auxiliaryRepositories]="programmingExercise().auxiliaryRepositories ?? []"
             />
         </div>
         <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
@@ -97,7 +97,7 @@
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
                 [checkoutDirectories]="checkoutDirectories.solutionBuildPlanCheckoutDirectories"
-                [auxiliaryRepositories]="programmingExercise.auxiliaryRepositories ?? []"
+                [auxiliaryRepositories]="programmingExercise().auxiliaryRepositories ?? []"
             />
         </div>
     }
@@ -106,7 +106,7 @@
 <ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
     <li>
         <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
-            {{ courseShortName }}{{ programmingExercise?.shortName }}{{ trailingRepoSlug }}
+            {{ courseShortName() }}{{ programmingExercise().shortName }}{{ trailingRepoSlug }}
         </code>
         @if (helpIconText) {
             <jhi-help-icon [text]="helpIconText" />

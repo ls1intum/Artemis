@@ -316,14 +316,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse markdown when preparing for save in edit mode', () => {
-        component.markdownEditor()!.inVisualMode = false;
+        component.markdownEditor()!.inVisualMode.set(false);
         const parseMarkdownSpy = vi.spyOn(component.markdownEditor()!, 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
 
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
-        component.markdownEditor()!.inVisualMode = true;
+        component.markdownEditor()!.inVisualMode.set(true);
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
         const mockEditor = {
             setText: vi.fn(),
@@ -337,7 +337,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
-        expect(component.markdownEditor()!['_markdown']).toBe('parsed-question');
+        expect(component.markdownEditor()!.currentMarkdown()).toBe('parsed-question');
     });
 
     it('should detect changes in visual mode', () => {

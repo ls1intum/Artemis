@@ -91,7 +91,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         if (!markdownEditor || this.reEvaluationInProgress()) {
             return false;
         }
-        return markdownEditor.inPreviewMode;
+        return markdownEditor.inPreviewMode();
     });
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
@@ -177,12 +177,12 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     prepareForSave(): void {
         const markdownEditor = this.markdownEditor();
-        if (markdownEditor?.inVisualMode) {
+        if (markdownEditor?.inVisualMode()) {
             /*
              * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
              * We update the markdown editor, which triggers the parsing of the visual tab content.
              */
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         } else {
             this.cleanupQuestion();
             if (markdownEditor) {
@@ -194,7 +194,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     onLeaveVisualTab(): void {
         const markdownEditor = this.markdownEditor();
         if (markdownEditor) {
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         }
         this.prepareForSave();
     }
@@ -293,7 +293,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.questionEditorText = this.generateMarkdown();
         const editor = this.markdownEditor();
         if (editor) {
-            editor.markdown = this.questionEditorText;
+            editor.setMarkdown(this.questionEditorText);
         }
         this.resetMultipleChoicePreview();
         this.resetMultipleChoiceVisual();

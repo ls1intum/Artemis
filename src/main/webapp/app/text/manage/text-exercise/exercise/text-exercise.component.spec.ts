@@ -59,7 +59,8 @@ describe('TextExercise Management Component', () => {
         courseExerciseService = TestBed.inject(CourseExerciseService);
         dialogService = TestBed.inject(DialogService);
 
-        // Set exercises via internal property since textExercises is a signal input
+        // Seed both the signal input and internal state for tests with and without change detection
+        fixture.componentRef.setInput('textExercises', [textExercise]);
         comp.internalTextExercises.set([textExercise]);
         // Initialize filter which is normally done in ngOnInit
         comp['filter'] = new ExerciseFilter();
@@ -82,7 +83,7 @@ describe('TextExercise Management Component', () => {
         );
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
         // THEN
@@ -95,7 +96,7 @@ describe('TextExercise Management Component', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         // Set the course before opening the modal to ensure courseId is defined
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
 
         comp.openImportModal();
         expect(dialogService.open).toHaveBeenCalledOnce();
@@ -113,8 +114,12 @@ describe('TextExercise Management Component', () => {
 
     describe('TextExercise Search Exercises', () => {
         it('should show all exercises', () => {
+            const filter = new ExerciseFilter('EXT', '', 'text');
+
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
+            fixture.componentRef.setInput('exerciseFilter', filter);
+            comp.filter = filter;
+            comp['applyFilter']();
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);
@@ -122,8 +127,12 @@ describe('TextExercise Management Component', () => {
         });
 
         it('should show no exercises', () => {
+            const filter = new ExerciseFilter('Prog', '', 'all');
+
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', filter);
+            comp.filter = filter;
+            comp['applyFilter']();
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);

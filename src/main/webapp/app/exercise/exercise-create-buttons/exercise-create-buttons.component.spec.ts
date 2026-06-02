@@ -1,13 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 import { Course } from 'app/course/shared/entities/course.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Manage Buttons Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ExerciseCreateButtonsComponent;
     let fixture: ComponentFixture<ExerciseCreateButtonsComponent>;
 
@@ -19,17 +23,19 @@ describe('Exercise Manage Buttons Component', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
             ],
-        }).compileComponents();
+        })
+            .overrideTemplate(ExerciseCreateButtonsComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExerciseCreateButtonsComponent);
         comp = fixture.componentInstance;
         fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

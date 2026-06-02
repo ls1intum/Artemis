@@ -130,7 +130,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
                     this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, input, output } from '@angular/core';
 import { TreeViewItem } from '../../models/tree-view-item';
 import { TreeViewItemTemplateContext } from '../../models/tree-view-item-template-context';
 import { FormsModule } from '@angular/forms';
@@ -11,8 +11,9 @@ import { TreeViewItemComponent } from 'app/programming/shared/code-editor/treevi
     imports: [FormsModule, TreeViewItemComponent],
 })
 export class TreeViewComponent<T> {
-    @Input() itemTemplate: TemplateRef<TreeViewItemTemplateContext<T>>;
-    @Input() items: TreeViewItem<T>[];
-    @Input() maxHeight = 500;
-    @Output() filterChange = new EventEmitter<string>();
+    // Optional: callers may omit this to use the built-in defaultItemTemplate fallback in the template.
+    readonly itemTemplate = input<TemplateRef<TreeViewItemTemplateContext<T>>>();
+    readonly items = input.required<TreeViewItem<T>[]>();
+    readonly maxHeight = input(500);
+    readonly filterChange = output<string>();
 }
