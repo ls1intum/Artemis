@@ -78,7 +78,7 @@
                                         [checked]="exerciseTypeFilter.getCurrentFilterState(convertToMapKey(type))"
                                         type="checkbox"
                                     />
-                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
+                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase().replace('-', '_') + 'Plural' | artemisTranslate }}</span>
                                 </label>
                             </li>
                         }
