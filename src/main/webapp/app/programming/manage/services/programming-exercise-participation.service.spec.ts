@@ -96,19 +96,19 @@ describe('ProgrammingExerciseParticipation Service', () => {
             req.flush(true);
         });
 
-        it.each([{ participationId: 42, gradedParticipationId: 21 }, { participationId: 42, gradedParticipationId: undefined }])(
-            'resetRepository',
-            ({ participationId, gradedParticipationId }: { participationId: number; gradedParticipationId?: number }) => {
-                let successful = false;
-                service.resetRepository(participationId, gradedParticipationId).subscribe(() => (successful = true));
+        it.each([
+            { participationId: 42, gradedParticipationId: 21 },
+            { participationId: 42, gradedParticipationId: undefined },
+        ])('resetRepository', ({ participationId, gradedParticipationId }: { participationId: number; gradedParticipationId?: number }) => {
+            let successful = false;
+            service.resetRepository(participationId, gradedParticipationId).subscribe(() => (successful = true));
 
-                const expectedURL =
-                    `${resourceUrlParticipations}${participationId}/reset-repository` + (gradedParticipationId ? `?gradedParticipationId=${gradedParticipationId}` : '');
-                const req = httpMock.expectOne({ method: 'PUT', url: expectedURL });
-                req.flush(of({}));
-                expect(successful).toBe(true);
-            },
-        );
+            const expectedURL =
+                `${resourceUrlParticipations}${participationId}/reset-repository` + (gradedParticipationId ? `?gradedParticipationId=${gradedParticipationId}` : '');
+            const req = httpMock.expectOne({ method: 'PUT', url: expectedURL });
+            req.flush(of({}));
+            expect(successful).toBe(true);
+        });
 
         it('retrieveCommitHistoryForParticipation', () => {
             const participationId = 42;

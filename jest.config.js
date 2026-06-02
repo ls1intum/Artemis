@@ -236,12 +236,15 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            // Floors drop as modules migrate out of Jest (each removes well-covered files from the denominator).
-            // Last full run: statements 82.37, branches 74.69, functions 68.49, lines 83.8 — floors set ~0.4-0.5pp below.
-            statements: 81.9,
-            branches: 72.9,
-            functions: 68,
-            lines: 83.4,
+            // Jest now runs only a handful of legacy integration specs (monaco-editor + code-editor). The
+            // programming module — its last large contributor — migrated to Vitest in this PR, so almost all
+            // source is excluded from the Jest denominator below and these floors are intentionally low.
+            // Vitest is now the primary client coverage gate (see vitest.config.ts). Floors track the last full run.
+            // Last full run: statements 23.93, branches 46.15, functions 5.55, lines 23.78 — floors set ~0.4pp below.
+            statements: 23.5,
+            branches: 45.5,
+            functions: 5,
+            lines: 23.3,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
