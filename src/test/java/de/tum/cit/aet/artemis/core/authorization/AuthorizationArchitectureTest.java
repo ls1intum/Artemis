@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -116,8 +117,11 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
+    // Includes RequestMapping so that a method-level @RequestMapping(method = ...) is also detected as an endpoint and
+    // must be authorized — otherwise it would bypass this rule (and, in modules without a *ResourceArchitectureTest
+    // subclass, the module-level shortcut-annotation rule does not run either).
     private static final Set<Class<? extends Annotation>> MAPPING_ANNOTATIONS = Set.of(GetMapping.class, PostMapping.class, PutMapping.class, PatchMapping.class,
-            DeleteMapping.class);
+            DeleteMapping.class, RequestMapping.class);
 
     /**
      * REST endpoints that intentionally perform authorization WITHOUT an Artemis annotation (a shared-secret token, an

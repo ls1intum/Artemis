@@ -377,8 +377,12 @@ public class CompetencyResource {
 
     /**
      * POST atlas/competencies/suggest : suggests competencies using AtlasML.
+     * <p>
+     * The target course is carried in the request body ({@code course_id}). {@code @EnforceAtLeastEditor} only gates the
+     * general editor role, so the caller must additionally be at least an editor in <em>that</em> course; this is
+     * checked programmatically below to prevent a user from requesting suggestions for a course they cannot edit.
      *
-     * @param request the request containing the description for competency suggestions
+     * @param request the request containing the description and the target course id for competency suggestions
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
     @PostMapping("competencies/suggest")
@@ -386,6 +390,8 @@ public class CompetencyResource {
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
         log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
+        var course = courseRepository.findByIdElseThrow(request.courseId());
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
         try {
