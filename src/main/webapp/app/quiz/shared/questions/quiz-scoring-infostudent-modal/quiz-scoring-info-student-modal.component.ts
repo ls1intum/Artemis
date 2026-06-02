@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, inject, input, model } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, inject, input, model, signal } from '@angular/core';
+import { DialogModule } from 'primeng/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -19,14 +19,15 @@ import { NgClass } from '@angular/common';
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, NgClass],
+    imports: [TranslateDirective, FaIconComponent, NgClass, DialogModule],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
-    private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
 
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
+
+    readonly isVisible = signal(false);
 
     score = model<number>(); // Score of the student that has been achieved
     questionIndex = input<number>(); // Question Index of the question
@@ -96,8 +97,8 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     /**
      * opens the pop-up for the explanation of the points
      */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+    open() {
+        this.isVisible.set(true);
     }
 
     /**
