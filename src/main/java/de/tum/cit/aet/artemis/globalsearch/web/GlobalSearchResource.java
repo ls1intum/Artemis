@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -76,14 +77,17 @@ public class GlobalSearchResource {
 
     private final ChannelRepository channelRepository;
 
+    private final StudentExamRepository studentExamRepository;
+
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository, StudentExamRepository studentExamRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.channelRepository = channelRepository;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -272,6 +276,25 @@ public class GlobalSearchResource {
     }
 
     /**
+     * Per-student exam registration data, pre-fetched once per request to scope exam and exam
+     * exercise visibility to the student's actual registrations and assigned exercises.
+     *
+     * @param registeredExamIds       IDs of non-test exams where the student has a StudentExam
+     * @param assignedExamExerciseIds IDs of exercises assigned to the student's StudentExams
+     */
+    private record StudentExamInfo(Set<Long> registeredExamIds, Set<Long> assignedExamExerciseIds) {
+    }
+
+    private StudentExamInfo fetchStudentExamInfo(long userId, List<Long> studentCourseIds) {
+        if (studentCourseIds.isEmpty()) {
+            return null;
+        }
+        Set<Long> registeredExamIds = studentExamRepository.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
+        Set<Long> assignedExerciseIds = studentExamRepository.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, studentCourseIds);
+        return new StudentExamInfo(registeredExamIds, assignedExerciseIds);
+    }
+
+    /**
      * Builds the compound per-type filter for the current request. Returns:
      * <ul>
      * <li>{@code hasAccess = false} if the user has no accessible courses (caller short-circuits with empty list)</li>
@@ -301,6 +324,7 @@ public class GlobalSearchResource {
         }
 
         CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
+        StudentExamInfo studentExamInfo = fetchStudentExamInfo(user.getId(), roleSets.studentCourseIds());
 
         Map<Long, Course> accessibleCoursesById = new HashMap<>();
         for (Course course : accessibleCourses) {
@@ -311,7 +335,7 @@ public class GlobalSearchResource {
 
         List<Filter> disjuncts = new ArrayList<>();
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
-            Filter disjunct = buildExerciseDisjunct(roleSets);
+            Filter disjunct = buildExerciseDisjunct(roleSets, studentExamInfo);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
@@ -329,7 +353,7 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
-            Filter disjunct = buildExamDisjunct(roleSets);
+            Filter disjunct = buildExamDisjunct(roleSets, studentExamInfo);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
@@ -337,7 +361,7 @@ public class GlobalSearchResource {
             // When the exam filter is active, also include exercises that belong to exams
             boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
             if (!isExerciseTypeAlreadyRequested) {
-                Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets);
+                Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets, studentExamInfo);
                 if (examExerciseDisjunct != null) {
                     disjuncts.add(examExerciseDisjunct);
                 }
@@ -431,22 +455,22 @@ public class GlobalSearchResource {
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exercises the user may access, or {@code null} if no courses qualify
      */
-    private Filter buildExerciseDisjunct(CourseRoleSets roleSets) {
+    private Filter buildExerciseDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
         }
         if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT, null)));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT, studentExamInfo)));
         }
         Filter combined = combineOr(subBranches);
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), combined);
     }
 
-    private static Filter exerciseAccessFilter(Role role) {
+    private static Filter exerciseAccessFilter(Role role, StudentExamInfo studentExamInfo) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
             // TAs: regular exercises are always visible (tutor uses the student view).
@@ -465,9 +489,22 @@ public class GlobalSearchResource {
 
             return Filter.or(regularExercises, assessableExamExercise);
         }
-        // Students: released regular exercises OR exam exercises after exam start
+        // Students: released regular exercises + only assigned exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
                 Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
+
+        if (studentExamInfo != null && !studentExamInfo.assignedExamExerciseIds().isEmpty()) {
+            // Only show exam exercises that are assigned to the student's individual exam
+            Filter assignedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                    Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now),
+                    Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).containsAny(studentExamInfo.assignedExamExerciseIds().toArray(new Long[0])));
+            return Filter.or(releasedRegularExercises, assignedExamExercises);
+        }
+        if (studentExamInfo != null) {
+            // Student has no assigned exam exercises (not registered for any exam)
+            return releasedRegularExercises;
+        }
+        // Fallback: studentExamInfo not available, use original behavior
         Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
                 Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
         return Filter.or(releasedRegularExercises, startedExamExercises);
@@ -511,22 +548,22 @@ public class GlobalSearchResource {
     /**
      * Builds the exam exercise disjunct. This is used when the exam type filter is active but the exercise
      * type filter is not, to include exercises belonging to exams in the results. Applies the same
-     * role-based visibility rules as {@link #buildExerciseDisjunct(CourseRoleSets)} but restricts
+     * role-based visibility rules as {@link #buildExerciseDisjunct(CourseRoleSets, StudentExamInfo)} but restricts
      * results to exam exercises only ({@code is_exam_exercise = true}).
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exam exercises the user may access, or {@code null} if no courses qualify
      */
-    private Filter buildExamExerciseDisjunct(CourseRoleSets roleSets) {
+    private Filter buildExamExerciseDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
         }
         if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT, null)));
         }
         if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT)));
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT, studentExamInfo)));
         }
         Filter combined = combineOr(subBranches);
         if (combined == null) {
@@ -542,21 +579,50 @@ public class GlobalSearchResource {
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exams the user may access, or {@code null} if no courses qualify
      */
-    private Filter buildExamDisjunct(CourseRoleSets roleSets) {
+    private Filter buildExamDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
         OffsetDateTime now = OffsetDateTime.now();
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.editorCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
         }
-        List<Long> visibleDateGatedCourseIds = new ArrayList<>(roleSets.taCourseIds().size() + roleSets.studentCourseIds().size());
-        visibleDateGatedCourseIds.addAll(roleSets.taCourseIds());
-        visibleDateGatedCourseIds.addAll(roleSets.studentCourseIds());
-        if (!visibleDateGatedCourseIds.isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, visibleDateGatedCourseIds),
+        // TAs: all exams with visible_date <= now
+        if (!roleSets.taCourseIds().isEmpty()) {
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()),
                     Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now)));
+        }
+        // Students: test exams (visible to all) + registered regular exams, both gated by visible_date
+        if (!roleSets.studentCourseIds().isEmpty()) {
+            Filter studentExamFilter = buildStudentExamFilter(roleSets.studentCourseIds(), studentExamInfo, now);
+            if (studentExamFilter != null) {
+                subBranches.add(studentExamFilter);
+            }
         }
         Filter combined = combineOr(subBranches);
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXAM), combined);
+    }
+
+    /**
+     * Builds the exam filter for students. Test exams are visible to all students (after visible_date),
+     * while regular exams are only visible if the student has a StudentExam registration.
+     */
+    private static Filter buildStudentExamFilter(List<Long> studentCourseIds, StudentExamInfo studentExamInfo, OffsetDateTime now) {
+        Filter courseFilter = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, studentCourseIds);
+        Filter visibleFilter = Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now);
+
+        if (studentExamInfo == null) {
+            // Fallback: studentExamInfo not available, show all visible exams (original behavior)
+            return Filter.and(courseFilter, visibleFilter);
+        }
+
+        List<Filter> branches = new ArrayList<>();
+        // Test exams: always visible to students in their courses
+        branches.add(Filter.and(courseFilter, visibleFilter, Filter.property(SearchableEntitySchema.Properties.TEST_EXAM).eq(true)));
+        // Regular exams: only if registered
+        if (!studentExamInfo.registeredExamIds().isEmpty()) {
+            branches.add(Filter.and(courseFilter, visibleFilter,
+                    Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).containsAny(studentExamInfo.registeredExamIds().toArray(new Long[0]))));
+        }
+        return combineOr(branches);
     }
 
     /**
