@@ -189,4 +189,53 @@ describe('ExerciseHeaderComponent', () => {
             expect(fixture.componentInstance.hasPracticeSubmission()).toBe(true);
         });
     });
+
+    describe('activeParticipation', () => {
+        it('should not fall back to the graded participation in practice mode (so the badge does not show the graded score)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBeUndefined();
+        });
+
+        it('should use the practice participation in practice mode when one exists', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(practiceParticipation);
+        });
+
+        it('should use the graded participation in graded mode', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(gradedParticipation);
+        });
+    });
 });

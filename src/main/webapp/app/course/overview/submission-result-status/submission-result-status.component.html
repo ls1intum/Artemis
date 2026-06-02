@@ -34,6 +34,10 @@
                 }
             }
         </div>
+    } @else if (isPractice()) {
+        <div>
+            <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
+        </div>
     } @else {
         <div>
             @if (exercise().teamMode && exercise().studentAssignedTeamIdComputed && !exercise().studentAssignedTeamId) {

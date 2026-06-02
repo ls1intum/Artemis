@@ -58,7 +58,7 @@ export class ExerciseHeaderComponent {
     });
 
     readonly activeParticipation = computed(() => {
-        return this.participationMode() === 'practice' ? (this.effectivePracticeParticipation() ?? this.studentParticipation()) : this.studentParticipation();
+        return this.participationMode() === 'practice' ? this.effectivePracticeParticipation() : this.studentParticipation();
     });
 
     readonly isViewingSubmission = signal(false);

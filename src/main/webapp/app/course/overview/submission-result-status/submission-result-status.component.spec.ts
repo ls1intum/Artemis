@@ -191,4 +191,43 @@ describe('SubmissionResultStatusComponent', () => {
             expect(span?.attributes['jhiTranslate']).toBe(expectedKey);
         });
     });
+
+    describe('practice mode', () => {
+        it('should show "currently participating" while practicing an ended quiz with no result yet', async () => {
+            // The underlying quiz has ended (due date passed) and there is no practice participation/result yet.
+            // Without the practice flag this would render "missed due date".
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.QUIZ,
+                quizEnded: true,
+                dueDate: dayjs().subtract(1, 'hours'),
+                quizBatches: [] as QuizBatch[],
+            } as QuizExercise);
+            fixture.componentRef.setInput('isPractice', true);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
+            expect(span?.attributes['jhiTranslate']).toBe('artemisApp.courseOverview.exerciseList.userParticipatingShort');
+        });
+
+        it('should show the result once a practice participation with a result exists', async () => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.QUIZ,
+                quizEnded: true,
+                dueDate: dayjs().subtract(1, 'hours'),
+                quizBatches: [] as QuizBatch[],
+            } as QuizExercise);
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ submitted: true, results: [{ id: 1 }] }],
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(fixture.debugElement.query(By.css('#submission-result-graded'))).not.toBeNull();
+        });
+    });
 });

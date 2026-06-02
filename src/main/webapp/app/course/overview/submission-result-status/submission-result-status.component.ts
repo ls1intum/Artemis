@@ -43,6 +43,7 @@ export class SubmissionResultStatusComponent {
     readonly triggerLastGraded = input(true);
     readonly showProgressBar = input(false);
     readonly quizLiveStatusOverride = input<LiveQuizParticipationStatus>();
+    readonly isPractice = input(false);
 
     // Computed signal for whether due date has passed
     private readonly afterDueDate = computed(() => {
@@ -68,7 +69,7 @@ export class SubmissionResultStatusComponent {
 
     readonly quizEnded = computed(() => {
         const exercise = this.exercise();
-        return exercise?.type === ExerciseType.QUIZ && !!(exercise as QuizExercise).quizEnded;
+        return exercise?.type === ExerciseType.QUIZ && (exercise as QuizExercise).quizEnded;
     });
 
     readonly exerciseMissedDueDate = computed(() => {
