@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureSearchApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Service
 @Lazy
+@Conditional(HyperionEnabled.class)
 public class HyperionCompetencyContextService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCompetencyContextService.class);
@@ -48,7 +51,7 @@ public class HyperionCompetencyContextService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
-    private final Optional<PyrisConnectorService> pyrisConnectorService;
+    private final Optional<IrisLectureSearchApi> irisLectureSearchApi;
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
@@ -58,11 +61,11 @@ public class HyperionCompetencyContextService {
     private final ChatClient chatClient;
 
     public HyperionCompetencyContextService(Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<PyrisConnectorService> pyrisConnectorService, Optional<LectureUnitApi> lectureUnitApi, Optional<HyperionPromptTemplateService> templateService,
+            Optional<IrisLectureSearchApi> irisLectureSearchApi, Optional<LectureUnitApi> lectureUnitApi, Optional<HyperionPromptTemplateService> templateService,
             @Nullable ChatClient chatClient) {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyRelationApi = competencyRelationApi;
-        this.pyrisConnectorService = pyrisConnectorService;
+        this.irisLectureSearchApi = irisLectureSearchApi;
         this.lectureUnitApi = lectureUnitApi;
         this.templateService = templateService;
         this.chatClient = chatClient;
@@ -125,11 +128,11 @@ public class HyperionCompetencyContextService {
 
         // Semantic search via Pyris: retrieves pre-indexed lecture content most relevant to the
         // selected competency titles, scoped to this course via the courseIds filter.
-        if (pyrisConnectorService.isPresent()) {
+        if (irisLectureSearchApi.isPresent()) {
             String query = selected.stream().map(CourseCompetency::getTitle).filter(Objects::nonNull).collect(Collectors.joining(", "));
             if (!query.isBlank()) {
-                pyrisConnectorService.get().searchLectures(query, LECTURE_SEARCH_LIMIT, List.of(courseId)).stream()
-                        .map(r -> formatSnippet(r.lecture().name(), r.lectureUnit().name(), r.snippet())).forEach(snippets::add);
+                irisLectureSearchApi.get().searchLectures(query, LECTURE_SEARCH_LIMIT, List.of(courseId)).stream()
+                        .map(r -> formatSnippet(r.lectureName(), r.lectureUnitName(), r.snippet())).forEach(snippets::add);
             }
         }
 

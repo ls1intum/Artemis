@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,8 +36,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionCompetencyContextService.CompetencyContext;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureSearchApi;
+import de.tum.cit.aet.artemis.iris.dto.IrisLectureSnippetDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -54,7 +53,7 @@ class HyperionCompetencyContextServiceTest {
     private CompetencyRelationApi competencyRelationApi;
 
     @Mock
-    private PyrisConnectorService pyrisConnectorService;
+    private IrisLectureSearchApi irisLectureSearchApi;
 
     @Mock
     private LectureUnitApi lectureUnitApi;
@@ -71,7 +70,7 @@ class HyperionCompetencyContextServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         var templateService = new HyperionPromptTemplateService();
         ChatClient chatClient = ChatClient.create(chatModel);
-        service = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(pyrisConnectorService),
+        service = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(irisLectureSearchApi),
                 Optional.of(lectureUnitApi), Optional.of(templateService), chatClient);
     }
 
@@ -115,8 +114,8 @@ class HyperionCompetencyContextServiceTest {
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findExercisesByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList()))
-                .thenReturn(List.of(makePyrisResult("Algorithms", "Sorting Unit", "Merge sort is divide-and-conquer.")));
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList()))
+                .thenReturn(List.of(makeSnippet("Algorithms", "Sorting Unit", "Merge sort is divide-and-conquer.")));
 
         CompetencyContext context = service.computeContext(42L, List.of(1L));
 
@@ -134,7 +133,7 @@ class HyperionCompetencyContextServiceTest {
 
         service.computeContext(42L, List.of(1L));
 
-        verify(pyrisConnectorService, never()).searchLectures(anyString(), anyInt(), anyList());
+        verify(irisLectureSearchApi, never()).searchLectures(anyString(), anyInt(), anyList());
     }
 
     @Test
@@ -144,7 +143,7 @@ class HyperionCompetencyContextServiceTest {
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(Set.of(1L))).thenReturn(Set.of(5L));
         when(competencyRelationApi.findExercisesByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
         when(lectureUnitApi.findAllByIds(Set.of(5L))).thenReturn(List.of(makeTextUnit("Inheritance", "OOP Basics", "Inheritance allows one class to extend another.")));
 
         CompetencyContext context = service.computeContext(10L, List.of(1L));
@@ -160,7 +159,7 @@ class HyperionCompetencyContextServiceTest {
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(Set.of(1L))).thenReturn(Set.of(5L));
         when(competencyRelationApi.findExercisesByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
         when(lectureUnitApi.findAllByIds(Set.of(5L))).thenReturn(List.of(makeTextUnit("Empty Unit", "Lecture", "   ")));
 
         CompetencyContext context = service.computeContext(10L, List.of(1L));
@@ -174,7 +173,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         TextExercise exercise = new TextExercise();
         exercise.setId(10L);
@@ -192,14 +191,14 @@ class HyperionCompetencyContextServiceTest {
 
     @Test
     void computeContext_skipsExerciseSummaryWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(pyrisConnectorService),
+        var serviceWithNullClient = new HyperionCompetencyContextService(Optional.of(courseCompetencyApi), Optional.of(competencyRelationApi), Optional.of(irisLectureSearchApi),
                 Optional.of(lectureUnitApi), Optional.of(new HyperionPromptTemplateService()), null);
 
         Competency competency = makeCompetency(1L, "Algorithms");
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         TextExercise exercise = new TextExercise();
         exercise.setId(10L);
@@ -219,7 +218,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         TextExercise exercise = new TextExercise();
         exercise.setId(10L);
@@ -241,7 +240,7 @@ class HyperionCompetencyContextServiceTest {
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of(5L, 6L));
         when(competencyRelationApi.findExercisesByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
         // Two text units with identical formatted output
         when(lectureUnitApi.findAllByIds(anySet())).thenReturn(
                 List.of(makeTextUnit("Sorting", "Lecture: Basics", "Merge sort splits the array."), makeTextUnit("Sorting", "Lecture: Basics", "Merge sort splits the array.")));
@@ -257,7 +256,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(1L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         TextExercise exercise = new TextExercise();
         exercise.setId(1L);
@@ -283,7 +282,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(1L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         FileUploadExercise exercise = new FileUploadExercise();
         exercise.setId(2L);
@@ -308,7 +307,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(1L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         ModelingExercise exercise = new ModelingExercise();
         exercise.setId(3L);
@@ -333,7 +332,7 @@ class HyperionCompetencyContextServiceTest {
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of(competency));
         when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
         when(competencyRelationApi.findLectureUnitIdsByCompetencyIds(anySet())).thenReturn(Set.of());
-        when(pyrisConnectorService.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
+        when(irisLectureSearchApi.searchLectures(anyString(), anyInt(), anyList())).thenReturn(List.of());
 
         TextExercise exercise = new TextExercise();
         exercise.setId(10L);
@@ -366,10 +365,7 @@ class HyperionCompetencyContextServiceTest {
         return unit;
     }
 
-    private static PyrisLectureSearchResultDTO makePyrisResult(String lectureName, String unitName, String snippet) {
-        var course = new PyrisLectureSearchResultDTO.CourseDTO(1L, "Test Course");
-        var lecture = new PyrisLectureSearchResultDTO.LectureDTO(1L, lectureName);
-        var unit = new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, unitName, "/u/1", 1, "lecture_unit_slide", Map.of(), null);
-        return new PyrisLectureSearchResultDTO(course, lecture, unit, snippet);
+    private static IrisLectureSnippetDTO makeSnippet(String lectureName, String unitName, String snippet) {
+        return new IrisLectureSnippetDTO(lectureName, unitName, snippet);
     }
 }
