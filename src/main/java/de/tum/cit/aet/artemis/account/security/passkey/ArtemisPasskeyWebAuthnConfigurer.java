@@ -91,6 +91,15 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     private String port;
 
     /**
+     * Optional override for the WebAuthn Relying Party ID.
+     * When set, this value is used instead of deriving the RP ID from {@code server.url}.
+     * Needed when the browser-facing hostname differs from the server hostname,
+     * e.g. in E2E tests where nginx terminates TLS on a different hostname.
+     */
+    @Value("${artemis.usermanagement.passkey.relying-party-id:}")
+    private String relyingPartyIdOverride;
+
+    /**
      * Additional allowed origins for WebAuthn passkey authentication.
      * Useful when the browser-facing URL differs from {@code server.url},
      * e.g. in E2E tests where an nginx reverse proxy terminates TLS on a different hostname.
@@ -144,7 +153,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         try {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
 
-            relyingPartyId = clientUrlToRegisterPasskey.getHost();
+            relyingPartyId = (relyingPartyIdOverride != null && !relyingPartyIdOverride.isBlank()) ? relyingPartyIdOverride.strip() : clientUrlToRegisterPasskey.getHost();
 
             allowedOrigins.add(clientUrlToRegisterPasskey.toString());
 
