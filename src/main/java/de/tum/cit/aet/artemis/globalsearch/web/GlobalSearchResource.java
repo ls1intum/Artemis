@@ -449,20 +449,21 @@ public class GlobalSearchResource {
     private static Filter exerciseAccessFilter(Role role) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
-            // TAs only see exercises they can assess. Text, modeling, and file-upload exercises
-            // always have manual assessment. Programming exercises require an explicit non-automatic
-            // assessment type (SEMI_AUTOMATIC when manual assessment or complaints are enabled).
-            // Quiz exercises are always auto-graded and excluded entirely.
-            // Exam exercises are additionally gated on the exam end date.
+            // TAs: regular exercises are always visible (tutor uses the student view).
+            // Exam exercises are only visible after the exam ends and only if the exercise is
+            // assessable by TAs (not quiz, and programming only with manual/semi-automatic assessment).
+            Filter regularExercises = Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false);
+
             Filter notProgrammingAndNotQuiz = Filter.and(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()).not(),
                     Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.QUIZ.getValue()).not());
             Filter programmingWithManualAssessment = Filter.and(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()),
                     Filter.or(Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.SEMI_AUTOMATIC.name()),
                             Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.MANUAL.name()),
                             Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.AUTOMATIC_ATHENA.name())));
-            Filter assessableExercise = Filter.or(notProgrammingAndNotQuiz, programmingWithManualAssessment);
-            return Filter.and(assessableExercise, Filter.or(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false), Filter
-                    .and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now))));
+            Filter assessableExamExercise = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                    Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now), Filter.or(notProgrammingAndNotQuiz, programmingWithManualAssessment));
+
+            return Filter.or(regularExercises, assessableExamExercise);
         }
         // Students: released regular exercises OR exam exercises after exam start
         Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
