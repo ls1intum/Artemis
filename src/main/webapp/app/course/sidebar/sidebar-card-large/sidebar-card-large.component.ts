@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Location } from '@angular/common';
@@ -17,11 +17,11 @@ export class SidebarCardLargeComponent {
     private route = inject(ActivatedRoute);
     private location = inject(Location);
 
-    @Input({ required: true }) sidebarItem: SidebarCardElement;
-    @Input() sidebarType?: SidebarTypes;
-    @Input() itemSelected?: boolean;
+    readonly sidebarItem = input.required<SidebarCardElement>();
+    readonly sidebarType = input<SidebarTypes>();
+    readonly itemSelected = input<boolean>();
     /** Key used for grouping or categorizing sidebar items */
-    @Input() groupKey?: string;
+    readonly groupKey = input<string>();
 
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
@@ -30,10 +30,10 @@ export class SidebarCardLargeComponent {
 
     refreshChildComponent(): void {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected) {
-                this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+            if (this.itemSelected()) {
+                this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
             } else {
-                this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+                this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
             }
         });
     }

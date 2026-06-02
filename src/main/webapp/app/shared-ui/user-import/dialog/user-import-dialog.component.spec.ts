@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +30,7 @@ import { User } from 'app/account/user/user.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 describe('UsersImportDialogComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<UsersImportDialogComponent>;
     let component: UsersImportDialogComponent;
     let examManagementService: ExamManagementService;
@@ -74,26 +77,26 @@ describe('UsersImportDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open and close dialog', () => {
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
 
         component.open();
-        expect(component.dialogVisible()).toBeTrue();
+        expect(component.dialogVisible()).toBe(true);
 
         component.close();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should emit importCompleted on finish', () => {
-        const emitSpy = jest.spyOn(component.importCompleted, 'emit');
+        const emitSpy = vi.spyOn(component.importCompleted, 'emit');
 
         component.onFinish();
 
         expect(emitSpy).toHaveBeenCalledOnce();
-        expect(component.dialogVisible()).toBeFalse();
+        expect(component.dialogVisible()).toBe(false);
     });
 
     it('should reset dialog when selecting csv file', async () => {
@@ -114,7 +117,7 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-        expect(component.noUsersFoundError).toBeTrue();
+        expect(component.noUsersFoundError).toBe(true);
     });
 
     it('should read students from csv file', async () => {
@@ -138,15 +141,15 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should stop parsing and show a generic error when csv parsing fails unexpectedly', async () => {
-        jest.spyOn(readUsersFromCsv, 'readStudentDTOsFromCSVFile').mockRejectedValue(new Error('parse failed'));
+        vi.spyOn(readUsersFromCsv, 'readStudentDTOsFromCSVFile').mockRejectedValue(new Error('parse failed'));
         const alertService = TestBed.inject(AlertService);
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
         const event = { target: { files: [studentCsvColumns], value: 'students.csv' } };
 
         await component.onCSVFileSelect(event);
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isParsing).toBeFalse();
+        expect(component.isParsing).toBe(false);
         expect(event.target.value).toBe('');
     });
 
@@ -159,14 +162,14 @@ describe('UsersImportDialogComponent', () => {
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
-        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
         component.importUsers();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBeFalse();
-        expect(component.hasImported).toBeTrue();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
 
@@ -296,13 +299,13 @@ describe('UsersImportDialogComponent', () => {
         const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = { body: notImportedStudents } as HttpResponse<ExamUserDTO[]>;
-        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse());
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
@@ -316,7 +319,7 @@ describe('UsersImportDialogComponent', () => {
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
-        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.open();
         // Set usersToImport after open() since open() calls resetDialog() which clears the array
@@ -324,8 +327,8 @@ describe('UsersImportDialogComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBeFalse();
-        expect(component.isSubmitDisabled).toBeFalse();
+        expect(component.hasImported).toBe(false);
+        expect(component.isSubmitDisabled).toBe(false);
         const importButton = fixture.debugElement.query(By.css('#import'));
 
         expect(importButton).not.toBeNull();
@@ -333,11 +336,11 @@ describe('UsersImportDialogComponent', () => {
         importButton.nativeElement.click();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBeFalse();
-        expect(component.hasImported).toBeTrue();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
-        jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.hasImported = true;
         fixture.detectChanges();
@@ -351,7 +354,7 @@ describe('UsersImportDialogComponent', () => {
 
     it('should expose validationError for invalid exam user csv rows', async () => {
         fixture.componentRef.setInput('examUserMode', true);
-        jest.spyOn(readUsersFromCsv, 'readExamUserDTOsFromCSVFile').mockResolvedValue({
+        vi.spyOn(readUsersFromCsv, 'readExamUserDTOsFromCSVFile').mockResolvedValue({
             ok: false,
             invalidRowIndices: [2, 4],
         });
@@ -362,13 +365,13 @@ describe('UsersImportDialogComponent', () => {
         expect(component.validationError).toBe('2, 4');
         expect(component.noUsersFoundError).toBeUndefined();
         expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBeFalse();
+        expect(component.isParsing).toBe(false);
         expect(event.target.value).toBe('');
     });
 
     it('should set noUsersFoundError when exam user csv contains no entries', async () => {
         fixture.componentRef.setInput('examUserMode', true);
-        jest.spyOn(readUsersFromCsv, 'readExamUserDTOsFromCSVFile').mockResolvedValue({
+        vi.spyOn(readUsersFromCsv, 'readExamUserDTOsFromCSVFile').mockResolvedValue({
             ok: true,
             examUsers: [],
         });
@@ -376,22 +379,22 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.noUsersFoundError).toBeTrue();
+        expect(component.noUsersFoundError).toBe(true);
         expect(component.validationError).toBeUndefined();
         expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBeFalse();
+        expect(component.isParsing).toBe(false);
         expect(event.target.value).toBe('');
     });
 
     it('should show a generic error and stop importing on save error', () => {
         const alertService = TestBed.inject(AlertService);
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
         component.isImporting = true;
 
         component.onSaveError();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBeFalse();
+        expect(component.isImporting).toBe(false);
     });
 
     it('should import tutorial group students and convert generated student dto response', () => {
@@ -409,14 +412,14 @@ describe('UsersImportDialogComponent', () => {
         ];
 
         const fakeResponse = { body: generatedStudents } as HttpResponse<any[]>;
-        jest.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(fakeResponse));
+        vi.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
         component.importUsers();
 
         expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport, 'response');
-        expect(component.isImporting).toBeFalse();
-        expect(component.hasImported).toBeTrue();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
         expect(component.notFoundUsers).toEqual([
             {
                 registrationNumber: '2',
@@ -445,7 +448,7 @@ describe('UsersImportDialogComponent', () => {
 
         const importedUsers: User[] = [firstImportedUser, secondImportedUser];
 
-        jest.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: importedUsers })));
+        vi.spyOn(adminUserService, 'importAll').mockReturnValue(of(new HttpResponse<User[]>({ body: importedUsers })));
 
         component.usersToImport = usersToImport;
         component.importUsers();
@@ -454,8 +457,8 @@ describe('UsersImportDialogComponent', () => {
             { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
             { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
         ]);
-        expect(component.isImporting).toBeFalse();
-        expect(component.hasImported).toBeTrue();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(true);
         expect(component.notFoundUsers).toMatchObject([
             { registrationNumber: '3', firstName: 'Alan', lastName: 'Turing', login: 'alan', email: 'alan@example.com', visibleRegistrationNumber: '3' },
             { registrationNumber: '4', firstName: 'Grace', lastName: 'Hopper', login: 'grace', email: 'grace@example.com', visibleRegistrationNumber: '4' },
@@ -468,12 +471,12 @@ describe('UsersImportDialogComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', undefined);
         fixture.componentRef.setInput('adminUserMode', false);
         const alertService = TestBed.inject(AlertService);
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
 
         component.importUsers();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBeFalse();
-        expect(component.hasImported).toBeFalse();
+        expect(component.isImporting).toBe(false);
+        expect(component.hasImported).toBe(false);
     });
 });

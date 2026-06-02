@@ -1,25 +1,25 @@
-<div [class.success]="testCaseState === TestCaseState.SUCCESS" [class.failed]="testCaseState === TestCaseState.FAIL">
-    @if (testCaseState === TestCaseState.SUCCESS) {
+<div [class.success]="testCaseState() === TestCaseState.SUCCESS" [class.failed]="testCaseState() === TestCaseState.FAIL">
+    @if (testCaseState() === TestCaseState.SUCCESS) {
         <fa-icon [icon]="farCheckCircle" size="lg" class="test-icon text-success" />
     }
-    @if (testCaseState === TestCaseState.FAIL) {
+    @if (testCaseState() === TestCaseState.FAIL) {
         <fa-icon [icon]="farTimesCircle" size="lg" class="test-icon text-danger" />
     }
-    @if (testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED) {
+    @if (testCaseState() === TestCaseState.NO_RESULT || testCaseState() === TestCaseState.NOT_EXECUTED) {
         <fa-icon [icon]="faCircleDot" size="lg" class="test-icon text-secondary" />
     }
-    @if (taskName) {
-        <span class="task-name" [innerHTML]="taskName | safeHtml"></span>
+    @if (taskName()) {
+        <span class="task-name" [innerHTML]="taskName() | safeHtml"></span>
     }
-    @if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length && testIds.length) {
+    @if (latestResult() && latestResult()!.feedbacks && latestResult()!.feedbacks!.length && testIds().length) {
         <span
             class="test-status--linked"
-            [class]="testIds?.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-            [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds.length, passedTests: successfulTests.length }"
+            [class]="testIds().length === successfulTests().length ? 'text-success' : failedTests().length ? 'text-danger' : 'text-secondary'"
+            [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds().length, passedTests: successfulTests().length }"
             (click)="showDetailsForTests()"
         ></span>
     } @else {
-        <span class="text-secondary" [innerHTML]="translationBasePath + (testIds.length ? 'noResult' : 'noTests') | artemisTranslate"></span>
+        <span class="text-secondary" [innerHTML]="translationBasePath + (testIds().length ? 'noResult' : 'noTests') | artemisTranslate"></span>
     }
     <!-- There are no results at all, build error or never executed.-->
 </div>

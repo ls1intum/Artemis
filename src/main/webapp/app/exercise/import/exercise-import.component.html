@@ -25,7 +25,7 @@
                     <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (this.exerciseType === ExerciseType.PROGRAMMING) {
+                @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
                     <th jhiSortBy="PROGRAMMING_LANGUAGE" class="col-2">
                         <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
                         <fa-icon [icon]="faSort" />
@@ -54,7 +54,7 @@
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm" />
                     </td>
-                    @if (exerciseType === ExerciseType.PROGRAMMING) {
+                    @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
                         <td class="text-break col-3">
                             <span>{{ asProgrammingExercise(exercise)?.programmingLanguage }}</span>
                         </td>

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -6,32 +8,35 @@ import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatu
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Plagiarism Header Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
+    const alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
+        dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
-            declarations: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
+            imports: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(PlagiarismHeaderComponent);
         comp = fixture.componentInstance;
@@ -48,23 +53,23 @@ describe('Plagiarism Header Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should confirm a plagiarism', () => {
-        jest.spyOn(comp, 'updatePlagiarismStatus');
+        vi.spyOn(comp, 'updatePlagiarismStatus');
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
-        expect(comp.isLoading).toBeTrue();
+        expect(comp.isLoading).toBe(true);
     });
 
     it('should deny a plagiarism', () => {
-        jest.spyOn(comp, 'updatePlagiarismStatus');
+        vi.spyOn(comp, 'updatePlagiarismStatus');
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
-        expect(comp.isLoading).toBeTrue();
+        expect(comp.isLoading).toBe(true);
     });
 
     it('should disable deny button if plagiarism status is denied or loading', () => {
@@ -77,38 +82,57 @@ describe('Plagiarism Header Component', () => {
         const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as HTMLButtonElement;
 
         expect(button).toBeTruthy();
-        expect(button.disabled).toBeTrue();
+        expect(button.disabled).toBe(true);
     });
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
-        jest.spyOn(comp, 'updatePlagiarismStatus');
-        const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
+        vi.spyOn(comp, 'updatePlagiarismStatus');
+        const dialogSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
 
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(comp.isLoading).toBeTrue();
+        expect(dialogSpy).toHaveBeenCalledOnce();
+        expect(comp.isLoading).toBe(true);
     });
 
-    it('should update the plagiarism status', fakeAsync(() => {
-        const updatePlagiarismComparisonStatusStub = jest
-            .spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus')
-            .mockReturnValue(of({}) as Observable<HttpResponse<void>>);
+    it('should deny the plagiarism when the confirmation dialog is confirmed', () => {
+        const updateSpy = vi.spyOn(comp, 'updatePlagiarismStatus').mockImplementation(() => {});
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
+
+        comp.denyPlagiarism();
+        dialogClose.next({ confirmed: true });
+
+        expect(updateSpy).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
+    });
+
+    it('should reset the loading state when the confirmation dialog is dismissed', () => {
+        const updateSpy = vi.spyOn(comp, 'updatePlagiarismStatus');
+        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
+
+        comp.denyPlagiarism();
+        dialogClose.next(undefined);
+
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(comp.isLoading).toBe(false);
+    });
+
+    it('should update the plagiarism status', async () => {
+        const updatePlagiarismComparisonStatusStub = vi.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus').mockReturnValue(of({}) as Observable<HttpResponse<void>>);
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
-        tick();
+        await Promise.resolve();
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison()?.status).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(comp.isLoading).toBeFalse();
-    }));
+        expect(comp.isLoading).toBe(false);
+    });
 
     it('should emit when expanding left split view pane', () => {
         // we set the splitControlSubject in beforeEach, hence we can assume it is defined
-        jest.spyOn(comp.splitControlSubject()!, 'next');
+        vi.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitLeftButton = nativeElement.querySelector("[data-qa='split-view-left']");
@@ -121,7 +145,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should emit when expanding right split view pane', () => {
         // we set the splitControlSubject in beforeEach, hence we can assume it is defined
-        jest.spyOn(comp.splitControlSubject()!, 'next');
+        vi.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitRightButton = nativeElement.querySelector("[data-qa='split-view-right']");
@@ -134,7 +158,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should emit when resetting the split panes', () => {
         // we set the splitControlSubject in beforeEach, hence we can assume it is defined
-        jest.spyOn(comp.splitControlSubject()!, 'next');
+        vi.spyOn(comp.splitControlSubject()!, 'next');
 
         const nativeElement = fixture.nativeElement;
         const splitHalfButton = nativeElement.querySelector("[data-qa='split-view-even']");
@@ -175,14 +199,14 @@ describe('Plagiarism Header Component', () => {
 
         fixture.componentRef.setInput('exercise', undefined);
         fixture.detectChanges();
-        const alertSpy = jest.spyOn(alertServiceMock, 'error');
-        const updateSpy = jest.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus');
+        const alertSpy = vi.spyOn(alertServiceMock, 'error');
+        const updateSpy = vi.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus');
 
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
         expect(alertSpy).toHaveBeenCalledWith('error.courseIdUndefined');
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(updateSpy).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
     });
 });

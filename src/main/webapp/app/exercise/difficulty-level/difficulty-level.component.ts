@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription } from 'rxjs';
@@ -19,14 +19,14 @@ export class DifficultyLevelComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
 
     private translateSubscription: Subscription;
-    @Input() difficultyLevel: string;
+    readonly difficultyLevel = input<string>(undefined!);
     coloredDifficultyLevel: ColoredDifficultyLevel = { label: '', color: [] };
 
     ngOnInit(): void {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.mapDifficultyLevelToColors(this.difficultyLevel);
+            this.mapDifficultyLevelToColors(this.difficultyLevel());
         });
-        this.coloredDifficultyLevel = this.mapDifficultyLevelToColors(this.difficultyLevel);
+        this.coloredDifficultyLevel = this.mapDifficultyLevelToColors(this.difficultyLevel());
     }
 
     mapDifficultyLevelToColors(difficultyLevel: string): ColoredDifficultyLevel {

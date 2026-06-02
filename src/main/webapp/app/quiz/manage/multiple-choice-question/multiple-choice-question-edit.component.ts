@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -53,7 +53,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -92,7 +91,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         if (!markdownEditor || this.reEvaluationInProgress()) {
             return false;
         }
-        return markdownEditor.inPreviewMode;
+        return markdownEditor.inPreviewMode();
     });
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
@@ -152,14 +151,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     }
 
     /**
-     * open the modal for the help dialog
-     * @param content
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
-    /**
      * Detect of text changes in the markdown editor
      * 1. Parse the text in the editor to get the newest values
      * 2. Notify the parent component to check the validity of the text
@@ -186,12 +177,12 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     prepareForSave(): void {
         const markdownEditor = this.markdownEditor();
-        if (markdownEditor?.inVisualMode) {
+        if (markdownEditor?.inVisualMode()) {
             /*
              * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
              * We update the markdown editor, which triggers the parsing of the visual tab content.
              */
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         } else {
             this.cleanupQuestion();
             if (markdownEditor) {
@@ -203,7 +194,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     onLeaveVisualTab(): void {
         const markdownEditor = this.markdownEditor();
         if (markdownEditor) {
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         }
         this.prepareForSave();
     }
@@ -302,7 +293,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.questionEditorText = this.generateMarkdown();
         const editor = this.markdownEditor();
         if (editor) {
-            editor.markdown = this.questionEditorText;
+            editor.setMarkdown(this.questionEditorText);
         }
         this.resetMultipleChoicePreview();
         this.resetMultipleChoiceVisual();

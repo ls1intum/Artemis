@@ -1,19 +1,14 @@
-<form class="conflict-modal" #confirmForm="ngForm" name="confirmForm" (ngSubmit)="refreshFiles()">
-    <div class="conflict-modal__header">
-        <h4 jhiTranslate="artemisApp.editor.refresh.refreshExplanationShort"></h4>
-    </div>
-    <div class="conflict-modal__body">
-        <span class="conflict-modal__body__warning">
-            <fa-icon [icon]="faExclamationTriangle" />
-            <div jhiTranslate="artemisApp.editor.refresh.refreshExplanationLong"></div>
+<form #confirmForm="ngForm" name="confirmForm" (ngSubmit)="refreshFiles()">
+    <div class="p-3">
+        <span class="d-inline-flex align-items-center gap-2">
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
+            <span jhiTranslate="artemisApp.editor.refresh.refreshExplanationLong"></span>
         </span>
     </div>
-    <div class="conflict-modal__footer">
-        <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
-        <button type="submit" class="conflict-modal__footer__submit" [disabled]="!confirmForm.valid">
-            <fa-icon [icon]="faTimes" /><span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+    <div class="d-flex justify-content-end gap-2 p-3 border-top">
+        <button class="btn btn-secondary" type="button" (click)="closeModal()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
+        <button type="submit" class="btn btn-danger" [disabled]="!confirmForm.valid">
+            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
         </button>
     </div>
 </form>
