@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -69,6 +69,7 @@ export class ExerciseHeadersInformationComponent {
     private sortService = inject(SortService);
     private serverDateService = inject(ArtemisServerDateService);
 
+    /** Captured once: the server time used as the reference point for all relative/absolute date displays. */
     private readonly now = this.serverDateService.now();
 
     readonly resultHistoryDropdown = viewChild(ResultHistoryDropdownComponent);
@@ -80,26 +81,16 @@ export class ExerciseHeadersInformationComponent {
 
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
+    /** Explicitly provided course; falls back to the exercise's own course via {@link resolvedCourse}. */
     readonly course = input<Course>();
     readonly submissionPolicy = input<SubmissionPolicy>();
+    /** Optional override for the result history; falls back to the results derived from the participation's submissions. */
     readonly sortedHistoryResultsInput = input<Result[] | undefined>();
     readonly isPractice = input<boolean>(false);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+    /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
-
-    readonly sortedHistoryResults = computed(() => {
-        const results = this.sortedHistoryResultsInput() ?? getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions);
-        return this.sortService.sortByProperty(Array.from(results), 'id', false);
-    });
-    readonly exercise = input.required<Exercise>();
-    readonly studentParticipation = input<StudentParticipation>();
-    /** Explicitly provided course; falls back to the exercise's own course via {@link resolvedCourse}. */
-    readonly course = input<Course>();
-    readonly submissionPolicy = input<SubmissionPolicy>();
-    readonly isPractice = input<boolean>(false);
-    readonly athenaEnabled = input<boolean>(false);
-    readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live quiz info to render as extra header boxes; undefined for non-quiz exercises or outside a live/practice participation. */
     readonly quizLiveHeaderInfo = input<QuizLiveHeaderInfo>();
 
@@ -110,7 +101,7 @@ export class ExerciseHeadersInformationComponent {
 
     /** Results across all submissions, sorted by id descending (newest first). The updated participation by the websocket is not guaranteed to be sorted. */
     readonly sortedHistoryResults = computed<Result[]>(() => {
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions);
+        const results = Array.from(this.sortedHistoryResultsInput() ?? getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
         this.sortService.sortByProperty(results, 'id', false);
         return results;
     });
