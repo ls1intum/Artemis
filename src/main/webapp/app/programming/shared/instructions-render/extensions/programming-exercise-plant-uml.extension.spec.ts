@@ -1,10 +1,11 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import 'jest-extended';
 
 /**
  * Tests for ProgrammingExercisePlantUmlExtensionWrapper.
@@ -31,6 +32,8 @@ import 'jest-extended';
  * - The per-diagram index comes from the array position (not mutable state), so no reset is needed
  */
 describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
+    setupTestBed({ zoneless: true });
+
     let extension: ProgrammingExercisePlantUmlExtensionWrapper;
 
     // Problem statements with varying numbers of PlantUML diagrams for testing
@@ -50,6 +53,10 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
         });
 
         extension = TestBed.inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     /**
@@ -213,7 +220,7 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
                 callbackCaptures.push(callback);
             });
 
-            const injectSpy = jest.spyOn(extension as any, 'loadAndInjectPlantUml');
+            const injectSpy = vi.spyOn(extension as any, 'loadAndInjectPlantUml');
 
             // Render exercise A with 2 diagrams
             extension.setExerciseId(10);
@@ -246,7 +253,7 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
                 callbackCaptures.push(callback);
             });
 
-            const injectSpy = jest.spyOn(extension as any, 'loadAndInjectPlantUml');
+            const injectSpy = vi.spyOn(extension as any, 'loadAndInjectPlantUml');
 
             // Exercise A: 2 diagrams
             extension.setExerciseId(10);

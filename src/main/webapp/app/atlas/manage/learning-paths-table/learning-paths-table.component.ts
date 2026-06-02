@@ -5,7 +5,8 @@ import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +33,7 @@ export class LearningPathsTableComponent {
 
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
 
     readonly courseId = input.required<number>();
 
@@ -104,6 +105,6 @@ export class LearningPathsTableComponent {
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {
-        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId, name);
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.dialogService, learningPathId, name);
     }
 }

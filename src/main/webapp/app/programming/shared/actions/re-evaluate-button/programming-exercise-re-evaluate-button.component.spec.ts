@@ -1,7 +1,9 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evalulate-button/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evaluate-button/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -12,12 +14,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Re-Evaluate Button Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
     programmingExercise.title = 'Exercise 1';
 
-    let comp: ProgrammingExerciseReEvaluateButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseReEvaluateButtonComponent>;
     let gradingService: ProgrammingExerciseGradingService;
 
@@ -27,18 +30,17 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseReEvaluateButtonComponent);
-        comp = fixture.componentInstance;
         gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
-        comp.exercise = programmingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should reEvaluate exercise', () => {
-        jest.spyOn(gradingService, 'reEvaluate');
+        vi.spyOn(gradingService, 'reEvaluate');
 
         const button = fixture.debugElement.nativeElement.querySelector('#re-evaluate-button button');
         button.click();

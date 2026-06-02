@@ -1,14 +1,14 @@
 <div
     id="cardInstructions"
     class="instructions-wrapper card collapsable-card"
-    [ngStyle]="collapsed ? (isAssessmentMode ? { height: '200px' } : { height: '250px' }) : { height: '100%' }"
+    [ngStyle]="collapsed ? (isAssessmentMode() ? { height: '200px' } : { height: '250px' }) : { height: '100%' }"
 >
     <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="!disableCollapse() && toggleEditorCollapse($event)">
         <h3 class="card-title">
             @if (!collapsed) {
                 <span>
                     <fa-icon [icon]="farListAlt" />
-                    @if (!isAssessmentMode) {
+                    @if (!isAssessmentMode()) {
                         @if (!isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
                         }
@@ -16,7 +16,7 @@
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
                         }
                     }
-                    @if (isAssessmentMode) {
+                    @if (isAssessmentMode()) {
                         <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
                 </span>
@@ -27,7 +27,7 @@
                         <fa-icon class="top-icon" [icon]="faChevronLeft" />
                     }
                     <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
-                    @if (!isAssessmentMode) {
+                    @if (!isAssessmentMode()) {
                         @if (!isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
                         }
@@ -35,7 +35,7 @@
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
                         }
                     }
-                    @if (isAssessmentMode) {
+                    @if (isAssessmentMode()) {
                         <span class="header" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
                     @if (!disableCollapse()) {
