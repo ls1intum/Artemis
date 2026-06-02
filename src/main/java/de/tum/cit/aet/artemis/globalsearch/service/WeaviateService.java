@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -140,7 +142,7 @@ public class WeaviateService {
         try {
             if (client.collections.exists(collectionName)) {
                 log.info("Collection '{}' already exists, skipping creation.", collectionName);
-                checkForConfigurationDrift(collectionName);
+                reconcileExistingCollection(collectionName, schema);
                 return;
             }
 
@@ -215,55 +217,68 @@ public class WeaviateService {
     }
 
     /**
-     * Compares the existing collection's vectorizer configuration with the application config.
-     * Logs a warning if there is a mismatch, guiding the developer to delete and recreate the collection.
+     * Reconciles an existing Weaviate collection with the Java schema definition:
+     * adds any missing properties and checks for vectorizer configuration drift.
+     * Fetches the collection config exactly once to avoid redundant REST calls.
      *
      * @param collectionName the fully-qualified collection name (with prefix)
+     * @param schema         the expected schema definition
      */
-    private void checkForConfigurationDrift(String collectionName) {
+    private void reconcileExistingCollection(String collectionName, WeaviateCollectionSchema schema) {
         try {
-            Optional<VectorConfig> defaultVector = getDefaultVectorConfig(collectionName);
-            if (defaultVector.isEmpty()) {
+            Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
+            if (existingConfig.isEmpty()) {
                 return;
             }
 
-            List<String> mismatches = detectVectorizerMismatches(defaultVector.get());
-            if (!mismatches.isEmpty()) {
-                log.warn(
-                        "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
-                                + "Delete the collection and restart Artemis to apply the new settings: curl -X DELETE \"http://{}:{}/v1/schema/{}\"",
-                        collectionName, String.join("; ", mismatches), properties.httpHost(), properties.httpPort(), collectionName);
-            }
+            addMissingProperties(collectionName, schema, existingConfig.get());
+            checkForConfigurationDrift(collectionName, existingConfig.get());
         }
         catch (Exception e) {
-            log.debug("Could not verify configuration of existing collection '{}': {}", collectionName, e.getMessage());
+            log.warn("Could not reconcile existing collection '{}': {}", collectionName, e.getMessage());
         }
     }
 
     /**
-     * Retrieves the default vector configuration from an existing collection.
-     *
-     * @param collectionName the fully-qualified collection name
-     * @return the default vector config, or empty if not available
+     * Detects properties defined in the Java schema but missing from the existing Weaviate
+     * collection, and adds them. This handles the case where new properties are added to
+     * {@link WeaviateCollectionSchema} after the collection was originally created.
      */
-    private Optional<VectorConfig> getDefaultVectorConfig(String collectionName) throws IOException {
-        Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
-        if (existingConfig.isEmpty()) {
-            return Optional.empty();
-        }
+    private void addMissingProperties(String collectionName, WeaviateCollectionSchema schema, CollectionConfig existingConfig) throws IOException {
+        Set<String> existingPropertyNames = existingConfig.properties().stream().map(Property::propertyName).collect(Collectors.toSet());
 
-        Map<String, VectorConfig> vectors = existingConfig.get().vectors();
+        var collection = client.collections.use(collectionName);
+        for (WeaviatePropertyDefinition prop : schema.properties()) {
+            if (!existingPropertyNames.contains(prop.name())) {
+                collection.config.addProperty(createProperty(prop));
+                log.info("Added missing property '{}' to collection '{}'", prop.name(), collectionName);
+            }
+        }
+    }
+
+    /**
+     * Compares the existing collection's vectorizer configuration with the application config.
+     * Logs a warning if there is a mismatch, guiding the developer to delete and recreate the collection.
+     */
+    private void checkForConfigurationDrift(String collectionName, CollectionConfig existingConfig) {
+        Map<String, VectorConfig> vectors = existingConfig.vectors();
         if (vectors == null || vectors.isEmpty()) {
-            return Optional.empty();
+            return;
         }
 
-        // Weaviate stores the default vector under the key "default"
         VectorConfig defaultVector = vectors.get("default");
         if (defaultVector == null) {
             log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
-            return Optional.empty();
+            return;
         }
-        return Optional.of(defaultVector);
+
+        List<String> mismatches = detectVectorizerMismatches(defaultVector);
+        if (!mismatches.isEmpty()) {
+            log.warn(
+                    "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
+                            + "Delete the collection and restart Artemis to apply the new settings: curl -X DELETE \"http://{}:{}/v1/schema/{}\"",
+                    collectionName, String.join("; ", mismatches), properties.httpHost(), properties.httpPort(), collectionName);
+        }
     }
 
     /**
