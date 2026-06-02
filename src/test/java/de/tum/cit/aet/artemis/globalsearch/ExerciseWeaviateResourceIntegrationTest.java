@@ -25,12 +25,15 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -93,6 +96,9 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private Course course;
 
     private ProgrammingExercise releasedExercise;
@@ -108,6 +114,10 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     private ProgrammingExercise endedExamAutoAssessmentProgrammingExercise;
 
     private ProgrammingExercise endedExamSemiAutoAssessmentProgrammingExercise;
+
+    private Exam ongoingExam;
+
+    private Exam endedExam;
 
     private Lecture lecture;
 
@@ -147,7 +157,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         notStartedExamExercise = exerciseRepository.save(notStartedExamExercise);
 
         // Create an exam exercise where the exam is ongoing (started but not ended)
-        Exam ongoingExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
+        ongoingExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
         ongoingExam = examRepository.save(ongoingExam);
         var ongoingExerciseGroup = ExamFactory.generateExerciseGroup(true, ongoingExam);
         ongoingExerciseGroup = exerciseGroupRepository.save(ongoingExerciseGroup);
@@ -156,7 +166,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         ongoingExamExercise = exerciseRepository.save(ongoingExamExercise);
 
         // Create an exam exercise where the exam has already ended
-        Exam endedExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), false);
+        endedExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), false);
         endedExam = examRepository.save(endedExam);
         var endedExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
         endedExerciseGroup = exerciseGroupRepository.save(endedExerciseGroup);
@@ -184,6 +194,14 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         lecture = lectureUtilService.createLecture(course);
         lecture.setTitle(SEARCH_PREFIX + " Test Lecture");
         lecture = lectureTestRepository.save(lecture);
+
+        // Register student1 for the ongoing and ended exams (with assigned exercises)
+        // so that the student-specific exam registration filter allows visibility.
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam ongoingStudentExam = examUtilService.addStudentExamWithUser(ongoingExam, student);
+        examUtilService.addExerciseToStudentExam(ongoingStudentExam, ongoingExamExercise);
+        StudentExam endedStudentExam = examUtilService.addStudentExamWithUser(endedExam, student);
+        examUtilService.addExerciseToStudentExam(endedStudentExam, endedExamExercise);
 
         // Index all exercises and the lecture in Weaviate
         searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(releasedExercise));
@@ -461,17 +479,17 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         /**
-         * Neither flag should appear on regular (non-exam) exercises regardless of role.
+         * Role flags should be present on regular exercises too, since they are used by the
+         * frontend for routing (e.g. tutors to student view, editors to management page).
          */
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testStaffFlagsAbsentOnRegularExercise() throws Exception {
+        void testStaffFlagsPresentOnRegularExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Released&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var regularResult = results.stream().filter(r -> (SEARCH_PREFIX + " Released Exercise").equals(r.title())).findFirst();
 
             assertThat(regularResult).isPresent();
-            assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
-            assertThat(regularResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+            assertThat(regularResult.get().metadata()).containsEntry("isAtLeastEditor", true);
         }
     }
 
@@ -526,6 +544,201 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var titles = getResultTitles(results);
 
             assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
+        }
+    }
+
+    @Nested
+    class StudentExamRegistrationTests {
+
+        /**
+         * A student without a StudentExam registration should not see exercises from that exam,
+         * even if the exam has started. The setUp only registers student1 for the ongoing and ended
+         * exams but NOT the not-started exam — however, the not-started exam hasn't started yet
+         * so it's filtered by date anyway. This test creates a SECOND ongoing exam that student1
+         * is NOT registered for, to verify the registration filter works.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCannotSeeExamExercisesWithoutRegistration() throws Exception {
+            // Create a second ongoing exam that student1 is NOT registered for
+            Exam unregisteredExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().plusHours(1), false);
+            unregisteredExam = examRepository.save(unregisteredExam);
+            var exerciseGroup = ExamFactory.generateExerciseGroup(true, unregisteredExam);
+            exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+            TextExercise unregisteredExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+            unregisteredExercise.setTitle(SEARCH_PREFIX + " UnregisteredExam Exercise");
+            unregisteredExercise = exerciseRepository.save(unregisteredExercise);
+
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unregisteredExercise));
+            TextExercise finalExercise = unregisteredExercise;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            // Student is registered for ongoing and ended exams but NOT this one
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " UnregisteredExam Exercise");
+            // But can still see exercises from registered exams
+            assertThat(titles).contains(SEARCH_PREFIX + " Ongoing Exam Exercise");
+        }
+
+        /**
+         * A student should only see exercises that were assigned to their individual StudentExam,
+         * not ALL exercises in the exam. The setUp only assigns specific exercises to the student's
+         * StudentExam.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCanOnlySeeAssignedExamExercises() throws Exception {
+            // Create an additional exercise in the ended exam that is NOT assigned to student1's StudentExam
+            var extraExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+            extraExerciseGroup = exerciseGroupRepository.save(extraExerciseGroup);
+            TextExercise unassignedExercise = TextExerciseFactory.generateTextExerciseForExam(extraExerciseGroup);
+            unassignedExercise.setTitle(SEARCH_PREFIX + " Unassigned EndedExam Exercise");
+            unassignedExercise = exerciseRepository.save(unassignedExercise);
+
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unassignedExercise));
+            TextExercise finalExercise = unassignedExercise;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            // Student can see the assigned exercise but not the unassigned one
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " Unassigned EndedExam Exercise");
+        }
+
+        /**
+         * Editors should still see all exam exercises regardless of StudentExam registration.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testEditorSeesAllExamExercisesRegardlessOfRegistration() throws Exception {
+            // Create an exam that no one is registered for
+            Exam noRegExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().plusHours(1), false);
+            noRegExam = examRepository.save(noRegExam);
+            var exerciseGroup = ExamFactory.generateExerciseGroup(true, noRegExam);
+            exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
+            TextExercise noRegExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+            noRegExercise.setTitle(SEARCH_PREFIX + " NoReg ExamExercise");
+            noRegExercise = exerciseRepository.save(noRegExercise);
+
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(noRegExercise));
+            TextExercise finalExercise = noRegExercise;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoReg&types=exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " NoReg ExamExercise");
+        }
+    }
+
+    @Nested
+    class StudentExamVisibilityTests {
+
+        /**
+         * A student should not see a regular exam they are not registered for.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCannotSeeUnregisteredRegularExam() throws Exception {
+            Exam unregisteredExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            unregisteredExam.setTitle(SEARCH_PREFIX + " UnregisteredExam");
+            unregisteredExam = examRepository.save(unregisteredExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(unregisteredExam));
+            Exam finalExam = unregisteredExam;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " UnregisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20UnregisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " UnregisteredExam");
+        }
+
+        /**
+         * A student should see a regular exam they ARE registered for (visible_date in the past).
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCanSeeRegisteredRegularExam() throws Exception {
+            Exam registeredExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            registeredExam.setTitle(SEARCH_PREFIX + " RegisteredExam");
+            registeredExam = examRepository.save(registeredExam);
+
+            // Register the student
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            examUtilService.addStudentExamWithUser(registeredExam, student);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(registeredExam));
+            Exam finalExam = registeredExam;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " RegisteredExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20RegisteredExam&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " RegisteredExam");
+        }
+
+        /**
+         * A student should see test exams without any registration (test exams are open to all).
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCanSeeTestExamWithoutRegistration() throws Exception {
+            Exam testExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), true);
+            testExam.setTitle(SEARCH_PREFIX + " TestExamVisible");
+            testExam = examRepository.save(testExam);
+
+            // No StudentExam registration for student1
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(testExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TestExamVisible", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TestExamVisible&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " TestExamVisible");
+        }
+
+        /**
+         * Editors should see all exams regardless of registration.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testEditorCanSeeAllExamsRegardlessOfRegistration() throws Exception {
+            Exam noRegExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            noRegExam.setTitle(SEARCH_PREFIX + " NoRegEditorExam");
+            noRegExam = examRepository.save(noRegExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(noRegExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " NoRegEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20NoRegEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " NoRegEditorExam");
         }
     }
 
