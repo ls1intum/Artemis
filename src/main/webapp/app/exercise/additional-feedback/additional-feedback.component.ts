@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -21,9 +21,9 @@ export class AdditionalFeedbackComponent {
     private translateService = inject(TranslateService);
     private localeConversionService = inject(LocaleConversionService);
 
-    @Input() feedback: Feedback[];
-    @Input() additional: boolean;
-    @Input() course?: Course;
+    readonly feedback = input<Feedback[]>(undefined!);
+    readonly additional = input<boolean>(undefined!);
+    readonly course = input<Course>();
 
     // Icons
     faCommentDots = faCommentDots;
@@ -41,7 +41,7 @@ export class AdditionalFeedbackComponent {
     public pointTranslation(points: number): string {
         const singular = Math.abs(points) === 1;
         return this.translateService.instant(`artemisApp.assessment.detail.points.${singular ? 'one' : 'many'}`, {
-            points: this.localeConversionService.toLocaleString(points, this.course?.accuracyOfScores),
+            points: this.localeConversionService.toLocaleString(points, this.course()?.accuracyOfScores),
         });
     }
 }
