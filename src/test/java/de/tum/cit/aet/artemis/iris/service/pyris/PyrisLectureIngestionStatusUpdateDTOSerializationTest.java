@@ -14,9 +14,15 @@ class PyrisLectureIngestionStatusUpdateDTOSerializationTest {
 
     @Test
     void deserializesSnakeCaseErrorCode() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"error_code\":\"YOUTUBE_PRIVATE\",\"slidePageNumbers\":[1,2,-1]}";
+        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"error_code\":\"YOUTUBE_PRIVATE\"}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.errorCode()).isEqualTo("YOUTUBE_PRIVATE");
+    }
+
+    @Test
+    void deserializesSlidePageNumbers() throws Exception {
+        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"slidePageNumbers\":[1,2,-1]}";
+        var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.slidePageNumbers()).containsExactly(1, 2, -1);
     }
 }

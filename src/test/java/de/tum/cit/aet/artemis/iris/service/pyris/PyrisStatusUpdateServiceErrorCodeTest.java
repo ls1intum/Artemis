@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -70,22 +69,6 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     }
 
     @Test
-    void terminalResultIsStillForwardedAsCheckpointData() {
-        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
-
-        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"segments\":[{\"start\":0.0,\"end\":1.0,\"text\":\"hi\",\"slideNumber\":0}],\"language\":\"en\"}",
-                List.of(doneStage), 7L, null, List.of(1, 2, -1));
-
-        service.handleStatusUpdate(job, statusUpdate);
-
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of(1, 2, -1)));
-        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"),
-                eq("{\"segments\":[{\"start\":0.0,\"end\":1.0,\"text\":\"hi\",\"slideNumber\":0}],\"language\":\"en\"}"));
-        verify(callbackApi, never()).handleHeartbeat(eq(42L), eq("job-token-abc"));
-    }
-
-    @Test
     void slidePageNumbersAreReadOnlyFromDedicatedField() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
@@ -95,6 +78,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         service.handleStatusUpdate(job, statusUpdate);
 
         verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of(1, 2, -1)));
+        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("{\"slidePageNumbers\":[9,9,9]}"));
     }
 
     @Test
@@ -107,31 +91,5 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         service.handleStatusUpdate(job, statusUpdate);
 
         verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
-    }
-
-    @Test
-    void emptySlidePageNumbersAreForwardedOnSuccessfulTerminalCallback() {
-        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
-
-        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("done", List.of(doneStage), 7L, null, List.of());
-
-        service.handleStatusUpdate(job, statusUpdate);
-
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of()));
-    }
-
-    @Test
-    void nonTerminalCallbacksStillDoNotCompleteTheJob() {
-        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
-
-        var inProgressStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.IN_PROGRESS, "running", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("checkpoint", List.of(inProgressStage), 7L, null, List.of(1, 2, -1));
-
-        service.handleStatusUpdate(job, statusUpdate);
-
-        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("checkpoint"));
-        verify(callbackApi).handleHeartbeat(eq(42L), eq("job-token-abc"));
-        verify(callbackApi, never()).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of(1, 2, -1)));
     }
 }

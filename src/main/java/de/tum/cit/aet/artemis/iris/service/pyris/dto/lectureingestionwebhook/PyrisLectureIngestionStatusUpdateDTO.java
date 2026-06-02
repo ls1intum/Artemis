@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -24,6 +23,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  *                             only expected on terminal callbacks and {@code null} otherwise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, @JsonAlias("id") long jobId, @Nullable @JsonProperty("error_code") String errorCode,
+public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, long jobId, @Nullable @JsonProperty("error_code") String errorCode,
         @Nullable List<Integer> slidePageNumbers) {
 }

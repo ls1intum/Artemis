@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -384,20 +383,8 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         processingState.setIngestionJobToken(jobToken);
         lectureUnitProcessingStateRepository.save(processingState);
 
-        Map<String, Object> doneStage = new LinkedHashMap<>();
-        doneStage.put("name", "Slides ingestion");
-        doneStage.put("weight", 10);
-        doneStage.put("state", PyrisStageState.DONE.name());
-        doneStage.put("message", "Lecture Ingestion Finished");
-        doneStage.put("internal", false);
-        doneStage.put("chatMessage", null);
-
-        Map<String, Object> statusUpdate = new LinkedHashMap<>();
-        statusUpdate.put("stages", List.of(doneStage));
-        statusUpdate.put("tokens", List.of());
-        statusUpdate.put("result", "Success");
-        statusUpdate.put("slidePageNumbers", List.of(1, 2, -1));
-        statusUpdate.put("id", 12345);
+        PyrisStageDTO doneStage = new PyrisStageDTO("Slides ingestion", 10, PyrisStageState.DONE, "Lecture Ingestion Finished", false, null);
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage), 12345L, null, List.of(1, 2, -1));
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
