@@ -469,7 +469,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         configureExamType(testExam1, ExamType.SIMULATION, ZonedDateTime.now().minusMinutes(10), 3600, 180, 0, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class);
     }
 
     @Test
@@ -479,6 +479,20 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         markStudentExamSubmitted(studentExamForTestExam1);
 
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeAllowsOnlyOneAttemptBeforePracticeStart() {
+        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusMinutes(10), 3600, 180, 60, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("simulationTestExamAttemptAlreadyExistsBeforePractice");
+                });
     }
 
     @Test

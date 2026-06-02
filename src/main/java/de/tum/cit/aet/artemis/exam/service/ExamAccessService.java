@@ -240,7 +240,7 @@ public class ExamAccessService {
 
         if (examType == ExamType.SIMULATION) {
             if (userHasAttempt) {
-                throw new AccessForbiddenException("Only one simulation test exam attempt is allowed.");
+                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed.", ENTITY_NAME, "simulationTestExamAttemptAlreadyExists");
             }
             return;
         }
@@ -248,7 +248,8 @@ public class ExamAccessService {
         if (examType == ExamType.SIMULATION_AND_PRACTICE) {
             final boolean simulationPhaseActive = now.isBefore(exam.getTestExamSimulationEndDate());
             if (simulationPhaseActive && userHasAttempt) {
-                throw new AccessForbiddenException("Only one simulation test exam attempt is allowed before the practice phase starts.");
+                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed before the practice phase starts.", ENTITY_NAME,
+                        "simulationTestExamAttemptAlreadyExistsBeforePractice");
             }
         }
     }
