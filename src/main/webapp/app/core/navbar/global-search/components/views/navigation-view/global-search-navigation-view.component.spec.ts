@@ -261,9 +261,27 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
             });
 
-            it('should navigate to exam', () => {
+            it('should navigate to student exam view when user is a student', () => {
                 component['navigateToResult']({ type: 'exam', id: '4', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', '4']);
+            });
+
+            it('should navigate to exam management when user is at least editor', () => {
+                component['navigateToResult']({
+                    type: 'exam',
+                    id: '4',
+                    metadata: { courseId: 10, isAtLeastEditor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4']);
+            });
+
+            it('should navigate to exam assessment dashboard when user is tutor', () => {
+                component['navigateToResult']({
+                    type: 'exam',
+                    id: '4',
+                    metadata: { courseId: 10, isAtLeastTutor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4', 'assessment-dashboard']);
             });
 
             it('should navigate to faq', () => {

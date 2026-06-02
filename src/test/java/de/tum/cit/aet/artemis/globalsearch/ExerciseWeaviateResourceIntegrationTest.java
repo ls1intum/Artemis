@@ -743,6 +743,205 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Nested
+    class ExamMetadataFlagTests {
+
+        /**
+         * Editors/instructors should see {@code isAtLeastEditor: true} in the metadata of exam results
+         * so the client can route them to the exam management page.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testInstructorReceivesIsAtLeastEditorFlagOnExam() throws Exception {
+            Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            visibleExam.setTitle(SEARCH_PREFIX + " InstrEditorExam");
+            visibleExam = examRepository.save(visibleExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " InstrEditorExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20InstrEditorExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var examResult = results.stream().filter(r -> (SEARCH_PREFIX + " InstrEditorExam").equals(r.title())).findFirst();
+
+            assertThat(examResult).isPresent();
+            assertThat(examResult.get().metadata()).containsEntry("isAtLeastEditor", true);
+            assertThat(examResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
+        }
+
+        /**
+         * Tutors should see {@code isAtLeastTutor: true} (not {@code isAtLeastEditor}) in the metadata of exam results
+         * so the client routes them to the exam assessment dashboard.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorReceivesIsAtLeastTutorFlagOnExam() throws Exception {
+            Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            visibleExam.setTitle(SEARCH_PREFIX + " TutorExamMeta");
+            visibleExam = examRepository.save(visibleExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var examResult = results.stream().filter(r -> (SEARCH_PREFIX + " TutorExamMeta").equals(r.title())).findFirst();
+
+            assertThat(examResult).isPresent();
+            assertThat(examResult.get().metadata()).containsEntry("isAtLeastTutor", true);
+            assertThat(examResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+        }
+
+        /**
+         * Students should NOT receive staff flags on exam results.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentDoesNotReceiveStaffFlagsOnExam() throws Exception {
+            Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            visibleExam.setTitle(SEARCH_PREFIX + " StudentExamMeta");
+            visibleExam = examRepository.save(visibleExam);
+
+            // Register the student so they can see the exam
+            User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            examUtilService.addStudentExamWithUser(visibleExam, student);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " StudentExamMeta", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20StudentExamMeta&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var examResult = results.stream().filter(r -> (SEARCH_PREFIX + " StudentExamMeta").equals(r.title())).findFirst();
+
+            assertThat(examResult).isPresent();
+            assertThat(examResult.get().metadata()).doesNotContainKey("isAtLeastTutor");
+            assertThat(examResult.get().metadata()).doesNotContainKey("isAtLeastEditor");
+        }
+    }
+
+    @Nested
+    class ExamFilterIncludesExamExercisesTests {
+
+        /**
+         * When types=exam is requested (without types=exercise), the results should also include
+         * exam exercises so that searching for exam content returns both the exam and its exercises.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testExamTypeFilterIncludesExamExercises() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+            var types = results.stream().map(GlobalSearchResultDTO::type).toList();
+
+            // Should include exam exercises
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
+            // Should include both exercise and exam types in the response
+            assertThat(types).contains(SearchableEntitySchema.TypeValues.EXERCISE);
+        }
+
+        /**
+         * When both types=exam,exercise are requested, exam exercises should NOT be double-counted
+         * (the buildExamExerciseDisjunct is skipped when exercise type is already requested).
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void testExamAndExerciseTypeFiltersDoNotDuplicateResults() throws Exception {
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam,exercise&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var exerciseTitles = results.stream().filter(r -> SearchableEntitySchema.TypeValues.EXERCISE.equals(r.type())).map(GlobalSearchResultDTO::title).toList();
+
+            // Each exercise title should appear at most once
+            assertThat(exerciseTitles).doesNotHaveDuplicates();
+        }
+
+        /**
+         * Students should only see exam exercises they are assigned to, even when filtering by exam type.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExamTypeFilterRespectsStudentExerciseAssignment() throws Exception {
+            // Create an unassigned exercise in the ended exam
+            var extraExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+            extraExerciseGroup = exerciseGroupRepository.save(extraExerciseGroup);
+            TextExercise unassignedExercise = TextExerciseFactory.generateTextExerciseForExam(extraExerciseGroup);
+            unassignedExercise.setTitle(SEARCH_PREFIX + " ExamFilterUnassigned");
+            unassignedExercise = exerciseRepository.save(unassignedExercise);
+
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(unassignedExercise));
+            TextExercise finalExercise = unassignedExercise;
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertExerciseExistsInWeaviate(weaviateService, finalExercise));
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            // Student should see their assigned exercise but not the unassigned one
+            assertThat(titles).contains(SEARCH_PREFIX + " Ended Exam Exercise");
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " ExamFilterUnassigned");
+        }
+    }
+
+    @Nested
+    class TutorExamVisibilityTests {
+
+        /**
+         * Tutors should see exams whose visible date has passed.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorCanSeeVisibleExam() throws Exception {
+            Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
+            visibleExam.setTitle(SEARCH_PREFIX + " TutorVisibleExam");
+            visibleExam = examRepository.save(visibleExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(visibleExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorVisibleExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorVisibleExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains(SEARCH_PREFIX + " TutorVisibleExam");
+        }
+
+        /**
+         * Tutors should NOT see exams whose visible date has not yet passed.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void testTutorCannotSeeNotYetVisibleExam() throws Exception {
+            Exam futureExam = ExamFactory.generateExam(course, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3), false);
+            futureExam.setTitle(SEARCH_PREFIX + " TutorFutureExam");
+            futureExam = examRepository.save(futureExam);
+
+            searchableEntityWeaviateService.upsertExamAsync(ExamSearchableEntityDTO.fromExam(futureExam));
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+                var bm25 = collection.query.bm25(SEARCH_PREFIX + " TutorFutureExam", b -> b.limit(5).queryProperties(SearchableEntitySchema.Properties.TITLE));
+                assertThat(bm25.objects()).isNotEmpty();
+            });
+
+            var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20TutorFutureExam&types=exam&courseId=" + course.getId(), HttpStatus.OK,
+                    GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).doesNotContain(SEARCH_PREFIX + " TutorFutureExam");
+        }
+    }
+
+    @Nested
     class ArchivedChannelSearchTests {
 
         @Test
