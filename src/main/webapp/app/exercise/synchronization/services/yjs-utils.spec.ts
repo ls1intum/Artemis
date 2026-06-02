@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from 'vitest';
 import { clearRemoteSelectionStyles, ensureRemoteSelectionStyle, getColorForClientId } from 'app/exercise/synchronization/services/yjs-utils';
 
 describe('yjs-utils', () => {
@@ -10,7 +11,7 @@ describe('yjs-utils', () => {
         ensureRemoteSelectionStyle(7, '#123456', displayName);
 
         const styleElement = document.getElementById('yjs-remote-selection-styles') as HTMLStyleElement | null;
-        expect(styleElement).toBeTruthy();
+        expect(styleElement).not.toBeNull();
         const styleText = styleElement?.textContent ?? '';
 
         // Hover rule uses full label and must contain escaped control characters.
@@ -25,7 +26,7 @@ describe('yjs-utils', () => {
         ensureRemoteSelectionStyle(8, maliciousColor, 'Test User');
 
         const styleElement = document.getElementById('yjs-remote-selection-styles') as HTMLStyleElement | null;
-        expect(styleElement).toBeTruthy();
+        expect(styleElement).not.toBeNull();
         const styleText = styleElement?.textContent ?? '';
 
         // Should not contain the malicious CSS

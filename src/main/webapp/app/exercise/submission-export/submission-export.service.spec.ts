@@ -1,6 +1,6 @@
-import { expect, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -8,6 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 describe('Submission Export Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: SubmissionExportService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
