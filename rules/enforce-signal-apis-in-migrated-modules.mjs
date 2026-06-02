@@ -20,6 +20,10 @@ const MIGRATED_MODULES = [
     'course',
     'editor',
     'exam',
+    'exercise/exercise-headers',
+    'exercise/feedback',
+    'exercise/result',
+    'exercise/result-history',
     'fileupload',
     'foundation',
     'hyperion',
@@ -67,11 +71,12 @@ export default createRule({
     },
     defaultOptions: [],
     create(context) {
-        const filename = context.filename ?? context.getFilename();
+        // Normalize Windows backslashes so the `/app/<module>/` check works across operating systems.
+        const filename = (context.filename ?? context.getFilename()).replaceAll('\\', '/');
 
-        // Only apply to source files in migrated modules, not to test/spec files
+        // Apply to all files (including test/spec files) in migrated modules
         const migratedModule = MIGRATED_MODULES.find((mod) => filename.includes(`/app/${mod}/`));
-        if (!migratedModule || filename.endsWith('.spec.ts')) {
+        if (!migratedModule) {
             return {};
         }
 
