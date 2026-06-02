@@ -237,25 +237,22 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     isCheckoutSolutionRepositoryValid(): boolean {
-        return Boolean(
-            this.checkoutSolutionRepositoryField()?.valid ||
-            this.programmingExercise().id ||
-            !this.programmingExercise().programmingLanguage ||
-            !this.programmingExerciseCreationConfig().checkoutSolutionRepositoryAllowed,
-        );
+        const repositoryFieldValid = this.checkoutSolutionRepositoryField()?.valid || this.programmingExercise().id;
+        const repositoryNotApplicable = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().checkoutSolutionRepositoryAllowed;
+        return Boolean(repositoryFieldValid || repositoryNotApplicable);
     }
 
     areCheckoutPathsValid(): boolean {
-        const programmingExerciseEditCheckoutDirectories = this.programmingExerciseEditCheckoutDirectories();
-        return Boolean(
-            !programmingExerciseEditCheckoutDirectories ||
-            (programmingExerciseEditCheckoutDirectories.formValid &&
-                programmingExerciseEditCheckoutDirectories.areValuesUnique([
-                    this.programmingExercise().buildConfig?.assignmentCheckoutPath,
-                    this.programmingExercise().buildConfig?.testCheckoutPath,
-                    this.programmingExercise().buildConfig?.solutionCheckoutPath,
-                ])),
-        );
+        const editCheckoutDirectories = this.programmingExerciseEditCheckoutDirectories();
+        if (!editCheckoutDirectories) {
+            return true;
+        }
+        const checkoutPaths = [
+            this.programmingExercise().buildConfig?.assignmentCheckoutPath,
+            this.programmingExercise().buildConfig?.testCheckoutPath,
+            this.programmingExercise().buildConfig?.solutionCheckoutPath,
+        ];
+        return Boolean(editCheckoutDirectories.formValid && editCheckoutDirectories.areValuesUnique(checkoutPaths));
     }
 
     toggleEditRepositoryCheckoutPath() {

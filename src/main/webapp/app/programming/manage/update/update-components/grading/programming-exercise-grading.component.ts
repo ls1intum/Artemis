@@ -86,15 +86,13 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     }
 
     calculateFormStatus() {
-        const newFormValidValue = Boolean(
-            this.maxScoreField()?.valid &&
-            // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
-            // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
-            (this.bonusPointsField()?.valid || this.programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) &&
-            (this.maxPenaltyField()?.valid || !this.programmingExercise().staticCodeAnalysisEnabled) &&
-            !this.submissionPolicyUpdateComponent()?.invalid &&
-            this.lifecycleComponent()?.formValid,
-        );
+        // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
+        // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
+        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || this.programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !this.programmingExercise().staticCodeAnalysisEnabled;
+        const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
+        const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && this.lifecycleComponent()?.formValid;
+        const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
 
         this.formValidSignal.set(newFormValidValue);
         this.formValid = newFormValidValue;

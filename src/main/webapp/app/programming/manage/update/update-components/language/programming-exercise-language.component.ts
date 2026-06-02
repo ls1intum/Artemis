@@ -98,13 +98,9 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     isPackageNameValid(): boolean {
         const packageNameField = this.packageNameField();
-        return Boolean(
-            !this.programmingExercise().programmingLanguage ||
-            !this.programmingExerciseCreationConfig().packageNameRequired ||
-            this.programmingExercise().projectType === ProjectType.XCODE ||
-            packageNameField?.isDisabled ||
-            packageNameField?.valid,
-        );
+        const languageOrPackageExempt = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().packageNameRequired;
+        const fieldValidOrExempt = this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || packageNameField?.valid;
+        return Boolean(languageOrPackageExempt || fieldValidOrExempt);
     }
 
     isCustomBuildPlanValid(): boolean {
