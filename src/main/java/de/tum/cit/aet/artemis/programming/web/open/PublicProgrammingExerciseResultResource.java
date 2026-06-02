@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -37,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.

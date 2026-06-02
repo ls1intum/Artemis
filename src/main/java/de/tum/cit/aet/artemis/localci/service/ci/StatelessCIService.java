@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.ci;
+package de.tum.cit.aet.artemis.localci.service.ci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
@@ -6,9 +6,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**

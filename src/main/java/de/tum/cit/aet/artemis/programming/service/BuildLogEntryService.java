@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -36,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 @Profile(PROFILE_CORE)
 @Lazy

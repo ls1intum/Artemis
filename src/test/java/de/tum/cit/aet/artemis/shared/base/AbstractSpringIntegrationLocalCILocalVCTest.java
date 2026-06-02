@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;

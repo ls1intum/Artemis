@@ -24,11 +24,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildStepDTO;

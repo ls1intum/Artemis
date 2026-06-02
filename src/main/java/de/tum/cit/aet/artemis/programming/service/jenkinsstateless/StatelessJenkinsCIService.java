@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**

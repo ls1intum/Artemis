@@ -11,18 +11,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
@@ -37,37 +30,11 @@ public class LocalCIService implements StatelessCIService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final BuildPhasesTemplateService buildPhasesTemplateService;
-
     private final DistributedDataAccessService distributedDataAccessService;
-
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public LocalCIService(BuildPhasesTemplateService buildPhasesTemplateService, DistributedDataAccessService distributedDataAccessService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
-        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-    }
-
-    /**
-     * Fetches the default build plan configuration for the given localci exercise
-     *
-     * @param exercise for which the build plans should be recreated
-     */
-    @Override
-    public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
-        if (exercise == null) {
-            return;
-        }
-        log.debug("Recreating build plans for exercise {}", exercise.getTitle());
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
-        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        buildConfig.setBuildScript(null);
-        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
-        // recreating the build plans for the exercise means we need to store the updated build config in the database
-        programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 
     /**
