@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +40,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
  */
 @Lazy
 @Service
-@Profile("localci")
+@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
 public class BuildPhasesTemplateService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPhasesTemplateService.class);
