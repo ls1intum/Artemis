@@ -57,14 +57,20 @@ export class CourseExamsComponent implements OnDestroy {
     private studentExamTestExamUpdateSubscription?: Subscription;
 
     private readonly studentExams = signal<StudentExam[]>([]);
-    studentExamsForRealExams = new Map<number, StudentExam>();
-    public realExamsOfCourse: Exam[] = [];
-    public testExamsOfCourse: Exam[] = [];
+    private readonly visibleExams = computed(
+        () =>
+            this.course()
+                ?.exams?.filter((exam) => this.isVisible(exam))
+                .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
+    );
+    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isTestExam(exam)));
+    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
+    protected readonly studentExamByRealExamId = signal(new Map<number, StudentExam>());
 
-    examSelected = signal(true);
-    sidebarData = signal<SidebarData | undefined>(undefined);
-    isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
-    isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
+    readonly examSelected = signal(true);
+    readonly sidebarData = computed<SidebarData | undefined>(() => this.computeSidebarData());
+    readonly isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
+    readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -73,12 +79,10 @@ export class CourseExamsComponent implements OnDestroy {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
-        this.prepareSidebarData();
         this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
             .subscribe((response: StudentExam[]) => {
                 this.studentExams.set(response!);
-                this.prepareSidebarData();
             });
 
         this.studentExamTestExamUpdateSubscription = combineLatest([
@@ -98,14 +102,12 @@ export class CourseExamsComponent implements OnDestroy {
                     }
                 });
 
-                this.prepareSidebarData();
-
                 this.examParticipationService.setShouldUpdateTestExams(false);
             });
 
         const currentCourse = this.course();
         if (currentCourse?.exams) {
-            this.updateExams();
+            this.loadRealExamSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam
@@ -113,7 +115,7 @@ export class CourseExamsComponent implements OnDestroy {
     }
 
     navigateToExam() {
-        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse, ...this.testExamsOfCourse]);
+        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse(), ...this.testExamsOfCourse()]);
         const lastSelectedExam = this.getLastSelectedExam();
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
@@ -128,23 +130,15 @@ export class CourseExamsComponent implements OnDestroy {
         }
     }
 
-    private updateExams(): void {
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            // Loading the exams from the course
-            const exams = currentCourse.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
-
-            this.realExamsOfCourse = exams.filter((exam) => !isTestExam(exam));
-            this.testExamsOfCourse = exams.filter((exam) => isTestExam(exam));
-            // get student exams for real exams
-            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
-                studentExams.forEach((exam) => {
-                    const studentExam = cloneDeep(exam) as StudentExam;
-                    this.studentExamsForRealExams.set(studentExam.id!, studentExam);
-                });
-                this.prepareSidebarData();
+    private loadRealExamSidebarData(): void {
+        lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
+            const realStudentExamById = new Map<number, StudentExam>();
+            studentExams.forEach((exam) => {
+                const studentExam = cloneDeep(exam) as StudentExam;
+                realStudentExamById.set(studentExam.id!, studentExam);
             });
-        }
+            this.studentExamByRealExamId.set(realStudentExamById);
+        });
     }
 
     /**
@@ -165,14 +159,15 @@ export class CourseExamsComponent implements OnDestroy {
 
     /**
      * Filters the studentExams for the examId and sorts them according to the studentExam.id in reverse order
+     * @param studentExams the student exams to sort
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExam[] {
-        if (!this.studentExams()) {
+    getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
+        if (!studentExams) {
             return [];
         }
-        return this.studentExams()
+        return studentExams
             .filter(function (studentExam) {
                 return studentExam.exam?.id && studentExam.startedDate && studentExam.exam.id === examId && studentExam.startedDate;
             })
@@ -197,17 +192,14 @@ export class CourseExamsComponent implements OnDestroy {
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const realStudentExamById = this.studentExamByRealExamId();
 
         for (const realExam of realExams) {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, realStudentExamById.get(realExam.id!));
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
         testExams.forEach((testExam) => {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(
-                testExam,
-                this.studentExamsForRealExams.get(testExam.id!),
-                this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap),
-            );
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, undefined, this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap));
             groupedExamGroups['test'].entityData.push(examCardItem);
             const testExamAttempts = testExamAttemptsMap.get(testExam.id!);
             if (testExamAttempts) {
@@ -231,27 +223,18 @@ export class CourseExamsComponent implements OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('exam', newState);
     }
 
-    updateSidebarData(accordionExamGroups: AccordionGroups, sidebarExams: SidebarCardElement[]) {
-        this.sidebarData.set({
-            groupByCategory: true,
-            sidebarType: 'exam',
-            storageId: 'exam',
-            groupedData: accordionExamGroups,
-            ungroupedData: sidebarExams,
-        });
-    }
-
-    prepareSidebarData() {
+    computeSidebarData(): SidebarData | undefined {
         if (!this.course()?.exams) {
             return;
         }
 
-        const sortedRealExams: Exam[] = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
-        const sortedTestExams: Exam[] = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+        const sortedRealExams: Exam[] = [...this.realExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
+        const sortedTestExams: Exam[] = [...this.testExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
 
+        const studentExams = this.studentExams();
         const testExamAttemptsMap: Map<number, StudentExam[]> = new Map();
         for (const testExam of sortedTestExams) {
-            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id!);
+            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(studentExams, testExam.id!);
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
             testExamAttemptsMap.set(testExam.id!, submittedAttempts);
         }
@@ -264,7 +247,13 @@ export class CourseExamsComponent implements OnDestroy {
         const sidebarExams: SidebarCardElement[] = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
 
         const accordionExamGroups = this.groupExamsByRealOrTest(sortedRealExams, sortedTestExams, testExamAttemptsMap);
-        this.updateSidebarData(accordionExamGroups, sidebarExams);
+        return {
+            groupByCategory: true,
+            sidebarType: 'exam',
+            storageId: 'exam',
+            groupedData: accordionExamGroups,
+            ungroupedData: sidebarExams,
+        };
     }
 
     onSubRouteDeactivate() {
@@ -275,7 +264,7 @@ export class CourseExamsComponent implements OnDestroy {
     }
 
     getAllStudentExamsForRealExams(): StudentExam[] {
-        return [...this.studentExamsForRealExams.values()];
+        return [...this.studentExamByRealExamId().values()];
     }
 
     // Method to iterate through the map and get all student exams
