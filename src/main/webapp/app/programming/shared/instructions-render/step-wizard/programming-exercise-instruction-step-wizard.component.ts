@@ -65,6 +65,9 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName }),
             width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,

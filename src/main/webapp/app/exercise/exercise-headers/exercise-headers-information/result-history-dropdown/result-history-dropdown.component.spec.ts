@@ -385,6 +385,11 @@ describe('ResultHistoryDropdownComponent', () => {
                 expect.objectContaining({
                     header: 'artemisApp.result.detail.feedback',
                     width: '80rem',
+                    breakpoints: {
+                        '1400px': '75vw',
+                        '1200px': '85vw',
+                        '992px': '95vw',
+                    },
                     modal: true,
                     closable: true,
                     closeOnEscape: true,

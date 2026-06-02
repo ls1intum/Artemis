@@ -550,6 +550,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             expect.objectContaining({
                 header: 'artemisApp.result.detail.feedbackForTask',
                 width: '50rem',
+                breakpoints: {
+                    '850px': '95vw',
+                },
                 modal: true,
                 closable: true,
                 closeOnEscape: true,

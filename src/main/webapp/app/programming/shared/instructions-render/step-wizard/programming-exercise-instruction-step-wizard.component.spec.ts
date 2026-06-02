@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -15,6 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -78,5 +79,31 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));
         expect(steps).toHaveLength(0);
+    });
+
+    it('should open the feedback dialog with responsive breakpoints', () => {
+        const result: Result = {
+            id: 1,
+            completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, positive: false, detailText: 'lorem ipsum' }],
+        };
+        fixture.componentRef.setInput('latestResult', result);
+        fixture.componentRef.setInput('tasks', [{ id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] }]);
+        fixture.detectChanges();
+
+        const dialogService = TestBed.inject(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+
+        fixture.componentInstance.showDetailsForTests([1], 'Implement BubbleSort');
+
+        expect(openSpy).toHaveBeenCalledWith(
+            FeedbackComponent,
+            expect.objectContaining({
+                width: '50rem',
+                breakpoints: {
+                    '850px': '95vw',
+                },
+            }),
+        );
     });
 });

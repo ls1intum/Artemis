@@ -270,6 +270,11 @@ export class ResultHistoryDropdownComponent {
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedback'),
             width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,
