@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -16,18 +16,18 @@ export type ModePickerOption<TMode> = {
     imports: [NgClass, ArtemisTranslatePipe],
 })
 export class ModePickerComponent<TMode> {
-    @Input() options: ModePickerOption<TMode>[];
-    @Input() disabled = false;
+    readonly options = input<ModePickerOption<TMode>[]>(undefined!);
+    readonly disabled = input(false);
 
-    @Input() value: TMode;
-    @Output() valueChange = new EventEmitter<TMode>();
+    readonly value = input<TMode>(undefined!);
+    readonly valueChange = output<TMode>();
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
      * @param mode chosen mode of type {TMode}
      */
     setMode(mode: TMode) {
-        if (!this.disabled && mode !== this.value) {
+        if (!this.disabled() && mode !== this.value()) {
             this.valueChange.emit(mode);
         }
     }

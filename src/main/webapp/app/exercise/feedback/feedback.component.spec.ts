@@ -1,7 +1,7 @@
-import { expect, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -30,6 +30,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 
 describe('FeedbackComponent', () => {
     setupTestBed({ zoneless: true });
+
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
 
@@ -180,7 +181,6 @@ describe('FeedbackComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -300,7 +300,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledExactlyOnceWith(55, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
         expect(comp.isLoading).toBe(false);
     });
 
@@ -309,7 +310,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.buildLogs).toHaveLength(0);
         expect(comp.isLoading).toBe(false);
     });
@@ -343,7 +345,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBe(false);
         expect(comp.isLoading).toBe(false);
     });
@@ -354,7 +357,8 @@ describe('FeedbackComponent', () => {
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBe(true);
         expect(comp.isLoading).toBe(false);
     });
@@ -399,8 +403,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should expand feedback when being printed', () => {
-        // @ts-ignore method is private
-        const expandFeedbackItemGroupsSpy = vi.spyOn(comp, 'expandFeedbackItemGroups');
+        const expandFeedbackItemGroupsSpy = vi.spyOn(comp as any, 'expandFeedbackItemGroups');
 
         const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
         const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;

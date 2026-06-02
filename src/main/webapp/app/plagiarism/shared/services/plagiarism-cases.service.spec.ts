@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { take } from 'rxjs/operators';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,6 +14,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('Plagiarism Cases Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: PlagiarismCasesService;
     let httpMock: HttpTestingController;
 
@@ -80,25 +84,23 @@ describe('Plagiarism Cases Service', () => {
         httpMock.verify();
     });
 
-    it('should get plagiarism cases for course for instructor', fakeAsync(() => {
+    it('should get plagiarism cases for course for instructor', () => {
         const returnedFromService = [plagiarismCase1, plagiarismCase2, plagiarismCase3];
         service.getCoursePlagiarismCasesForInstructor(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get plagiarism case for course for instructor', fakeAsync(() => {
+    it('should get plagiarism case for course for instructor', () => {
         const returnedFromService = plagiarismCase1;
         service.getPlagiarismCaseDetailForInstructor(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should save plagiarism case verdict', fakeAsync(() => {
+    it('should save plagiarism case verdict', () => {
         const returnedFromService = {
             ...plagiarismCase1,
             verdict: PlagiarismVerdict.PLAGIARISM,
@@ -107,71 +109,60 @@ describe('Plagiarism Cases Service', () => {
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get plagiarism case for course and exercise for student', fakeAsync(() => {
+    it('should get plagiarism case for course and exercise for student', () => {
         const returnedFromService = plagiarismCase1;
         service.getPlagiarismCaseInfoForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get plagiarism cases for course and multiple exercises for student', fakeAsync(() => {
+    it('should get plagiarism cases for course and multiple exercises for student', () => {
         service.getPlagiarismCaseInfosForStudent(1, [1, 2]).pipe(take(1)).subscribe();
 
         httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/plagiarism-cases?exerciseId=1&exerciseId=2' });
-        tick();
-    }));
+    });
 
-    it('should get plagiarism case for course for student', fakeAsync(() => {
+    it('should get plagiarism case for course for student', () => {
         const returnedFromService = plagiarismCase1;
         service.getPlagiarismCaseDetailForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get plagiarism comparison for split view', fakeAsync(() => {
+    it('should get plagiarism comparison for split view', () => {
         const returnedFromService = plagiarismComparison1;
         service.getPlagiarismComparisonForSplitView(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should update plagiarism comparison status', fakeAsync(() => {
+    it('should update plagiarism comparison status', () => {
         const returnedFromService = {};
         service.updatePlagiarismComparisonStatus(1, 1, PlagiarismStatus.CONFIRMED).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should clean up plagiarism', fakeAsync(() => {
+    it('should clean up plagiarism', () => {
         const returnedFromService = {};
         service.cleanUpPlagiarism(1, 1, true).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush(returnedFromService);
-        tick();
-    }));
-    it.each([textExercise, examTextExercise])(
-        'should make GET request to retrieve number of plagiarism cases',
-        fakeAsync(() => {
-            const numberOfResultsExercise = 2;
-            service.getNumberOfPlagiarismCasesForExercise(textExercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/exercises/1/plagiarism-cases-count' });
-            req.flush(numberOfResultsExercise);
-            tick();
-        }),
-    );
-    it('should get plagiarism cases for an exam (instructor)', fakeAsync(() => {
+    });
+    it.each([textExercise, examTextExercise])('should make GET request to retrieve number of plagiarism cases', (exercise) => {
+        const numberOfResultsExercise = 2;
+        service.getNumberOfPlagiarismCasesForExercise(exercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/exercises/1/plagiarism-cases-count' });
+        req.flush(numberOfResultsExercise);
+    });
+    it('should get plagiarism cases for an exam (instructor)', () => {
         const mockCases = [plagiarismCase1, plagiarismCase2];
         service
             .getExamPlagiarismCasesForInstructor(1, 42)
@@ -184,10 +175,9 @@ describe('Plagiarism Cases Service', () => {
             url: 'api/plagiarism/courses/1/exams/42/plagiarism-cases/for-instructor',
         });
         req.flush(mockCases);
-        tick();
-    }));
+    });
 
-    it('should return a map of PlagiarismCaseInfo objects for student', fakeAsync(() => {
+    it('should return a map of PlagiarismCaseInfo objects for student', () => {
         const fakeResponse = {
             1: {},
             2: {},
@@ -202,28 +192,25 @@ describe('Plagiarism Cases Service', () => {
             (r) => r.method === 'GET' && r.url === 'api/plagiarism/courses/7/plagiarism-cases' && r.params.getAll('exerciseId')!.sort().join(',') === '1,2',
         );
         req.flush(fakeResponse);
-        tick();
-    }));
+    });
 
-    it('should call DELETE with deleteAll=false by default', fakeAsync(() => {
+    it('should call DELETE with deleteAll=false by default', () => {
         service.cleanUpPlagiarism(5, 99).pipe(take(1)).subscribe();
         const req = httpMock.expectOne(
             (r) => r.method === 'DELETE' && r.url === 'api/plagiarism/exercises/5/plagiarism-results/99/plagiarism-comparisons' && r.params.get('deleteAll') === 'false',
         );
         req.flush({});
-        tick();
-    }));
+    });
 
-    it('should PUT status update payload correctly', fakeAsync(() => {
+    it('should PUT status update payload correctly', () => {
         service.updatePlagiarismComparisonStatus(2, 3, PlagiarismStatus.DENIED).pipe(take(1)).subscribe();
         const req = httpMock.expectOne(
             (r) => r.method === 'PUT' && r.url === 'api/plagiarism/courses/2/plagiarism-comparisons/3/status' && r.body.status === PlagiarismStatus.DENIED,
         );
         req.flush(null);
-        tick();
-    }));
+    });
 
-    it('should handle error when saving verdict', fakeAsync(() => {
+    it('should handle error when saving verdict', () => {
         const errorResponse = { status: 400, statusText: 'Bad Request' };
         service
             .saveVerdict(1, 1, { verdict: PlagiarismVerdict.WARNING })
@@ -237,6 +224,5 @@ describe('Plagiarism Cases Service', () => {
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush('Invalid data', errorResponse);
-        tick();
-    }));
+    });
 });
