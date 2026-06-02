@@ -226,7 +226,7 @@ describe('Test case distribution chart', () => {
         component.updateTranslation();
 
         expect(instantSpy).toHaveBeenCalledTimes(3);
-        instantSpy.mock.calls.forEach((calls, index) => {
+        instantSpy.mock.calls.forEach((calls: unknown[], index: number) => {
             expect(calls[0]).toBe(prefix.concat(labels[index]));
         });
         expect(component.ngxWeightData[0].name).toBe(prefix.concat(labels[0]));

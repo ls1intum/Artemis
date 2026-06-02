@@ -68,7 +68,7 @@ import { DialogService } from 'primeng/dynamicdialog';
  * stub it by assigning a callable that returns the container double. `editableInstructions` and
  * `codeGenerationStatusPopover` are equally `viewChild` signals.
  */
-type ComponentInternals = CodeEditorInstructorAndEditorContainerComponent & {
+type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
     editableInstructions: Signal<any>;
     codeGenerationRunningModal: Signal<any>;
@@ -97,7 +97,8 @@ type ComponentInternals = CodeEditorInstructorAndEditorContainerComponent & {
     createFileBinding: (syncState: any, model: any, editorInstance: any) => void;
     teardownFileBinding: () => void;
 };
-const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as ComponentInternals;
+type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, keyof ComponentInternalsOverrides> & ComponentInternalsOverrides;
+const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 /** Stub shape for the code editor container double that the base container exposes via a viewChild signal. */
 interface CodeEditorContainerStub {

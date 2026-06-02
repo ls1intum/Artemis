@@ -12,10 +12,11 @@ import '@angular/localize/init';
  * Typed view onto the protected `loadAffected` method so the spec can invoke it
  * without a blanket `(component as any)` cast.
  */
-type ModalInternals = AffectedStudentsModalComponent & {
+type ModalInternalsOverrides = {
     loadAffected(): Promise<void>;
 };
-const internals = (c: AffectedStudentsModalComponent): ModalInternals => c as ModalInternals;
+type ModalInternals = Omit<AffectedStudentsModalComponent, keyof ModalInternalsOverrides> & ModalInternalsOverrides;
+const internals = (c: AffectedStudentsModalComponent): ModalInternals => c as unknown as ModalInternals;
 
 describe('AffectedStudentsModalComponent', () => {
     setupTestBed({ zoneless: true });

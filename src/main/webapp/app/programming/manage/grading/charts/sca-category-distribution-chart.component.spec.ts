@@ -148,7 +148,7 @@ describe('SCA category distribution chart', () => {
         component.updateTranslations();
 
         expect(instantSpy).toHaveBeenCalledTimes(3);
-        instantSpy.mock.calls.forEach((calls, index) => {
+        instantSpy.mock.calls.forEach((calls: unknown[], index: number) => {
             expect(calls[0]).toBe(prefix.concat(labels[index]));
             expect(component.ngxData[index].name).toBe(prefix.concat(labels[index]));
         });

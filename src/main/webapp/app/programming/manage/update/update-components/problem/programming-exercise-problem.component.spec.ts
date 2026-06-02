@@ -40,21 +40,23 @@ import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/share
  * Typed view onto the private `currentAiOperationSubscription` field of the AI operations helper so the
  * spec can assert subscription teardown without a blanket `(component as any)` cast.
  */
-type AiOpsInternals = ProblemStatementAiOperationsHelper & {
+type AiOpsInternalsOverrides = {
     currentAiOperationSubscription: Subscription | undefined;
 };
-const aiOpsInternals = (c: ProgrammingExerciseProblemComponent): AiOpsInternals => c.aiOps as AiOpsInternals;
+type AiOpsInternals = Omit<ProblemStatementAiOperationsHelper, keyof AiOpsInternalsOverrides> & AiOpsInternalsOverrides;
+const aiOpsInternals = (c: ProgrammingExerciseProblemComponent): AiOpsInternals => c.aiOps as unknown as AiOpsInternals;
 
 /**
  * Typed accessor that overrides the `editableInstructions` viewChild signal with a stub for tests that
  * need a controllable editor instance. The viewChild is exposed as a callable signal, so the stub mirrors
  * that shape.
  */
-type EditableInstructionsHolder = ProgrammingExerciseProblemComponent & {
+type EditableInstructionsHolderOverrides = {
     editableInstructions: () => ProgrammingExerciseEditableInstructionComponent | undefined;
 };
+type EditableInstructionsHolder = Omit<ProgrammingExerciseProblemComponent, keyof EditableInstructionsHolderOverrides> & EditableInstructionsHolderOverrides;
 const setEditableInstructions = (c: ProgrammingExerciseProblemComponent, stub: Partial<ProgrammingExerciseEditableInstructionComponent>): void => {
-    (c as EditableInstructionsHolder).editableInstructions = () => stub as ProgrammingExerciseEditableInstructionComponent;
+    (c as unknown as EditableInstructionsHolder).editableInstructions = () => stub as ProgrammingExerciseEditableInstructionComponent;
 };
 
 describe('ProgrammingExerciseProblemComponent', () => {

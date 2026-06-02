@@ -83,10 +83,11 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
  * Typed view onto the protected `fetchParticipationRepoFiles` method so the spec can invoke it
  * without a blanket `(component as any)` cast.
  */
-type CommitDetailsViewInternals = CommitDetailsViewComponent & {
+type CommitDetailsViewInternalsOverrides = {
     fetchParticipationRepoFiles(): void;
 };
-const internals = (c: CommitDetailsViewComponent): CommitDetailsViewInternals => c as CommitDetailsViewInternals;
+type CommitDetailsViewInternals = Omit<CommitDetailsViewComponent, keyof CommitDetailsViewInternalsOverrides> & CommitDetailsViewInternalsOverrides;
+const internals = (c: CommitDetailsViewComponent): CommitDetailsViewInternals => c as unknown as CommitDetailsViewInternals;
 
 describe('CommitDetailsViewComponent', () => {
     setupTestBed({ zoneless: true });

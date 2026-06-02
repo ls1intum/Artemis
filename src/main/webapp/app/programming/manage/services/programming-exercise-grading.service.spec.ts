@@ -57,7 +57,7 @@ describe('ProgrammingExerciseGradingService', () => {
 
         exercise1TestCaseSubject = new Subject();
         exercise2TestCaseSubject = new Subject();
-        subscribeStub.mockImplementation((arg1) => {
+        subscribeStub.mockImplementation((arg1: string) => {
             switch (arg1) {
                 case exercise1Topic:
                     return exercise1TestCaseSubject.asObservable();
@@ -66,7 +66,7 @@ describe('ProgrammingExerciseGradingService', () => {
             }
             return new Subject().asObservable();
         });
-        getStub.mockImplementation((arg1) => {
+        getStub.mockImplementation((arg1: string) => {
             switch (arg1) {
                 case `${gradingService.resourceUrl}/${exercise1.id}/test-cases`:
                     return of(testCases1);

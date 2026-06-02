@@ -22,12 +22,13 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
  * Typed view onto the private members the spec drives directly, so the tests can read/invoke
  * them without a blanket `(component as any)` cast. The shape mirrors the component declaration.
  */
-type ComponentInternals = FeedbackAnalysisComponent & {
+type ComponentInternalsOverrides = {
     loadData(): Promise<void>;
     debounceLoadData(): void;
     isFeedbackDetailChannelModalOpen: boolean;
 };
-const internals = (c: FeedbackAnalysisComponent): ComponentInternals => c as ComponentInternals;
+type ComponentInternals = Omit<FeedbackAnalysisComponent, keyof ComponentInternalsOverrides> & ComponentInternalsOverrides;
+const internals = (c: FeedbackAnalysisComponent): ComponentInternals => c as unknown as ComponentInternals;
 
 describe('FeedbackAnalysisComponent', () => {
     setupTestBed({ zoneless: true });

@@ -57,12 +57,13 @@ import { MonacoBinding } from 'y-monaco';
  * component; the helpers below let the spec stub it (the child is mocked, so the real query never
  * resolves to a usable Monaco editor).
  */
-type EditableInstructionInternals = ProgrammingExerciseEditableInstructionComponent & {
+type EditableInstructionInternalsOverrides = {
     markdownEditorMonaco: Signal<MarkdownEditorMonacoComponent | undefined>;
     problemStatementSyncState?: ProblemStatementSyncState;
     problemStatementBinding?: MonacoBinding;
 };
-const internals = (c: ProgrammingExerciseEditableInstructionComponent): EditableInstructionInternals => c as EditableInstructionInternals;
+type EditableInstructionInternals = Omit<ProgrammingExerciseEditableInstructionComponent, keyof EditableInstructionInternalsOverrides> & EditableInstructionInternalsOverrides;
+const internals = (c: ProgrammingExerciseEditableInstructionComponent): EditableInstructionInternals => c as unknown as EditableInstructionInternals;
 /** Override the `markdownEditorMonaco` viewChild signal with a fixed stub value. */
 const setMarkdownEditorMonaco = (c: ProgrammingExerciseEditableInstructionComponent, value: MarkdownEditorMonacoComponent | undefined): void => {
     internals(c).markdownEditorMonaco = (() => value) as Signal<MarkdownEditorMonacoComponent | undefined>;

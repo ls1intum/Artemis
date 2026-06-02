@@ -62,14 +62,15 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
  * Typed view onto the component's private members and methods the spec needs to reach,
  * so they can be accessed without a blanket `(comp as any)` cast.
  */
-type ContainerInternals = CodeEditorTutorAssessmentContainerComponent & {
+type ContainerInternalsOverrides = {
     athenaService: AthenaService;
     dialogService: DialogService;
     submission?: ProgrammingSubmission;
     loadFeedbackSuggestions: () => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
 };
-const internals = (c: CodeEditorTutorAssessmentContainerComponent): ContainerInternals => c as ContainerInternals;
+type ContainerInternals = Omit<CodeEditorTutorAssessmentContainerComponent, keyof ContainerInternalsOverrides> & ContainerInternalsOverrides;
+const internals = (c: CodeEditorTutorAssessmentContainerComponent): ContainerInternals => c as unknown as ContainerInternals;
 
 /**
  * Drains the pending microtask queue (identity promise, asap-scheduled submission emission, and the chained
