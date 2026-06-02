@@ -258,6 +258,7 @@ describe('CompetencyManagementComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             ImportAllCourseCompetenciesModalComponent,
             expect.objectContaining({
+                style: { width: '90vw', maxWidth: '50rem' },
                 modal: true,
                 showHeader: false,
                 dismissableMask: false,
@@ -278,6 +279,7 @@ describe('CompetencyManagementComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             AgentChatModalComponent,
             expect.objectContaining({
+                style: { width: '90vw', maxWidth: '50rem' },
                 modal: true,
                 showHeader: false,
                 dismissableMask: true,

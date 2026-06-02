@@ -178,7 +178,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     async openImportAllModal() {
         const dialogRef = this.dialogService.open(ImportAllCourseCompetenciesModalComponent, {
-            style: { width: '50rem' },
+            style: { width: '90vw', maxWidth: '50rem' },
             modal: true,
             closable: true,
             closeOnEscape: true,
@@ -258,7 +258,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     protected openAgentChatModal(): void {
         this.dialogService.open(AgentChatModalComponent, {
-            style: { width: '50rem' },
+            style: { width: '90vw', maxWidth: '50rem' },
             modal: true,
             closable: true,
             closeOnEscape: true,
