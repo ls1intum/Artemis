@@ -1,59 +1,44 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-
-class MockNgbModalRef {
-    componentInstance = {
-        exerciseId: undefined,
-        exerciseType: undefined,
-    };
-    result: Promise<boolean> = Promise.resolve(true);
-}
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Submission Export Button Component', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<SubmissionExportButtonComponent>;
     let component: SubmissionExportButtonComponent;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let mouseEvent: MouseEvent;
 
     const exerciseId = 1;
     const exerciseType = ExerciseType.TEXT;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), SubmissionExportButtonComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [SubmissionExportButtonComponent],
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(SubmissionExportButtonComponent);
-                component = fixture.componentInstance;
+            .overrideTemplate(SubmissionExportButtonComponent, '')
+            .compileComponents();
 
-                modalService = TestBed.inject(NgbModal);
+        fixture = TestBed.createComponent(SubmissionExportButtonComponent);
+        component = fixture.componentInstance;
+        dialogService = TestBed.inject(DialogService);
 
-                component.exerciseId = exerciseId;
-                component.exerciseType = exerciseType;
+        fixture.componentRef.setInput('exerciseId', exerciseId);
+        fixture.componentRef.setInput('exerciseType', exerciseType);
+        fixture.detectChanges();
 
-                mouseEvent = new MouseEvent('mouseEvent');
-            });
+        mouseEvent = new MouseEvent('mouseEvent');
     });
 
     afterEach(() => {
@@ -62,21 +47,30 @@ describe('Submission Export Button Component', () => {
 
     it('should open export submission dialog', () => {
         const mouseEventSpy = vi.spyOn(mouseEvent, 'stopPropagation');
-        const openSpy = vi.spyOn(modalService, 'open');
+        const openSpy = vi.spyOn(dialogService, 'open');
 
         component.openSubmissionExportDialog(mouseEvent);
 
         expect(mouseEventSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledExactlyOnceWith(SubmissionExportDialogComponent, { keyboard: true, size: 'lg' });
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledWith(
+            SubmissionExportDialogComponent,
+            expect.objectContaining({
+                header: 'artemisApp.instructorDashboard.exportSubmissions.title',
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+            }),
+        );
     });
 
     it('should set input values for dialog', () => {
-        const mockModalRef = new MockNgbModalRef();
-        modalService.open = vi.fn().mockReturnValue(mockModalRef);
+        const openSpy = vi.spyOn(dialogService, 'open');
 
         component.openSubmissionExportDialog(mouseEvent);
 
-        expect(mockModalRef.componentInstance.exerciseId).toBe(exerciseId);
-        expect(mockModalRef.componentInstance.exerciseType).toBe(exerciseType);
+        expect(openSpy.mock.calls[0][1]?.inputValues).toEqual({ exerciseId, exerciseType });
     });
 });

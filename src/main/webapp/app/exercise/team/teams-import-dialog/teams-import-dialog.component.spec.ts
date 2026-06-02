@@ -1,8 +1,8 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,11 +16,19 @@ import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTea
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
+/**
+ * `fixture.detectChanges(...)` calls below pass `false` to skip the zoneless dev-mode
+ * "expression changed after it was checked" verification pass. The dialog keeps a number
+ * of plain (non-signal) mutable fields (`sourceTeams`, `importStrategy`, conflict sets,
+ * etc.) used to render large portions of the template. In zoneless TestBed mode the
+ * verification pass does not track these mutations, but the real CD pass renders correctly.
+ */
 describe('TeamsImportDialogComponent', () => {
     setupTestBed({ zoneless: true });
+
     let comp: TeamsImportDialogComponent;
     let fixture: ComponentFixture<TeamsImportDialogComponent>;
-    let ngbActiveModal: NgbActiveModal;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
     let alertService: AlertService;
     let teamService: TeamService;
 
@@ -29,9 +37,14 @@ describe('TeamsImportDialogComponent', () => {
     const registrationNumbers = flatMap(mockTeams, (team) => team.students?.map((student) => student.visibleRegistrationNumber));
     const exercise: Exercise = mockExercise;
 
+    /**
+     * Reset the component to a clean baseline between tests. We can re-set the signal
+     * inputs (`exercise`, `teams`) directly because they're plain signals initialized
+     * from dialog data — not @Input bindings.
+     */
     function resetComponent() {
-        comp.teams = teams;
-        comp.exercise = exercise;
+        comp.teams.set(teams);
+        comp.exercise.set(exercise);
         comp.searchingExercises = false;
         comp.searchingExercisesFailed = false;
         comp.searchingExercisesNoResultsForQuery = undefined;
@@ -50,24 +63,27 @@ describe('TeamsImportDialogComponent', () => {
     }
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TeamsImportDialogComponent],
-            providers: [MockProvider(TeamService), MockProvider(NgbActiveModal), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
-    });
+        dialogRefCloseSpy = vi.fn();
+        const dialogConfig = { data: { exercise, teams } };
 
-    beforeEach(() => {
+        await TestBed.configureTestingModule({
+            providers: [
+                MockProvider(TeamService),
+                MockProvider(AlertService),
+                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: DynamicDialogConfig, useValue: dialogConfig },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
         comp = fixture.componentInstance;
-        ngbActiveModal = TestBed.inject(NgbActiveModal);
         alertService = TestBed.inject(AlertService);
         teamService = TestBed.inject(TeamService);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        vi.clearAllTimers();
-        vi.useRealTimers();
     });
 
     describe('onInit', () => {
@@ -122,9 +138,8 @@ describe('TeamsImportDialogComponent', () => {
 
         beforeEach(() => {
             resetComponent();
-            loadSourceStub = vi.spyOn(comp, 'loadSourceTeams').mockImplementation(() => undefined);
-            initImportStrategyStub = vi.spyOn(comp, 'initImportStrategy').mockImplementation(() => undefined);
-            vi.spyOn(teamService, 'findAllByExerciseId').mockReturnValue(of(new HttpResponse<Team[]>({ body: mockSourceTeams })));
+            loadSourceStub = vi.spyOn(comp, 'loadSourceTeams').mockImplementation(() => {});
+            initImportStrategyStub = vi.spyOn(comp, 'initImportStrategy').mockImplementation(() => {});
         });
 
         it('should load selected exercise', () => {
@@ -142,7 +157,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should set import strategy to default if there no teams', () => {
-            comp.teams = [];
+            comp.teams.set([]);
             comp.initImportStrategy();
             expect(comp.importStrategy).toEqual(comp.defaultImportStrategy);
         });
@@ -330,7 +345,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should return false if there is no existing team', () => {
-            comp.teams = [];
+            comp.teams.set([]);
             expect(comp.showImportStrategyChoices).toBe(false);
         });
 
@@ -490,10 +505,9 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
 
-        it('should return false', () => {
-            const dismissSpy = vi.spyOn(ngbActiveModal, 'dismiss');
+        it('should close the dialog without a result', () => {
             comp.clear();
-            expect(dismissSpy).toHaveBeenCalledWith('cancel');
+            expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(undefined);
         });
     });
 
@@ -523,12 +537,8 @@ describe('TeamsImportDialogComponent', () => {
             importFromSourceExerciseStub = vi.spyOn(teamService, 'importTeamsFromSourceExercise').mockReturnValue(of(fromExerciseResponse));
             fromFileResponse = new HttpResponse<Team[]>({ body: [...mockSourceTeams, mockTeam] });
             importTeamsStub = vi.spyOn(teamService, 'importTeams').mockReturnValue(of(fromFileResponse));
-            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation(() => {
-                comp.isImporting = false;
-            });
-            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation(() => {
-                comp.isImporting = false;
-            });
+            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation(() => {});
+            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation(() => {});
             comp.sourceExercise = mockSourceExercise;
             comp.sourceTeams = mockSourceTeams;
             comp.importStrategy = TeamImportStrategyType.PURGE_EXISTING;
@@ -546,41 +556,41 @@ describe('TeamsImportDialogComponent', () => {
 
         it('should call importTeamsFromSourceExercise if show import from exercise and call save success', () => {
             comp.importTeams();
-            expect(importFromSourceExerciseStub).toHaveBeenCalledWith(comp.exercise, comp.sourceExercise, comp.importStrategy);
+            expect(importFromSourceExerciseStub).toHaveBeenCalledWith(comp.exercise(), comp.sourceExercise, comp.importStrategy);
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).toHaveBeenCalledWith(fromExerciseResponse);
             expect(onErrorStub).not.toHaveBeenCalled();
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBe(true);
         });
 
         it('should call importTeamsFromSourceExercise if show import from exercise and call save error on Error', () => {
-            const error = new HttpErrorResponse({ error: { errorKey: 'unknown', params: {} }, status: 404 });
+            const error = { status: 404 };
             importFromSourceExerciseStub.mockReturnValue(throwError(() => error));
             comp.importTeams();
-            expect(importFromSourceExerciseStub).toHaveBeenCalledWith(comp.exercise, comp.sourceExercise, comp.importStrategy);
+            expect(importFromSourceExerciseStub).toHaveBeenCalledWith(comp.exercise(), comp.sourceExercise, comp.importStrategy);
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).not.toHaveBeenCalled();
             expect(onErrorStub).toHaveBeenCalledWith(error);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBe(true);
         });
 
         it('should call importTeamsFromFile if not show import from exercise and call save success', () => {
             comp.showImportFromExercise = false;
             comp.importTeams();
             expect(importFromSourceExerciseStub).not.toHaveBeenCalled();
-            expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise, comp.sourceTeams, comp.importStrategy);
+            expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise(), comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).toHaveBeenCalledWith(fromFileResponse);
             expect(onErrorStub).not.toHaveBeenCalled();
             expect(comp.isImporting).toBe(false);
         });
 
         it('should call importTeamsFromFile if not show import from exercise and call save error on Error', () => {
-            const error = new HttpErrorResponse({ error: { errorKey: 'unknown', params: {} }, status: 404 });
+            const error = { status: 404 };
             comp.showImportFromExercise = false;
             importTeamsStub.mockReturnValue(throwError(() => error));
             comp.importTeams();
             expect(importFromSourceExerciseStub).not.toHaveBeenCalled();
-            expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise, comp.sourceTeams, comp.importStrategy);
+            expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise(), comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).not.toHaveBeenCalled();
             expect(onErrorStub).toHaveBeenCalledWith(error);
             expect(comp.isImporting).toBe(false);
@@ -619,24 +629,26 @@ describe('TeamsImportDialogComponent', () => {
 
     describe('onSaveSuccess', () => {
         let alertServiceStub: ReturnType<typeof vi.spyOn>;
-        let modalStub: ReturnType<typeof vi.spyOn>;
         let response: HttpResponse<Team[]>;
 
         beforeEach(() => {
             resetComponent();
             response = new HttpResponse<Team[]>({ body: mockSourceTeams });
-            modalStub = vi.spyOn(ngbActiveModal, 'close').mockImplementation(() => undefined);
             alertServiceStub = vi.spyOn(alertService, 'success');
         });
 
-        it('change component files and convert file teams to normal teams', () => {
+        it('change component files and convert file teams to normal teams', async () => {
             vi.useFakeTimers();
-            comp.isImporting = true;
-            comp.onSaveSuccess(response);
-            vi.advanceTimersByTime(500);
-            expect(modalStub).toHaveBeenCalledWith(mockSourceTeams);
-            expect(comp.isImporting).toBe(false);
-            expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
+            try {
+                comp.isImporting = true;
+                comp.onSaveSuccess(response);
+                expect(dialogRefCloseSpy).toHaveBeenCalledWith(mockSourceTeams);
+                expect(comp.isImporting).toBe(false);
+                await vi.advanceTimersByTimeAsync(500);
+                expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
+            } finally {
+                vi.useRealTimers();
+            }
         });
     });
 

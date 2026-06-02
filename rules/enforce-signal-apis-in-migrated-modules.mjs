@@ -8,7 +8,7 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * must not be reintroduced in these modules.
  */
 // TODO: Add other modules here once they have been fully migrated to Angular signal-based APIs.
-// Still pending (legacy decorators remain): course, editor, exercise, programming.
+// Still pending (legacy decorators remain): exercise, programming.
 const MIGRATED_MODULES = [
     'account',
     'admin',
@@ -17,6 +17,8 @@ const MIGRATED_MODULES = [
     'calendar',
     'communication',
     'core',
+    'course',
+    'editor',
     'exam',
     'fileupload',
     'foundation',
@@ -64,11 +66,12 @@ export default createRule({
     },
     defaultOptions: [],
     create(context) {
-        const filename = context.filename ?? context.getFilename();
+        // Normalize Windows backslashes so the `/app/<module>/` check works across operating systems.
+        const filename = (context.filename ?? context.getFilename()).replaceAll('\\', '/');
 
-        // Only apply to source files in migrated modules, not to test/spec files
+        // Apply to all files (including test/spec files) in migrated modules
         const migratedModule = MIGRATED_MODULES.find((mod) => filename.includes(`/app/${mod}/`));
-        if (!migratedModule || filename.endsWith('.spec.ts')) {
+        if (!migratedModule) {
             return {};
         }
 
