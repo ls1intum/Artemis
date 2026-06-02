@@ -1,6 +1,7 @@
 import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
@@ -16,7 +17,7 @@ import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -65,7 +66,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
-    activeModal? = inject(NgbActiveModal, { optional: true });
+    readonly dialogRef = inject(DynamicDialogRef, { optional: true });
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
@@ -206,7 +208,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     readonly isPrinting = input(false);
 
     // Icons
-    faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
     isLoading = false;
@@ -254,6 +255,23 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * When a result has feedbacks assigned to it, no server call will be executed.
      */
     ngOnInit(): void {
+        // When opened via DialogService, inputs arrive through DynamicDialogConfig.data rather than template bindings.
+        // The standalone-feedback page (and the existing spec) bind inputs directly, so dialogConfig may be absent.
+        const data = this.dialogConfig?.data;
+        if (data) {
+            this.exercise = data.exercise ?? this.exercise;
+            this.result = data.result ?? this.result;
+            this.participation = data.participation ?? this.participation;
+            this.exerciseType = data.exerciseType ?? this.exerciseType;
+            this.feedbackFilter = data.feedbackFilter ?? this.feedbackFilter;
+            this.showScoreChart = data.showScoreChart ?? this.showScoreChart;
+            this.messageKey = data.messageKey ?? this.messageKey;
+            this.showMissingAutomaticFeedbackInformation = data.showMissingAutomaticFeedbackInformation ?? this.showMissingAutomaticFeedbackInformation;
+            this.latestDueDate = data.latestDueDate ?? this.latestDueDate;
+            this.taskName = data.taskName ?? this.taskName;
+            this.numberOfNotExecutedTests = data.numberOfNotExecutedTests ?? this.numberOfNotExecutedTests;
+        }
+
         this.isLoading = true;
 
         this.initializeExerciseInformation();

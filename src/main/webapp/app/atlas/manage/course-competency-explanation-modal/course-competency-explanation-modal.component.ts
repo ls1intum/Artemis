@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
@@ -15,9 +15,9 @@ export class CourseCompetencyExplanationModalComponent {
 
     protected readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/adaptive-learning';
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
 
     protected closeModal(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 }
