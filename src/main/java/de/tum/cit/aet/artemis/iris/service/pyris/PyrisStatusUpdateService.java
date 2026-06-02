@@ -152,25 +152,39 @@ public class PyrisStatusUpdateService {
     /**
      * Handles the status update of a lecture ingestion job.
      * <p>
-     * If the callback carries a {@code result} payload, Artemis forwards it to the checkpoint handler regardless
-     * of terminality. The lecture module itself decides whether the payload is relevant for the current phase.
+     * On EVERY callback (not just terminal): passes the {@code result} field to the checkpoint handler.
+     * This allows Artemis to save transcription data mid-pipeline and transition TRANSCRIBING → INGESTING.
      * <p>
-     * On terminal callbacks, Artemis additionally forwards the dedicated {@code slidePageNumbers} field if present.
+     * On terminal callback: notifies the processing service that the job completed or failed.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), hasText(statusUpdate.result()));
+        log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
 
-        forwardCheckpointPayload(job, statusUpdate.result());
-
-        if (isTerminal(statusUpdate.stages())) {
-            completeLectureIngestion(job, statusUpdate);
-            return;
+        // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
+        if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
+            processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
         }
 
-        keepLectureIngestionAlive(job);
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+
+        if (isDone) {
+            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
+            String rawCode = statusUpdate.errorCode();
+            String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
+            List<Integer> slidePageNumbers = success ? statusUpdate.slidePageNumbers() : null;
+            log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumbers));
+            pyrisJobService.removeJob(job);
+        }
+        else {
+            pyrisJobService.updateJob(job);
+            // Update lastUpdated on every non-terminal callback so stuck detection
+            // can use "time since last callback" instead of "time since phase started"
+            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
+        }
     }
 
     /**
@@ -205,41 +219,6 @@ public class PyrisStatusUpdateService {
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
-    }
-
-    private void forwardCheckpointPayload(LectureIngestionWebhookJob job, String result) {
-        if (hasText(result)) {
-            processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), result));
-        }
-    }
-
-    private boolean isTerminal(List<PyrisStageDTO> stages) {
-        return stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-    }
-
-    private void completeLectureIngestion(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-        String errorCode = success ? null : normalizeErrorCode(statusUpdate.errorCode());
-        List<Integer> slidePageNumbers = success ? statusUpdate.slidePageNumbers() : null;
-
-        log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
-        processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumbers));
-        pyrisJobService.removeJob(job);
-    }
-
-    private void keepLectureIngestionAlive(LectureIngestionWebhookJob job) {
-        pyrisJobService.updateJob(job);
-        // Update lastUpdated on every running callback so stuck detection
-        // can use "time since last callback" instead of "time since phase started"
-        processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
-    }
-
-    private String normalizeErrorCode(String errorCode) {
-        return hasText(errorCode) ? errorCode : null;
-    }
-
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
     }
 
 }
