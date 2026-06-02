@@ -11,6 +11,8 @@ import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-in
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('FinishedJobsTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -84,6 +86,7 @@ describe('FinishedJobsTableComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: DialogService, useClass: MockDialogService },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });

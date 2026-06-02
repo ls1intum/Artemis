@@ -4,21 +4,21 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Subject } from 'rxjs';
 
 describe('ResultHistoryDropdownComponent', () => {
     setupTestBed({ zoneless: true });
@@ -26,16 +26,8 @@ describe('ResultHistoryDropdownComponent', () => {
     let component: ResultHistoryDropdownComponent;
     let fixture: ComponentFixture<ResultHistoryDropdownComponent>;
     let mockRouter: MockRouter;
-    let dialogService: DialogService;
-    let dialogOpenSpy: ReturnType<typeof vi.fn>;
 
     const defaultExercise: Exercise = { id: 1, type: ExerciseType.PROGRAMMING, course: { id: 1 } } as Exercise;
-
-    const dialogRef = {
-        onClose: new Subject<void>(),
-        onChildComponentLoaded: new Subject<FeedbackComponent>(),
-        close: vi.fn(),
-    } as unknown as DynamicDialogRef<FeedbackComponent>;
 
     const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
         const participation: Participation = { id: 1 } as Participation;
@@ -46,14 +38,13 @@ describe('ResultHistoryDropdownComponent', () => {
 
     beforeEach(async () => {
         mockRouter = new MockRouter();
-        dialogOpenSpy = vi.fn().mockReturnValue(dialogRef);
 
         await TestBed.configureTestingModule({
             imports: [ResultHistoryDropdownComponent, TranslateModule.forRoot()],
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
-                { provide: DialogService, useValue: { open: dialogOpenSpy } },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -63,7 +54,6 @@ describe('ResultHistoryDropdownComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ResultHistoryDropdownComponent);
                 component = fixture.componentInstance;
-                dialogService = TestBed.inject(DialogService);
                 fixture.componentRef.setInput('exercise', defaultExercise);
                 fixture.componentRef.setInput('sortedHistoryResults', []);
                 fixture.detectChanges();
@@ -367,6 +357,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
+            const dialogService = TestBed.inject(DialogService);
             const openSpy = vi.spyOn(dialogService, 'open');
 
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
@@ -378,6 +369,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should open feedback modal when result has participation', () => {
+            const dialogService = TestBed.inject(DialogService);
             const openSpy = vi.spyOn(dialogService, 'open');
 
             const participation: Participation = { id: 1 } as Participation;
@@ -388,24 +380,21 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(openSpy).toHaveBeenCalled();
-        });
-
-        it('should pass feedback inputs to the PrimeNG dialog', () => {
-            const participation: Participation = { id: 1 } as Participation;
-            const result = { id: 1, score: 80, submission: { id: 1, participation } } as unknown as Result;
-            const event = new Event('click');
-
-            component.showFeedback(result, event);
-
-            expect(dialogService.open).toHaveBeenCalledWith(
+            expect(openSpy).toHaveBeenCalledWith(
                 FeedbackComponent,
                 expect.objectContaining({
-                    inputValues: expect.objectContaining({
-                        exercise: defaultExercise,
-                        result,
-                        participation,
-                    }),
+                    header: 'artemisApp.result.detail.feedback',
+                    width: '80rem',
+                    breakpoints: {
+                        '1400px': '75vw',
+                        '1200px': '85vw',
+                        '992px': '95vw',
+                    },
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    data: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );
         });
