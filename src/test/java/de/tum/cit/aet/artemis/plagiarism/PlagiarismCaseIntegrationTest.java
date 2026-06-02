@@ -151,6 +151,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
                 .containsExactlyInAnyOrderElementsOf(coursePlagiarismCases.stream().map(PlagiarismCase::getId).toList());
         assertThat(plagiarismCasesResponse.getFirst().plagiarismSubmissionCount()).as("should include the number of submissions").isEqualTo(2);
         assertThat(plagiarismCasesResponse.getFirst().exercise().id()).as("should include exercise summary").isEqualTo(textExercise.getId());
+        assertThat(plagiarismCasesResponse.getFirst().student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
     }
 
     @Test
@@ -179,6 +180,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(plagiarismCase.id()).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1.getId());
         assertThat(plagiarismCase.plagiarismSubmissions()).as("should include plagiarism submissions").hasSize(2);
         assertThat(plagiarismCase.plagiarismSubmissions().getFirst().plagiarismComparison()).as("should include comparison summaries").isNotNull();
+        assertThat(plagiarismCase.student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
     }
 
     @Test
@@ -210,6 +212,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").extracting(PlagiarismCaseOverviewDTO::id)
                 .containsExactlyInAnyOrderElementsOf(examPlagiarismCases.stream().map(PlagiarismCase::getId).toList());
         assertThat(plagiarismCasesResponse.getFirst().exercise().examId()).as("should include exam summary").isEqualTo(exam.getId());
+        assertThat(plagiarismCasesResponse.getFirst().student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
     }
 
     @Test
@@ -363,6 +366,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(plagiarismCase.id()).as("should get plagiarism case for student").isEqualTo(plagiarismCase1.getId());
         assertThat(plagiarismCase.plagiarismSubmissions()).as("should include plagiarism submissions").hasSize(2);
         assertThat(plagiarismCase.plagiarismSubmissions().getFirst().plagiarismComparison()).as("should include comparison summaries").isNotNull();
+        assertThat(plagiarismCase.student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
     }
 
     @Test

@@ -22,7 +22,6 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
      * @param studentLogin                         the affected student login
      * @param studentFirstName                     the affected student's first name
      * @param studentLastName                      the affected student's last name
-     * @param studentVisibleRegistrationNumber     the affected student's visible registration number
      * @param postId                               the post id
      * @param postCreationDate                     the post creation date
      * @param hasStudentAnswer                     whether the affected student answered the notification post
@@ -35,12 +34,11 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
      * @param plagiarismSubmissionCount            the number of submissions attached to the plagiarism case
      * @param createdByContinuousPlagiarismControl whether the case was created by continuous plagiarism control
      */
-    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentFirstName, String studentLastName,
-            String studentVisibleRegistrationNumber, Long postId, ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate,
-            Long verdictById, String verdictByLogin, String verdictByFirstName, String verdictByLastName, long plagiarismSubmissionCount,
-            boolean createdByContinuousPlagiarismControl) {
-        this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), studentVisibleRegistrationNumber), postOrNull(postId, postCreationDate),
-                verdict, verdictDate, userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), Math.toIntExact(plagiarismSubmissionCount),
+    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentFirstName, String studentLastName, Long postId,
+            ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin,
+            String verdictByFirstName, String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
+        this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
+                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), Math.toIntExact(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, hasStudentAnswer);
     }
 
