@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import dayjs from 'dayjs/esm';
@@ -6,6 +8,8 @@ import { SubmissionVersionService } from 'app/exercise/submission-version/submis
 import { provideHttpClient } from '@angular/common/http';
 
 describe('SubmissionVersion Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: SubmissionVersionService;
     let httpMock: HttpTestingController;
     const submission = new TextSubmission();
@@ -18,7 +22,7 @@ describe('SubmissionVersion Service', () => {
         service = TestBed.inject(SubmissionVersionService);
         httpMock = TestBed.inject(HttpTestingController);
     });
-    it('should get submission versions for submission', fakeAsync(() => {
+    it('should get submission versions for submission', () => {
         const submissionId = 1;
         const submissionVersion = {
             id: 1,
@@ -30,6 +34,5 @@ describe('SubmissionVersion Service', () => {
         service.findAllSubmissionVersionsOfSubmission(submissionId).subscribe((resp) => expect(resp).toEqual(expected));
         const req = httpMock.expectOne({ url: `api/exercise/submissions/${submissionId}/versions`, method: 'GET' });
         req.flush(expected);
-        tick();
-    }));
+    });
 });

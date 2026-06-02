@@ -9,6 +9,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PaginatorState } from 'primeng/paginator';
 import { TranslateModule } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -100,6 +101,18 @@ describe('CourseRequestsComponent', () => {
 
         const fixture = TestBed.createComponent(CourseRequestsComponent);
         component = fixture.componentInstance;
+    });
+
+    describe('pagination (PrimeNG paginator)', () => {
+        it('converts the 0-indexed paginator event to the 1-indexed decided page and reloads with the 0-indexed offset', () => {
+            mockCourseRequestService.findAdminOverview.mockClear();
+            mockCourseRequestService.findAdminOverview.mockReturnValue(of({ pendingRequests: [], decidedRequests: [], totalDecidedCount: 0 } as CourseRequestsAdminOverview));
+
+            component.onDecidedPaginatorChange({ page: 2 } as PaginatorState);
+
+            expect(component.decidedPage()).toBe(3);
+            expect(mockCourseRequestService.findAdminOverview).toHaveBeenCalledWith(2, component.decidedPageSize);
+        });
     });
 
     describe('ngOnInit', () => {

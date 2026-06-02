@@ -1,6 +1,6 @@
+import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -10,28 +10,24 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
-import { signal } from '@angular/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('ProgrammingDiffReportDetailComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ProgrammingDiffReportDetailComponent;
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
-    let modalService: NgbModal;
-    let mockModalRef: NgbModalRef;
+    let dialogService: DialogService;
+    let mockDialogRef: DynamicDialogRef;
 
     beforeEach(async () => {
-        mockModalRef = {
-            close: jest.fn(),
-            componentInstance: {
-                repositoryDiffInformation: signal(null),
-                templateFileContentByPath: signal(null),
-                solutionFileContentByPath: signal(null),
-            },
+        mockDialogRef = {
+            close: vi.fn(),
         } as any;
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingDiffReportDetailComponent],
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(mockDialogRef) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -39,13 +35,13 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingDiffReportDetailComponent);
 
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         component = fixture.componentInstance;
     });
 
     it('should open git diff modal when repository diff information exists', () => {
-        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-        component.detail = {
+        const dialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
             data: {
                 repositoryDiffInformation: {
@@ -57,33 +53,46 @@ describe('ProgrammingDiffReportDetailComponent', () => {
                 templateFileContentByPath: new Map([['file1.txt', 'content1']]),
                 solutionFileContentByPath: new Map([['file1.txt', 'content2']]),
             },
-        } as ProgrammingDiffReportDetail;
+        } as ProgrammingDiffReportDetail);
 
         component.showGitDiff();
 
-        expect(modalSpy).toHaveBeenCalled();
-        expect(mockModalRef.componentInstance.repositoryDiffInformation).toBeDefined();
-        expect(mockModalRef.componentInstance.templateFileContentByPath).toBeDefined();
-        expect(mockModalRef.componentInstance.solutionFileContentByPath).toBeDefined();
+        expect(dialogSpy).toHaveBeenCalled();
+        expect(dialogSpy).toHaveBeenCalledWith(
+            expect.any(Function),
+            expect.objectContaining({
+                // Guard the close-affordance fix: PrimeNG only renders the X and binds Escape when closable is true.
+                closable: true,
+                data: expect.objectContaining({
+                    repositoryDiffInformation: expect.objectContaining({
+                        totalLineChange: expect.objectContaining({
+                            addedLineCount: 10,
+                            removedLineCount: 5,
+                        }),
+                    }),
+                    diffForTemplateAndSolution: true,
+                }),
+            }),
+        );
     });
 
     it('should not open git diff modal when repository diff information is missing', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        component.detail = {
+        const dialogSpy = vi.spyOn(dialogService, 'open');
+        fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
             data: {
                 repositoryDiffInformation: undefined,
                 templateFileContentByPath: new Map(),
                 solutionFileContentByPath: new Map(),
             },
-        } as ProgrammingDiffReportDetail;
+        } as ProgrammingDiffReportDetail);
 
         component.showGitDiff();
-        expect(modalSpy).not.toHaveBeenCalled();
+        expect(dialogSpy).not.toHaveBeenCalled();
     });
 
     it('should calculate line counts correctly using getter methods', () => {
-        component.detail = {
+        fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
             data: {
                 repositoryDiffInformation: {
@@ -95,14 +104,22 @@ describe('ProgrammingDiffReportDetailComponent', () => {
                 templateFileContentByPath: new Map(),
                 solutionFileContentByPath: new Map(),
             },
-        } as ProgrammingDiffReportDetail;
+        } as ProgrammingDiffReportDetail);
 
         expect(component.addedLineCount).toBe(15);
         expect(component.removedLineCount).toBe(8);
     });
 
-    it('should handle ngOnDestroy lifecycle method', () => {
-        // Test that ngOnDestroy doesn't throw when modalRef is undefined
-        expect(() => component.ngOnDestroy()).not.toThrow();
+    it('should close an open dialog on destroy', () => {
+        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        fixture.componentRef.setInput('detail', {
+            type: DetailType.ProgrammingDiffReport,
+            data: { repositoryDiffInformation: { totalLineChange: { addedLineCount: 1, removedLineCount: 0 } } },
+        } as ProgrammingDiffReportDetail);
+
+        component.showGitDiff();
+        component.ngOnDestroy();
+
+        expect(mockDialogRef.close).toHaveBeenCalledOnce();
     });
 });

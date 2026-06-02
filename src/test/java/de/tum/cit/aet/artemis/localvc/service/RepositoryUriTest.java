@@ -12,7 +12,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 class RepositoryUriTest {

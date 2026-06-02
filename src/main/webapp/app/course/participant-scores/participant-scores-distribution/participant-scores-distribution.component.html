@@ -13,8 +13,8 @@
         [yScaleMax]="yScaleMax"
         [showDataLabel]="true"
         [animations]="false"
-        [dataLabelFormatting]="dataLabelFormatting"
-        [showDataLabel]="!isCourseScore"
+        [dataLabelFormatting]="dataLabelFormatting()"
+        [showDataLabel]="!isCourseScore()"
         (select)="onSelect.emit($event)"
         class="row"
     >

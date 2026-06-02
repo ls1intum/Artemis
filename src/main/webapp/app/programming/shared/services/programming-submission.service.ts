@@ -720,12 +720,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
+        return this.http.post(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { params, observe: 'response' });
+        return this.http.post(`api/programming/participations/${participationId}/trigger-failed-build`, {}, { params, observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {

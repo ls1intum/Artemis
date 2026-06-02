@@ -1,32 +1,33 @@
-@if (detail.data.participation) {
+@let data = detail().data;
+@if (data.participation) {
     <div class="d-flex align-items-center">
-        @if (!detail.data.loading) {
+        @if (!data.loading) {
             <jhi-updating-result
-                [exercise]="detail.data.exercise"
-                [participation]="detail.data.participation"
+                [exercise]="data.exercise"
+                [participation]="data.participation"
                 [showUngradedResults]="true"
                 [personalParticipation]="false"
                 [short]="false"
                 [showProgressBar]="true"
                 [showProgressBarBorder]="true"
-                (onParticipationChange)="detail.data.onParticipationChange()"
+                (onParticipationChange)="data.onParticipationChange()"
                 class="me-2"
             />
         }
-        @if (detail.data.participation.submissions?.first()?.results?.length) {
+        @if (data.participation.submissions?.first()?.results?.length) {
             <jhi-programming-exercise-instructor-status
                 class="repository-status-icon me-2"
-                [participationType]="detail.data.type"
-                [participation]="detail.data.participation"
-                [exercise]="detail.data.exercise"
+                [participationType]="data.type"
+                [participation]="data.participation"
+                [exercise]="data.exercise"
             />
-            @if (detail.data.exercise.isAtLeastEditor) {
-                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="detail.data.exercise" [participation]="detail.data.participation" />
+            @if (data.exercise.isAtLeastEditor) {
+                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="data.exercise" [participation]="data.participation" />
             }
         }
-        @if (detail.data.exercise.isAtLeastEditor && detail.data.participation.id) {
-            <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
-                @switch (detail.data.type) {
+        @if (data.exercise.isAtLeastEditor && data.participation.id) {
+            <a [routerLink]="data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
+                @switch (data.type) {
                     @case (ProgrammingExerciseParticipationType.TEMPLATE) {
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions"></span>
                     }

@@ -1,16 +1,20 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('FileService', () => {
+    setupTestBed({ zoneless: true });
+
     const firstUniqueFileName = 'someOtherUniqueFileName';
     const secondUniqueFileName = 'someUniqueFileName';
 
     let fileService: FileService;
     let httpMock: HttpTestingController;
-    let getUniqueFileNameSpy: jest.SpyInstance;
+    let getUniqueFileNameSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,7 +22,7 @@ describe('FileService', () => {
         });
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
-        getUniqueFileNameSpy = jest.spyOn(fileService, 'getUniqueFileName');
+        getUniqueFileNameSpy = vi.spyOn(fileService, 'getUniqueFileName');
     });
 
     describe('getFile', () => {
@@ -36,7 +40,8 @@ describe('FileService', () => {
             const file = await filePromise;
 
             expect(file.size).toEqual(blob.size);
-            expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', undefined);
+            expect(getUniqueFileNameSpy).toHaveBeenCalledOnce();
+            expect(getUniqueFileNameSpy).toHaveBeenCalledWith('png', undefined);
         });
 
         it('should return a file with unique name', async () => {
@@ -57,7 +62,8 @@ describe('FileService', () => {
             const file = await filePromise;
 
             expect(file.size).toEqual(blob.size);
-            expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', existingFileNames);
+            expect(getUniqueFileNameSpy).toHaveBeenCalledOnce();
+            expect(getUniqueFileNameSpy).toHaveBeenCalledWith('png', existingFileNames);
         });
     });
 
@@ -160,7 +166,7 @@ describe('FileService', () => {
             const encodedUrl = 'http://example.com/files/some%20file%20name.txt';
             const newWindowMock = { location: { href: '' } } as Window;
 
-            jest.spyOn(window, 'open').mockReturnValue(newWindowMock);
+            vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
 
             const newWindow = fileService.downloadFile(downloadUrl);
             expect(newWindow).not.toBeNull();
@@ -175,7 +181,7 @@ describe('FileService', () => {
             const encodedUrl = 'http://example.com/files/newAttachment.txt';
             const newWindowMock = { location: { href: '' } } as Window;
 
-            jest.spyOn(window, 'open').mockReturnValue(newWindowMock);
+            vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
 
             const newWindow = fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
             expect(newWindow).not.toBeNull();

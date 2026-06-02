@@ -10,14 +10,15 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { Subject } from 'rxjs';
 
 describe('ResultHistoryDropdownComponent', () => {
     setupTestBed({ zoneless: true });
@@ -25,24 +26,34 @@ describe('ResultHistoryDropdownComponent', () => {
     let component: ResultHistoryDropdownComponent;
     let fixture: ComponentFixture<ResultHistoryDropdownComponent>;
     let mockRouter: MockRouter;
+    let dialogService: DialogService;
+    let dialogOpenSpy: ReturnType<typeof vi.fn>;
 
     const defaultExercise: Exercise = { id: 1, type: ExerciseType.PROGRAMMING, course: { id: 1 } } as Exercise;
 
+    const dialogRef = {
+        onClose: new Subject<void>(),
+        onChildComponentLoaded: new Subject<FeedbackComponent>(),
+        close: vi.fn(),
+    } as unknown as DynamicDialogRef<FeedbackComponent>;
+
     const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
         const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation, ...submission } as Submission;
+        const sub = { id: id, participation } as Submission;
+        Object.assign(sub, submission);
         return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
     };
 
     beforeEach(async () => {
         mockRouter = new MockRouter();
+        dialogOpenSpy = vi.fn().mockReturnValue(dialogRef);
 
         await TestBed.configureTestingModule({
             imports: [ResultHistoryDropdownComponent, TranslateModule.forRoot()],
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: dialogOpenSpy } },
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -52,6 +63,7 @@ describe('ResultHistoryDropdownComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ResultHistoryDropdownComponent);
                 component = fixture.componentInstance;
+                dialogService = TestBed.inject(DialogService);
                 fixture.componentRef.setInput('exercise', defaultExercise);
                 fixture.componentRef.setInput('sortedHistoryResults', []);
                 fixture.detectChanges();
@@ -355,8 +367,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
-            const modalService = TestBed.inject(NgbModal);
-            const openSpy = vi.spyOn(modalService, 'open');
+            const openSpy = vi.spyOn(dialogService, 'open');
 
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
             const event = new Event('click');
@@ -367,8 +378,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should open feedback modal when result has participation', () => {
-            const modalService = TestBed.inject(NgbModal);
-            const openSpy = vi.spyOn(modalService, 'open');
+            const openSpy = vi.spyOn(dialogService, 'open');
 
             const participation: Participation = { id: 1 } as Participation;
             const result = { id: 1, score: 80, submission: { id: 1, participation } } as unknown as Result;
@@ -379,6 +389,25 @@ describe('ResultHistoryDropdownComponent', () => {
 
             expect(event.stopPropagation).toHaveBeenCalled();
             expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('should pass feedback inputs to the PrimeNG dialog', () => {
+            const participation: Participation = { id: 1 } as Participation;
+            const result = { id: 1, score: 80, submission: { id: 1, participation } } as unknown as Result;
+            const event = new Event('click');
+
+            component.showFeedback(result, event);
+
+            expect(dialogService.open).toHaveBeenCalledWith(
+                FeedbackComponent,
+                expect.objectContaining({
+                    inputValues: expect.objectContaining({
+                        exercise: defaultExercise,
+                        result,
+                        participation,
+                    }),
+                }),
+            );
         });
     });
 
