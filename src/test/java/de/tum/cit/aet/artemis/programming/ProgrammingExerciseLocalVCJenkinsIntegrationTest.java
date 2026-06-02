@@ -429,6 +429,8 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_testNotCreatedError() throws Exception {
         AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
         try {
+            // The default setup pre-creates the team repository; remove it so this test verifies cleanup of a newly failed copy.
+            programmingExerciseTestService.studentTeamRepo.resetLocalRepo();
             doAnswer(invocation -> {
                 LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
                 Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
