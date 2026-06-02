@@ -375,6 +375,20 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentSlidePageNumbersStoredAsComparableJson_shouldLoadOnPostgres() throws Exception {
+        attachmentDirectOfLecture.setSlidePageNumbers(List.of(1, 3, 5));
+        attachmentRepository.saveAndFlush(attachmentDirectOfLecture);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
+        assertThat(receivedLectureWithDetails.attachments()).anyMatch(attachment -> attachment.id().equals(attachmentDirectOfLecture.getId()));
+        assertThat(attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow().getSlidePageNumbers()).containsExactly(1, 3, 5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
         attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         attachmentVideoUnitRepository.save(attachmentVideoUnit);

@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -66,8 +65,7 @@ public class Attachment extends DomainObject implements Serializable {
     @Column(name = "student_version")
     private String studentVersion;
 
-    @Convert(converter = SlidePageNumberListConverter.class)
-    @Column(name = "slide_page_numbers", columnDefinition = "json")
+    @Column(name = "slide_page_numbers")
     @JdbcTypeCode(SqlTypes.JSON)
     private List<Integer> slidePageNumbers;
 

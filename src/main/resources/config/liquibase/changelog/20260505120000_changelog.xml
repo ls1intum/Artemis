@@ -3,10 +3,19 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260505-01-add-slide-page-numbers-column" author="pyris-integration">
+    <changeSet id="20260505120000-1" author="vivienxr" dbms="mysql,h2">
         <comment>Add slide_page_numbers JSON column to attachment for PDF page number tracking</comment>
         <addColumn tableName="attachment">
             <column name="slide_page_numbers" type="json">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260505120000-2" author="vivienxr" dbms="postgresql">
+        <comment>Add slide_page_numbers JSONB column to attachment for comparable PDF page number tracking on PostgreSQL</comment>
+        <addColumn tableName="attachment">
+            <column name="slide_page_numbers" type="jsonb">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
