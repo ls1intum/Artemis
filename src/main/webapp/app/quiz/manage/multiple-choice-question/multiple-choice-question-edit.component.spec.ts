@@ -18,8 +18,6 @@ import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
 
 // Mock monaco-editor module
@@ -57,7 +55,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
-    let modalService: NgbModal;
 
     const question: MultipleChoiceQuestion = {
         exportQuiz: false,
@@ -138,7 +135,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: MonacoEditorService, useValue: mockMonacoEditorService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -149,7 +145,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.detectChanges();
@@ -343,15 +338,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
         expect(component.markdownEditor()!.currentMarkdown()).toBe('parsed-question');
-    });
-
-    it('should open modal', () => {
-        const content = {};
-        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
-
-        component.open(content);
-
-        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(content, { size: 'lg' });
     });
 
     it('should detect changes in visual mode', () => {
