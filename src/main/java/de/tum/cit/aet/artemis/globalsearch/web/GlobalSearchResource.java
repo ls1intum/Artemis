@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -77,10 +77,10 @@ public class GlobalSearchResource {
 
     private final ChannelRepository channelRepository;
 
-    private final StudentExamRepository studentExamRepository;
+    private final StudentExamApi studentExamRepository;
 
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository, StudentExamRepository studentExamRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository, StudentExamApi studentExamRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
