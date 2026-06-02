@@ -127,7 +127,7 @@ export class CategorySelectorComponent {
         const categoryString = (event.value || '').trim();
         // prevent adding duplicated categories
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 2) {
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 10) {
             let category = this.findExistingCategory(categoryString);
             if (!category) {
                 category = this.createCategory(categoryString);
@@ -159,7 +159,7 @@ export class CategorySelectorComponent {
     onItemSelect(event: MatAutocompleteSelectedEvent): void {
         const categoryString = (event.option.value || '').trim();
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 2) {
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 10) {
             // check if there is an existing category and reuse the same color
             let category = this.findExistingCategory(categoryString);
             if (!category) {
