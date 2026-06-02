@@ -22,6 +22,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { DialogService } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 
 describe('ExerciseHeadersInformationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -46,6 +48,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 MockProvider(ExerciseService),
                 MockProvider(ComplaintService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue({ onChildComponentLoaded: new Subject() }) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -57,7 +60,8 @@ describe('ExerciseHeadersInformationComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
-                component.exercise = { ...exercise };
+                const testExercise = Object.assign({}, exercise);
+                fixture.componentRef.setInput('exercise', testExercise);
                 fixture.detectChanges();
             });
     });
@@ -120,18 +124,18 @@ describe('ExerciseHeadersInformationComponent', () => {
             submissions: [{ results: [result] }],
         } as StudentParticipation;
 
-        component.course = course;
-        component.studentParticipation = studentParticipation;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('studentParticipation', studentParticipation);
 
         const expectedDueDate = dayjs().add(7, 'days');
         vi.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
 
-        if (component.course?.maxComplaintTimeDays) {
+        if (component.course()?.maxComplaintTimeDays) {
             component.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-                component.exercise,
-                component.course.maxComplaintTimeDays,
-                getAllResultsOfAllSubmissions(component.studentParticipation.submissions).last(),
-                component.studentParticipation,
+                component.exercise(),
+                component.course()!.maxComplaintTimeDays!,
+                getAllResultsOfAllSubmissions(component.studentParticipation()!.submissions).last(),
+                component.studentParticipation(),
             );
         }
     });
@@ -177,7 +181,8 @@ describe('ExerciseHeadersInformationComponent', () => {
             startDate: dayjs().add(3, 'days'),
         } as unknown as Exercise;
 
-        component.exercise = { ...exerciseWithStartDate };
+        const testExerciseWithStartDate = Object.assign({}, exerciseWithStartDate);
+        fixture.componentRef.setInput('exercise', testExerciseWithStartDate);
         const startDateContent: DateContent = {
             type: 'dateTime',
             value: dayjs().add(3, 'days'),
@@ -191,7 +196,7 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        if (component.exercise.startDate && dayjs().isBefore(component.exercise.startDate)) {
+        if (component.exercise().startDate && dayjs().isBefore(component.exercise().startDate)) {
             component.informationBoxItems.push(startDateItem);
         }
 
@@ -204,7 +209,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         const submissionPolicyWithoutLimit = { submissionLimit: undefined } as SubmissionPolicy;
 
         // Case 1: More than 1 submission left
-        component.submissionPolicy = submissionPolicyWithLimit;
+        fixture.componentRef.setInput('submissionPolicy', submissionPolicyWithLimit);
         component.numberOfSubmissions = 1;
         expect(component.getSubmissionColor()).toBe('body-color');
 
@@ -221,7 +226,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.getSubmissionColor()).toBe('danger');
 
         // Case 5: Unlimited submissions left
-        component.submissionPolicy = submissionPolicyWithoutLimit;
+        fixture.componentRef.setInput('submissionPolicy', submissionPolicyWithoutLimit);
         component.numberOfSubmissions = 0;
         expect(component.getSubmissionColor()).toBe('body-color');
 
@@ -248,7 +253,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         component.dueDate = dueDate;
         component.informationBoxItems = [];
 
-        if (component.dueDate?.isBefore(now) && component.exercise.assessmentDueDate?.isAfter(now)) {
+        if (component.dueDate?.isBefore(now) && component.exercise().assessmentDueDate?.isAfter(now)) {
             component.informationBoxItems.push(assessmentDueItem);
         }
 
@@ -291,15 +296,16 @@ describe('ExerciseHeadersInformationComponent', () => {
             submissions: mockSubmissions,
         } as StudentParticipation;
 
-        component.studentParticipation = mockStudentParticipation;
+        fixture.componentRef.setInput('studentParticipation', mockStudentParticipation);
         component.countSubmissions();
         expect(component.numberOfSubmissions).toBe(2);
     });
 
     it('should call updateSubmissionPolicyItem if submissionPolicy is active and has a submission limit', () => {
-        component.submissionPolicy = new LockRepositoryPolicy();
-        component.submissionPolicy.active = true;
-        component.submissionPolicy.submissionLimit = 5;
+        const submissionPolicy = new LockRepositoryPolicy();
+        submissionPolicy.active = true;
+        submissionPolicy.submissionLimit = 5;
+        fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
         const updateSubmissionPolicyItemSpy = vi.spyOn(component, 'updateSubmissionPolicyItem');
 
@@ -309,7 +315,7 @@ describe('ExerciseHeadersInformationComponent', () => {
     });
 
     it('should not make status clickable when there are no sorted history results', () => {
-        component.sortedHistoryResults = [];
+        fixture.componentRef.setInput('studentParticipation', { submissions: [] } as StudentParticipation);
         component.informationBoxItems = [
             {
                 title: 'artemisApp.courseOverview.exerciseDetails.status',
@@ -326,7 +332,7 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should make status clickable when there are sorted history results', () => {
         const result = { id: 1, score: 50, submission: { id: 1, participation: { id: 1, type: 'student' } } } as unknown as Result;
-        component.sortedHistoryResults = [result];
+        fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [result] }] } as StudentParticipation);
         component.informationBoxItems = [
             {
                 title: 'artemisApp.courseOverview.exerciseDetails.status',
@@ -343,13 +349,14 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should accept sortedHistoryResults input', () => {
         const results = [{ id: 1, score: 80 } as Result, { id: 2, score: 90 } as Result];
-        component.sortedHistoryResults = results;
-        expect(component.sortedHistoryResults).toEqual(results);
+        fixture.componentRef.setInput('sortedHistoryResultsInput', results);
+        const expectedResults = [results[1], results[0]];
+        expect(component.sortedHistoryResults()).toEqual(expectedResults);
     });
 
     it('should default sortedHistoryResults to empty array', () => {
         const newFixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
         const newComponent = newFixture.componentInstance;
-        expect(newComponent.sortedHistoryResults).toEqual([]);
+        expect(newComponent.sortedHistoryResults()).toEqual([]);
     });
 });

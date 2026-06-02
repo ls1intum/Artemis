@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnInit, computed, inject, input } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -51,13 +51,15 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     readonly getIconTooltip = getIconTooltip;
     readonly dayjs = dayjs;
 
-    @Input() public exercise: Exercise;
-    @Input() public studentParticipation?: StudentParticipation;
-    @Input() public title: string;
-    @Input() public exam?: Exam;
-    @Input() public course?: Course;
-    @Input() public isTestRun = false;
-    @Input() public submissionPolicy?: SubmissionPolicy;
+    readonly exercise = input.required<Exercise>();
+    readonly studentParticipation = input<StudentParticipation>();
+    readonly title = input<string>();
+    readonly exam = input<Exam>();
+    readonly course = input<Course>();
+    readonly isTestRun = input<boolean>(false);
+    readonly submissionPolicy = input<SubmissionPolicy>();
+
+    readonly effectiveCourse = computed(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
@@ -78,32 +80,37 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     faQuestionCircle = faQuestionCircle;
 
     ngOnInit() {
-        this.exerciseCategories = this.exercise.categories || [];
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+        const course = this.effectiveCourse();
+        const exam = this.exam();
 
-        if (this.exercise.type) {
-            this.icon = getIcon(this.exercise.type);
+        this.exerciseCategories = exercise.categories || [];
+
+        if (exercise.type) {
+            this.icon = getIcon(exercise.type);
         }
 
-        this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
+        this.programmingExercise = exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
 
-        if (this.exam) {
+        if (exam) {
             this.determineNextRelevantDateExamMode();
         } else {
-            this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
-            if (this.course?.maxComplaintTimeDays) {
+            this.dueDate = getExerciseDueDate(exercise, studentParticipation);
+            this.isBeforeStartDate = exercise.startDate ? exercise.startDate.isAfter(dayjs()) : !!exercise.releaseDate?.isAfter(dayjs());
+            if (course?.maxComplaintTimeDays) {
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-                    this.exercise,
-                    this.course.maxComplaintTimeDays,
-                    getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
-                    this.studentParticipation,
+                    exercise,
+                    course.maxComplaintTimeDays,
+                    getAllResultsOfAllSubmissions(studentParticipation?.submissions).last(),
+                    studentParticipation,
                 );
             }
             // There is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                !!this.studentParticipation?.submissionCount &&
+                !!studentParticipation?.submissionCount &&
                 !this.individualComplaintDueDate &&
-                (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
+                (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.determineNextRelevantDateCourseMode();
         }
@@ -114,19 +121,22 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     ngOnChanges() {
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
+        const submissionPolicy = this.submissionPolicy();
+        const studentParticipation = this.studentParticipation();
+        const exercise = this.exercise();
+        const course = this.effectiveCourse();
 
-        if (this.submissionPolicy?.active) {
+        if (submissionPolicy?.active) {
             this.countSubmissions();
         }
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
         if (results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
             this.sortService.sortByProperty(results, 'id', false);
 
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
             }
         }
     }
@@ -135,7 +145,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the exam cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateExamMode() {
-        const possibleDates = [this.exam?.endDate, this.exam?.publishResultsDate];
+        const exam = this.exam();
+        const possibleDates = [exam?.endDate, exam?.publishResultsDate];
         const possibleDatesLabels = ['endDate', 'publishResultsDate'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
@@ -145,7 +156,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the course exercise cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateCourseMode() {
-        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDueDate];
+        const exercise = this.exercise();
+        const possibleDates = [exercise.releaseDate, exercise.startDate, exercise.assessmentDueDate, this.individualComplaintDueDate];
         const possibleDatesLabels = ['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
@@ -190,6 +202,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     private countSubmissions() {
-        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation());
     }
 }

@@ -1,15 +1,15 @@
 <h4>
-    @if (submissions && submissions.length === 0) {
+    @if (submissions() && submissions().length === 0) {
         <small class="text-warning" jhiTranslate="artemisApp.assessmentDashboard.noSubmissionFound" [translateValues]="{}"></small>
     }
-    @if (submissions && submissions.length > 0) {
+    @if (submissions() && submissions().length > 0) {
         <small
-            [ngClass]="numberAssessedSubmissions === submissions.length ? 'text-success' : 'text-warning'"
+            [ngClass]="numberAssessedSubmissions === submissions().length ? 'text-success' : 'text-warning'"
             jhiTranslate="artemisApp.assessmentDashboard.progressDescription"
             [translateValues]="{
-                percentageAssessed: (numberAssessedSubmissions / submissions.length) * 100 | number: '0.0-0',
+                percentageAssessed: (numberAssessedSubmissions / submissions().length) * 100 | number: '0.0-0',
                 numberAssessed: numberAssessedSubmissions,
-                numberSubmissions: submissions.length,
+                numberSubmissions: submissions().length,
             }"
         ></small>
     }
