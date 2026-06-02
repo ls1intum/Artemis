@@ -1,16 +1,5 @@
 import { Subject } from 'rxjs';
-
-/**
- * Creates a mock function compatible with both Jest and Vitest.
- */
-function createMockFn<T = unknown>(): jest.Mock<T> | (() => T) {
-    // Check if we're in Jest environment
-    if (typeof jest !== 'undefined' && jest.fn) {
-        return jest.fn();
-    }
-    // For Vitest or other environments, return a simple function
-    return (() => {}) as unknown as jest.Mock<T>;
-}
+import { type Mock, vi } from 'vitest';
 
 /**
  * Mock for PrimeNG DialogService used in tests.
@@ -19,8 +8,8 @@ function createMockFn<T = unknown>(): jest.Mock<T> | (() => T) {
 export class MockDialogService {
     private mockDialogRef = {
         onClose: new Subject<void>(),
-        close: createMockFn(),
+        close: vi.fn(),
     };
 
-    open = (() => this.mockDialogRef) as unknown as jest.Mock;
+    open = vi.fn(() => this.mockDialogRef) as unknown as Mock;
 }

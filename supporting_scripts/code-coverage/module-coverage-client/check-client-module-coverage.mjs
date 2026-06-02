@@ -17,6 +17,8 @@ const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
 let jestSummary = {};
 let vitestSummary = {};
 
+// Jest has been removed; the entire client runs on Vitest. The Jest coverage summary no longer
+// exists, so its absence is expected and the (now empty) jestSummary is simply unused.
 if (fs.existsSync(jestSummaryPath)) {
     try {
         jestSummary = JSON.parse(fs.readFileSync(jestSummaryPath, 'utf-8'));
@@ -24,9 +26,6 @@ if (fs.existsSync(jestSummaryPath)) {
         console.error('❌ Failed to parse Jest coverage-summary.json:', error);
         process.exit(1);
     }
-} else {
-    console.error('❌ Jest coverage-summary.json not found at', jestSummaryPath);
-    process.exit(1);
 }
 
 if (fs.existsSync(vitestSummaryPath)) {
@@ -45,167 +44,167 @@ if (fs.existsSync(vitestSummaryPath)) {
 
 const moduleThresholds = {
     account: {
-        statements: 95.00,
-        branches:   80.00,
-        functions:  95.00,
-        lines:      95.50,
+        statements: 95.0,
+        branches: 80.0,
+        functions: 95.0,
+        lines: 95.5,
     },
     admin: {
         // TODO: branches at 78% has room to improve once admin gets more component-level tests
         // (admin-data-exports, admin-sbom, organization-management are the lowest).
-        statements: 92.50,
-        branches:   78.00,
-        functions:  88.50,
-        lines:      92.50,
+        statements: 92.5,
+        branches: 78.0,
+        functions: 88.5,
+        lines: 92.5,
     },
     assessment: {
-        statements: 93.00,
-        branches:   82.00,
-        functions:  91.80,
-        lines:      93.70,
+        statements: 93.0,
+        branches: 82.0,
+        functions: 91.8,
+        lines: 93.7,
     },
     atlas: {
-        statements: 91.20,
-        branches:   66.30,
-        functions:  84.70,
-        lines:      91.00,
+        statements: 91.2,
+        branches: 66.3,
+        functions: 84.7,
+        lines: 91.0,
     },
     // buildagent client module folded into localci/ (the UI was always served by core nodes and talked
     // to LocalCI REST endpoints). Conservative initial baselines mirror the pre-extraction numbers.
     localci: {
-        statements: 89.00,
-        branches:   74.00,
-        functions:  84.00,
-        lines:      89.00,
+        statements: 89.0,
+        branches: 74.0,
+        functions: 84.0,
+        lines: 89.0,
     },
     // localvc client = repository-view + commit-history components (moved from programming/shared).
     // Baselines set a few points below the measured coverage (stmts 98.6 / branch 88.5 / funcs 95.5 / lines 99.3)
     // so the gate is meaningful while leaving headroom for minor future variance.
     localvc: {
-        statements: 95.00,
-        branches:   82.00,
-        functions:  90.00,
-        lines:      95.00,
+        statements: 95.0,
+        branches: 82.0,
+        functions: 90.0,
+        lines: 95.0,
     },
     communication: {
         // Lowered after notification extraction moved ~5k lines (course-notification subtree)
         // and its associated coverage out. Ratchet back up once messaging side is measured.
-        statements: 85.00,
-        branches:   65.00,
-        functions:  80.00,
-        lines:      85.00,
+        statements: 85.0,
+        branches: 65.0,
+        functions: 80.0,
+        lines: 85.0,
     },
     core: {
         // Statements/lines lowered (course + admin moved out — their well-covered code lifted
         // the previous baseline). Branches/functions raised (the moved code had lower coverage
         // for those metrics on average). TODO: keep tightening as core continues to slim down.
-        statements: 87.50,
-        branches:   75.50,
-        functions:  87.00,
-        lines:      87.50,
+        statements: 87.5,
+        branches: 75.5,
+        functions: 87.0,
+        lines: 87.5,
     },
     course: {
         // TODO: branches at 73% reflects the large course-management subtree; ratchet up as
         // remaining components get tests (course-archive, course-dashboard visualizations).
-        statements: 90.50,
-        branches:   72.50,
-        functions:  86.50,
-        lines:      91.00,
+        statements: 90.5,
+        branches: 72.5,
+        functions: 86.5,
+        lines: 91.0,
     },
     exam: {
-        statements: 91.50,
-        branches:   75.50,
-        functions:  84.60,
-        lines:      91.80,
+        statements: 91.5,
+        branches: 75.5,
+        functions: 84.6,
+        lines: 91.8,
     },
     exercise: {
-        statements: 86.80,
-        branches:   75.00,
-        functions:  77.30,
-        lines:      87.00,
+        statements: 86.8,
+        branches: 75.0,
+        functions: 77.3,
+        lines: 87.0,
     },
     fileupload: {
-        statements: 94.40,
-        branches:   77.90,
-        functions:  94.30,
-        lines:      94.80,
+        statements: 94.4,
+        branches: 77.9,
+        functions: 94.3,
+        lines: 94.8,
     },
     hyperion: {
         // Currently, there are no files under src/main/webapp/app/hyperion/,
         // so thresholds mirror the current effective coverage (no files found → skipped by checker).
         // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
-        branches:   0,
-        functions:  0,
-        lines:      0,
+        branches: 0,
+        functions: 0,
+        lines: 0,
     },
     iris: {
-        statements: 85.70,
-        branches:   73.00,
-        functions:  79.80,
-        lines:      86.40,
+        statements: 85.7,
+        branches: 73.0,
+        functions: 79.8,
+        lines: 86.4,
     },
     lecture: {
-        statements: 92.50,
-        branches:   75.50,
-        functions:  88.50,
-        lines:      92.40,
+        statements: 92.5,
+        branches: 75.5,
+        functions: 88.5,
+        lines: 92.4,
     },
     lti: {
-        statements: 93.40,
-        branches:   80.80,
-        functions:  88.60,
-        lines:      93.20,
+        statements: 93.4,
+        branches: 80.8,
+        functions: 88.6,
+        lines: 93.2,
     },
     modeling: {
-        statements: 87.30,
-        branches:   72.20,
-        functions:  84.40,
-        lines:      87.30,
+        statements: 87.3,
+        branches: 72.2,
+        functions: 84.4,
+        lines: 87.3,
     },
     notification: {
         // New module extracted from communication in this PR. Conservative initial baseline;
         // ratchet up once CI measures the actual coverage of the extracted UI.
-        statements: 80.00,
-        branches:   60.00,
-        functions:  75.00,
-        lines:      80.00,
+        statements: 80.0,
+        branches: 60.0,
+        functions: 75.0,
+        lines: 80.0,
     },
     plagiarism: {
-        statements: 93.30,
-        branches:   81.90,
-        functions:  86.80,
-        lines:      93.40,
+        statements: 93.3,
+        branches: 81.9,
+        functions: 86.8,
+        lines: 93.4,
     },
     programming: {
-        statements: 89.40,
-        branches:   76.00,
-        functions:  81.20,
-        lines:      89.40,
+        statements: 89.4,
+        branches: 76.0,
+        functions: 81.2,
+        lines: 89.4,
     },
     quiz: {
-        statements: 90.00,
-        branches:   75.10,
-        functions:  87.00,
-        lines:      90.00,
+        statements: 90.0,
+        branches: 75.1,
+        functions: 87.0,
+        lines: 90.0,
     },
     shared: {
-        statements: 88.00,
-        branches:   72.00,
-        functions:  85.60,
-        lines:      87.80,
+        statements: 88.0,
+        branches: 72.0,
+        functions: 85.6,
+        lines: 87.8,
     },
     text: {
-        statements: 89.70,
-        branches:   69.00,
-        functions:  86.00,
-        lines:      90.00,
+        statements: 89.7,
+        branches: 69.0,
+        functions: 86.0,
+        lines: 90.0,
     },
     tutorialgroup: {
-        statements: 91.00,
-        branches:   74.00,
-        functions:  87.00,
-        lines:      81.00,
+        statements: 91.0,
+        branches: 74.0,
+        functions: 87.0,
+        lines: 81.0,
     },
 };
 
@@ -228,7 +227,7 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const roundedThreshold = roundToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= roundedThreshold;
         const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
-        const shouldBumpCoverageUp = (roundedPercentage - roundedThreshold) >= SHOULD_BUMP_COVERAGE_DELTA;
+        const shouldBumpCoverageUp = roundedPercentage - roundedThreshold >= SHOULD_BUMP_COVERAGE_DELTA;
 
         const status = `${higherThanExpected && shouldBumpCoverageUp ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
@@ -243,9 +242,9 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
     const prefix = `src/main/webapp/app/${module}/`;
     const aggregatedMetrics = {
         statements: { total: 0, covered: 0 },
-        branches:   { total: 0, covered: 0 },
-        functions:  { total: 0, covered: 0 },
-        lines:      { total: 0, covered: 0 },
+        branches: { total: 0, covered: 0 },
+        functions: { total: 0, covered: 0 },
+        lines: { total: 0, covered: 0 },
     };
 
     // Use Vitest coverage for Vitest modules, Jest for everything else
@@ -263,7 +262,7 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
                 console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
                 continue;
             }
-            aggregatedMetrics[metric].total   += metricsData[metric].total;
+            aggregatedMetrics[metric].total += metricsData[metric].total;
             aggregatedMetrics[metric].covered += metricsData[metric].covered;
         }
     }

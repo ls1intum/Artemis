@@ -48,16 +48,6 @@ peerDependencyRules:
 # transitive packages to CVE-patched versions and force Angular 21 across all
 # @swimlane/* and ng-mocks subtrees (still on older peer ranges).
 overrides:
-    '@angular-builders/jest>@angular-devkit/build-angular': '^21.2.0'
-    '@angular-builders/jest>@angular/cdk': '^21.2.0'
-    '@angular-builders/jest>@angular/common': '^21.2.0'
-    '@angular-builders/jest>@angular/compiler': '^21.2.0'
-    '@angular-builders/jest>@angular/core': '^21.2.0'
-    '@angular-builders/jest>@angular/forms': '^21.2.0'
-    '@angular-builders/jest>@angular/platform-browser': '^21.2.0'
-    '@angular-builders/jest>@angular/platform-browser-dynamic': '^21.2.0'
-    '@angular-builders/jest>@angular/router': '^21.2.0'
-    '@angular-builders/jest>@angular/compiler-cli': '^21.2.0'
     '@swimlane/ngx-charts>@angular/animations': '^21.2.0'
     '@swimlane/ngx-charts>@angular/cdk': '^21.2.0'
     '@swimlane/ngx-charts>@angular/common': '^21.2.0'
@@ -126,7 +116,6 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    '@angular-builders/jest@21.0.3': 'patches/@angular-builders+jest+21.0.3.patch'
     '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
     'eslint@10.4.0': 'patches/eslint+10.4.0.patch'
 

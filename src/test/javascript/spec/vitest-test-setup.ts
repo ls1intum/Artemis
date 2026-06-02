@@ -1,7 +1,7 @@
 /**
  * Global Vitest Test Setup for Artemis
  *
- * Parallel to jest-test-setup.ts, this provides global mocks for Vitest tests.
+ * Provides the global mocks/polyfills for the Vitest client test suite (Vitest is the sole client test runner).
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
  * NOTE: All tests run in zoneless mode - do not import zone.js
  */

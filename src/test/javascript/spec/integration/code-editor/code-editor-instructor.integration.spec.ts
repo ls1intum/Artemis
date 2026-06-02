@@ -1,3 +1,18 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock y-monaco so MonacoBinding does not require a real Monaco editor instance. Without this,
+// Vite tries to transform the real y-monaco.js, whose `monaco-editor/esm/...` deep import is not
+// covered by the bare `monaco-editor` -> mock alias and fails to resolve.
+vi.mock('y-monaco', () => {
+    // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
+    const MockMonacoBinding = vi.fn(function (this: any) {
+        this.destroy = vi.fn();
+    });
+    return { MonacoBinding: MockMonacoBinding };
+});
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -73,19 +88,21 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorInstructorIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let domainService: DomainService;
     let route: ActivatedRoute;
 
-    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
-    let getRepositoryContentStub: jest.SpyInstance;
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
-    let getBuildLogsStub: jest.SpyInstance;
-    let findWithParticipationsStub: jest.SpyInstance;
-    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
-    let navigateSpy: jest.SpyInstance;
+    let checkIfRepositoryIsCleanStub: MockInstance;
+    let getRepositoryContentStub: MockInstance;
+    let subscribeForLatestResultOfParticipationStub: MockInstance;
+    let getFeedbackDetailsForResultStub: MockInstance;
+    let getBuildLogsStub: MockInstance;
+    let findWithParticipationsStub: MockInstance;
+    let getLatestResultWithFeedbacksStub: MockInstance;
+    let navigateSpy: MockInstance;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
@@ -100,8 +117,10 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                TranslateModule.forRoot(),
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
                 KeysPipe,
@@ -147,7 +166,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
-                { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: of(undefined) })) } },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
                 }),
@@ -174,16 +193,16 @@ describe('CodeEditorInstructorIntegration', () => {
         routeSubject = new Subject<Params>();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-        checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-        getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-        subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-        getLatestResultWithFeedbacksStub = jest
+        checkIfRepositoryIsCleanStub = vi.spyOn(codeEditorRepositoryService, 'getStatus');
+        getRepositoryContentStub = vi.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+        subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getLatestResultWithFeedbacksStub = vi
             .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
             .mockReturnValue(throwError(() => new Error('no result')));
-        getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-        navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
-        findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
+        getBuildLogsStub = vi.spyOn(buildLogService, 'getBuildLogs');
+        navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        findWithParticipationsStub = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
         findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
@@ -191,7 +210,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
@@ -220,7 +239,7 @@ describe('CodeEditorInstructorIntegration', () => {
     };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
-        jest.resetModules();
+        vi.resetModules();
         const result = { id: 9 } as Result;
         const submission = { id: 1, buildFailed: false, results: [result] } as Submission;
         result.submission = submission;
@@ -242,7 +261,7 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (comp.router as MockRouter).setUrl('code-editor-instructor/1');
         initContainer(exercise);
@@ -289,7 +308,7 @@ describe('CodeEditorInstructorIntegration', () => {
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
         } as ProgrammingExercise;
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         initContainer(exercise);
 
         findWithParticipationsSubject.error('fatal error');
@@ -311,7 +330,7 @@ describe('CodeEditorInstructorIntegration', () => {
             solutionParticipation: { id: 4 },
             course: { id: 1 },
         } as ProgrammingExercise;
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (comp.router as MockRouter).setUrl(`code-editor/TESTS`);
         comp.ngOnDestroy();
@@ -372,7 +391,7 @@ describe('CodeEditorInstructorIntegration', () => {
             } as ProgrammingExerciseStudentParticipation,
         ];
 
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore
@@ -434,7 +453,7 @@ describe('CodeEditorInstructorIntegration', () => {
             programmingExercise: exercise,
         } as SolutionProgrammingExerciseParticipation;
 
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore

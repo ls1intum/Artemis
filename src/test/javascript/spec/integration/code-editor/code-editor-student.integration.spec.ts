@@ -1,8 +1,13 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -18,9 +23,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
-import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/create-node/code-editor-file-browser-create-node.component';
-import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component';
-import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -34,7 +36,6 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -62,6 +63,8 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('CodeEditorStudentIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let container: CodeEditorStudentContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
@@ -70,9 +73,9 @@ describe('CodeEditorStudentIntegration', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
-    let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: MockInstance;
+    let getFeedbackDetailsForResultStub: MockInstance;
+    let getStudentParticipationWithLatestResultStub: MockInstance;
 
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let routeSubject: Subject<Params>;
@@ -82,32 +85,9 @@ describe('CodeEditorStudentIntegration', () => {
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                CodeEditorStudentContainerComponent,
-                CodeEditorContainerComponent,
-                MockComponent(CodeEditorFileBrowserComponent),
-                MockComponent(CodeEditorInstructionsComponent),
-                CodeEditorRepositoryIsLockedComponent,
-                MockPipe(KeysPipe),
-                MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(UpdatingResultComponent),
-                MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ProgrammingExerciseInstructionComponent),
-                MockComponent(AdditionalFeedbackComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(CodeEditorGridComponent),
-                MockComponent(CodeEditorActionsComponent),
-                MockComponent(CodeEditorBuildOutputComponent),
-                MockComponent(CodeEditorMonacoComponent),
-                MockComponent(CodeEditorFileBrowserCreateNodeComponent),
-                MockComponent(CodeEditorFileBrowserFolderComponent),
-                MockComponent(CodeEditorFileBrowserFileComponent),
-                MockComponent(CodeEditorStatusComponent),
-                TreeViewComponent,
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule), CodeEditorStudentContainerComponent, CodeEditorContainerComponent, CodeEditorRepositoryIsLockedComponent, TreeViewComponent],
             providers: [
                 JhiLanguageHelper,
                 { provide: AccountService, useClass: MockAccountService },
@@ -128,33 +108,61 @@ describe('CodeEditorStudentIntegration', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
-                container = containerFixture.componentInstance;
-                containerDebugElement = containerFixture.debugElement;
+            .overrideComponent(CodeEditorStudentContainerComponent, {
+                set: {
+                    imports: [
+                        FaIconComponent,
+                        TranslateDirective,
+                        CodeEditorContainerComponent,
+                        CodeEditorRepositoryIsLockedComponent,
+                        MockComponent(IncludedInScoreBadgeComponent),
+                        MockComponent(UpdatingResultComponent),
+                        MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(AdditionalFeedbackComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .overrideComponent(CodeEditorContainerComponent, {
+                set: {
+                    imports: [
+                        MockComponent(CodeEditorGridComponent),
+                        MockComponent(CodeEditorActionsComponent),
+                        MockComponent(CodeEditorFileBrowserComponent),
+                        MockComponent(CodeEditorMonacoComponent),
+                        MockComponent(CodeEditorInstructionsComponent),
+                        MockComponent(CodeEditorBuildOutputComponent),
+                        MockPipe(KeysPipe),
+                    ],
+                },
+            })
+            .compileComponents();
 
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                resultService = TestBed.inject(ResultService);
-                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-                route = TestBed.inject(ActivatedRoute);
+        containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
+        container = containerFixture.componentInstance;
+        containerDebugElement = containerFixture.debugElement;
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        resultService = TestBed.inject(ResultService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        route = TestBed.inject(ActivatedRoute);
 
-                routeSubject = new Subject<Params>();
-                // @ts-ignore
-                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
-                subscribeForLatestResultOfParticipationStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
-                    .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-                getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-            });
+        routeSubject = new Subject<Params>();
+        // @ts-ignore
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+
+        subscribeForLatestResultOfParticipationStub = vi
+            .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+            .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getStudentParticipationWithLatestResultStub = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);

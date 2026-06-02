@@ -30,8 +30,12 @@ import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let metisService: MetisService;
@@ -60,9 +64,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             ],
         }).compileComponents();
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         fixture = TestBed.createComponent(MonacoEditorComponent);
         comp = fixture.componentInstance;
         metisService = TestBed.inject(MetisService);
@@ -77,11 +79,11 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const registerActionWithCompletionProvider = (action: TextEditorAction, triggerCharacter?: string) => {
-        const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
+        const registerCompletionProviderStub = vi.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation(() => ({ dispose: () => {} }));
         comp.registerAction(action);
         expect(registerCompletionProviderStub).toHaveBeenCalledOnce();
         provider = registerCompletionProviderStub.mock.calls[0][1];
@@ -110,7 +112,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
             users = [metisUser1, metisUser2, metisTutor];
-            jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
+            vi.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
             exercises = metisService.getCourse().exercises!;
             faqs = await firstValueFrom(metisService.getFaqs());
 
@@ -131,7 +133,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should suggest no values for the wrong model', async () => {
@@ -222,7 +224,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         it('should use cached channels if available', async () => {
             const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
-            const getChannelsSpy = jest.spyOn(channelService, 'getPublicChannelsOfCourse');
+            const getChannelsSpy = vi.spyOn(channelService, 'getPublicChannelsOfCourse');
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
             expect(await channelReferenceAction.fetchChannels()).toBe(channels);
@@ -231,7 +233,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
         it('should load and cache channels if none are cached', async () => {
             const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
-            const getChannelsStub = jest.spyOn(channelService, 'getPublicChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: channels, status: 200 })));
+            const getChannelsStub = vi.spyOn(channelService, 'getPublicChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: channels, status: 200 })));
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
             expect(await channelReferenceAction.fetchChannels()).toBe(channels);
@@ -249,7 +251,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('ExerciseReferenceAction (edge cases)', () => {
         it('should initialize with empty values if exercises are not available', () => {
-            jest.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
+            vi.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
             fixture.detectChanges();
             comp.registerAction(exerciseReferenceAction);
             expect(exerciseReferenceAction.getValues()).toEqual([]);
@@ -265,7 +267,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('FaqReferenceAction', () => {
         it('should initialize with empty values if faqs are not available', () => {
-            jest.spyOn(metisService, 'getFaqs').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'getFaqs').mockReturnValue(of([]));
 
             fixture.detectChanges();
             comp.registerAction(faqReferenceAction);
@@ -290,12 +292,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
         beforeEach(() => {
             lectures = metisService.getCourse().lectures!;
-            jest.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
+            vi.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
             lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService, fileService);
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should correctly initialize lecturesWithDetails', () => {
