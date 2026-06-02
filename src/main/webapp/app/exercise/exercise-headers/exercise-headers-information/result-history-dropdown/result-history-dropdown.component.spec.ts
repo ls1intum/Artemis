@@ -31,7 +31,8 @@ describe('ResultHistoryDropdownComponent', () => {
 
     const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
         const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation, ...submission } as Submission;
+        const sub = { id: id, participation } as Submission;
+        Object.assign(sub, submission);
         return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
     };
 
@@ -388,7 +389,7 @@ describe('ResultHistoryDropdownComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({ result, participation }),
+                    data: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );
         });

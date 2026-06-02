@@ -1,4 +1,4 @@
-@if (!isExamReviewPage && !dialogRef) {
+@if (!isExamReviewPage() && !dialogRef) {
     <div class="modal-header feedback-header">
         @if (taskName) {
             <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
@@ -27,7 +27,7 @@
     } @else {
         @if (!loadingFailed && feedbackItemNodes?.length) {
             <div class="result-detail-container">
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
@@ -94,7 +94,7 @@
                     </div>
                 }
 
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <hr />
                 }
 
@@ -149,7 +149,7 @@
                     }
                 </dl>
             } @else {
-                @if (!isExamReviewPage) {
+                @if (!isExamReviewPage()) {
                     <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
                 } @else {
                     <span jhiTranslate="artemisApp.result.noResultDetails"></span>
@@ -185,7 +185,7 @@
             </dl>
         } @else {
             <!-- No content fallback -->
-            @if (!isExamReviewPage) {
+            @if (!isExamReviewPage()) {
                 <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
             } @else {
                 <span jhiTranslate="artemisApp.result.noResultDetails"></span>

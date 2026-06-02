@@ -57,7 +57,7 @@ describe('QuizExercise Management Component', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
         accountService = TestBed.inject(AccountService);
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.quizExercises.set([quizExercise]);
         comp.filter = new ExerciseFilter();
     });
@@ -101,7 +101,8 @@ describe('QuizExercise Management Component', () => {
     describe('QuizExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Quiz', '', 'quiz'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
@@ -110,7 +111,8 @@ describe('QuizExercise Management Component', () => {
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
