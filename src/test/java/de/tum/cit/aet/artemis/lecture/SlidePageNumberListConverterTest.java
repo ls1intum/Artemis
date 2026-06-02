@@ -95,6 +95,15 @@ class SlidePageNumberListConverterTest {
     }
 
     @Test
+    void convertToEntityAttribute_shouldHandleQuotedJsonArray() {
+        String json = "\"[1,2,-1]\"";
+
+        List<Integer> slidePageNumbers = converter.convertToEntityAttribute(json);
+
+        assertThat(slidePageNumbers).containsExactly(1, 2, -1);
+    }
+
+    @Test
     void convertToEntityAttribute_shouldThrowExceptionForInvalidJson() {
         String invalidJson = "not a valid json";
 

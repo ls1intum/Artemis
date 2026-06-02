@@ -635,12 +635,7 @@ public class ProcessingStateCallbackService {
      * The list maps slide numbers to their corresponding page numbers in the PDF.
      */
     private void saveSlidePageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> slidePageNumbers) {
-        if (slidePageNumbers == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
-            return;
-        }
-        if (attachmentVideoUnit.getSlides().size() != slidePageNumbers.size()) {
-            log.warn("Ignoring slidePageNumbers for unit {} because size {} does not match slide count {}", attachmentVideoUnit.getId(), slidePageNumbers.size(),
-                    attachmentVideoUnit.getSlides().size());
+        if (!(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
         Attachment attachment = attachmentVideoUnit.getAttachment();

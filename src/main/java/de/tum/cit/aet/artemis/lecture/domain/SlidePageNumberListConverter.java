@@ -48,6 +48,9 @@ public class SlidePageNumberListConverter implements AttributeConverter<List<Int
         }
 
         try {
+            if (jsonData.startsWith("\"") && jsonData.endsWith("\"")) {
+                jsonData = objectMapper.readValue(jsonData, String.class);
+            }
             return objectMapper.readValue(jsonData, LIST_TYPE);
         }
         catch (IOException e) {

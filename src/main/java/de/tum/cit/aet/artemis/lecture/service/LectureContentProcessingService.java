@@ -21,9 +21,11 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -56,12 +58,15 @@ public class LectureContentProcessingService {
 
     private final ProcessingStateCallbackService processingStateCallbackService;
 
+    private final AttachmentRepository attachmentRepository;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, Optional<IrisLectureApi> irisLectureApi,
-            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService) {
+            FeatureToggleService featureToggleService, ProcessingStateCallbackService processingStateCallbackService, AttachmentRepository attachmentRepository) {
         this.processingStateRepository = processingStateRepository;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
         this.processingStateCallbackService = processingStateCallbackService;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -312,6 +317,13 @@ public class LectureContentProcessingService {
     }
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit) {
+        Attachment attachment = unit.getAttachment();
+        if (attachment != null && attachment.getSlidePageNumbers() != null) {
+            log.info("Clearing existing slide page numbers for unit {} (content changed)", unit.getId());
+            attachment.setSlidePageNumbers(null);
+            attachmentRepository.save(attachment);
+        }
+
         // When a new job starts, Iris terminates old processes automatically
         if (irisLectureApi.isPresent()) {
             try {

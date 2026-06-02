@@ -22,6 +22,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  *                      ignored (treated as {@code null}) on successful completions
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureIngestionStatusUpdateDTO(@JsonAlias("final_result") String result, List<PyrisStageDTO> stages, @JsonAlias("id") long jobId,
-        @Nullable @JsonProperty("error_code") String errorCode) {
+public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, @JsonAlias("id") long jobId, @Nullable @JsonProperty("error_code") String errorCode) {
 }
