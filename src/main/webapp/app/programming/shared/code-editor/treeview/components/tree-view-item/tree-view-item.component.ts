@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, input, output } from '@angular/core';
 import { TreeViewItem } from '../../models/tree-view-item';
 import { TreeViewItemTemplateContext } from '../../models/tree-view-item-template-context';
 import { NgTemplateOutlet } from '@angular/common';
@@ -10,22 +10,34 @@ import { NgTemplateOutlet } from '@angular/common';
     imports: [NgTemplateOutlet],
 })
 export class TreeViewItemComponent<T> {
-    @Input() template: TemplateRef<TreeViewItemTemplateContext<T>>;
-    @Input() item: TreeViewItem<T>;
-    @Output() checkedChange = new EventEmitter<boolean>();
+    readonly template = input<TemplateRef<TreeViewItemTemplateContext<T>>>();
+    readonly item = input<TreeViewItem<T>>();
+    readonly checkedChange = output<boolean>();
 
     onCollapseExpand = () => {
-        this.item.collapsed = !this.item.collapsed;
+        const item = this.item();
+        if (item) {
+            item.collapsed = !item.collapsed;
+        }
     };
 
     onCheckedChange = () => {
-        const checked = this.item.checked;
+        const item = this.item();
+        if (!item) {
+            return;
+        }
+        const checked = item.checked;
         this.checkedChange.emit(checked);
     };
 
     onChildCheckedChange(child: TreeViewItem<T>, checked: boolean): void {
+        const item = this.item();
+        if (!item) {
+            this.checkedChange.emit(checked);
+            return;
+        }
         let itemChecked: boolean | undefined = undefined;
-        for (const childItem of this.item.children) {
+        for (const childItem of item.children) {
             if (itemChecked == undefined) {
                 itemChecked = childItem.checked;
             } else if (itemChecked !== childItem.checked) {
@@ -38,8 +50,8 @@ export class TreeViewItemComponent<T> {
             itemChecked = false;
         }
 
-        if (this.item.checked !== itemChecked) {
-            this.item.checked = itemChecked;
+        if (item.checked !== itemChecked) {
+            item.checked = itemChecked;
         }
 
         this.checkedChange.emit(checked);
