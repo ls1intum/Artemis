@@ -1,8 +1,8 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { User } from 'app/account/user/user.model';
@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {
     setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: ExternalSubmissionService;
 
@@ -49,7 +50,8 @@ describe('External Submission Service', () => {
         const req = httpMock.expectOne({ url: `api/assessment/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
         const returned = { ...result, id: 4 };
         req.flush(returned);
-        expect(convertDateFromServerSpy).toHaveBeenCalledExactlyOnceWith(createResult);
+        expect(convertDateFromServerSpy).toHaveBeenCalledOnce();
+        expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);
         expect(createResult).toBeDefined();
         expect(createResult!.body).toEqual(returned);
     });
