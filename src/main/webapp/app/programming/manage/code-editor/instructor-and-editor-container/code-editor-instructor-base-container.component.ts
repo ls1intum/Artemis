@@ -327,7 +327,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     saveChangesAndSelectDomain(domain: DomainChange) {
         if (this.codeEditorContainer() != undefined) {
-            this.codeEditorContainer()!.actions()?.onSave();
+            // Save before switching domains. Use a non-null assertion (not optional chaining) so a missing
+            // actions component throws instead of silently skipping the save and losing unsaved edits.
+            this.codeEditorContainer()!.actions()!.onSave();
         }
         this.domainService.setDomain(domain);
     }
