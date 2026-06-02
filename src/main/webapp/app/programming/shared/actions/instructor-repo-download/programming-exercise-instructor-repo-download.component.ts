@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
@@ -23,19 +23,21 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() exerciseId: number;
-    @Input() repositoryType: RepositoryType;
-    @Input() auxiliaryRepositoryId: number;
-    @Input() buttonSize = ButtonSize.SMALL;
-    @Input() title = 'artemisApp.programmingExercise.export.downloadRepo';
+    readonly exerciseId = input<number>();
+    readonly repositoryType = input<RepositoryType>();
+    readonly auxiliaryRepositoryId = input<number>();
+    readonly buttonSize = input(ButtonSize.SMALL);
+    readonly title = input('artemisApp.programmingExercise.export.downloadRepo');
 
     // Icons
     faDownload = faDownload;
 
     exportRepository() {
-        if (this.exerciseId && this.repositoryType) {
+        const exerciseId = this.exerciseId();
+        const repositoryType = this.repositoryType();
+        if (exerciseId && repositoryType) {
             this.programmingExerciseService
-                .exportInstructorRepository(this.exerciseId, this.repositoryType, this.auxiliaryRepositoryId)
+                .exportInstructorRepository(exerciseId, repositoryType, this.auxiliaryRepositoryId())
                 .pipe(
                     catchError((error) => {
                         if (error.status === 500 || error.status === 404) {
