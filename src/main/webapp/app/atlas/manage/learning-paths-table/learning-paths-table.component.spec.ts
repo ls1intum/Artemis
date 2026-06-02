@@ -13,6 +13,7 @@ import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-p
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -53,6 +54,7 @@ describe('LearningPathsTableComponent', () => {
                 },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
+                MockProvider(DialogService),
             ],
         })
             .overrideComponent(LearningPathsTableComponent, {
