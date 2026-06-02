@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { By } from '@angular/platform-browser';
+import { Dialog } from 'primeng/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
@@ -22,7 +22,6 @@ describe('Quiz Scoring Info Student Modal Component', () => {
 
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;
     let comp: QuizScoringInfoStudentModalComponent;
-    let modalService: NgbModal;
     let translateService: TranslateService;
     let translateSpy: any;
     const translationBasePath = 'artemisApp.quizExercise.explanationText.';
@@ -30,15 +29,11 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [QuizScoringInfoStudentModalComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizScoringInfoStudentModalComponent);
         comp = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
         translateService = TestBed.inject(TranslateService);
 
         translateSpy = vi.spyOn(translateService, 'instant');
@@ -70,13 +65,18 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     });
 
     it('should open modal', () => {
-        const content: any = {} as HTMLElement;
-        const openModalSpy = vi.spyOn(modalService, 'open');
+        expect(comp.isVisible()).toBe(false);
 
-        comp.open(content);
+        comp.open();
 
-        expect(openModalSpy).toHaveBeenCalledOnce();
-        expect(openModalSpy).toHaveBeenCalledWith(content, { size: 'lg' });
+        expect(comp.isVisible()).toBe(true);
+    });
+
+    it('should configure a responsive breakpoint so the 50rem dialog stays within narrow viewports', () => {
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
+        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
     });
 
     it('check count for drag and drop exercise with singular values', () => {

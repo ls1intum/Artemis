@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
@@ -18,8 +19,8 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
-    // FeedbackComponent still uses NgbActiveModal; migration is out of scope.
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
 
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
@@ -63,14 +64,25 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         if (!latestResult) {
             return;
         }
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
-        const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise();
-        componentInstance.result = latestResult;
-        componentInstance.participation = this.participation();
-        componentInstance.feedbackFilter = this.testIds();
-        componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        componentInstance.taskName = this.taskName();
-        componentInstance.numberOfNotExecutedTests = this.notExecutedTests().length;
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: this.taskName() }),
+            width: '50rem',
+            breakpoints: {
+                '850px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+            data: {
+                exercise: this.exercise(),
+                result: latestResult,
+                participation: this.participation(),
+                feedbackFilter: this.testIds(),
+                exerciseType: ExerciseType.PROGRAMMING,
+                taskName: this.taskName(),
+                numberOfNotExecutedTests: this.notExecutedTests().length,
+            },
+        });
     }
 }
