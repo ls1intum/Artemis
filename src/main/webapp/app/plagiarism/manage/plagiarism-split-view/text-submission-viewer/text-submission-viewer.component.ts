@@ -211,7 +211,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     downloadCurrentFile() {
         const currentFile = this.currentFile();
         const exercise = this.exercise();
-        const exerciseName = exercise && 'shortName' in exercise ? exercise.shortName : exercise?.id;
+        const exerciseName = exercise && 'shortName' in exercise ? exercise.shortName : (exercise?.id ?? 'exercise');
         this.repositoryService.downloadFile(currentFile!, exerciseName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
     }
 
