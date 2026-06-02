@@ -56,7 +56,9 @@ export class FeedbackDetailChannelModalComponent {
     async handleModal(): Promise<boolean> {
         try {
             const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
-            modalRef.componentInstance.affectedStudentsCount = this.feedbackDetail().count;
+            // affectedStudentsCount is a signal input(); when the modal is opened imperatively via NgbModal it must
+            // be assigned a signal (not a plain number) so that calling affectedStudentsCount() in the template works.
+            modalRef.componentInstance.affectedStudentsCount = signal(this.feedbackDetail().count);
             return await modalRef.result;
         } catch (error) {
             this.alertService.error(error);

@@ -1,5 +1,5 @@
-import { Component, OnDestroy, inject, input, output } from '@angular/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Component, inject, input, output } from '@angular/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -24,10 +24,9 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     `,
     imports: [ButtonComponent],
 })
-export class ProgrammingAssessmentRepoExportButtonComponent implements OnDestroy {
+export class ProgrammingAssessmentRepoExportButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
-    private dialogRef?: DynamicDialogRef;
 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
@@ -43,10 +42,6 @@ export class ProgrammingAssessmentRepoExportButtonComponent implements OnDestroy
     // Icons
     faDownload = faDownload;
 
-    ngOnDestroy() {
-        this.dialogRef?.close();
-    }
-
     /**
      * Stops the propagation of the mouse event and opens the repo export dialog,
      * passing this instance's values through the dialog config data.
@@ -55,19 +50,22 @@ export class ProgrammingAssessmentRepoExportButtonComponent implements OnDestroy
     openRepoExportDialog(event: MouseEvent) {
         this.buttonPressed.emit();
         event.stopPropagation();
-        this.dialogRef =
-            this.dialogService.open(ProgrammingAssessmentRepoExportDialogComponent, {
-                header: this.translateService.instant('entity.exportRepos.title'),
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                width: '50rem',
-                data: {
-                    programmingExercises: this.programmingExercises(),
-                    participationIdList: this.participationIdList(),
-                    participantIdentifierList: this.participantIdentifierList(),
-                    singleParticipantMode: this.singleParticipantMode(),
-                },
-            }) ?? undefined;
+        // Let the dialog own its lifecycle (it is closable / closeOnEscape). It must NOT be tied to this
+        // button's destruction: on the exercise-scores page the button lives inside an export popover that
+        // closes on press (buttonPressed -> closeExportPopover), destroying this component right after the
+        // dialog opens — closing the ref in ngOnDestroy would make the dialog flash and vanish.
+        this.dialogService.open(ProgrammingAssessmentRepoExportDialogComponent, {
+            header: this.translateService.instant('entity.exportRepos.title'),
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            width: '50rem',
+            data: {
+                programmingExercises: this.programmingExercises(),
+                participationIdList: this.participationIdList(),
+                participantIdentifierList: this.participantIdentifierList(),
+                singleParticipantMode: this.singleParticipantMode(),
+            },
+        });
     }
 }
