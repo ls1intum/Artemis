@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
@@ -99,6 +101,11 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
         plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
         plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
+        var plagiarismMatch = new PlagiarismMatch();
+        plagiarismMatch.setStartA(1);
+        plagiarismMatch.setStartB(2);
+        plagiarismMatch.setLength(3);
+        plagiarismComparison2.setMatches(Set.of(plagiarismMatch));
         plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
     }
 
@@ -190,7 +197,16 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(comparison.submissionB().id()).isEqualTo(plagiarismComparison1.getSubmissionB().getId());
         assertThat(comparison.similarity()).isEqualTo(plagiarismComparison1.getSimilarity());
         assertThat(comparison.status()).isEqualTo(plagiarismComparison1.getStatus());
-        assertThat(comparison.matches()).hasSameSizeAs(plagiarismComparison1.getMatches());
+        assertThat(comparison.matches()).as("should omit empty plagiarism matches").isNull();
+
+        PlagiarismComparisonDTO comparisonWithMatches = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+        assertThat(comparisonWithMatches.matches()).as("should include plagiarism matches").singleElement().satisfies(match -> {
+            assertThat(match.startA()).isEqualTo(1);
+            assertThat(match.startB()).isEqualTo(2);
+            assertThat(match.length()).isEqualTo(3);
+        });
     }
 
     @Test

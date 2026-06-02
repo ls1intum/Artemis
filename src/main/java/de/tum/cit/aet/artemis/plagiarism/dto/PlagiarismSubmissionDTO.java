@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PlagiarismSubmissionDTO(Long id, long submissionId, String studentLogin, List<PlagiarismSubmissionElementDTO> elements, int size, Double score) {
 
     /**
