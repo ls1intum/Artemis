@@ -104,9 +104,9 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.repositoryExportOptions.addParticipantName).toBeFalsy();
-        expect(comp.repositoryExportOptions.anonymizeRepository).toBeTruthy();
-        expect(comp.exportInProgress).toBeFalsy();
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
+        expect(comp.repositoryExportOptions.anonymizeRepository).toBe(true);
+        expect(comp.exportInProgress).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
@@ -120,8 +120,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.repositoryExportOptions.addParticipantName).toBeFalsy();
-        expect(comp.exportInProgress).toBeFalsy();
+        expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
+        expect(comp.exportInProgress).toBe(false);
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
@@ -153,7 +153,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         await fixture.whenStable();
-        expect(comp.exportInProgress).toBeFalsy();
+        expect(comp.exportInProgress).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     });
 
