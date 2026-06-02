@@ -292,7 +292,7 @@ describe('CodeButtonComponent', () => {
         component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Password);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isTeamParticipation()).toBe(false);
+        expect(component.isTeamParticipation()).toBeFalsy();
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
@@ -300,9 +300,9 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         vi.useFakeTimers();
         component.onCopyFinished(true);
-        expect(component.wasCopied()).toBe(true);
+        expect(component.wasCopied()).toBeTruthy();
         vi.advanceTimersByTime(3000);
-        expect(component.wasCopied()).toBe(false);
+        expect(component.wasCopied()).toBeFalsy();
         vi.useRealTimers();
     });
 
@@ -310,7 +310,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         component.onCopyFinished(false);
         fixture.detectChanges();
-        expect(component.wasCopied()).toBe(false);
+        expect(component.wasCopied()).toBeFalsy();
     });
 
     it('should fetch and store ssh preference', () => {
@@ -323,7 +323,7 @@ describe('CodeButtonComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.useSsh()).toBe(false);
+        expect(component.useSsh()).toBeFalsy();
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         fixture.detectChanges();
@@ -332,20 +332,20 @@ describe('CodeButtonComponent', () => {
         expect(useSSHButton).not.toBeNull();
         useSSHButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
-        expect(component.useSsh()).toBe(true);
+        expect(component.useSsh()).toBeTruthy();
 
         const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
-        expect(component.useSsh()).toBe(false);
+        expect(component.useSsh()).toBeFalsy();
 
         const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
-        expect(component.useSsh()).toBe(false);
-        expect(component.useToken()).toBe(true);
+        expect(component.useSsh()).toBeFalsy();
+        expect(component.useToken()).toBeTruthy();
     });
 
     it.each([

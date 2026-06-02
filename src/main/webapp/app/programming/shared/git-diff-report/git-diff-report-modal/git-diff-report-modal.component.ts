@@ -1,8 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+
+interface GitDiffReportModalData {
+    repositoryDiffInformation?: RepositoryDiffInformation;
+    diffForTemplateAndSolution?: boolean;
+}
+
 @Component({
     selector: 'jhi-git-diff-report-modal',
     templateUrl: './git-diff-report-modal.component.html',
@@ -12,13 +18,15 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
 export class GitDiffReportModalComponent {
     static readonly WINDOW_CLASS = 'diff-view-modal';
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly data = this.dialogConfig.data as GitDiffReportModalData | undefined;
 
-    readonly repositoryDiffInformation = signal<RepositoryDiffInformation | undefined>(undefined);
+    readonly repositoryDiffInformation = signal<RepositoryDiffInformation | undefined>(this.data?.repositoryDiffInformation);
 
-    readonly diffForTemplateAndSolution = signal<boolean>(true);
+    readonly diffForTemplateAndSolution = signal<boolean>(this.data?.diffForTemplateAndSolution ?? true);
 
     close(): void {
-        this.activeModal.dismiss();
+        this.dialogRef.close();
     }
 }

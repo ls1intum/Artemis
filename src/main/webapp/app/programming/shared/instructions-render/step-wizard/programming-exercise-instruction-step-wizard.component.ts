@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -10,61 +10,61 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
+interface StepWizardStep {
+    done: TestCaseState;
+    title: string;
+    testIds: number[];
+}
+
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
     imports: [TranslateDirective, NgbTooltip, FaIconComponent],
 })
-export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
+export class ProgrammingExerciseInstructionStepWizardComponent {
+    // FeedbackComponent still uses NgbActiveModal; migration is out of scope.
     private modalService = inject(NgbModal);
     private instructionService = inject(ProgrammingExerciseInstructionService);
 
     TestCaseState = TestCaseState;
 
-    @Input() exercise: Exercise;
-    @Input() participation: Participation;
-    @Input() latestResult?: Result;
-    @Input() tasks: TaskArray;
+    readonly exercise = input<Exercise>();
+    readonly participation = input<Participation>();
+    readonly latestResult = input<Result>();
+    readonly tasks = input.required<TaskArray>();
 
-    steps: Array<{ done: TestCaseState; title: string; testIds: number[] }>;
+    readonly steps = computed<StepWizardStep[]>(() => {
+        // Parent template binds a class field that can be undefined on first render despite `input.required`.
+        const tasks = this.tasks();
+        const latestResult = this.latestResult();
+        if (!tasks) {
+            return [];
+        }
+        return tasks.map(({ taskName, testIds }) => ({
+            done: this.instructionService.testStatusForTask(testIds, latestResult).testCaseState,
+            title: taskName,
+            testIds,
+        }));
+    });
 
-    // Icons
     faTimes = faTimes;
     faCheck = faCheck;
     faCircle = faCircle;
 
-    /**
-     * Life cycle hook called by Angular to indicate that changes are detected.
-     * @param changes - change that is detected.
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
-            this.steps = this.tasks.map(({ taskName, testIds }) => ({
-                done: this.instructionService.testStatusForTask(testIds, this.latestResult).testCaseState,
-                title: taskName,
-                testIds,
-            }));
-        }
-    }
-
-    /**
-     * Opens the FeedbackComponent as popup; displays test results
-     * @param {string[]} tests - Identifies the testcase
-     * @param taskName - the name of the selected task
-     */
-    public showDetailsForTests(tests: number[], taskName: string) {
-        if (!this.latestResult || !tests.length) {
+    showDetailsForTests(tests: number[], taskName: string) {
+        const latestResult = this.latestResult();
+        if (!latestResult || !tests.length) {
             return;
         }
         const {
             detailed: { notExecutedTests },
-        } = this.instructionService.testStatusForTask(tests, this.latestResult);
+        } = this.instructionService.testStatusForTask(tests, latestResult);
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
-        componentInstance.exercise = this.exercise;
-        componentInstance.result = this.latestResult;
-        componentInstance.participation = this.participation;
+        componentInstance.exercise = this.exercise()!;
+        componentInstance.result = latestResult;
+        componentInstance.participation = this.participation()!;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = taskName;

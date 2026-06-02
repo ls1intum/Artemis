@@ -1,6 +1,7 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/shared-ui/detail-overview-list/exercise-detail.directive';
-import { Component, ViewChild } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import type {
     BooleanDetail,
     DateDetail,
@@ -25,24 +26,25 @@ import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared
 import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { vi } from 'vitest';
 
 @Component({
     template: ` <div jhiExerciseDetail [detail]="detail"></div>`,
     imports: [ExerciseDetailDirective],
 })
 class TestDetailHostComponent {
-    @ViewChild(ExerciseDetailDirective) directive: ExerciseDetailDirective;
+    directive = viewChild.required(ExerciseDetailDirective);
     detail: Detail;
 }
 
 describe('ExerciseDetailDirective', () => {
+    setupTestBed({ zoneless: true });
     let component: TestDetailHostComponent;
     let fixture: ComponentFixture<TestDetailHostComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TestDetailHostComponent],
-            declarations: [ExerciseDetailDirective, MockDirective(TranslateDirective), MockComponent(TextDetailComponent), MockComponent(ProgrammingDiffReportDetailComponent)],
+            imports: [TestDetailHostComponent, MockDirective(TranslateDirective), MockComponent(TextDetailComponent), MockComponent(ProgrammingDiffReportDetailComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestDetailHostComponent);
@@ -51,7 +53,7 @@ describe('ExerciseDetailDirective', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     /** tests directive for {@link NotShownDetail}s */
@@ -104,19 +106,19 @@ describe('ExerciseDetailDirective', () => {
     });
 
     function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
-        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
         component.detail = detailToBeChecked;
         fixture.changeDetectorRef.detectChanges();
-        component.directive.ngOnInit();
+        component.directive().ngOnInit();
 
         expect(createComponentSpy).not.toHaveBeenCalled();
     }
 
     function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
-        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
         component.detail = detailToBeChecked;
         fixture.changeDetectorRef.detectChanges();
-        component.directive.ngOnInit();
+        component.directive().ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
     }

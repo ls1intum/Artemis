@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/programming/auxiliary-repository/")
+@RequestMapping({ "api/programming/auxiliary-repositories/", "api/programming/auxiliary-repository/" })
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;

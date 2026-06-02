@@ -146,7 +146,7 @@ describe('ModelingExercise Service', () => {
             .subscribe((resp) => {
                 expect(resp.body).toEqual(expected);
             });
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import/${modelingExercise.id}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import?sourceExerciseId=${modelingExercise.id}` });
         req.flush(returnedFromService);
     });
 });

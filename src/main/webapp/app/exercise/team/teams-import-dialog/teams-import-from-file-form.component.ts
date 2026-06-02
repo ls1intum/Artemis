@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
@@ -39,15 +39,14 @@ type CsvEntry = { [column: string]: string };
     imports: [TranslateDirective, HelpIconComponent, FaIconComponent],
 })
 export class TeamsImportFromFileFormComponent {
-    private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
 
-    @Output() teamsChanged = new EventEmitter<Team[]>();
+    readonly teamsChanged = output<Team[]>();
     sourceTeams?: Team[];
     importedTeams: StudentWithTeam[] = [];
     importFile?: File;
-    importFileName: string;
-    loading: boolean;
+    importFileName = '';
+    readonly loading = signal(false);
 
     // Icons
     faSpinner = faSpinner;
@@ -77,7 +76,7 @@ export class TeamsImportFromFileFormComponent {
             }
             this.sourceTeams = this.convertTeams(this.importedTeams);
             this.teamsChanged.emit(this.sourceTeams);
-            this.loading = false;
+            this.loading.set(false);
             // Clearing html elements,
             this.importFile = undefined;
             this.importFileName = '';
@@ -86,7 +85,7 @@ export class TeamsImportFromFileFormComponent {
                 control.value = '';
             }
         } catch (e) {
-            this.loading = false;
+            this.loading.set(false);
             const message = `${this.translateService.instant('artemisApp.team.errors.importFailed')} ${e}`;
             alert(message);
         }
@@ -101,7 +100,7 @@ export class TeamsImportFromFileFormComponent {
             const fileList: FileList = event.target.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile.name;
-            this.loading = true;
+            this.loading.set(true);
         }
         if (!this.importFile) {
             return;
@@ -109,7 +108,6 @@ export class TeamsImportFromFileFormComponent {
         const fileReader = this.generateFileReader();
         fileReader.onload = () => this.onFileLoadImport(fileReader);
         fileReader.readAsText(this.importFile);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -162,7 +160,7 @@ export class TeamsImportFromFileFormComponent {
      * Convert imported team list to normal teams
      */
     convertTeams(importTeam: StudentWithTeam[]): Team[] {
-        const teams: Team[] = [];
+        let teams: Team[] = [];
         importTeam.forEach((student, index) => {
             const newStudent = new User();
             newStudent.firstName = student.firstName ?? '';
@@ -191,7 +189,7 @@ export class TeamsImportFromFileFormComponent {
                 newTeam.name = student.teamName;
                 newTeam.shortName = shortName;
                 newTeam.students = [newStudent];
-                teams.push(newTeam);
+                teams = [...teams, newTeam];
             } else {
                 teams[teamIndex].students = [...teams[teamIndex].students!, newStudent];
             }

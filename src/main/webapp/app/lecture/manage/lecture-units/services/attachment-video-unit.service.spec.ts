@@ -355,7 +355,7 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-video-units/${attachmentVideoUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
@@ -77,13 +78,14 @@ public class GroupChatResource extends ConversationManagementResource {
     /**
      * POST courses/:courseId/group-chats/: Starts a new group chat in a course
      *
-     * @param courseId                    the id of the course
-     * @param otherChatParticipantsLogins logins of the starting members of the group chat (excluding the requesting user)
+     * @param courseId             the id of the course
+     * @param groupChatCreationDTO the request body identifying the group chat members by login
      * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
      */
     @PostMapping("{courseId}/group-chats")
     @EnforceAtLeastStudent
-    public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
+    public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody GroupChatCreationDTO groupChatCreationDTO) throws URISyntaxException {
+        var otherChatParticipantsLogins = groupChatCreationDTO.memberLogins();
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create group chat in course {} between: {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
         var course = courseRepository.findByIdElseThrow(courseId);

@@ -1,25 +1,25 @@
 <div class="btn-group">
     <div
         class="btn"
-        [ngClass]="{ 'btn-primary selected': !exercise.difficulty, 'btn-default': exercise.difficulty }"
+        [ngClass]="{ 'btn-primary selected': !exercise().difficulty, 'btn-default': exercise().difficulty }"
         (click)="setDifficulty(undefined)"
         jhiTranslate="artemisApp.exercise.noLevel"
     ></div>
     <div
         class="btn"
-        [ngClass]="{ 'btn-success selected': exercise.difficulty === DifficultyLevel.EASY, 'btn-default': exercise.difficulty !== DifficultyLevel.EASY }"
+        [ngClass]="{ 'btn-success selected': exercise().difficulty === DifficultyLevel.EASY, 'btn-default': exercise().difficulty !== DifficultyLevel.EASY }"
         (click)="setDifficulty(DifficultyLevel.EASY)"
         jhiTranslate="artemisApp.exercise.easy"
     ></div>
     <div
         class="btn btn-default"
-        [ngClass]="{ 'btn-warning selected': exercise.difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise.difficulty !== DifficultyLevel.MEDIUM }"
+        [ngClass]="{ 'btn-warning selected': exercise().difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise().difficulty !== DifficultyLevel.MEDIUM }"
         (click)="setDifficulty(DifficultyLevel.MEDIUM)"
         jhiTranslate="artemisApp.exercise.medium"
     ></div>
     <div
         class="btn btn-default"
-        [ngClass]="{ 'btn-danger selected': exercise.difficulty === DifficultyLevel.HARD, 'btn-default': exercise.difficulty !== DifficultyLevel.HARD }"
+        [ngClass]="{ 'btn-danger selected': exercise().difficulty === DifficultyLevel.HARD, 'btn-default': exercise().difficulty !== DifficultyLevel.HARD }"
         (click)="setDifficulty(DifficultyLevel.HARD)"
         jhiTranslate="artemisApp.exercise.hard"
     ></div>
