@@ -403,8 +403,8 @@ export class CourseOverviewService {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
     }
 
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
-        if (attempts && indices) {
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[]) {
+        if (attempts) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
     }

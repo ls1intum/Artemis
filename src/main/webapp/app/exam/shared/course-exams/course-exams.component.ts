@@ -1,13 +1,12 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
+import { Subscription, combineLatest, filter, lastValueFrom } from 'rxjs';
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
@@ -52,33 +51,21 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
+
     private parentParamSubscription?: Subscription;
-    private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
+
     private studentExams: StudentExam[];
     studentExamsForRealExams = new Map<number, StudentExam>();
-    public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
-    studentExamState: Subscription;
 
-    // Icons
-    faAngleUp = faAngleUp;
-    faAngleDown = faAngleDown;
-    faListAlt = faListAlt;
-
-    sortedRealExams?: Exam[];
-    sortedTestExams?: Exam[];
-    testExamMap: Map<number, StudentExam[]> = new Map();
     examSelected = signal(true);
-    accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData = signal<SidebarData | undefined>(undefined);
-    sidebarExams: SidebarCardElement[] = [];
     isCollapsed = signal(false);
     isExamStarted = signal(false);
-    withinWorkingTime: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -109,7 +96,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.examParticipationService.shouldUpdateTestExamsObservable,
             this.examParticipationService.currentlyLoadedStudentExam,
         ])
-            .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate === true && !!studentExam && studentExam.exam?.course?.id === this.courseId()))
+            .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()))
             .subscribe(([_, latestExam]) => {
                 const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id);
                 if (index !== -1 && this.studentExams) {
@@ -124,8 +111,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         const currentCourse = this.course();
         if (currentCourse?.exams) {
-            // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-            this.expandAttemptsMap = new Map(currentCourse.exams.filter((exam) => isTestExam(exam) && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
         }
 
@@ -154,8 +139,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (currentCourse?.exams) {
             // Loading the exams from the course
             const exams = currentCourse.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
-            // add new exams to the attempt map
-            exams.filter((exam) => isTestExam(exam) && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
 
             this.realExamsOfCourse = exams.filter((exam) => !isTestExam(exam));
             this.testExamsOfCourse = exams.filter((exam) => isTestExam(exam));
@@ -177,13 +160,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.parentParamSubscription) {
             this.parentParamSubscription.unsubscribe();
         }
-        if (this.courseUpdatesSubscription) {
-            this.courseUpdatesSubscription.unsubscribe();
-        }
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
-        this.unsubscribeFromExamStateSubscription();
     }
 
     /**
@@ -211,15 +190,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Used to change the entry corresponding to the examId, if the user has expanded the list of attempts for this exam or not
-     * @param examId the examId for which the boolean-value should be changed
-     */
-    changeExpandAttemptList(examId: number) {
-        const newValue = !this.expandAttemptsMap.get(examId);
-        this.expandAttemptsMap.set(examId, newValue);
-    }
-
-    /**
      * Used for the sort()-function to order the Exams according to their startDate.
      * @param exam1 exam1 for comparison
      * @param exam2 exam2 for comparison
@@ -235,7 +205,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return 0;
     }
 
-    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
+    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         for (const realExam of realExams) {
@@ -246,10 +216,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(
                 testExam,
                 this.studentExamsForRealExams.get(testExam.id!),
-                this.getNumberOfAttemptsForTestExam(testExam),
+                this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap),
             );
             groupedExamGroups['test'].entityData.push(examCardItem);
-            const testExamAttempts = this.testExamMap.get(testExam.id!);
+            const testExamAttempts = testExamAttemptsMap.get(testExam.id!);
             if (testExamAttempts) {
                 testExamAttempts.forEach((attempt, index) => {
                     const attemptNumber = testExamAttempts.length - index;
@@ -271,13 +241,13 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('exam', newState);
     }
 
-    updateSidebarData() {
+    updateSidebarData(accordionExamGroups: AccordionGroups, sidebarExams: SidebarCardElement[]) {
         this.sidebarData.set({
             groupByCategory: true,
             sidebarType: 'exam',
             storageId: 'exam',
-            groupedData: this.accordionExamGroups,
-            ungroupedData: this.sidebarExams,
+            groupedData: accordionExamGroups,
+            ungroupedData: sidebarExams,
         });
     }
 
@@ -286,29 +256,25 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
-        this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
-        for (const testExam of this.sortedTestExams) {
+        const sortedRealExams: Exam[] = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+        const sortedTestExams: Exam[] = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
+
+        const testExamAttemptsMap: Map<number, StudentExam[]> = new Map();
+        for (const testExam of sortedTestExams) {
             const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id!);
-            orderedTestExamAttempts.forEach((attempt, index) => {
-                this.calculateIndividualWorkingTimeForTestExams(attempt, index === 0);
-            });
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
-            this.testExamMap.set(testExam.id!, submittedAttempts);
+            testExamAttemptsMap.set(testExam.id!, submittedAttempts);
         }
 
-        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams, this.getAllStudentExamsForRealExams());
-        const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedTestExams);
-        const allStudentExams = this.getAllStudentExams();
-        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(
-            allStudentExams,
-            this.getIndicesForStudentExams(allStudentExams.length),
-        );
+        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(sortedRealExams, this.getAllStudentExamsForRealExams());
+        const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(sortedTestExams);
+        const allStudentExams = this.getAllStudentExams(testExamAttemptsMap);
+        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(allStudentExams);
 
-        this.sidebarExams = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
+        const sidebarExams: SidebarCardElement[] = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
 
-        this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
-        this.updateSidebarData();
+        const accordionExamGroups = this.groupExamsByRealOrTest(sortedRealExams, sortedTestExams, testExamAttemptsMap);
+        this.updateSidebarData(accordionExamGroups, sidebarExams);
     }
 
     onSubRouteDeactivate() {
@@ -323,9 +289,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     // Method to iterate through the map and get all student exams
-    getAllStudentExams(): StudentExam[] {
+    getAllStudentExams(testExamAttemptsMap: Map<number, StudentExam[]>): StudentExam[] {
         const allStudentExams: StudentExam[] = [];
-        this.testExamMap.forEach((studentExams) => {
+        testExamAttemptsMap.forEach((studentExams) => {
             studentExams.forEach((studentExam) => {
                 allStudentExams.push(studentExam);
             });
@@ -333,56 +299,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return allStudentExams;
     }
 
-    // Creating attempt indices for student exams
-    getIndicesForStudentExams(numberOfStudentExams: number): number[] {
-        const indices: number[] = [];
-        for (let i = 1; i <= numberOfStudentExams; i++) {
-            indices.push(i);
-        }
-        return indices;
-    }
-
-    getNumberOfAttemptsForTestExam(exam: Exam): number {
-        const studentExams = this.testExamMap.get(exam.id!);
+    getNumberOfAttemptsForTestExam(exam: Exam, testExamAttemptsMap: Map<number, StudentExam[]>): number {
+        const studentExams = testExamAttemptsMap.get(exam.id!);
         return studentExams ? studentExams.length : 0;
-    }
-
-    /**
-     * Calculate the individual working time for every submitted StudentExam. As the StudentExam needs to be submitted, the
-     * working time cannot change.
-     * For the latest StudentExam, which is still within the allowed working time, a subscription is used to periodically check this.
-     */
-    calculateIndividualWorkingTimeForTestExams(studentExam: StudentExam, latestExam: boolean) {
-        if (studentExam.started && studentExam.submitted && studentExam.startedDate && studentExam.submissionDate) {
-            this.withinWorkingTime = false;
-        } else if (latestExam) {
-            // A subscription is used here to limit the number of calls for the countdown of the remaining workingTime.
-            this.studentExamState = interval(1000).subscribe(() => {
-                this.isWithinWorkingTime(studentExam, studentExam.exam!);
-                // If the StudentExam is no longer within the working time, the subscription can be unsubscribed, as the state will not change anymore
-                if (!this.withinWorkingTime) {
-                    this.unsubscribeFromExamStateSubscription();
-                }
-            });
-        } else {
-            this.withinWorkingTime = false;
-        }
-    }
-
-    /**
-     * Used to unsubscribe from the studentExamState Subscriptions
-     */
-    unsubscribeFromExamStateSubscription() {
-        this.studentExamState?.unsubscribe();
-    }
-
-    /**
-     * Determines if the given StudentExam is (still) within the working time
-     */
-    isWithinWorkingTime(studentExam: StudentExam, exam: Exam) {
-        if (studentExam.started && !studentExam.submitted && studentExam.startedDate && exam.workingTime) {
-            const endDate = dayjs(studentExam.startedDate).add(exam.workingTime, 'seconds');
-            this.withinWorkingTime = dayjs(endDate).isAfter(dayjs());
-        }
     }
 }
