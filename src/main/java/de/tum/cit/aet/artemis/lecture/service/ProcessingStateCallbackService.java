@@ -638,6 +638,11 @@ public class ProcessingStateCallbackService {
         if (slidePageNumbers == null || !(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
+        if (attachmentVideoUnit.getSlides().size() != slidePageNumbers.size()) {
+            log.warn("Ignoring slidePageNumbers for unit {} because size {} does not match slide count {}", attachmentVideoUnit.getId(), slidePageNumbers.size(),
+                    attachmentVideoUnit.getSlides().size());
+            return;
+        }
         Attachment attachment = attachmentVideoUnit.getAttachment();
         if (attachment == null) {
             return;

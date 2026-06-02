@@ -251,6 +251,12 @@ public class PyrisStatusUpdateService {
             if (listNode == null || !listNode.isArray()) {
                 return null;
             }
+            for (var elementNode : listNode) {
+                if (!elementNode.isIntegralNumber() || !elementNode.canConvertToInt()) {
+                    log.warn("Ignoring slidePageNumbers because it contains a non-integer element: {}", elementNode);
+                    return null;
+                }
+            }
             List<Integer> extracted = objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
             return extracted.isEmpty() ? null : extracted;
         }

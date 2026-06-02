@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,7 +83,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     }
 
     @Test
-    void slidePageNumbersAreForwardedWithoutFilteringOrReindexing() {
+    void slidePageNumbersAreRejectedWhenListContainsNull() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
         var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
@@ -92,7 +91,19 @@ class PyrisStatusUpdateServiceErrorCodeTest {
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(Arrays.asList(1, null, 0, -2, -1, 10)));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
+    }
+
+    @Test
+    void slidePageNumbersAreRejectedWhenListContainsText() {
+        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
+
+        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"slidePageNumbers\":[1,\"2\",-1]}", List.of(doneStage), 7L, null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
     }
 
     @Test

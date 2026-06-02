@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -411,6 +412,7 @@ class LectureContentProcessingServiceTest {
         void shouldSaveSlidePageNumbersOnSuccess() {
             Attachment attachment = new Attachment();
             testUnit.setAttachment(attachment);
+            testUnit.setSlides(List.of(new Slide(), new Slide(), new Slide()));
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
@@ -426,8 +428,27 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldNotSaveSlidePageNumbersWhenCountDoesNotMatchSlides() {
+            Attachment attachment = new Attachment();
+            testUnit.setAttachment(attachment);
+            testUnit.setSlides(List.of(new Slide(), new Slide()));
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testUnit.getAttachment().getSlidePageNumbers()).isNull();
+            verify(attachmentRepository, never()).save(any());
+        }
+
+        @Test
         void shouldNotSaveSlidePageNumbersWhenAttachmentIsNull() {
             testUnit.setAttachment(null);
+            testUnit.setSlides(List.of(new Slide(), new Slide(), new Slide()));
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));

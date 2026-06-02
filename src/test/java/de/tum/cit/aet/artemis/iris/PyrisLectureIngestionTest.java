@@ -366,7 +366,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void ingestionCompleteSavesSlidePageNumbersFromFinalResult() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 3, true);
         Long attachmentId = unit.getAttachment().getId();
         unit.setLecture(lecture1);
         unit.setVideoSource("https://example.com/video.mp4");
