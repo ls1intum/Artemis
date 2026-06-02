@@ -178,15 +178,31 @@ describe('CategorySelectorComponent', () => {
     it('should set categories for autocomplete on changes', () => {
         fixture.componentRef.setInput('existingCategories', [category3, category4, category5]);
         fixture.componentRef.setInput('categories', [category3]);
+        fixture.detectChanges();
 
         let result;
         comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
         expect(result).toEqual(['category4', 'category5']);
     });
 
+    it('should refresh autocomplete options when the inputs change after the initial render', () => {
+        fixture.componentRef.setInput('existingCategories', [category3, category4, category5]);
+        fixture.componentRef.setInput('categories', [category3]);
+        fixture.detectChanges();
+
+        let result;
+        comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));
+        expect(result).toEqual(['category4', 'category5']);
+
+        fixture.componentRef.setInput('categories', [category3, category4]);
+        fixture.detectChanges();
+        expect(result).toEqual(['category5']);
+    });
+
     it('should filter categories for autocomplete on changes', () => {
         fixture.componentRef.setInput('existingCategories', [category3, category4, category5]);
         fixture.componentRef.setInput('categories', [category3]);
+        fixture.detectChanges();
 
         let result;
         comp.uniqueCategoriesForAutocomplete.subscribe((value) => (result = value));

@@ -19,9 +19,9 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     readonly averageScoreOfExercise = input<number>();
     readonly scoreDistribution = input<number[]>();
     readonly numberOfExerciseScores = input<number>();
-    readonly exerciseType = input<ExerciseType>();
-    readonly courseId = input<number>();
-    readonly exerciseId = input<number>();
+    readonly exerciseType = input.required<ExerciseType>();
+    readonly courseId = input.required<number>();
+    readonly exerciseId = input.required<number>();
 
     // ngx
     ngxData: any[] = [];

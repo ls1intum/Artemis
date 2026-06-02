@@ -81,7 +81,11 @@ export class StatisticsGraphComponent {
                 this.pushToData();
             });
         } else {
-            this.service.getChartDataForContent(this.currentSpan(), this.currentPeriod, this.graphType(), this.statisticsView(), this.entityId()!).subscribe((res: number[]) => {
+            const entityId = this.entityId();
+            if (entityId === undefined) {
+                return;
+            }
+            this.service.getChartDataForContent(this.currentSpan(), this.currentPeriod, this.graphType(), this.statisticsView(), entityId).subscribe((res: number[]) => {
                 this.dataForSpanType = res;
                 this.pushToData();
             });

@@ -5,7 +5,8 @@ import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger }
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { Observable, map, startWith } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable, combineLatest, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { MatFormField } from '@angular/material/form-field';
@@ -63,10 +64,13 @@ export class CategorySelectorPrimengComponent {
 
     categoryCtrl = new FormControl<string | undefined>(undefined);
 
-    // The autocomplete pipeline reads the latest signal values lazily on each emission, so it only needs to be created once.
-    readonly uniqueCategoriesForAutocomplete: Observable<string[]> = this.categoryCtrl.valueChanges.pipe(
-        startWith(undefined),
-        map((userInput: string | undefined) => (userInput ? this.filterCategories(userInput) : this.existingCategoriesAsStringArray().slice())),
+    // Re-emit when the user types, but also when the parent updates the existing or selected categories, so the options never go stale after the initial render.
+    readonly uniqueCategoriesForAutocomplete: Observable<string[]> = combineLatest([
+        this.categoryCtrl.valueChanges.pipe(startWith(undefined)),
+        toObservable(this.existingCategories),
+        toObservable(this.selectedCategoryItems),
+    ]).pipe(
+        map(([userInput]) => (userInput ? this.filterCategories(userInput) : this.existingCategoriesAsStringArray().slice())),
         // remove duplicated values
         map((categories: string[]) => [...new Set(categories)]),
         // remove categories that have already been selected in the exercise

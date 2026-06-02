@@ -37,9 +37,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     readonly chartCategoryFilter = inject(ChartCategoryFilter);
 
-    readonly exerciseAverageScores = input<CourseManagementStatisticsModel[]>([]);
-    readonly courseAverage = input<number>();
-    readonly courseId = input<number>();
+    readonly exerciseAverageScores = input.required<CourseManagementStatisticsModel[]>();
+    readonly courseAverage = input.required<number>();
+    readonly courseId = input.required<number>();
 
     /** the input scores ordered ascending by average score; the working set the chart and filters operate on */
     private orderedScores: CourseManagementStatisticsModel[] = [];
