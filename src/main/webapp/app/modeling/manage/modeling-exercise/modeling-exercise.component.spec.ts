@@ -82,7 +82,7 @@ describe('ModelingExercise Management Component', () => {
         );
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
         // THEN
@@ -93,7 +93,7 @@ describe('ModelingExercise Management Component', () => {
     it('should delete exercise', () => {
         vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
@@ -107,7 +107,8 @@ describe('ModelingExercise Management Component', () => {
     describe('ModelingExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('UML', '', 'modeling'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.modelingExercises).toHaveLength(1);
@@ -116,7 +117,8 @@ describe('ModelingExercise Management Component', () => {
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
+            fixture.detectChanges();
 
             // THEN
             expect(comp.modelingExercises).toHaveLength(1);
@@ -149,7 +151,8 @@ describe('ModelingExercise Management Component', () => {
         comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
         comp.predicate = 'testPredicate';
         comp.reverse = true;
-        comp.exerciseFilter = new ExerciseFilter();
+        fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter());
+        fixture.detectChanges();
         comp.sortRows();
         expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledOnce();

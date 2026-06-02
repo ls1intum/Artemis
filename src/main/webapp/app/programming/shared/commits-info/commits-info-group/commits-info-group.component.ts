@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, linkedSignal } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoRowComponent } from './commits-info-row/commits-info-row.component';
 import { NgStyle } from '@angular/common';
@@ -9,28 +9,26 @@ import { NgStyle } from '@angular/common';
     imports: [CommitsInfoRowComponent, NgStyle],
 })
 export class CommitsInfoGroupComponent {
-    @Input() commits: CommitInfo[];
-    @Input() currentSubmissionHash?: string;
-    @Input() previousSubmissionHash?: string;
-    @Input() exerciseProjectKey?: string;
-    @Input() isRepositoryView = false;
-    @Input() groupIndex: number;
-    @Input() groupCount: number;
-    @Input() pushNumber: number;
-    @Input()
-    set isGroupExpanded(value: boolean) {
-        if (this.isExpanded !== value) {
-            this.isExpanded = value;
-        }
-    }
+    readonly commits = input.required<CommitInfo[]>();
+    readonly currentSubmissionHash = input<string>();
+    readonly previousSubmissionHash = input<string>();
+    readonly exerciseProjectKey = input<string>();
+    readonly isRepositoryView = input(false);
+    readonly groupIndex = input.required<number>();
+    readonly groupCount = input.required<number>();
+    readonly pushNumber = input.required<number>();
+    readonly isGroupExpanded = input<boolean>(false);
 
-    protected isExpanded = false;
+    // Local toggle state seeded from the parent's expand-all input. Re-seeds whenever the source
+    // changes (idiomatic Angular 21 alternative to an input→signal copy-effect), and remains
+    // independently writable via `.set()` / `.update()` for the per-row toggle.
+    protected readonly isExpanded = linkedSignal(() => this.isGroupExpanded());
 
     protected toggleExpand() {
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
     }
 
     public getIsExpanded(): boolean {
-        return this.isExpanded;
+        return this.isExpanded();
     }
 }
