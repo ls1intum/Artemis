@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -18,6 +20,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
@@ -35,7 +39,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             providers: [
-                { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: dialogClose })) } },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose })) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -49,20 +53,20 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         submissionService = TestBed.inject(ProgrammingSubmissionService);
         dialogService = TestBed.inject(DialogService);
 
-        comp.exercise = programmingExercise;
-        comp.participation = participation;
-        comp.lastResultIsManual = true;
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        fixture.componentRef.setInput('participation', participation);
+        comp.lastResultIsManual.set(true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should trigger build', () => {
-        jest.spyOn(dialogService, 'open');
-        jest.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
+        vi.spyOn(dialogService, 'open');
+        vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
 
-        comp.triggerBuild({ stopPropagation: jest.fn() });
+        comp.triggerBuild({ stopPropagation: vi.fn() } as unknown as MouseEvent);
 
         expect(dialogService.open).toHaveBeenCalledOnce();
         expect(dialogService.open).toHaveBeenCalledWith(

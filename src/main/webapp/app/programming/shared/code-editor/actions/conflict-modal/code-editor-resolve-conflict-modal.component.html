@@ -1,20 +1,15 @@
-<form class="conflict-modal" #deleteForm="ngForm" name="deleteForm" (ngSubmit)="resetRepository()">
-    <div class="conflict-modal__header">
-        <h4 class="fw-medium" jhiTranslate="artemisApp.editor.conflict.conflictExplanationShort"></h4>
-    </div>
-    <div class="conflict-modal__body">
+<form #deleteForm="ngForm" name="deleteForm" (ngSubmit)="resetRepository()">
+    <div class="p-3">
         <div jhiTranslate="artemisApp.editor.conflict.conflictExplanationLong"></div>
-        <span class="conflict-modal__body__warning">
-            <fa-icon [icon]="faExclamationTriangle" />
+        <span class="d-inline-flex align-items-center gap-2 mt-2">
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
             <span jhiTranslate="artemisApp.editor.conflict.conflictWarning"></span>
         </span>
     </div>
-    <div class="conflict-modal__footer">
-        <button class="conflict-modal__footer__cancel" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
-        <button type="submit" class="conflict-modal__footer__submit" [disabled]="!deleteForm.valid">
-            <fa-icon [icon]="faTimes" /><span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
+    <div class="d-flex justify-content-end gap-2 p-3 border-top">
+        <button class="btn btn-secondary" type="button" (click)="closeModal()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
+        <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
+            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
         </button>
     </div>
 </form>

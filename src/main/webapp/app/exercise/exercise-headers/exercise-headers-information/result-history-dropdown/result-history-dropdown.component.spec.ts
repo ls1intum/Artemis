@@ -4,18 +4,19 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateModule } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
@@ -30,7 +31,8 @@ describe('ResultHistoryDropdownComponent', () => {
 
     const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
         const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation, ...submission } as Submission;
+        const sub = { id: id, participation } as Submission;
+        Object.assign(sub, submission);
         return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
     };
 
@@ -42,7 +44,7 @@ describe('ResultHistoryDropdownComponent', () => {
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -355,8 +357,8 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
-            const modalService = TestBed.inject(NgbModal);
-            const openSpy = vi.spyOn(modalService, 'open');
+            const dialogService = TestBed.inject(DialogService);
+            const openSpy = vi.spyOn(dialogService, 'open');
 
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
             const event = new Event('click');
@@ -367,8 +369,8 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should open feedback modal when result has participation', () => {
-            const modalService = TestBed.inject(NgbModal);
-            const openSpy = vi.spyOn(modalService, 'open');
+            const dialogService = TestBed.inject(DialogService);
+            const openSpy = vi.spyOn(dialogService, 'open');
 
             const participation: Participation = { id: 1 } as Participation;
             const result = { id: 1, score: 80, submission: { id: 1, participation } } as unknown as Result;
@@ -378,7 +380,23 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(openSpy).toHaveBeenCalled();
+            expect(openSpy).toHaveBeenCalledWith(
+                FeedbackComponent,
+                expect.objectContaining({
+                    header: 'artemisApp.result.detail.feedback',
+                    width: '80rem',
+                    breakpoints: {
+                        '1400px': '75vw',
+                        '1200px': '85vw',
+                        '992px': '95vw',
+                    },
+                    modal: true,
+                    closable: true,
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    data: expect.objectContaining({ exercise: defaultExercise, result, participation }),
+                }),
+            );
         });
     });
 

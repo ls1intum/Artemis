@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -9,6 +9,11 @@ import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.mode
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+
+export interface CompetencyGraphModalData {
+    learningPathId: number;
+    name?: string;
+}
 
 @Component({
     selector: 'jhi-competency-graph-modal',
@@ -23,13 +28,14 @@ export class CompetencyGraphModalComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly scienceService = inject(ScienceService);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
-    readonly name = input<string>();
-    readonly learningPathId = input.required<number>();
+    readonly name = signal<string | undefined>((this.dialogConfig.data as CompetencyGraphModalData).name);
+    readonly learningPathId = signal<number>((this.dialogConfig.data as CompetencyGraphModalData).learningPathId);
 
     readonly isLoading = signal<boolean>(false);
     readonly competencyGraph = signal<CompetencyGraphDTO | undefined>(undefined);
-    private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
         effect(() => {
@@ -54,16 +60,21 @@ export class CompetencyGraphModalComponent {
     }
 
     closeModal(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 
-    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number, name: string | undefined): void {
-        const modalRef = modalService.open(CompetencyGraphModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'competency-graph-modal',
+    static openCompetencyGraphModal(dialogService: DialogService, learningPathId: number, name: string | undefined): void {
+        dialogService.open(CompetencyGraphModalComponent, {
+            style: { width: '90vw', maxWidth: '90rem' },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            styleClass: 'competency-graph-modal',
+            data: <CompetencyGraphModalData>{ learningPathId, name },
         });
-        modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
-        modalRef.componentInstance.name = signal<string | undefined>(name);
     }
 }
