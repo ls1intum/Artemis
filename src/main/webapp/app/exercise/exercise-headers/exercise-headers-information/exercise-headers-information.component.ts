@@ -240,7 +240,7 @@ export class ExerciseHeadersInformationComponent {
         }
         const isDueDateInThePast = dueDate.isBefore(this.now);
         // If the due date is less than a day away, the color change to red
-        const dueDateStatusBadge = dueDate.isBetween(this.now.add(1, 'day'), this.now) ? 'danger' : 'body-color';
+        const dueDateStatusBadge = dueDate.isBetween(this.now, this.now.add(1, 'day')) ? 'danger' : 'body-color';
         // If the due date is less than a week away, text is displayed relatively e.g. 'in 2 days'
         const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(dueDate, this.now);
 

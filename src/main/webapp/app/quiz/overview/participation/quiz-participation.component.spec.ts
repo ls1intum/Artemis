@@ -418,10 +418,9 @@ describe('QuizParticipationComponent - live mode', () => {
             submitted: true,
             submittedAnswers: [answer],
         };
-        const result: Result = {
+        component.result = {
             submission: quizSubmission,
         };
-        component.result = result;
         component.submission = quizSubmission;
         component.quizExercise = quizExerciseForResults;
         component.showingResult = true;
@@ -646,6 +645,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
         expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 
     it('should not show missed deadline message when student effectively submitted', () => {
@@ -658,6 +658,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
         expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 
     it('should not show missed deadline message when deadline has not passed', () => {
@@ -668,6 +669,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
         expect(fixture.nativeElement.querySelector('.quiz-content')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#quiz-header')).toBeNull();
     });
 });
 
