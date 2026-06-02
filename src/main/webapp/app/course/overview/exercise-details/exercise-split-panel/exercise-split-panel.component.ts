@@ -76,9 +76,11 @@ export class ExerciseSplitPanelComponent {
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
     private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizResultSubscription: { unsubscribe(): void } | undefined;
 
     readonly quizSubmitted = output<QuizSubmission>();
     readonly quizPracticeParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
     readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
@@ -303,6 +305,9 @@ export class ExerciseSplitPanelComponent {
             this.quizPracticeParticipationSubscription = component.practiceParticipationChanged.subscribe((participation: StudentParticipation) => {
                 this.quizPracticeParticipationChanged.emit(participation);
             });
+            this.liveQuizResultSubscription = component.liveQuizResultParticipation.subscribe((participation: StudentParticipation) => {
+                this.liveQuizResultParticipation.emit(participation);
+            });
         }
     }
 
@@ -316,6 +321,8 @@ export class ExerciseSplitPanelComponent {
         this.liveQuizStatusSubscription = undefined;
         this.quizPracticeParticipationSubscription?.unsubscribe();
         this.quizPracticeParticipationSubscription = undefined;
+        this.liveQuizResultSubscription?.unsubscribe();
+        this.liveQuizResultSubscription = undefined;
         this._quizHasStarted.set(false);
     }
 }

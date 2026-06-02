@@ -138,6 +138,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly quizStartedEvent = output<void>();
     readonly quizSubmittedEvent = output<QuizSubmission>();
     readonly practiceParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizResultParticipation = output<StudentParticipation>();
     readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
     private lastEmittedLiveQuizStatus: LiveQuizParticipationStatus | undefined;
 
@@ -696,6 +697,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (this.submission.results?.length && this.submission.results[0].score !== undefined && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
                 this.showResult(this.submission.results[0]);
+                this.emitLiveQuizResult(participation);
             }
         } else {
             this.submission = new QuizSubmission();
@@ -763,7 +765,20 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.transferInformationToQuizExercise(quizExercise);
                 this.applySubmission();
                 this.showResult(this.submission.results[0]);
+                this.syncSubmitState();
+                this.emitLiveQuizResult(participation);
             }
+        }
+    }
+
+    /**
+     * Surfaces the result-bearing participation to the surrounding exercise page (live mode only) so the exercise
+     * header reflects the graded result (status badge + achieved points) as soon as the result arrives, without a
+     * page refresh. The full participation is emitted.
+     */
+    private emitLiveQuizResult(participation: StudentParticipation): void {
+        if (this.mode === 'live' && participation?.submissions?.some((submission) => submission.results?.length)) {
+            this.liveQuizResultParticipation.emit(participation);
         }
     }
 
