@@ -149,45 +149,44 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         // Create an exam exercise where the exam has NOT started yet (start date in the future)
         Exam notStartedExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3), false);
-        notStartedExam = examRepository.save(notStartedExam);
         var notStartedExerciseGroup = ExamFactory.generateExerciseGroup(true, notStartedExam);
-        notStartedExerciseGroup = exerciseGroupRepository.save(notStartedExerciseGroup);
+        notStartedExam = examRepository.save(notStartedExam);
         notStartedExamExercise = TextExerciseFactory.generateTextExerciseForExam(notStartedExerciseGroup);
         notStartedExamExercise.setTitle(SEARCH_PREFIX + " NotStarted Exam Exercise");
         notStartedExamExercise = exerciseRepository.save(notStartedExamExercise);
 
         // Create an exam exercise where the exam is ongoing (started but not ended)
         ongoingExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
-        ongoingExam = examRepository.save(ongoingExam);
         var ongoingExerciseGroup = ExamFactory.generateExerciseGroup(true, ongoingExam);
-        ongoingExerciseGroup = exerciseGroupRepository.save(ongoingExerciseGroup);
+        ongoingExam = examRepository.save(ongoingExam);
         ongoingExamExercise = TextExerciseFactory.generateTextExerciseForExam(ongoingExerciseGroup);
         ongoingExamExercise.setTitle(SEARCH_PREFIX + " Ongoing Exam Exercise");
         ongoingExamExercise = exerciseRepository.save(ongoingExamExercise);
 
         // Create an exam exercise where the exam has already ended
         endedExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), false);
-        endedExam = examRepository.save(endedExam);
         var endedExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
-        endedExerciseGroup = exerciseGroupRepository.save(endedExerciseGroup);
+        var autoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+        var semiAutoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
+        endedExam = examRepository.save(endedExam);
+
         endedExamExercise = TextExerciseFactory.generateTextExerciseForExam(endedExerciseGroup);
         endedExamExercise.setTitle(SEARCH_PREFIX + " Ended Exam Exercise");
         endedExamExercise = exerciseRepository.save(endedExamExercise);
 
         // Create an exam programming exercise with AUTOMATIC assessment (default) in the ended exam
-        var autoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
-        autoAssessmentExerciseGroup = exerciseGroupRepository.save(autoAssessmentExerciseGroup);
         endedExamAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(autoAssessmentExerciseGroup);
         endedExamAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " AutoAssess ExamProg");
         endedExamAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        endedExamAutoAssessmentProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(endedExamAutoAssessmentProgrammingExercise.getBuildConfig()));
         endedExamAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamAutoAssessmentProgrammingExercise);
 
         // Create an exam programming exercise with SEMI_AUTOMATIC assessment in the ended exam
-        var semiAutoAssessmentExerciseGroup = ExamFactory.generateExerciseGroup(true, endedExam);
-        semiAutoAssessmentExerciseGroup = exerciseGroupRepository.save(semiAutoAssessmentExerciseGroup);
         endedExamSemiAutoAssessmentProgrammingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(semiAutoAssessmentExerciseGroup);
         endedExamSemiAutoAssessmentProgrammingExercise.setTitle(SEARCH_PREFIX + " SemiAutoAssess ExamProg");
         endedExamSemiAutoAssessmentProgrammingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        endedExamSemiAutoAssessmentProgrammingExercise
+                .setBuildConfig(programmingExerciseBuildConfigRepository.save(endedExamSemiAutoAssessmentProgrammingExercise.getBuildConfig()));
         endedExamSemiAutoAssessmentProgrammingExercise = exerciseRepository.save(endedExamSemiAutoAssessmentProgrammingExercise);
 
         // Create a lecture in the same course
