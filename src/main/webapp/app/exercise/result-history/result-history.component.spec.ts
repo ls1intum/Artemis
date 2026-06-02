@@ -1,5 +1,5 @@
-import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -12,19 +12,18 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ResultHistoryComponent', () => {
     setupTestBed({ zoneless: true });
+
     let component: ResultHistoryComponent;
     let fixture: ComponentFixture<ResultHistoryComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal), provideHttpClient(), provideHttpClientTesting()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ResultHistoryComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ResultHistoryComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {

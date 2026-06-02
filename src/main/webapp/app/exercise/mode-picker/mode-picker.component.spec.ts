@@ -1,15 +1,14 @@
-import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Mode Picker Component', () => {
     setupTestBed({ zoneless: true });
+
     let comp: ModePickerComponent<string>;
     let fixture: ComponentFixture<ModePickerComponent<string>>;
 
@@ -26,88 +25,70 @@ describe('Mode Picker Component', () => {
         },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockPipe(ArtemisTranslatePipe), ModePickerComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ModePickerComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModePickerComponent<string>);
-                comp = fixture.componentInstance;
-            });
-    });
+        }).compileComponents();
 
-    afterEach(() => {
-        vi.restoreAllMocks();
+        fixture = TestBed.createComponent(ModePickerComponent<string>);
+        comp = fixture.componentInstance;
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
 
-        expect(comp.disabled).toBe(false);
+        expect(comp.disabled()).toBe(false);
         expect(comp.valueChange).toBeDefined();
     });
 
     it('should set mode when new mode is different', () => {
-        const newMode = 'new mode';
-        comp.disabled = false;
-
-        comp.value = 'old mode';
-
-        let valueChangeCalledWith = undefined;
+        fixture.componentRef.setInput('disabled', false);
+        fixture.componentRef.setInput('value', 'old mode');
+        let valueChangeCalledWith: string | undefined;
         comp.valueChange.subscribe((value) => (valueChangeCalledWith = value));
 
-        comp.setMode(newMode);
+        comp.setMode('new mode');
 
-        expect(valueChangeCalledWith).toBe(newMode);
+        expect(valueChangeCalledWith).toBe('new mode');
     });
 
     it('should not set mode when new mode is the same', () => {
-        const newMode = 'old mode';
-
-        comp.disabled = false;
-        comp.value = newMode;
-
-        let valueChangeCalledWith = undefined;
+        fixture.componentRef.setInput('disabled', false);
+        fixture.componentRef.setInput('value', 'old mode');
+        let valueChangeCalledWith: string | undefined;
         comp.valueChange.subscribe((value) => (valueChangeCalledWith = value));
 
-        comp.setMode(newMode);
+        comp.setMode('old mode');
 
         expect(valueChangeCalledWith).toBeUndefined();
     });
 
     it('should not set mode when disabled', () => {
-        const newMode = 'new mode';
-
-        comp.disabled = true;
-        comp.value = 'old mode';
-
-        let valueChangeCalledWith = undefined;
+        fixture.componentRef.setInput('disabled', true);
+        fixture.componentRef.setInput('value', 'old mode');
+        let valueChangeCalledWith: string | undefined;
         comp.valueChange.subscribe((value) => (valueChangeCalledWith = value));
 
-        comp.setMode(newMode);
+        comp.setMode('new mode');
 
         expect(valueChangeCalledWith).toBeUndefined();
     });
 
     it('should set mode classes according to the chosen value', () => {
-        comp.options = modePickerOptions;
+        fixture.componentRef.setInput('options', modePickerOptions);
+        fixture.detectChanges();
+        let modes = fixture.debugElement.queryAll(By.css('.btn'));
+        let actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
 
-        fixture.changeDetectorRef.detectChanges();
-        const modes = fixture.debugElement.queryAll(By.css('.btn'));
-
-        const actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
-
-        // If no value is set, all options should have 'btn-default' class.
         actualClassesForNodes.forEach((actualClassesForNode) => expect(actualClassesForNode).toEqual(['btn', 'btn-default']));
 
         const chosenOption = modePickerOptions[0];
-        comp.value = chosenOption.value;
+        fixture.componentRef.setInput('value', chosenOption.value);
+        fixture.detectChanges();
+        modes = fixture.debugElement.queryAll(By.css('.btn'));
+        actualClassesForNodes = modes.map((node) => node.nativeNode.getAttribute('class').split(' '));
 
-        fixture.changeDetectorRef.detectChanges();
-
-        // If a value is chosen, chosen options should have its own btnClass class.
-        expect(modes[0].nativeNode.getAttribute('class').split(' ')).toEqual(['btn', chosenOption.btnClass]);
+        expect(actualClassesForNodes[0]).toEqual(['btn', chosenOption.btnClass]);
     });
 });
