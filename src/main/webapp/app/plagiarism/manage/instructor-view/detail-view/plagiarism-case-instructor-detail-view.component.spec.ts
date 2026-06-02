@@ -39,7 +39,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         id: 1,
         title: 'Test Exercise',
         type: ExerciseType.TEXT,
-        courseId: 1,
+        courseId: 2,
         courseTitle: 'Test Course',
     } as PlagiarismCaseExercise;
 
@@ -78,12 +78,14 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should set plagiarism case and exercises on initialization', async () => {
+        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'setCourse');
         component.ngOnInit();
         await Promise.resolve();
         expect(component.courseId()).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         expect(component.plagiarismCase()).toEqual(plagiarismCase);
         expect(component.currentAccount?.id).toBe(99);
+        expect(setCourseSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 1, title: exercise.courseTitle }));
     });
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {

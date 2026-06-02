@@ -18,6 +18,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MetisService } from 'app/communication/service/metis.service';
 
 describe('Plagiarism Cases Student View Component', () => {
     setupTestBed({ zoneless: true });
@@ -39,7 +40,7 @@ describe('Plagiarism Cases Student View Component', () => {
         id: 1,
         title: 'Test Exercise',
         type: ExerciseType.TEXT,
-        courseId: 1,
+        courseId: 2,
         courseTitle: 'Test Course',
     } as PlagiarismCaseExercise;
 
@@ -84,12 +85,14 @@ describe('Plagiarism Cases Student View Component', () => {
     });
 
     it('should set plagiarism case on initialization', async () => {
+        const setCourseSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'setCourse');
         component.ngOnInit();
         await Promise.resolve();
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         await Promise.resolve();
         expect(component.plagiarismCase()).toEqual(plagiarismCase);
+        expect(setCourseSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 1, title: exercise.courseTitle }));
     });
 
     it('should set isAfterDueDate', async () => {

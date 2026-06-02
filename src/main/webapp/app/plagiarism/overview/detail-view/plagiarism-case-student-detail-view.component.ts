@@ -79,7 +79,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse({ id: plagiarismCase.exercise?.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
+                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
 
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({

@@ -116,7 +116,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
                 this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
                 this.verdictPointDeduction.set(plagiarismCase.verdictPointDeduction ?? 0);
-                this.metisService.setCourse({ id: plagiarismCase.exercise?.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
+                this.metisService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle } as Course);
                 this.metisService.setPageType(this.pageType);
                 this.metisService.getFilteredPosts({
                     plagiarismCaseId: plagiarismCase.id,
