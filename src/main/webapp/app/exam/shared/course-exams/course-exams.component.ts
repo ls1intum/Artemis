@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Course } from 'app/course/shared/entities/course.model';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { Subscription, combineLatest, filter, lastValueFrom } from 'rxjs';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
+import { Subscription, combineLatest, filter, lastValueFrom, of } from 'rxjs';
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -40,7 +40,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     styleUrls: ['./course-exams.component.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseExamsComponent implements OnInit, OnDestroy {
+export class CourseExamsComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -49,23 +49,22 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
 
-    courseId = signal<number>(0);
-    course = signal<Course | undefined>(undefined);
+    private readonly parentParams = toSignal(this.route.parent?.params ?? of<Params>({}), { initialValue: this.route.parent?.snapshot.params ?? {} });
+    readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
+    readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
-    private parentParamSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
-    private examStartedSubscription?: Subscription;
 
-    private studentExams: StudentExam[];
+    private readonly studentExams = signal<StudentExam[]>([]);
     studentExamsForRealExams = new Map<number, StudentExam>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
 
     examSelected = signal(true);
     sidebarData = signal<SidebarData | undefined>(undefined);
-    isCollapsed = signal(false);
-    isExamStarted = signal(false);
+    isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
+    isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -73,22 +72,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     /**
      * subscribe to changes in the course and fetch course by the path parameter
      */
-    ngOnInit(): void {
-        this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
-        this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
-            this.courseId.set(Number(params.courseId));
-        });
-
-        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
-            this.isExamStarted.set(isStarted);
-        });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId()));
+    constructor() {
         this.prepareSidebarData();
         this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
             .subscribe((response: StudentExam[]) => {
-                this.studentExams = response!;
+                this.studentExams.set(response!);
                 this.prepareSidebarData();
             });
 
@@ -98,12 +87,17 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         ])
             .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()))
             .subscribe(([_, latestExam]) => {
-                const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id);
-                if (index !== -1 && this.studentExams) {
-                    this.studentExams[index] = latestExam;
-                } else {
-                    this.studentExams = [...(this.studentExams || []), latestExam];
-                }
+                this.studentExams.update((studentExams) => {
+                    const index = studentExams?.findIndex((se) => se?.id === latestExam?.id);
+                    if (index !== -1 && studentExams) {
+                        const updated = [...studentExams!];
+                        updated[index] = latestExam;
+                        return updated;
+                    } else {
+                        return [...(studentExams || []), latestExam];
+                    }
+                });
+
                 this.prepareSidebarData();
 
                 this.examParticipationService.setShouldUpdateTestExams(false);
@@ -157,12 +151,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
-        if (this.parentParamSubscription) {
-            this.parentParamSubscription.unsubscribe();
-        }
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
-        this.examStartedSubscription?.unsubscribe();
     }
 
     /**
@@ -179,10 +169,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @return a by id descending ordered list of studentExams
      */
     getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExam[] {
-        if (!this.studentExams) {
+        if (!this.studentExams()) {
             return [];
         }
-        return this.studentExams
+        return this.studentExams()
             .filter(function (studentExam) {
                 return studentExam.exam?.id && studentExam.startedDate && studentExam.exam.id === examId && studentExam.startedDate;
             })
