@@ -28,13 +28,7 @@ public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> 
             comparisons = plagiarismResult.getComparisons().stream().map(PlagiarismComparisonDTO::fromComparison).toList();
         }
 
-        List<Integer> similarityDistribution = null;
-        try {
-            similarityDistribution = plagiarismResult.getSimilarityDistribution();
-        }
-        catch (NullPointerException ignored) {
-            // Older tests and partially initialized results may not carry a distribution yet.
-        }
+        List<Integer> similarityDistribution = plagiarismResult.getSimilarityDistribution();
 
         return new PlagiarismResultDetailsDTO(plagiarismResult.getId(), comparisons, plagiarismResult.getDuration(), similarityDistribution, plagiarismResult.getCreatedDate());
     }

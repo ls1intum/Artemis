@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
 
-import org.hibernate.Hibernate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -38,30 +35,8 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
             ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin,
             String verdictByFirstName, String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
         this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
-                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), Math.toIntExact(plagiarismSubmissionCount),
+                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, hasStudentAnswer);
-    }
-
-    /**
-     * Maps a plagiarism case entity to the overview DTO.
-     *
-     * @param plagiarismCase the plagiarism case entity
-     * @return the DTO representation
-     */
-    public static PlagiarismCaseOverviewDTO ofOverview(PlagiarismCase plagiarismCase) {
-        if (plagiarismCase == null) {
-            return null;
-        }
-
-        int plagiarismSubmissionCount = 0;
-        if (plagiarismCase.getPlagiarismSubmissions() != null && Hibernate.isInitialized(plagiarismCase.getPlagiarismSubmissions())) {
-            plagiarismSubmissionCount = plagiarismCase.getPlagiarismSubmissions().size();
-        }
-
-        return new PlagiarismCaseOverviewDTO(plagiarismCase.getId(), PlagiarismCaseExerciseDTO.fromExercise(plagiarismCase.getExercise()),
-                PlagiarismCaseUserDTO.fromUser(plagiarismCase.getStudent()), PlagiarismCasePostSummaryDTO.fromPost(plagiarismCase.getPost()), plagiarismCase.getVerdict(),
-                plagiarismCase.getVerdictDate(), PlagiarismCaseUserDTO.fromUser(plagiarismCase.getVerdictBy()), plagiarismSubmissionCount,
-                plagiarismCase.isCreatedByContinuousPlagiarismControl(), false);
     }
 
     private static PlagiarismCaseUserDTO userOrNull(Long id, String login, String name, String visibleRegistrationNumber) {
@@ -72,10 +47,25 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
     }
 
     private static String fullName(String firstName, String lastName) {
-        if (lastName != null && !lastName.isEmpty()) {
+        boolean hasFirstName = firstName != null && !firstName.isEmpty();
+        boolean hasLastName = lastName != null && !lastName.isEmpty();
+        if (hasFirstName && hasLastName) {
             return firstName + " " + lastName;
         }
-        return firstName;
+        if (hasFirstName) {
+            return firstName;
+        }
+        if (hasLastName) {
+            return lastName;
+        }
+        return null;
+    }
+
+    private static int toBoundedInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.toIntExact(value);
     }
 
     private static PlagiarismCasePostSummaryDTO postOrNull(Long id, ZonedDateTime creationDate) {

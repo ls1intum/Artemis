@@ -41,7 +41,7 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
             ZonedDateTime postCreationDate, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin, String verdictByFirstName,
             String verdictByLastName, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl, String verdictMessage, int verdictPointDeduction) {
         this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), null), postOrNull(postId, postCreationDate), verdict, verdictDate,
-                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), Math.toIntExact(plagiarismSubmissionCount),
+                userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), toBoundedInt(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, verdictMessage, verdictPointDeduction, null);
     }
 
@@ -90,10 +90,25 @@ public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercis
     }
 
     private static String fullName(String firstName, String lastName) {
-        if (lastName != null && !lastName.isEmpty()) {
+        boolean hasFirstName = firstName != null && !firstName.isEmpty();
+        boolean hasLastName = lastName != null && !lastName.isEmpty();
+        if (hasFirstName && hasLastName) {
             return firstName + " " + lastName;
         }
-        return firstName;
+        if (hasFirstName) {
+            return firstName;
+        }
+        if (hasLastName) {
+            return lastName;
+        }
+        return null;
+    }
+
+    private static int toBoundedInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.toIntExact(value);
     }
 
     private static PlagiarismCasePostSummaryDTO postOrNull(Long id, ZonedDateTime creationDate) {
