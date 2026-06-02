@@ -42,6 +42,6 @@ describe('ProgrammingExerciseTimelineComponent', () => {
             'artemisApp.exercise.assessmentDueDate',
         ]);
         expect(timelineItems.map((item) => item.date())).toEqual([startDate, buildAndTestAfterDueDate, assessmentDueDate]);
-        expect(timelineItems.every((item) => item.kind === 'optional')).toBeTrue();
+        expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
     });
 });

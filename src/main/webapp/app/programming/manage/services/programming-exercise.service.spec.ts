@@ -265,7 +265,7 @@ describe('ProgrammingExercise Service', () => {
                 .query(expected)
                 .pipe(take(1))
                 .subscribe((resp) => {
-                    expect(resp.body).toIncludeAllMembers([expected]);
+                    expect(resp.body).toEqual(expect.arrayContaining([expected]));
                 });
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([returnedFromService]);

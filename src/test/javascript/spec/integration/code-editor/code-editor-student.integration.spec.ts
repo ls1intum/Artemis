@@ -182,13 +182,13 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBeTrue();
+        expect(container.loadingParticipation).toBe(true);
 
         findWithLatestResultSubject.next(participation);
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
-        expect(container.loadingParticipation).toBeFalse();
-        expect(container.participationCouldNotBeFetched).toBeFalse();
+        expect(container.loadingParticipation).toBe(false);
+        expect(container.participationCouldNotBeFetched).toBe(false);
         expect(container.participation).toEqual({ ...participation, submissions: [{ ...submission, results: [result] }] });
     });
 
@@ -210,10 +210,10 @@ describe('CodeEditorStudentIntegration', () => {
         containerFixture.detectChanges();
 
         // Repository should be locked because due date has passed and it's not practice mode
-        expect(container.repositoryIsLocked).toBeTrue();
+        expect(container.repositoryIsLocked).toBe(true);
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
-        expect(container.codeEditorContainer()!.fileBrowser()!.disableActions).toBeTrue();
-        expect(container.codeEditorContainer()!.actions()!.disableActions).toBeTrue();
+        expect(container.codeEditorContainer()!.fileBrowser()!.disableActions).toBe(true);
+        expect(container.codeEditorContainer()!.actions()!.disableActions).toBe(true);
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
@@ -223,12 +223,12 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBeTrue();
+        expect(container.loadingParticipation).toBe(true);
 
         findWithLatestResultSubject.error('fatal error');
 
-        expect(container.loadingParticipation).toBeFalse();
-        expect(container.participationCouldNotBeFetched).toBeTrue();
+        expect(container.loadingParticipation).toBe(false);
+        expect(container.participationCouldNotBeFetched).toBe(true);
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(container.participation).toBeUndefined();
     });
