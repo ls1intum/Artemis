@@ -1,7 +1,7 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { Subscription, combineLatest, filter, lastValueFrom, of } from 'rxjs';
+import { combineLatest, filter, map, merge, of, scan, tap } from 'rxjs';
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -40,7 +40,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     styleUrls: ['./course-exams.component.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseExamsComponent implements OnDestroy {
+export class CourseExamsComponent {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -53,10 +53,26 @@ export class CourseExamsComponent implements OnDestroy {
     readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
-    private studentExamTestExamInitialFetchSubscription?: Subscription;
-    private studentExamTestExamUpdateSubscription?: Subscription;
-
-    private readonly studentExams = signal<StudentExam[]>([]);
+    private readonly studentExams = toSignal(
+        merge(
+            this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId()).pipe(map((studentExams) => () => studentExams ?? [])),
+            combineLatest([this.examParticipationService.shouldUpdateTestExamsObservable, this.examParticipationService.currentlyLoadedStudentExam]).pipe(
+                filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()),
+                map(([_, latestExam]) => latestExam!),
+                tap(() => this.examParticipationService.setShouldUpdateTestExams(false)),
+                map((latestExam) => (studentExams: StudentExam[]) => {
+                    const index = studentExams.findIndex((studentExam) => studentExam?.id === latestExam?.id);
+                    if (index !== -1) {
+                        const updated = [...studentExams];
+                        updated[index] = latestExam;
+                        return updated;
+                    }
+                    return [...studentExams, latestExam];
+                }),
+            ),
+        ).pipe(scan((studentExams, updateStudentExams) => updateStudentExams(studentExams), [] as StudentExam[])),
+        { initialValue: [] },
+    );
     private readonly visibleExams = computed(
         () =>
             this.course()
@@ -65,7 +81,19 @@ export class CourseExamsComponent implements OnDestroy {
     );
     protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isTestExam(exam)));
     protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
-    protected readonly studentExamByRealExamId = signal(new Map<number, StudentExam>());
+    protected readonly studentExamByRealExamId = toSignal(
+        this.examParticipationService.getRealExamSidebarData(this.courseId()).pipe(
+            map((studentExams) => {
+                const studentExamByRealExamId = new Map<number, StudentExam>();
+                studentExams.forEach((exam) => {
+                    const studentExam = cloneDeep(exam) as StudentExam;
+                    studentExamByRealExamId.set(studentExam.id!, studentExam);
+                });
+                return studentExamByRealExamId;
+            }),
+        ),
+        { initialValue: new Map<number, StudentExam>() },
+    );
 
     readonly examSelected = signal(true);
     readonly sidebarData = computed<SidebarData | undefined>(() => this.computeSidebarData());
@@ -79,37 +107,6 @@ export class CourseExamsComponent implements OnDestroy {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
-        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
-            .subscribe((response: StudentExam[]) => {
-                this.studentExams.set(response!);
-            });
-
-        this.studentExamTestExamUpdateSubscription = combineLatest([
-            this.examParticipationService.shouldUpdateTestExamsObservable,
-            this.examParticipationService.currentlyLoadedStudentExam,
-        ])
-            .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()))
-            .subscribe(([_, latestExam]) => {
-                this.studentExams.update((studentExams) => {
-                    const index = studentExams?.findIndex((se) => se?.id === latestExam?.id);
-                    if (index !== -1 && studentExams) {
-                        const updated = [...studentExams!];
-                        updated[index] = latestExam;
-                        return updated;
-                    } else {
-                        return [...(studentExams || []), latestExam];
-                    }
-                });
-
-                this.examParticipationService.setShouldUpdateTestExams(false);
-            });
-
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            this.loadRealExamSidebarData();
-        }
-
         // If no exam is selected navigate to the last selected or upcoming Exam
         this.navigateToExam();
     }
@@ -128,25 +125,6 @@ export class CourseExamsComponent implements OnDestroy {
             // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
             this.examSelected.set(!!examId);
         }
-    }
-
-    private loadRealExamSidebarData(): void {
-        lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
-            const realStudentExamById = new Map<number, StudentExam>();
-            studentExams.forEach((exam) => {
-                const studentExam = cloneDeep(exam) as StudentExam;
-                realStudentExamById.set(studentExam.id!, studentExam);
-            });
-            this.studentExamByRealExamId.set(realStudentExamById);
-        });
-    }
-
-    /**
-     * unsubscribe from all subscriptions
-     */
-    ngOnDestroy(): void {
-        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
-        this.studentExamTestExamUpdateSubscription?.unsubscribe();
     }
 
     /**
