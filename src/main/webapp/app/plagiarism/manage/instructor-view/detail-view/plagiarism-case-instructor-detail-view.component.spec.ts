@@ -175,10 +175,22 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         const examTitle = 'Exam Title';
+        const examExercise = {
+            id: 1,
+            title: 'Test Exercise',
+            type: ExerciseType.TEXT,
+            courseId: 2,
+            courseTitle: 'Test Course',
+            examId: 3,
+            examTitle,
+        } as PlagiarismCaseExercise;
         const examPlagiarismCase = {
-            ...plagiarismCase,
-            exercise: { ...exercise, examId: 3, examTitle },
-        };
+            id: 1,
+            exercise: examExercise,
+            verdict: PlagiarismVerdict.PLAGIARISM,
+            post: { id: 1 },
+            student: { name: 'Test User' },
+        } as PlagiarismCase;
         component.plagiarismCase.set(examPlagiarismCase);
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
@@ -204,7 +216,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         component.plagiarismCase.set({
-            ...plagiarismCase,
+            id: 1,
+            verdict: PlagiarismVerdict.PLAGIARISM,
+            post: { id: 1 },
             student: undefined,
             exercise: undefined,
         } as PlagiarismCase);
