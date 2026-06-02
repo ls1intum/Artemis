@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -105,7 +106,7 @@ public class ExamRegistrationService {
      * @param examUserDTOs the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
+    public ExamRegistrationResultDTO registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
@@ -114,6 +115,7 @@ public class ExamRegistrationService {
         }
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
@@ -123,10 +125,13 @@ public class ExamRegistrationService {
             }
             else {
                 User student = optionalStudent.get();
+                if (isStaffMemberOfCourse(course, student)) {
+                    rejectedStaffDTOs.add(examUserDto);
+                    continue;
+                }
                 Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
-                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !authorizationCheckService.isInstructorInCourse(course, student)
-                        && !authorizationCheckService.isAdmin(student)) {
+                if (examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) {
                     ExamUser registeredExamUser = new ExamUser();
                     registeredExamUser.setUser(optionalStudent.get());
                     registeredExamUser.setExam(exam);
@@ -171,7 +176,7 @@ public class ExamRegistrationService {
             log.warn("Could not add audit event to audit log", ex);
         }
 
-        return notFoundStudentsDTOs;
+        return new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs);
     }
 
     /**
@@ -359,7 +364,7 @@ public class ExamRegistrationService {
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
             Optional<ExamUser> registeredExamUserCheckOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-            if (registeredExamUserCheckOptional.isEmpty() && !authorizationCheckService.isInstructorInCourse(course, student) && !authorizationCheckService.isAdmin(student)) {
+            if (registeredExamUserCheckOptional.isEmpty() && !isStaffMemberOfCourse(course, student)) {
                 ExamUser registeredExamUser = createExamUser(exam, student);
                 exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
@@ -377,5 +382,19 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
+    }
+
+    /**
+     * Checks whether the given user holds a staff role (instructor, editor, tutor, or admin) in the course
+     * and therefore must not be registered as an exam student.
+     *
+     * @param course the course the exam belongs to
+     * @param user   the user to check (must have groups loaded)
+     * @return true if the user is course staff and may not be registered as an exam student
+     */
+    public boolean isStaffMemberOfCourse(Course course, User user) {
+        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getEditorGroupName())
+                || user.getGroups().contains(course.getTeachingAssistantGroupName()) || authorizationCheckService.isAdmin(user)
+                || authorizationCheckService.isEditorInCourse(course, user) || authorizationCheckService.isTeachingAssistantInCourse(course, user);
     }
 }
