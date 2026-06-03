@@ -108,10 +108,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         return EMPTY;
                     }
 
-                    // Query too short for server search (1-2 chars) and no filter active —
-                    // show loading skeleton while user is typing, then after debounce show
-                    // the "too short" message without sending a request to the server.
-                    if (isTooShort && !hasFilter && !hasCourseFilter) {
+                    // Query too short for server search (1-2 chars) — show loading skeleton
+                    // while user is typing, then after debounce show the "too short" message
+                    // without sending a request to the server (even when a filter is active).
+                    if (isTooShort) {
                         this.isLoading.set(true);
                         this.searchError.set(undefined);
                         return timer(SEARCH_DEBOUNCE_MS).pipe(
