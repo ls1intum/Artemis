@@ -5,7 +5,7 @@ on:
 
 jobs:
   pullequestReadyForReview:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - name: Label "ready for review"
         uses: actions/github-script@v9

@@ -19,7 +19,7 @@ env:
 jobs:
 
   server-tests-mysql:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 80
 
     steps:

@@ -95,7 +95,7 @@ jobs:
 
   build-war:
     name: Build .war artifact
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - uses: actions/checkout@v6
         with:
@@ -179,9 +179,9 @@ jobs:
       ref: ${{ github.event.pull_request.head.sha || github.sha }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      runner-amd64: arc-buildkit-ls1intum-stud-amd64
+      runner-amd64: arc-buildkit-ls1intum-theiaprod-amd64
       runner-arm64: arc-buildkit-ls1intum-parma-arm64
-      runner-merge: arc-buildkit-ls1intum-stud-amd64
+      runner-merge: arc-buildkit-ls1intum-theiaprod-amd64
       build-amd64: true
       build-arm64: false
       tags: |
@@ -200,9 +200,9 @@ jobs:
       ref: ${{ github.ref_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      runner-amd64: arc-buildkit-ls1intum-stud-amd64
+      runner-amd64: arc-buildkit-ls1intum-theiaprod-amd64
       runner-arm64: arc-buildkit-ls1intum-parma-arm64
-      runner-merge: arc-buildkit-ls1intum-stud-amd64
+      runner-merge: arc-buildkit-ls1intum-theiaprod-amd64
       tags: |
         type=ref,event=tag
 
@@ -213,7 +213,7 @@ jobs:
     name: Save Docker Image Tag
     needs: [docker-pr, docker-release]
     if: ${{ always() && (needs.docker-pr.result == 'success' || needs.docker-release.result == 'success') }}
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - name: Save Docker tag to file
         env:
@@ -231,7 +231,7 @@ jobs:
     name: ARC E2E Test
     needs: save-docker-tag
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
@@ -279,7 +279,7 @@ jobs:
     name: Block default workflow_run E2E
     needs: arc-e2e-test
     if: ${{ always() && github.event_name == 'pull_request' }}
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - name: Fail intentionally after ARC E2E test
         run: |

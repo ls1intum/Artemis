@@ -19,7 +19,7 @@ concurrency:
 jobs:
     validation:
         name: "Gradle Wrapper Validation"
-        runs-on: arc-buildkit-ls1intum-stud-amd64
+        runs-on: arc-buildkit-ls1intum-theiaprod-amd64
         steps:
             - uses: actions/checkout@v6
             - uses: gradle/actions/wrapper-validation@v6

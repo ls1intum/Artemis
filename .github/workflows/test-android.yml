@@ -39,7 +39,7 @@ concurrency:
 jobs:
   e2e-tests:
     name: Android E2E Tests
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 60
 
     steps:

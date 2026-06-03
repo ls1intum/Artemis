@@ -6,7 +6,7 @@ on:
 jobs:
   stale:
     if: github.repository_owner == 'ls1intum'
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - name: Check for stale PRs
         uses: actions/stale@v10

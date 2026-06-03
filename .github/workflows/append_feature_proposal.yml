@@ -6,7 +6,7 @@ on:
 
 jobs:
   check-labels:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     outputs:
       status: ${{ steps.feature-proposal-tag-check.outputs.status }}
     steps:
@@ -37,7 +37,7 @@ jobs:
   manage-feature-proposal:
     needs: check-labels
     if: needs.check-labels.outputs.status == 'success'
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - name: Check if feature proposal tag added
         uses: actions/github-script@v9

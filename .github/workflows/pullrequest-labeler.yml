@@ -3,7 +3,7 @@ on: [pull_request_target]
 
 jobs:
   label:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
       - uses: actions/labeler@v6
         with:

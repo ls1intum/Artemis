@@ -13,7 +13,7 @@ jobs:
             github.event.pull_request.base.ref == 'develop' &&
             github.event.pull_request.head.repo != null &&
             github.event.pull_request.head.repo.fork == false
-        runs-on: arc-buildkit-ls1intum-stud-amd64
+        runs-on: arc-buildkit-ls1intum-theiaprod-amd64
         timeout-minutes: 2
         permissions:
             pull-requests: write

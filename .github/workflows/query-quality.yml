@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   query-quality-check:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
 
     steps:
       - name: Checkout code

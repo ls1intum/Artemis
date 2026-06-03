@@ -14,7 +14,7 @@ on:
 
 jobs:
   check:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     steps:
     - uses: actions/checkout@v6
     - name: Verify version is consistent across build.gradle, openapi.yaml and README.md

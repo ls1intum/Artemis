@@ -71,7 +71,7 @@ jobs:
   # This matches the production database engine and catches SQL dialect issues that
   # in-memory databases like H2 would miss.
   server-tests:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 80
 
     steps:
@@ -219,7 +219,7 @@ jobs:
         cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
   server-style:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
@@ -246,7 +246,7 @@ jobs:
         reporter: java-junit
 
   client-tests:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 45
     steps:
         - uses: actions/checkout@v6
@@ -306,7 +306,7 @@ jobs:
             path: build/test-results/vitest/junit.xml
 
   client-style:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v6
@@ -336,7 +336,7 @@ jobs:
       if: success() || failure()
 
   client-compilation:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v6

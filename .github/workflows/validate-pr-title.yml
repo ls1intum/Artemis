@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   validate-pr-title:
-    runs-on: arc-buildkit-ls1intum-stud-amd64
+    runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 1
     steps:
       - uses: Slashgear/action-check-pr-title@v5.0.1
