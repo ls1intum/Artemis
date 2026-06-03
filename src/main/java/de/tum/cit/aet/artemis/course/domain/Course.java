@@ -175,10 +175,10 @@ public class Course extends DomainObject {
     @Column(name = "restricted_athena_modules_access", nullable = false)
     private boolean restrictedAthenaModulesAccess = false; // default is false
 
-    @Column(name = "athena_formative_enabled", nullable = false)
+    @Transient
     private boolean athenaFormativeEnabled = false;
 
-    @Column(name = "athena_grading_enabled", nullable = false)
+    @Transient
     private boolean athenaGradingEnabled = false;
 
     /**
