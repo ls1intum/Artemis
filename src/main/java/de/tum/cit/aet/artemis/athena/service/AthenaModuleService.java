@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -61,11 +63,14 @@ public class AthenaModuleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
-            ExerciseRepository exerciseRepository) {
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper, ExerciseRepository exerciseRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -239,18 +244,12 @@ public class AthenaModuleService {
             return;
         }
 
-        if (course.isAthenaGradingEnabled()) {
-            exercise.setFeedbackSuggestionModule(getDefaultModule(exercise.getExerciseType()));
-        }
-        else {
-            exercise.setFeedbackSuggestionModule(null);
-        }
-        if (course.isAthenaFormativeEnabled()) {
-            exercise.setAllowFeedbackRequests(true);
-        }
-        else {
-            exercise.setAllowFeedbackRequests(false);
-        }
+        var config = courseAthenaConfigRepository.findByCourseId(course.getId());
+        boolean gradingEnabled = config.map(CourseAthenaConfig::isGradingEnabled).orElse(false);
+        boolean formativeEnabled = config.map(CourseAthenaConfig::isFormativeEnabled).orElse(false);
+
+        exercise.setFeedbackSuggestionModule(gradingEnabled ? getDefaultModule(exercise.getExerciseType()) : null);
+        exercise.setAllowFeedbackRequests(formativeEnabled);
     }
 
     /**
