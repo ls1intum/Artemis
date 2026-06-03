@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -84,10 +85,12 @@ public class CourseUpdateResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final CourseAthenaConfigService courseAthenaConfigService;
+
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, CourseAthenaConfigService courseAthenaConfigService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -99,6 +102,7 @@ public class CourseUpdateResource {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.courseAthenaConfigService = courseAthenaConfigService;
     }
 
     private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
@@ -175,8 +179,8 @@ public class CourseUpdateResource {
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
         // Capture Athena flag values BEFORE applying DTO so we can detect true→false transitions
-        boolean wasGradingEnabled = existingCourse.isAthenaGradingEnabled();
-        boolean wasFormativeEnabled = existingCourse.isAthenaFormativeEnabled();
+        boolean wasGradingEnabled = courseAthenaConfigService.isGradingEnabled(courseId);
+        boolean wasFormativeEnabled = courseAthenaConfigService.isFormativeEnabled(courseId);
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -271,6 +275,10 @@ public class CourseUpdateResource {
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
+
+        courseAthenaConfigService.updateConfig(result, courseUpdateDTO.athenaFormativeEnabled(), courseUpdateDTO.athenaGradingEnabled());
+        courseAthenaConfigService.stampAthenaConfig(result);
+
         return ResponseEntity.ok(result);
     }
 
