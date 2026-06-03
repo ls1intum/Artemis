@@ -193,6 +193,7 @@ cat results.txt
 | `--sql-analysis` | off | SQL query counting mode (requires `--server-log`) |
 | `--server-log=<path>` | — | Path to server log file (used with `--sql-analysis`) |
 | `--output=<path>` | — | Append results as NDJSON for later comparison |
+| `--report=<path>` | — | Write a formatted Markdown report of the results |
 | `--label=<name>` | timestamp | Label for this run (e.g. `develop`, `dsl-branch`) |
 
 Environment variables `ARTEMIS_SERVER_URL`, `ARTEMIS_ADMIN_USER`, `ARTEMIS_ADMIN_PASSWORD`, `ARTEMIS_STUDENT_PASSWORD` can be used instead of CLI flags.

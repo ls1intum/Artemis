@@ -35,6 +35,7 @@
  *   --server-log=<path>        Path to the server log file (used with --sql-analysis).
  *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
  *   --output=<path>            Write results to a file (append mode) for later comparison
+ *   --report=<path>            Write a formatted Markdown report of the benchmark results
  *   --label=<name>             Label for this run (e.g. "develop" or "dsl-branch")
  *   --help                     Show help
  */
@@ -42,7 +43,7 @@
 // ---------------------------------------------------------------------------
 // Imports – reuse the HTTP client and auth helpers from the setup-course lib
 // ---------------------------------------------------------------------------
-import { readFileSync, appendFileSync } from 'node:fs';
+import { readFileSync, appendFileSync, writeFileSync } from 'node:fs';
 import { HttpClient } from '../course-scripts/setup-course/lib/http-client.mjs';
 import { authenticate } from '../course-scripts/setup-course/lib/auth.mjs';
 
@@ -80,6 +81,7 @@ Options:
   --sql-analysis             SQL query analysis mode (requires --server-log)
   --server-log=<path>        Path to server log file for SQL counting
   --output=<path>            Append results to file for A/B comparison
+  --report=<path>            Write a formatted Markdown report of the results
   --label=<name>             Label for this run (e.g. "develop", "dsl-branch")
   --help                     Show this help
 
@@ -132,6 +134,7 @@ const config = {
     sqlAnalysis: args['sql-analysis'] === 'true',
     serverLog: args['server-log'] || null,
     outputFile: args['output'] || null,
+    reportFile: args['report'] || null,
     label: args['label'] || new Date().toISOString(),
 };
 
@@ -555,6 +558,116 @@ function appendResult(record) {
     appendFileSync(config.outputFile, JSON.stringify(record) + '\n', 'utf-8');
 }
 
+/**
+ * Write a formatted Markdown report of the benchmark results.
+ */
+function writeMarkdownReport({ mode, snapshot, allCoursesStats, singleCourseStats, courseId, allCoursesSql, singleCourseSql }) {
+    if (!config.reportFile) return;
+
+    const lines = [];
+    const ts = new Date().toISOString();
+
+    lines.push(`# Access Rights DSL — Benchmark Report`);
+    lines.push('');
+    lines.push(`| Property | Value |`);
+    lines.push(`|----------|-------|`);
+    lines.push(`| **Label** | ${config.label} |`);
+    lines.push(`| **Date** | ${ts} |`);
+    lines.push(`| **Server** | ${config.serverUrl} |`);
+    lines.push(`| **Mode** | ${mode === 'sql-analysis' ? 'SQL Analysis' : 'Response Time'} |`);
+    if (mode !== 'sql-analysis') {
+        lines.push(`| **Iterations** | ${config.iterations} (+ ${config.warmup} warmup) |`);
+    }
+    lines.push('');
+
+    // Entity snapshot
+    lines.push(`## Database Entity Snapshot`);
+    lines.push('');
+    lines.push(`| Metric | Count |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Total courses in DB | ${snapshot.totalCourses} |`);
+    lines.push(`| Active courses (in date range) | ${snapshot.activeCourses} |`);
+    lines.push(`| Courses visible to bench_student | ${snapshot.visibleCourses} |`);
+    lines.push(`| Exercises visible to bench_student | ${snapshot.totalVisibleExercises} |`);
+    lines.push(`| — of which programming exercises | ${snapshot.totalVisibleProgrammingExercises} |`);
+    lines.push('');
+
+    if (mode === 'sql-analysis') {
+        // SQL Analysis report
+        lines.push(`## SQL Query Analysis`);
+        lines.push('');
+
+        lines.push(`### GET /api/core/courses/for-dashboard`);
+        lines.push('');
+        if (allCoursesSql) {
+            lines.push(`| Metric | Value |`);
+            lines.push(`|--------|-------|`);
+            lines.push(`| Response time | ${formatMs(allCoursesSql.elapsed)} |`);
+            lines.push(`| Total queries | ${allCoursesSql.sqlStats.totalQueries} |`);
+            lines.push(`| SELECTs | ${allCoursesSql.sqlStats.selects} |`);
+            lines.push(`| INSERTs | ${allCoursesSql.sqlStats.inserts} |`);
+            lines.push(`| UPDATEs | ${allCoursesSql.sqlStats.updates} |`);
+            lines.push(`| DELETEs | ${allCoursesSql.sqlStats.deletes} |`);
+            lines.push(`| Unique queries | ${allCoursesSql.sqlStats.uniqueQueries} |`);
+        }
+        lines.push('');
+
+        if (singleCourseSql && courseId) {
+            lines.push(`### GET /api/core/courses/${courseId}/for-dashboard`);
+            lines.push('');
+            lines.push(`| Metric | Value |`);
+            lines.push(`|--------|-------|`);
+            lines.push(`| Response time | ${formatMs(singleCourseSql.elapsed)} |`);
+            lines.push(`| Total queries | ${singleCourseSql.sqlStats.totalQueries} |`);
+            lines.push(`| SELECTs | ${singleCourseSql.sqlStats.selects} |`);
+            lines.push(`| INSERTs | ${singleCourseSql.sqlStats.inserts} |`);
+            lines.push(`| UPDATEs | ${singleCourseSql.sqlStats.updates} |`);
+            lines.push(`| DELETEs | ${singleCourseSql.sqlStats.deletes} |`);
+            lines.push(`| Unique queries | ${singleCourseSql.sqlStats.uniqueQueries} |`);
+            lines.push('');
+        }
+    } else {
+        // Response Time report
+        lines.push(`## Response Time Results`);
+        lines.push('');
+
+        lines.push(`### GET /api/core/courses/for-dashboard`);
+        lines.push('');
+        if (allCoursesStats) {
+            lines.push(`| Metric | Value |`);
+            lines.push(`|--------|-------|`);
+            lines.push(`| Iterations | ${allCoursesStats.count} |`);
+            lines.push(`| Mean | ${formatMs(allCoursesStats.mean)} |`);
+            lines.push(`| Median | ${formatMs(allCoursesStats.median)} |`);
+            lines.push(`| Min | ${formatMs(allCoursesStats.min)} |`);
+            lines.push(`| Max | ${formatMs(allCoursesStats.max)} |`);
+            lines.push(`| P90 | ${formatMs(allCoursesStats.p90)} |`);
+            lines.push(`| P95 | ${formatMs(allCoursesStats.p95)} |`);
+            lines.push(`| Std Dev | ${formatMs(allCoursesStats.stddev)} |`);
+        }
+        lines.push('');
+
+        if (singleCourseStats && courseId) {
+            lines.push(`### GET /api/core/courses/${courseId}/for-dashboard`);
+            lines.push('');
+            lines.push(`| Metric | Value |`);
+            lines.push(`|--------|-------|`);
+            lines.push(`| Iterations | ${singleCourseStats.count} |`);
+            lines.push(`| Mean | ${formatMs(singleCourseStats.mean)} |`);
+            lines.push(`| Median | ${formatMs(singleCourseStats.median)} |`);
+            lines.push(`| Min | ${formatMs(singleCourseStats.min)} |`);
+            lines.push(`| Max | ${formatMs(singleCourseStats.max)} |`);
+            lines.push(`| P90 | ${formatMs(singleCourseStats.p90)} |`);
+            lines.push(`| P95 | ${formatMs(singleCourseStats.p95)} |`);
+            lines.push(`| Std Dev | ${formatMs(singleCourseStats.stddev)} |`);
+            lines.push('');
+        }
+    }
+
+    writeFileSync(config.reportFile, lines.join('\n') + '\n', 'utf-8');
+    console.log(`Markdown report written to: ${config.reportFile}`);
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -704,6 +817,15 @@ async function main() {
         config: { iterations: config.iterations, warmup: config.warmup, courseCount: config.courseCount },
     });
 
+    // Write markdown report
+    writeMarkdownReport({
+        mode: 'response-time',
+        snapshot,
+        allCoursesStats,
+        singleCourseStats,
+        courseId,
+    });
+
     console.log('\nBenchmark complete.');
     if (config.outputFile) {
         console.log(`Results appended to: ${config.outputFile}`);
@@ -798,6 +920,15 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
             ...singleCourseResult.sqlStats,
         } : null,
         courseId,
+    });
+
+    // Write markdown report
+    writeMarkdownReport({
+        mode: 'sql-analysis',
+        snapshot,
+        courseId,
+        allCoursesSql: allCoursesResult,
+        singleCourseSql: singleCourseResult,
     });
 
     if (config.outputFile) {
