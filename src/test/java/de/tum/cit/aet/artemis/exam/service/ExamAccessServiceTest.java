@@ -474,11 +474,29 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationTestExamBlocksAfterSimulationPhase() {
+        configureExamType(testExam1, ExamType.SIMULATION, ZonedDateTime.now().minusHours(1), 1800, 180, 0, ZonedDateTime.now().plusHours(2));
+
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("simulationTestExamPhaseEnded");
+                });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCreateStudentExamElseThrow_simulationAndPracticeBlocksDuringPracticeStartDelay() {
         configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(1), 1800, 180, 60, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("testExamPracticePhaseNotStarted");
+                });
     }
 
     @Test

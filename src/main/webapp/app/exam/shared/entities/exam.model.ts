@@ -32,7 +32,7 @@ export class Exam implements BaseEntity {
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
-    // buffer in seconds between simulation and repeatable practice phases of a test exam
+    // buffer in minutes between simulation and repeatable practice phases of a test exam
     public testExamPracticeStartDelay?: number;
     public examiner?: string;
     public moduleNumber?: string;

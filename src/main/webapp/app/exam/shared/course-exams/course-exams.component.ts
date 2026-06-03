@@ -190,7 +190,7 @@ export class CourseExamsComponent {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
     }
 
-    protected toggleSidebar() {
+    toggleSidebar() {
         const newState = !this.isCollapsed();
         this.isCollapsed.set(newState);
         this.courseOverviewService.setSidebarCollapseState('exam', newState);

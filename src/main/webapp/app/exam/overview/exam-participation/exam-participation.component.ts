@@ -1,4 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -9,7 +10,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -26,7 +27,7 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ExamBarComponent } from '../exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from '../exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { QuizExamSubmissionComponent } from '../exercises/quiz/quiz-exam-submission.component';
@@ -60,6 +61,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -83,7 +85,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         FaIconComponent,
         ExamResultSummaryComponent,
         RouterLink,
-        AsyncPipe,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
     ],
@@ -105,6 +106,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+    private testExamParticipationMessageService = inject(TestExamParticipationMessageService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -187,8 +189,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     loadingExam: boolean;
     isAtLeastTutor?: boolean;
     isAtLeastInstructor?: boolean;
+    testExamParticipationErrorKey?: string;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+    protected readonly participationGenerationStatus = toSignal(this.generateParticipationStatus, { initialValue: 'success' as GenerateParticipationStatus });
 
     constructor() {
         // show only one synchronization error every 5s
@@ -218,6 +222,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.studentExamId = parseInt(studentExamId, 10);
             }
             this.loadingExam = true;
+            this.testExamParticipationErrorKey = undefined;
             if (this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                     next: (studentExam) => {
@@ -235,8 +240,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
-                    error: () => {
-                        this.handleNoStudentExam();
+                    error: (error: HttpErrorResponse) => {
+                        this.handleNoStudentExam(error);
                     },
                 });
             } else {
@@ -244,8 +249,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
-                    error: () => {
-                        this.handleNoStudentExam();
+                    error: (error: HttpErrorResponse) => {
+                        this.handleNoStudentExam(error);
                     },
                 });
             }
@@ -291,6 +296,29 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     get canDeactivateWarning() {
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
+    }
+
+    protected get showStartView(): boolean {
+        return this.isVisible() && !this.isGracePeriodOver() && !this.studentExam?.submitted && !this.examStartConfirmed;
+    }
+
+    protected get showParticipationView(): boolean {
+        return this.isVisible() && this.isActive() && !this.isOver() && this.examStartConfirmed;
+    }
+
+    protected get showEndView(): boolean {
+        return !!this.studentExam && !this.studentExam.submitted && ((this.isOver() && this.examStartConfirmed) || this.isGracePeriodOver());
+    }
+
+    protected get showSubmissionSuccess(): boolean {
+        return !!this.studentExam?.submitted && !this.showExamSummary && !this.loadingExam;
+    }
+
+    protected get connectionStatusTranslationKey(): string {
+        if (!this.connected) {
+            return 'artemisApp.examParticipation.disconnected';
+        }
+        return this.isProgrammingExercise() ? 'artemisApp.examParticipation.ideConnected' : 'artemisApp.examParticipation.connected';
     }
 
     get activePageIndex(): number {
@@ -557,6 +585,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 
+    get studentFailedToSubmitTranslationKey(): string {
+        if (isTestExam(this.exam)) {
+            return 'artemisApp.examParticipation.testExamAttemptUsed';
+        }
+        return 'artemisApp.studentExam.submissionNotInTime';
+    }
+
+    get testExamParticipationMessageKey(): string {
+        return this.testExamParticipationMessageService.getMessage(this.exam, this.testExamParticipationErrorKey).translationKey;
+    }
+
+    get testExamParticipationTranslateValues(): { date?: string } {
+        return this.testExamParticipationMessageService.getMessage(this.exam, this.testExamParticipationErrorKey).translateValues;
+    }
+
     /**
      * check if exam is over
      */
@@ -569,14 +612,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }
-        return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
+        return !!this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
     }
 
     /**
      * check if the grace period has already passed
      */
-    isGracePeriodOver() {
-        return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
+    isGracePeriodOver(): boolean {
+        return !!this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
     }
 
     /**
@@ -589,7 +632,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!this.exam) {
             return false;
         }
-        return this.exam.visibleDate ? this.exam.visibleDate.isBefore(this.serverDateService.now()) : false;
+        return this.exam.visibleDate ? dayjs(this.exam.visibleDate).isBefore(this.serverDateService.now()) : false;
     }
 
     /**
@@ -602,7 +645,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!this.exam) {
             return false;
         }
-        return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
+        return this.exam.startDate ? dayjs(this.exam.startDate).isBefore(this.serverDateService.now()) : false;
     }
 
     checkVerticalOverflow(): boolean {
@@ -663,18 +706,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Handles the case when there is no student exam. Here we have to check if the user is at least tutor to show the redirect to the exam management page.
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
-    handleNoStudentExam() {
-        const course = this.courseStorageService.getCourse(this.courseId);
+    async handleNoStudentExam(error?: HttpErrorResponse) {
+        this.testExamParticipationErrorKey = error?.error?.errorKey ?? 'noStudentExam';
+        let course = this.courseStorageService.getCourse(this.courseId);
         if (!course) {
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
-                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
-            });
-        } else {
-            this.isAtLeastTutor = course.isAtLeastTutor;
-            this.isAtLeastInstructor = course.isAtLeastInstructor;
+            course = (await firstValueFrom(this.courseService.find(this.courseId))).body ?? undefined;
         }
+        this.isAtLeastTutor = course?.isAtLeastTutor;
+        this.isAtLeastInstructor = course?.isAtLeastInstructor;
+        this.setExamFromCourse(course);
         this.loadingExam = false;
+    }
+
+    private setExamFromCourse(course: Course | undefined): void {
+        if (this.examId) {
+            const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId);
+            if (exam) {
+                this.exam = exam;
+                this.testExam = this.testExam || isTestExam(this.exam);
+            }
+        }
     }
 
     /**
@@ -838,6 +889,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 return of(undefined);
             }),
         );
+    }
+
+    protected retryCreateParticipationForActiveExercise(): void {
+        const activeExercise = this.activeExamPage.exercise;
+        if (activeExercise) {
+            this.createParticipationForExercise(activeExercise).subscribe();
+        }
     }
 
     /**
