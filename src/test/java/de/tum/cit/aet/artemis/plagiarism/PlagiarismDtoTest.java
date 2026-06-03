@@ -1,10 +1,13 @@
-package de.tum.cit.aet.artemis.plagiarism.dto;
+package de.tum.cit.aet.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDetailsDTO;
 
 class PlagiarismDtoTest {
 
