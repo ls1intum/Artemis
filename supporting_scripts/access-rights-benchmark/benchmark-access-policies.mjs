@@ -34,7 +34,7 @@
  *                              Defaults --server-log to "server.log" if not explicitly set.
  *                              For SQL execution timing, also enable in application-local.yml:
  *                                spring.jpa.properties.hibernate.generate_statistics: true
- *                                logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO
+ *                                logging.level.org.hibernate.session.metrics: DEBUG
  *   --server-log=<path>        Path to the server log file (default: server.log with --sql-analysis).
  *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
  *   --output=<path>            Write results to a file (append mode) for later comparison
@@ -86,7 +86,7 @@ Options:
                                spring.jpa.show-sql: true
                                spring.jpa.properties.hibernate.format_sql: true
                                spring.jpa.properties.hibernate.generate_statistics: true
-                               logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO
+                               logging.level.org.hibernate.session.metrics: DEBUG
   --server-log=<path>        Path to server log file (default: server.log with --sql-analysis)
   --output=<path>            Append results to file for A/B comparison
   --report=<path>            Write a formatted Markdown report of the results
@@ -482,7 +482,7 @@ function getLogFileSize(logPath) {
         console.error('        name: server.log');
         console.error('      level:');
         console.error('        org.hibernate.SQL: DEBUG');
-        console.error('        org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+        console.error('        org.hibernate.session.metrics: DEBUG');
         console.error('');
         console.error('  Note: show-sql uses System.out (not captured by logging.file.name).');
         console.error('  Option B requires org.hibernate.SQL: DEBUG instead of / in addition to show-sql.');
@@ -636,25 +636,62 @@ function extractRawSqlStatements(logSnippet) {
  * Parse Hibernate Session Metrics from a log snippet.
  * Requires hibernate.generate_statistics=true to be present in the log.
  * Returns null if no metrics block is found.
+ *
+ * Supports two formats:
+ *
+ * Legacy format (older Hibernate, show-sql style):
+ *   Session Metrics {
+ *       12345 nanoseconds spent preparing 5 JDBC statements;
+ *       ...
+ *   }
+ *
+ * Modern format (Hibernate 7+, logging framework via org.hibernate.session.metrics):
+ *   Logging session metrics:
+ *       12345 ns acquiring 1 JDBC connections
+ *       67890 ns releasing 1 JDBC connections
+ *       11111 ns preparing 5 JDBC statements
+ *       22222 ns executing 5 JDBC statements
+ *       ...
  */
 function parseSessionMetrics(logSnippet) {
-    const metricsMatch = logSnippet.match(/Session Metrics \{([\s\S]*?)\}/);
-    if (!metricsMatch) return null;
+    // Try legacy format first: "Session Metrics { ... }"
+    const legacyMatch = logSnippet.match(/Session Metrics \{([\s\S]*?)\}/);
+    if (legacyMatch) {
+        const block = legacyMatch[1];
+        const extract = (pattern) => {
+            const m = block.match(pattern);
+            return m ? { ns: parseInt(m[1], 10), count: parseInt(m[2], 10) } : null;
+        };
+        return {
+            acquiring: extract(/(\d+) nanoseconds spent acquiring (\d+) JDBC connections/),
+            releasing: extract(/(\d+) nanoseconds spent releasing (\d+) JDBC connections/),
+            preparing: extract(/(\d+) nanoseconds spent preparing (\d+) JDBC statements/),
+            executing: extract(/(\d+) nanoseconds spent executing (\d+) JDBC statements/),
+            batches: extract(/(\d+) nanoseconds spent executing (\d+) JDBC batches/),
+            flushes: extract(/(\d+) nanoseconds spent executing (\d+) flushes/),
+        };
+    }
 
-    const metricsBlock = metricsMatch[1];
-    const extract = (pattern) => {
-        const m = metricsBlock.match(pattern);
-        return m ? { ns: parseInt(m[1], 10), count: parseInt(m[2], 10) } : null;
-    };
+    // Modern format (Hibernate 7+): "Logging session metrics:\n\t<N> ns <verb> <count> JDBC ..."
+    // The block may be preceded by a logging-framework timestamp line.
+    const modernMatch = logSnippet.match(/Logging session metrics:\s*\n([\s\S]*?)(?:\n\S|\n*$)/);
+    if (modernMatch) {
+        const block = modernMatch[1];
+        const extract = (pattern) => {
+            const m = block.match(pattern);
+            return m ? { ns: parseInt(m[1], 10), count: parseInt(m[2], 10) } : null;
+        };
+        return {
+            acquiring: extract(/(\d+) ns acquiring (\d+) JDBC connections/),
+            releasing: extract(/(\d+) ns releasing (\d+) JDBC connections/),
+            preparing: extract(/(\d+) ns preparing (\d+) JDBC statements/),
+            executing: extract(/(\d+) ns executing (\d+) JDBC statements/),
+            batches: extract(/(\d+) ns executing (\d+) JDBC batches/),
+            flushes: extract(/(\d+) ns executing (\d+) flushes/),
+        };
+    }
 
-    return {
-        acquiring: extract(/(\d+) nanoseconds spent acquiring (\d+) JDBC connections/),
-        releasing: extract(/(\d+) nanoseconds spent releasing (\d+) JDBC connections/),
-        preparing: extract(/(\d+) nanoseconds spent preparing (\d+) JDBC statements/),
-        executing: extract(/(\d+) nanoseconds spent executing (\d+) JDBC statements/),
-        batches: extract(/(\d+) nanoseconds spent executing (\d+) JDBC batches/),
-        flushes: extract(/(\d+) nanoseconds spent executing (\d+) flushes/),
-    };
+    return null;
 }
 
 function formatNsAsMs(ns) {
@@ -877,7 +914,7 @@ async function main() {
         console.error('        name: server.log');
         console.error('      level:');
         console.error('        org.hibernate.SQL: DEBUG');
-        console.error('        org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+        console.error('        org.hibernate.session.metrics: DEBUG');
         console.error('');
         console.error('  Note: show-sql uses System.out (not captured by logging.file.name).');
         console.error('  Option B requires org.hibernate.SQL: DEBUG instead of / in addition to show-sql.');
@@ -1061,7 +1098,7 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('  spring.jpa.show-sql: true');
     console.log('  spring.jpa.properties.hibernate.format_sql: true          (for readable SQL)');
     console.log('  spring.jpa.properties.hibernate.generate_statistics: true (for SQL timing)');
-    console.log('  logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+    console.log('  logging.level.org.hibernate.session.metrics: DEBUG');
     console.log('    (required if logback-spring.xml sets org.hibernate to WARN)');
     console.log();
 
@@ -1221,10 +1258,10 @@ function printSqlAnalysis(label, result) {
         console.log('  NOTE: No Hibernate Session Metrics found. For SQL execution timing:');
         console.log('    1. Enable in application-local.yml:');
         console.log('       spring.jpa.properties.hibernate.generate_statistics: true');
-        console.log('    2. The StatisticalLoggingSessionEventListener logger must be at INFO or lower.');
+        console.log('    2. The session metrics logger must be at DEBUG level.');
         console.log('       If logback-spring.xml sets org.hibernate to WARN, metrics are suppressed.');
         console.log('       Add to application-local.yml:');
-        console.log('         logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+        console.log('         logging.level.org.hibernate.session.metrics: DEBUG');
     }
 }
 
