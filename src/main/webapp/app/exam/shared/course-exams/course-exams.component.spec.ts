@@ -103,10 +103,10 @@ describe('CourseExamsComponent', () => {
         exam: visibleTestExam2,
     } as StudentExam;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
                 MockModule(FormsModule),
@@ -125,6 +125,9 @@ describe('CourseExamsComponent', () => {
                     useValue: {
                         parent: {
                             params: of({ courseId: '1' }),
+                            snapshot: {
+                                params: { courseId: '1' },
+                            },
                         },
                         params: of({ examId: visibleRealExam1.id }),
                     },
@@ -138,26 +141,24 @@ describe('CourseExamsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(CourseExamsComponent);
-                component = componentFixture.componentInstance;
+        }).compileComponents();
 
-                courseStorageService = TestBed.inject(CourseStorageService);
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                courseOverviewService = TestBed.inject(CourseOverviewService);
-                (examParticipationService as any).examIsStarted$ = of(false);
-                examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
-                examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
-                vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
-                    exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
-                });
-                vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
-                    of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
-                );
-                vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
-            });
+        courseStorageService = TestBed.inject(CourseStorageService);
+        examParticipationService = TestBed.inject(ExamParticipationService);
+        courseOverviewService = TestBed.inject(CourseOverviewService);
+        (examParticipationService as any).examIsStarted$ = of(false);
+        examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
+        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
+        });
+        vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
+            of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
+        );
+        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
+
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
     });
 
     afterEach(() => {
@@ -177,71 +178,42 @@ describe('CourseExamsComponent', () => {
     it('should correctly return StudentExams by id in reverse order', () => {
         componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];
-        expect(component.getStudentExamForExamIdOrderedByIdReverse(11)).toEqual(resultArray);
+        expect(
+            component.getStudentExamForExamIdOrderedByIdReverse([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted], 11),
+        ).toEqual(resultArray);
     });
 
-    it('should correctly initialize the expandAttemptsMap', () => {
-        const expectedMap = new Map<number, boolean>();
-        expectedMap.set(visibleTestExam1.id!, false);
-        expectedMap.set(visibleTestExam2.id!, false);
-
-        // Map gets initialized in OnInit-Method
-        component.ngOnInit();
-
-        expect(component.expandAttemptsMap).toEqual(expectedMap);
-    });
-
-    it('should correctly switch boolean value in expandAttemptsMap', () => {
-        const expectedMap = new Map<number, boolean>();
-        expectedMap.set(visibleTestExam1.id!, true);
-        expectedMap.set(visibleTestExam2.id!, false);
-
-        // Map gets initialized in OnInit-Method
-        component.ngOnInit();
-        component.changeExpandAttemptList(visibleTestExam1.id!);
-
-        expect(component.expandAttemptsMap).toEqual(expectedMap);
-    });
-
-    it('should correctly update new exams', async () => {
-        const newExam = {
+    it('should correctly update new exams', () => {
+        const newExamSidebarData = {
             id: 42,
             visibleDate: dayjs().subtract(1, 'minutes'),
         } as Exam;
-        const course = new Course();
-        course.exams = [visibleRealExam1, visibleRealExam2];
-        component.course.set(course);
 
-        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExam]));
-        examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExamSidebarData]));
         examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
-        component.ngOnInit();
-        // Allow promise from lastValueFrom in updateExams() to resolve
-        await Promise.resolve();
-        await Promise.resolve();
-        expect(component.studentExamsForRealExams.has(newExam.id!)).toBe(true);
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+
+        expect(component['studentExamByRealExamId']().has(newExamSidebarData.id!)).toBe(true);
     });
 
     it('should correctly return visible real exams ordered according to startedDate', () => {
-        component.ngOnInit();
         const resultArray = [visibleRealExam2, visibleRealExam1];
-        expect(component.realExamsOfCourse).toEqual(resultArray);
+        expect(component['realExamsOfCourse']()).toEqual(resultArray);
     });
 
     it('should correctly return visible test exams ordered according to startedDate', () => {
-        component.ngOnInit();
         const resultArray = [visibleTestExam2, visibleTestExam1];
-        expect(component.testExamsOfCourse).toEqual(resultArray);
+        expect(component['testExamsOfCourse']()).toEqual(resultArray);
     });
 
     it('should display/hide sidebar if exam is started/over', () => {
         (examParticipationService as any).examIsStarted$ = of(true);
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+
         componentFixture.detectChanges();
         expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(true);
-
-        component.isExamStarted.set(false);
-        componentFixture.changeDetectorRef.detectChanges();
-        expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBe(false);
     });
 
     it('should group all exams as test when all exams are test exams', () => {
@@ -252,7 +224,7 @@ describe('CourseExamsComponent', () => {
         ];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest([], testExams);
+        const groupedExams = component.groupExamsByRealOrTest([], testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(0);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -272,7 +244,7 @@ describe('CourseExamsComponent', () => {
         const realExams: Exam[] = [{ id: 1, title: 'Real Exam 1' } as Exam, { id: 2, title: 'Real Exam 2' } as Exam, { id: 3, title: 'Real Exam 3' } as Exam];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
-        const groupedExams = component.groupExamsByRealOrTest(realExams, testExams);
+        const groupedExams = component.groupExamsByRealOrTest(realExams, testExams, new Map());
 
         expect(groupedExams['real'].entityData).toHaveLength(3);
         expect(groupedExams['test'].entityData).toHaveLength(3);
@@ -309,12 +281,10 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should not update sidebarData if there is no exam', () => {
-        const course = new Course();
-        course.exams = undefined;
-        component.course.set(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(new Course());
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
 
-        const updateSidebarDataStub = vi.spyOn(component, 'updateSidebarData');
-        component.prepareSidebarData();
-        expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
+        expect(component.computeSidebarData()).toBeUndefined();
     });
 });

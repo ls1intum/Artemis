@@ -49,7 +49,7 @@ export class CourseExamsComponent {
     private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
 
-    private readonly parentParams = toSignal(this.route.parent?.params ?? of<Params>({}), { initialValue: this.route.parent?.snapshot.params ?? {} });
+    private readonly parentParams = toSignal(this.route.parent?.params ?? of<Params>({}), { initialValue: this.route.parent?.snapshot?.params ?? {} });
     readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
