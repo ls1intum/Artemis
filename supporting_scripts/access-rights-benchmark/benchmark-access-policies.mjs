@@ -39,6 +39,8 @@
  *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
  *   --output=<path>            Write results to a file (append mode) for later comparison
  *   --report=<path>            Write a formatted Markdown report of the benchmark results
+ *   --outline                  Outline-compatible Markdown: uses a single <details> block
+ *                              for all raw SQL queries instead of one per query
  *   --label=<name>             Label for this run (e.g. "develop" or "dsl-branch")
  *   --help                     Show help
  */
@@ -47,6 +49,7 @@
 // Imports – reuse the HTTP client and auth helpers from the setup-course lib
 // ---------------------------------------------------------------------------
 import { readFileSync, appendFileSync, writeFileSync, existsSync } from 'node:fs';
+import { basename, dirname, extname, join } from 'node:path';
 import { HttpClient } from '../course-scripts/setup-course/lib/http-client.mjs';
 import { authenticate } from '../course-scripts/setup-course/lib/auth.mjs';
 
@@ -90,6 +93,8 @@ Options:
   --server-log=<path>        Path to server log file (default: server.log with --sql-analysis)
   --output=<path>            Append results to file for A/B comparison
   --report=<path>            Write a formatted Markdown report of the results
+  --outline                  Outline-compatible Markdown: raw SQL queries are rendered
+                             as plain code blocks instead of HTML <details> tags
   --label=<name>             Label for this run (e.g. "develop", "dsl-branch")
   --help                     Show this help
 
@@ -143,6 +148,7 @@ const config = {
     serverLog: args['server-log'] || (args['sql-analysis'] === 'true' ? 'server.log' : null),
     outputFile: args['output'] || null,
     reportFile: args['report'] || null,
+    outline: args['outline'] === 'true',
     label: args['label'] || new Date().toISOString(),
 };
 
@@ -767,9 +773,9 @@ function appendSqlAnalysisSection(lines, sqlResult) {
         }
     }
 
-    // Raw SQL queries
+    // Raw SQL queries (outline mode defers these to a separate file)
     const rawQueries = stats.rawQueries;
-    if (rawQueries && rawQueries.length > 0) {
+    if (rawQueries && rawQueries.length > 0 && !config.outline) {
         lines.push('');
         lines.push(`#### Raw SQL Queries (${rawQueries.length})`);
         lines.push('');
@@ -876,6 +882,53 @@ function writeMarkdownReport({ mode, snapshot, allCoursesStats, singleCourseStat
             lines.push(`| Std Dev | ${formatMs(singleCourseStats.stddev)} |`);
             lines.push('');
         }
+    }
+
+    // In outline mode, write raw SQL queries to a separate file and link from the main report
+    if (config.outline && mode === 'sql-analysis') {
+        const ext = extname(config.reportFile);
+        const base = basename(config.reportFile, ext);
+        const dir = dirname(config.reportFile);
+        const queriesFile = join(dir, `${base}-queries${ext}`);
+        const queriesFileName = basename(queriesFile);
+
+        const queryLines = [];
+        queryLines.push(`# Raw SQL Queries`);
+        queryLines.push('');
+        queryLines.push(`> Companion to [${basename(config.reportFile)}](./${basename(config.reportFile)})`);
+        queryLines.push('');
+
+        if (allCoursesSql?.sqlStats?.rawQueries?.length > 0) {
+            queryLines.push(`## GET /api/core/courses/for-dashboard`);
+            queryLines.push('');
+            for (let i = 0; i < allCoursesSql.sqlStats.rawQueries.length; i++) {
+                const q = allCoursesSql.sqlStats.rawQueries[i];
+                queryLines.push(`### ${i + 1}. ${q.type}`);
+                queryLines.push('```sql');
+                queryLines.push(q.sql);
+                queryLines.push('```');
+                queryLines.push('');
+            }
+        }
+
+        if (singleCourseSql?.sqlStats?.rawQueries?.length > 0 && courseId) {
+            queryLines.push(`## GET /api/core/courses/${courseId}/for-dashboard`);
+            queryLines.push('');
+            for (let i = 0; i < singleCourseSql.sqlStats.rawQueries.length; i++) {
+                const q = singleCourseSql.sqlStats.rawQueries[i];
+                queryLines.push(`### ${i + 1}. ${q.type}`);
+                queryLines.push('```sql');
+                queryLines.push(q.sql);
+                queryLines.push('```');
+                queryLines.push('');
+            }
+        }
+
+        writeFileSync(queriesFile, queryLines.join('\n') + '\n', 'utf-8');
+        lines.push('');
+        lines.push(`> Raw SQL queries: [${queriesFileName}](./${queriesFileName})`);
+        lines.push('');
+        console.log(`Raw SQL queries written to: ${queriesFile}`);
     }
 
     writeFileSync(config.reportFile, lines.join('\n') + '\n', 'utf-8');
