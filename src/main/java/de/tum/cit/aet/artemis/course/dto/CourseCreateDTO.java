@@ -118,8 +118,6 @@ public record CourseCreateDTO(
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
         course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
-        course.setAthenaFormativeEnabled(athenaFormativeEnabled);
-        course.setAthenaGradingEnabled(athenaGradingEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
