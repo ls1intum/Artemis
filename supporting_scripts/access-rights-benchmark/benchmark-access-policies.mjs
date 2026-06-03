@@ -541,16 +541,16 @@ function countSqlQueries(logSnippet) {
         }
 
         let matched = false;
-        if (sqlStart.startsWith('select ') || sqlStart.startsWith('select\n')) {
+        if (/^select\b/.test(sqlStart)) {
             selects++;
             matched = true;
-        } else if (sqlStart.startsWith('insert ')) {
+        } else if (/^insert\b/.test(sqlStart)) {
             inserts++;
             matched = true;
-        } else if (sqlStart.startsWith('update ')) {
+        } else if (/^update\b/.test(sqlStart)) {
             updates++;
             matched = true;
-        } else if (sqlStart.startsWith('delete ')) {
+        } else if (/^delete\b/.test(sqlStart)) {
             deletes++;
             matched = true;
         }
