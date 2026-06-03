@@ -1252,10 +1252,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * changes: every UI tick (via {@link updateDisplayedTimes} → {@link syncSubmitState}) and when results are shown.
      */
     private updateLiveHeaderInfo(): void {
-        if (!this.quizExercise) {
+        if (!this.quizExercise || (this.mode !== 'live' && this.mode !== 'practice')) {
             this._liveHeaderInfo.set(undefined);
             return;
         }
+
         const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
         if (!this.showingResult) {
             if (!this.waitingForQuizStart && !this.quizExercise.quizEnded && !this.submission.submitted && this.remainingTimeSeconds >= 0) {
