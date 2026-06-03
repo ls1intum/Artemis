@@ -18,6 +18,7 @@ import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/shared/types/sidebar';
+import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -139,13 +140,10 @@ export class ExamParticipationService {
             }),
         );
     }
-    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
-        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
-        return this.httpClient.get<Exam[]>(url).pipe(
-            map((exams: Exam[]) => {
-                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
-            }),
-        );
+
+    public getRealExamWorkingTimes(courseId: number): Observable<ExamWorkingTimeDTO[]> {
+        const url = `api/exam/courses/${courseId}/real-exam-working-times`;
+        return this.httpClient.get<ExamWorkingTimeDTO[]>(url);
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {

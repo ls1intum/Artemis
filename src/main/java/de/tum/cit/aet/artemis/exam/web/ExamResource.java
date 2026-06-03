@@ -94,10 +94,10 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -1194,19 +1194,19 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
-     * For the content see {@link ExamSidebarDataDTO}
+     * GET /courses/{courseId}/real-exam-working-times : Get individual working times for real exams in a course.
+     * For the content see {@link ExamWorkingTimeDTO}
      *
      * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and with the found sidebar data as body
+     * @return the ResponseEntity with status 200 (OK) and with the found working times as body
      */
-    @GetMapping("courses/{courseId}/real-exams-sidebar-data")
+    @GetMapping("courses/{courseId}/real-exam-working-times")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
-        log.debug("REST request to get sidebar data for exams in course {}", courseId);
+    public ResponseEntity<Set<ExamWorkingTimeDTO>> getWorkingTimesForRealExams(@PathVariable long courseId) {
+        log.debug("REST request to get individual working times for real exams in course {}", courseId);
         User user = userRepository.getUser();
-        Set<ExamSidebarDataDTO> sidebarData = examRepository.findSidebarDataForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
-        return ResponseEntity.ok(sidebarData);
+        Set<ExamWorkingTimeDTO> workingTimes = examRepository.findWorkingTimesForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
+        return ResponseEntity.ok(workingTimes);
     }
 
     /**

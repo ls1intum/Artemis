@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { combineLatest, filter, map, of } from 'rxjs';
+import { combineLatest, filter, of } from 'rxjs';
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -61,7 +61,7 @@ export class CourseExamsComponent {
     );
 
     protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isTestExam(exam)));
-    protected readonly studentExamByRealExamId = signal<Map<number, StudentExam>>(new Map());
+    protected readonly realExamWorkingTimeByExamId = signal<Map<number, number>>(new Map());
 
     protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
     private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
@@ -116,14 +116,11 @@ export class CourseExamsComponent {
                 });
             });
 
-        // set the student exams for the real exams
+        // load real exam working times for the current student.
         this.examParticipationService
-            .getRealExamSidebarData(this.courseId())
-            .pipe(
-                map((realExamSidebarData) => new Map(realExamSidebarData.map((studentExam) => [studentExam.id!, studentExam as StudentExam]))),
-                takeUntilDestroyed(),
-            )
-            .subscribe((studentExamByRealExamId) => this.studentExamByRealExamId.set(studentExamByRealExamId));
+            .getRealExamWorkingTimes(this.courseId())
+            .pipe(takeUntilDestroyed())
+            .subscribe((workingTimes) => this.realExamWorkingTimeByExamId.set(new Map(workingTimes.map((workingTime) => [workingTime.examId, workingTime.workingTime]))));
     }
 
     navigateToExam() {
@@ -156,7 +153,7 @@ export class CourseExamsComponent {
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    protected getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
+    getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
         if (!studentExams) {
             return [];
         }
@@ -181,14 +178,17 @@ export class CourseExamsComponent {
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
-        const realStudentExamById = this.studentExamByRealExamId();
 
+        const realExamWorkingTimeByExamId = this.realExamWorkingTimeByExamId();
         for (const realExam of realExams) {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, realStudentExamById.get(realExam.id!));
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, { workingTime: realExamWorkingTimeByExamId.get(realExam.id!) });
             groupedExamGroups['real'].entityData.push(examCardItem);
         }
+
         testExams.forEach((testExam) => {
-            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, undefined, this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap));
+            const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, {
+                numberOfAttempts: this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap),
+            });
             groupedExamGroups['test'].entityData.push(examCardItem);
             const testExamAttempts = testExamAttemptsMap.get(testExam.id!);
             if (testExamAttempts) {
@@ -199,6 +199,7 @@ export class CourseExamsComponent {
                 });
             }
         });
+
         return groupedExamGroups;
     }
 

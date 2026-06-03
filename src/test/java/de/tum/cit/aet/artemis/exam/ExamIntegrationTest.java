@@ -70,9 +70,9 @@ import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -2403,18 +2403,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamSidebarDataForRealExams() throws Exception {
+    void testGetExamWorkingTimesForRealExams() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         Exam testExam = examUtilService.addTestExam(course);
         StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
         examUtilService.addStudentExamWithUser(testExam, student1);
-        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
-        assertThat(examSidebarData).hasSize(1);
-        ExamSidebarDataDTO element = examSidebarData.iterator().next();
-        assertThat(element.id()).isEqualTo(exam.getId());
-        assertThat(element.title()).isEqualTo(exam.getTitle());
+        Set<ExamWorkingTimeDTO> examWorkingTimes = request.getSet("/api/exam/courses/" + course.getId() + "/real-exam-working-times", HttpStatus.OK, ExamWorkingTimeDTO.class);
+        assertThat(examWorkingTimes).hasSize(1);
+        ExamWorkingTimeDTO element = examWorkingTimes.iterator().next();
+        assertThat(element.examId()).isEqualTo(exam.getId());
         assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
-        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
     }
 }

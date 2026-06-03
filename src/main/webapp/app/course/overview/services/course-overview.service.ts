@@ -491,20 +491,20 @@ export class CourseOverviewService {
         };
     }
 
-    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, options?: { studentExam?: StudentExam; numberOfAttempts?: number; workingTime?: number }): SidebarCardElement {
         return {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
-            workingTime: exam.workingTime,
-            studentExam: studentExam,
+            workingTime: options?.workingTime ?? exam.workingTime,
+            studentExam: options?.studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
             isAttempt: false,
             testExam: isTestExam(exam),
-            attempts: numberOfAttempts ?? 0,
+            attempts: options?.numberOfAttempts ?? 0,
         };
     }
 

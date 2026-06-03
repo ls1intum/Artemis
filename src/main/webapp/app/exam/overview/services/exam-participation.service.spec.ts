@@ -276,11 +276,12 @@ describe('ExamParticipationService', () => {
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch sidebar data successfully', async () => {
-        const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam working times successfully', async () => {
+        const returnedFromService = [{ examId: 1, workingTime: 3600 }];
+        service.getRealExamWorkingTimes(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/exam/courses/1/real-exam-working-times');
         req.flush(returnedFromService);
     });
 

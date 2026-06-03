@@ -28,6 +28,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
 
 describe('CourseExamsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -155,7 +156,7 @@ describe('CourseExamsComponent', () => {
         vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
             of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
         );
-        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([]));
+        vi.spyOn(examParticipationService, 'getRealExamWorkingTimes').mockReturnValue(of([]));
 
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
@@ -183,18 +184,22 @@ describe('CourseExamsComponent', () => {
         ).toEqual(resultArray);
     });
 
-    it('should correctly update new exams', () => {
-        const newExamSidebarData = {
-            id: 42,
-            visibleDate: dayjs().subtract(1, 'minutes'),
-        } as Exam;
+    it('should correctly update real exam working times', () => {
+        const existingExamWorkingTimes: ExamWorkingTimeDTO[] = [
+            { examId: visibleRealExam1.id!, workingTime: 3600 },
+            { examId: visibleRealExam2.id!, workingTime: 3600 },
+        ];
+        const newExamWorkingTime: ExamWorkingTimeDTO = {
+            examId: 42,
+            workingTime: 3600,
+        };
 
-        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockReturnValue(of([visibleRealExam1, visibleRealExam2, newExamSidebarData]));
+        vi.spyOn(examParticipationService, 'getRealExamWorkingTimes').mockReturnValue(of([...existingExamWorkingTimes, newExamWorkingTime]));
         examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
 
-        expect(component['studentExamByRealExamId']().has(newExamSidebarData.id!)).toBe(true);
+        expect(component['realExamWorkingTimeByExamId']().has(newExamWorkingTime.examId)).toBe(true);
     });
 
     it('should correctly return visible real exams ordered according to startedDate', () => {
