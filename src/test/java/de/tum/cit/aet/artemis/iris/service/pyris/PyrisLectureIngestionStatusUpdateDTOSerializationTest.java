@@ -20,9 +20,9 @@ class PyrisLectureIngestionStatusUpdateDTOSerializationTest {
     }
 
     @Test
-    void deserializesSlidePageNumbers() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"slidePageNumbers\":[1,2,-1]}";
+    void deserializesDisplayPageNumbers() throws Exception {
+        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":42,\"displayPageNumbers\":[1,2,-1]}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.slidePageNumbers()).containsExactly(1, 2, -1);
+        assertThat(dto.displayPageNumbers()).containsExactly(1, 2, -1);
     }
 }

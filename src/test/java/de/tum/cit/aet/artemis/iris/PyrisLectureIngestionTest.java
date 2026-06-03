@@ -390,6 +390,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
         Attachment updatedAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
-        assertThat(updatedAttachment.getSlidePageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
+        assertThat(updatedAttachment.getDisplayPageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
     }
 }

@@ -69,20 +69,20 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     }
 
     @Test
-    void slidePageNumbersAreReadOnlyFromDedicatedField() {
+    void displayPageNumbersAreReadOnlyFromDedicatedField() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
         var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"slidePageNumbers\":[9,9,9]}", List.of(doneStage), 7L, null, List.of(1, 2, -1));
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"displayPageNumbers\":[9,9,9]}", List.of(doneStage), 7L, null, List.of(1, 2, -1));
 
         service.handleStatusUpdate(job, statusUpdate);
 
         verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of(1, 2, -1)));
-        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("{\"slidePageNumbers\":[9,9,9]}"));
+        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("{\"displayPageNumbers\":[9,9,9]}"));
     }
 
     @Test
-    void missingSlidePageNumbersRemainNullableOnSuccess() {
+    void missingDisplayPageNumbersRemainNullableOnSuccess() {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
         var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);

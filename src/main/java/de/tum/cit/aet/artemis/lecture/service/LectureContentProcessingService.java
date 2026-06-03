@@ -318,9 +318,9 @@ public class LectureContentProcessingService {
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit) {
         Attachment attachment = unit.getAttachment();
-        if (attachment != null && attachment.getSlidePageNumbers() != null) {
-            log.info("Clearing existing slide page numbers for unit {} (content changed)", unit.getId());
-            attachment.setSlidePageNumbers(null);
+        if (attachment != null && attachment.getDisplayPageNumbers() != null) {
+            log.info("Clearing existing display page numbers for unit {} (content changed)", unit.getId());
+            attachment.setDisplayPageNumbers(null);
             attachmentRepository.save(attachment);
         }
 

@@ -223,14 +223,14 @@ public class ProcessingStateCallbackService {
      * Validates the job token to reject stale callbacks from old jobs.
      * After completion, dispatches the next pending job to fill the freed slot.
      *
-     * @param lectureUnitId    the ID of the lecture unit
-     * @param jobToken         the job token from the callback
-     * @param success          whether processing succeeded
-     * @param errorCode        machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
-     * @param slidePageNumbers list of page numbers indexed by slide number (0-based: index 0 = slide 1);
-     *                             {@code null} if not applicable or unavailable
+     * @param lectureUnitId      the ID of the lecture unit
+     * @param jobToken           the job token from the callback
+     * @param success            whether processing succeeded
+     * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based: index 0 = slide 1);
+     *                               {@code null} if not applicable or unavailable
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> slidePageNumbers) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -256,7 +256,7 @@ public class ProcessingStateCallbackService {
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
-            saveSlidePageNumbers(state, slidePageNumbers);
+            saveDisplayPageNumbers(state, displayPageNumbers);
 
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
@@ -628,13 +628,13 @@ public class ProcessingStateCallbackService {
         return activeStates.size();
     }
 
-    // -------------------- Slide Page Number Mapping --------------------
+    // -------------------- Display Page Number Mapping --------------------
 
     /**
-     * Saves the slide page numbers received from PyRIS to the attachment.
-     * The list maps slide numbers to their corresponding page numbers in the PDF.
+     * Saves the display page numbers received from PyRIS to the attachment.
+     * The list maps slide numbers to the displayed page numbers detected in the PDF.
      */
-    private void saveSlidePageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> slidePageNumbers) {
+    private void saveDisplayPageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> displayPageNumbers) {
         if (!(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }
@@ -642,7 +642,7 @@ public class ProcessingStateCallbackService {
         if (attachment == null) {
             return;
         }
-        attachment.setSlidePageNumbers(slidePageNumbers);
+        attachment.setDisplayPageNumbers(displayPageNumbers);
         attachmentRepository.save(attachment);
     }
 

@@ -408,7 +408,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldSaveSlidePageNumbersOnSuccess() {
+        void shouldSaveDisplayPageNumbersOnSuccess() {
             Attachment attachment = new Attachment();
             testUnit.setAttachment(attachment);
             testState.setPhase(ProcessingPhase.INGESTING);
@@ -421,14 +421,14 @@ class LectureContentProcessingServiceTest {
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getSlidePageNumbers()).containsExactly(1, 2, -1);
+            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
             verify(attachmentRepository).save(attachment);
         }
 
         @Test
-        void shouldClearSlidePageNumbersWhenNullOnSuccess() {
+        void shouldClearDisplayPageNumbersWhenNullOnSuccess() {
             Attachment attachment = new Attachment();
-            attachment.setSlidePageNumbers(List.of(1, 2, -1));
+            attachment.setDisplayPageNumbers(List.of(1, 2, -1));
             testUnit.setAttachment(attachment);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
@@ -439,12 +439,12 @@ class LectureContentProcessingServiceTest {
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getSlidePageNumbers()).isNull();
+            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).isNull();
             verify(attachmentRepository).save(attachment);
         }
 
         @Test
-        void shouldNotSaveSlidePageNumbersWhenAttachmentIsNull() {
+        void shouldNotSaveDisplayPageNumbersWhenAttachmentIsNull() {
             testUnit.setAttachment(null);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
@@ -641,11 +641,11 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldClearSlidePageNumbersOnAttachmentChange() {
+        void shouldClearDisplayPageNumbersOnAttachmentChange() {
             Attachment attachment = new Attachment();
             attachment.setVersion(2);
             attachment.setLink("slides.pdf");
-            attachment.setSlidePageNumbers(List.of(1, 2, -1));
+            attachment.setDisplayPageNumbers(List.of(1, 2, -1));
             testUnit.setAttachment(attachment);
             testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
             testState.setAttachmentVersion(1);
@@ -657,7 +657,7 @@ class LectureContentProcessingServiceTest {
 
             service.triggerProcessing(testUnit);
 
-            assertThat(attachment.getSlidePageNumbers()).isNull();
+            assertThat(attachment.getDisplayPageNumbers()).isNull();
             verify(attachmentRepository).save(attachment);
         }
 

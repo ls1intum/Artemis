@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * <ul>
  * <li>Outbound webhook uses camelCase {@code videoSourceType}.</li>
  * <li>Inbound status update reads snake_case {@code error_code}.</li>
- * <li>Inbound ingestion status reads optional {@code slidePageNumbers} from its dedicated field.</li>
+ * <li>Inbound ingestion status reads optional {@code displayPageNumbers} from its dedicated field.</li>
  * <li>Inbound status update silently ignores camelCase {@code errorCode} (unknown field), matching Spring Boot's default mapper config.</li>
  * </ul>
  */
@@ -40,18 +40,18 @@ class WireFormatContractTest {
     }
 
     @Test
-    void inboundStatusUpdateReadsDedicatedSlidePageNumbersField() throws Exception {
-        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":7,\"slidePageNumbers\":[1,2,-1]}";
+    void inboundStatusUpdateReadsDedicatedDisplayPageNumbersField() throws Exception {
+        String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":7,\"displayPageNumbers\":[1,2,-1]}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
         assertThat(dto.result()).isEqualTo("done");
-        assertThat(dto.slidePageNumbers()).containsExactly(1, 2, -1);
+        assertThat(dto.displayPageNumbers()).containsExactly(1, 2, -1);
     }
 
     @Test
-    void inboundStatusUpdateKeepsMissingSlidePageNumbersNullable() throws Exception {
+    void inboundStatusUpdateKeepsMissingDisplayPageNumbersNullable() throws Exception {
         String json = "{\"result\":\"done\",\"stages\":[],\"jobId\":7}";
         var dto = mapper.readValue(json, PyrisLectureIngestionStatusUpdateDTO.class);
-        assertThat(dto.slidePageNumbers()).isNull();
+        assertThat(dto.displayPageNumbers()).isNull();
     }
 
     @Test
