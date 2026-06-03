@@ -31,8 +31,8 @@ jobs:
   # Guard against workflow_run queue stacking. Each Build retry fires a new
   # workflow_run event that queues another E2E run for the same SHA; built-in
   # concurrency cancel-in-progress does not reliably dedupe queued runs that
-  # sit waiting for the [self-hosted, e2e-test] pool. This job runs on
-  # ubuntu-latest (instant pickup) and uses styfle/cancel-workflow-action to
+  # sit waiting for the runner pool. This test branch routes the guard job to
+  # the ARC BuildKit runner and uses styfle/cancel-workflow-action to
   # cancel older same-SHA runs of this workflow, and self-cancels if a newer
   # run already exists. Cross-SHA cancellation is the built-in `concurrency`
   # block's responsibility (it works reliably when the next run starts
@@ -43,7 +43,7 @@ jobs:
     # E2E runs anyway, because all dependent jobs are if-gated on
     # conclusion == 'success'. No queue stacking comes from failed Builds.
     if: github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 2
     permissions:
       actions: write
@@ -64,7 +64,7 @@ jobs:
     name: Determine Relevant Tests
     needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     outputs:
       run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
       relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
@@ -103,7 +103,7 @@ jobs:
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.relevant_tests != ''
-    runs-on: [self-hosted, e2e-test]
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
@@ -295,7 +295,7 @@ jobs:
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
       (needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'skipped')
-    runs-on: [self-hosted, e2e-test]
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
     outputs:
@@ -496,7 +496,7 @@ jobs:
       needs.determine-tests.result == 'success' &&
       (needs.determine-tests.outputs.run_all_tests == 'true' ||
        (needs.determine-tests.outputs.relevant_tests == '' && needs.determine-tests.outputs.remaining_tests == ''))
-    runs-on: [self-hosted, e2e-test]
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
     outputs:
@@ -676,7 +676,7 @@ jobs:
     name: Run All E2E Tests (Non-PR)
     needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
-    runs-on: [self-hosted, e2e-test]
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
@@ -752,7 +752,7 @@ jobs:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
     if: always() && github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     steps:
 
       - name: Determine overall status

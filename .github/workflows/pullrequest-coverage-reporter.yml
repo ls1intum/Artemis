@@ -24,7 +24,7 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion != 'cancelled' &&
       github.event.workflow_run.conclusion != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 15
     permissions:
       pull-requests: write

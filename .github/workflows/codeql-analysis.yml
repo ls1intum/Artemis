@@ -30,7 +30,7 @@ env:
 jobs:
   analyse:
     name: Analyse
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
 
     steps:
     - name: Checkout repository

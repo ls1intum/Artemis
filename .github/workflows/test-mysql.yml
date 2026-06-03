@@ -19,7 +19,7 @@ env:
 jobs:
 
   server-tests-mysql:
-    runs-on: aet-large-ubuntu
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 80
 
     steps:

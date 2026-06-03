@@ -7,7 +7,7 @@ on:
 jobs:
   validate-ready-to-merge:
     if: github.event.label.name == 'ready to merge'
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     timeout-minutes: 5
     permissions:
       pull-requests: write
