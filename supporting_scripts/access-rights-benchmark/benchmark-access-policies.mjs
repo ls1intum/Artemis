@@ -31,10 +31,11 @@
  *   --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
  *   --sql-analysis             SQL query analysis mode: run each endpoint once, capture
  *                              server log, count SQL queries and extract timing per request.
- *                              Requires --server-log=<path> to the Artemis console log file.
+ *                              Defaults --server-log to "server.log" if not explicitly set.
  *                              For SQL execution timing, also enable in application-local.yml:
  *                                spring.jpa.properties.hibernate.generate_statistics: true
- *   --server-log=<path>        Path to the server log file (used with --sql-analysis).
+ *                                logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO
+ *   --server-log=<path>        Path to the server log file (default: server.log with --sql-analysis).
  *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
  *   --output=<path>            Write results to a file (append mode) for later comparison
  *   --report=<path>            Write a formatted Markdown report of the benchmark results
@@ -45,7 +46,7 @@
 // ---------------------------------------------------------------------------
 // Imports – reuse the HTTP client and auth helpers from the setup-course lib
 // ---------------------------------------------------------------------------
-import { readFileSync, appendFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, appendFileSync, writeFileSync, existsSync } from 'node:fs';
 import { HttpClient } from '../course-scripts/setup-course/lib/http-client.mjs';
 import { authenticate } from '../course-scripts/setup-course/lib/auth.mjs';
 
@@ -80,12 +81,13 @@ Options:
   --warmup=<n>               Warmup iterations (not measured) (default: 3)
   --setup-data               Create test data before benchmarking
   --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
-  --sql-analysis             SQL query analysis mode (requires --server-log).
+  --sql-analysis             SQL query analysis mode (defaults --server-log to "server.log").
                              Enable these in application-local.yml for full detail:
                                spring.jpa.show-sql: true
                                spring.jpa.properties.hibernate.format_sql: true
                                spring.jpa.properties.hibernate.generate_statistics: true
-  --server-log=<path>        Path to server log file for SQL counting
+                               logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO
+  --server-log=<path>        Path to server log file (default: server.log with --sql-analysis)
   --output=<path>            Append results to file for A/B comparison
   --report=<path>            Write a formatted Markdown report of the results
   --label=<name>             Label for this run (e.g. "develop", "dsl-branch")
@@ -110,10 +112,10 @@ Examples:
   # SQL query analysis (A/B comparison workflow):
   #   1. Start server:  ./gradlew bootRun 2>&1 | tee server.log
   #   2. On develop branch:
-  node benchmark-access-policies.mjs --sql-analysis --server-log=server.log \\
+  node benchmark-access-policies.mjs --sql-analysis \\
       --label=develop --output=benchmark-results.txt --course-id=1
   #   3. Switch to DSL branch, restart server, then:
-  node benchmark-access-policies.mjs --sql-analysis --server-log=server.log \\
+  node benchmark-access-policies.mjs --sql-analysis \\
       --label=dsl-branch --output=benchmark-results.txt --course-id=1
   #   4. Compare: cat benchmark-results.txt
 `);
@@ -138,7 +140,7 @@ const config = {
     setupData: args['setup-data'] === 'true',
     courseId: args['course-id'] ? parseInt(args['course-id'], 10) : null,
     sqlAnalysis: args['sql-analysis'] === 'true',
-    serverLog: args['server-log'] || null,
+    serverLog: args['server-log'] || (args['sql-analysis'] === 'true' ? 'server.log' : null),
     outputFile: args['output'] || null,
     reportFile: args['report'] || null,
     label: args['label'] || new Date().toISOString(),
@@ -468,7 +470,24 @@ function getLogFileSize(logPath) {
         const content = readFileSync(logPath, 'utf-8');
         return content.length;
     } catch (error) {
-        console.error(`Cannot read server log at ${logPath}: ${error.message}`);
+        console.error(`ERROR: Server log file not found at: ${logPath}`);
+        console.error('');
+        console.error('Option A — Pipe server output to a file:');
+        console.error('  ./gradlew bootRun 2>&1 | tee server.log');
+        console.error('');
+        console.error('Option B — Configure Spring Boot to write a log file.');
+        console.error('  Add to application-local.yml:');
+        console.error('    logging:');
+        console.error('      file:');
+        console.error('        name: server.log');
+        console.error('      level:');
+        console.error('        org.hibernate.SQL: DEBUG');
+        console.error('        org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+        console.error('');
+        console.error('  Note: show-sql uses System.out (not captured by logging.file.name).');
+        console.error('  Option B requires org.hibernate.SQL: DEBUG instead of / in addition to show-sql.');
+        console.error('');
+        console.error('Then restart the server and re-run this benchmark.');
         process.exit(1);
     }
 }
@@ -510,7 +529,16 @@ function countSqlQueries(logSnippet) {
         const trimmed = line.trim().toLowerCase();
         // Match "Hibernate: select ..." or standalone "select ..." at start of formatted block
         const isHibernateLine = trimmed.startsWith('hibernate:');
-        const sqlStart = isHibernateLine ? trimmed.substring('hibernate:'.length).trim() : trimmed;
+        // Also match logging-framework format: "... org.hibernate.SQL                        : select ..."
+        const loggingMatch = !isHibernateLine && /org\.hibernate\.sql\s*:\s*(.*)/.exec(trimmed);
+        let sqlStart;
+        if (isHibernateLine) {
+            sqlStart = trimmed.substring('hibernate:'.length).trim();
+        } else if (loggingMatch) {
+            sqlStart = loggingMatch[1].trim();
+        } else {
+            sqlStart = trimmed;
+        }
 
         let matched = false;
         if (sqlStart.startsWith('select ') || sqlStart.startsWith('select\n')) {
@@ -561,8 +589,8 @@ function countSqlQueries(logSnippet) {
  */
 function extractRawSqlStatements(logSnippet) {
     const queries = [];
-    // Split on "Hibernate:" to isolate each SQL block
-    const parts = logSnippet.split(/Hibernate:\s*/);
+    // Split on "Hibernate:" or "org.hibernate.SQL ... :" markers to isolate each SQL block
+    const parts = logSnippet.split(/(?:Hibernate:\s*|org\.hibernate\.SQL\s+:\s*)/);
 
     for (let i = 1; i < parts.length; i++) {
         const block = parts[i];
@@ -836,9 +864,25 @@ async function main() {
     console.log();
 
     // Validate SQL analysis prerequisites
-    if (config.sqlAnalysis && !config.serverLog) {
-        console.error('ERROR: --sql-analysis requires --server-log=<path>');
-        console.error('Start the server with:  ./gradlew bootRun 2>&1 | tee server.log');
+    if (config.sqlAnalysis && !existsSync(config.serverLog)) {
+        console.error(`ERROR: Server log file not found at: ${config.serverLog}`);
+        console.error('');
+        console.error('Option A — Pipe server output to a file:');
+        console.error('  ./gradlew bootRun 2>&1 | tee server.log');
+        console.error('');
+        console.error('Option B — Configure Spring Boot to write a log file.');
+        console.error('  Add to application-local.yml:');
+        console.error('    logging:');
+        console.error('      file:');
+        console.error('        name: server.log');
+        console.error('      level:');
+        console.error('        org.hibernate.SQL: DEBUG');
+        console.error('        org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+        console.error('');
+        console.error('  Note: show-sql uses System.out (not captured by logging.file.name).');
+        console.error('  Option B requires org.hibernate.SQL: DEBUG instead of / in addition to show-sql.');
+        console.error('');
+        console.error('Then restart the server and re-run this benchmark.');
         process.exit(1);
     }
 
@@ -1017,6 +1061,8 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('  spring.jpa.show-sql: true');
     console.log('  spring.jpa.properties.hibernate.format_sql: true          (for readable SQL)');
     console.log('  spring.jpa.properties.hibernate.generate_statistics: true (for SQL timing)');
+    console.log('  logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
+    console.log('    (required if logback-spring.xml sets org.hibernate to WARN)');
     console.log();
 
     // --- Endpoint 1: All courses dashboard ---
@@ -1172,8 +1218,13 @@ function printSqlAnalysis(label, result) {
 
     if (!metrics) {
         console.log();
-        console.log('  NOTE: No Hibernate Session Metrics found. For SQL execution timing, enable:');
-        console.log('    spring.jpa.properties.hibernate.generate_statistics: true');
+        console.log('  NOTE: No Hibernate Session Metrics found. For SQL execution timing:');
+        console.log('    1. Enable in application-local.yml:');
+        console.log('       spring.jpa.properties.hibernate.generate_statistics: true');
+        console.log('    2. The StatisticalLoggingSessionEventListener logger must be at INFO or lower.');
+        console.log('       If logback-spring.xml sets org.hibernate to WARN, metrics are suppressed.');
+        console.log('       Add to application-local.yml:');
+        console.log('         logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: INFO');
     }
 }
 
