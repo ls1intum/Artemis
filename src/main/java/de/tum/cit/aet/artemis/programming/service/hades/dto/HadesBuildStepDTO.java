@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * This record wraps a build step for Hades. It contains the id and name of a step, volume mounts, working dir, metadata, docker image and a script.
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String workingDir, HashMap<String, String> metadata, String script,
-        boolean ContinueOnError) implements Serializable {
+        @JsonProperty("continue_on_error") boolean ContinueOnError) implements Serializable {
 
     public record VolumeMount(String name, String mountPath) {
     }
