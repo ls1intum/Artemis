@@ -28,10 +28,12 @@
  *   --iterations=<n>           Benchmark iterations per endpoint (default: 20)
  *   --warmup=<n>               Warmup iterations (not measured) (default: 3)
  *   --setup-data               Create test data before benchmarking
- *   --course-id=<id>           Benchmark a specific course (for single-course endpoint)
+ *   --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
  *   --sql-analysis             SQL query analysis mode: run each endpoint once, capture
- *                              server log, and count SQL queries per request.
+ *                              server log, count SQL queries and extract timing per request.
  *                              Requires --server-log=<path> to the Artemis console log file.
+ *                              For SQL execution timing, also enable in application-local.yml:
+ *                                spring.jpa.properties.hibernate.generate_statistics: true
  *   --server-log=<path>        Path to the server log file (used with --sql-analysis).
  *                              Tip: start Artemis with  ./gradlew bootRun 2>&1 | tee server.log
  *   --output=<path>            Write results to a file (append mode) for later comparison
@@ -77,8 +79,12 @@ Options:
   --iterations=<n>           Benchmark iterations per endpoint (default: 20)
   --warmup=<n>               Warmup iterations (not measured) (default: 3)
   --setup-data               Create test data before benchmarking
-  --course-id=<id>           Benchmark a specific course (single-course endpoint)
-  --sql-analysis             SQL query analysis mode (requires --server-log)
+  --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
+  --sql-analysis             SQL query analysis mode (requires --server-log).
+                             Enable these in application-local.yml for full detail:
+                               spring.jpa.show-sql: true
+                               spring.jpa.properties.hibernate.format_sql: true
+                               spring.jpa.properties.hibernate.generate_statistics: true
   --server-log=<path>        Path to server log file for SQL counting
   --output=<path>            Append results to file for A/B comparison
   --report=<path>            Write a formatted Markdown report of the results
@@ -476,7 +482,8 @@ function readLogSince(logPath, offset) {
 }
 
 /**
- * Count SQL queries in a Hibernate show-sql log snippet.
+ * Count SQL queries in a Hibernate show-sql log snippet and extract
+ * individual SQL statements and Hibernate session metrics.
  *
  * With format_sql=true, Hibernate outputs multi-line formatted SQL.
  * Each statement starts with one of: select, insert, update, delete
@@ -486,6 +493,9 @@ function readLogSince(logPath, offset) {
  * with "Hibernate: select/insert/update/delete".
  *
  * We count both patterns.
+ *
+ * If hibernate.generate_statistics=true, the log also contains a
+ * "Session Metrics { ... }" block with aggregate JDBC timing that we parse.
  */
 function countSqlQueries(logSnippet) {
     const lines = logSnippet.split('\n');
@@ -524,7 +534,103 @@ function countSqlQueries(logSnippet) {
         }
     }
 
-    return { totalQueries, selects, inserts, updates, deletes, uniqueQueries: uniqueQueries.size };
+    // ---------------------------------------------------------------
+    // Extract individual SQL statements (full text, preserving formatting)
+    // Split on "Hibernate:" markers to get each SQL block
+    // ---------------------------------------------------------------
+    const rawQueries = extractRawSqlStatements(logSnippet);
+
+    // ---------------------------------------------------------------
+    // Parse Hibernate Session Metrics (requires generate_statistics=true)
+    // Example block:
+    //   Session Metrics {
+    //       12345 nanoseconds spent preparing 5 JDBC statements;
+    //       67890 nanoseconds spent executing 5 JDBC statements;
+    //       ...
+    //   }
+    // ---------------------------------------------------------------
+    const sessionMetrics = parseSessionMetrics(logSnippet);
+
+    return { totalQueries, selects, inserts, updates, deletes, uniqueQueries: uniqueQueries.size, rawQueries, sessionMetrics };
+}
+
+/**
+ * Extract individual SQL statements from a Hibernate log snippet.
+ * Handles both formatted (multi-line) and unformatted (single-line) output.
+ * Returns an array of { type, sql } objects.
+ */
+function extractRawSqlStatements(logSnippet) {
+    const queries = [];
+    // Split on "Hibernate:" to isolate each SQL block
+    const parts = logSnippet.split(/Hibernate:\s*/);
+
+    for (let i = 1; i < parts.length; i++) {
+        const block = parts[i];
+        // Collect SQL lines: continuation lines are indented or contain SQL keywords
+        const blockLines = block.split('\n');
+        const sqlLines = [];
+
+        for (const line of blockLines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            const lower = trimmed.toLowerCase();
+
+            // SQL continuation: indented lines, SQL keywords, or looks like SQL
+            const isSqlLine = /^\s{2,}/.test(line) // indented
+                || /^(select|insert|update|delete|from|where|and|or|join|left|inner|right|cross|outer|on|group|order|having|limit|offset|values|set|into|case|when|then|else|end|exists|not|in|like|between|as|distinct|union|all|fetch|with|returning|using)\b/i.test(trimmed)
+                || /^[a-z0-9_.,()? =<>!'"*+\-\[\]%]+$/i.test(trimmed);
+
+            if (sqlLines.length === 0) {
+                // First line must start with a SQL keyword
+                if (/^(select|insert|update|delete)\b/i.test(lower)) {
+                    sqlLines.push(trimmed);
+                } else {
+                    break; // Not a SQL block
+                }
+            } else if (isSqlLine) {
+                sqlLines.push(trimmed);
+            } else {
+                break; // End of SQL block (hit a log line)
+            }
+        }
+
+        if (sqlLines.length > 0) {
+            const sql = sqlLines.join('\n');
+            const type = sqlLines[0].trim().split(/\s/)[0].toUpperCase();
+            queries.push({ type, sql });
+        }
+    }
+
+    return queries;
+}
+
+/**
+ * Parse Hibernate Session Metrics from a log snippet.
+ * Requires hibernate.generate_statistics=true to be present in the log.
+ * Returns null if no metrics block is found.
+ */
+function parseSessionMetrics(logSnippet) {
+    const metricsMatch = logSnippet.match(/Session Metrics \{([\s\S]*?)\}/);
+    if (!metricsMatch) return null;
+
+    const metricsBlock = metricsMatch[1];
+    const extract = (pattern) => {
+        const m = metricsBlock.match(pattern);
+        return m ? { ns: parseInt(m[1], 10), count: parseInt(m[2], 10) } : null;
+    };
+
+    return {
+        acquiring: extract(/(\d+) nanoseconds spent acquiring (\d+) JDBC connections/),
+        releasing: extract(/(\d+) nanoseconds spent releasing (\d+) JDBC connections/),
+        preparing: extract(/(\d+) nanoseconds spent preparing (\d+) JDBC statements/),
+        executing: extract(/(\d+) nanoseconds spent executing (\d+) JDBC statements/),
+        batches: extract(/(\d+) nanoseconds spent executing (\d+) JDBC batches/),
+        flushes: extract(/(\d+) nanoseconds spent executing (\d+) flushes/),
+    };
+}
+
+function formatNsAsMs(ns) {
+    return (ns / 1_000_000).toFixed(2) + ' ms';
 }
 
 /**
@@ -556,6 +662,65 @@ async function runWithSqlCapture(label, requestFn, logPath) {
 function appendResult(record) {
     if (!config.outputFile) return;
     appendFileSync(config.outputFile, JSON.stringify(record) + '\n', 'utf-8');
+}
+
+/**
+ * Append SQL analysis tables (query counts, Hibernate timing, raw SQL) to a Markdown lines array.
+ */
+function appendSqlAnalysisSection(lines, sqlResult) {
+    const stats = sqlResult.sqlStats;
+
+    // Summary table
+    lines.push(`| Metric | Value |`);
+    lines.push(`|--------|-------|`);
+    lines.push(`| Response time | ${formatMs(sqlResult.elapsed)} |`);
+    lines.push(`| Total queries | ${stats.totalQueries} |`);
+    lines.push(`| SELECTs | ${stats.selects} |`);
+    lines.push(`| INSERTs | ${stats.inserts} |`);
+    lines.push(`| UPDATEs | ${stats.updates} |`);
+    lines.push(`| DELETEs | ${stats.deletes} |`);
+    lines.push(`| Unique queries | ${stats.uniqueQueries} |`);
+
+    // Hibernate Session Metrics (if available)
+    const metrics = stats.sessionMetrics;
+    if (metrics) {
+        lines.push('');
+        lines.push(`#### Hibernate JDBC Timing`);
+        lines.push('');
+        lines.push(`| Phase | Statements | Time |`);
+        lines.push(`|-------|-----------|------|`);
+        if (metrics.preparing) {
+            lines.push(`| Preparing | ${metrics.preparing.count} | ${formatNsAsMs(metrics.preparing.ns)} |`);
+        }
+        if (metrics.executing) {
+            lines.push(`| Executing | ${metrics.executing.count} | ${formatNsAsMs(metrics.executing.ns)} |`);
+        }
+        if (metrics.preparing && metrics.executing) {
+            const totalSqlMs = (metrics.preparing.ns + metrics.executing.ns) / 1_000_000;
+            const pct = sqlResult.elapsed > 0 ? ((totalSqlMs / sqlResult.elapsed) * 100).toFixed(1) : '?';
+            lines.push(`| **Total SQL** | | **${totalSqlMs.toFixed(2)} ms** (${pct}% of response time) |`);
+        }
+    }
+
+    // Raw SQL queries
+    const rawQueries = stats.rawQueries;
+    if (rawQueries && rawQueries.length > 0) {
+        lines.push('');
+        lines.push(`#### Raw SQL Queries (${rawQueries.length})`);
+        lines.push('');
+        for (let i = 0; i < rawQueries.length; i++) {
+            const q = rawQueries[i];
+            lines.push(`<details>`);
+            lines.push(`<summary>${i + 1}. ${q.type}</summary>`);
+            lines.push('');
+            lines.push('```sql');
+            lines.push(q.sql);
+            lines.push('```');
+            lines.push('');
+            lines.push(`</details>`);
+            lines.push('');
+        }
+    }
 }
 
 /**
@@ -600,30 +765,14 @@ function writeMarkdownReport({ mode, snapshot, allCoursesStats, singleCourseStat
         lines.push(`### GET /api/core/courses/for-dashboard`);
         lines.push('');
         if (allCoursesSql) {
-            lines.push(`| Metric | Value |`);
-            lines.push(`|--------|-------|`);
-            lines.push(`| Response time | ${formatMs(allCoursesSql.elapsed)} |`);
-            lines.push(`| Total queries | ${allCoursesSql.sqlStats.totalQueries} |`);
-            lines.push(`| SELECTs | ${allCoursesSql.sqlStats.selects} |`);
-            lines.push(`| INSERTs | ${allCoursesSql.sqlStats.inserts} |`);
-            lines.push(`| UPDATEs | ${allCoursesSql.sqlStats.updates} |`);
-            lines.push(`| DELETEs | ${allCoursesSql.sqlStats.deletes} |`);
-            lines.push(`| Unique queries | ${allCoursesSql.sqlStats.uniqueQueries} |`);
+            appendSqlAnalysisSection(lines, allCoursesSql);
         }
         lines.push('');
 
         if (singleCourseSql && courseId) {
             lines.push(`### GET /api/core/courses/${courseId}/for-dashboard`);
             lines.push('');
-            lines.push(`| Metric | Value |`);
-            lines.push(`|--------|-------|`);
-            lines.push(`| Response time | ${formatMs(singleCourseSql.elapsed)} |`);
-            lines.push(`| Total queries | ${singleCourseSql.sqlStats.totalQueries} |`);
-            lines.push(`| SELECTs | ${singleCourseSql.sqlStats.selects} |`);
-            lines.push(`| INSERTs | ${singleCourseSql.sqlStats.inserts} |`);
-            lines.push(`| UPDATEs | ${singleCourseSql.sqlStats.updates} |`);
-            lines.push(`| DELETEs | ${singleCourseSql.sqlStats.deletes} |`);
-            lines.push(`| Unique queries | ${singleCourseSql.sqlStats.uniqueQueries} |`);
+            appendSqlAnalysisSection(lines, singleCourseSql);
             lines.push('');
         }
     } else {
@@ -723,6 +872,26 @@ async function main() {
     let courseId = config.courseId;
     if (!courseId && benchData?.courseIds?.length > 0) {
         courseId = benchData.courseIds[0];
+    }
+
+    // Auto-discover a courseId if still not set — pick the first visible course
+    if (!courseId) {
+        try {
+            const dashboardResp = await studentClient.get('/api/core/courses/for-dashboard');
+            const courses = dashboardResp.data?.courses || [];
+            if (courses.length > 0) {
+                courseId = courses[0].course?.id;
+                if (courseId) {
+                    console.log(`Auto-discovered course ID ${courseId} ("${courses[0].course?.title}") for single-course benchmark.`);
+                }
+            }
+        } catch {
+            // Non-fatal — single-course benchmark will be skipped
+        }
+        if (!courseId) {
+            console.log('WARNING: Could not auto-discover a course ID. Single-course benchmark will be skipped.');
+            console.log('  Use --course-id=<id> or --setup-data to enable it.');
+        }
     }
 
     // Collect entity snapshot before benchmarking
@@ -844,7 +1013,10 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log(`Label      : ${config.label}`);
     console.log();
     console.log('Running one warmup request per endpoint, then one measured request.');
-    console.log('Make sure the server was started with show-sql: true');
+    console.log('Make sure the server was started with these settings in application-local.yml:');
+    console.log('  spring.jpa.show-sql: true');
+    console.log('  spring.jpa.properties.hibernate.format_sql: true          (for readable SQL)');
+    console.log('  spring.jpa.properties.hibernate.generate_statistics: true (for SQL timing)');
     console.log();
 
     // --- Endpoint 1: All courses dashboard ---
@@ -895,6 +1067,11 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log(`    Total queries : ${allCoursesResult.sqlStats.totalQueries}`);
     console.log(`    SELECTs       : ${allCoursesResult.sqlStats.selects}`);
     console.log(`    Unique queries: ${allCoursesResult.sqlStats.uniqueQueries}`);
+    if (allCoursesResult.sqlStats.sessionMetrics?.executing) {
+        const m = allCoursesResult.sqlStats.sessionMetrics;
+        const totalSqlMs = ((m.preparing?.ns || 0) + m.executing.ns) / 1_000_000;
+        console.log(`    SQL exec time : ${totalSqlMs.toFixed(2)} ms`);
+    }
 
     if (singleCourseResult) {
         console.log();
@@ -903,9 +1080,18 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
         console.log(`    Total queries : ${singleCourseResult.sqlStats.totalQueries}`);
         console.log(`    SELECTs       : ${singleCourseResult.sqlStats.selects}`);
         console.log(`    Unique queries: ${singleCourseResult.sqlStats.uniqueQueries}`);
+        if (singleCourseResult.sqlStats.sessionMetrics?.executing) {
+            const m = singleCourseResult.sqlStats.sessionMetrics;
+            const totalSqlMs = ((m.preparing?.ns || 0) + m.executing.ns) / 1_000_000;
+            console.log(`    SQL exec time : ${totalSqlMs.toFixed(2)} ms`);
+        }
     }
 
-    // Write results to output file
+    // Write results to output file (exclude raw query text from JSON for compactness)
+    const stripRaw = (stats) => {
+        const { rawQueries, ...rest } = stats;
+        return { ...rest, rawQueryCount: rawQueries?.length || 0 };
+    };
     appendResult({
         label: config.label,
         timestamp: new Date().toISOString(),
@@ -913,11 +1099,11 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
         snapshot,
         allCourses: {
             responseTimeMs: allCoursesResult.elapsed,
-            ...allCoursesResult.sqlStats,
+            ...stripRaw(allCoursesResult.sqlStats),
         },
         singleCourse: singleCourseResult ? {
             responseTimeMs: singleCourseResult.elapsed,
-            ...singleCourseResult.sqlStats,
+            ...stripRaw(singleCourseResult.sqlStats),
         } : null,
         courseId,
     });
@@ -947,12 +1133,47 @@ function printSqlAnalysis(label, result) {
     console.log(`    DELETEs : ${result.sqlStats.deletes}`);
     console.log(`    Unique  : ${result.sqlStats.uniqueQueries}`);
 
+    // Hibernate Session Metrics (requires generate_statistics=true)
+    const metrics = result.sqlStats.sessionMetrics;
+    if (metrics) {
+        console.log(`\n  Hibernate Session Metrics (JDBC timing):`);
+        if (metrics.preparing) {
+            console.log(`    Preparing ${metrics.preparing.count} statements : ${formatNsAsMs(metrics.preparing.ns)}`);
+        }
+        if (metrics.executing) {
+            console.log(`    Executing ${metrics.executing.count} statements : ${formatNsAsMs(metrics.executing.ns)}`);
+        }
+        if (metrics.preparing && metrics.executing) {
+            const totalSqlMs = (metrics.preparing.ns + metrics.executing.ns) / 1_000_000;
+            const pct = result.elapsed > 0 ? ((totalSqlMs / result.elapsed) * 100).toFixed(1) : '?';
+            console.log(`    Total SQL time              : ${totalSqlMs.toFixed(2)} ms (${pct}% of response time)`);
+        }
+    }
+
+    // Raw SQL queries
+    const rawQueries = result.sqlStats.rawQueries;
+    if (rawQueries && rawQueries.length > 0) {
+        console.log(`\n  Individual SQL queries (${rawQueries.length}):`);
+        for (let i = 0; i < rawQueries.length; i++) {
+            const q = rawQueries[i];
+            // Truncate display to first 3 lines for console readability
+            const preview = q.sql.split('\n').slice(0, 3).join(' ').substring(0, 120);
+            console.log(`    [${i + 1}] ${q.type}: ${preview}${q.sql.length > 120 ? '...' : ''}`);
+        }
+    }
+
     if (result.sqlStats.totalQueries === 0) {
         console.log();
         console.log('  WARNING: No SQL queries detected. Possible causes:');
         console.log('    - show-sql is not enabled in application-local.yml');
         console.log('    - The server log file path is incorrect');
         console.log('    - The log file is not being flushed fast enough (try adding a small delay)');
+    }
+
+    if (!metrics) {
+        console.log();
+        console.log('  NOTE: No Hibernate Session Metrics found. For SQL execution timing, enable:');
+        console.log('    spring.jpa.properties.hibernate.generate_statistics: true');
     }
 }
 
