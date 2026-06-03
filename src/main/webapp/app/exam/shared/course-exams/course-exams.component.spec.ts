@@ -290,6 +290,6 @@ describe('CourseExamsComponent', () => {
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
 
-        expect(component.computeSidebarData()).toBeUndefined();
+        expect(component.buildSidebarData()).toBeUndefined();
     });
 });

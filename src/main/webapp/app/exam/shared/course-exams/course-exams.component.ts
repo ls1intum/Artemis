@@ -16,23 +16,9 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
-const DEFAULT_UNIT_GROUPS: AccordionGroups = {
-    real: { entityData: [] },
-    test: { entityData: [] },
-    attempt: { entityData: [] },
-};
-
-const DEFAULT_COLLAPSE_STATE: CollapseState = {
-    real: false,
-    test: false,
-    attempt: false,
-};
-
-const DEFAULT_SHOW_ALWAYS: CollapseState = {
-    real: false,
-    test: false,
-    attempt: false,
-};
+const DEFAULT_UNIT_GROUPS: AccordionGroups = { real: { entityData: [] }, test: { entityData: [] }, attempt: { entityData: [] } };
+const DEFAULT_COLLAPSE_STATE: CollapseState = { real: false, test: false, attempt: false };
+const DEFAULT_SHOW_ALWAYS: CollapseState = { real: false, test: false, attempt: false };
 
 @Component({
     selector: 'jhi-course-exams',
@@ -66,9 +52,10 @@ export class CourseExamsComponent {
     protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
     private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
 
-    readonly examSelected = signal(true);
+    readonly sidebarData = computed<SidebarData | undefined>(() => this.buildSidebarData());
+
     readonly isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
-    readonly sidebarData = computed<SidebarData | undefined>(() => this.computeSidebarData());
+    readonly examSelected = signal(true);
     readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -78,13 +65,6 @@ export class CourseExamsComponent {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
-        this.handleStudentExams();
-
-        // If no exam is selected navigate to the last selected or upcoming Exam
-        this.navigateToExam();
-    }
-
-    private handleStudentExams() {
         // load the baseline of studentExams without overwriting newer local updates.
         this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
@@ -121,10 +101,13 @@ export class CourseExamsComponent {
             .getRealExamWorkingTimes(this.courseId())
             .pipe(takeUntilDestroyed())
             .subscribe((workingTimes) => this.realExamWorkingTimeByExamId.set(new Map(workingTimes.map((workingTime) => [workingTime.examId, workingTime.workingTime]))));
+
+        // If no exam is selected navigate to the last selected or upcoming Exam
+        this.navigateToExam();
     }
 
-    navigateToExam() {
-        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.realExamsOfCourse(), ...this.testExamsOfCourse()]);
+    private navigateToExam() {
+        const upcomingExam = this.courseOverviewService.getUpcomingExam([...this.visibleExams()]);
         const lastSelectedExam = this.getLastSelectedExam();
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
@@ -143,7 +126,7 @@ export class CourseExamsComponent {
      * check for given exam if it is visible
      * @param {Exam} exam
      */
-    isVisible(exam: Exam): boolean {
+    protected isVisible(exam: Exam): boolean {
         return exam.visibleDate ? dayjs(exam.visibleDate).isBefore(this.serverDateService.now()) : false;
     }
 
@@ -153,7 +136,7 @@ export class CourseExamsComponent {
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
+    protected getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
         if (!studentExams) {
             return [];
         }
@@ -166,7 +149,7 @@ export class CourseExamsComponent {
      * @param exam2 exam2 for comparison
      * @return value for sort()-function
      */
-    sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
+    protected sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
         if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
             return -1;
         }
@@ -176,7 +159,7 @@ export class CourseExamsComponent {
         return 0;
     }
 
-    groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
+    protected groupExamsByRealOrTestOrAttempt(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
         const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
 
         const realExamWorkingTimeByExamId = this.realExamWorkingTimeByExamId();
@@ -187,7 +170,7 @@ export class CourseExamsComponent {
 
         testExams.forEach((testExam) => {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(testExam, {
-                numberOfAttempts: this.getNumberOfAttemptsForTestExam(testExam, testExamAttemptsMap),
+                numberOfAttempts: testExamAttemptsMap.get(testExam.id!)?.length ?? 0,
             });
             groupedExamGroups['test'].entityData.push(examCardItem);
             const testExamAttempts = testExamAttemptsMap.get(testExam.id!);
@@ -203,17 +186,17 @@ export class CourseExamsComponent {
         return groupedExamGroups;
     }
 
-    getLastSelectedExam(): number | undefined {
+    private getLastSelectedExam(): number | undefined {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
     }
 
-    toggleSidebar() {
+    protected toggleSidebar() {
         const newState = !this.isCollapsed();
         this.isCollapsed.set(newState);
         this.courseOverviewService.setSidebarCollapseState('exam', newState);
     }
 
-    computeSidebarData(): SidebarData | undefined {
+    protected buildSidebarData(): SidebarData | undefined {
         if (!this.course()?.exams) {
             return;
         }
@@ -229,7 +212,7 @@ export class CourseExamsComponent {
             testExamAttemptsMap.set(testExam.id!, submittedAttempts);
         }
 
-        const accordionExamGroups = this.groupExamsByRealOrTest(sortedRealExams, sortedTestExams, testExamAttemptsMap);
+        const accordionExamGroups = this.groupExamsByRealOrTestOrAttempt(sortedRealExams, sortedTestExams, testExamAttemptsMap);
         const sidebarExams: SidebarCardElement[] = [
             ...accordionExamGroups['real'].entityData,
             ...accordionExamGroups['test'].entityData,
@@ -250,10 +233,5 @@ export class CourseExamsComponent {
             return;
         }
         this.navigateToExam();
-    }
-
-    getNumberOfAttemptsForTestExam(exam: Exam, testExamAttemptsMap: Map<number, StudentExam[]>): number {
-        const studentExams = testExamAttemptsMap.get(exam.id!);
-        return studentExams ? studentExams.length : 0;
     }
 }
