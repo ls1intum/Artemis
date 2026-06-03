@@ -292,47 +292,16 @@ export class CourseManagementPage {
         return this.page.locator('#detail-value-artemisApp\\.course\\.shortName');
     }
 
-    /**
-     * Retrieves the locator for the course student group name.
-     * @returns The locator for the course student group name.
-     */
-    getCourseStudentGroupName() {
-        return this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName');
-    }
     getNumberOfStudents() {
         return this.page.locator('#number-of-students');
-    }
-
-    /**
-     * Retrieves the locator for the course tutor group name.
-     * @returns The locator for the course tutor group name.
-     */
-    getCourseTutorGroupName() {
-        return this.page.locator('#detail-value-artemisApp\\.course\\.teachingAssistantGroupName');
     }
 
     getNumberOfTutors() {
         return this.page.locator('#number-of-tutors');
     }
 
-    /**
-     * Retrieves the locator for the course editor group name.
-     * @returns The locator for the course editor group name.
-     */
-    getCourseEditorGroupName() {
-        return this.page.locator('#detail-value-artemisApp\\.course\\.editorGroupName');
-    }
-
     getNumberOfEditors() {
         return this.page.locator('#number-of-editors');
-    }
-
-    /**
-     * Retrieves the locator for the course instructor group.
-     * @returns The locator for the course instructor group name.
-     */
-    getCourseInstructorGroupName() {
-        return this.page.locator('#detail-value-artemisApp\\.course\\.instructorGroupName');
     }
 
     getNumberOfInstructors() {

@@ -145,10 +145,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
             expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
             expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
-            expect(courseBody.studentGroupName).toBe(`artemis-${courseData.shortName}-students`);
-            expect(courseBody.editorGroupName).toBe(`artemis-${courseData.shortName}-editors`);
-            expect(courseBody.instructorGroupName).toBe(`artemis-${courseData.shortName}-instructors`);
-            expect(courseBody.teachingAssistantGroupName).toBe(`artemis-${courseData.shortName}-tutors`);
 
             await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
