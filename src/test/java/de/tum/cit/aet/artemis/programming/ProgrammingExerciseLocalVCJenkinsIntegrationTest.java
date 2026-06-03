@@ -8,12 +8,13 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTL
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -37,15 +39,14 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 // TODO: rewrite this test to use LocalVC
@@ -54,9 +55,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "progexlocalvcjenkins";
-
-    @Autowired
-    private TempFileUtilService tempFileUtilService;
 
     @BeforeEach
     void setup() throws Exception {
@@ -429,15 +427,24 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
-        var teamLocalPath = tempFileUtilService.createTempDirectory("teamLocalRepo");
+        AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
         try {
-            doReturn(teamLocalPath).when(gitServiceSpy).getDefaultLocalCheckOutPathOfRepo(any());
-            doThrow(new IOException("Checkout got interrupted!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+            doAnswer(invocation -> {
+                LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
+                Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
+                Files.createDirectories(localTargetRepositoryPath);
+                targetRepositoryPath.set(localTargetRepositoryPath);
+                throw new IOException("Checkout got interrupted!");
+            }).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
             programmingExerciseTestService.copyRepository_testNotCreatedError();
+
+            assertThat(targetRepositoryPath.get()).isNotNull().doesNotExist();
         }
         finally {
-            Files.deleteIfExists(teamLocalPath);
+            if (targetRepositoryPath.get() != null) {
+                Files.deleteIfExists(targetRepositoryPath.get());
+            }
         }
     }
 
