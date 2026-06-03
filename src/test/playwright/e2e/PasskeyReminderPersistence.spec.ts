@@ -4,9 +4,9 @@ import { test } from '../support/fixtures';
 test('Passkey reminder modal is not displayed on re-login after remind me in 30 days was chosen', async ({ page, loginPage, navigationBar }) => {
     const artemisAdmin = { username: 'artemis_admin', password: 'artemis_admin' };
 
-    // First login
-    await page.goto('/');
-    // Clear the passkey modal suppression so the modal appears for this test
+    // First login — navigate explicitly to sign-in and clear the passkey modal suppression
+    await page.context().clearCookies();
+    await page.goto('/sign-in');
     await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
     await loginPage.login(artemisAdmin);
 
