@@ -1,4 +1,3 @@
-import { CDPSession } from '@playwright/test';
 import { test as base } from './baseFixtures';
 import { LoginPage } from './pageobjects/LoginPage';
 import { UserCredentials } from './users';
@@ -156,10 +155,6 @@ export type ArtemisPageObjects = {
     exerciseTeams: ExerciseTeamsPage;
 };
 
-export type ArtemisInfrastructure = {
-    virtualAuthenticator: CDPSession;
-};
-
 export type ArtemisRequests = {
     accountManagementAPIRequests: AccountManagementAPIRequests;
     courseManagementAPIRequests: CourseManagementAPIRequests;
@@ -172,7 +167,7 @@ export type ArtemisRequests = {
 /**
  * Custom test object extended to use Artemis related fixtures.
  */
-export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests & ArtemisInfrastructure>({
+export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
     /**
      * Wrap `page.goto` with a lightweight Angular-render check. Under heavy parallel
      * multi-node load the SPA occasionally fails to bootstrap the route component on
@@ -472,8 +467,5 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));
-    },
-    virtualAuthenticator: async ({ virtualAuthenticator }, use) => {
-        await use(virtualAuthenticator);
     },
 });

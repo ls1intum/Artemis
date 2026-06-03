@@ -8,6 +8,19 @@ function passkeyTestUser(testTitle: string) {
     return { username: `passkey_e2e_${id}`, password: `passkey_e2e_${id}`, email: `passkey_e2e_${id}@example.com` };
 }
 
+/**
+ * Disables WebAuthn conditional mediation so it cannot auto-complete login before an
+ * explicit button click — with automaticPresenceSimulation:true the virtual authenticator
+ * would otherwise resolve the background credentials.get() immediately.
+ */
+async function disableConditionalMediation(page: import('@playwright/test').Page) {
+    await page.addInitScript(() => {
+        if (window.PublicKeyCredential) {
+            (window.PublicKeyCredential as unknown as Record<string, unknown>).isConditionalMediationAvailable = async () => false;
+        }
+    });
+}
+
 test.describe('Passkey', () => {
     test.beforeEach(async ({ page, login }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
@@ -29,7 +42,7 @@ test.describe('Passkey', () => {
     test.afterEach(async ({ page }, testInfo) => {
         const user = passkeyTestUser(testInfo.title);
         await page.context().clearCookies();
-        await page.request.post(`api/core/public/authenticate`, {
+        await page.request.post(`${BASE_API}/core/public/authenticate`, {
             data: { username: admin.username, password: admin.password, rememberMe: true },
         });
         await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
@@ -97,15 +110,7 @@ test.describe('Passkey', () => {
 
     test('logs in with a registered passkey', async ({ page, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
-        // Disable conditional mediation so it cannot auto-complete login before the explicit
-        // button click — with automaticPresenceSimulation:true the virtual authenticator would
-        // otherwise resolve the background credentials.get() immediately, hide the form, and
-        // cause the subsequent click() to fail on a detached element.
-        await page.addInitScript(() => {
-            if (window.PublicKeyCredential) {
-                (window.PublicKeyCredential as unknown as Record<string, unknown>).isConditionalMediationAvailable = async () => false;
-            }
-        });
+        await disableConditionalMediation(page);
         await registerPasskeyViaApi(page, user);
 
         // Clear session and go to sign-in page
@@ -136,14 +141,7 @@ test.describe('Passkey', () => {
 
     test('cannot login with a passkey after it was deleted', async ({ page, login, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
-        // Disable conditional mediation for the same reason as "logs in" — prevents
-        // the background credentials.get() from triggering the error alert before the
-        // explicit button click does (which would produce a duplicate alert).
-        await page.addInitScript(() => {
-            if (window.PublicKeyCredential) {
-                (window.PublicKeyCredential as unknown as Record<string, unknown>).isConditionalMediationAvailable = async () => false;
-            }
-        });
+        await disableConditionalMediation(page);
         await registerPasskeyViaApi(page, user);
 
         // Delete the passkey via API
@@ -178,7 +176,7 @@ test.describe('Passkey', () => {
  */
 async function registerPasskeyViaApi(page: import('@playwright/test').Page, user: { username: string; password: string }) {
     // Authenticate as the user to get JWT cookie
-    const authResponse = await page.request.post('api/core/public/authenticate', {
+    const authResponse = await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: user.username, password: user.password, rememberMe: true },
     });
     expect(authResponse.status()).toBe(200);
@@ -192,7 +190,7 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
     const account = await accountResponse.json();
 
     // Perform the full WebAuthn registration inside the browser context
-    const result = await page.evaluate(
+    const error = await page.evaluate(
         async ({ userId, email }: { userId: number; email: string }) => {
             function base64urlToBuffer(base64url: string): ArrayBuffer {
                 const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -208,7 +206,7 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
             });
             if (!optionsResponse.ok) {
                 const body = await optionsResponse.text().catch(() => '');
-                return `options-failed: ${optionsResponse.status} ${body}`;
+                return `Getting registration options failed: ${optionsResponse.status} ${body}`;
             }
             const options = await optionsResponse.json();
 
@@ -230,7 +228,7 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
             })) as PublicKeyCredential | null;
 
             if (!credential) {
-                return 'credential-null';
+                return 'navigator.credentials.create() returned null';
             }
 
             // 3. Register the credential with the server
@@ -248,12 +246,14 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
 
             if (!registerResponse.ok) {
                 const body = await registerResponse.text().catch(() => '');
-                return `register-failed: ${registerResponse.status} ${body}`;
+                return `Registering credential failed: ${registerResponse.status} ${body}`;
             }
-            return 'success';
+            return undefined;
         },
         { userId: account.id, email: account.email },
     );
 
-    expect(result).toBe('success');
+    if (error) {
+        throw new Error(`registerPasskeyViaApi failed: ${error}`);
+    }
 }

@@ -6,7 +6,7 @@ import { BASE_API } from '../support/constants';
 const TEST_USER = { username: 'passkey_reminder_e2e', password: 'passkey_reminder_e2e', email: 'passkey_reminder_e2e@example.com' };
 
 test.beforeEach(async ({ page }) => {
-    await page.request.post('api/core/public/authenticate', {
+    await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
     await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 
 test.afterEach(async ({ page }) => {
     await page.context().clearCookies();
-    await page.request.post('api/core/public/authenticate', {
+    await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
     await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
