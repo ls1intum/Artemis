@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseAdminService;
+import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
 import de.tum.cit.aet.artemis.course.service.CourseDeletionService;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.course.service.CourseResetService;
@@ -115,9 +116,12 @@ public class AdminCourseResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final CourseAthenaConfigService courseAthenaConfigService;
+
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService,
+            CourseAthenaConfigService courseAthenaConfigService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -130,6 +134,7 @@ public class AdminCourseResource {
         this.courseResetService = courseResetService;
         this.progressService = progressService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.courseAthenaConfigService = courseAthenaConfigService;
     }
 
     /**
@@ -217,6 +222,9 @@ public class AdminCourseResource {
         }
 
         channelService.createDefaultChannels(createdCourse);
+
+        courseAthenaConfigService.updateConfig(createdCourse, courseDTO.athenaFormativeEnabled(), courseDTO.athenaGradingEnabled());
+        courseAthenaConfigService.stampAthenaConfig(createdCourse);
 
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
