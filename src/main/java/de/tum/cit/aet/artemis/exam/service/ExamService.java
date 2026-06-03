@@ -39,6 +39,9 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -55,29 +58,26 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -101,7 +101,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -199,7 +201,7 @@ public class ExamService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableItemWeaviateService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -210,7 +212,8 @@ public class ExamService {
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -238,7 +241,7 @@ public class ExamService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.exerciseWeaviateService = exerciseWeaviateService;
+        this.searchableItemWeaviateService = searchableItemWeaviateService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1208,7 +1211,7 @@ public class ExamService {
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
         List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
         List<DueDateStat[]> numberOfAssessmentsFinishedOfCorrectionRoundsByExercise = new ArrayList<>();
-        List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
+        List<Long> numberOfInitializedParticipationsByExercise = new ArrayList<>();
         List<Long> numberOfParticipationsForAssessmentGeneratedByExercise = new ArrayList<>();
 
         // loop over all exercises and retrieve all needed counts for the properties at once
@@ -1237,8 +1240,8 @@ public class ExamService {
                 }
             }
 
-            // get number of all generated participations
-            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
+            // get number of successfully initialized participations
+            numberOfInitializedParticipationsByExercise.add(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(exercise.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1250,13 +1253,13 @@ public class ExamService {
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
         Long[] totalNumberOfAssessmentsFinished = new Long[numberOfCorrectionRoundsInExam];
-        long totalNumberOfParticipationsGenerated = 0;
+        long totalNumberOfInitializedParticipations = 0;
         long totalNumberOfParticipationsForAssessment = 0;
 
         if (isInstructor) {
             // sum up all counts for the different properties
-            for (Long numberOfParticipations : numberOfParticipationsGeneratedByExercise) {
-                totalNumberOfParticipationsGenerated += numberOfParticipations != null ? numberOfParticipations : 0;
+            for (Long numberOfInitialized : numberOfInitializedParticipationsByExercise) {
+                totalNumberOfInitializedParticipations += numberOfInitialized != null ? numberOfInitialized : 0;
             }
         }
         // sum up all counts for the different properties
@@ -1297,8 +1300,9 @@ public class ExamService {
             }
 
             // check if all exercises have been prepared for all students;
+            // exercises are only considered prepared if ALL participations are properly initialized
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
-                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipationsGenerated;
+                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfInitializedParticipations;
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
@@ -1587,17 +1591,29 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
+            searchableItemWeaviateService.ifPresent(service -> {
+                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+                });
+            });
         }
     }
 
     /**
-     * Syncs exam exercises with Weaviate.
+     * Syncs exam and its exercises with Weaviate.
      *
-     * @param exam the exam whose exercises should be synced
+     * @param exam the exam whose metadata and exercises should be synced
      */
     public void syncExamExercisesMetadata(Exam exam) {
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
+        searchableItemWeaviateService.ifPresent(service -> {
+            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+            });
+        });
     }
 
     /**

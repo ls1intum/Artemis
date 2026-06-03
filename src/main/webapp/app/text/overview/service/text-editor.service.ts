@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
-import { Language } from 'app/core/course/shared/entities/course.model';
+import { Language } from 'app/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
@@ -19,7 +19,7 @@ export class TextEditorService {
     get(participationId: number, resultId?: number): Observable<StudentParticipation> {
         const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http
-            .get<StudentParticipation>(`api/text/text-editor/${participationId}`, { params })
+            .get<StudentParticipation>(`api/text/participations/${participationId}/text-editor`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 

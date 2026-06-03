@@ -4,7 +4,7 @@
             <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '· ' + feedbackItem.title }}</h4>
             @if (feedbackItem.credits) {
                 <span class="fw-bold feedback-item__credits">
-                    {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
+                    {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course()) }}P
                     @if (feedbackItem.type === 'Subsequent') {
                         <fa-icon [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                     }
@@ -26,13 +26,13 @@
                 <h4 class="feedback-item__category">{{ 'artemisApp.feedback.group.' + feedbackItemGroup.name | artemisTranslate }} ({{ feedbackItemGroup.members.length }})</h4>
             </div>
             @if (feedbackItemGroup.credits !== 0) {
-                <span class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
+                <span class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course()) }}P </span>
             }
         </div>
         @if (feedbackItemGroup.open) {
             <div class="mx-3">
                 @for (feedbackItem of feedbackItemGroup.members; track feedbackItem) {
-                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course" />
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" />
                 }
             </div>
         }

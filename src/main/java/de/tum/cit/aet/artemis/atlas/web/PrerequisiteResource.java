@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
@@ -37,17 +39,15 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.PrerequisiteService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
  * REST controller for managing {@link Prerequisite Prerequisite} entities.
@@ -141,7 +141,7 @@ public class PrerequisiteResource {
     public ResponseEntity<CourseCompetencyResponseDTO> createPrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisiteRequest);
-        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
+        Prerequisite prerequisite = CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
         checkPrerequisitesAttributesForCreation(prerequisite);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -165,7 +165,7 @@ public class PrerequisiteResource {
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createPrerequisite(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> prerequisites)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
-        var prerequisiteEntities = prerequisites.stream().map(this::toPrerequisite).toList();
+        var prerequisiteEntities = prerequisites.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Prerequisite::new)).toList();
         for (Prerequisite prerequisite : prerequisiteEntities) {
             checkPrerequisitesAttributesForCreation(prerequisite);
         }
@@ -310,7 +310,7 @@ public class PrerequisiteResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> updatePrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest) {
         log.debug("REST request to update Prerequisite : {}", prerequisiteRequest);
-        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
+        Prerequisite prerequisite = CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
         checkPrerequisitesAttributesForUpdate(prerequisite);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -361,10 +361,6 @@ public class PrerequisiteResource {
         if (prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty() || prerequisite.getMasteryThreshold() < 1 || prerequisite.getMasteryThreshold() > 100) {
             throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
         }
-    }
-
-    private Prerequisite toPrerequisite(CourseCompetencyRequestDTO prerequisiteRequest) {
-        return CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
     }
 
     /**

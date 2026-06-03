@@ -1,16 +1,20 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
-import { Range } from 'app/shared/util/utils';
+import { Range } from 'app/foundation/util/utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismRunDetailsComponent } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-run-details.component';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DatePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('Plagiarism Run Details', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: PlagiarismRunDetailsComponent;
     let fixture: ComponentFixture<PlagiarismRunDetailsComponent>;
 
@@ -40,12 +44,12 @@ describe('Plagiarism Run Details', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('updates chart data on changes', () => {
-        jest.spyOn(comp, 'updateChartDataSet');
-        jest.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        vi.spyOn(comp, 'updateChartDataSet');
+        vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
         comp.ngOnChanges({
             plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
@@ -66,7 +70,7 @@ describe('Plagiarism Run Details', () => {
     });
 
     it('sets BucketDTOs', () => {
-        const filterComparisonsMock = jest.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        const filterComparisonsMock = vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
 
         comp.ngOnChanges({
             plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
@@ -77,7 +81,7 @@ describe('Plagiarism Run Details', () => {
     });
 
     it.each([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])('emits the correct range if bar is selected', (minimumBorder: number) => {
-        const similaritySelectedStub = jest.spyOn(comp.similaritySelected, 'emit').mockImplementation();
+        const similaritySelectedStub = vi.spyOn(comp.similaritySelected, 'emit').mockImplementation(() => {});
         const maximumBorder = minimumBorder + 10;
 
         const event = { name: '[' + minimumBorder + '%-' + maximumBorder + '%)' };
@@ -86,7 +90,7 @@ describe('Plagiarism Run Details', () => {
 
         expect(similaritySelectedStub).toHaveBeenCalledOnce();
         expect(similaritySelectedStub).toHaveBeenCalledWith(new Range(minimumBorder, maximumBorder));
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([1, 2, 3])('return correct bucketDTO', (label: number) => {

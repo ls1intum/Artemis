@@ -4,11 +4,11 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
-import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Router } from '@angular/router';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {

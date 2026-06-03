@@ -1,16 +1,16 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { DoughnutChartType } from 'app/core/course/manage/detail/course-detail.component';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
@@ -25,13 +25,13 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
 
     private readonly router = inject(Router);
 
-    @Input() course: Course;
-    @Input() contentType: DoughnutChartType;
-    @Input() exerciseId: number;
-    @Input() exerciseType: ExerciseType;
-    @Input() currentPercentage: number | undefined;
-    @Input() currentAbsolute: number | undefined;
-    @Input() currentMax: number | undefined;
+    readonly course = input<Course>(undefined!);
+    readonly contentType = input<DoughnutChartType>(undefined!);
+    readonly exerciseId = input<number>(undefined!);
+    readonly exerciseType = input<ExerciseType>(undefined!);
+    readonly currentPercentage = input<number>();
+    readonly currentAbsolute = input<number>();
+    readonly currentMax = input<number>();
 
     receivedStats = false;
     doughnutChartTitle: string;
@@ -54,13 +54,14 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     ngOnChanges() {
         // [0, 0, 0] will lead to the chart not being displayed,
         // assigning [0, 0, 0] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
-        if (this.currentAbsolute == undefined && !this.receivedStats) {
+        const currentAbsolute = this.currentAbsolute();
+        if (currentAbsolute == undefined && !this.receivedStats) {
             this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
         } else {
             this.receivedStats = true;
-            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
-            this.stats = [this.currentAbsolute!, remaining, 0]; // done, not done, na
-            return this.currentMax === 0 ? this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE) : this.updatePieChartData(this.stats);
+            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax()! - currentAbsolute!, this.course());
+            this.stats = [currentAbsolute!, remaining, 0]; // done, not done, na
+            return this.currentMax() === 0 ? this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE) : this.updatePieChartData(this.stats);
         }
     }
 
@@ -68,18 +69,18 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * Depending on the information we want to display in the doughnut chart, we need different titles and links
      */
     ngOnInit(): void {
-        switch (this.contentType) {
+        switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
                 this.doughnutChartTitle = 'averageScore';
-                this.titleLink = [`/course-management/${this.course.id}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
+                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
                 break;
             case DoughnutChartType.PARTICIPATIONS:
                 this.doughnutChartTitle = 'participationRate';
-                this.titleLink = [`/course-management/${this.course.id}/${this.exerciseType}-exercises/${this.exerciseId}/participations`];
+                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
                 break;
             case DoughnutChartType.QUESTIONS:
                 this.doughnutChartTitle = 'resolved_posts';
-                this.titleLink = [`/courses/${this.course.id}/exercises/${this.exerciseId}`];
+                this.titleLink = [`/courses/${this.course().id}/exercises/${this.exerciseId()}`];
                 break;
             default:
                 this.doughnutChartTitle = '';
@@ -92,7 +93,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        if (this.course.id && this.exerciseId && this.titleLink) {
+        if (this.course().id && this.exerciseId() && this.titleLink) {
             this.router.navigate(this.titleLink);
         }
     }
@@ -114,6 +115,6 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)
      */
     valueFormatting(data: any): string {
-        return this.currentMax === 0 ? '0' : data.value;
+        return this.currentMax() === 0 ? '0' : data.value;
     }
 }

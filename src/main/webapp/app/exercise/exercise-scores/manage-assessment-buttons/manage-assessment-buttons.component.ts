@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -12,10 +12,10 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
@@ -28,12 +28,12 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     private textAssessmentService = inject(TextAssessmentService);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
 
-    @Input() exercise: Exercise;
-    @Input() course: Course;
-    @Input() participation: Participation;
-    @Input() isLoading: boolean;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly course = input<Course>(undefined!);
+    readonly participation = input.required<Participation>();
+    readonly isLoading = input<boolean>(undefined!);
 
-    @Output() refresh = new EventEmitter<void>();
+    readonly refresh = output<void>();
 
     correctionRoundIndices: number[];
     cancelConfirmationText: string;
@@ -51,42 +51,47 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-        this.examMode = !!this.exercise.exerciseGroup;
-        if (isPracticeMode(this.participation) && !this.examMode) {
+        this.newManualResultAllowed = areManualResultsAllowed(this.exercise());
+        this.examMode = !!this.exercise().exerciseGroup;
+        if (isPracticeMode(this.participation()) && !this.examMode) {
             // don't allow manual results for practice mode participations
             this.newManualResultAllowed = false;
         }
         // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
-        this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
+        this.correctionRoundIndices = [...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
     }
 
     getAssessmentLink(correctionRound = 0) {
-        if (!this.exercise.type || !this.exercise.id || !this.course.id || !this.participation.submissions?.[0]?.id) {
+        const exercise = this.exercise();
+        const course = this.course();
+        const participation = this.participation();
+        const submission = participation.submissions?.[0];
+        if (!exercise.type || !exercise.id || !course.id || !submission?.id) {
             return;
         }
         correctionRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
 
         return getLinkToSubmissionAssessment(
-            this.exercise.type,
-            this.course.id,
-            this.exercise.id,
-            this.participation.id,
-            this.participation.submissions?.[0]?.id,
-            this.exercise.exerciseGroup?.exam?.id,
-            this.exercise.exerciseGroup?.id,
+            exercise.type,
+            course.id,
+            exercise.id,
+            participation.id,
+            submission.id,
+            exercise.exerciseGroup?.exam?.id,
+            exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            this.participation.submissions[0].results?.[correctionRound]?.id,
+            submission.results?.[correctionRound]?.id,
         );
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
         // TODO do we need to handle this differently for programming exercises?
-        const result = this.participation.submissions![0].results?.[correctionRound];
+        const submission = this.participation().submissions![0];
+        const result = submission.results?.[correctionRound];
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!this.participation.submissions![0].results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!submission.results?.[correctionRound + 1]) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;
@@ -102,7 +107,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
         if (confirmCancel && result.submission?.id) {
             let cancelSubscription;
-            switch (this.exercise.type) {
+            switch (this.exercise().type) {
                 case ExerciseType.PROGRAMMING:
                     cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
                     break;
@@ -117,6 +122,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
                     break;
             }
             cancelSubscription?.subscribe(() => {
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.refresh.emit();
             });
         }

@@ -37,10 +37,16 @@ export default defineConfig({
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
+            'src/main/webapp/app/account/**/*.spec.ts', // include all account tests
+            'src/main/webapp/app/admin/**/*.spec.ts', // include all admin tests
             'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
-            'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
+            'src/main/webapp/app/course/**/*.spec.ts', // include all course tests
+            'src/main/webapp/app/calendar/**/*.spec.ts', // include all calendar tests
+            'src/main/webapp/app/localci/**/*.spec.ts', // include localci tests (absorbed the buildagent UI)
+            'src/main/webapp/app/localvc/**/*.spec.ts', // include localvc tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
+            'src/main/webapp/app/exercise/**/*.spec.ts', // include exercise tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts', // include tutorial group tests
             'src/main/webapp/app/quiz/**/*.spec.ts', // include quiz tests
             'src/main/webapp/app/lecture/**/*.spec.ts', // include lecture tests
@@ -49,6 +55,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
+            'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.spec.ts', // include exam request AI feedback button tests
             'src/main/webapp/app/exam/manage/student-exams/**/*.spec.ts', // include exam manage student-exams tests
             'src/main/webapp/app/exam/manage/test-runs/**/*.spec.ts', // include exam manage test-runs tests
             'src/main/webapp/app/exam/manage/exercise-groups/**/*.spec.ts', // include exam manage exercise groups tests
@@ -60,15 +67,13 @@ export default defineConfig({
             'src/main/webapp/app/exam/manage/exams/**/*.spec.ts', // include exams (detail/import/update/checklist/mode-picker) tests
             'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
             'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
-            'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
-            'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
-            'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
-            'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
-            'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
+            'src/main/webapp/app/shared-ui/**/*.spec.ts', // include shared-ui module tests
+            'src/main/webapp/app/foundation/**/*.spec.ts', // include all foundation tests (migrated to Vitest)
+            'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
-            'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
-            'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
+            'src/main/webapp/app/editor/**/*.spec.ts', // include all editor module tests (markdown/monaco editor)
+            'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.spec.ts', // include programming exercise component tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
@@ -76,15 +81,60 @@ export default defineConfig({
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
-            'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
+            'src/main/webapp/app/communication/**/*.spec.ts', // include communication module tests
+            'src/main/webapp/app/notification/**/*.spec.ts', // include notification module tests
+            'src/main/webapp/app/exercise/additional-feedback/**/*.spec.ts', // include additional feedback tests
+            'src/main/webapp/app/exercise/assessment-progress-label/**/*.spec.ts', // include assessment progress label tests
+            'src/main/webapp/app/exercise/course-exercises/**/*.spec.ts', // include course exercise service tests
+            'src/main/webapp/app/exercise/difficulty-level/**/*.spec.ts', // include difficulty level tests
+            'src/main/webapp/app/exercise/difficulty-picker/**/*.spec.ts', // include difficulty picker tests
+            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.spec.ts', // include exam exercise row buttons tests
+            'src/main/webapp/app/exercise/example-solution/**/*.spec.ts', // include example solution tests
+            'src/main/webapp/app/exercise/example-submission/**/*.spec.ts', // include example submission tests
+            'src/main/webapp/app/exercise/exercise-categories/**/*.spec.ts', // include exercise categories tests
+            'src/main/webapp/app/exercise/exercise-create-buttons/**/*.spec.ts', // include exercise create buttons tests
+            'src/main/webapp/app/exercise/exercise-detail-common-actions/**/*.spec.ts', // include exercise detail common actions tests
+            'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
+            'src/main/webapp/app/exercise/exercise-info/**/*.spec.ts', // include exercise info tests
+            'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise scores tests
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.spec.ts', // include exercise title channel name tests
+            'src/main/webapp/app/exercise/exercise-title-channel-name-primeng/**/*.spec.ts', // include exercise title channel name PrimeNG tests
+            'src/main/webapp/app/exercise/exercise-update-notification/**/*.spec.ts', // include exercise update notification tests
+            'src/main/webapp/app/exercise/exercise-update-warning/**/*.spec.ts', // include exercise update warning tests
+            'src/main/webapp/app/exercise/external-submission/**/*.spec.ts', // include external submission tests
+            'src/main/webapp/app/exercise/feedback/**/*.spec.ts', // include feedback tests
+            'src/main/webapp/app/exercise/feedback-suggestion/**/*.spec.ts', // include feedback suggestion tests
+            'src/main/webapp/app/exercise/import/**/*.spec.ts', // include exercise import tests
+            'src/main/webapp/app/exercise/mode-picker/**/*.spec.ts', // include mode picker tests
             'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
             'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
+            'src/main/webapp/app/exercise/presentation-score/**/*.spec.ts', // include presentation score tests
+            'src/main/webapp/app/exercise/rating/**/*.spec.ts', // include rating tests
+            'src/main/webapp/app/exercise/result-history/**/*.spec.ts', // include result history tests
+            'src/main/webapp/app/exercise/services/**/*.spec.ts', // include exercise services tests
+            'src/main/webapp/app/exercise/shared/**/*.spec.ts', // include exercise shared tests
+            'src/main/webapp/app/exercise/statistics/**/*.spec.ts', // include exercise statistics tests
+            'src/main/webapp/app/exercise/structured-grading-criterion/**/*.spec.ts', // include structured grading criterion tests
+            'src/main/webapp/app/exercise/submission/**/*.spec.ts', // include submission tests
+            'src/main/webapp/app/exercise/submission-export/**/*.spec.ts', // include submission export tests
+            'src/main/webapp/app/exercise/submission-policy/**/*.spec.ts', // include submission policy tests
+            'src/main/webapp/app/exercise/submission-version/**/*.spec.ts', // include submission version tests
+            'src/main/webapp/app/exercise/team/**/*.spec.ts', // include team tests
+            'src/main/webapp/app/exercise/team-config-form-group/**/*.spec.ts', // include team config form group tests
+            'src/main/webapp/app/exercise/team-submission-sync/**/*.spec.ts', // include team submission sync tests
+            'src/main/webapp/app/exercise/unreferenced-feedback/**/*.spec.ts', // include unreferenced feedback tests
+            'src/main/webapp/app/exercise/util/**/*.spec.ts', // include exercise util tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
+            'src/main/webapp/app/exercise/result/**/*.spec.ts', // include exercise result tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
-            'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
-            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
-            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
-            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
+            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
+            'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
+            'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
+            'src/main/webapp/app/plagiarism/**/*.spec.ts', // include all plagiarism tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -100,19 +150,26 @@ export default defineConfig({
             reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
+                'src/main/webapp/app/account/**/*.ts', // include all account for code coverage
+                'src/main/webapp/app/admin/**/*.ts', // include all admin for code coverage
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
-                'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
+                'src/main/webapp/app/localci/**/*.ts', // include localci for code coverage
+                'src/main/webapp/app/localvc/**/*.ts', // include localvc for code coverage
                 'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
+                'src/main/webapp/app/course/**/*.ts', // include all course for code coverage
+                'src/main/webapp/app/calendar/**/*.ts', // include all calendar for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
                 'src/main/webapp/app/text/**/*.ts', // include text module for code coverage
+                'src/main/webapp/app/exercise/**/*.ts', // include exercise for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts', // include tutorial group for code coverage
                 'src/main/webapp/app/lti/**/*.ts', // include lti for code coverage
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
+                'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.ts', // include exam request AI feedback button for code coverage
                 'src/main/webapp/app/exam/manage/student-exams/**/*.ts', // include exam manage student-exams for code coverage
                 'src/main/webapp/app/exam/manage/test-runs/**/*.ts', // include exam manage test-runs for code coverage
                 'src/main/webapp/app/exam/manage/exercise-groups/**/*.ts', // include exam manage exercise groups for code coverage
@@ -124,31 +181,75 @@ export default defineConfig({
                 'src/main/webapp/app/exam/manage/exams/**/*.ts', // include exams (detail/import/update/checklist/mode-picker) for code coverage
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
-                'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
-                'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
-                'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
-                'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
-                'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
+                'src/main/webapp/app/shared-ui/**/*.ts', // include shared-ui module for code coverage
+                'src/main/webapp/app/foundation/**/*.ts', // include all foundation for code coverage
+                'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
-                'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/editor/**/*.ts', // include all editor module for code coverage
+                'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.ts', // include programming exercise component for code coverage
+                'src/main/webapp/app/exercise/additional-feedback/**/*.ts', // include additional feedback for code coverage
+                'src/main/webapp/app/exercise/assessment-progress-label/**/*.ts', // include assessment progress label for code coverage
+                'src/main/webapp/app/exercise/course-exercises/**/*.ts', // include course exercise service for code coverage
+                'src/main/webapp/app/exercise/difficulty-level/**/*.ts', // include difficulty level for code coverage
+                'src/main/webapp/app/exercise/difficulty-picker/**/*.ts', // include difficulty picker for code coverage
+                'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.ts', // include exam exercise row buttons for code coverage
+                'src/main/webapp/app/exercise/example-solution/**/*.ts', // include example solution for code coverage
+                'src/main/webapp/app/exercise/example-submission/**/*.ts', // include example submission for code coverage
+                'src/main/webapp/app/exercise/exercise-categories/**/*.ts', // include exercise categories for code coverage
+                'src/main/webapp/app/exercise/exercise-create-buttons/**/*.ts', // include exercise create buttons for code coverage
+                'src/main/webapp/app/exercise/exercise-detail-common-actions/**/*.ts', // include exercise detail common actions for code coverage
                 'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
+                'src/main/webapp/app/exercise/exercise-info/**/*.ts', // include exercise info for code coverage
+                'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise scores for code coverage
+                'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts', // include exercise title channel name for code coverage
+                'src/main/webapp/app/exercise/exercise-title-channel-name-primeng/**/*.ts', // include exercise title channel name PrimeNG for code coverage
+                'src/main/webapp/app/exercise/exercise-update-notification/**/*.ts', // include exercise update notification for code coverage
+                'src/main/webapp/app/exercise/exercise-update-warning/**/*.ts', // include exercise update warning for code coverage
+                'src/main/webapp/app/exercise/external-submission/**/*.ts', // include external submission for code coverage
+                'src/main/webapp/app/exercise/feedback/**/*.ts', // include feedback for code coverage
+                'src/main/webapp/app/exercise/feedback-suggestion/**/*.ts', // include feedback suggestion for code coverage
+                'src/main/webapp/app/exercise/import/**/*.ts', // include exercise import for code coverage
+                'src/main/webapp/app/exercise/mode-picker/**/*.ts', // include mode picker for code coverage
+                'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
+                'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
+                'src/main/webapp/app/exercise/presentation-score/**/*.ts', // include presentation score for code coverage
+                'src/main/webapp/app/exercise/rating/**/*.ts', // include rating for code coverage
+                'src/main/webapp/app/exercise/result-history/**/*.ts', // include result history for code coverage
+                'src/main/webapp/app/exercise/review/**/*.ts', // include review for code coverage
+                'src/main/webapp/app/exercise/services/**/*.ts', // include exercise services for code coverage
+                'src/main/webapp/app/exercise/shared/**/*.ts', // include exercise shared for code coverage
+                'src/main/webapp/app/exercise/statistics/**/*.ts', // include exercise statistics for code coverage
+                'src/main/webapp/app/exercise/structured-grading-criterion/**/*.ts', // include structured grading criterion for code coverage
+                'src/main/webapp/app/exercise/submission/**/*.ts', // include submission for code coverage
+                'src/main/webapp/app/exercise/submission-export/**/*.ts', // include submission export for code coverage
+                'src/main/webapp/app/exercise/submission-policy/**/*.ts', // include submission policy for code coverage
+                'src/main/webapp/app/exercise/submission-version/**/*.ts', // include submission version for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
+                'src/main/webapp/app/exercise/team/**/*.ts', // include team for code coverage
+                'src/main/webapp/app/exercise/team-config-form-group/**/*.ts', // include team config form group for code coverage
+                'src/main/webapp/app/exercise/team-submission-sync/**/*.ts', // include team submission sync for code coverage
+                'src/main/webapp/app/exercise/unreferenced-feedback/**/*.ts', // include unreferenced feedback for code coverage
+                'src/main/webapp/app/exercise/util/**/*.ts', // include exercise util for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
-                'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
+                'src/main/webapp/app/notification/**/*.ts', // include all notification module for code coverage
                 'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
                 'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
+                'src/main/webapp/app/exercise/result/**/*.ts', // include exercise result for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
-                'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
-                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
-                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
-                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
+                'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
+                'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
+                'src/main/webapp/app/plagiarism/**/*.ts', // include all plagiarism for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
@@ -161,12 +262,11 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Lowered ~0.5pp below current actuals to absorb further Jest→Vitest
-                // migration drift. Re-tune when migration completes.
-                lines: 89.6,
-                statements: 89.4,
+                // Floors set just below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
+                lines: 88.8,
+                statements: 88.7,
                 branches: 73.6,
-                functions: 87.4,
+                functions: 86.0,
             },
         },
     },

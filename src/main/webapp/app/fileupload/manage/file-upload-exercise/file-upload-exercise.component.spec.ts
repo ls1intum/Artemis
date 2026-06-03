@@ -11,19 +11,19 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortService } from 'app/foundation/service/sort.service';
 
 describe('FileUploadExerciseComponent', () => {
     setupTestBed({ zoneless: true });
@@ -87,7 +87,7 @@ describe('FileUploadExerciseComponent', () => {
         fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
         alertService = TestBed.inject(AlertService);
 
-        component.course = course;
+        fixture.componentRef.setInput('course', course);
     });
 
     afterEach(() => {
@@ -139,7 +139,7 @@ describe('FileUploadExerciseComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            expect(component.fileUploadExercises()[0].course).toBe(component.course);
+            expect(component.fileUploadExercises()[0].course).toBe(component.courseContext);
         });
     });
 
@@ -191,26 +191,30 @@ describe('FileUploadExerciseComponent', () => {
         });
 
         it('should filter exercises by title', () => {
-            component.exerciseFilter = new ExerciseFilter('PDF', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('PDF', '', 'all'));
+            fixture.detectChanges();
 
             expect(component.filteredFileUploadExercises().length).toBe(1);
             expect(component.filteredFileUploadExercises()[0].title).toBe('PDF Upload');
         });
 
         it('should show all exercises when filter matches all', () => {
-            component.exerciseFilter = new ExerciseFilter('Upload', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Upload', '', 'all'));
+            fixture.detectChanges();
 
             expect(component.filteredFileUploadExercises().length).toBe(3);
         });
 
         it('should show no exercises when filter matches none', () => {
-            component.exerciseFilter = new ExerciseFilter('NonExistent', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('NonExistent', '', 'all'));
+            fixture.detectChanges();
 
             expect(component.filteredFileUploadExercises().length).toBe(0);
         });
 
         it('should apply filter by exercise type', () => {
-            component.exerciseFilter = new ExerciseFilter('', '', 'file-upload');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('', '', 'file-upload'));
+            fixture.detectChanges();
 
             expect(component.filteredFileUploadExercises().length).toBe(3);
         });
@@ -297,7 +301,8 @@ describe('FileUploadExerciseComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            component.exerciseFilter = new ExerciseFilter('Test', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Test', '', 'all'));
+            fixture.detectChanges();
 
             expect(component.filteredFileUploadExercises()).toHaveLength(1);
         });

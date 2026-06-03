@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
 
 @Component({
     selector: 'jhi-landing-social-proof',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe],
     styles: `
         :host {
@@ -48,6 +49,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
 
         .logo-item {
             height: 36px;
+            width: auto;
             flex-shrink: 0;
             opacity: 0.7;
             transition: opacity 0.2s;
@@ -84,15 +86,36 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
         }
     `,
     template: `
-        <section class="social-proof">
+        <section class="social-proof" [attr.aria-label]="'landing.socialProof.universitiesAria' | artemisTranslate">
             <p class="social-proof-title">{{ 'landing.socialProof.title' | artemisTranslate }}</p>
             <div class="marquee-container">
                 <div class="marquee-track">
                     @for (logo of logos; track logo.name) {
-                        <img class="logo-item" [class.light-mode-black]="logo.isWhiteLogo" [src]="logo.file" [alt]="logo.name" [style.width.px]="logo.width" />
+                        <img
+                            class="logo-item"
+                            [class.light-mode-black]="logo.isWhiteLogo"
+                            [src]="logo.file"
+                            [alt]="logo.name"
+                            [style.width.px]="logo.width"
+                            height="36"
+                            [attr.width]="logo.width"
+                            loading="lazy"
+                            decoding="async"
+                        />
                     }
-                    @for (logo of logos; track $index) {
-                        <img class="logo-item" [class.light-mode-black]="logo.isWhiteLogo" [src]="logo.file" [alt]="logo.name" [style.width.px]="logo.width" />
+                    @for (logo of logos; track logo.name) {
+                        <img
+                            class="logo-item"
+                            [class.light-mode-black]="logo.isWhiteLogo"
+                            [src]="logo.file"
+                            [alt]=""
+                            aria-hidden="true"
+                            [style.width.px]="logo.width"
+                            height="36"
+                            [attr.width]="logo.width"
+                            loading="lazy"
+                            decoding="async"
+                        />
                     }
                 </div>
             </div>

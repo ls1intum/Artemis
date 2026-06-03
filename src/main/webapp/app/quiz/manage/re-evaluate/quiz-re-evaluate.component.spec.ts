@@ -9,9 +9,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -84,12 +84,11 @@ describe('QuizExercise Re-evaluate Component', () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(DialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(NgbActiveModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -142,6 +141,20 @@ describe('QuizExercise Re-evaluate Component', () => {
         // reset all
         comp.resetAll();
         expect(comp.quizExercise).toEqual(comp.savedEntity);
+    });
+
+    it('should clear invalid state after deleting and restoring the only question via resetAll', () => {
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        // Delete all questions so the quiz becomes invalid
+        const questions = [...comp.quizExercise.quizQuestions!];
+        questions.forEach((q) => comp.deleteQuestion(q));
+        expect(comp.quizExercise.quizQuestions).toHaveLength(0);
+        expect(comp.quizIsValid).toBe(false);
+        // Restore questions via resetAll
+        comp.resetAll();
+        expect(comp.quizExercise.quizQuestions!.length).toBeGreaterThan(0);
+        expect(comp.quizIsValid).toBe(true);
     });
 
     it('should have pending changes', () => {

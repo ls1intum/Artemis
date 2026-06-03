@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
@@ -93,7 +93,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var body = new PyrisMemoryWithRelationsDTO(pyrisMemory, List.of(learning), List.of(connection));
         irisRequestMockProvider.mockGetMemoryWithRelations(user.getId(), memoryId, body);
 
-        var dto = request.get("/api/iris/user/memory/" + memoryId, HttpStatus.OK, MemirisMemoryWithRelationsDTO.class);
+        var dto = request.get("/api/iris/user/memories/" + memoryId, HttpStatus.OK, MemirisMemoryWithRelationsDTO.class);
         assertThat(dto.id()).isEqualTo(memoryId);
         assertThat(dto.title()).isEqualTo("T");
         assertThat(dto.sleptOn()).isTrue();
@@ -110,7 +110,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "missing";
         irisRequestMockProvider.mockGetMemoryWithRelationsError(user.getId(), memoryId, HttpStatus.NOT_FOUND);
-        request.get("/api/iris/user/memory/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
+        request.get("/api/iris/user/memories/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
     }
 
     @Test
@@ -119,7 +119,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "DEL-1";
         irisRequestMockProvider.mockDeleteMemory(user.getId(), memoryId);
-        request.delete("/api/iris/user/memory/" + memoryId, HttpStatus.NO_CONTENT);
+        request.delete("/api/iris/user/memories/" + memoryId, HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -128,6 +128,6 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "FAIL-1";
         irisRequestMockProvider.mockDeleteMemoryError(user.getId(), memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
-        request.delete("/api/iris/user/memory/" + memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/iris/user/memories/" + memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -1,8 +1,8 @@
 <h4 class="fw-medium">
-    <div class="badge me-1" [ngStyle]="{ backgroundColor: category.color }" [ngClass]="'category-' + fontSize">
-        {{ category.category }}
-        @if (displayRemoveButton) {
-            <button class="remove-button" (click)="onClick()">
+    <div class="badge me-1" [ngStyle]="{ backgroundColor: category().color }" [ngClass]="'category-' + fontSize()">
+        {{ category().category }}
+        @if (displayRemoveButton()) {
+            <button class="remove-button" (click)="onClick()()">
                 <fa-icon [icon]="faTimes" class="category-chip-remove" />
             </button>
         }

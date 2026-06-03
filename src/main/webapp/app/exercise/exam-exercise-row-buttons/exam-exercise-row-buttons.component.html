@@ -1,25 +1,60 @@
+@let courseValue = course();
+@let exerciseValue = exercise();
+@let examValue = exam();
+@let exerciseGroupIdValue = exerciseGroupId();
 <div class="btn-group flex-btn-group-container">
-    @if (course.isAtLeastInstructor) {
+    @if (courseValue.isAtLeastInstructor) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'participations']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                exerciseValue.type + '-exercises',
+                exerciseValue.id,
+                'participations',
+            ]"
             class="btn btn-primary btn-sm me-1"
         >
             <fa-icon [icon]="farListAlt" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
         </a>
     }
-    @if (course.isAtLeastInstructor) {
+    @if (courseValue.isAtLeastInstructor) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'scores']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                exerciseValue.type + '-exercises',
+                exerciseValue.id,
+                'scores',
+            ]"
             class="btn btn-info btn-sm me-1"
         >
             <fa-icon [icon]="faTable" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
         </a>
     }
-    @if (course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING) {
+    @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.PROGRAMMING) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'programming-exercises', exercise.id, 'grading', 'test-cases']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                'programming-exercises',
+                exerciseValue.id,
+                'grading',
+                'test-cases',
+            ]"
             class="btn btn-warning btn-sm me-1"
         >
             <fa-icon [icon]="faFileSignature" />
@@ -27,26 +62,51 @@
         </a>
     }
     <!-- Example Submission -->
-    @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.FILE_UPLOAD) {
+    @if (
+        courseValue.isAtLeastEditor &&
+        exerciseValue.type !== exerciseType.QUIZ &&
+        exerciseValue.type !== exerciseType.PROGRAMMING &&
+        exerciseValue.type !== exerciseType.FILE_UPLOAD
+    ) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'example-submissions']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                exerciseValue.type + '-exercises',
+                exerciseValue.id,
+                'example-submissions',
+            ]"
             class="btn btn-success btn-sm me-1"
         >
             <fa-icon [icon]="faBook" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions"></span>
         </a>
     }
-    @if (course.isAtLeastInstructor && exercise.type === exerciseType.QUIZ) {
+    @if (courseValue.isAtLeastInstructor && exerciseValue.type === exerciseType.QUIZ) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'quiz-point-statistic']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                'quiz-exercises',
+                exerciseValue.id,
+                'quiz-point-statistic',
+            ]"
             class="btn btn-info btn-sm me-1"
         >
             <fa-icon [icon]="faSignal" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.statistics"></span>
         </a>
     }
-    @if (course.isAtLeastInstructor && exercise.teamMode) {
-        <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'teams']" class="btn btn-primary btn-sm me-1">
+    @if (courseValue.isAtLeastInstructor && exerciseValue.teamMode) {
+        <a [routerLink]="['/course-management', courseValue.id, 'exercises', exerciseValue.id, 'teams']" class="btn btn-primary btn-sm me-1">
             <fa-icon [icon]="faUsers" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams"></span>
         </a>
@@ -54,24 +114,27 @@
     <!-- The route expects a preferred participationId. As we only have Exercises and not ProgrammingExercises with
   participation, we pass a hardcoded number. The code editor component will load the proper ProgrammingExercise, choose
   a participation and update the url displayed in the browser -->
-    @if (course.isAtLeastEditor && exercise.type === exerciseType.PROGRAMMING) {
-        <a [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, -1]" class="btn btn-warning btn-sm me-1">
+    @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.PROGRAMMING) {
+        <a
+            [routerLink]="['/course-management', courseValue.id, 'programming-exercises', exerciseValue.id, 'code-editor', RepositoryType.TEMPLATE, -1]"
+            class="btn btn-warning btn-sm me-1"
+        >
             <fa-icon [icon]="faPencilAlt" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor"></span>
         </a>
     }
-    @if (course.isAtLeastEditor && exercise.type === exerciseType.QUIZ) {
+    @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.QUIZ) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'preview']"
+            [routerLink]="['/course-management', courseValue.id, 'exams', examValue.id, 'exercise-groups', exerciseGroupIdValue, 'quiz-exercises', exerciseValue.id, 'preview']"
             class="btn btn-success btn-sm me-1"
         >
             <fa-icon [icon]="faEye" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview"></span>
         </a>
     }
-    @if (course.isAtLeastEditor && exercise.type === exerciseType.QUIZ) {
+    @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.QUIZ) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 'solution']"
+            [routerLink]="['/course-management', courseValue.id, 'exams', examValue.id, 'exercise-groups', exerciseGroupIdValue, 'quiz-exercises', exerciseValue.id, 'solution']"
             class="btn btn-success btn-sm me-1"
         >
             <fa-icon [icon]="faEye" />
@@ -79,11 +142,21 @@
         </a>
     }
     <!-- Edit or re-evaluate for quizzes -->
-    @if (course.isAtLeastEditor && exercise.type === exerciseType.QUIZ) {
+    @if (courseValue.isAtLeastEditor && exerciseValue.type === exerciseType.QUIZ) {
         <!-- Only show the re-evaluate button after the exam has ended -->
-        @if (isExamOver() && course.isAtLeastInstructor) {
+        @if (isExamOver() && courseValue.isAtLeastInstructor) {
             <a
-                [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, 'quiz-exercises', exercise.id, 're-evaluate']"
+                [routerLink]="[
+                    '/course-management',
+                    courseValue.id,
+                    'exams',
+                    examValue.id,
+                    'exercise-groups',
+                    exerciseGroupIdValue,
+                    'quiz-exercises',
+                    exerciseValue.id,
+                    're-evaluate',
+                ]"
                 class="btn btn-warning btn-sm me-1"
             >
                 <fa-icon [icon]="faWrench" />
@@ -94,7 +167,7 @@
         @if (!isExamOver()) {
             <div style="display: flex">
                 <!-- Display a warning next to the edit button if test run participations for this exercise exist -->
-                @if (exercise.testRunParticipationsExist) {
+                @if (exerciseValue.testRunParticipationsExist) {
                     <fa-icon
                         style="margin: 0.3em"
                         [icon]="faExclamationTriangle"
@@ -104,7 +177,17 @@
                 }
                 <a
                     [class.disabled]="hasExamStarted()"
-                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
+                    [routerLink]="[
+                        '/course-management',
+                        courseValue.id,
+                        'exams',
+                        examValue.id,
+                        'exercise-groups',
+                        exerciseGroupIdValue,
+                        exerciseValue.type + '-exercises',
+                        exerciseValue.id,
+                        'edit',
+                    ]"
                     class="btn btn-warning btn-sm me-1"
                 >
                     <fa-icon [icon]="faWrench" />
@@ -113,26 +196,36 @@
             </div>
         }
     }
-    @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
+    @if (courseValue.isAtLeastEditor && exerciseValue.type !== exerciseType.QUIZ) {
         <a
-            [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
+            [routerLink]="[
+                '/course-management',
+                courseValue.id,
+                'exams',
+                examValue.id,
+                'exercise-groups',
+                exerciseGroupIdValue,
+                exerciseValue.type + '-exercises',
+                exerciseValue.id,
+                'edit',
+            ]"
             class="btn btn-warning btn-sm me-1"
         >
             <fa-icon [icon]="faWrench" />
             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
         </a>
     }
-    @if (course.isAtLeastInstructor && exercise.type !== exerciseType.PROGRAMMING) {
+    @if (courseValue.isAtLeastInstructor && exerciseValue.type !== exerciseType.PROGRAMMING) {
         <button
             jhiDeleteButton
-            [entityTitle]="exercise.title || ''"
+            [entityTitle]="exerciseValue.title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
             entitySummaryTitle="artemisApp.exercise.delete.summary.title"
             [fetchEntitySummary]="fetchExerciseDeletionSummary()"
             [translateValues]="{
-                courseTitle: course.title,
-                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                courseTitle: courseValue.title,
+                courseType: courseValue.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
             }"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
@@ -140,16 +233,16 @@
             <fa-icon [icon]="faTrash" />
         </button>
     }
-    @if (course.isAtLeastInstructor && exercise.type === exerciseType.PROGRAMMING) {
+    @if (courseValue.isAtLeastInstructor && exerciseValue.type === exerciseType.PROGRAMMING) {
         <button
             jhiDeleteButton
-            [entityTitle]="exercise.title || ''"
+            [entityTitle]="exerciseValue.title || ''"
             entitySummaryTitle="artemisApp.exercise.delete.summary.title"
             [fetchEntitySummary]="fetchExerciseDeletionSummary()"
             deleteQuestion="artemisApp.programmingExercise.delete.question"
             [translateValues]="{
-                courseTitle: course.title,
-                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                courseTitle: courseValue.title,
+                courseType: courseValue.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
             }"
             (delete)="deleteProgrammingExercise($event)"
             [dialogError]="dialogError$"

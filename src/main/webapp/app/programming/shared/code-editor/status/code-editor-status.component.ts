@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommitState, EditorState } from '../model/code-editor.model';
 
 @Component({
@@ -16,10 +16,8 @@ export class CodeEditorStatusComponent {
     CommitState = CommitState;
     EditorState = EditorState;
 
-    @Input()
-    editorState: EditorState;
-    @Input()
-    commitState: CommitState;
+    readonly editorState = input<EditorState>();
+    readonly commitState = input<CommitState>();
 
     // Icons
     faCircleNotch = faCircleNotch;

@@ -2,7 +2,7 @@ import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { Post } from './shared/entities/post.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 export enum PostingEditType {
     CREATE,
@@ -132,7 +132,7 @@ export interface ContextInformation {
  */
 export type RouteComponents = (string | number)[];
 
-export const MetisWebsocketChannelPrefix = '/topic/metis/';
+export const MetisWebsocketChannelPrefix = '/topic/communication/';
 
 /**
  * whitespace accepted only together with a character excluding newline character

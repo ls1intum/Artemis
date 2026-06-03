@@ -24,6 +24,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            toggleThreadFeedbackSelection: vi.fn(),
+            isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             toggleGroupResolvedInContext: vi.fn(),
             threads: signal([]),
         };
@@ -56,8 +58,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('should request confirmation dialog on deleteComment', () => {
         const confirmSpy = vi.spyOn(confirmationService, 'confirm');
         comp.deleteComment(5);
-        expect(confirmSpy).toHaveBeenCalledOnce();
-        expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
+        expect(confirmSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
     });
 
     it('should delete comment when deletion is confirmed', () => {
@@ -178,6 +179,44 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should toggle feedback selection when enabled', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
+
+        comp.toggleFeedbackSelection();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+    });
+
+    it('should show feedback action before resolve and reply actions', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
+
+        fixture.detectChanges();
+
+        const actionText = fixture.nativeElement.querySelector('.monaco-review-comment-actions')?.textContent ?? '';
+        expect(actionText.indexOf('artemisApp.review.selectThreadAsFeedback')).toBeLessThan(actionText.indexOf('artemisApp.review.resolveThread'));
+        expect(actionText.indexOf('artemisApp.review.resolveThread')).toBeLessThan(actionText.indexOf('artemisApp.review.replySubmit'));
+    });
+
+    it('should show selected feedback badge and deselection action when selected for feedback', () => {
+        reviewCommentService.isThreadSelectedAsFeedback.mockReturnValue(true);
+        fixture.componentRef.setInput('showFeedbackAction', true);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.threadSelectedForCodeGeneration');
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
+    });
+
+    it('should hide the feedback action for outdated threads', () => {
+        fixture.componentRef.setInput('showFeedbackAction', true);
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
     it('should resolve all threads in the group and collapse current thread', () => {

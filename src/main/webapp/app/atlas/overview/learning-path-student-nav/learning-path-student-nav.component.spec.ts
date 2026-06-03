@@ -7,7 +7,7 @@ import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-pa
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 

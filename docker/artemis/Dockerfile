@@ -57,16 +57,25 @@ COPY . .
 
 # `-x pnpmInstall` skips re-running the install task — node_modules is already
 # in place from the previous RUN.
+#
+# `-Psbom` includes the server + client Software Bill of Materials inside the WAR.
+# This Dockerfile is the production image build path (used by the `docker-release`
+# job in .github/workflows/build.yml, which only fires on push to develop / main /
+# release/* / version tags and on release events). Always emitting the SBOM here
+# guarantees that deployed images expose the dependency inventory via
+# AdminSbomResource and the weekly vulnerability scan finds something to scan.
+# The PR Docker image (docker-pr) bypasses this RUN stage via WAR_FILE_STAGE=external_builder
+# and reuses the WAR from build-war, which deliberately ships without SBOM on PRs.
 RUN \
   --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.pnpm-store \
   --mount=type=cache,target=/opt/artemis/.cache \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar -x pnpmInstall
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar -Psbom clean bootWar -x pnpmInstall
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3.23.2 AS external_builder
+FROM docker.io/library/alpine:3.23.4 AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"

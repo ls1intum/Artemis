@@ -39,6 +39,7 @@
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Plattform Connector",
             "redis": "Redis",
+            "weaviate": "Weaviate",
             "reactiveDiscoveryClients": "Reactive Discovery Clients"
         },
         "table": {

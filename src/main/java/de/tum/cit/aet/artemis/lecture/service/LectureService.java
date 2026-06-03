@@ -21,27 +21,31 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -87,12 +91,15 @@ public class LectureService {
 
     private final Optional<IrisChatSessionApi> irisChatSessionApi;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     private final YouTubeUrlService youTubeUrlService;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
-            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi, YouTubeUrlService youTubeUrlService) {
+            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -104,6 +111,7 @@ public class LectureService {
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
         this.irisChatSessionApi = irisChatSessionApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
     }
 
@@ -201,6 +209,13 @@ public class LectureService {
         // Remove any Iris chat sessions referencing this lecture. Since the unified iris_session
         // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
         irisChatSessionApi.ifPresent(api -> api.deleteAllForLecture(lecture.getId()));
+
+        // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
+        // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
+            service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        });
 
         lectureRepository.deleteById(lecture.getId());
     }
@@ -462,19 +477,39 @@ public class LectureService {
 
         Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
         Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+
+        Set<Lecture> lecturesToUpdate = new HashSet<>();
+        Set<Channel> channelsToUpdate = new HashSet<>();
+
         for (int index = 0; index < existingLectures.size(); index++) {
             Lecture lecture = existingLectures.get(index);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
-                lecture.setTitle("Lecture " + (index + 1));
+            String newTitle = "Lecture " + (index + 1);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+                lecture.setTitle(newTitle);
+                lecturesToUpdate.add(lecture);
             }
             Channel channel = lectureToChannelMap.get(lecture.getId());
             String channelName = channel.getName();
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
-                channel.setName("lecture-lecture-" + (index + 1));
+            String newChannelName = "lecture-lecture-" + (index + 1);
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+                channel.setName(newChannelName);
+                channelsToUpdate.add(channel);
             }
         }
 
         lectureRepository.saveAll(existingLectures);
         channelRepository.saveAll(existingLectureChannels);
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            lecturesToUpdate.forEach(lecture -> service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
+            channelsToUpdate.forEach(channel -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
+        });
     }
 }

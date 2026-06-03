@@ -1,33 +1,34 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { downloadFile, downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Range } from 'app/shared/util/utils';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FormsModule } from '@angular/forms';
 import { PlagiarismSidebarComponent } from '../plagiarism-sidebar/plagiarism-sidebar.component';
 import { PlagiarismDetailsComponent } from '../plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from '../plagiarism-run-details/plagiarism-run-details.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 
 export type PlagiarismCheckState = {
@@ -49,6 +50,7 @@ export type PlagiarismCheckState = {
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
+        DialogModule,
         FormsModule,
         PlagiarismSidebarComponent,
         PlagiarismDetailsComponent,
@@ -64,7 +66,6 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private inspectorService = inject(PlagiarismInspectorService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
-    private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
 
     /**
@@ -147,6 +148,11 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * Whether all plagiarism comparisons should be deleted. If this is true, comparisons with the status "approved" or "denied" will also be deleted
      */
     deleteAllPlagiarismComparisons = false;
+
+    /**
+     * Controls the visibility of the clean-up confirmation dialog.
+     */
+    readonly cleanUpModalVisible = signal(false);
 
     readonly FeatureToggle = FeatureToggle;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -482,14 +488,17 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Open a modal that requires the user's confirmation.
-     * @param content the modal content
+     * Open the dialog that requires the user's confirmation before cleaning up plagiarism results.
      */
-    openCleanUpModal(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
-            if (result === 'confirm') {
-                this.cleanUpPlagiarism();
-            }
-        });
+    openCleanUpModal() {
+        this.cleanUpModalVisible.set(true);
+    }
+
+    /**
+     * Confirm the clean-up: close the dialog and trigger the clean-up.
+     */
+    confirmCleanUp() {
+        this.cleanUpModalVisible.set(false);
+        this.cleanUpPlagiarism();
     }
 }

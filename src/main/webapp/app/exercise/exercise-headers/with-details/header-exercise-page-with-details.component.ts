@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { SortService } from 'app/shared/service/sort.service';
+import { Component, OnChanges, OnInit, computed, inject, input } from '@angular/core';
+import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -10,19 +10,19 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { IncludedInScoreBadgeComponent } from '../included-in-score-badge/included-in-score-badge.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
@@ -51,13 +51,15 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     readonly getIconTooltip = getIconTooltip;
     readonly dayjs = dayjs;
 
-    @Input() public exercise: Exercise;
-    @Input() public studentParticipation?: StudentParticipation;
-    @Input() public title: string;
-    @Input() public exam?: Exam;
-    @Input() public course?: Course;
-    @Input() public isTestRun = false;
-    @Input() public submissionPolicy?: SubmissionPolicy;
+    readonly exercise = input.required<Exercise>();
+    readonly studentParticipation = input<StudentParticipation>();
+    readonly title = input<string>();
+    readonly exam = input<Exam>();
+    readonly course = input<Course>();
+    readonly isTestRun = input<boolean>(false);
+    readonly submissionPolicy = input<SubmissionPolicy>();
+
+    readonly effectiveCourse = computed(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
@@ -78,32 +80,37 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     faQuestionCircle = faQuestionCircle;
 
     ngOnInit() {
-        this.exerciseCategories = this.exercise.categories || [];
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+        const course = this.effectiveCourse();
+        const exam = this.exam();
 
-        if (this.exercise.type) {
-            this.icon = getIcon(this.exercise.type);
+        this.exerciseCategories = exercise.categories || [];
+
+        if (exercise.type) {
+            this.icon = getIcon(exercise.type);
         }
 
-        this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
+        this.programmingExercise = exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
 
-        if (this.exam) {
+        if (exam) {
             this.determineNextRelevantDateExamMode();
         } else {
-            this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
-            if (this.course?.maxComplaintTimeDays) {
+            this.dueDate = getExerciseDueDate(exercise, studentParticipation);
+            this.isBeforeStartDate = exercise.startDate ? exercise.startDate.isAfter(dayjs()) : !!exercise.releaseDate?.isAfter(dayjs());
+            if (course?.maxComplaintTimeDays) {
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-                    this.exercise,
-                    this.course.maxComplaintTimeDays,
-                    getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
-                    this.studentParticipation,
+                    exercise,
+                    course.maxComplaintTimeDays,
+                    getAllResultsOfAllSubmissions(studentParticipation?.submissions).last(),
+                    studentParticipation,
                 );
             }
             // There is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                !!this.studentParticipation?.submissionCount &&
+                !!studentParticipation?.submissionCount &&
                 !this.individualComplaintDueDate &&
-                (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
+                (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.determineNextRelevantDateCourseMode();
         }
@@ -114,19 +121,22 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     ngOnChanges() {
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
+        const submissionPolicy = this.submissionPolicy();
+        const studentParticipation = this.studentParticipation();
+        const exercise = this.exercise();
+        const course = this.effectiveCourse();
 
-        if (this.submissionPolicy?.active) {
+        if (submissionPolicy?.active) {
             this.countSubmissions();
         }
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
         if (results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
             this.sortService.sortByProperty(results, 'id', false);
 
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
             }
         }
     }
@@ -135,7 +145,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the exam cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateExamMode() {
-        const possibleDates = [this.exam?.endDate, this.exam?.publishResultsDate];
+        const exam = this.exam();
+        const possibleDates = [exam?.endDate, exam?.publishResultsDate];
         const possibleDatesLabels = ['endDate', 'publishResultsDate'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
@@ -145,7 +156,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the course exercise cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateCourseMode() {
-        const possibleDates = [this.exercise.releaseDate, this.exercise.startDate, this.exercise.assessmentDueDate, this.individualComplaintDueDate];
+        const exercise = this.exercise();
+        const possibleDates = [exercise.releaseDate, exercise.startDate, exercise.assessmentDueDate, this.individualComplaintDueDate];
         const possibleDatesLabels = ['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());
@@ -190,6 +202,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     }
 
     private countSubmissions() {
-        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation());
     }
 }

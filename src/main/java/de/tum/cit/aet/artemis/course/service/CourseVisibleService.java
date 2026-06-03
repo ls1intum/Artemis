@@ -1,0 +1,42 @@
+package de.tum.cit.aet.artemis.course.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
+import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
+import de.tum.cit.aet.artemis.course.domain.Course;
+
+/**
+ * Service for determining whether a course is visible to a user.
+ */
+@Service
+@Profile(PROFILE_CORE)
+@Lazy
+public class CourseVisibleService {
+
+    private final PolicyEngine policyEngine;
+
+    private final AccessPolicy<Course> courseVisibilityPolicy;
+
+    public CourseVisibleService(PolicyEngine policyEngine, CourseVisibilityPolicy courseVisibilityPolicyProvider) {
+        this.policyEngine = policyEngine;
+        this.courseVisibilityPolicy = courseVisibilityPolicyProvider.getPolicy();
+    }
+
+    /**
+     * Checks if a course is visible for a user based on their role and the course's start date.
+     *
+     * @param user   the user for whom to check visibility
+     * @param course the course to check visibility for
+     * @return true if the course is visible for the user, false otherwise
+     */
+    public boolean isCourseVisibleForUser(User user, Course course) {
+        return policyEngine.isAllowed(courseVisibilityPolicy, user, course);
+    }
+}

@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
@@ -53,7 +53,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.programmingExerciseTaskService.initializeTask(this.task);
         test.changed = true;
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     taskUpdateHandler() {
@@ -77,7 +77,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             }
         });
 
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     formatTestIndex(i: number, j: number): string {

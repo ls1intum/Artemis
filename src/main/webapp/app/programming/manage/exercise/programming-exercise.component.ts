@@ -5,15 +5,15 @@ import { Observable, merge } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { onError } from 'app/shared/util/global.utils';
+import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import {
@@ -32,26 +32,26 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from '../grading/warning/programming-exercise-grading-dirty-warning.component';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SlicePipe } from '@angular/common';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SharingInfo } from 'app/sharing/sharing.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
@@ -130,7 +130,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
                     this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;
