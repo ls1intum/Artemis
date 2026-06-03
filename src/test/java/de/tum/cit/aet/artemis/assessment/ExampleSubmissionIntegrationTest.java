@@ -409,8 +409,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void importExampleSubmissionWithStudentSubmission_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Submission submission = new TextSubmission();
         submission.setId(12345L);
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         importExampleSubmission(textExercise.getId(), submission.getId(), HttpStatus.FORBIDDEN);
     }
 

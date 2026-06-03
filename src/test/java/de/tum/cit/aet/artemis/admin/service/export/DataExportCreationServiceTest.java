@@ -343,8 +343,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             Files.createDirectories(repoDownloadClonePath);
         }
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
-                courseShortName, true, true);
+        var course = courseUtilService.createCourseWithExamAndExerciseGroupsAndGradingScale(userForExport, courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();

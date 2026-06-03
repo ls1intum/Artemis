@@ -11,6 +11,7 @@ import java.time.format.FormatStyle;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -108,7 +109,10 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void tearDown() {
         // Clean up entities created during tests to ensure isolation
         globalNotificationSettingRepository.deleteAll();
-        courseRepository.findAll().stream().filter(c -> c.getInstructorGroupName() != null && c.getInstructorGroupName().startsWith(TEST_PREFIX)).forEach(courseRepository::delete);
+        // Revoke UCR entries for TEST_PREFIX instructors — courses without UCR entries are
+        // invisible to findInstructorRecipientsForMaintenanceEmail, so course deletion is unnecessary
+        Stream.of(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2").flatMap(login -> userTestRepository.findOneWithGroupsByLogin(login).stream()).map(User::getId)
+                .forEach(userCourseRoleRepository::deleteByUser_Id);
     }
 
     // ---- Template rendering tests ----
@@ -180,8 +184,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void findInstructorRecipients_shouldReturnInstructorsOfOngoingCourse() {
         var now = ZonedDateTime.now();
         // Create ongoing course and enroll instructor1 as INSTRUCTOR
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
         var instructor1 = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         userUtilService.enrollUserInCourse(instructor1, ongoingCourse, CourseRole.INSTRUCTOR);
@@ -194,15 +197,11 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldNotIncludeInstructorsOnlyInExpiredCourses() {
         var now = ZonedDateTime.now();
-        // Use a unique group name that no other test will use
-        var uniqueInstructorGroup = TEST_PREFIX + "expired_only_instr";
-
         // Enroll instructor1 only in the expired course (not in any ongoing course)
         var expiredOnlyInstructor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
 
         // Create only an expired course
-        Course expiredCourse = CourseFactory.generateCourse(null, now.minusDays(60), now.minusDays(1), new HashSet<>(), "someStudents", "someTutors", "someEditors",
-                uniqueInstructorGroup);
+        Course expiredCourse = CourseFactory.generateCourse(null, now.minusDays(60), now.minusDays(1), new HashSet<>());
         courseRepository.save(expiredCourse);
         userUtilService.enrollUserInCourse(expiredOnlyInstructor, expiredCourse, CourseRole.INSTRUCTOR);
 
@@ -214,8 +213,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldExcludeOptedOutUsers() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
         // Enroll instructor2 so the course has at least one recipient (instructor1 is opted out)
@@ -238,8 +236,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void countInstructorRecipients_shouldMatchFindSize() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
@@ -251,8 +248,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void findInstructorRecipients_shouldIncludeInstructorsOfCourseWithNullDates() {
         var now = ZonedDateTime.now();
         // Course with null start and end dates should be considered ongoing
-        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
-                TEST_PREFIX + "instructor");
+        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         courseRepository.save(openCourse);
         var instructor1 = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         userUtilService.enrollUserInCourse(instructor1, openCourse, CourseRole.INSTRUCTOR);
@@ -264,8 +260,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void findInstructorRecipients_shouldExcludeUsersWithNoEmail() {
         var now = ZonedDateTime.now();
-        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor",
-                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+        Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
         courseRepository.save(ongoingCourse);
 
         // Remove email from instructor1

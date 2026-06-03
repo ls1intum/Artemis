@@ -12,6 +12,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -59,9 +60,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationIndependentT
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         course1 = courseUtilService.addEmptyCourse();
         course2 = courseUtilService.addEmptyCourse();
-        course2.setStudentGroupName("another-group");
-        courseRepository.save(course2);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.enrollUserInCourse(student1, course1, CourseRole.STUDENT);
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
         studentExam1 = examUtilService.addStudentExam(exam1);
         studentExam1.setUser(student1);

@@ -1351,8 +1351,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testDownloadExamArchiveAsInstructorNotInCourse_forbidden() throws Exception {
         // Create an exam with no archive
         Course course = courseUtilService.createCourse();
-        course.setInstructorGroupName("some-group");
-        course = courseRepository.save(course);
         var exam = examUtilService.addExam(course);
 
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
@@ -1863,8 +1861,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asInstructor_returnsNoExams() throws Exception {
         var title = "Another fancy exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("non-instructors");
-        courseRepository.save(course);
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
@@ -1878,8 +1874,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asAdmin_returnsExams() throws Exception {
         var title = "Yet another 3rd exam search title for the exam which is not used somewhere else";
         Course course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("non-instructors");
-        courseRepository.save(course);
         var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);

@@ -709,8 +709,6 @@ public class ProgrammingExerciseTestService {
 
     public void importFromFile_tutor_forbidden() throws Exception {
         deleteLocalVcProjectIfPresent(exercise);
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.FORBIDDEN);
@@ -1330,8 +1328,6 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExercise_noTutors_created() throws Exception {
-        course.setTeachingAssistantGroupName(null);
-        courseRepository.save(course);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         final var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -1546,9 +1542,6 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportInstructorRepositories_forbidden() throws Exception {
-        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.FORBIDDEN);
         exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.FORBIDDEN);
         exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.FORBIDDEN);
@@ -1785,9 +1778,6 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
-        // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN, false, false, false);
     }
 
@@ -2301,7 +2291,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
+        Set<User> students = new HashSet<>(userRepo.findAllByUserPrefix(userPrefix + "student"));
         Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
@@ -2327,7 +2317,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
+        Set<User> students = new HashSet<>(userRepo.findAllByUserPrefix(userPrefix + "student"));
         Team team = new Team().name("Team 1").shortName(userPrefix + TEAM_SHORT_NAME).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 

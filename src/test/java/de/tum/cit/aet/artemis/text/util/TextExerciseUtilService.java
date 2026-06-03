@@ -223,7 +223,7 @@ public class TextExerciseUtilService {
      * @return The newly created Course
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
@@ -505,7 +505,7 @@ public class TextExerciseUtilService {
      * @return The created Course
      */
     public Course addCourseWithOneFinishedTextExercise() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);

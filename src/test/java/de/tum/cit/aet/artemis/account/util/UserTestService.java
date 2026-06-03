@@ -36,10 +36,13 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -110,6 +113,9 @@ public class UserTestService {
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private String TEST_PREFIX;
 
@@ -803,7 +809,7 @@ public class UserTestService {
      * @return params for request
      */
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status,
-            boolean findWithoutUserGroups) {
+            boolean findWithoutCourseEnrollment) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "1000");
@@ -814,7 +820,7 @@ public class UserTestService {
         params.add("origins", origins);
         params.add("registrationNumbers", registrationNumbers);
         params.add("status", status);
-        params.add("findWithoutUserGroups", Boolean.toString(findWithoutUserGroups));
+        params.add("findWithoutCourseEnrollment", Boolean.toString(findWithoutCourseEnrollment));
         return params;
     }
 
@@ -851,9 +857,6 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Collections.emptySet());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), user2.getLogin());
         }
@@ -875,9 +878,9 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Collections.emptySet());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
+            // Enroll user2 in the course — the filter excludes users that have any UCR entry.
+            // user1 has no UCR entry and must appear; user2 is enrolled and must be excluded.
+            userCourseRoleRepository.save(new UserCourseRole(user2, course, CourseRole.STUDENT));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }

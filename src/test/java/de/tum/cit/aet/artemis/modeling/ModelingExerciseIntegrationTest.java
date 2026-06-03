@@ -802,7 +802,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         String searchTerm = "ClassDiagram testAdminGetsResultsFromAllCourses";
         final var search = pageableSearchUtilService.configureSearch(searchTerm);
         final var oldResult = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
-        courseUtilService.addCourseInOtherInstructionGroupAndExercise(searchTerm);
+        courseUtilService.addCourseWithExercise(searchTerm);
         final var result = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
     }
@@ -951,8 +951,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.FORBIDDEN);
     }
 

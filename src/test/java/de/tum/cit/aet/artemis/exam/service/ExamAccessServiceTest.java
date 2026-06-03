@@ -333,9 +333,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_isStudentInCourse() {
+        // addEmptyCourse() creates a course with no UCR enrollments; student1 is not enrolled → AccessForbiddenException expected
         Course course = courseUtilService.addEmptyCourse();
-        course.setStudentGroupName("another");
-        courseRepository.save(course);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 

@@ -312,21 +312,15 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
-        course.setInstructorGroupName("Different group name");
-        courseRepository.save(course);
-
+    void testImportTeamsFromExerciseForbiddenWhenNotInstructorInCourse() throws Exception {
+        // instructor1 has no UCR entry for this course, so access is denied
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore, they should not be able to import teams
-        course.setInstructorGroupName("Different group name");
-        courseRepository.save(course);
-
+    void testImportTeamsFromListForbiddenWhenNotInstructorInCourse() throws Exception {
+        // instructor1 has no UCR entry for this course, so access is denied
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 

@@ -447,9 +447,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintsByCourseIdTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
-        course.setInstructorGroupName("test");
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
@@ -500,9 +497,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
-        course.setInstructorGroupName("test");
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
 
         final var params = new LinkedMultiValueMap<String, String>();
         request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
@@ -540,9 +534,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint.getResult().setAssessor(instructor);
         resultRepository.save(complaint.getResult());
         complaint = complaintRepo.save(complaint);
-        course.setInstructorGroupName("test");
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
 
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
@@ -698,9 +689,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintsByExerciseIdTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
-        course.setInstructorGroupName("test");
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         params.add("exerciseId", complaint.getResult().getSubmission().getParticipation().getExercise().getId().toString());
@@ -812,10 +800,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final TextExercise examExercise = examUtilService.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final long courseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
-        Course course = examExercise.getExerciseGroup().getExam().getCourse();
-        course.setInstructorGroupName("test");
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("examId", String.valueOf(examId));
         params.add("courseId", String.valueOf(courseId));

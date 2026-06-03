@@ -68,8 +68,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
-            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
-                    TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>());
             course = courseRepository.save(course);
 
         }
@@ -111,8 +110,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
-                    TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
+            course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>());
             course = courseRepository.save(course);
         }
 

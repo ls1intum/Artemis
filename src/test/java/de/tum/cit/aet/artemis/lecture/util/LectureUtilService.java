@@ -101,7 +101,7 @@ public class LectureUtilService {
      * @return The created Lecture
      */
     public Lecture createCourseWithLecture(boolean saveLecture) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");

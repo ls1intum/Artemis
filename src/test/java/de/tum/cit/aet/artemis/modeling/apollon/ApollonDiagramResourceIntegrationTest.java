@@ -42,8 +42,8 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
         apollonDiagram = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
+        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         courseRepository.save(course1);
         courseRepository.save(course2);
     }

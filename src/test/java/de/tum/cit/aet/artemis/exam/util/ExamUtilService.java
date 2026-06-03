@@ -1071,7 +1071,7 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
@@ -1118,7 +1118,7 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam;
         if (startDateBeforeCurrentTime) {
             // Create an exam that is already started
@@ -1171,7 +1171,7 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
@@ -1401,7 +1401,7 @@ public class ExamUtilService {
      * @return The newly created Exam with two correction rounds
      */
     public Exam setupExamWithTwoCorrectionRounds(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         Exam exam = addExam(course);

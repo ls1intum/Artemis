@@ -116,9 +116,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_InvalidInstructor() throws Exception {
-        // make sure the instructor is not instructor for this course anymore by changing the courses' instructor group name
-        course.setInstructorGroupName("new-instructor-group-name");
-        courseRepository.save(course);
         fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
@@ -276,8 +273,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        course.setInstructorGroupName("new-instructor-group-name");
-        courseRepository.save(course);
         for (var exercise : course.getExercises()) {
             request.get("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
         }
@@ -360,8 +355,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        course.setInstructorGroupName("new-instructor-group-name");
-        courseRepository.save(course);
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
@@ -408,8 +401,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
-        course.setInstructorGroupName("new-instructor-group-name");
-        courseRepository.save(course);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), UpdateFileUploadExerciseDTO.of(fileUploadExercise),
                 FileUploadExercise.class, HttpStatus.FORBIDDEN);
     }
@@ -558,8 +549,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
         var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        course.setInstructorGroupName("new-instructor-group-name");
-        courseRepository.save(course);
         request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
@@ -628,8 +617,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
 
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", UpdateFileUploadExerciseDTO.of(fileUploadExercise),
                 FileUploadExercise.class, HttpStatus.FORBIDDEN);

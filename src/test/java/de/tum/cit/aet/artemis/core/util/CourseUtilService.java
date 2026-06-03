@@ -228,7 +228,7 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course createCourse(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
@@ -241,8 +241,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithUserPrefix(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
@@ -264,7 +263,7 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithMessagingEnabled(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
@@ -272,27 +271,24 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves a course with the given short name and student group name.
+     * Creates and saves a course whose short name starts with the given prefix.
      *
-     * @param studentGroupName The student group name of the course.
-     * @param shortName        The short name of the course.
+     * @param shortName The short name prefix of the course.
      * @return The new course.
      */
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
-        return createCourseWithCustomStudentGroupName(studentGroupName, shortName, "");
+    public Course createCourseWithShortName(String shortName) {
+        return createCourseWithShortName(shortName, "");
     }
 
     /**
-     * Creates and saves a course with the given short name and student group name, enrolling users by login prefix.
+     * Creates and saves a course whose short name starts with the given prefix, enrolling users by login prefix.
      *
-     * @param studentGroupName The student group name of the course.
-     * @param shortName        The short name of the course.
-     * @param userPrefix       The login prefix of the test users to enroll (e.g. "examint").
+     * @param shortName  The short name prefix of the course.
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
      * @return The new course.
      */
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
-                500, 500, true, true, 7);
+    public Course createCourseWithShortName(String shortName, String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), 3, 3, 7, 500, 500, true, true, 7);
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
@@ -440,10 +436,8 @@ public class CourseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor",
-                userPrefix + "editor", userPrefix + "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course1);
@@ -619,7 +613,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
@@ -790,7 +784,7 @@ public class CourseUtilService {
      */
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
 
         var modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram, course);
         var textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
@@ -975,33 +969,6 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves an active empty course with default user group names.
-     *
-     * @return An empty course.
-     */
-    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
-        return addEmptyCourse(studentGroupName, taGroupName, editorGroupName, instructorGroupName, "");
-    }
-
-    /**
-     * Creates and saves an active empty course with the given group names, enrolling users by login prefix.
-     *
-     * @param studentGroupName    The student group name.
-     * @param taGroupName         The teaching assistant group name.
-     * @param editorGroupName     The editor group name.
-     * @param instructorGroupName The instructor group name.
-     * @param userPrefix          The login prefix of the test users to enroll (e.g. "examint").
-     * @return An empty course.
-     */
-    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
-                instructorGroupName);
-        course = courseRepo.save(course);
-        enrollPrefixedUsersInCourse(course, userPrefix);
-        return course;
-    }
-
-    /**
      * Enrolls users into {@code user_course_role} by login prefix.
      * Finds users whose logins start with {@code userPrefix + "student"}, {@code userPrefix + "tutor"},
      * {@code userPrefix + "editor"}, and {@code userPrefix + "instructor"} and creates the corresponding
@@ -1022,32 +989,35 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves an active empty course with default user group names.
+     * Creates and saves an active empty course.
      *
      * @return An empty course.
      */
     public Course addEmptyCourse() {
-        return addEmptyCourse("tumuser", "tutor", "editor", "instructor", "");
+        return addEmptyCourse("");
     }
 
     /**
-     * Creates and saves an active empty course with default user group names, enrolling users by login prefix.
+     * Creates and saves an active empty course and enrolls users by login prefix.
      *
      * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
      * @return An empty course.
      */
     public Course addEmptyCourse(String userPrefix) {
-        return addEmptyCourse("tumuser", "tutor", "editor", "instructor", userPrefix);
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
+        course = courseRepo.save(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
      * Creates and saves a course with the corresponding exercise.
      *
-     * @param title The title reflect the type of exercise to be added to the course
+     * @param title The title of the exercise to be added to the course (e.g. "Programming", "Text", "ClassDiagram")
      * @return The newly created course.
      */
-    public Course addCourseInOtherInstructionGroupAndExercise(String title) {
-        return addCourseInOtherInstructionGroupAndExercise(title, "");
+    public Course addCourseWithExercise(String title) {
+        return addCourseWithExercise(title, "");
     }
 
     /**
@@ -1057,8 +1027,8 @@ public class CourseUtilService {
      * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
      * @return The newly created course.
      */
-    public Course addCourseInOtherInstructionGroupAndExercise(String title, String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
+    public Course addCourseWithExercise(String title, String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
             enrollPrefixedUsersInCourse(course, userPrefix);
@@ -1113,7 +1083,7 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextExercise(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle("Modeling");
@@ -1144,7 +1114,7 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextAndFileUploadExercise(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
@@ -1241,8 +1211,7 @@ public class CourseUtilService {
     public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
             int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast)
             throws IOException {
-        Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "student" + suffix,
-                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         ZonedDateTime assessmentDueDate;
         ZonedDateTime releaseDate = PAST_TIMESTAMP;
         ZonedDateTime dueDate = PAST_TIMESTAMP.plusHours(1);
@@ -1504,35 +1473,31 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves a course with custom student group name and exam with exercises including grading scale.
+     * Creates and saves a course with an exam, exercise groups, and grading scale.
      *
      * @param user                     The student to be added to the exam.
-     * @param studentGroupName         The new student group name.
-     * @param shortName                The short name of the course.
+     * @param shortName                The short name prefix of the course.
      * @param withProgrammingExercise  True, if the exam should include programming exercises. False, if the exam does not include programming exercises.
      * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types. False, if they are not needed.
      * @return The created course.
      */
-    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
-            boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
-        return createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(user, studentGroupName, shortName, withProgrammingExercise,
-                withAllQuizQuestionTypes, "");
+    public Course createCourseWithExamAndExerciseGroupsAndGradingScale(User user, String shortName, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
+        return createCourseWithExamAndExerciseGroupsAndGradingScale(user, shortName, withProgrammingExercise, withAllQuizQuestionTypes, "");
     }
 
     /**
-     * Creates and saves a course with custom student group name and exam with exercises including grading scale, enrolling users by login prefix.
+     * Creates and saves a course with an exam, exercise groups, and grading scale, enrolling users by login prefix.
      *
      * @param user                     The student to be added to the exam.
-     * @param studentGroupName         The new student group name.
-     * @param shortName                The short name of the course.
+     * @param shortName                The short name prefix of the course.
      * @param withProgrammingExercise  True, if the exam should include programming exercises.
      * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types.
      * @param userPrefix               The login prefix of the test users to enroll (e.g. "examint").
      * @return The created course.
      */
-    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
-            boolean withProgrammingExercise, boolean withAllQuizQuestionTypes, String userPrefix) {
-        Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName, userPrefix);
+    public Course createCourseWithExamAndExerciseGroupsAndGradingScale(User user, String shortName, boolean withProgrammingExercise, boolean withAllQuizQuestionTypes,
+            String userPrefix) {
+        Course course = createCourseWithShortName(shortName, userPrefix);
         Exam exam = examUtilService.addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
                 ZonedDateTime.now().minusMinutes(1));
         gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);

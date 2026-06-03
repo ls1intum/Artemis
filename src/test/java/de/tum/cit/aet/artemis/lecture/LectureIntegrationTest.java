@@ -263,7 +263,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
-        Course otherCourse = courseUtilService.addEmptyCourse("other-students", "other-tutors", "other-editors", "other-instructors");
+        Course otherCourse = courseUtilService.addEmptyCourse();
         Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
         String originalDescription = otherLecture.getDescription();
 

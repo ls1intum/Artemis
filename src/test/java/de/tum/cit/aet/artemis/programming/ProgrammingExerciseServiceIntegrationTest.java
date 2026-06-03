@@ -217,7 +217,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExercise.setTitle(title);
         programmingExerciseRepository.save(programmingExercise);
 
-        var otherCourse = courseUtilService.addCourseInOtherInstructionGroupAndExercise("Programming");
+        var otherCourse = courseUtilService.addCourseWithExercise("Programming");
         var otherProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         otherProgrammingExercise.setTitle(title);
         programmingExerciseRepository.save(otherProgrammingExercise);

@@ -34,7 +34,9 @@ import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -53,6 +55,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 class ChannelIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "chtest";
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ConversationService conversationService;
@@ -636,11 +641,14 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
-        var allStudentLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allTutorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+        var allStudentLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(ucr -> ucr.getUser().getLogin())
                 .collect(Collectors.toSet());
-        var allEditorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allInstructorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allTutorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(ucr -> ucr.getUser().getLogin())
+                .collect(Collectors.toSet());
+        var allEditorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.EDITOR).stream().map(ucr -> ucr.getUser().getLogin())
+                .collect(Collectors.toSet());
+        var allInstructorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(ucr -> ucr.getUser().getLogin())
+                .collect(Collectors.toSet());
         var allUserLogins = new HashSet<>(allStudentLogins);
         allUserLogins.addAll(allTutorLogins);
         allUserLogins.addAll(allEditorLogins);

@@ -367,7 +367,7 @@ public class ProgrammingExerciseUtilService {
      * @return The created course with a programming exercise.
      */
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage, String title, String shortName) {
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
         addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage, title, shortName, null);
         course = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
@@ -474,7 +474,7 @@ public class ProgrammingExerciseUtilService {
      * @return The newly created course with a programming exercise.
      */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
-        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);

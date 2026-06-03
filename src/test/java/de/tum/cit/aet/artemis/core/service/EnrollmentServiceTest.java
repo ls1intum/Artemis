@@ -60,7 +60,6 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             course.setEnrollmentEnabled(true);
             course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
-            course.setStudentGroupName("test-students");
             return course;
         }
 
@@ -151,7 +150,6 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
             course.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
             course.setEndDate(ZonedDateTime.now().plusDays(6));
-            course.setStudentGroupName("test-students");
             return course;
         }
 

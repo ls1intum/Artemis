@@ -378,9 +378,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories_asEditor_wrongCourse() throws Exception {
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true);
-        otherCourse.setEditorGroupName("otherEditorGroup");
-        otherCourse.setInstructorGroupName("otherInstructorGroup");
-        courseRepository.save(otherCourse);
         Exercise sourceExercise = otherCourse.getExercises().iterator().next();
 
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);

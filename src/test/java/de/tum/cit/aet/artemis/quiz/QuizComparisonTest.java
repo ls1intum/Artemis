@@ -57,7 +57,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsWithNullQuestionAndIds() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
@@ -83,7 +83,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsOfDifferentQuestionTypeSameId() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
         Long id1 = quizQuestions.getFirst().getId();
@@ -104,7 +104,7 @@ class QuizComparisonTest {
 
     @Test
     void testCompareSubmissionsWithEmptySubmission() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
         List<QuizQuestion> quizQuestions = setAllQuizQuestionIds(quizExercise);
 
@@ -122,7 +122,7 @@ class QuizComparisonTest {
 
     @Test
     void compareCourseQuizSubmittedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         createSubmissionsForQuizQuestionsAndAssert(quizExercise);
@@ -130,7 +130,7 @@ class QuizComparisonTest {
 
     @Test
     void compareExamQuizSubmittedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course, true);
         QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().getFirst());
 
@@ -163,7 +163,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithChangedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;
@@ -283,7 +283,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithAddedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;
@@ -385,7 +385,7 @@ class QuizComparisonTest {
 
     @Test
     void compareQuizSubmittedAnswersWithRemovedAnswers() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.INDIVIDUAL);
 
         long id = 1L;

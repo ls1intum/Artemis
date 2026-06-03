@@ -133,7 +133,7 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled(String userPrefix) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);

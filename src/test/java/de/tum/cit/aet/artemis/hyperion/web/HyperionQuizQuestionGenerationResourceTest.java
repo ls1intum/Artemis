@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -30,9 +29,6 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
 
     @Autowired
     private CourseTestRepository courseRepository;
-
-    @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
 
     private static final String TEST_PREFIX = "hyperionquizgen";
 
@@ -44,10 +40,6 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
 
         Course course = new Course();
         course.setTitle("Hyperion Test Course");
-        course.setStudentGroupName(TEST_PREFIX + "student");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
 

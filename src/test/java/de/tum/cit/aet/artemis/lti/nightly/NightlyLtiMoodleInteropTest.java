@@ -51,6 +51,8 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
@@ -142,6 +144,9 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private String registrationId;
 
@@ -354,8 +359,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         var newUser = userTestRepository.findOneByEmailIgnoreCase(email).orElseThrow();
         assertThat(newUser.getLogin()).startsWith(userPrefix + "_");
         createdUserLogin = newUser.getLogin();
-        var newUserWithGroups = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(newUser.getLogin()).orElseThrow();
-        assertThat(newUserWithGroups.getGroups()).contains(course.getStudentGroupName());
+        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(newUser.getId(), course.getId(), CourseRole.STUDENT)).isTrue();
     }
 
     private void seedCachedAuthorizationRequest(String state, String nonce) {

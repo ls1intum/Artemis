@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.distinct;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAllUsersWithoutUserGroups;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAllUsersWithoutCourseEnrollment;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAuthoritySpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermSpecification;
@@ -909,8 +909,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities))
                 .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
 
-        if (userSearch.isFindWithoutUserGroups()) {
-            specification = specification.and(getAllUsersWithoutUserGroups());
+        if (userSearch.isFindWithoutCourseEnrollment()) {
+            specification = specification.and(getAllUsersWithoutCourseEnrollment());
         }
 
         return findAll(specification, sorted).map(user -> {

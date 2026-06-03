@@ -225,7 +225,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        // Note: setGroups removed — ManagedUserVM has no groups field; API ignores group strings
 
         request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
     }

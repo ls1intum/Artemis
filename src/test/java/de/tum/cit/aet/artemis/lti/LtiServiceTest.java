@@ -68,8 +68,6 @@ class LtiServiceTest {
 
     private User user;
 
-    private final String courseStudentGroupName = "courseStudentGroupName";
-
     private AutoCloseable closeable;
 
     @BeforeEach
@@ -79,7 +77,6 @@ class LtiServiceTest {
         ltiService = new LtiService(userCreationService, userRepository, userCourseRoleRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
         Course course = new Course();
         course.setId(100L);
-        course.setStudentGroupName(courseStudentGroupName);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
         exercise = new TextExercise();
@@ -145,9 +142,7 @@ class LtiServiceTest {
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);
 
-        assertThat(user.getGroups()).contains(courseStudentGroupName);
-        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
-
+        verify(userCourseRoleRepository).save(any());
         verify(userCreationService).saveUser(user);
     }
 

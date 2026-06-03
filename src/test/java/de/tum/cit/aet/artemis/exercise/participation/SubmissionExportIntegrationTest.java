@@ -186,11 +186,8 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+    void testNoSubmissionsForStudent_asInstructorNotInCourse() throws Exception {
         var exportOptions = new SubmissionExportOptionsDTO(false, false, null, "nonexistentstudent");
-        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setInstructorGroupName("abc");
-        courseUtilService.saveCourse(course);
         request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);

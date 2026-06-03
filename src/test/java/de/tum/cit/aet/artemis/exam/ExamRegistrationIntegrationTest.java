@@ -109,13 +109,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
-        User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
-
-        Set<User> studentsInCourseBefore = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
+        int studentCountBefore = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
-        Set<User> studentsInCourseAfter = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        studentsInCourseBefore.add(student42);
-        assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
+        assertThat(userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
+                .hasSize(studentCountBefore + 1);
     }
 
     @Test

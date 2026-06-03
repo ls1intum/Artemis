@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -22,7 +23,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     private static final String TEST_PREFIX = "atlasorchres";
 
-    /** Instructor outside the course's prefix-restricted group; exercises the wrong-course branch of {@code @EnforceAtLeastInstructorInExercise}. */
+    /** Instructor not enrolled in the test course; exercises the wrong-course branch of {@code @EnforceAtLeastInstructorInExercise}. */
     private static final String OTHER_PREFIX = "atlasorchresother";
 
     @Autowired
@@ -32,19 +33,12 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @BeforeEach
     void setup() {
-        // OTHER_PREFIX must be added first: addUsers wipes the groups of every existing user, so
-        // whichever batch is added last keeps its groups. The TEST_PREFIX instructor needs to
-        // retain its group membership to pass the @EnforceAtLeastInstructorInExercise DB check.
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        // Restrict the course's groups to TEST_PREFIX so the OTHER_PREFIX instructor is not a
-        // member of this course and the wrong-course branch can be exercised.
-        course.setStudentGroupName(TEST_PREFIX + "tumuser");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(course);
+        // Only TEST_PREFIX instructor is enrolled; OTHER_PREFIX instructor has no UCR entry and will be denied.
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         featureToggleService.enableFeature(Feature.AtlasAgent);
     }
@@ -115,14 +109,9 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // resolution would walk to the underlying course and silently mutate course-wide
         // competencies, which is never what the instructor wants.
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        // Re-restrict the new course's groups to TEST_PREFIX so the @EnforceAtLeastInstructorInExercise
-        // gate succeeds for this fixture too.
         Course examCourse = examExercise.getExerciseGroup().getExam().getCourse();
-        examCourse.setStudentGroupName(TEST_PREFIX + "tumuser");
-        examCourse.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        examCourse.setEditorGroupName(TEST_PREFIX + "editor");
-        examCourse.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(examCourse);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(instructor, examCourse, CourseRole.INSTRUCTOR);
 
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));

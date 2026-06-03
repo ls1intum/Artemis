@@ -129,7 +129,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
         @Test
         void throwsWhenUserNotEnrolledInCourse() {
-            Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-chat-service-other", "other-group");
+            Course otherCourse = courseUtilService.createCourse();
             IrisChatSession session = new IrisChatSession(otherCourse, student1());
             session.setId(1L);
 

@@ -119,7 +119,7 @@ public class QuizExerciseUtilService {
      * @return The newly created course with the quiz.
      */
     public Course addCourseWithOneQuizExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
@@ -218,7 +218,7 @@ public class QuizExerciseUtilService {
      * @return Created and saved course.
      */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises);
         courseRepo.save(course);
         return course;
     }

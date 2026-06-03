@@ -1,33 +1,22 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
-import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MvcResult;
 
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
 
 class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "courselocalvcjenkins";
-
-    @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
 
     @BeforeEach
     void setup() {
@@ -87,12 +76,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         courseTestService.testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
-        courseTestService.testCreateCourseWithCustomNonExistingGroupNames();
     }
 
     @Test
@@ -192,63 +175,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateOldMembersInCourse() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-editor-group");
-
-        changeUserGroup(TEST_PREFIX + "instructor1", Set.of(course.getTeachingAssistantGroupName()));
-        changeUserGroup(TEST_PREFIX + "tutor1", Set.of(course.getTeachingAssistantGroupName(), "new-editor-group"));
-        changeUserGroup(TEST_PREFIX + "tutor2", Set.of(course.getEditorGroupName()));
-
-        MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
-        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-
-        assertThat(course.getInstructorGroupName()).isEqualTo("new-editor-group");
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testSetPermissionsForNewGroupMembersInCourse() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-
-        course.setInstructorGroupName("new-instructor-group");
-        course.setEditorGroupName("new-editor-group");
-        course.setTeachingAssistantGroupName("new-ta-group");
-
-        // Enroll users in the course via UserCourseRole (authorization no longer uses group strings)
-        User newEditor = userUtilService.createAndSaveUser("new-editor");
-        userUtilService.enrollUserInCourse(newEditor, course, CourseRole.EDITOR);
-
-        User newTa = userUtilService.createAndSaveUser("new-ta");
-        userUtilService.enrollUserInCourse(newTa, course, CourseRole.TEACHING_ASSISTANT);
-
-        User newInstructor = userUtilService.createAndSaveUser("new-instructor");
-        userUtilService.enrollUserInCourse(newInstructor, course, CourseRole.INSTRUCTOR);
-        MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
-        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-
-        assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
-        assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
-        assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
-    }
-
-    /**
-     * Changes the group of the user.
-     *
-     * @param userLogin the login of the user
-     * @param groups    the groups to change
-     */
-    private void changeUserGroup(String userLogin, Set<String> groups) {
-        User updatedUser = userTestRepository.findOneWithGroupsByLogin(userLogin).orElseThrow();
-        // Update groups in-place — setGroups() replaces the PersistentSet reference which
-        // causes a NullPointerException in hasDeletes() when Hibernate merges a detached entity.
-        updatedUser.getGroups().clear();
-        updatedUser.getGroups().addAll(groups);
-        userTestRepository.save(updatedUser);
     }
 
     @Test
@@ -467,7 +393,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepository.save(course);
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
@@ -807,12 +733,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
         courseTestService.testGetCourseManagementDetailDataForFutureCourse();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllGroupsForAllCourses() throws Exception {
-        courseTestService.testGetAllGroupsForAllCourses();
     }
 
     @Test

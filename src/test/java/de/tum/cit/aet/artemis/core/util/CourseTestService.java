@@ -444,7 +444,7 @@ public class CourseTestService {
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
 
-        Course course2 = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course2.setShortName("shortName");
         request.performMvcRequest(buildCreateCourse(course2)).andExpect(status().isBadRequest());
         assertThat(courseRepo.findAllByShortName(course2.getShortName())).as("Course has not been stored").hasSize(1);
@@ -520,23 +520,9 @@ public class CourseTestService {
     }
 
     // Test
-    public void testCreateCourseWithCustomNonExistingGroupNames() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setStudentGroupName("StudentGroupName");
-        course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
-        course.setEditorGroupName("EditorGroupName");
-        course.setInstructorGroupName("InstructorGroupName");
-        var result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
-        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        courseRepo.findByIdElseThrow(course.getId());
-        List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
-        assertThat(repoContent).as("Course got stored").hasSize(1);
-    }
-
-    // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, communication = false, messaging = true
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, false, 0);
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), 5, 5, 14, 2000, 2000, false, false, 0);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -567,11 +553,7 @@ public class CourseTestService {
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
         List<Course> courses = new ArrayList<>(courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
-        Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null, true);
-        course3.setStudentGroupName(course3.getDefaultStudentGroupName());
-        course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
-        course3.setEditorGroupName(course3.getDefaultEditorGroupName());
-        course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
+        Course course3 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), true);
         course3 = courseRepo.save(course3);
         courses.add(course3);
         addConversationsToCourse(course3);
@@ -842,7 +824,7 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepo.save(course);
 
         course.setTitle("Test Course");
@@ -1098,16 +1080,11 @@ public class CourseTestService {
 
         // Custom user is student in 0 and 1, tutor in 2, editor in 3 and instructor in 4
         Course[] courses = new Course[5];
-        courses[0] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        courses[1] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        courses[2] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        courses[3] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        courses[4] = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        courses[0] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[1] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[2] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[3] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        courses[4] = CourseFactory.generateCourse(null, null, null, new HashSet<>());
 
         // Roles for customUser per course
         CourseRole[] customUserRoles = { CourseRole.STUDENT, CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR };
@@ -1174,8 +1151,7 @@ public class CourseTestService {
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>(), userPrefix + "student",
-                userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -1274,8 +1250,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
@@ -1288,12 +1263,9 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
-        Course courseActive = CourseFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), userPrefix + "student",
-                userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
-        Course courseNotActivePast = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
-                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
-        Course courseNotActiveFuture = CourseFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
-                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
+        Course courseActive = CourseFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>());
+        Course courseNotActivePast = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>());
+        Course courseNotActiveFuture = CourseFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>());
         courseActive = courseRepo.save(courseActive);
         enrollPrefixedUsersInCourse(courseActive, userPrefix);
         courseNotActivePast = courseRepo.save(courseNotActivePast);
@@ -1365,25 +1337,23 @@ public class CourseTestService {
     // Test
     public void testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseEnrollmentActiveEnrollmentEnabled = CourseFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
-                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+                new HashSet<>());
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEnabled(true);
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
         courseEnrollmentActiveEnrollmentEnabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
         Course courseEnrollmentActiveEnrollmentDisabled = CourseFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25),
-                new HashSet<>(), "testuser", "tutor", "editor", "instructor");
+                new HashSet<>());
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEnabled(false);
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentStartDate(ZonedDateTime.now().minusMinutes(25));
         courseEnrollmentActiveEnrollmentDisabled.setEnrollmentEndDate(ZonedDateTime.now().plusMinutes(25));
 
-        Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser",
-                "tutor", "editor", "instructor");
+        Course courseEnrollmentNotActivePast = CourseFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>());
         courseEnrollmentNotActivePast.setEnrollmentEnabled(true);
         courseEnrollmentNotActivePast.setEnrollmentStartDate(ZonedDateTime.now().minusDays(5));
         courseEnrollmentNotActivePast.setEnrollmentEndDate(ZonedDateTime.now().minusMinutes(25));
 
-        Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser",
-                "tutor", "editor", "instructor");
+        Course courseEnrollmentNotActiveFuture = CourseFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>());
         courseEnrollmentNotActiveFuture.setEnrollmentEnabled(true);
         courseEnrollmentNotActiveFuture.setEnrollmentStartDate(ZonedDateTime.now().plusMinutes(25));
         courseEnrollmentNotActiveFuture.setEnrollmentEndDate(ZonedDateTime.now().plusDays(5));
@@ -1475,13 +1445,6 @@ public class CourseTestService {
         Course testCourse = courseUtilService.createCourse();
         request.get("/api/course/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
-    }
-
-    // Test
-    public void testGetAllGroupsForAllCourses() throws Exception {
-        Set<String> allGroups = new HashSet<>(request.getList("/api/core/admin/courses/groups", HttpStatus.OK, String.class));
-        courseRepo.findAll().stream().findAny().ifPresent(course -> assertThat(allGroups)
-                .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName())));
     }
 
     // Test
@@ -1680,20 +1643,10 @@ public class CourseTestService {
     public void testGetCourse() throws Exception {
         List<Course> testCourses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, false, 0);
         for (Course testCourse : testCourses) {
-            testCourse.setInstructorGroupName(userPrefix + "instructor");
-            testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
-            testCourse.setEditorGroupName(userPrefix + "editor");
-            testCourse.setStudentGroupName(userPrefix + "student");
-            courseRepo.save(testCourse);
-
             Course courseWithExercises = request.get("/api/course/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, Course.class);
             Course courseOnly = request.get("/api/course/courses/" + testCourse.getId(), HttpStatus.OK, Course.class);
 
             // Check course properties on courseOnly
-            assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo(userPrefix + "student");
-            assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo(userPrefix + "tutor");
-            assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo(userPrefix + "editor");
-            assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo(userPrefix + "instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
@@ -1738,8 +1691,8 @@ public class CourseTestService {
     public void testEnrollInCourse() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
         course2.setEnrollmentEndDate(futureTimestamp);
@@ -1765,8 +1718,8 @@ public class CourseTestService {
     public void testEnrollInCourse_notMeetsDate() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course notYetStartedCourse = CourseFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>());
+        Course finishedCourse = CourseFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>());
         notYetStartedCourse.setEnrollmentEnabled(true);
         notYetStartedCourse.setEnrollmentStartDate(futureTimestamp);
         notYetStartedCourse.setEnrollmentEndDate(futureTimestamp);
@@ -1812,9 +1765,9 @@ public class CourseTestService {
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        courses[0] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse1", "tutor", "editor", "instructor");
-        courses[1] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse2", "tutor", "editor", "instructor");
-        courses[2] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "unenrolltestcourse3", "tutor", "editor", "instructor");
+        courses[0] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        courses[1] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        courses[2] = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         courses[0].setUnenrollmentEnabled(true);
         courses[0].setUnenrollmentEndDate(futureTimestamp);
         courses[1].setUnenrollmentEnabled(false);
@@ -1826,7 +1779,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourse_instructorNotInCourse() throws Exception {
-        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        var course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepo.save(course);
 
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());
@@ -1834,8 +1787,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
 
@@ -1856,8 +1808,7 @@ public class CourseTestService {
      * Searches for others users of a course in multiple roles
      */
     public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
 
@@ -1888,7 +1839,7 @@ public class CourseTestService {
      * Tries to search for users of another course and expects to be forbidden
      */
     public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -1900,8 +1851,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllEditorsInCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
 
@@ -1912,14 +1862,14 @@ public class CourseTestService {
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
 
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         testGetAllStudentsOrTutorsOrInstructorsInCourse__forbidden(course);
     }
@@ -1932,8 +1882,7 @@ public class CourseTestService {
 
     // Test
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course.setLearningPathsEnabled(true);
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
@@ -1945,15 +1894,14 @@ public class CourseTestService {
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
@@ -1961,8 +1909,7 @@ public class CourseTestService {
 
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
 
@@ -1981,7 +1928,7 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
@@ -1989,8 +1936,7 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         request.delete("/api/course/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
@@ -2001,15 +1947,14 @@ public class CourseTestService {
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
 
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
@@ -2347,8 +2292,7 @@ public class CourseTestService {
     }
 
     private Course createCourseForUserSearchTest() {
-        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        var course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
         course = courseRepo.save(course);
         enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
@@ -2492,7 +2436,7 @@ public class CourseTestService {
     // Test
     public void testDownloadCourseArchiveAsInstructor_not_found() throws Exception {
         // Generate a course that has no archive and assert that an 404 status is thrown
-        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(1L, null, null, new HashSet<>());
         course = courseRepo.save(course);
 
         var downloadedArchive = request.get("/api/course/courses/" + course.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
@@ -3084,19 +3028,19 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithValidStartAndEndDate() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated());
     }
 
     // Test
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>());
         request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
     // Test
     public void testCreateInvalidOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
 
         // with EnrollmentEnabled
         course.setOnlineCourse(true);
@@ -3106,7 +3050,7 @@ public class CourseTestService {
 
     // Test
     public void testCreateValidOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -3116,7 +3060,7 @@ public class CourseTestService {
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
@@ -3129,7 +3073,7 @@ public class CourseTestService {
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         course = courseRepo.save(course);
         var courseId = course.getId();
@@ -3142,7 +3086,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3162,7 +3106,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3178,7 +3122,7 @@ public class CourseTestService {
 
     // Test
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3190,7 +3134,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3207,7 +3151,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3218,7 +3162,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(false);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3231,7 +3175,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
 
         MvcResult result = request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -3244,7 +3188,7 @@ public class CourseTestService {
     }
 
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         CourseFactory.generateOnlineCourseConfiguration(course, "prefix", null);
         course = courseRepo.save(course);
@@ -3274,7 +3218,7 @@ public class CourseTestService {
         ltiPlatformConfiguration.setJwkSetUri("jwkUri");
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
 
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>());
         course.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "prefix", "url");
         onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
@@ -3369,7 +3313,7 @@ public class CourseTestService {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
 
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         Course savedCourse = courseRepo.save(course);
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
@@ -3391,8 +3335,7 @@ public class CourseTestService {
     // Test
     // TODO: reactivate test as part of Learning Paths
     public void testUpdateCourseEnableLearningPaths() throws Exception {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "editlearningpathenabledcourse",
-                "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>());
         course.setLearningPathsEnabled(false);
         courseRepo.save(course);
         User student = userUtilService.getUserByLogin(userPrefix + "student1");

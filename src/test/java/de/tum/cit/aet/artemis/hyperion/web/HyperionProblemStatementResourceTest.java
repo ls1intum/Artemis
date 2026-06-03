@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
@@ -53,9 +52,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
@@ -80,10 +76,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         Course course = new Course();
         course.setTitle("Hyperion Test Course");
-        course.setStudentGroupName(TEST_PREFIX + "student");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
 
@@ -621,7 +613,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // Create a second course with its own exercise
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();
@@ -722,7 +713,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course Section");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other-section");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();

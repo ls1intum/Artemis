@@ -119,7 +119,7 @@ public class ModelingExerciseUtilService {
      * @return The created Course
      */
     public Course addCourseWithOneModelingExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course);
         modelingExercise.setTitle(title);
@@ -167,7 +167,7 @@ public class ModelingExerciseUtilService {
      * @return The created Course
      */
     public Course addCourseWithDifferentModelingExercises() {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
         course.addExercises(classExercise);

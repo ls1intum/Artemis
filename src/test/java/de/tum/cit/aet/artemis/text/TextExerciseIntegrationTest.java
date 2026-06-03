@@ -250,9 +250,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
-
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -304,8 +301,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         textExercise.setId(null);
 
         request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
@@ -672,9 +667,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
-
         request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
@@ -944,9 +936,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllTextExercisesForCourse_isNotAtLeastTeachingAssistantInCourse_forbidden() throws Exception {
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
-
         request.getList("/api/text/courses/" + course.getId() + "/text-exercises", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
@@ -999,8 +988,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextExercise_isNotAtleastTeachingAssistantInCourse_forbidden() throws Exception {
-        course.setTeachingAssistantGroupName("test");
-        courseRepository.save(course);
         request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
@@ -1139,9 +1126,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         String courseTitle = "testAdminGetsResultsFromAllCourses";
 
         textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
-        Course otherInstructorsCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
-        otherInstructorsCourse.setInstructorGroupName("other-instructors");
-        courseRepository.save(otherInstructorsCourse);
+        textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
 
         final var search = pageableSearchUtilService.configureSearch(courseTitle);
         final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
@@ -1312,8 +1297,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarism_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, PlagiarismResult.class,
                 plagiarismUtilService.getDefaultPlagiarismOptions());
     }
@@ -1344,8 +1327,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResult_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         request.get("/api/text/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -1419,9 +1400,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
-
         request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
                 TextExercise.class, HttpStatus.FORBIDDEN);
     }

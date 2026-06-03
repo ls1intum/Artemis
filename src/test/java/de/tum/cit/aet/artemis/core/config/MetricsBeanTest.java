@@ -122,8 +122,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var users = userUtilService.addUsers(TEST_PREFIX + "active", 3, 0, 0, 0);
 
         var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        course1.setStudentGroupName(TEST_PREFIX + "active" + "tumuser");
-        courseRepository.save(course1);
 
         var textExercise = ExerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
@@ -232,7 +230,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var course1 = courseUtilService.createCourse();
         course1.setTitle("Course 1");
         course1.setSemester(null);
-        course1.setStudentGroupName(TEST_PREFIX + "course1Students");
         course1 = courseRepository.save(course1);
         var exam1 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -243,7 +240,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var course2 = courseUtilService.createCourse();
         course2.setSemester("WS 2023/24");
-        course2.setStudentGroupName(TEST_PREFIX + "course2Students");
         course2 = courseRepository.save(course2);
         var exam2 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
         exam2.setTitle("exam" + UUID.randomUUID());
@@ -353,8 +349,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         var course2 = courseUtilService.createCourse();
-        course2.setStudentGroupName(TEST_PREFIX + "course2students");
-        courseRepository.save(course2);
+        userUtilService.enrollUserInCourse(users.get(3), course2, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(4), course2, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(5), course2, CourseRole.STUDENT);
         course2.addExercises(
                 exerciseRepository.save(QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED, course2)));
         courseRepository.save(course2);

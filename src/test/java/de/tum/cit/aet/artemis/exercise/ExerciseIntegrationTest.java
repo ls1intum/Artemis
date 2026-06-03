@@ -16,8 +16,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,8 +25,11 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -92,6 +93,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     static final int NUMBER_OF_TUTORS = 1;
 
@@ -664,14 +668,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private List<User> findTutors(Course course) {
-        List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userTestRepository.findAllWithGroupsByDeletedIsFalse(Pageable.unpaged());
-        for (User user : allUsers) {
-            if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-                tutors.add(user);
-            }
-        }
-        return tutors;
+        return userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(UserCourseRole::getUser).toList();
     }
 
     @Test

@@ -60,7 +60,6 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
         var course = courseUtilService.addEmptyCourse();
         var inactiveCourse = courseUtilService.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
-        inactiveCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(inactiveCourse);
         var instructorsCourse = courseUtilService.createCourse();
         courseRepository.save(instructorsCourse);
@@ -88,7 +87,6 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
         courseUtilService.addEmptyCourse();
         var inactiveCourse = courseUtilService.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
-        inactiveCourse.setStudentGroupName("test-students");
         courseRepository.save(inactiveCourse);
         var instructorsCourse = courseUtilService.createCourse();
         courseRepository.save(instructorsCourse);

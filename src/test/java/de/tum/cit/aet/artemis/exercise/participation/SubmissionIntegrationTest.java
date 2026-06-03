@@ -180,12 +180,10 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
+    void testGetSubmissionsOnPageWithSize_notInstructorInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
         request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
@@ -193,14 +191,12 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetSubmissionVersionsBySubmissionId_isNotInstructorInCourse_forbidden() throws Exception {
+    void testGetSubmissionVersionsBySubmissionId_notInstructorInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
-        course.setInstructorGroupName("test");
-        courseRepository.save(course);
         request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
