@@ -30,6 +30,7 @@ import { Component as NgComponent } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @NgComponent({
@@ -117,6 +118,20 @@ describe('CompetencyManagementTableComponent', () => {
 
         competencyManagementTableComponent.updateDataAfterImportAll(responseBody);
         expect(component.allCompetencies).toHaveLength(2);
+    });
+
+    it('should open the import-all dialog with a responsive width that never exceeds the viewport', () => {
+        const dialogService = TestBed.inject(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+
+        competencyManagementTableComponent.openImportAllModal();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            ImportAllCompetenciesComponent,
+            expect.objectContaining({
+                style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
+            }),
+        );
     });
 
     it('should handle delete competency', () => {

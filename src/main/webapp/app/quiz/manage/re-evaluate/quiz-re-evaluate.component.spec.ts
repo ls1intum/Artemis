@@ -11,7 +11,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -84,12 +84,11 @@ describe('QuizExercise Re-evaluate Component', () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(DialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(NgbActiveModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

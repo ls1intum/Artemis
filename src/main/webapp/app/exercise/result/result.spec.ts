@@ -5,11 +5,13 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,6 +23,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
+import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
@@ -65,19 +68,34 @@ describe('ResultComponent', () => {
     const textParticipation: StudentParticipation = { id: 6, type: ParticipationType.STUDENT, exercise: textExercise };
 
     beforeEach(() => {
-        TestBed.overrideComponent(ResultComponent, {
-            remove: { imports: [ArtemisDatePipe, ArtemisTimeAgoPipe, TranslateDirective, NgbTooltip] },
-            add: { imports: [MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective), MockDirective(NgbTooltip)] },
-        });
         TestBed.configureTestingModule({
-            imports: [MockPipe(ArtemisTranslatePipe), ResultComponent],
-            providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [ResultComponent],
+            providers: [
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ResultComponent);
-                component = fixture.componentInstance;
-            });
+            .overrideComponent(ResultComponent, {
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective, NgbTooltip] },
+                add: {
+                    imports: [
+                        MockComponent(ResultProgressBarComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisDatePipe),
+                        MockDirective(TranslateDirective),
+                        MockDirective(NgbTooltip),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ResultComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -85,7 +103,7 @@ describe('ResultComponent', () => {
     });
 
     it('should initialize', () => {
-        component.result = result;
+        component.result.set(result);
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
@@ -96,12 +114,12 @@ describe('ResultComponent', () => {
         participation1.submissions = [submission1];
         submission1.results = [result1];
 
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
+        expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faQuestionCircle);
@@ -114,12 +132,12 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
+        expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
         expect(component.resultIconClass).toEqual(faTimesCircle);
@@ -133,12 +151,12 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(modelingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
+        expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -152,12 +170,12 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(programmingParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
+        expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -171,12 +189,12 @@ describe('ResultComponent', () => {
         const participation1 = cloneDeep(textParticipation);
         participation1.submissions = [submission1];
         submission1.results = [result1];
-        component.participation = participation1;
-        component.showUngradedResults = true;
+        fixture.componentRef.setInput('participation', participation1);
+        fixture.componentRef.setInput('showUngradedResults', true);
 
         fixture.detectChanges();
 
-        expect(component.result).toEqual(result1);
+        expect(component.result()).toEqual(result1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -209,8 +227,8 @@ describe('ResultComponent', () => {
         submission = { ...submission, results: [result] };
         const participation = cloneDeep(programmingParticipation);
         participation.submissions = [submission];
-        component.short = short;
-        component.participation = participation;
+        fixture.componentRef.setInput('short', short);
+        fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
 
         const warningIcon = fixture.debugElement.nativeElement.querySelector('#code-issue-warnings-icon');

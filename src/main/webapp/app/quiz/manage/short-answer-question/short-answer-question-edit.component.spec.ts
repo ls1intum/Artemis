@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -15,7 +15,7 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -77,19 +77,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 ShortAnswerQuestionEditComponent,
             ],
             providers: [
-                MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        })
-            .overrideComponent(ShortAnswerQuestionEditComponent, {
-                set: {
-                    providers: [MockProvider(NgbModal)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
     });
@@ -380,14 +373,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.setQuestionEditorValue('[-spot 1] [-spot 2]');
         expect(component.numberOfSpot).toBe(3);
         expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
-    });
-
-    it('should open', () => {
-        const content = {};
-        const modalService = fixture.debugElement.injector.get(NgbModal);
-        const modalSpy = vi.spyOn(modalService, 'open');
-        component.open(content);
-        expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should add spot to cursor and increase the spot number', () => {

@@ -1,15 +1,9 @@
-@if (!isExamReviewPage()) {
+@if (!isExamReviewPage() && !dialogRef) {
     <div class="modal-header feedback-header">
         @if (taskName) {
             <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
         } @else {
             <h3 class="modal-title" jhiTranslate="artemisApp.result.detail.feedback"></h3>
-        }
-
-        @if (activeModal) {
-            <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-                <fa-icon [icon]="faXmark" size="xl" />
-            </button>
         }
     </div>
 }
@@ -203,7 +197,7 @@
     </ng-template>
 </div>
 <div class="modal-footer">
-    @if (activeModal) {
-        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    @if (dialogRef) {
+        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="dialogRef.close()" jhiTranslate="entity.action.close">Close</button>
     }
 </div>
