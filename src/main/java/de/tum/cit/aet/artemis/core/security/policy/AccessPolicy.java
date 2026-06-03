@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * A declarative access policy that evaluates a sequence of rules against a user and resource.

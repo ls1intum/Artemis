@@ -6,6 +6,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 /**
  * A policy condition that can be converted to a JPA Specification predicate.
  * This allows access policies to be used both for runtime authorization checks
@@ -42,7 +44,7 @@ public interface SpecificationCondition<T> extends PolicyCondition<T> {
         return new SpecificationCondition<>() {
 
             @Override
-            public boolean test(de.tum.cit.aet.artemis.core.domain.User user, T resource) {
+            public boolean test(User user, T resource) {
                 return SpecificationCondition.this.test(user, resource) && other.test(user, resource);
             }
 
@@ -70,7 +72,7 @@ public interface SpecificationCondition<T> extends PolicyCondition<T> {
         return new SpecificationCondition<>() {
 
             @Override
-            public boolean test(de.tum.cit.aet.artemis.core.domain.User user, T resource) {
+            public boolean test(User user, T resource) {
                 return SpecificationCondition.this.test(user, resource) || other.test(user, resource);
             }
 
@@ -94,7 +96,7 @@ public interface SpecificationCondition<T> extends PolicyCondition<T> {
         return new SpecificationCondition<>() {
 
             @Override
-            public boolean test(de.tum.cit.aet.artemis.core.domain.User user, T resource) {
+            public boolean test(User user, T resource) {
                 return !SpecificationCondition.this.test(user, resource);
             }
 

@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.security.policy;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
 
-import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.core.security.Role;
 
 /**

@@ -16,10 +16,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyProvider;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course_;
 
 /**
  * Policy provider for course visibility access control.

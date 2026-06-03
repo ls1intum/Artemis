@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Factory class for creating Course specifications that are automatically generated

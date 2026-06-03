@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.security.policy;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * A composable predicate that tests whether a user satisfies a condition
