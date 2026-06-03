@@ -48,7 +48,6 @@
                 },
                 "actions": {
                     "generate": "Generate",
-                    "previewPrompt": "[DEBUG] Preview Prompt",
                     "openInEditor": "Open in editor",
                     "addToEditor": "Add to quiz",
                     "loading": {

@@ -162,17 +162,3 @@
 .quiz-ai-generation-tooltip {
     z-index: 2000 !important;
 }
-
-// TODO: Remove
-.quiz-ai-generation-modal .prompt-preview {
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: var(--surface-ground);
-    border: 1px solid var(--surface-border);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    overflow-y: auto;
-    max-height: 100%;
-    margin: 0;
-}

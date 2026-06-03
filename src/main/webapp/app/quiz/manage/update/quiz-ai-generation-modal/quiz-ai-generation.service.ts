@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -17,12 +16,6 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 export class QuizAiGenerationService {
     private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
     private translateService = inject(TranslateService);
-    private http = inject(HttpClient);
-
-    // TODO: Remove
-    previewPrompt(courseId: number, request: QuizQuestionGenerationRequest): Observable<string> {
-        return this.http.post(`api/hyperion/courses/${courseId}/quiz-exercises/preview-prompt`, request, { responseType: 'text' });
-    }
 
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService

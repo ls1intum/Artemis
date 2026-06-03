@@ -67,8 +67,6 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     selectedQuestionTypes = signal<GeneratedQuestionType[]>(['single-choice']);
     generatedQuestions = signal<GeneratedQuestion[]>([]);
     isGenerating = signal(false);
-    promptPreview = signal<string | undefined>(undefined);
-    isLoadingPromptPreview = signal(false);
     loadingPhraseIndex = signal(0);
     loadingDotsCount = signal(0);
 
@@ -221,44 +219,6 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
 
     getResultCountTranslateValues() {
         return { count: this.generatedQuestions().length };
-    }
-
-    // TODO: remove
-    previewPrompt(): void {
-        const courseId = this.courseId();
-        if (!courseId || !this.canGenerate()) {
-            return;
-        }
-        const difficulty = Math.max(0, Math.min(100, this.difficulty()));
-        const request: QuizQuestionGenerationRequest = this.isCompetencyMode()
-            ? {
-                  competencyIds: this.selectedCompetencies()
-                      .map((c) => c.id)
-                      .filter((id): id is number => id !== undefined),
-                  optionalPrompt: this.optionalPrompt().trim() || undefined,
-                  language: this.language(),
-                  questionTypes: this.selectedQuestionTypes(),
-                  numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
-                  difficulty,
-              }
-            : {
-                  topic: this.topic().trim(),
-                  optionalPrompt: this.optionalPrompt().trim() || undefined,
-                  language: this.language(),
-                  questionTypes: this.selectedQuestionTypes(),
-                  numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
-                  difficulty,
-              };
-
-        this.isLoadingPromptPreview.set(true);
-        this.promptPreview.set(undefined);
-        this.quizAiGenerationService
-            .previewPrompt(courseId, request)
-            .pipe(finalize(() => this.isLoadingPromptPreview.set(false)))
-            .subscribe({
-                next: (prompt) => this.promptPreview.set(prompt),
-                error: () => this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.generationFailed'),
-            });
     }
 
     addGeneratedQuestionsToQuiz(): void {

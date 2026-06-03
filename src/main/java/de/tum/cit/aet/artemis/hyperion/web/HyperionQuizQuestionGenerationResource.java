@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,23 +81,6 @@ public class HyperionQuizQuestionGenerationResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = quizQuestionGenerationService.generateQuizQuestions(course, request);
         return ResponseEntity.ok(result);
-    }
-
-    /**
-     * POST /courses/{courseId}/quiz-exercises/preview-prompt : Returns the rendered LLM prompt for the given request without calling the LLM.
-     * TODO: Remove this
-     *
-     * @param courseId the id of the course
-     * @param request  generation configuration
-     * @return the rendered prompt string
-     */
-    @EnforceAtLeastEditorInCourse
-    @PostMapping(value = "courses/{courseId}/quiz-exercises/preview-prompt", produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> previewPrompt(@PathVariable long courseId, @Valid @RequestBody QuizQuestionGenerationRequestDTO request) {
-        log.debug("REST request to preview Hyperion quiz question prompt for course [{}]", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        String prompt = quizQuestionGenerationService.previewPrompt(course, request);
-        return ResponseEntity.ok(prompt);
     }
 
     /**
