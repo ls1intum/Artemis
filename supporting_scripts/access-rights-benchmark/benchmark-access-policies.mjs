@@ -441,8 +441,12 @@ async function runBenchmark(label, requestFn, warmup, iterations) {
 
     // Warmup (not measured)
     for (let i = 0; i < warmup; i++) {
+        const start = performance.now();
         await requestFn();
+        const elapsed = performance.now() - start;
+        process.stdout.write(`  Warmup: ${i + 1}/${warmup} (${formatMs(elapsed)})\r`);
     }
+    console.log('');
 
     // Measured iterations
     const timings = [];
@@ -451,13 +455,9 @@ async function runBenchmark(label, requestFn, warmup, iterations) {
         await requestFn();
         const elapsed = performance.now() - start;
         timings.push(elapsed);
-
-        // Print progress every 10 iterations
-        if ((i + 1) % 10 === 0 || i === iterations - 1) {
-            process.stdout.write(`  Progress: ${i + 1}/${iterations} (last: ${formatMs(elapsed)})\r`);
-        }
+        process.stdout.write(`  Benchmark: ${i + 1}/${iterations} (${formatMs(elapsed)})\r`);
     }
-    console.log(''); // newline after progress
+    console.log('');
 
     return timings;
 }
@@ -1286,8 +1286,12 @@ async function runSqlBenchmark(label, requestFn, logPath, warmup, iterations) {
 
     // Warmup (not measured)
     for (let i = 0; i < warmup; i++) {
+        const start = performance.now();
         await requestFn();
+        const elapsed = performance.now() - start;
+        process.stdout.write(`  Warmup: ${i + 1}/${warmup} (${formatMs(elapsed)})\r`);
     }
+    console.log('');
 
     // Measured iterations — collect response times
     const timings = [];
@@ -1298,9 +1302,7 @@ async function runSqlBenchmark(label, requestFn, logPath, warmup, iterations) {
             // Last iteration: also capture log for SQL analysis
             const result = await runWithSqlCapture(label, requestFn, logPath);
             timings.push(result.elapsed);
-
-            // Print progress
-            process.stdout.write(`  Progress: ${i + 1}/${iterations} (last: ${formatMs(result.elapsed)})\n`);
+            process.stdout.write(`  Benchmark: ${i + 1}/${iterations} (${formatMs(result.elapsed)})\n`);
 
             const responseTimeStats = computeStats(timings);
             return { responseTimeStats, sqlStats: result.sqlStats, logSnippet: result.logSnippet };
@@ -1310,10 +1312,7 @@ async function runSqlBenchmark(label, requestFn, logPath, warmup, iterations) {
         await requestFn();
         const elapsed = performance.now() - start;
         timings.push(elapsed);
-
-        if ((i + 1) % 10 === 0) {
-            process.stdout.write(`  Progress: ${i + 1}/${iterations} (last: ${formatMs(elapsed)})\r`);
-        }
+        process.stdout.write(`  Benchmark: ${i + 1}/${iterations} (${formatMs(elapsed)})\r`);
     }
 }
 
