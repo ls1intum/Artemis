@@ -297,6 +297,87 @@ async function setupBenchmarkData(client) {
 }
 
 // ---------------------------------------------------------------------------
+// Entity snapshot
+// ---------------------------------------------------------------------------
+
+/**
+ * Collects a snapshot of relevant entity counts from the database at the time
+ * the benchmark runs. This gives context for interpreting benchmark results:
+ * - Total courses tells you the SQL query scale for the all-courses endpoint
+ * - Active/visible courses narrow down what the student endpoint actually processes
+ * - Exercise counts reflect the work done by programming exercise visibility filtering
+ *
+ * Uses:
+ *   GET /api/core/courses          (as admin) — all courses regardless of visibility
+ *   GET /api/core/courses/for-dashboard  (as student) — courses + exercises visible to bench_student
+ *
+ * @param {HttpClient} adminClient   - authenticated admin HTTP client
+ * @param {HttpClient} studentClient - authenticated student HTTP client
+ * @returns {object} snapshot with counts
+ */
+async function collectEntitySnapshot(adminClient, studentClient) {
+    console.log('\n' + '='.repeat(60));
+    console.log('DATABASE ENTITY SNAPSHOT');
+    console.log('='.repeat(60));
+
+    let totalCourses = '?';
+    let activeCourses = '?';
+    let visibleCourses = '?';
+    let totalVisibleExercises = '?';
+    let totalVisibleProgrammingExercises = '?';
+
+    // Admin: fetch all courses to get total and active counts
+    try {
+        const adminCoursesResponse = await adminClient.get('/api/core/courses');
+        const allCourses = Array.isArray(adminCoursesResponse.data) ? adminCoursesResponse.data : [];
+        totalCourses = allCourses.length;
+
+        const now = new Date();
+        activeCourses = allCourses.filter(c => {
+            const start = c.startDate ? new Date(c.startDate) : null;
+            const end = c.endDate ? new Date(c.endDate) : null;
+            return (!start || start <= now) && (!end || end >= now);
+        }).length;
+    } catch (error) {
+        console.error(`  WARNING: Could not fetch admin course list: ${error.message}`);
+    }
+
+    // Student: fetch for-dashboard to count visible courses and exercises
+    try {
+        const dashboardResponse = await studentClient.get('/api/core/courses/for-dashboard');
+        const dashboardData = dashboardResponse.data;
+        const visibleCourseDTOs = dashboardData?.courses ? [...dashboardData.courses] : [];
+        visibleCourses = visibleCourseDTOs.length;
+
+        let exerciseCount = 0;
+        let programmingCount = 0;
+        for (const dto of visibleCourseDTOs) {
+            const exercises = dto.course?.exercises || [];
+            exerciseCount += exercises.length;
+            programmingCount += exercises.filter(e => e.type === 'programming').length;
+        }
+        totalVisibleExercises = exerciseCount;
+        totalVisibleProgrammingExercises = programmingCount;
+    } catch (error) {
+        console.error(`  WARNING: Could not fetch student dashboard: ${error.message}`);
+    }
+
+    console.log(`  Total courses in DB                : ${totalCourses}`);
+    console.log(`  Active courses (now in date range)  : ${activeCourses}`);
+    console.log(`  Courses visible to bench_student    : ${visibleCourses}`);
+    console.log(`  Exercises visible to bench_student  : ${totalVisibleExercises}`);
+    console.log(`  └─ of which programming exercises   : ${totalVisibleProgrammingExercises}`);
+
+    return {
+        totalCourses,
+        activeCourses,
+        visibleCourses,
+        totalVisibleExercises,
+        totalVisibleProgrammingExercises,
+    };
+}
+
+// ---------------------------------------------------------------------------
 // Benchmark helpers
 // ---------------------------------------------------------------------------
 
@@ -531,11 +612,14 @@ async function main() {
         courseId = benchData.courseIds[0];
     }
 
+    // Collect entity snapshot before benchmarking
+    const snapshot = await collectEntitySnapshot(adminClient, studentClient);
+
     // -------------------------------------------------------------------
     // SQL ANALYSIS MODE
     // -------------------------------------------------------------------
     if (config.sqlAnalysis) {
-        await runSqlAnalysisMode(studentClient, courseId);
+        await runSqlAnalysisMode(studentClient, courseId, snapshot);
         return;
     }
 
@@ -614,6 +698,7 @@ async function main() {
         label: config.label,
         timestamp: new Date().toISOString(),
         mode: 'response-time',
+        snapshot,
         allCourses: allCoursesStats,
         singleCourse: singleCourseStats,
         config: { iterations: config.iterations, warmup: config.warmup, courseCount: config.courseCount },
@@ -629,7 +714,7 @@ async function main() {
  * SQL Analysis Mode: fires each endpoint exactly once (with a warmup request first),
  * captures the server log window, and counts SQL queries.
  */
-async function runSqlAnalysisMode(studentClient, courseId) {
+async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('\n' + '='.repeat(60));
     console.log('SQL QUERY ANALYSIS');
     console.log('='.repeat(60));
@@ -703,6 +788,7 @@ async function runSqlAnalysisMode(studentClient, courseId) {
         label: config.label,
         timestamp: new Date().toISOString(),
         mode: 'sql-analysis',
+        snapshot,
         allCourses: {
             responseTimeMs: allCoursesResult.elapsed,
             ...allCoursesResult.sqlStats,
