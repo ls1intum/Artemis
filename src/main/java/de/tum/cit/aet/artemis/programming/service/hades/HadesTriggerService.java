@@ -72,6 +72,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
+            // ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
+            // String buildScript = buildConfig.getBuildScript();
+
             // Create the submission repository DTO
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), null, null, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), null, null, null);
@@ -117,6 +120,10 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                 : buildPlanPhasesDTO.orElseThrow().phases();
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+
+        for (BuildPhaseDTO phase : activePhases) {
+            log.debug("Phase '{}' script: {}", phase.name(), phase.script());
+        }
 
         return buildConfigService.createBuildScriptFromActivePhases(buildConfig, activePhases);
     }
