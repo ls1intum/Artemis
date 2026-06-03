@@ -226,3 +226,62 @@ jobs:
         with:
           name: docker-tag
           path: docker-tag.txt
+
+  arc-e2e-test:
+    name: ARC E2E Test
+    needs: save-docker-tag
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: arc-buildkit-ls1intum-stud-amd64
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+      PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+      PLAYWRIGHT_REPORT_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.pull_request.number }}
+      PLAYWRIGHT_REPORT_PHASE: arc
+      PLAYWRIGHT_REPORT_TRIGGERED_BY: pull_request
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+      - name: Download Docker tag
+        uses: actions/download-artifact@v8
+        with:
+          name: docker-tag
+      - name: Set Docker tag environment variable
+        run: |
+          ARTEMIS_DOCKER_TAG="$(cat docker-tag.txt)"
+          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> "$GITHUB_ENV"
+          echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
+      - name: Make E2E scripts executable
+        run: chmod +x .ci/E2E-tests/cleanup.sh .ci/E2E-tests/execute.sh
+      - name: Run cleanup script before E2E
+        run: .ci/E2E-tests/cleanup.sh
+      - name: Run ARC E2E tests
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+  block-default-e2e-workflow-run:
+    name: Block default workflow_run E2E
+    needs: arc-e2e-test
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: arc-buildkit-ls1intum-stud-amd64
+    steps:
+      - name: Fail intentionally after ARC E2E test
+        run: |
+          echo "Intentional temporary failure: keep the Build workflow conclusion non-successful so the default-branch workflow_run E2E path does not start on the old runners."
+          exit 1
