@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { combineLatest, filter, map, merge, of, scan, tap } from 'rxjs';
+import { combineLatest, filter, map, of } from 'rxjs';
 import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -53,51 +53,22 @@ export class CourseExamsComponent {
     readonly courseId = computed(() => Number(this.parentParams()['courseId'] ?? 0));
     readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
 
-    private readonly studentExams = toSignal(
-        merge(
-            this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId()).pipe(map((studentExams) => () => studentExams ?? [])),
-            combineLatest([this.examParticipationService.shouldUpdateTestExamsObservable, this.examParticipationService.currentlyLoadedStudentExam]).pipe(
-                filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()),
-                map(([_, latestExam]) => latestExam!),
-                tap(() => this.examParticipationService.setShouldUpdateTestExams(false)),
-                map((latestExam) => (studentExams: StudentExam[]) => {
-                    const index = studentExams.findIndex((studentExam) => studentExam?.id === latestExam?.id);
-                    if (index !== -1) {
-                        const updated = [...studentExams];
-                        updated[index] = latestExam;
-                        return updated;
-                    }
-                    return [...studentExams, latestExam];
-                }),
-            ),
-        ).pipe(scan((studentExams, updateStudentExams) => updateStudentExams(studentExams), [] as StudentExam[])),
-        { initialValue: [] },
-    );
     private readonly visibleExams = computed(
         () =>
             this.course()
                 ?.exams?.filter((exam) => this.isVisible(exam))
                 .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
     );
+
     protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isTestExam(exam)));
+    protected readonly studentExamByRealExamId = signal<Map<number, StudentExam>>(new Map());
+
     protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isTestExam(exam)));
-    protected readonly studentExamByRealExamId = toSignal(
-        this.examParticipationService.getRealExamSidebarData(this.courseId()).pipe(
-            map((studentExams) => {
-                const studentExamByRealExamId = new Map<number, StudentExam>();
-                studentExams.forEach((exam) => {
-                    const studentExam = cloneDeep(exam) as StudentExam;
-                    studentExamByRealExamId.set(studentExam.id!, studentExam);
-                });
-                return studentExamByRealExamId;
-            }),
-        ),
-        { initialValue: new Map<number, StudentExam>() },
-    );
+    private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
 
     readonly examSelected = signal(true);
-    readonly sidebarData = computed<SidebarData | undefined>(() => this.computeSidebarData());
     readonly isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
+    readonly sidebarData = computed<SidebarData | undefined>(() => this.computeSidebarData());
     readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -107,8 +78,52 @@ export class CourseExamsComponent {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
+        this.handleStudentExams();
+
         // If no exam is selected navigate to the last selected or upcoming Exam
         this.navigateToExam();
+    }
+
+    private handleStudentExams() {
+        // load the baseline of studentExams without overwriting newer local updates.
+        this.examParticipationService
+            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
+            .pipe(takeUntilDestroyed())
+            .subscribe((loadedStudentExams) => {
+                this.studentExamsOfTestExams.update((currentStudentExams) => [
+                    ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
+                    ...currentStudentExams,
+                ]);
+            });
+
+        // watch for new student exams
+        combineLatest([this.examParticipationService.shouldUpdateTestExamsObservable, this.examParticipationService.currentlyLoadedStudentExam])
+            .pipe(
+                filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()),
+                takeUntilDestroyed(),
+            )
+            .subscribe(([_, latestExam]) => {
+                this.studentExamsOfTestExams.update((studentExams) => {
+                    this.examParticipationService.setShouldUpdateTestExams(false);
+
+                    const index = studentExams.findIndex((se) => se?.id === latestExam?.id);
+                    if (index !== -1) {
+                        const updated = [...studentExams];
+                        updated[index] = latestExam;
+                        return updated;
+                    }
+                    return [...studentExams, latestExam];
+                });
+            });
+
+        // set the student exams for the real exams
+        this.examParticipationService
+            .getRealExamSidebarData(this.courseId())
+            .pipe(
+                map((realExamSidebarData) => new Map(realExamSidebarData.map((studentExam) => [studentExam.id!, studentExam as StudentExam]))),
+                takeUntilDestroyed(),
+            )
+            .subscribe((studentExamByRealExamId) => this.studentExamByRealExamId.set(studentExamByRealExamId));
     }
 
     navigateToExam() {
@@ -141,15 +156,11 @@ export class CourseExamsComponent {
      * @param examId the examId for which the StudentExams should be retrieved
      * @return a by id descending ordered list of studentExams
      */
-    getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
+    protected getStudentExamForExamIdOrderedByIdReverse(studentExams: StudentExam[], examId: number): StudentExam[] {
         if (!studentExams) {
             return [];
         }
-        return studentExams
-            .filter(function (studentExam) {
-                return studentExam.exam?.id && studentExam.startedDate && studentExam.exam.id === examId && studentExam.startedDate;
-            })
-            .sort((se1, se2) => se2.id! - se1.id!);
+        return studentExams.filter((studentExam) => studentExam.exam?.id === examId && studentExam.startedDate).sort((se1, se2) => se2.id! - se1.id!);
     }
 
     /**
@@ -209,10 +220,10 @@ export class CourseExamsComponent {
         const sortedRealExams: Exam[] = [...this.realExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
         const sortedTestExams: Exam[] = [...this.testExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
 
-        const studentExams = this.studentExams();
+        const testExamAttempts = this.studentExamsOfTestExams();
         const testExamAttemptsMap: Map<number, StudentExam[]> = new Map();
         for (const testExam of sortedTestExams) {
-            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(studentExams, testExam.id!);
+            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExamAttempts, testExam.id!);
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
             testExamAttemptsMap.set(testExam.id!, submittedAttempts);
         }
