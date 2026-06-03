@@ -311,7 +311,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
-        reconnectSubmittedAnswerQuizQuestions(quizSubmission, quizExercise);
+        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(quizSubmission, quizExercise);
         quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
@@ -410,25 +410,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
-        reconnectSubmittedAnswerQuizQuestions(savedQuizSubmission, quizExercise);
+        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(savedQuizSubmission, quizExercise);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
-    }
-
-    private void reconnectSubmittedAnswerQuizQuestions(QuizSubmission quizSubmission, QuizExercise quizExercise) {
-        if (quizSubmission.getSubmittedAnswers() == null || quizExercise.getQuizQuestions() == null) {
-            return;
-        }
-        Map<Long, QuizQuestion> quizQuestionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            QuizQuestion submittedAnswerQuestion = submittedAnswer.getQuizQuestion();
-            if (submittedAnswerQuestion != null) {
-                QuizQuestion loadedQuestion = quizQuestionMap.get(submittedAnswerQuestion.getId());
-                if (loadedQuestion != null) {
-                    submittedAnswer.setQuizQuestion(loadedQuestion);
-                }
-            }
-        }
     }
 
     private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,

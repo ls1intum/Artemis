@@ -121,11 +121,11 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
-import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionQuestionConnector;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -834,7 +834,7 @@ public class ExamService {
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
                 if (exercise instanceof QuizExercise quizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
-                    reconnectSubmittedAnswerQuizQuestions(quizSubmission, quizExercise);
+                    QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(quizSubmission, quizExercise);
                     // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
@@ -845,22 +845,6 @@ public class ExamService {
         else {
             // To prevent LazyInitializationException.
             exercise.setStudentParticipations(Set.of());
-        }
-    }
-
-    private void reconnectSubmittedAnswerQuizQuestions(QuizSubmission quizSubmission, QuizExercise quizExercise) {
-        if (quizSubmission.getSubmittedAnswers() == null || quizExercise.getQuizQuestions() == null) {
-            return;
-        }
-        Map<Long, QuizQuestion> quizQuestionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            QuizQuestion submittedAnswerQuestion = submittedAnswer.getQuizQuestion();
-            if (submittedAnswerQuestion != null) {
-                QuizQuestion loadedQuestion = quizQuestionMap.get(submittedAnswerQuestion.getId());
-                if (loadedQuestion != null) {
-                    submittedAnswer.setQuizQuestion(loadedQuestion);
-                }
-            }
         }
     }
 

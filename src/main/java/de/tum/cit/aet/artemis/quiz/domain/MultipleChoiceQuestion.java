@@ -291,12 +291,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @PrePersist
     @PreUpdate
     private void ensureAnswerOptionBackReferences() {
-        if (answerOptions == null || !Hibernate.isInitialized(answerOptions)) {
-            return;
-        }
-        for (AnswerOption option : answerOptions) {
-            if (option != null && option.getQuestion() != this) {
-                option.setQuestion(this);
+        if (answerOptions != null && Hibernate.isInitialized(answerOptions)) {
+            for (AnswerOption option : answerOptions) {
+                if (option != null && option.getQuestion() != this) {
+                    option.setQuestion(this);
+                }
             }
         }
     }

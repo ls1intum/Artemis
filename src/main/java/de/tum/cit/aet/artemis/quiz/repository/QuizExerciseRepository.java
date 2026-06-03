@@ -77,7 +77,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Transactional(readOnly = true)
     default Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId) {
-        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsById(quizExerciseId));
+        return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsById(quizExerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
@@ -91,7 +91,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Transactional(readOnly = true)
     default Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId) {
-        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId));
+        return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
@@ -104,7 +104,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Transactional(readOnly = true)
     default Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId) {
-        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsById(quizExerciseId));
+        return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsById(quizExerciseId));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
@@ -117,7 +117,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Transactional(readOnly = true)
     default Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId) {
-        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndCompetenciesById(quizExerciseId));
+        return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsAndCompetenciesById(quizExerciseId));
     }
 
     @Query("""
@@ -126,7 +126,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH question.answerOptions
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<MultipleChoiceQuestion> findMultipleChoiceQuestionsWithAnswerOptionsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<MultipleChoiceQuestion> initializeMultipleChoiceAnswerOptions(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -134,7 +134,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH question.dropLocations
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<DragAndDropQuestion> findDragAndDropQuestionsWithDropLocationsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<DragAndDropQuestion> initializeDragAndDropDropLocations(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -142,7 +142,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH question.dragItems
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<DragAndDropQuestion> findDragAndDropQuestionsWithDragItemsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<DragAndDropQuestion> initializeDragAndDropDragItems(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -152,7 +152,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH mapping.dropLocation
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<DragAndDropQuestion> findDragAndDropQuestionsWithCorrectMappingsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<DragAndDropQuestion> initializeDragAndDropCorrectMappings(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -160,7 +160,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH question.spots
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<ShortAnswerQuestion> findShortAnswerQuestionsWithSpotsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<ShortAnswerQuestion> initializeShortAnswerSpots(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -168,7 +168,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH question.solutions
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<ShortAnswerQuestion> findShortAnswerQuestionsWithSolutionsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<ShortAnswerQuestion> initializeShortAnswerSolutions(@Param("quizExerciseId") Long quizExerciseId);
 
     @Query("""
             SELECT DISTINCT question
@@ -178,14 +178,14 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN FETCH mapping.solution
             WHERE question.exercise.id = :quizExerciseId
             """)
-    List<ShortAnswerQuestion> findShortAnswerQuestionsWithCorrectMappingsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+    List<ShortAnswerQuestion> initializeShortAnswerCorrectMappings(@Param("quizExerciseId") Long quizExerciseId);
 
-    private Optional<QuizExercise> withEagerQuestionChildCollections(Optional<QuizExercise> quizExercise) {
-        quizExercise.ifPresent(this::loadQuizQuestionChildCollections);
+    private Optional<QuizExercise> withInitializedQuestionChildCollections(Optional<QuizExercise> quizExercise) {
+        quizExercise.ifPresent(this::initializeLazyQuestionChildCollections);
         return quizExercise;
     }
 
-    private void loadQuizQuestionChildCollections(QuizExercise quizExercise) {
+    private void initializeLazyQuestionChildCollections(QuizExercise quizExercise) {
         if (quizExercise.getQuizQuestions() == null) {
             return;
         }
@@ -200,18 +200,20 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         }
 
         Long quizExerciseId = quizExercise.getId();
+        // These queries initialize lazy child collections on the already managed quiz question instances.
+        // The returned lists are intentionally ignored because Hibernate updates the persistence context.
         if (hasMultipleChoiceQuestion) {
-            findMultipleChoiceQuestionsWithAnswerOptionsByExerciseId(quizExerciseId);
+            initializeMultipleChoiceAnswerOptions(quizExerciseId);
         }
         if (hasDragAndDropQuestion) {
-            findDragAndDropQuestionsWithDropLocationsByExerciseId(quizExerciseId);
-            findDragAndDropQuestionsWithDragItemsByExerciseId(quizExerciseId);
-            findDragAndDropQuestionsWithCorrectMappingsByExerciseId(quizExerciseId);
+            initializeDragAndDropDropLocations(quizExerciseId);
+            initializeDragAndDropDragItems(quizExerciseId);
+            initializeDragAndDropCorrectMappings(quizExerciseId);
         }
         if (hasShortAnswerQuestion) {
-            findShortAnswerQuestionsWithSpotsByExerciseId(quizExerciseId);
-            findShortAnswerQuestionsWithSolutionsByExerciseId(quizExerciseId);
-            findShortAnswerQuestionsWithCorrectMappingsByExerciseId(quizExerciseId);
+            initializeShortAnswerSpots(quizExerciseId);
+            initializeShortAnswerSolutions(quizExerciseId);
+            initializeShortAnswerCorrectMappings(quizExerciseId);
         }
     }
 
