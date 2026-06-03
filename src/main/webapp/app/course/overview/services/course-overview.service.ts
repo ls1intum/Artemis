@@ -387,10 +387,6 @@ export class CourseOverviewService {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
 
-    mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
-        return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
-    }
-
     /**
      * Maps an array of conversations to their respective sidebar card representations.
      * This is used to display conversation cards (channels, group chats, etc.) in the sidebar.
@@ -401,12 +397,6 @@ export class CourseOverviewService {
      */
     mapConversationsToSidebarCardElements(course: Course, conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
-    }
-
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[]) {
-        if (attempts) {
-            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
-        }
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {

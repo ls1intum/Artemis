@@ -217,14 +217,13 @@ export class CourseExamsComponent {
             testExamAttemptsMap.set(testExam.id!, submittedAttempts);
         }
 
-        const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(sortedRealExams, this.getAllStudentExamsForRealExams());
-        const sidebarTestExams = this.courseOverviewService.mapExamsToSidebarCardElements(sortedTestExams);
-        const allStudentExams = this.getAllStudentExams(testExamAttemptsMap);
-        const sidebarTestExamAttempts = this.courseOverviewService.mapTestExamAttemptsToSidebarCardElements(allStudentExams);
-
-        const sidebarExams: SidebarCardElement[] = [...sidebarRealExams, ...sidebarTestExams, ...(sidebarTestExamAttempts ?? [])];
-
         const accordionExamGroups = this.groupExamsByRealOrTest(sortedRealExams, sortedTestExams, testExamAttemptsMap);
+        const sidebarExams: SidebarCardElement[] = [
+            ...accordionExamGroups['real'].entityData,
+            ...accordionExamGroups['test'].entityData,
+            ...accordionExamGroups['attempt'].entityData,
+        ];
+
         return {
             groupByCategory: true,
             sidebarType: 'exam',
@@ -239,21 +238,6 @@ export class CourseExamsComponent {
             return;
         }
         this.navigateToExam();
-    }
-
-    getAllStudentExamsForRealExams(): StudentExam[] {
-        return [...this.studentExamByRealExamId().values()];
-    }
-
-    // Method to iterate through the map and get all student exams
-    getAllStudentExams(testExamAttemptsMap: Map<number, StudentExam[]>): StudentExam[] {
-        const allStudentExams: StudentExam[] = [];
-        testExamAttemptsMap.forEach((studentExams) => {
-            studentExams.forEach((studentExam) => {
-                allStudentExams.push(studentExam);
-            });
-        });
-        return allStudentExams;
     }
 
     getNumberOfAttemptsForTestExam(exam: Exam, testExamAttemptsMap: Map<number, StudentExam[]>): number {
