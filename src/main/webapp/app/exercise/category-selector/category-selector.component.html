@@ -14,7 +14,7 @@
         }
         <input
             id="field_categories"
-            [hidden]="selectedCategoryItems().length >= 10"
+            [hidden]="selectedCategoryItems().length >= MAX_CATEGORIES"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"

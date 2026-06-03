@@ -47,6 +47,7 @@ export class CategorySelectorComponent {
     protected readonly faTimes = faTimes;
     protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
     private readonly COLOR_SELECTOR_HEIGHT = 150;
+    protected readonly MAX_CATEGORIES = 10;
 
     /** the selected categories passed in by the parent */
     readonly categories = input<ExerciseCategory[] | FaqCategory[]>();
@@ -127,7 +128,7 @@ export class CategorySelectorComponent {
         const categoryString = (event.value || '').trim();
         // prevent adding duplicated categories
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 10) {
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < this.MAX_CATEGORIES) {
             let category = this.findExistingCategory(categoryString);
             if (!category) {
                 category = this.createCategory(categoryString);
@@ -159,7 +160,7 @@ export class CategorySelectorComponent {
     onItemSelect(event: MatAutocompleteSelectedEvent): void {
         const categoryString = (event.option.value || '').trim();
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 10) {
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < this.MAX_CATEGORIES) {
             // check if there is an existing category and reuse the same color
             let category = this.findExistingCategory(categoryString);
             if (!category) {
