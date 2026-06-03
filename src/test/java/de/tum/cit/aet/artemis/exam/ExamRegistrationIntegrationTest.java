@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,8 +25,10 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -66,6 +67,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private Course course1;
 
@@ -175,7 +179,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
         User student99 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
-        assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
+        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
@@ -225,8 +229,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            var user = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
-            assertThat(user.getGroups()).contains(course1.getStudentGroupName());
+            assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(examUser.getUser().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
         }
 
         // Make sure delete also works if so many objects have been created before
@@ -293,12 +296,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
-        int numberOfStudentsInCourse = userTestRepository.findAllByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
+        int numberOfStudentsInCourse = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
-        student99.setGroups(Collections.singleton("tumuser"));
+        userUtilService.enrollUserInCourse(student99, course1, CourseRole.STUDENT);
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
-        assertThat(student99.getGroups()).contains(course1.getStudentGroupName());
+        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
 
         var examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
         assertThat(examUser99).isEmpty();

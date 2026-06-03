@@ -295,9 +295,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
     }
 
     @Test
@@ -305,9 +305,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitTutorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
     }
 
     @Test
@@ -315,9 +315,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitEditorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
     }
 
     @Disabled

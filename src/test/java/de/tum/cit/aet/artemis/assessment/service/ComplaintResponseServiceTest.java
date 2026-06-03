@@ -82,27 +82,13 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentT
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createCourse(TEST_PREFIX);
 
         this.student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        this.student1.setGroups(Set.of(course.getStudentGroupName()));
-        userRepository.save(this.student1);
-
         this.student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        this.student2.setGroups(Set.of(course.getStudentGroupName()));
-        userRepository.save(this.student2);
-
         this.tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        this.tutor1.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepository.save(this.tutor1);
-
         this.tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
-        this.tutor2.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepository.save(this.tutor2);
-
         this.instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        this.instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(this.instructor);
 
         this.textExercise = this.textExerciseUtilService.createIndividualTextExercise(course, null, null, null);
         this.teamTextExercise = this.textExerciseUtilService.createTeamTextExercise(course, null, null, null);

@@ -111,7 +111,6 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         instructor1 = users.stream().filter(u -> u.getLogin().equals(TEST_PREFIX + "instructor1")).findFirst().orElseThrow();
 
         // Setup course without programming exercise (we'll create exercises via REST API)
-        // Use default groups ("tumuser", "tutor", "editor", "instructor") which match the groups created by addUsers
         course = courseUtilService.addEmptyCourse();
 
         // Mock LDAP authentication
@@ -1071,13 +1070,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @BeforeEach
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void setupExam() throws Exception {
-            // Update course groups to match the user groups created by addUsers(TEST_PREFIX, ...)
-            // This is required for exam tests where students must be in the course's student group
-            course.setStudentGroupName(TEST_PREFIX + "tumuser");
-            course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-            course.setEditorGroupName(TEST_PREFIX + "editor");
-            course.setInstructorGroupName(TEST_PREFIX + "instructor");
-            courseRepository.save(course);
+            // Enroll TEST_PREFIX users into the course via UCR (addEmptyCourse enrolls "" prefix users only)
+            courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
             // Create exam with exercise group
             exam = examUtilService.addExamWithExerciseGroup(course, true);

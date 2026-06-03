@@ -4,7 +4,6 @@ import static org.mockito.Mockito.lenient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +18,7 @@ import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -129,6 +129,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     @Autowired
     protected UserUtilService userUtilService;
 
+    @Autowired
+    protected UserCourseRoleRepository userCourseRoleRepository;
+
     // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
     protected static final String NOT_FOUND = "not found";
 
@@ -190,11 +193,10 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
         instructor2Login = testPrefix + "instructor2";
         instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
-        // Remove instructor2 from the instructor group of the course.
-        instructor2.setGroups(Set.of());
-        userTestRepository.save(instructor2);
-
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // Enroll test-prefix users into the course; then explicitly remove instructor2 (not in course by design)
+        courseUtilService.enrollPrefixedUsersInCourse(course, testPrefix);
+        userCourseRoleRepository.deleteByUser_IdAndCourse_Id(instructor2.getId(), course.getId());
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));

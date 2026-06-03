@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -257,7 +256,6 @@ public class UserTestService {
         final var newPassword = "bonobo42";
         final var newEmail = "bonobo42@tum.com";
         final var newFirstName = "Bruce";
-        final var newGroups = Set.of("foo", "bar");
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
@@ -266,7 +264,6 @@ public class UserTestService {
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
         student.setFirstName(newFirstName);
-        student.setGroups(newGroups);
         student.setLastName(newLastName);
         student.setImageUrl(newImageUrl);
         student.setLangKey(newLangKey);
@@ -327,28 +324,9 @@ public class UserTestService {
         assertThat(userInDB.getId()).isEqualTo(student.getId());
     }
 
-    // Test
-    public void updateUserGroups() throws Exception {
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        courseRepository.save(course);
-
-        // First we create a new user with group
-        student.setGroups(Set.of("instructor"));
-        student = userTestRepository.save(student);
-
-        // We will then update the user by modifying the groups
-        var updatedUser = student;
-        updatedUser.setGroups(Set.of("tutor"));
-        request.put("/api/account/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
-
-        var updatedUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
-        assertThat(updatedUserOrEmpty).isPresent();
-
-        updatedUser = updatedUserOrEmpty.get();
-        assertThat(updatedUser.getId()).isEqualTo(student.getId());
-        assertThat(updatedUser.getGroups()).hasSize(1).contains("tutor");
-    }
+    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
+    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
+    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
@@ -499,16 +477,10 @@ public class UserTestService {
     }
 
     // Test
-    public void createUserWithGroups() throws Exception {
+    public void createUser_verifyNoGroupMembership() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
-
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("instructor2");
-        courseRepository.save(course);
 
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
@@ -516,7 +488,8 @@ public class UserTestService {
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor2"));
+        // Note: ManagedUserVM no longer carries group strings (UserDTO dropped groups in Phase 6).
+        // The admin create API always creates users with empty groups; course membership is via UCR.
 
         request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
@@ -525,13 +498,11 @@ public class UserTestService {
 
         var createdUser = createdUserOrEmpty.get();
         assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getGroups()).hasSize(2).isEqualTo(newUser.getGroups());
+        assertThat(createdUser.getGroups()).as("Admin-created user always starts with empty user_groups").isEmpty();
     }
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-        userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -568,8 +539,6 @@ public class UserTestService {
 
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
-        student.setGroups(Collections.emptySet());
-        userTestRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -661,7 +630,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        repoUser.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
         userTestRepository.save(repoUser);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -683,7 +652,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        user.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -891,7 +860,7 @@ public class UserTestService {
     }
 
     // Test
-    public void testUserWithoutGroups() throws Exception {
+    public void testUserWithoutCourseEnrollment() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         courseRepository.save(course);
 

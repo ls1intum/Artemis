@@ -17,7 +17,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,6 +46,9 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -353,30 +358,22 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         @BeforeEach
         void setUp() {
-            course = courseUtilService.addEmptyCourse();
+            course = courseUtilService.addEmptyCourse(TEST_PREFIX);
             userUtilService.addSuperAdmin(TEST_PREFIX);
             superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
-            // Add student to the course's student group
             student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            student.setGroups(Set.of(course.getStudentGroupName()));
-            userRepository.save(student);
 
-            // Add tutor to the course's TA group
+            // student2 is a student-role user acting as TA in this course for superadmin tests
             tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-            tutor.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-            userRepository.save(tutor);
+            userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
 
-            // Create and add editor to the course's editor group
+            // editor is a freshly created user — not covered by the prefix enrollment above
             userUtilService.createAndSaveUser(TEST_PREFIX + "editor");
             editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
-            editor.setGroups(Set.of(course.getEditorGroupName()));
-            userRepository.save(editor);
+            userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
 
-            // Add instructor to the course's instructor group
             instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-            instructor.setGroups(Set.of(course.getInstructorGroupName()));
-            userRepository.save(instructor);
         }
 
         @Test

@@ -31,6 +31,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
@@ -51,6 +53,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
@@ -83,17 +88,13 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         persistedCourseId = course.getId();
 
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.getGroups().add(course.getStudentGroupName());
-        userTestRepository.save(student);
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        tutor.getGroups().add(course.getTeachingAssistantGroupName());
-        userTestRepository.save(tutor);
+        userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        editor.getGroups().add(course.getEditorGroupName());
-        userTestRepository.save(editor);
+        userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.getGroups().add(course.getInstructorGroupName());
-        userTestRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("Hyperion Test Exercise");

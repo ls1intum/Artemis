@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -28,6 +30,9 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private static final String TEST_PREFIX = "hyperionquizgen";
 
@@ -47,20 +52,16 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
         persistedCourseId = course.getId();
 
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.getGroups().add(course.getStudentGroupName());
-        userTestRepository.save(student);
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
 
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        tutor.getGroups().add(course.getTeachingAssistantGroupName());
-        userTestRepository.save(tutor);
+        userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
 
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        editor.getGroups().add(course.getEditorGroupName());
-        userTestRepository.save(editor);
+        userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
 
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.getGroups().add(course.getInstructorGroupName());
-        userTestRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 
     @AfterEach

@@ -12,9 +12,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -32,9 +30,6 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Autowired
     private CourseUtilService courseUtilService;
 
-    @Autowired
-    private UserCourseRoleTestRepository userCourseRoleRepository;
-
     private Course course;
 
     @BeforeEach
@@ -48,7 +43,6 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // Create a user with SUPER_ADMIN authority
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -63,7 +57,6 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // Create a user with ADMIN authority
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
-        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -78,7 +71,6 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // Create a user with both ADMIN and SUPER_ADMIN authorities
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY, Authority.ADMIN_AUTHORITY));
-        user.setGroups(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
@@ -93,7 +85,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddInstructorAuthorityBasedOnCourseRole() {
         // Enroll user as instructor in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.INSTRUCTOR));
+        userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
@@ -108,7 +100,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddEditorAuthorityBasedOnCourseRole() {
         // Enroll user as editor in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.EDITOR));
+        userUtilService.enrollUserInCourse(user, course, CourseRole.EDITOR);
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
@@ -123,7 +115,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldAddTeachingAssistantAuthorityBasedOnCourseRole() {
         // Enroll user as teaching assistant in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.TEACHING_ASSISTANT));
+        userUtilService.enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
@@ -154,7 +146,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     void testBuildAuthorities_shouldCombinePreservedAndCourseRoleBasedAuthorities() {
         // A super admin user who is also an instructor in a course should have both authorities
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.INSTRUCTOR));
+        userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
         user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
 
         // Call buildAuthorities

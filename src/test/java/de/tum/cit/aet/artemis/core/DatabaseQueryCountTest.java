@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -10,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
@@ -36,9 +33,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     void setup() {
         participantScoreScheduleService.shutdown();
         userUtilService.addUsers(TEST_PREFIX, 2, NUMBER_OF_TUTORS, 0, 0);
-        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.setGroups(Set.of(TEST_PREFIX + "tumuser"));
-        userTestRepository.save(student);
     }
 
     @Test

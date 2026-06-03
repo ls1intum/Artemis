@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -79,7 +79,7 @@ public class ConversationUtilService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private UserCourseRoleTestRepository userCourseRoleRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;
@@ -123,30 +123,41 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled() {
+        return createCourseWithPostsDisabled("");
+    }
+
+    /**
+     * Creates and saves a Course with disabled posts, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created Course
+     */
+    public Course createCourseWithPostsDisabled(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
-    private void enrollUsersFromGroupsInCourse(Course course) {
-        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
-        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
-        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
-        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    /**
+     * Enrolls users into {@code user_course_role} by login prefix.
+     * Finds users whose logins start with {@code userPrefix + "student"}, {@code userPrefix + "tutor"},
+     * {@code userPrefix + "editor"}, and {@code userPrefix + "instructor"} and creates the corresponding
+     * {@code UserCourseRole} rows. Pass {@code ""} for the default (no-prefix) test users.
+     *
+     * @param course     the course to enroll users into
+     * @param userPrefix the test user prefix (e.g. {@code "examint"}), or {@code ""} for the default users
+     */
+    public void enrollPrefixedUsersInCourse(Course course, String userPrefix) {
+        enrollByLoginPrefix(course, userPrefix + "student", CourseRole.STUDENT);
+        enrollByLoginPrefix(course, userPrefix + "tutor", CourseRole.TEACHING_ASSISTANT);
+        enrollByLoginPrefix(course, userPrefix + "editor", CourseRole.EDITOR);
+        enrollByLoginPrefix(course, userPrefix + "instructor", CourseRole.INSTRUCTOR);
     }
 
-    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
-        if (groupName == null || groupName.isBlank()) {
-            return;
-        }
-        Set<de.tum.cit.aet.artemis.account.domain.User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
-        for (de.tum.cit.aet.artemis.account.domain.User user : users) {
-            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
-                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
-            }
-        }
+    private void enrollByLoginPrefix(Course course, String loginPrefix, CourseRole role) {
+        userRepo.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
     }
 
     /**

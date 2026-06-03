@@ -3,14 +3,16 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.service.CourseOverviewService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -23,6 +25,9 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -58,14 +63,11 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
         inactiveCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(inactiveCourse);
         var instructorsCourse = courseUtilService.createCourse();
-        instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(instructorsCourse);
 
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        var groups = new HashSet<String>();
-        groups.add("test-instructors");
-        instructor.setGroups(groups);
-        userRepository.save(instructor);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(instructor, inactiveCourse, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(instructor, instructorsCourse, CourseRole.INSTRUCTOR);
 
         var courses = courseOverviewService.getAllCoursesForManagementOverview(false);
         assertThat(courses).contains(instructorsCourse);
@@ -89,14 +91,11 @@ class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest
         inactiveCourse.setStudentGroupName("test-students");
         courseRepository.save(inactiveCourse);
         var instructorsCourse = courseUtilService.createCourse();
-        instructorsCourse.setStudentGroupName("test-students");
         courseRepository.save(instructorsCourse);
 
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var groups = new HashSet<String>();
-        groups.add("test-students");
-        student.setGroups(groups);
-        userRepository.save(student);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.enrollUserInCourse(student, inactiveCourse, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(student, instructorsCourse, CourseRole.STUDENT);
 
         var courses = courseOverviewService.getAllCoursesForManagementOverview(false);
         assertThat(courses).isEmpty();

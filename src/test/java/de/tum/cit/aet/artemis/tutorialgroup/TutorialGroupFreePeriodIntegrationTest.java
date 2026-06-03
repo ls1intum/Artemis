@@ -32,10 +32,10 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @Override
     void setupTestScenario() {
         super.setupTestScenario();
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), testPrefix + "student1");
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), testPrefix + "tutor1");
-        userUtilService.addEditor(exampleCourse.getEditorGroupName(), testPrefix + "editor1");
-        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), testPrefix + "instructor1");
+        userUtilService.addStudentToCourse(testPrefix + "student1", exampleCourse);
+        userUtilService.addTeachingAssistantToCourse(testPrefix + "tutor1", exampleCourse);
+        userUtilService.addEditorToCourse(testPrefix + "editor1", exampleCourse);
+        userUtilService.addInstructorToCourse(testPrefix + "instructor1", exampleCourse);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }

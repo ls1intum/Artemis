@@ -59,4 +59,14 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("DELETE FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role IN :roles")
     void deleteByCourse_IdAndRoleIn(@Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM UserCourseRole ucr WHERE ucr.course.id = :courseId")
+    void deleteByCourse_Id(@Param("courseId") Long courseId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM UserCourseRole ucr")
+    void deleteAllInBulk();
+
 }

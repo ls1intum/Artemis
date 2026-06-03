@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -92,28 +92,23 @@ public class ExamUtilService {
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
     /**
-     * Phase-8 bridge: converts legacy group membership into user_course_role rows
-     * for courses created directly in ExamUtilService (without going through CourseUtilService).
+     * Enrolls users into {@code user_course_role} by login prefix.
+     * Finds users whose logins start with {@code userPrefix + "student"}, {@code userPrefix + "tutor"},
+     * {@code userPrefix + "editor"}, and {@code userPrefix + "instructor"} and creates the corresponding
+     * {@code UserCourseRole} rows. Pass {@code ""} for the default (no-prefix) test users.
      *
-     * @param course the course to enroll users in
+     * @param course     the course to enroll users into
+     * @param userPrefix the test user prefix (e.g. {@code "examint"}), or {@code ""} for the default users
      */
-    private void enrollUsersFromGroupsInCourse(Course course) {
-        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
-        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
-        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
-        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    public void enrollPrefixedUsersInCourse(Course course, String userPrefix) {
+        enrollByLoginPrefix(course, userPrefix + "student", CourseRole.STUDENT);
+        enrollByLoginPrefix(course, userPrefix + "tutor", CourseRole.TEACHING_ASSISTANT);
+        enrollByLoginPrefix(course, userPrefix + "editor", CourseRole.EDITOR);
+        enrollByLoginPrefix(course, userPrefix + "instructor", CourseRole.INSTRUCTOR);
     }
 
-    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
-        if (groupName == null || groupName.isBlank()) {
-            return;
-        }
-        Set<User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
-        for (User user : users) {
-            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
-                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
-            }
-        }
+    private void enrollByLoginPrefix(Course course, String loginPrefix, CourseRole role) {
+        userRepo.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
     }
 
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
@@ -149,7 +144,7 @@ public class ExamUtilService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private UserCourseRoleTestRepository userCourseRoleRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -1064,12 +1059,24 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
+        return addExerciseGroupWithExamAndCourse(mandatory, "");
+    }
+
+    /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names,
+     * enrolling users by login prefix.
+     *
+     * @param mandatory  True, if the ExerciseGroup should be mandatory
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup
+     */
+    public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1098,6 +1105,19 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime) {
+        return addExerciseGroupWithExamAndCourse(mandatory, startDateBeforeCurrentTime, "");
+    }
+
+    /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course with default group names,
+     * enrolling users by login prefix.
+     *
+     * @param mandatory                  True, if the ExerciseGroup should be mandatory
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam should be before the current time, needed for examLiveEvent tests for already started exams
+     * @param userPrefix                 The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup
+     */
+    public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory, boolean startDateBeforeCurrentTime, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam;
         if (startDateBeforeCurrentTime) {
@@ -1111,7 +1131,7 @@ public class ExamUtilService {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1139,12 +1159,24 @@ public class ExamUtilService {
      * @return The newly created ExerciseGroup
      */
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
+        return addExerciseGroupWithExamWithReviewDatesAndCourse(mandatory, "");
+    }
+
+    /**
+     * Creates and saves an Exam with an ExerciseGroup for a newly created, active course. The exam has a review date [now; now + 60min].
+     * Enrolls users by login prefix.
+     *
+     * @param mandatory  True, if the ExerciseGroup should be mandatory
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created ExerciseGroup
+     */
+    public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ExamFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1358,9 +1390,20 @@ public class ExamUtilService {
      * @return The newly created Exam with two correction rounds
      */
     public Exam setupExamWithTwoCorrectionRounds() {
+        return setupExamWithTwoCorrectionRounds("");
+    }
+
+    /**
+     * Creates and saves an Exam with two correction rounds configured for testing scenarios,
+     * enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint")
+     * @return The newly created Exam with two correction rounds
+     */
+    public Exam setupExamWithTwoCorrectionRounds(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         Exam exam = addExam(course);
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.setStartDate(ZonedDateTime.now().minusHours(2));

@@ -80,7 +80,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var competency2 = competencyUtilService.createCompetency(course);
             competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            userUtilService.addStudent(TEST_PREFIX + "tumuser", TEST_PREFIX + "student1337");
+            userUtilService.addStudent(TEST_PREFIX + "student1337");
             var healthStatus = learningPathService.getHealthStatusForCourse(course);
             assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.MISSING);
             assertThat(healthStatus.missingLearningPaths()).isEqualTo(1);

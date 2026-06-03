@@ -9,7 +9,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -32,9 +31,9 @@ import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -50,7 +49,7 @@ class LtiServiceTest {
     private UserTestRepository userRepository;
 
     @Mock
-    private UserCourseRoleTestRepository userCourseRoleRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Mock
     private AuthorityService authorityService;
@@ -88,7 +87,7 @@ class LtiServiceTest {
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
-        user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
+        user.setLtiCreated(true);   // replaces legacy LTI_GROUP_NAME group
     }
 
     @AfterEach

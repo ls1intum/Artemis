@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,11 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -58,9 +58,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Autowired
-    private UserTestRepository userRepository;
-
-    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -74,6 +71,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private Exercise exercise;
 
@@ -131,21 +131,15 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @BeforeEach
     void setUp() {
         course = courseUtilService.createCourse();
-        course.setInstructorGroupName(TEST_PREFIX + "instructors");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
-        course.setEditorGroupName(TEST_PREFIX + "editors");
-        course.setStudentGroupName(TEST_PREFIX + "students");
         course.setTitle(COURSE_TITLE);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.setGroups(Set.of(TEST_PREFIX + "students"));
-        userRepository.save(student);
-
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.setGroups(Set.of(TEST_PREFIX + "instructors"));
-        userRepository.save(instructor);
+
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         Exam exam = examUtilService.addExam(course);
         examRepository.save(exam);

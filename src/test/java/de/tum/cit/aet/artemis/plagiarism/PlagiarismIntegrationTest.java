@@ -249,8 +249,8 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
         request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
     }
 }

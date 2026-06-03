@@ -155,7 +155,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
@@ -872,9 +871,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value, we simulate unenrollment
-        // because the user is no longer part of the user group and hence, the course.
-        courseUtilService.updateCourseGroups("abc", course, "");
+        // remove all UCR entries to simulate unenrollment (user loses course access)
+        courseUtilService.removeAllCourseEnrollments(course);
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());

@@ -115,7 +115,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testGetStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
-        userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta1");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta1");
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
 
@@ -169,7 +169,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
     void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "other-instructor1");
+        userUtilService.addInstructor(TEST_PREFIX + "other-instructor1");
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExerciseSCAEnabled);
         request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
     }
@@ -220,7 +220,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testUpdateStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
-        userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta");
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
 

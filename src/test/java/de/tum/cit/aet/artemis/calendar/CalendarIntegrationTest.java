@@ -162,15 +162,11 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setUp() {
-        userUtilService.addStudent("tumuser", STUDENT_LOGIN);
-        userUtilService.addTeachingAssistant("tutor", TUTOR_LOGIN);
-        userUtilService.addEditor("editor", EDITOR_LOGIN);
-        userUtilService.addInstructor("instructor", INSTRUCTOR_LOGIN);
-        student = userUtilService.getUserByLogin(STUDENT_LOGIN);
-        tutor = userUtilService.getUserByLogin(TUTOR_LOGIN);
-        editor = userUtilService.getUserByLogin(EDITOR_LOGIN);
-        instructor = userUtilService.getUserByLogin(INSTRUCTOR_LOGIN);
         course = courseUtilService.createCourse();
+        student = userUtilService.addStudentToCourse(STUDENT_LOGIN, course);
+        tutor = userUtilService.addTeachingAssistantToCourse(TUTOR_LOGIN, course);
+        editor = userUtilService.addEditorToCourse(EDITOR_LOGIN, course);
+        instructor = userUtilService.addInstructorToCourse(INSTRUCTOR_LOGIN, course);
     }
 
     @Nested
@@ -218,7 +214,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
         void shouldReturnForbiddenForStudentNotPartOfCourse() throws Exception {
-            userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
+            userUtilService.addStudent(NOT_STUDENT_LOGIN);
             Long courseId = course.getId();
             String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                     + TEST_LANGUAGE_STRING;
@@ -228,7 +224,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "TUTOR")
         void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
-            userUtilService.addStudent("nottutor", NOT_TUTOR_LOGIN);
+            userUtilService.addStudent(NOT_TUTOR_LOGIN);
             Long courseId = course.getId();
             String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                     + TEST_LANGUAGE_STRING;
@@ -238,7 +234,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "TA")
         void shouldReturnForbiddenForEditorNotPartOfCourse() throws Exception {
-            userUtilService.addStudent("noteditor", NOT_EDITOR_LOGIN);
+            userUtilService.addStudent(NOT_EDITOR_LOGIN);
             Long courseId = course.getId();
             String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                     + TEST_LANGUAGE_STRING;
@@ -248,7 +244,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
         void shouldReturnForbiddenForInstructorNotPartOfCourse() throws Exception {
-            userUtilService.addStudent("notinstructor", NOT_INSTRUCTOR_LOGIN);
+            userUtilService.addStudent(NOT_INSTRUCTOR_LOGIN);
             Long courseId = course.getId();
             String url = "/api/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                     + TEST_LANGUAGE_STRING;
@@ -1386,7 +1382,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
         void shouldReturnForbiddenWhenUserNotParticipantOfCourse() throws Exception {
-            userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
+            userUtilService.addStudent(NOT_STUDENT_LOGIN);
             User notStudent = userUtilService.getUserByLogin(NOT_STUDENT_LOGIN);
             String expectedToken = generateUniqueTestToken();
             userUtilService.clearAllTokensAndSetTokenForUser(notStudent, expectedToken);

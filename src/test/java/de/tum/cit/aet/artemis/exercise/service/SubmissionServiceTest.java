@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -86,11 +86,16 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ComplaintUtilService complaintUtilService;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
     private User student1;
 
     private User tutor1;
 
     private User tutor2;
+
+    private Course examCourse;
 
     private TextExercise examTextExercise;
 
@@ -130,8 +135,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
 
-        Course course = courseUtilService.createCourse();
-        Exam exam = examUtilService.addExam(course);
+        examCourse = courseUtilService.createCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(examCourse);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examRepository.save(exam);
@@ -164,8 +169,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowanceGroupCheck() {
-        student1.setGroups(Collections.singleton("another-group"));
-        userRepository.save(student1);
+        // Remove student1 from the course so they have no enrollment — access should be denied
+        userCourseRoleRepository.deleteByUser_IdAndCourse_Id(student1.getId(), examCourse.getId());
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }
 

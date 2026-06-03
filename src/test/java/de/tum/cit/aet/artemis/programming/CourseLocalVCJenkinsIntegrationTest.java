@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -12,10 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -23,6 +25,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "courselocalvcjenkins";
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @BeforeEach
     void setup() {
@@ -161,8 +166,8 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseGroups() throws Exception {
-        courseTestService.testUpdateCourseGroups();
+    void testUpdateCourse_persistsGroupNameFields() throws Exception {
+        courseTestService.testUpdateCourse_persistsGroupNameFields();
     }
 
     @Test
@@ -214,18 +219,15 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         course.setEditorGroupName("new-editor-group");
         course.setTeachingAssistantGroupName("new-ta-group");
 
-        // Create editor in the course
-        User user = userUtilService.createAndSaveUser("new-editor");
-        user.setGroups(Set.of("new-editor-group"));
-        userTestRepository.save(user);
+        // Enroll users in the course via UserCourseRole (authorization no longer uses group strings)
+        User newEditor = userUtilService.createAndSaveUser("new-editor");
+        userUtilService.enrollUserInCourse(newEditor, course, CourseRole.EDITOR);
 
-        user = userUtilService.createAndSaveUser("new-ta");
-        user.setGroups(Set.of("new-ta-group"));
-        userTestRepository.save(user);
+        User newTa = userUtilService.createAndSaveUser("new-ta");
+        userUtilService.enrollUserInCourse(newTa, course, CourseRole.TEACHING_ASSISTANT);
 
-        user = userUtilService.createAndSaveUser("new-instructor");
-        user.setGroups(Set.of("new-instructor-group"));
-        userTestRepository.save(user);
+        User newInstructor = userUtilService.createAndSaveUser("new-instructor");
+        userUtilService.enrollUserInCourse(newInstructor, course, CourseRole.INSTRUCTOR);
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
@@ -241,12 +243,11 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
      * @param groups    the groups to change
      */
     private void changeUserGroup(String userLogin, Set<String> groups) {
-        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(userLogin);
-        assertThat(user).isPresent();
-
-        User updatedUser = user.get();
-        updatedUser.setGroups(groups);
-
+        User updatedUser = userTestRepository.findOneWithGroupsByLogin(userLogin).orElseThrow();
+        // Update groups in-place — setGroups() replaces the PersistentSet reference which
+        // causes a NullPointerException in hasDeletes() when Hibernate merges a detached entity.
+        updatedUser.getGroups().clear();
+        updatedUser.getGroups().addAll(groups);
         userTestRepository.save(updatedUser);
     }
 
@@ -816,12 +817,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAddUsersToCourseGroup() throws Exception {
+    void testAddUsersToCourseMembership() throws Exception {
         String group = "students";
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
         String email = "test@mail";
-        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2, email);
+        courseTestService.testAddUsersToCourseMembership(group, registrationNumber1, registrationNumber2, email);
     }
 
     @Test

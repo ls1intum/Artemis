@@ -53,9 +53,11 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
@@ -156,6 +158,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private ExamUserRepository examUserRepository;
 
     @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
+    @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired(required = false)
@@ -199,13 +204,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         course1 = courseUtilService.addEmptyCourse();
         course2 = courseUtilService.addEmptyCourse();
 
-        course10 = courseUtilService.createCourse();
-        course10.setInstructorGroupName("instructor10-test-group");
-        course10 = courseRepository.save(course10);
+        // Enroll standard users (student1-4, tutor1, instructor1) in course1 and course2
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student" + i);
+            userUtilService.enrollUserInCourse(student, course1, CourseRole.STUDENT);
+            userUtilService.enrollUserInCourse(student, course2, CourseRole.STUDENT);
+        }
+        var tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.enrollUserInCourse(tutor1, course1, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(tutor1, course2, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(instructor, course1, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(instructor, course2, CourseRole.INSTRUCTOR);
 
+        course10 = courseUtilService.createCourse();
         User instructor10 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor10");
-        instructor10.setGroups(Set.of(course10.getInstructorGroupName()));
-        userTestRepository.save(instructor10);
+        userUtilService.enrollUserInCourse(instructor10, course10, CourseRole.INSTRUCTOR);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
@@ -804,11 +817,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
         var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
-        assertThat(course1.getInstructorGroupName()).isIn(instructor.getGroups());
+        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course1.getId(), CourseRole.INSTRUCTOR)).isTrue();
 
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
-            assertThat(exam.getCourse().getInstructorGroupName()).as("should be instructor for exam with index %d and id %d", i, exam.getId()).isIn(instructor.getGroups());
+            assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), exam.getCourse().getId(), CourseRole.INSTRUCTOR))
+                    .as("should be instructor for exam with index %d and id %d", i, exam.getId()).isTrue();
         }
     }
 
@@ -2102,7 +2116,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
 
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
     }
@@ -2112,7 +2126,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        courseUtilService.removeAllCourseEnrollments(course);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("differentStudentExamsSameIPAddress", "true");

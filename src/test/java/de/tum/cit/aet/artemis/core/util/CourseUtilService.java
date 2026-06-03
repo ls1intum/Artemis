@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -210,7 +210,7 @@ public class CourseUtilService {
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
-    private UserCourseRoleTestRepository userCourseRoleRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     /**
      * Creates and saves a course (`id` is automatically generated).
@@ -218,9 +218,19 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course createCourse() {
+        return createCourse("");
+    }
+
+    /**
+     * Creates and saves a course (`id` is automatically generated) and enrolls users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createCourse(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -234,7 +244,7 @@ public class CourseUtilService {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -244,10 +254,20 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course createCourseWithMessagingEnabled() {
+        return createCourseWithMessagingEnabled("");
+    }
+
+    /**
+     * Creates and saves a course with messaging enabled and enrolls users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The newly created course.
+     */
+    public Course createCourseWithMessagingEnabled(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -259,10 +279,22 @@ public class CourseUtilService {
      * @return The new course.
      */
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
+        return createCourseWithCustomStudentGroupName(studentGroupName, shortName, "");
+    }
+
+    /**
+     * Creates and saves a course with the given short name and student group name, enrolling users by login prefix.
+     *
+     * @param studentGroupName The student group name of the course.
+     * @param shortName        The short name of the course.
+     * @param userPrefix       The login prefix of the test users to enroll (e.g. "examint").
+     * @return The new course.
+     */
+    public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -272,7 +304,17 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course createCourseWithExercisesAndLecturesAndCompetencies() {
-        Course course = createCourse();
+        return createCourseWithExercisesAndLecturesAndCompetencies("");
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise, lecture, and competency with default values, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createCourseWithExercisesAndLecturesAndCompetencies(String userPrefix) {
+        Course course = createCourse(userPrefix);
 
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExercise);
@@ -288,7 +330,7 @@ public class CourseUtilService {
         exerciseRepository.save(programmingExercise);
 
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -304,7 +346,6 @@ public class CourseUtilService {
      * @return The new course.
      */
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
-        // createCourse() already calls enrollUsersFromGroupsInCourse; the extra save here re-enrolls after org assignment
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
         Organization organization = organizationTestService.createOrganization(name, shortName, url, description, logoUrl, emailPattern);
@@ -460,9 +501,9 @@ public class CourseUtilService {
         course1.addLectures(lecture2);
 
         course1 = courseRepo.save(course1);
-        enrollUsersFromGroupsInCourse(course1);
+        enrollPrefixedUsersInCourse(course1, userPrefix);
         course2 = courseRepo.save(course2);
-        enrollUsersFromGroupsInCourse(course2);
+        enrollPrefixedUsersInCourse(course2, userPrefix);
 
         lectureRepo.save(lecture1);
         lectureRepo.save(lecture2);
@@ -602,7 +643,7 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(courseSaved);
+        enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
@@ -772,7 +813,7 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(courseSaved);
+        enrollPrefixedUsersInCourse(courseSaved, userPrefix);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
@@ -939,37 +980,45 @@ public class CourseUtilService {
      * @return An empty course.
      */
     public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
+        return addEmptyCourse(studentGroupName, taGroupName, editorGroupName, instructorGroupName, "");
+    }
+
+    /**
+     * Creates and saves an active empty course with the given group names, enrolling users by login prefix.
+     *
+     * @param studentGroupName    The student group name.
+     * @param taGroupName         The teaching assistant group name.
+     * @param editorGroupName     The editor group name.
+     * @param instructorGroupName The instructor group name.
+     * @param userPrefix          The login prefix of the test users to enroll (e.g. "examint").
+     * @return An empty course.
+     */
+    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
                 instructorGroupName);
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
     /**
-     * Enrolls all users whose legacy group membership matches a course's group names into the {@code user_course_role} table.
-     * This is the Phase-8 bridge: tests still set up users via string groups; this method converts those groups into
-     * UCR rows so that {@link de.tum.cit.aet.artemis.core.service.AuthorizationCheckService} can find the right role.
+     * Enrolls users into {@code user_course_role} by login prefix.
+     * Finds users whose logins start with {@code userPrefix + "student"}, {@code userPrefix + "tutor"},
+     * {@code userPrefix + "editor"}, and {@code userPrefix + "instructor"} and creates the corresponding
+     * {@code UserCourseRole} rows. Pass {@code ""} for the default (no-prefix) test users.
      *
-     * @param course the course whose group names are used as enrollment keys
+     * @param course     the course to enroll users into
+     * @param userPrefix the test user prefix (e.g. {@code "examint"}), or {@code ""} for the default users
      */
-    public void enrollUsersFromGroupsInCourse(Course course) {
-        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
-        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
-        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
-        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    public void enrollPrefixedUsersInCourse(Course course, String userPrefix) {
+        enrollByLoginPrefix(course, userPrefix + "student", CourseRole.STUDENT);
+        enrollByLoginPrefix(course, userPrefix + "tutor", CourseRole.TEACHING_ASSISTANT);
+        enrollByLoginPrefix(course, userPrefix + "editor", CourseRole.EDITOR);
+        enrollByLoginPrefix(course, userPrefix + "instructor", CourseRole.INSTRUCTOR);
     }
 
-    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
-        if (groupName == null || groupName.isBlank()) {
-            return;
-        }
-        Set<User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
-        for (User user : users) {
-            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
-                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
-            }
-        }
+    private void enrollByLoginPrefix(Course course, String loginPrefix, CourseRole role) {
+        userRepo.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
     }
 
     /**
@@ -978,7 +1027,17 @@ public class CourseUtilService {
      * @return An empty course.
      */
     public Course addEmptyCourse() {
-        return addEmptyCourse("tumuser", "tutor", "editor", "instructor");
+        return addEmptyCourse("tumuser", "tutor", "editor", "instructor", "");
+    }
+
+    /**
+     * Creates and saves an active empty course with default user group names, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return An empty course.
+     */
+    public Course addEmptyCourse(String userPrefix) {
+        return addEmptyCourse("tumuser", "tutor", "editor", "instructor", userPrefix);
     }
 
     /**
@@ -988,10 +1047,21 @@ public class CourseUtilService {
      * @return The newly created course.
      */
     public Course addCourseInOtherInstructionGroupAndExercise(String title) {
+        return addCourseInOtherInstructionGroupAndExercise(title, "");
+    }
+
+    /**
+     * Creates and saves a course with the corresponding exercise, enrolling users by login prefix.
+     *
+     * @param title      The title reflect the type of exercise to be added to the course
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The newly created course.
+     */
+    public Course addCourseInOtherInstructionGroupAndExercise(String title, String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
-            enrollUsersFromGroupsInCourse(course);
+            enrollPrefixedUsersInCourse(course, userPrefix);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
@@ -1011,7 +1081,7 @@ public class CourseUtilService {
             textExercise.setTitle("Text");
             course.addExercises(textExercise);
             course = courseRepo.save(course);
-            enrollUsersFromGroupsInCourse(course);
+            enrollPrefixedUsersInCourse(course, userPrefix);
             exerciseRepository.save(textExercise);
         }
         else if (title.startsWith("ClassDiagram")) {
@@ -1020,7 +1090,7 @@ public class CourseUtilService {
             modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
             course = courseRepo.save(course);
-            enrollUsersFromGroupsInCourse(course);
+            enrollPrefixedUsersInCourse(course, userPrefix);
             exerciseRepository.save(modelingExercise);
         }
 
@@ -1033,6 +1103,16 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextExercise() {
+        return addCourseWithModelingAndTextExercise("");
+    }
+
+    /**
+     * Creates and saves a course with both modeling and text exercise, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course addCourseWithModelingAndTextExercise(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
                 course);
@@ -1042,7 +1122,7 @@ public class CourseUtilService {
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         return course;
@@ -1054,6 +1134,16 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course addCourseWithModelingAndTextAndFileUploadExercise() {
+        return addCourseWithModelingAndTextAndFileUploadExercise("");
+    }
+
+    /**
+     * Creates and saves a course with one modeling, one text, and one file upload exercise, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course addCourseWithModelingAndTextAndFileUploadExercise(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, DiagramType.ClassDiagram,
@@ -1070,7 +1160,7 @@ public class CourseUtilService {
         course.addExercises(fileUploadExercise);
 
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
@@ -1165,7 +1255,7 @@ public class CourseUtilService {
         }
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         course.setExercises(new HashSet<>()); // avoid lazy init issue
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
@@ -1246,7 +1336,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public Course createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
-        Course course = addCourseWithModelingAndTextAndFileUploadExercise();
+        Course course = addCourseWithModelingAndTextAndFileUploadExercise(userPrefix);
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
@@ -1274,7 +1364,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public Course createCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
-        var course = addEmptyCourse();
+        var course = addEmptyCourse(userPrefix);
 
         // Create a file upload exercise with a dummy submission file
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
@@ -1336,7 +1426,18 @@ public class CourseUtilService {
      * @return The created course.
      */
     public Course createCourseWithTextExerciseAndTutor(String tutorLogin) {
-        Course course = this.createCourse();
+        return createCourseWithTextExerciseAndTutor(tutorLogin, "");
+    }
+
+    /**
+     * Creates and saves a course with text exercise and a tutor, enrolling users by login prefix.
+     *
+     * @param tutorLogin The login of the tutor to be created.
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createCourseWithTextExerciseAndTutor(String tutorLogin, String userPrefix) {
+        Course course = this.createCourse(userPrefix);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
@@ -1345,11 +1446,9 @@ public class CourseUtilService {
         textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
         User user = userUtilService.createAndSaveUser(tutorLogin);
-        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        user = userRepo.save(user);
-        // Also create the UCR entry so AuthorizationCheckService can find this user's role
+        // Enroll as TA via UCR (the authoritative source for role checks)
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.TEACHING_ASSISTANT)) {
-            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.TEACHING_ASSISTANT));
+            userUtilService.enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
         }
         return course;
     }
@@ -1394,21 +1493,14 @@ public class CourseUtilService {
     }
 
     /**
-     * Updates course groups with the passed prefix and suffix.
+     * Removes all {@code user_course_role} entries for the given course.
+     * Use this to simulate a user having no course enrollment (e.g. to test FORBIDDEN access),
+     * and follow with {@link #enrollPrefixedUsersInCourse(Course, String)} to restore enrollments.
      *
-     * @param userPrefix The new prefix of the course user groups.
-     * @param course     The course to be updated.
-     * @param suffix     The new suffix of the course user groups.
+     * @param course the course whose enrollments should be cleared
      */
-    public void updateCourseGroups(String userPrefix, Course course, String suffix) {
-        course.setStudentGroupName(userPrefix + "student" + suffix);
-        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
-        course.setEditorGroupName(userPrefix + "editor" + suffix);
-        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
-        // Remove stale UCR entries for this course and re-derive from the new group names
+    public void removeAllCourseEnrollments(Course course) {
         userCourseRoleRepository.deleteByCourse_Id(course.getId());
-        Course savedCourse = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(savedCourse);
     }
 
     /**
@@ -1423,14 +1515,31 @@ public class CourseUtilService {
      */
     public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
             boolean withProgrammingExercise, boolean withAllQuizQuestionTypes) {
-        Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName);
+        return createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(user, studentGroupName, shortName, withProgrammingExercise,
+                withAllQuizQuestionTypes, "");
+    }
+
+    /**
+     * Creates and saves a course with custom student group name and exam with exercises including grading scale, enrolling users by login prefix.
+     *
+     * @param user                     The student to be added to the exam.
+     * @param studentGroupName         The new student group name.
+     * @param shortName                The short name of the course.
+     * @param withProgrammingExercise  True, if the exam should include programming exercises.
+     * @param withAllQuizQuestionTypes True, if the exam should include all quiz question types.
+     * @param userPrefix               The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created course.
+     */
+    public Course createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(User user, String studentGroupName, String shortName,
+            boolean withProgrammingExercise, boolean withAllQuizQuestionTypes, String userPrefix) {
+        Course course = createCourseWithCustomStudentGroupName(studentGroupName, shortName, userPrefix);
         Exam exam = examUtilService.addExam(course, user, ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
                 ZonedDateTime.now().minusMinutes(1));
         gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
         course = courseRepo.save(course);
-        enrollUsersFromGroupsInCourse(course);
+        enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 }

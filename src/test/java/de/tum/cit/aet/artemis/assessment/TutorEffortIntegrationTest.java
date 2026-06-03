@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -41,6 +42,9 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
     private Course course;
 
     private Exercise exercise;
@@ -54,13 +58,12 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
      */
     @BeforeEach
     void initTestCase() {
-        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
+        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1", TEST_PREFIX);
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
         textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
         var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
-        instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userTestRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 
     /**

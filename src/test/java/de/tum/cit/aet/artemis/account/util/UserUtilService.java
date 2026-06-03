@@ -29,10 +29,13 @@ import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
@@ -81,7 +84,7 @@ public class UserUtilService {
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
 
     @Autowired
-    private UserCourseRoleTestRepository userCourseRoleRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -106,14 +109,13 @@ public class UserUtilService {
      * Creates and saves the given amount of Users with the given arguments.
      *
      * @param loginPrefix              The prefix that will be added in front of every User's username
-     * @param groups                   The groups that the Users will be added to
      * @param authorities              The authorities that the Users will have
      * @param amount                   The amount of Users to generate
      * @param registrationNumberPrefix The prefix that will be added in front of every User's registration number
      * @return The List of generated Users
      */
-    public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
-        List<User> generatedUsers = generateAndSaveActivatedUsers(loginPrefix, groups, authorities, amount);
+    public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
+        List<User> generatedUsers = generateAndSaveActivatedUsers(loginPrefix, authorities, amount);
         for (int i = 0; i < generatedUsers.size(); i++) {
             generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
         }
@@ -124,13 +126,12 @@ public class UserUtilService {
      * Creates and saves the given amount of Users with the given arguments.
      *
      * @param loginPrefix A number will be appended to this prefix to create the login
-     * @param groups      The groups that the Users will be added to
      * @param authorities The authorities that the Users will have
      * @param amount      The amount of Users to generate
      * @return The List of generated Users
      */
-    public List<User> generateAndSaveActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
-        return generateAndSaveActivatedUsers(loginPrefix, UserFactory.USER_PASSWORD, groups, authorities, amount);
+    public List<User> generateAndSaveActivatedUsers(String loginPrefix, Set<Authority> authorities, int amount) {
+        return generateAndSaveActivatedUsers(loginPrefix, UserFactory.USER_PASSWORD, authorities, amount);
     }
 
     /**
@@ -138,21 +139,17 @@ public class UserUtilService {
      *
      * @param loginPrefix        A number will be appended to this prefix to create the login
      * @param commonPasswordHash The password hash that will be set for every User
-     * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
      * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
-    public List<User> generateAndSaveActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
+    public List<User> generateAndSaveActivatedUsers(String loginPrefix, String commonPasswordHash, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             var login = loginPrefix + i;
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
-            if (groups != null) {
-                user.setGroups(Set.of(groups));
-                user.setAuthorities(authorities);
-            }
+            user.setAuthorities(authorities);
             user = userTestRepository.save(user);
             generatedUsers.add(user);
         }
@@ -244,36 +241,31 @@ public class UserUtilService {
      *
      * @param loginPrefix        The prefix that will be added in front of every User's username
      * @param commonPasswordHash The password hash that will be set for every User
-     * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
      * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
-    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
-        return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
+    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, commonPasswordHash, authorities, 1, amount);
     }
 
     /**
-     * Creates and saves Users with the given arguments. Creates [to - from + 1] Users.
+     * Creates Users with the given arguments. Creates [to - from + 1] Users (NOT yet saved — callers must save them).
      *
      * @param loginPrefix        The prefix that will be added in front of every User's username
      * @param commonPasswordHash The password hash that will be set for every User
-     * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
      * @param from               The first number to append to the loginPrefix
      * @param to                 The last number to append to the loginPrefix
      * @return The List of generated Users
      */
-    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int from, int to) {
+    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, Set<Authority> authorities, int from, int to) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = from; i <= to; i++) {
             var login = loginPrefix + i;
-            // the following line either creates the user or resets and existing user to its original state
+            // the following line either creates the user or resets an existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
-            if (groups != null) {
-                user.setGroups(Set.of(groups));
-                user.setAuthorities(authorities);
-            }
+            user.setAuthorities(authorities);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -356,17 +348,13 @@ public class UserUtilService {
             authorityRepository.saveAll(superAdminAuthorities);
         }
         log.debug("Generate {} students...", numberOfStudents);
-        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD),
-                new String[] { "tumuser", "testgroup", prefix + "tumuser" }, studentAuthorities, numberOfStudents);
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfStudents);
         log.debug("{} students generated. Generate {} tutors...", numberOfStudents, numberOfTutors);
-        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), new String[] { "tutor", "testgroup", prefix + "tutor" },
-                tutorAuthorities, numberOfTutors);
+        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), tutorAuthorities, numberOfTutors);
         log.debug("{} tutors generated. Generate {} editors...", numberOfTutors, numberOfEditors);
-        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), new String[] { "editor", "testgroup", prefix + "editor" },
-                editorAuthorities, numberOfEditors);
+        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), editorAuthorities, numberOfEditors);
         log.debug("{} editors generated. Generate {} instructors...", numberOfEditors, numberOfInstructors);
-        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD),
-                new String[] { "instructor", "testgroup", prefix + "instructor" }, instructorAuthorities, numberOfInstructors);
+        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD), instructorAuthorities, numberOfInstructors);
         log.debug("{} instructors generated", numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
@@ -378,7 +366,6 @@ public class UserUtilService {
         if (!userExistsWithLogin("admin")) {
             log.debug("Generate admin");
             User admin = UserFactory.generateActivatedUser("admin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setGroups(Set.of("admin"));
             admin.setAuthorities(adminAuthorities);
             usersToAdd.add(admin);
             log.debug("Generate admin done");
@@ -386,26 +373,27 @@ public class UserUtilService {
         if (!userExistsWithLogin("superadmin")) {
             log.debug("Generate super admin");
             User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
-            admin.setGroups(Set.of("superadmin"));
             admin.setAuthorities(superAdminAuthorities);
             usersToAdd.add(admin);
             log.debug("Generate super admin done");
         }
 
-        // Before adding new users, existing users are removed from courses.
-        // Otherwise, the amount users per course constantly increases while running the tests,
-        // even though the old users are not needed anymore.
+        // Before adding new users, remove all user_course_role entries so AuthorizationCheckService sees no
+        // stale roles from a previous test. Courses created afterwards re-populate via
+        // CourseUtilService.enrollPrefixedUsersInCourse().
+        // Use bulk JPQL delete to avoid loading UCR entities (with uninitialized User proxies) into the Hibernate
+        // session — the entity-loading deleteAll() would leave PersistentSet snapshots (sn=null) on those
+        // proxies, causing a NullPointerException in sortCollectionActions when saveOrUpdate() flushes.
         if (!usersToAdd.isEmpty()) {
-            Set<User> currentUsers = userTestRepository.findAllByGroupsNotEmpty();
-            log.debug("Removing {} users from all courses...", currentUsers.size());
-            currentUsers.forEach(user -> user.setGroups(Set.of()));
-            userTestRepository.saveAll(currentUsers);
-            // Also remove all user_course_role entries so AuthorizationCheckService sees no stale roles.
-            // Courses created afterwards will re-populate via CourseUtilService.enrollUsersFromGroupsInCourse().
-            userCourseRoleRepository.deleteAll();
-            log.debug("Removing {} users from all courses. Done", currentUsers.size());
+            userCourseRoleRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
-            usersToAdd = userTestRepository.saveAll(usersToAdd);
+            // Use saveOrUpdate instead of saveAll: for existing users (with ID), saveAll triggers JPA merge(),
+            // which loads the managed entity with a lazy PersistentSet(sn=null) for the legacy `groups`
+            // ElementCollection, then replaces it with a new PersistentSet(loaded=true, sn=null) built from
+            // the detached user's plain HashSet. At flush, PersistentSet.hasDeletes() → NPE (sn is null).
+            // saveOrUpdate loads the user WITH groups eagerly (initialising sn) and updates fields in-place,
+            // avoiding the NPE. This workaround is removed in Phase 9 when the groups field is dropped.
+            usersToAdd = usersToAdd.stream().map(userTestRepository::saveOrUpdate).toList();
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -420,8 +408,7 @@ public class UserUtilService {
      * @param to     The last number to append to the loginPrefix
      */
     public void addStudents(String prefix, int from, int to) {
-        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD),
-                new String[] { "tumuser", "testgroup", prefix + "tumuser" }, studentAuthorities, from, to);
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
         userTestRepository.saveAll(students);
     }
 
@@ -444,14 +431,14 @@ public class UserUtilService {
 
     /**
      * Creates and saves a User with instructor authorities, if no User with the given username exists.
+     * Course membership is managed via {@code user_course_role}; callers should use
+     * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
+     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
      *
-     * @param instructorGroup The group that the instructor will be added to
-     * @param instructorName  The login of the instructor
+     * @param instructorName The login of the instructor
      */
-    public void addInstructor(final String instructorGroup, final String instructorName) {
+    public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { instructorGroup, "testgroup" };
-        instructor.setGroups(Set.of(groups));
         instructor.setAuthorities(instructorAuthorities);
         instructor = userTestRepository.save(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
@@ -459,14 +446,14 @@ public class UserUtilService {
 
     /**
      * Creates and saves a User with editor authorities, if no User with the given username exists.
+     * Course membership is managed via {@code user_course_role}; callers should use
+     * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
+     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
      *
-     * @param editorGroup The group that the editor will be added to
-     * @param editorName  The login of the editor
+     * @param editorName The login of the editor
      */
-    public void addEditor(final String editorGroup, final String editorName) {
+    public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { editorGroup, "testgroup" };
-        editor.setGroups(Set.of(groups));
         editor.setAuthorities(editorAuthorities);
         editor = userTestRepository.save(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
@@ -474,14 +461,14 @@ public class UserUtilService {
 
     /**
      * Creates and saves a User with tutor authorities, if no User with the given username exists.
+     * Course membership is managed via {@code user_course_role}; callers should use
+     * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
+     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
      *
-     * @param taGroup The group that the tutor will be added to
-     * @param taName  The login of the tutor
+     * @param taName The login of the teaching assistant
      */
-    public void addTeachingAssistant(final String taGroup, final String taName) {
+    public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { taGroup, "testgroup" };
-        ta.setGroups(Set.of(groups));
         ta.setAuthorities(tutorAuthorities);
         ta = userTestRepository.save(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
@@ -489,17 +476,85 @@ public class UserUtilService {
 
     /**
      * Creates and saves a User with student authorities, if no User with the given username exists.
+     * Course membership is managed via {@code user_course_role}; callers should use
+     * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
+     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
      *
-     * @param studentGroup The group that the student will be added to
-     * @param studentName  The login of the student
+     * @param studentName The login of the student
      */
-    public void addStudent(final String studentGroup, final String studentName) {
+    public void addStudent(final String studentName) {
         User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { studentGroup, "testgroup" };
-        student.setGroups(Set.of(groups));
         student.setAuthorities(studentAuthorities);
         student = userTestRepository.save(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
+    }
+
+    /**
+     * Enrolls an already-existing User in the given course with the specified role by inserting a {@code user_course_role} row.
+     * This is the single canonical place for individual UCR enrollment in tests.
+     *
+     * @param user   the user to enroll
+     * @param course the course to enroll them in
+     * @param role   the role they should have in the course
+     */
+    public void enrollUserInCourse(final User user, final Course course, final CourseRole role) {
+        userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+    }
+
+    /**
+     * Creates (or reuses) a User with instructor authorities and immediately enrolls them in the given course via {@code user_course_role}.
+     *
+     * @param login  The login of the instructor
+     * @param course The course the instructor should be enrolled in
+     * @return the saved User
+     */
+    public User addInstructorToCourse(final String login, final Course course) {
+        addInstructor(login);
+        User user = getUserByLogin(login);
+        enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
+        return user;
+    }
+
+    /**
+     * Creates (or reuses) a User with editor authorities and immediately enrolls them in the given course via {@code user_course_role}.
+     *
+     * @param login  The login of the editor
+     * @param course The course the editor should be enrolled in
+     * @return the saved User
+     */
+    public User addEditorToCourse(final String login, final Course course) {
+        addEditor(login);
+        User user = getUserByLogin(login);
+        enrollUserInCourse(user, course, CourseRole.EDITOR);
+        return user;
+    }
+
+    /**
+     * Creates (or reuses) a User with tutor authorities and immediately enrolls them in the given course via {@code user_course_role}.
+     *
+     * @param login  The login of the teaching assistant
+     * @param course The course the teaching assistant should be enrolled in
+     * @return the saved User
+     */
+    public User addTeachingAssistantToCourse(final String login, final Course course) {
+        addTeachingAssistant(login);
+        User user = getUserByLogin(login);
+        enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
+        return user;
+    }
+
+    /**
+     * Creates (or reuses) a User with student authorities and immediately enrolls them in the given course via {@code user_course_role}.
+     *
+     * @param login  The login of the student
+     * @param course The course the student should be enrolled in
+     * @return the saved User
+     */
+    public User addStudentToCourse(final String login, final Course course) {
+        addStudent(login);
+        User user = getUserByLogin(login);
+        enrollUserInCourse(user, course, CourseRole.STUDENT);
+        return user;
     }
 
     /**
@@ -510,8 +565,6 @@ public class UserUtilService {
     public void addSuperAdmin(final String prefix) {
         String superAdminLogin = prefix + "superadmin";
         User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { "superadmin", "testgroup" };
-        superAdmin.setGroups(Set.of(groups));
         superAdmin.setAuthorities(superAdminAuthorities);
         superAdmin = userTestRepository.save(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
@@ -525,8 +578,6 @@ public class UserUtilService {
     public void addAdmin(final String prefix) {
         String adminLogin = prefix + "admin";
         User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
-        String[] groups = new String[] { "admin", "testgroup" };
-        admin.setGroups(Set.of(groups));
         admin.setAuthorities(adminAuthorities);
         admin = userTestRepository.save(admin);
         assertThat(admin.getId()).as("Admin has been created").isNotNull();
@@ -568,47 +619,13 @@ public class UserUtilService {
     }
 
     /**
-     * Removes the User with the given username from all Courses and saves the updated User.
+     * Removes the User with the given username from all Courses by deleting their {@code user_course_role} entries.
      *
      * @param login The login of the User
      */
     public void removeUserFromAllCourses(String login) {
         User user = getUserByLogin(login);
-        user.setGroups(Set.of());
-        userTestRepository.save(user);
-    }
-
-    /**
-     * Updates and saves the User's groups.
-     *
-     * @param userPrefix          The prefix of the User's username
-     * @param userSuffix          The suffix of the custom group
-     * @param numberOfStudents    The number of students to update
-     * @param numberOfTutors      The number of tutors to update
-     * @param numberOfEditors     The number of editors to update
-     * @param numberOfInstructors The number of instructors to update
-     */
-    public void adjustUserGroupsToCustomGroups(String userPrefix, String userSuffix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
-        for (int i = 1; i <= numberOfStudents; i++) {
-            var user = getUserByLogin(userPrefix + "student" + i);
-            user.setGroups(Set.of(userPrefix + "student" + userSuffix));
-            userTestRepository.save(user);
-        }
-        for (int i = 1; i <= numberOfTutors; i++) {
-            var user = getUserByLogin(userPrefix + "tutor" + i);
-            user.setGroups(Set.of(userPrefix + "tutor" + userSuffix));
-            userTestRepository.save(user);
-        }
-        for (int i = 1; i <= numberOfEditors; i++) {
-            var user = getUserByLogin(userPrefix + "editor" + i);
-            user.setGroups(Set.of(userPrefix + "editor" + userSuffix));
-            userTestRepository.save(user);
-        }
-        for (int i = 1; i <= numberOfInstructors; i++) {
-            var user = getUserByLogin(userPrefix + "instructor" + i);
-            user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
-            userTestRepository.save(user);
-        }
+        userCourseRoleRepository.deleteByUser_Id(user.getId());
     }
 
     /**

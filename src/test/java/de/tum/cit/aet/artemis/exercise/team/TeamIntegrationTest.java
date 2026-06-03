@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -58,6 +59,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
     private Course course;
 
     private Exercise exercise;
@@ -76,6 +80,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
         // Make exercise team-based and already released to students
         exercise = course.getExercises().iterator().next();
@@ -459,13 +464,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.setGroups(Set.of(TEST_PREFIX + "student" + "assignedTeam"));
-        userTestRepository.save(student);
-
-        course.setStudentGroupName(TEST_PREFIX + "student" + "assignedTeam");
-        courseRepository.save(course);
-
+        // student1 is already enrolled as STUDENT via prefix enrollment in initTestCase
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
                 .students(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());

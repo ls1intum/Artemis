@@ -43,9 +43,9 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        userUtilService.addInstructor("other-instructor-group", TEST_PREFIX + "other-instructor1");
-        userUtilService.addEditor("other-editor-group", TEST_PREFIX + "other-editor");
-        userUtilService.addStudent("other-student-group", TEST_PREFIX + "other-student1");
+        userUtilService.addInstructor(TEST_PREFIX + "other-instructor1");
+        userUtilService.addEditor(TEST_PREFIX + "other-editor");
+        userUtilService.addStudent(TEST_PREFIX + "other-student1");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();

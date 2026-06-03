@@ -53,7 +53,6 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 1, 0, 0, 0);
     }
 
     @ParameterizedTest

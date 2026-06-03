@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +16,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -59,6 +59,9 @@ public class ConsistencyCheckTestService {
     @Autowired
     private CourseUtilService courseUtil;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
     public Course course1;
 
     public Course course2;
@@ -78,11 +81,8 @@ public class ConsistencyCheckTestService {
         course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
         User user = userUtilService.createAndSaveUser("instructor1");
-        Set<String> groups = new HashSet<>();
-        groups.add(course1.getInstructorGroupName());
-        groups.add(course2.getInstructorGroupName());
-        user.setGroups(groups);
-        userRepository.save(user);
+        userUtilService.enrollUserInCourse(user, course1, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(user, course2, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -197,10 +197,9 @@ public class ConsistencyCheckTestService {
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_forbidden() throws Exception {
-        // remove user from course group to simulate an unauthorized situation
+        // remove user from course to simulate an unauthorized situation
         User notAuthorizedUser = userRepository.getUser();
-        notAuthorizedUser.setGroups(new HashSet<>());
-        userRepository.save(notAuthorizedUser);
+        userCourseRoleRepository.deleteByUser_Id(notAuthorizedUser.getId());
 
         var exercise = (ProgrammingExercise) course2.getExercises().iterator().next();
         request.get("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.FORBIDDEN, ConsistencyErrorDTO.class);

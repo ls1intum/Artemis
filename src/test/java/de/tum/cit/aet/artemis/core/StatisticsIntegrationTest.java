@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
@@ -100,6 +101,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        // addCourseWithOneModelingExercise does a bare save; enroll TEST_PREFIX users so numberOfStudentsOrTeamsInCourse is non-zero
+        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         var now = ZonedDateTime.now();
         TextExercise exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(exercise);
@@ -253,7 +256,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(exerciseResult.maxPointsOfExercise()).isEqualTo(10);
         assertThat(exerciseResult.numberOfExerciseScores()).isEqualTo(2);
         assertThat(exerciseResult.numberOfParticipations()).isEqualTo(2);
-        assertThat(exerciseResult.numberOfStudentsOrTeamsInCourse()).isEqualTo(userTestRepository.countUserInGroup(course.getStudentGroupName()));
+        assertThat(exerciseResult.numberOfStudentsOrTeamsInCourse()).isEqualTo(userTestRepository.countByCourseIdAndRole(course.getId(), CourseRole.STUDENT));
         assertThat(exerciseResult.numberOfPosts()).isEqualTo(1);
         assertThat(exerciseResult.numberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];

@@ -78,7 +78,9 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -180,6 +182,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -1354,8 +1359,7 @@ public class ProgrammingExerciseTestService {
         user = userRepo.save(user);
 
         final Course course = setupCourseWithProgrammingExercise(ExerciseMode.INDIVIDUAL);
-        user.setGroups(Set.of(course.getStudentGroupName()));
-        user = userRepo.save(user);
+        userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
         Participant participant = user;
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
@@ -2306,9 +2310,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
 
         // Add a new student to the team
-        User newStudent = userUtilService
-                .generateAndSaveActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1)
-                .getFirst();
+        User newStudent = userUtilService.generateAndSaveActivatedUsers(userPrefix + "new-student", Set.of(new Authority(Role.STUDENT.getAuthority())), 1).getFirst();
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
@@ -2353,8 +2355,7 @@ public class ProgrammingExerciseTestService {
         // final String edxUsername = userPrefixEdx.get() + "student"; // TODO: Fix this (userPrefixEdx is missing)
         final String edxUsername = userPrefix + "ltinotpres" + "student";
 
-        User edxStudent = UserFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1)
-                .getFirst();
+        User edxStudent = UserFactory.generateActivatedUsers(edxUsername, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).getFirst();
         edxStudent.setInternal(true);
         edxStudent.setPassword(passwordService.hashPassword(edxStudent.getPassword()));
         edxStudent = userRepo.save(edxStudent);

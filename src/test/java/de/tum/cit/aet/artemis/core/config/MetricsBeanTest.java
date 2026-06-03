@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -65,6 +66,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ExamUserRepository examUserRepository;
@@ -247,12 +251,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam2);
         examUtilService.addStudentExamWithUser(exam2, users.getFirst());
 
-        users.forEach(user -> user.setGroups(new HashSet<>()));
-        users.getFirst().getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(1).getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(2).getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(2).getGroups().add(TEST_PREFIX + "course2Students");
-        userRepository.saveAll(users);
+        userUtilService.enrollUserInCourse(users.getFirst(), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(1), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course2, CourseRole.STUDENT);
 
         metricsBean.updatePublicArtemisMetrics();
 
@@ -302,17 +304,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     void testPrometheusMetricsExercises() {
         var users = userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 0);
         // 3 in course 1
-        users.getFirst().setGroups(Set.of(TEST_PREFIX + "course1students"));
-        users.get(1).setGroups(Set.of(TEST_PREFIX + "course1students"));
-        users.get(2).setGroups(Set.of(TEST_PREFIX + "course1students"));
-        // 3 in course 2
-        users.get(3).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        users.get(4).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        users.get(5).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        userRepository.saveAll(users);
-
         var course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName(TEST_PREFIX + "course1students");
+        userUtilService.enrollUserInCourse(users.getFirst(), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(1), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course1, CourseRole.STUDENT);
 
         course1.addExercises(exerciseRepository
                 .save(QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusMinutes(5), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED, course1)));

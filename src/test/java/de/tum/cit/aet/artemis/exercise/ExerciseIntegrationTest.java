@@ -164,7 +164,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetStudentParticipationCountByIdFiltersParticipantsNotInCourseGroup() throws Exception {
+    void testGetStudentParticipationCountByIdFiltersNonStudentParticipants() throws Exception {
         Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), null);
 
@@ -182,7 +182,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetStudentParticipationCountByIdFiltersParticipantsNotInCourseGroupForExamExercise() throws Exception {
+    void testGetStudentParticipationCountByIdFiltersNonStudentParticipantsForExamExercise() throws Exception {
         TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
 
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");

@@ -171,7 +171,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother1");
+        userUtilService.addInstructor(TEST_PREFIX + "instructorother1");
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         competency = competencyUtilService.createCompetency(course);

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.transaction.Transactional;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
@@ -24,8 +26,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 @Repository
 @Primary
 public interface UserTestRepository extends UserRepository {
-
-    Set<User> findAllByGroupsNotEmpty();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalse();
@@ -92,4 +92,51 @@ public interface UserTestRepository extends UserRepository {
             WHERE user.login = :login
             """)
     Optional<User> findOneWithExamUsersByLogin(@Param("login") String login);
+
+    /**
+     * Saves a new user via persist(), or updates an existing user in-place within one transaction.
+     * <p>
+     * Using plain {@code save(freshUser)} for existing users (those with an ID) triggers JPA
+     * {@code merge()}, which loads the managed entity with a lazy, uninitialized
+     * {@code PersistentSet} for the legacy {@code groups} {@code @ElementCollection} ({@code sn = null}).
+     * Hibernate then creates a <em>new</em> {@code PersistentSet(loaded=true, sn=null)} from the plain
+     * {@code HashSet} in the detached entity. This causes a {@code NullPointerException} in
+     * {@code PersistentSet.hasDeletes()} during {@code sortCollectionActions} at flush time.
+     * <p>
+     * This method avoids that by loading the user <strong>with groups eagerly</strong> (via the
+     * inherited {@code findOneWithGroupsByLogin} EntityGraph) within the same {@code @Transactional}
+     * scope, so the {@code PersistentSet} is managed and its snapshot ({@code sn}) is initialized.
+     * The {@code groups} collection is then cleared in-place to prevent stale legacy strings from
+     * accumulating in {@code user_groups}.
+     * <p>
+     * <strong>Phase-9 note:</strong> once the {@code groups} field is dropped from {@code User} (and
+     * the {@code user_groups} table is deleted), this method can be replaced with plain
+     * {@code save()}/{@code saveAll()}.
+     *
+     * @param freshUser the user to persist (new) or update (existing); must have all fields set
+     * @return the saved or updated user
+     */
+    @Transactional
+    default User saveOrUpdate(User freshUser) {
+        if (freshUser.getId() == null) {
+            return save(freshUser);
+        }
+        // Load with groups eagerly so the PersistentSet sn is initialized (prevents NPE at flush).
+        User existing = findOneWithGroupsByLogin(freshUser.getLogin()).orElseThrow(() -> new IllegalStateException("User not found for reuse: " + freshUser.getLogin()));
+        existing.setPassword(freshUser.getPassword());
+        existing.setFirstName(freshUser.getFirstName());
+        existing.setLastName(freshUser.getLastName());
+        existing.setEmail(freshUser.getEmail());
+        existing.setActivated(freshUser.getActivated());
+        existing.setLangKey(freshUser.getLangKey());
+        existing.setSelectedLLMUsageTimestamp(freshUser.getSelectedLLMUsageTimestamp());
+        existing.setSelectedLLMUsage(freshUser.getSelectedLLMUsage());
+        // Clear legacy group strings in-place to keep user_groups clean (Phase 9 drops this table).
+        existing.getGroups().clear();
+        existing.getAuthorities().clear();
+        if (freshUser.getAuthorities() != null) {
+            existing.getAuthorities().addAll(freshUser.getAuthorities());
+        }
+        return save(existing);
+    }
 }

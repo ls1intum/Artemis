@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -40,7 +40,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     private LectureTestRepository lectureRepository;
 
     @Autowired
-    private UserTestRepository userRepository;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private Course course;
 
@@ -57,8 +57,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
         // Create test data
         course = courseUtilService.createCourse();
         instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
-        instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         lecture = new Lecture();
         lecture.setTitle("Test Lecture");

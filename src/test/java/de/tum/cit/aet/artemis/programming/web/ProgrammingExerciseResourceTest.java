@@ -18,9 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -54,9 +54,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private UserUtilService userUtilService;
 
     @Autowired
-    protected UserTestRepository userTestRepository;
-
-    @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
@@ -75,10 +72,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
-    private CourseTestRepository courseRepository;
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
-    private LocalVCLocalCITestService localVCLocalCITestService;
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
@@ -98,18 +95,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @BeforeEach
     void setup() {
-        String studentParticipationGroupName = TEST_PREFIX + "studentParticipationGroup";
-
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<String> student1Groups = new HashSet<>(student1.getGroups());
-        student1Groups.add(studentParticipationGroupName);
-        student1.setGroups(student1Groups);
-        userTestRepository.save(student1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setStudentGroupName(studentParticipationGroupName);
-        course = courseRepository.save(course);
+        userUtilService.enrollUserInCourse(student1, course, CourseRole.STUDENT);
 
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -131,8 +121,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
@@ -165,8 +154,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testExportRepositoryWithFullHistory() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
@@ -258,8 +246,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         /*
          * The factory method populateUnreleasedProgrammingExercise() will call
@@ -323,8 +310,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         // Create a programming exercise and explicitly clear all categories
         // (The factory method populateUnreleasedProgrammingExercise() normally adds "cat1" and "cat2")
@@ -414,7 +400,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private void addInstructorToCourse() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 }

@@ -238,14 +238,14 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     };
 
     UsersInCourseOne createAndSaveUsersInCourseOneData() {
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
-        userUtilService.addEditor(exampleCourse.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
-        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+        userUtilService.addStudentToCourse(FIRST_COURSE_STUDENT1_LOGIN, exampleCourse);
+        userUtilService.addStudentToCourse(FIRST_COURSE_STUDENT2_LOGIN, exampleCourse);
+        userUtilService.addStudentToCourse(FIRST_COURSE_STUDENT3_LOGIN, exampleCourse);
+        userUtilService.addStudentToCourse(FIRST_COURSE_STUDENT4_LOGIN, exampleCourse);
+        userUtilService.addTeachingAssistantToCourse(FIRST_COURSE_TUTOR1_LOGIN, exampleCourse);
+        userUtilService.addTeachingAssistantToCourse(FIRST_COURSE_TUTOR2_LOGIN, exampleCourse);
+        userUtilService.addEditorToCourse(FIRST_COURSE_EDITOR1_LOGIN, exampleCourse);
+        userUtilService.addInstructorToCourse(FIRST_COURSE_INSTRUCTOR1_LOGIN, exampleCourse);
 
         var instructor = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
         var tutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
@@ -264,9 +264,9 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     UsersInCourseTwo createAndSaveUsersInCourseTwoData() {
-        userUtilService.addTeachingAssistant(exampleCourse2.getTeachingAssistantGroupName(), SECOND_COURSE_TUTOR1_LOGIN);
-        userUtilService.addEditor(exampleCourse2.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
-        userUtilService.addInstructor(exampleCourse2.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
+        userUtilService.addTeachingAssistantToCourse(SECOND_COURSE_TUTOR1_LOGIN, exampleCourse2);
+        userUtilService.addEditorToCourse(SECOND_COURSE_EDITOR1_LOGIN, exampleCourse2);
+        userUtilService.addInstructorToCourse(SECOND_COURSE_INSTRUCTOR1_LOGIN, exampleCourse2);
 
         var instructor = userRepository.findOneByLogin(SECOND_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
         var editor = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();

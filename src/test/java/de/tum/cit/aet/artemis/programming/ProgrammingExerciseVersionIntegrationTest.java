@@ -478,7 +478,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testGetExerciseVersions_forbidden_forInstructorNotInExercise() throws Exception {
         // `beforeEach` requires instructor access to run;
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
     }
@@ -562,7 +562,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long versionId = version.getId();
 
         // Switch to instructor user and attempt to get snapshot
-        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
@@ -578,7 +578,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 ExerciseSnapshotDTO.class);
         assertThat(tutorSnapshot).isNotNull();
 
-        userUtilService.addTeachingAssistant(TEST_PREFIX + "isolated-tutor-group", TEST_PREFIX + "external_tutor");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "external_tutor");
         userUtilService.changeUser(TEST_PREFIX + "external_tutor");
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
