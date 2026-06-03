@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, inject, viewChild } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -14,8 +14,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     providers: [ApollonDiagramService],
     imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
-export class ApollonDiagramCreateFormComponent implements AfterViewInit {
-    private activeModal = inject(NgbActiveModal);
+export class ApollonDiagramCreateFormComponent implements OnInit, AfterViewInit {
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private apollonDiagramService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
 
@@ -25,6 +26,10 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
 
     // Icons
     faSave = faSave;
+
+    ngOnInit() {
+        this.apollonDiagram = this.dialogConfig.data.apollonDiagram;
+    }
 
     /**
      * Adds focus on the title input field
@@ -42,7 +47,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
             next: ({ body }) => {
                 if (body) {
                     this.isSaving = false;
-                    this.activeModal.close(body);
+                    this.dialogRef.close(body);
                 }
             },
             error: () => {
@@ -55,6 +60,6 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
      * Cancels the modal
      */
     dismiss() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 }

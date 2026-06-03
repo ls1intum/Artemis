@@ -176,7 +176,7 @@ export class CompetencyManagementTableComponent {
         };
         const dialogRef = this.dialogService.open(ImportAllCompetenciesComponent, {
             header: this.translateService.instant(`artemisApp.${this.competencyType()}.importAll.title`),
-            style: { width: '60rem', height: '85vh' },
+            style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
             contentStyle: { height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
             modal: true,
             closable: true,
