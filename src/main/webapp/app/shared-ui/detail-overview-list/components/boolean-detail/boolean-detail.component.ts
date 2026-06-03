@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { BooleanDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
 
@@ -8,5 +8,5 @@ import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-chec
     imports: [ChecklistCheckComponent],
 })
 export class BooleanDetailComponent {
-    @Input() detail: BooleanDetail;
+    detail = input.required<BooleanDetail>();
 }

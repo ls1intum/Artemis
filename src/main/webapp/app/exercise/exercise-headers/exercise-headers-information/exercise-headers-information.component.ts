@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject, output, viewChild } from '@angular/core';
+import { Component, OnChanges, OnInit, computed, inject, input, output, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -57,14 +57,19 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
-    @Input() exercise: Exercise;
-    @Input() studentParticipation?: StudentParticipation;
-    @Input() course?: Course;
-    @Input() submissionPolicy?: SubmissionPolicy;
-    @Input() sortedHistoryResults: Result[] = [];
-    @Input() isPractice: boolean = false;
-    @Input() athenaEnabled: boolean = false;
-    @Input() feedbackRequestLimit: number = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
+    readonly exercise = input.required<Exercise>();
+    readonly studentParticipation = input<StudentParticipation>();
+    readonly course = input<Course>();
+    readonly submissionPolicy = input<SubmissionPolicy>();
+    readonly sortedHistoryResultsInput = input<Result[] | undefined>();
+    readonly isPractice = input<boolean>(false);
+    readonly athenaEnabled = input<boolean>(false);
+    readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+
+    readonly sortedHistoryResults = computed(() => {
+        const results = this.sortedHistoryResultsInput() ?? getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions);
+        return this.sortService.sortByProperty(Array.from(results), 'id', false);
+    });
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
@@ -76,34 +81,43 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     informationBoxItems: InformationBox[] = [];
 
     ngOnInit() {
-        this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
+        this.dueDate = getExerciseDueDate(this.exercise(), this.studentParticipation());
         this.now = this.serverDateService.now();
-        if (this.course?.maxComplaintTimeDays) {
+        const course = this.effectiveCourse();
+        const studentParticipation = this.studentParticipation();
+        if (course?.maxComplaintTimeDays) {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
-                this.exercise,
-                this.course.maxComplaintTimeDays,
-                getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
-                this.studentParticipation,
+                this.exercise(),
+                course.maxComplaintTimeDays,
+                getAllResultsOfAllSubmissions(studentParticipation?.submissions).last(),
+                studentParticipation,
             );
         }
         this.createInformationBoxItems();
     }
 
     ngOnChanges() {
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
+        this.updateOnInputChanges();
+    }
 
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+    private effectiveCourse(): Course | undefined {
+        return this.course() ?? getCourseFromExercise(this.exercise());
+    }
+
+    private updateOnInputChanges(): void {
+        const submissionPolicy = this.submissionPolicy();
+        const results = this.sortedHistoryResults();
+        const exercise = this.exercise();
+        const course = this.effectiveCourse();
+
+        if (submissionPolicy?.active && submissionPolicy.submissionLimit) {
             this.updateSubmissionPolicyItem();
         }
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
-        // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-        this.sortService.sortByProperty(results, 'id', false);
-        this.sortedHistoryResults = results;
 
         if (results.length) {
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course) ?? 0;
             } else {
                 this.achievedPoints = 0;
             }
@@ -113,7 +127,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.achievedPoints = 0;
             this.updatePointsItem();
         }
-        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+        if (this.athenaEnabled() && this.exercise().allowFeedbackRequests) {
             this.updateAiFeedbackItem();
         }
     }
@@ -133,18 +147,18 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     updatePointsItem() {
         const pointsItemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.points');
         if (pointsItemIndex !== -1) {
-            this.informationBoxItems[pointsItemIndex] = this.getPointsItem('points', this.exercise.maxPoints!, this.achievedPoints);
+            this.informationBoxItems[pointsItemIndex] = this.getPointsItem('points', this.exercise().maxPoints!, this.achievedPoints);
         }
     }
 
     addPointsItems() {
-        const { maxPoints, bonusPoints } = this.exercise;
+        const { maxPoints, bonusPoints } = this.exercise();
         if (maxPoints) {
             if (bonusPoints) {
                 let achievedBonusPoints: number = 0;
                 // If the student has more points than the max points, the bonus points are calculated
                 if (this.achievedPoints > maxPoints) {
-                    achievedBonusPoints = roundValueSpecifiedByCourseSettings(this.achievedPoints - maxPoints, this.course);
+                    achievedBonusPoints = roundValueSpecifiedByCourseSettings(this.achievedPoints - maxPoints, this.effectiveCourse());
                 }
                 const achievedPoints = this.achievedPoints - achievedBonusPoints;
                 this.informationBoxItems.push(this.getPointsItem('points', maxPoints, achievedPoints));
@@ -161,21 +175,22 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.informationBoxItems.push(dueDateItem);
         }
         // If the due date is in the past and the assessment due date is in the future, show the assessment due date
-        if (this.dueDate?.isBefore(this.now) && this.exercise.assessmentDueDate?.isAfter(this.now)) {
+        const assessmentDueDate = this.exercise().assessmentDueDate;
+        if (this.dueDate?.isBefore(this.now) && assessmentDueDate?.isAfter(this.now)) {
             const assessmentDueItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
                 content: {
                     type: 'dateTime',
-                    value: this.exercise.assessmentDueDate,
+                    value: assessmentDueDate,
                 },
                 isContentComponent: true,
                 tooltip: 'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip',
-                tooltipParams: { date: this.exercise.assessmentDueDate.format('lll') },
+                tooltipParams: { date: assessmentDueDate.format('lll') },
             };
             this.informationBoxItems.push(assessmentDueItem);
         }
         // // If the assessment due date is in the past and the complaint due date is in the future, show the complaint due date
-        if (this.exercise.assessmentDueDate?.isBefore(this.now) && this.individualComplaintDueDate?.isAfter(this.now)) {
+        if (assessmentDueDate?.isBefore(this.now) && this.individualComplaintDueDate?.isAfter(this.now)) {
             const complaintDueItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.complaintDue',
                 content: {
@@ -224,14 +239,15 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addStartDateItem() {
-        if (this.exercise.startDate && this.now.isBefore(this.exercise.startDate)) {
+        const startDate = this.exercise().startDate;
+        if (startDate && this.now.isBefore(startDate)) {
             // If the start date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-            const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(this.exercise.startDate, this.now);
+            const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(startDate, this.now);
             const startDateItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.startDate',
                 content: {
                     type: shouldDisplayStartDateRelative ? 'timeAgo' : 'dateTime',
-                    value: this.exercise.startDate,
+                    value: startDate,
                 },
                 isContentComponent: true,
                 tooltip: shouldDisplayStartDateRelative ? 'artemisApp.exerciseActions.startExerciseBeforeStartDate' : undefined,
@@ -241,12 +257,13 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addDifficultyItem() {
-        if (this.exercise.difficulty) {
+        const difficulty = this.exercise().difficulty;
+        if (difficulty) {
             const difficultyItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.difficulty',
                 content: {
                     type: 'difficultyLevel',
-                    value: this.exercise.difficulty,
+                    value: difficulty,
                 },
                 isContentComponent: true,
             };
@@ -259,7 +276,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             title: 'artemisApp.courseOverview.exerciseDetails.status',
             content: {
                 type: 'submissionStatus',
-                value: this.exercise,
+                value: this.exercise(),
             },
             isContentComponent: true,
         };
@@ -267,14 +284,14 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addCategoryItems() {
-        const notReleased = this.exercise.releaseDate?.isAfter(this.now);
+        const notReleased = this.exercise().releaseDate?.isAfter(this.now);
 
-        if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length) {
+        if (notReleased || this.exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise().categories?.length) {
             const categoryItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.categories',
                 content: {
                     type: 'categories',
-                    value: this.exercise,
+                    value: this.exercise(),
                 },
                 isContentComponent: true,
             };
@@ -283,7 +300,9 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addSubmissionPolicyItem() {
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+        const submissionPolicy = this.submissionPolicy();
+
+        if (submissionPolicy?.active && submissionPolicy.submissionLimit) {
             this.informationBoxItems.push(this.getSubmissionPolicyItem());
         }
     }
@@ -293,17 +312,18 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: {
                 type: 'string',
-                value: `${this.numberOfSubmissions} /  ${this.submissionPolicy?.submissionLimit}`,
+                value: `${this.numberOfSubmissions} /  ${this.submissionPolicy()?.submissionLimit}`,
             },
-            contentColor: this.submissionPolicy?.submissionLimit ? this.getSubmissionColor() : 'body-color',
-            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + this.submissionPolicy?.type + '.tooltip',
-            tooltipParams: { points: this.submissionPolicy?.exceedingPenalty?.toString() },
+            contentColor: this.submissionPolicy()?.submissionLimit ? this.getSubmissionColor() : 'body-color',
+            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + this.submissionPolicy()?.type + '.tooltip',
+            tooltipParams: { points: this.submissionPolicy()?.exceedingPenalty?.toString() },
         };
     }
 
     getSubmissionColor(): string {
         // default color should be 'body-color', thats why the default submissionsLeft is 2
-        const submissionsLeft = this.submissionPolicy?.submissionLimit ? this.submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
+        const submissionLimit = this.submissionPolicy()?.submissionLimit;
+        const submissionsLeft = submissionLimit ? submissionLimit - this.numberOfSubmissions : 2;
         let submissionColor = 'body-color';
         if (submissionsLeft === 1) submissionColor = 'warning';
         // 0 submissions left or limit is already reached
@@ -332,17 +352,17 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     countSubmissions() {
-        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation());
     }
 
     addStaticCodeAnalysisItem() {
-        if (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).staticCodeAnalysisEnabled) {
+        if (this.exercise().type === ExerciseType.PROGRAMMING && (this.exercise() as ProgrammingExercise).staticCodeAnalysisEnabled) {
             this.informationBoxItems.push(this.getStaticCodeAnalysisItem());
         }
     }
 
     getStaticCodeAnalysisItem(): InformationBox {
-        const latestResult = this.sortedHistoryResults.first();
+        const latestResult = this.sortedHistoryResults().first();
         const issueCount = latestResult?.codeIssueCount ?? 0;
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
@@ -363,7 +383,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addAiFeedbackItem() {
-        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+        if (this.athenaEnabled() && this.exercise().allowFeedbackRequests) {
             this.countAiFeedbackRequests();
             this.informationBoxItems.push(this.getAiFeedbackItem());
         }
@@ -374,16 +394,16 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             title: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests',
             content: {
                 type: 'string',
-                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit}`,
+                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit()}`,
             },
-            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit ? 'danger' : 'warning',
+            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit() ? 'danger' : 'warning',
             tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
         };
     }
 
     countAiFeedbackRequests() {
         this.currentFeedbackRequestCount =
-            getAllResultsOfAllSubmissions(this.studentParticipation?.submissions)?.filter(
+            getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions)?.filter(
                 (result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true,
             ).length ?? 0;
     }

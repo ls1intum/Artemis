@@ -19,7 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.

@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -117,6 +117,11 @@ public class LocalVCService extends AbstractVersionControlService {
         // Try to find the folder in the file system. If it is not found, return false.
         Path projectPath = localVCBasePath.resolve(projectKey);
         return Files.exists(projectPath);
+    }
+
+    @Override
+    protected boolean repositoryExists(LocalVCRepositoryUri repositoryUri) {
+        return Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath));
     }
 
     /**

@@ -27,7 +27,7 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse((response) => response.url().includes(`${MODELING_EXERCISE_BASE}/import?sourceExerciseId=`));
         await this.page.click('#save-entity');
         return await responsePromise;
     }

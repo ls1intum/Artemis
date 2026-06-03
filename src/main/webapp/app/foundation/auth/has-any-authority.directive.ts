@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, inject } from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -19,20 +19,22 @@ export class HasAnyAuthorityDirective {
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
 
-    private authorities: readonly Authority[];
+    /** Required authorities; a single authority string is normalized to an array. */
+    readonly jhiHasAnyAuthority = input.required<readonly Authority[], string | string[] | readonly Authority[]>({
+        transform: (value) => (typeof value === 'string' ? [value as Authority] : (value as readonly Authority[])),
+    });
 
-    @Input()
-    set jhiHasAnyAuthority(value: string | string[] | readonly Authority[]) {
-        this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
-        this.updateView();
-        // Get notified each time authentication state changes.
-        this.accountService.getAuthenticationState().subscribe(() => this.updateView());
-    }
-
-    private updateView(): void {
-        this.accountService.hasAnyAuthority(this.authorities).then((result) => {
+    constructor() {
+        // Re-render whenever the required authorities or the authentication state change: hasAnyAuthorityDirect()
+        // synchronously reads the userIdentity()/authenticated() signals, so this effect tracks them and re-runs on
+        // login/logout — no separate auth-state subscription is needed. The effect runs after inputs are set, so
+        // reading the required input here is safe (a constructor subscription would read it during construction and
+        // throw NG0950). Toggling the embedded view via ViewContainerRef notifies the change-detection scheduler on
+        // attach/detach, so this renders correctly under zoneless change detection.
+        effect(() => {
+            const authorized = this.accountService.hasAnyAuthorityDirect(this.jhiHasAnyAuthority());
             this.viewContainerRef.clear();
-            if (result) {
+            if (authorized) {
                 this.viewContainerRef.createEmbeddedView(this.templateRef);
             }
         });

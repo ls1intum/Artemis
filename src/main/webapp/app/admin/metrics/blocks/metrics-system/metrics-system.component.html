@@ -12,16 +12,16 @@
         <div class="col-md-9">Process CPU usage</div>
         <div class="col-md-3 text-right">{{ 100 * systemMetrics()['process.cpu.usage'] | number: '1.0-2' }} %</div>
     </div>
-    <ngb-progressbar [value]="100 * systemMetrics()['process.cpu.usage']" [striped]="true" [animated]="false" type="success">
-        <span>{{ 100 * systemMetrics()['process.cpu.usage'] | number: '1.0-2' }} %</span>
-    </ngb-progressbar>
+    <p-progressbar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" color="var(--bs-success, #28a745)">
+        <ng-template #content>{{ toPercentage(systemMetrics()['process.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
+    </p-progressbar>
     <div class="row">
         <div class="col-md-9">System CPU usage</div>
         <div class="col-md-3 text-right">{{ 100 * systemMetrics()['system.cpu.usage'] | number: '1.0-2' }} %</div>
     </div>
-    <ngb-progressbar [value]="100 * systemMetrics()['system.cpu.usage']" [striped]="true" [animated]="false" type="success">
-        <span>{{ 100 * systemMetrics()['system.cpu.usage'] | number: '1.0-2' }} %</span>
-    </ngb-progressbar>
+    <p-progressbar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" color="var(--bs-success, #28a745)">
+        <ng-template #content>{{ toPercentage(systemMetrics()['system.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
+    </p-progressbar>
     <div class="row">
         <div class="col-md-9">System CPU count</div>
         <div class="col-md-3 text-right">{{ systemMetrics()['system.cpu.count'] }}</div>

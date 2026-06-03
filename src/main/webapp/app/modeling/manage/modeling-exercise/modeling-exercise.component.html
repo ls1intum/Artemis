@@ -3,7 +3,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (course.isAtLeastInstructor) {
+                    @if (courseContext.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" [ngModel]="allChecked" />
                         </th>
@@ -11,7 +11,7 @@
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (course.presentationScore) {
+                    @if (courseContext.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -24,7 +24,7 @@
             <tbody>
                 @for (modelingExercise of filteredModelingExercises; track trackId($index, modelingExercise)) {
                     <tr id="{{ 'exercise-card-' + modelingExercise.id }}">
-                        @if (course.isAtLeastInstructor) {
+                        @if (courseContext.isAtLeastInstructor) {
                             <td class="d-md-table-cell">
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(modelingExercise)" [ngModel]="isExerciseSelected(modelingExercise)" />
                             </td>
@@ -81,7 +81,7 @@
                                 }
                             </div>
                         </td>
-                        @if (course.presentationScore) {
+                        @if (courseContext.presentationScore) {
                             <td>{{ modelingExercise.presentationScoreEnabled }}</td>
                         }
                         <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
@@ -149,8 +149,8 @@
                                         entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                         [fetchEntitySummary]="fetchExerciseDeletionSummary(modelingExercise)"
                                         [translateValues]="{
-                                            courseTitle: course.title,
-                                            courseType: course.testCourse
+                                            courseTitle: courseContext.title,
+                                            courseType: courseContext.testCourse
                                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                         }"
@@ -168,14 +168,14 @@
         </table>
         @if (selectedExercises.length > 0) {
             <div>
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <button
                         jhiDeleteButton
                         [entityTitle]="'Delete All Modeling Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
                         [translateValues]="{
-                            courseTitle: course.title,
-                            courseType: course.testCourse
+                            courseTitle: courseContext.title,
+                            courseType: courseContext.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"

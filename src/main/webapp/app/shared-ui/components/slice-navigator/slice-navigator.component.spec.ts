@@ -1,9 +1,13 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from './slice-navigator.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockComponent } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SliceNavigatorComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SliceNavigatorComponent;
     let fixture: ComponentFixture<SliceNavigatorComponent>;
 
@@ -15,6 +19,7 @@ describe('SliceNavigatorComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [SliceNavigatorComponent, MockComponent(ButtonComponent)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(SliceNavigatorComponent);
@@ -67,25 +72,25 @@ describe('SliceNavigatorComponent', () => {
     });
 
     it('should disable the previous button when on the first page', () => {
-        expect(component.previousDisabled()).toBeTrue();
+        expect(component.previousDisabled()).toBeTruthy();
     });
 
     it('should enable the previous button when not on the first page', () => {
         component.nextPage();
         fixture.detectChanges();
-        expect(component.previousDisabled()).toBeFalse();
+        expect(component.previousDisabled()).toBeFalsy();
     });
 
     it('should disable the next button when hasMoreItems is false', () => {
         fixture.componentRef.setInput('hasMoreItems', false);
         fixture.detectChanges();
-        expect(component.nextDisabled()).toBeTrue();
+        expect(component.nextDisabled()).toBeTruthy();
     });
 
     it('should disable the next button when isLoading is true', () => {
         fixture.componentRef.setInput('isLoading', true);
         fixture.detectChanges();
-        expect(component.nextDisabled()).toBeTrue();
+        expect(component.nextDisabled()).toBeTruthy();
     });
 
     it('should not emit a page change event when nextPage is called and hasMoreItems is false', () => {

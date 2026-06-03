@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
@@ -10,47 +12,54 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UnreferencedFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: UnreferencedFeedbackComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [UnreferencedFeedbackComponent, UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
-                comp = fixture.componentInstance;
-                sgiService = TestBed.inject(StructuredGradingCriterionService);
-            });
+            .overrideComponent(UnreferencedFeedbackComponent, {
+                remove: { imports: [TranslateDirective, UnreferencedFeedbackDetailComponent] },
+                add: { imports: [MockDirective(TranslateDirective), UnreferencedFeedbackDetailStubComponent] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
+        comp = fixture.componentInstance;
+        sgiService = TestBed.inject(StructuredGradingCriterionService);
     });
 
     it('should validate feedback', () => {
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeFalse();
+        expect(comp.assessmentsAreValid).toBe(false);
 
         const feedback = new Feedback();
         feedback.credits = undefined;
-        comp.unreferencedFeedback.push(feedback);
+        comp.unreferencedFeedback = [...comp.unreferencedFeedback, feedback];
 
         fixture.changeDetectorRef.detectChanges();
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeFalse();
+        expect(comp.assessmentsAreValid).toBe(false);
 
         feedback.credits = 1;
         fixture.changeDetectorRef.detectChanges();
 
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeTrue();
+        expect(comp.assessmentsAreValid).toBe(true);
     });
 
     it('should add unreferenced feedback', () => {
-        comp.addReferenceIdForExampleSubmission = true;
+        fixture.componentRef.setInput('addReferenceIdForExampleSubmission', true);
         comp.addUnreferencedFeedback();
 
         expect(comp.unreferencedFeedback).toHaveLength(1);
@@ -94,7 +103,7 @@ describe('UnreferencedFeedbackComponent', () => {
     it('should add unreferenced feedback on dropping assessment instruction', () => {
         const instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         comp.unreferencedFeedback = [];
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         });
@@ -108,9 +117,9 @@ describe('UnreferencedFeedbackComponent', () => {
 
     it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
         const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions = [suggestion];
+        comp.feedbackSuggestions.set([suggestion]);
         comp.acceptSuggestion(suggestion);
-        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbackSuggestions()).toHaveLength(0);
         expect(comp.unreferencedFeedback).toEqual([
             {
                 text: 'FeedbackSuggestion:accepted:',
@@ -121,15 +130,15 @@ describe('UnreferencedFeedbackComponent', () => {
     });
 
     it('should only replace feedback on drop, not add another one', () => {
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
         comp.createAssessmentOnDrop(new Event(''));
         fixture.changeDetectorRef.detectChanges();
 
         const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.css('jhi-unreferenced-feedback-detail'));
         const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
 
-        const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
-        const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
+        const createAssessmentOnDropStub: ReturnType<typeof vi.spyOn> = vi.spyOn(comp, 'createAssessmentOnDrop');
+        const updateFeedbackOnDropStub: ReturnType<typeof vi.spyOn> = vi.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
 
         const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
         unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
@@ -142,8 +151,8 @@ describe('UnreferencedFeedbackComponent', () => {
 
     it('should remove discarded suggestions', () => {
         const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
-        comp.feedbackSuggestions = [suggestion];
+        comp.feedbackSuggestions.set([suggestion]);
         comp.discardSuggestion(suggestion);
-        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbackSuggestions()).toHaveLength(0);
     });
 });

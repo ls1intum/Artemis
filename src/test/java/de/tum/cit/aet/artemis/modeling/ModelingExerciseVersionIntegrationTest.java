@@ -131,7 +131,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), exerciseToImport,
+        ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), exerciseToImport,
                 ModelingExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
