@@ -1,0 +1,88 @@
+.exercise-relation-graph-container {
+    height: 70vh;
+    min-width: 0;
+}
+
+.relation-editor,
+.legend,
+.relation-list {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 6px;
+    background: var(--bs-body-bg, #fff);
+}
+
+.relation-side {
+    width: 260px;
+    flex-shrink: 0;
+}
+
+.relation-node {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 0.5rem;
+    border: 1px solid var(--bs-secondary, #6c757d);
+    border-radius: 6px;
+    background: var(--bs-body-bg, #fff);
+    font-size: 0.85rem;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    &.group-node {
+        border-style: dashed;
+        border-width: 2px;
+        font-weight: 600;
+        background: var(--bs-tertiary-bg, #eef1f4);
+    }
+}
+
+::ng-deep .edge {
+    .line {
+        stroke: var(--bs-secondary, #6c757d);
+        fill: none;
+
+        &.harder-than {
+            stroke-dasharray: 5, 4;
+        }
+    }
+
+    .edge-label {
+        font-size: 0.7rem;
+        fill: var(--bs-secondary-color, #6c757d);
+    }
+}
+
+::ng-deep .arrow-head {
+    fill: var(--bs-secondary, #6c757d);
+}
+
+// Legible legend swatches (the v2 legend swatches were nearly invisible on a white background).
+.legend {
+    .legend-node {
+        display: inline-block;
+        width: 20px;
+        height: 14px;
+        border: 1px solid var(--bs-secondary, #6c757d);
+        border-radius: 3px;
+        background: var(--bs-body-bg, #fff);
+
+        &.group {
+            border-style: dashed;
+            border-width: 2px;
+            background: var(--bs-tertiary-bg, #eef1f4);
+        }
+    }
+
+    .legend-line {
+        display: inline-block;
+        width: 24px;
+        border-top: 2px solid var(--bs-secondary, #6c757d);
+
+        &.dashed {
+            border-top-style: dashed;
+        }
+    }
+}

@@ -1,0 +1,334 @@
+<div class="exercise-row d-flex align-items-center gap-3 py-2 px-3">
+    @if (showDragHandle()) {
+        <fa-icon class="drag-handle text-muted flex-shrink-0" cdkDragHandle [icon]="faGripVertical" />
+    }
+    @if (showCheckbox()) {
+        <p-checkbox class="flex-shrink-0" [binary]="true" [ngModel]="selected()" (ngModelChange)="selectedChange.emit()" />
+    }
+    @if (showTypeIcon()) {
+        <fa-icon [icon]="icon()" [fixedWidth]="true" class="flex-shrink-0" />
+    }
+
+    <div class="col-title min-width-0">
+        <a class="fw-semibold" [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id]">{{ exercise().title }}</a>
+        @if (groups().length > 0) {
+            <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none lh-1 mt-1" (click)="groupPopover.toggle($event)">
+                <fa-icon [icon]="faLayerGroup" class="me-1" /><span>{{ owningGroupName() ?? 'No group' }}</span
+                ><i class="pi pi-chevron-down ms-1" style="font-size: 0.65rem"></i>
+            </button>
+            <p-popover #groupPopover>
+                <div class="d-flex flex-column py-1" style="min-width: 140px">
+                    @for (option of groupOptions(); track option.value) {
+                        <button
+                            type="button"
+                            class="btn btn-link btn-sm text-start text-decoration-none px-2 py-1"
+                            [class.fw-semibold]="option.value === owningGroup()?.id"
+                            (click)="onGroupSelect(option.value); groupPopover.hide()"
+                        >
+                            {{ option.label }}
+                        </button>
+                    }
+                    <hr class="my-1" />
+                    <button type="button" class="btn btn-link btn-sm text-start text-decoration-none px-2 py-1 text-primary" (click)="groupCreate.emit(); groupPopover.hide()">
+                        <i class="pi pi-plus me-1"></i>New group
+                    </button>
+                </div>
+            </p-popover>
+        }
+        @if (exercise().difficulty) {
+            <div class="mt-1">
+                <span class="badge {{ difficultyBadgeClass() }}">{{ exercise().difficulty }}</span>
+            </div>
+        }
+    </div>
+
+    <div class="col-dates small text-muted">
+        @if (effectiveReleaseDate()) {
+            <div [class.fst-italic]="releaseDateOverridden()">
+                <span jhiTranslate="artemisApp.exercise.release"></span>: {{ effectiveReleaseDate() | artemisDate: 'short-date' }}
+            </div>
+        }
+        @if (effectiveDueDate()) {
+            <div [class.fst-italic]="dueDateOverridden()"><span jhiTranslate="artemisApp.exercise.due"></span>: {{ effectiveDueDate() | artemisDate: 'short-date' }}</div>
+        }
+    </div>
+
+    <div class="col-points">
+        <div class="d-flex flex-column">
+            <span>
+                {{ exercise().maxPoints }}pts
+                @if (exercise().bonusPoints) {
+                    <span class="text-muted small">(+{{ exercise().bonusPoints }})</span>
+                }
+            </span>
+            @switch (exercise().includedInOverallScore) {
+                @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                }
+                @case (IncludedInOverallScore.INCLUDED_AS_BONUS) {
+                    <span class="small text-warning-emphasis fw-semibold" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                }
+                @case (IncludedInOverallScore.NOT_INCLUDED) {
+                    <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="col-categories d-flex align-items-center gap-2 flex-wrap">
+        <jhi-exercise-categories [exercise]="exercise()" />
+    </div>
+
+    @if (devSettings.actionButtonVariant() === 'text-and-icon') {
+        <div class="d-flex gap-1 flex-wrap col-actions">
+            @if (exercise().type === ExerciseType.QUIZ) {
+                @let qti = asQuiz(exercise());
+                @if (qti.status === QuizStatus.INVISIBLE) {
+                    <button class="btn btn-warning btn-sm" (click)="setQuizVisible(qti)"><fa-icon [icon]="faEye" /><span class="ms-1">Set Visible</span></button>
+                }
+                @if (qti.status === QuizStatus.VISIBLE && qti.quizMode === QuizMode.SYNCHRONIZED && !qti.quizStarted) {
+                    <button class="btn btn-success btn-sm" (click)="startQuiz(qti)"><fa-icon [icon]="faPlayCircle" /><span class="ms-1">Start</span></button>
+                }
+                @if ((qti.status === QuizStatus.VISIBLE || qti.status === QuizStatus.ACTIVE) && qti.quizMode === QuizMode.BATCHED) {
+                    <button class="btn btn-primary btn-sm" (click)="addBatch(qti)"><fa-icon [icon]="faPlus" /><span class="ms-1">Add Batch</span></button>
+                }
+                @if ((qti.status === QuizStatus.VISIBLE || qti.status === QuizStatus.ACTIVE) && !qti.quizEnded) {
+                    <button class="btn btn-danger btn-sm" (click)="endQuiz(qti)"><fa-icon [icon]="faStopCircle" /><span class="ms-1">End</span></button>
+                }
+            }
+            @if (exercise().mode === ExerciseMode.TEAM) {
+                <a [routerLink]="['/course-management', courseId(), 'exercises', exercise().id, 'teams']" class="btn btn-primary btn-sm">
+                    <fa-icon [icon]="faUsers" /><span class="ms-1">Teams</span>
+                </a>
+            }
+            <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'participations']" class="btn btn-primary btn-sm">
+                <fa-icon [icon]="faListAlt" /><span class="ms-1">Participations</span>
+            </a>
+            <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'scores']" class="btn btn-info btn-sm">
+                <fa-icon [icon]="faTable" /><span class="ms-1">Scores</span>
+            </a>
+            @if (exercise().type === ExerciseType.QUIZ) {
+                @let qti2 = asQuiz(exercise());
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'quiz-point-statistic']" class="btn btn-info btn-sm">
+                    <fa-icon [icon]="faChartBar" /><span class="ms-1">Statistics</span>
+                </a>
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'preview']" class="btn btn-success btn-sm">
+                    <fa-icon [icon]="faEye" /><span class="ms-1">Preview</span>
+                </a>
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'solution']" class="btn btn-success btn-sm">
+                    <fa-icon [icon]="faLightbulb" /><span class="ms-1">Solution</span>
+                </a>
+                @if (qti2.quizEnded) {
+                    <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 're-evaluate']" class="btn btn-warning btn-sm">
+                        <fa-icon [icon]="faRedo" /><span class="ms-1">Re-evaluate</span>
+                    </a>
+                }
+            }
+            @if (exercise().type === ExerciseType.MODELING || exercise().type === ExerciseType.TEXT) {
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'example-submissions']" class="btn btn-success btn-sm">
+                    <fa-icon [icon]="faClipboardList" /><span class="ms-1">Examples</span>
+                </a>
+            }
+            @if (exercise().type === ExerciseType.PROGRAMMING) {
+                <a
+                    [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
+                    class="btn btn-warning btn-sm"
+                >
+                    <fa-icon [icon]="faPencilAlt" /><span class="ms-1">Edit in Editor</span>
+                </a>
+            }
+            <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'edit']" class="btn btn-warning btn-sm">
+                <fa-icon [icon]="faWrench" /><span class="ms-1">Edit</span>
+            </a>
+            <button
+                jhiDeleteButton
+                [renderButtonText]="false"
+                [renderButtonStyle]="false"
+                [entityTitle]="exercise().title!"
+                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="deleteExercise($event)"
+                [dialogError]="dialogError$"
+                class="btn btn-danger btn-sm"
+            >
+                <fa-icon [icon]="faTrash" /><span class="ms-1">Delete</span>
+            </button>
+        </div>
+    } @else if (devSettings.actionButtonVariant() === 'ellipsis') {
+        <div class="d-flex gap-1 col-actions">
+            @if (exercise().type === ExerciseType.QUIZ) {
+                @let qel = asQuiz(exercise());
+                @if (qel.status === QuizStatus.INVISIBLE) {
+                    <button class="btn btn-warning btn-sm" (click)="setQuizVisible(qel)"><fa-icon [icon]="faEye" /><span class="ms-1">Set Visible</span></button>
+                }
+                @if (qel.status === QuizStatus.VISIBLE && qel.quizMode === QuizMode.SYNCHRONIZED && !qel.quizStarted) {
+                    <button class="btn btn-success btn-sm" (click)="startQuiz(qel)"><fa-icon [icon]="faPlayCircle" /><span class="ms-1">Start</span></button>
+                }
+                @if ((qel.status === QuizStatus.VISIBLE || qel.status === QuizStatus.ACTIVE) && qel.quizMode === QuizMode.BATCHED) {
+                    <button class="btn btn-primary btn-sm" (click)="addBatch(qel)"><fa-icon [icon]="faPlus" /><span class="ms-1">Add Batch</span></button>
+                }
+                @if ((qel.status === QuizStatus.VISIBLE || qel.status === QuizStatus.ACTIVE) && !qel.quizEnded) {
+                    <button class="btn btn-danger btn-sm" (click)="endQuiz(qel)"><fa-icon [icon]="faStopCircle" /><span class="ms-1">End</span></button>
+                }
+            }
+            <button class="btn btn-sm btn-outline-secondary" (click)="actionsPanel.toggle($event)" title="Actions">
+                <i class="pi pi-ellipsis-h"></i>
+            </button>
+            <p-popover #actionsPanel>
+                <div class="d-flex flex-column gap-1 py-1" style="min-width: 180px">
+                    @if (exercise().mode === ExerciseMode.TEAM) {
+                        <a [routerLink]="['/course-management', courseId(), 'exercises', exercise().id, 'teams']" class="btn btn-sm btn-primary text-start">
+                            <fa-icon [icon]="faUsers" /><span class="ms-2">Teams</span>
+                        </a>
+                    }
+                    <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'participations']" class="btn btn-sm btn-primary text-start">
+                        <fa-icon [icon]="faListAlt" /><span class="ms-2">Participations</span>
+                    </a>
+                    <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'scores']" class="btn btn-sm btn-info text-start">
+                        <fa-icon [icon]="faTable" /><span class="ms-2">Scores</span>
+                    </a>
+                    @if (exercise().type === ExerciseType.QUIZ) {
+                        @let qel2 = asQuiz(exercise());
+                        <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'quiz-point-statistic']" class="btn btn-sm btn-info text-start">
+                            <fa-icon [icon]="faChartBar" /><span class="ms-2">Statistics</span>
+                        </a>
+                        <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'preview']" class="btn btn-sm btn-success text-start">
+                            <fa-icon [icon]="faEye" /><span class="ms-2">Preview</span>
+                        </a>
+                        <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'solution']" class="btn btn-sm btn-success text-start">
+                            <fa-icon [icon]="faLightbulb" /><span class="ms-2">Solution</span>
+                        </a>
+                        @if (qel2.quizEnded) {
+                            <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 're-evaluate']" class="btn btn-sm btn-warning text-start">
+                                <fa-icon [icon]="faRedo" /><span class="ms-2">Re-evaluate</span>
+                            </a>
+                        }
+                    }
+                    @if (exercise().type === ExerciseType.MODELING || exercise().type === ExerciseType.TEXT) {
+                        <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'example-submissions']" class="btn btn-sm btn-success text-start">
+                            <fa-icon [icon]="faClipboardList" /><span class="ms-2">Examples</span>
+                        </a>
+                    }
+                    @if (exercise().type === ExerciseType.PROGRAMMING) {
+                        <a
+                            [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
+                            class="btn btn-sm btn-warning text-start"
+                        >
+                            <fa-icon [icon]="faPencilAlt" /><span class="ms-2">Edit in Editor</span>
+                        </a>
+                    }
+                    <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'edit']" class="btn btn-sm btn-warning text-start">
+                        <fa-icon [icon]="faWrench" /><span class="ms-2">Edit</span>
+                    </a>
+                    <button
+                        jhiDeleteButton
+                        [renderButtonText]="false"
+                        [renderButtonStyle]="false"
+                        [entityTitle]="exercise().title!"
+                        entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                        [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                        deleteQuestion="artemisApp.exercise.delete.question"
+                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                        (delete)="deleteExercise($event)"
+                        [dialogError]="dialogError$"
+                        class="btn btn-sm btn-danger text-start w-100"
+                    >
+                        <fa-icon [icon]="faTrash" /><span class="ms-2">Delete</span>
+                    </button>
+                </div>
+            </p-popover>
+        </div>
+    } @else {
+        <div class="d-flex gap-1 flex-wrap col-actions">
+            @if (exercise().type === ExerciseType.QUIZ) {
+                @let qio = asQuiz(exercise());
+                @if (qio.status === QuizStatus.INVISIBLE) {
+                    <button class="btn btn-warning btn-sm" (click)="setQuizVisible(qio)"><fa-icon [icon]="faEye" /><span class="ms-1">Set Visible</span></button>
+                }
+                @if (qio.status === QuizStatus.VISIBLE && qio.quizMode === QuizMode.SYNCHRONIZED && !qio.quizStarted) {
+                    <button class="btn btn-success btn-sm" (click)="startQuiz(qio)"><fa-icon [icon]="faPlayCircle" /><span class="ms-1">Start</span></button>
+                }
+                @if ((qio.status === QuizStatus.VISIBLE || qio.status === QuizStatus.ACTIVE) && qio.quizMode === QuizMode.BATCHED) {
+                    <button class="btn btn-primary btn-sm" (click)="addBatch(qio)"><fa-icon [icon]="faPlus" /><span class="ms-1">Add Batch</span></button>
+                }
+                @if ((qio.status === QuizStatus.VISIBLE || qio.status === QuizStatus.ACTIVE) && !qio.quizEnded) {
+                    <button class="btn btn-danger btn-sm" (click)="endQuiz(qio)"><fa-icon [icon]="faStopCircle" /><span class="ms-1">End</span></button>
+                }
+            }
+            @if (exercise().mode === ExerciseMode.TEAM) {
+                <a [routerLink]="['/course-management', courseId(), 'exercises', exercise().id, 'teams']" class="btn btn-primary btn-sm" title="Teams">
+                    <fa-icon [icon]="faUsers" />
+                </a>
+            }
+            <a
+                [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'participations']"
+                class="btn btn-primary btn-sm"
+                [title]="'artemisApp.exercise.participations' | artemisTranslate"
+            >
+                <fa-icon [icon]="faListAlt" />
+            </a>
+            <a
+                [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'scores']"
+                class="btn btn-info btn-sm"
+                [title]="'entity.action.scores' | artemisTranslate"
+            >
+                <fa-icon [icon]="faTable" />
+            </a>
+            @if (exercise().type === ExerciseType.QUIZ) {
+                @let qio2 = asQuiz(exercise());
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'quiz-point-statistic']" class="btn btn-info btn-sm" title="Statistics">
+                    <fa-icon [icon]="faChartBar" />
+                </a>
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'preview']" class="btn btn-success btn-sm" title="Preview">
+                    <fa-icon [icon]="faEye" />
+                </a>
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'solution']" class="btn btn-success btn-sm" title="Solution">
+                    <fa-icon [icon]="faLightbulb" />
+                </a>
+                @if (qio2.quizEnded) {
+                    <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 're-evaluate']" class="btn btn-warning btn-sm" title="Re-evaluate">
+                        <fa-icon [icon]="faRedo" />
+                    </a>
+                }
+            }
+            @if (exercise().type === ExerciseType.MODELING || exercise().type === ExerciseType.TEXT) {
+                <a [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'example-submissions']" class="btn btn-success btn-sm" title="Example Submissions">
+                    <fa-icon [icon]="faClipboardList" />
+                </a>
+            }
+            @if (exercise().type === ExerciseType.PROGRAMMING) {
+                <a
+                    [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
+                    class="btn btn-warning btn-sm"
+                    [title]="'entity.action.editInEditor' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faPencilAlt" />
+                </a>
+            }
+            <a
+                [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id, 'edit']"
+                class="btn btn-warning btn-sm"
+                [title]="'entity.action.edit' | artemisTranslate"
+            >
+                <fa-icon [icon]="faWrench" />
+            </a>
+            <button
+                jhiDeleteButton
+                [renderButtonText]="false"
+                [renderButtonStyle]="false"
+                [entityTitle]="exercise().title!"
+                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="deleteExercise($event)"
+                [dialogError]="dialogError$"
+                class="btn btn-danger btn-sm"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        </div>
+    }
+</div>

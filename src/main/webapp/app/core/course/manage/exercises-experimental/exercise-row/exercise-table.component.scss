@@ -1,0 +1,18 @@
+.sort-col {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+
+    &:hover {
+        background-color: var(--bs-tertiary-bg);
+    }
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--bs-secondary-color);
+
+    &:active {
+        cursor: grabbing;
+    }
+}

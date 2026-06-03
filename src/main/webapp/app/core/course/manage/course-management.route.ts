@@ -196,6 +196,29 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        // Original exercise-management view backed by mock data (dev only).
+                        path: 'exercises/original',
+                        loadComponent: () => import('app/core/course/manage/exercises/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                            pageTitle: 'artemisApp.course.exercises',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        // Experimental exercise-management view backed by mock data (dev only).
+                        path: 'exercises/experimental',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/course-management-exercises-experimental.component').then(
+                                (m) => m.CourseManagementExercisesExperimentalComponent,
+                            ),
+                        data: {
+                            authorities: IS_AT_LEAST_TUTOR,
+                            pageTitle: 'artemisApp.course.exercises',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
                         path: 'communication',
                         loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                         data: {

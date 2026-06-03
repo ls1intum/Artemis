@@ -1,0 +1,38 @@
+:host {
+    display: block;
+}
+
+.exercise-row {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 6px;
+    background: transparent;
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+// Fixed-width columns so information spreads across the row and aligns between rows (v1-like).
+.col-title {
+    flex: 1 1 auto;
+}
+
+.col-dates {
+    flex: 0 1 190px;
+    min-width: 0;
+}
+
+.col-points {
+    flex: 0 1 120px;
+    min-width: 0;
+}
+
+.col-categories {
+    flex: 0 1 160px;
+    min-width: 0;
+}
+
+.col-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}

@@ -4,6 +4,21 @@
 @import '../../shared/course-base-container/course-variables';
 @import '../../shared/course-base-container/course-base-container.component';
 
+// Make mat-sidenav-content a flex column so the sticky title bar and scrollable
+// body container share the fixed height correctly.
+::ng-deep .mat-drawer-content {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+// In sidebar mode the body container fills the remaining height and scrolls.
+.sidebar-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* Component-specific styles only */
 .controls {
     display: flex;

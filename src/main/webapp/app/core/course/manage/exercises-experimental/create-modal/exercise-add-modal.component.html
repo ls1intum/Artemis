@@ -1,0 +1,156 @@
+<p-dialog
+    [header]="dialogHeader"
+    [visible]="visible()"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    [style]="{ width: '680px', maxWidth: '95vw' }"
+    [draggable]="false"
+>
+    @if (mode() === 'unified') {
+        <div class="tab-bar mb-3">
+            <button class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('create')">Create</button>
+            <button class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('import')">Import</button>
+            <button class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('export')">Export</button>
+        </div>
+    }
+
+    <!-- ── Create tab ── -->
+    @if (mode() === 'create' || (mode() === 'unified' && activeTab() === 'create')) {
+        <p class="text-muted small mb-3">Select an exercise type. You can customise all details in the next step.</p>
+        <div class="exercise-grid">
+            @for (card of exerciseTypeCards; track card.type) {
+                <button class="exercise-card {{ card.accentClass }}" (click)="navigateToCreate(card)" type="button">
+                    <div class="card-icon-wrapper">
+                        <fa-icon [icon]="card.icon" />
+                    </div>
+                    <h6>{{ card.label }}</h6>
+                    <p>{{ card.description }}</p>
+                    <span class="card-cta">
+                        Create
+                        <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    </span>
+                </button>
+            }
+            <button class="exercise-card card--group" (click)="createGroup()" type="button">
+                <div class="card-icon-wrapper">
+                    <fa-icon [icon]="faLayerGroup" />
+                </div>
+                <h6>Exercise Group</h6>
+                <p>A set of variant exercises on the same topic. Students practice any variant and choose which to submit for grading.</p>
+                <span class="card-cta">
+                    Create
+                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                </span>
+            </button>
+        </div>
+    }
+
+    <!-- ── Import tab ── -->
+    @if (mode() === 'import' || (mode() === 'unified' && activeTab() === 'import')) {
+        @if (importSelectedType() === null) {
+            <p class="text-muted small mb-3">Select what you want to import.</p>
+            <div class="exercise-grid">
+                @for (card of exerciseTypeCards; track card.type) {
+                    <button class="exercise-card {{ card.accentClass }}" (click)="selectImportType(card.type)" type="button">
+                        <div class="card-icon-wrapper">
+                            <fa-icon [icon]="card.icon" />
+                        </div>
+                        <h6>{{ card.label }}</h6>
+                        <p>{{ card.description }}</p>
+                        <span class="card-cta">
+                            Select
+                            <fa-icon [icon]="faArrowRight" class="ms-1" />
+                        </span>
+                    </button>
+                }
+                <button class="exercise-card card--group" (click)="selectImportType('group')" type="button">
+                    <div class="card-icon-wrapper">
+                        <fa-icon [icon]="faLayerGroup" />
+                    </div>
+                    <h6>Exercise Group</h6>
+                    <p>Import a group of variant exercises from another course, including all its exercises.</p>
+                    <span class="card-cta">
+                        Select
+                        <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    </span>
+                </button>
+            </div>
+        } @else if (importSelectedType() === 'group') {
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="backToImportTypeSelection()"> <fa-icon [icon]="faArrowLeft" class="me-1" />Back </p-button>
+                <span class="fw-semibold">Import Exercise Group</span>
+            </div>
+            <p class="text-muted small mb-2">Select groups to import. All exercises in the group are included.</p>
+            <div class="import-list">
+                @for (grp of importGroups(); track grp.id) {
+                    <label class="import-item d-flex align-items-center gap-2 py-2 px-2 border-bottom">
+                        <p-checkbox [binary]="true" [ngModel]="importGroupSelectedIds().has(grp.id)" (ngModelChange)="toggleImportGroupSelection(grp.id)" />
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold small">{{ grp.title }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis small">{{ grp.exerciseCount }} exercises</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem">{{ grp.course }}</div>
+                        </div>
+                    </label>
+                }
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Cancel</p-button>
+                <p-button severity="primary" size="small" [disabled]="importGroupSelectedIds().size === 0" (onClick)="confirmImport()">
+                    Import {{ importGroupSelectedIds().size > 0 ? '(' + importGroupSelectedIds().size + ')' : '' }}
+                </p-button>
+            </div>
+        } @else {
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="backToImportTypeSelection()"> <fa-icon [icon]="faArrowLeft" class="me-1" />Back </p-button>
+                <span class="fw-semibold">Import {{ importTypeLabel(importSelectedType()!) }}</span>
+            </div>
+            <p class="text-muted small mb-2">Select exercises to import. They will be added to this course and remain fully editable.</p>
+            <div class="import-list">
+                @for (ex of importExercisesForType(importSelectedType()!); track ex.id) {
+                    <label class="import-item d-flex align-items-center gap-2 py-2 px-2 border-bottom">
+                        <p-checkbox [binary]="true" [ngModel]="importSelectedIds().has(ex.id)" (ngModelChange)="toggleImportSelection(ex.id)" />
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="fw-semibold small">{{ ex.title }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem">{{ ex.course }}</div>
+                        </div>
+                    </label>
+                }
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Cancel</p-button>
+                <p-button severity="primary" size="small" [disabled]="importSelectedIds().size === 0" (onClick)="confirmImport()">
+                    Import {{ importSelectedIds().size > 0 ? '(' + importSelectedIds().size + ')' : '' }}
+                </p-button>
+            </div>
+        }
+    }
+
+    <!-- ── Export tab ── -->
+    @if (mode() === 'export' || (mode() === 'unified' && activeTab() === 'export')) {
+        <p class="text-muted small mb-2">Quiz exercises can be exported as JSON for backup or sharing. Select the exercises to export.</p>
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <p-checkbox [binary]="true" [ngModel]="exportSelectAll()" (ngModelChange)="toggleExportSelectAll($event)" inputId="export-select-all" />
+            <label for="export-select-all" class="small fw-semibold mb-0" style="cursor: pointer">Select all</label>
+        </div>
+        @let quizExercises = exportQuizExercises();
+        <div class="import-list">
+            @for (ex of quizExercises; track ex.id) {
+                <label class="import-item d-flex align-items-center gap-2 py-2 px-2 border-bottom">
+                    <p-checkbox [binary]="true" [ngModel]="exportSelectedIds().has(ex.id)" (ngModelChange)="toggleExportSelection(ex.id)" />
+                    <div class="flex-grow-1 min-width-0">
+                        <div class="fw-semibold small">{{ ex.title }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem">{{ ex.course }}</div>
+                    </div>
+                </label>
+            }
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Cancel</p-button>
+            <p-button severity="success" size="small" [disabled]="exportSelectedIds().size === 0" (onClick)="confirmExport()">
+                Export {{ exportSelectedIds().size > 0 ? '(' + exportSelectedIds().size + ')' : '' }}
+            </p-button>
+        </div>
+    }
+</p-dialog>

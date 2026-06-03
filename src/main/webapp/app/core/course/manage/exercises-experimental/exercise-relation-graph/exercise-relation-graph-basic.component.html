@@ -1,0 +1,109 @@
+<div class="d-flex flex-column gap-3">
+    <div class="relation-editor d-flex flex-wrap align-items-end gap-2 p-2">
+        <div class="d-flex flex-column">
+            <label class="small text-muted">Source</label>
+            <p-select
+                [options]="endpointOptions()"
+                [ngModel]="newSource()"
+                (ngModelChange)="newSource.set($event)"
+                [group]="true"
+                optionGroupLabel="label"
+                optionGroupChildren="items"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select source"
+                [filter]="true"
+                appendTo="body"
+            />
+        </div>
+        <div class="d-flex flex-column">
+            <label class="small text-muted">Relation</label>
+            <p-select [options]="relationTypeOptions" [ngModel]="newType()" (ngModelChange)="newType.set($event)" optionLabel="label" optionValue="value" appendTo="body" />
+        </div>
+        <div class="d-flex flex-column">
+            <label class="small text-muted">Target</label>
+            <p-select
+                [options]="endpointOptions()"
+                [ngModel]="newTarget()"
+                (ngModelChange)="newTarget.set($event)"
+                [group]="true"
+                optionGroupLabel="label"
+                optionGroupChildren="items"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Select target"
+                [filter]="true"
+                appendTo="body"
+            />
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" [disabled]="!canAdd()" (click)="addRelation()">Add relation</button>
+    </div>
+
+    <div class="d-flex gap-3 align-items-start">
+        @if (nodes().length === 0) {
+            <div class="text-muted p-3">No exercise relations defined. Add one above.</div>
+        } @else {
+            <div class="exercise-relation-graph-container flex-grow-1" xmlns:svg="http://www.w3.org/2000/svg">
+                <ngx-graph
+                    layout="dagreCluster"
+                    [draggingEnabled]="true"
+                    [links]="edges()"
+                    [nodes]="nodes()"
+                    [update$]="update$"
+                    [center$]="center$"
+                    [zoomToFit$]="zoomToFit$"
+                    [showMiniMap]="false"
+                >
+                    <ng-template #defsTemplate>
+                        <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+                        </svg:marker>
+                    </ng-template>
+                    <ng-template #nodeTemplate let-node>
+                        <svg:g class="node-group">
+                            <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+                                <div class="relation-node" [class.group-node]="node.data?.kind === 'group'" [attr.title]="node.label">
+                                    {{ node.label }}
+                                </div>
+                            </svg:foreignObject>
+                        </svg:g>
+                    </ng-template>
+                    <ng-template #linkTemplate let-link>
+                        <svg:g class="edge">
+                            <svg:path class="line" [class.harder-than]="link.data?.type === ExerciseRelationType.HARDER_THAN" stroke-width="1.5" marker-end="url(#arrow)" />
+                            @if (link.midPoint) {
+                                <svg:text class="edge-label" text-anchor="middle" [attr.x]="link.midPoint.x" [attr.y]="link.midPoint.y - 4">
+                                    {{ link.label }}
+                                </svg:text>
+                            }
+                        </svg:g>
+                    </ng-template>
+                </ngx-graph>
+            </div>
+        }
+
+        <div class="relation-side d-flex flex-column gap-2">
+            <div class="legend p-2">
+                <div class="fw-semibold small mb-1">Legend</div>
+                <div class="d-flex align-items-center gap-2 small mb-1"><span class="legend-node"></span> Exercise</div>
+                <div class="d-flex align-items-center gap-2 small mb-2"><span class="legend-node group"></span> Group (applies to all variants)</div>
+                <div class="d-flex align-items-center gap-2 small mb-1"><span class="legend-line"></span> Prerequisite</div>
+                <div class="d-flex align-items-center gap-2 small"><span class="legend-line dashed"></span> Harder than</div>
+            </div>
+
+            @if (relationList().length > 0) {
+                <div class="relation-list p-2">
+                    <div class="fw-semibold small mb-1">Relations</div>
+                    @for (relation of relationList(); track relation.id) {
+                        <div class="d-flex align-items-center gap-2 small mb-1">
+                            <span class="flex-grow-1">{{ relation.sourceLabel }} → {{ relation.targetLabel }} ({{ relation.type }})</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeRelation(relation.id)" title="Delete relation">
+                                <fa-icon [icon]="faTrash" />
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

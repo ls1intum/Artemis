@@ -1,4 +1,5 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
+import { Router } from '@angular/router';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import {
@@ -25,10 +26,16 @@ const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: () => unknown }> = [
     { pattern: /^api\/quiz\/courses\/\d+\/quiz-exercises$/, data: () => INTRO_JAVA_QUIZ_EXERCISES },
 ];
 
+// The /original and /experimental exercise-management views are backed by mock data.
+// The default /exercises route hits the real backend.
+const VERSIONED_VIEW = /\/exercises\/(?:original|experimental)(?:[/?#]|$)/;
+
 @Injectable()
 export class MockCourseInterceptor implements HttpInterceptor {
+    private readonly router = inject(Router);
+
     intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-        if (!isDevMode() || req.method !== 'GET') {
+        if (!isDevMode() || req.method !== 'GET' || !VERSIONED_VIEW.test(this.router.url)) {
             return next.handle(req);
         }
 

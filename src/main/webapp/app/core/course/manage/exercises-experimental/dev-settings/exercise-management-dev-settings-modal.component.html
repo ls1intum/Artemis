@@ -1,0 +1,38 @@
+<p-dialog header="Exercise Management Dev Settings" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" [style]="{ width: '480px' }">
+    <div class="d-flex flex-column gap-3">
+        <div>
+            <label class="fw-semibold d-block mb-2">Exercise Row</label>
+            <p-selectbutton
+                [options]="exerciseRowOptions"
+                [ngModel]="devSettings.exerciseRowVariant()"
+                (ngModelChange)="devSettings.setExerciseRowVariant($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+        </div>
+        <div>
+            <label class="fw-semibold d-block mb-2">Add Exercises</label>
+            <p-selectbutton
+                [options]="addExerciseOptions"
+                [ngModel]="devSettings.addExerciseVariant()"
+                (ngModelChange)="devSettings.setAddExerciseVariant($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+        </div>
+        <div>
+            <label class="fw-semibold d-block mb-2">Action Buttons</label>
+            <p-selectbutton
+                [options]="actionButtonOptions"
+                [ngModel]="devSettings.actionButtonVariant()"
+                (ngModelChange)="devSettings.setActionButtonVariant($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <p-toggleswitch [ngModel]="devSettings.massActionsEnabled()" (ngModelChange)="devSettings.setMassActionsEnabled($event)" inputId="mass-actions-toggle" />
+            <label for="mass-actions-toggle" class="fw-semibold mb-0">Mass Actions</label>
+        </div>
+    </div>
+</p-dialog>

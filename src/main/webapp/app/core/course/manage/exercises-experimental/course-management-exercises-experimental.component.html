@@ -1,0 +1,415 @@
+@if (course()) {
+    <div *titleBarTitle>
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0">
+                <span>{{ course()!.title }} — Exercises ({{ exerciseCount() }})</span>
+            </h5>
+        </div>
+    </div>
+
+    <ng-template titleBarActions>
+        <p-button severity="secondary" [text]="true" (onClick)="settingsVisible.set(true)" title="Dev Settings">
+            <fa-icon [icon]="faGear" />
+        </p-button>
+    </ng-template>
+
+    <ng-template titleBarToolbar>
+        <!-- Controls row -->
+        <div class="controls d-flex align-items-center gap-2">
+            <p-selectbutton size="small" [options]="viewOptions" [ngModel]="view()" (ngModelChange)="onViewChange($event)" optionValue="value" [allowEmpty]="false">
+                <ng-template #item let-item>
+                    <fa-icon [icon]="item.icon" />
+                    <span class="ms-1 d-none d-md-inline">{{ item.label }}</span>
+                </ng-template>
+            </p-selectbutton>
+            <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
+            @if (devSettings.exerciseRowVariant() !== 'table') {
+                <div class="d-flex align-items-center gap-1">
+                    <span class="text-muted small">Sort:</span>
+                    <p-select
+                        [options]="sortOptions"
+                        [ngModel]="sortField()"
+                        (ngModelChange)="onSortChange($event)"
+                        optionValue="value"
+                        optionLabel="label"
+                        size="small"
+                        class="sort-select"
+                    />
+                </div>
+            }
+            @if (devSettings.addExerciseVariant() === 'slim') {
+                <p-button size="small" severity="secondary">
+                    <fa-icon [icon]="faFileImport" />
+                    <span class="ms-1">Import</span>
+                </p-button>
+                <p-button size="small">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1">New</span>
+                </p-button>
+            }
+            @if (devSettings.addExerciseVariant() === 'modal-split') {
+                <p-button size="small" severity="secondary" (onClick)="openImportModal()">
+                    <fa-icon [icon]="faFileImport" />
+                    <span class="ms-1">Import</span>
+                </p-button>
+                <p-button size="small" severity="secondary" (onClick)="openExportModal()">
+                    <fa-icon [icon]="faFileExport" />
+                    <span class="ms-1">Export</span>
+                </p-button>
+                <p-button size="small" (onClick)="openCreateModal()">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1">Create</span>
+                </p-button>
+            }
+            @if (devSettings.addExerciseVariant() === 'modal-unified') {
+                <p-button size="small" (onClick)="openAddModal()">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1">Manage</span>
+                </p-button>
+            }
+        </div>
+
+        <!-- Mass actions row -->
+        @if (devSettings.massActionsEnabled() && selectedCount() > 0) {
+            <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                <span class="text-muted small">{{ selectedCount() }} selected</span>
+                <p-button size="small" severity="secondary" [outlined]="true" (onClick)="clearSelection()">Deselect all</p-button>
+                @if (allSelectedAreProgramming()) {
+                    <p-button size="small" severity="warn" [outlined]="true" (onClick)="editSelectedExercises()"> <i class="pi pi-wrench me-1"></i>Edit Selected </p-button>
+                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="downloadReposSelected()"> <i class="pi pi-download me-1"></i>Download Repos </p-button>
+                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="consistencyCheckSelected()">
+                        <i class="pi pi-verified me-1"></i>Consistency Check
+                    </p-button>
+                }
+                <p-button size="small" severity="danger" (onClick)="deleteSelected()"> <i class="pi pi-trash me-1"></i>Delete selected </p-button>
+            </div>
+        }
+    </ng-template>
+
+    @if (buckets().length === 0) {
+        <div class="alert alert-secondary" role="alert">No exercises match "{{ search() }}".</div>
+    }
+    <div cdkDropList (cdkDropListDropped)="dropBucket($event)" [cdkDropListDisabled]="!isGroup()" class="d-flex flex-column gap-3">
+        @for (bucket of buckets(); track bucket.id) {
+            <div cdkDrag [cdkDragDisabled]="!isGroup()">
+                <p-panel [toggleable]="true">
+                    <ng-template pTemplate="header">
+                        <div class="d-flex flex-column w-100">
+                            <!-- Row 1: always visible -->
+                            <div class="d-flex align-items-center gap-2">
+                                @if (isGroup()) {
+                                    <span class="drag-handle text-muted pi pi-bars" cdkDragHandle></span>
+                                }
+                                @if (bucket.icon) {
+                                    <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
+                                }
+
+                                @if (isGroup() && bucket.group) {
+                                    @if (isEditingGroup(bucket.group.id)) {
+                                        <input
+                                            pInputText
+                                            [(ngModel)]="bucket.group.title"
+                                            placeholder="Group name"
+                                            class="group-title-input fw-semibold"
+                                            [class.is-invalid]="!bucket.group.title?.trim()"
+                                            (click)="$event.stopPropagation()"
+                                        />
+                                        <p-button
+                                            [text]="true"
+                                            severity="success"
+                                            size="small"
+                                            title="Save"
+                                            [disabled]="!bucket.group.title?.trim()"
+                                            (onClick)="saveGroup(bucket.group.id!); $event.stopPropagation()"
+                                        >
+                                            <fa-icon [icon]="faCheck" />
+                                        </p-button>
+                                        <p-button
+                                            [text]="true"
+                                            severity="secondary"
+                                            size="small"
+                                            title="Cancel"
+                                            (onClick)="cancelEditGroup(bucket.group.id!); $event.stopPropagation()"
+                                        >
+                                            <i class="pi pi-times"></i>
+                                        </p-button>
+                                    } @else {
+                                        <span class="fw-semibold">{{ bucket.group.title }}</span>
+                                        <span class="text-muted">({{ bucket.exercises.length }})</span>
+                                        <p-button
+                                            [text]="true"
+                                            severity="secondary"
+                                            size="small"
+                                            title="Edit group"
+                                            (onClick)="startEditGroup(bucket.group.id!); $event.stopPropagation()"
+                                        >
+                                            <fa-icon [icon]="faPen" />
+                                        </p-button>
+                                    }
+
+                                    <div class="ms-auto d-flex align-items-center gap-1" (click)="$event.stopPropagation()">
+                                        @if (devSettings.addExerciseVariant() === 'inline' && courseId() !== undefined) {
+                                            <p-button size="small" severity="secondary" (onClick)="openImportModal()">
+                                                <fa-icon [icon]="faFileImport" /><span class="ms-1">Import</span>
+                                            </p-button>
+                                            <p-button size="small" severity="secondary" (onClick)="openExportModal()">
+                                                <fa-icon [icon]="faFileExport" /><span class="ms-1">Export</span>
+                                            </p-button>
+                                            <p-button size="small" (onClick)="openCreateModal()"> <fa-icon [icon]="faPlus" /><span class="ms-1">Create</span> </p-button>
+                                        }
+                                    </div>
+                                } @else {
+                                    <span class="fw-semibold">{{ bucket.title }} ({{ bucket.exercises.length }})</span>
+                                    @if (devSettings.addExerciseVariant() === 'inline' && courseId() !== undefined) {
+                                        <div class="ms-auto d-flex gap-1">
+                                            @if (bucket.exerciseType) {
+                                                <p-button size="small" [routerLink]="createRouteForType(courseId()!, bucket.exerciseType)" [title]="'New ' + bucket.title">
+                                                    <fa-icon [icon]="faPlus" />
+                                                    <span class="ms-1">New</span>
+                                                </p-button>
+                                                @if (bucket.exerciseType === ExerciseType.QUIZ) {
+                                                    <p-button size="small" severity="secondary" title="Export Quiz">Export</p-button>
+                                                }
+                                            } @else {
+                                                @for (typeOption of ALL_EXERCISE_TYPES; track typeOption.type) {
+                                                    <p-button
+                                                        size="small"
+                                                        severity="secondary"
+                                                        [routerLink]="createRouteForType(courseId()!, typeOption.type)"
+                                                        [title]="'New ' + typeOption.label"
+                                                    >
+                                                        <fa-icon [icon]="getExerciseTypeIcon(typeOption.type)" />
+                                                    </p-button>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            <!-- Row 1b: non-edit group details (structured, labeled) -->
+                            @if (isGroup() && bucket.group && !isEditingGroup(bucket.group.id)) {
+                                @if (
+                                    bucket.group.releaseDate ||
+                                    bucket.group.startDate ||
+                                    bucket.group.dueDate ||
+                                    bucket.group.assessmentDueDate ||
+                                    bucket.group.maxPoints !== undefined ||
+                                    bucket.group.handInLimit !== undefined
+                                ) {
+                                    <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
+                                        @if (bucket.group.releaseDate) {
+                                            <span><span class="fw-semibold">Release:</span> {{ bucket.group.releaseDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.startDate) {
+                                            <span><span class="fw-semibold">Start:</span> {{ bucket.group.startDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.dueDate) {
+                                            <span><span class="fw-semibold">Due:</span> {{ bucket.group.dueDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.assessmentDueDate) {
+                                            <span><span class="fw-semibold">Feedback due:</span> {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.maxPoints !== undefined) {
+                                            <span class="d-flex align-items-center gap-1">
+                                                <span class="fw-semibold">Max points:</span> {{ bucket.group.maxPoints }}p
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    class="ms-1"
+                                                    pTooltip="Caps the total points this group contributes to the course score."
+                                                    tooltipPosition="top"
+                                                />
+                                            </span>
+                                        }
+                                        @if (bucket.group.handInLimit !== undefined) {
+                                            <span class="d-flex align-items-center gap-1">
+                                                <span class="fw-semibold">Hand-in limit:</span> {{ bucket.group.handInLimit }}
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    class="ms-1"
+                                                    pTooltip="Students may solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
+                                                    tooltipPosition="top"
+                                                />
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            <!-- Row 2: edit fields (edit mode only) -->
+                            @if (isGroup() && bucket.group && isEditingGroup(bucket.group.id)) {
+                                <div class="d-flex flex-column pt-2 mt-1 border-top" (click)="$event.stopPropagation()">
+                                    <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
+                                        <i class="pi pi-exclamation-triangle"></i>
+                                        Setting group dates will override the individual dates of all exercises in this group.
+                                    </div>
+                                    <div class="d-flex flex-wrap align-items-end gap-3">
+                                        <div>
+                                            <div class="d-flex align-items-center gap-1 text-muted small mb-1">
+                                                <span>Max points</span>
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    pTooltip="Caps the total points this group contributes to the course score. Students earn at most this value from the group, regardless of which variant they complete."
+                                                    tooltipPosition="top"
+                                                />
+                                            </div>
+                                            <p-inputnumber
+                                                [ngModel]="bucket.group.maxPoints ?? null"
+                                                (ngModelChange)="bucket.group.maxPoints = $event ?? undefined"
+                                                [min]="0"
+                                                placeholder="No cap"
+                                                styleClass="group-pts-input"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="d-flex align-items-center gap-1 text-muted small mb-1">
+                                                <span>Hand-in limit</span>
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    pTooltip="Limits how many exercises a student can submit for manual grading. Students may still solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
+                                                    tooltipPosition="top"
+                                                />
+                                            </div>
+                                            <p-inputnumber
+                                                [ngModel]="bucket.group.handInLimit ?? null"
+                                                (ngModelChange)="bucket.group.handInLimit = $event ?? undefined"
+                                                [min]="1"
+                                                placeholder="No limit"
+                                                styleClass="group-pts-input"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small mb-1">Release date</div>
+                                            <input
+                                                type="datetime-local"
+                                                [value]="getGroupDateValue(bucket.group.releaseDate)"
+                                                (change)="setGroupDate(bucket.group, 'releaseDate', $any($event.target).value)"
+                                                class="group-date-input form-control form-control-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small mb-1">Start date</div>
+                                            <input
+                                                type="datetime-local"
+                                                [value]="getGroupDateValue(bucket.group.startDate)"
+                                                (change)="setGroupDate(bucket.group, 'startDate', $any($event.target).value)"
+                                                class="group-date-input form-control form-control-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small mb-1">Due date</div>
+                                            <input
+                                                type="datetime-local"
+                                                [value]="getGroupDateValue(bucket.group.dueDate)"
+                                                (change)="setGroupDate(bucket.group, 'dueDate', $any($event.target).value)"
+                                                class="group-date-input form-control form-control-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="text-muted small mb-1">Feedback due</div>
+                                            <input
+                                                type="datetime-local"
+                                                [value]="getGroupDateValue(bucket.group.assessmentDueDate)"
+                                                (change)="setGroupDate(bucket.group, 'assessmentDueDate', $any($event.target).value)"
+                                                class="group-date-input form-control form-control-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </ng-template>
+
+                    @if (devSettings.exerciseRowVariant() === 'table') {
+                        @if (courseId() !== undefined) {
+                            <jhi-exercise-table
+                                [exercises]="bucket.exercises"
+                                [courseId]="courseId()!"
+                                [group]="bucket.group"
+                                [showDragHandle]="isGroup()"
+                                [showTypeIcon]="view() !== 'type'"
+                                [showGroupSelector]="!isGroup() && groups().length > 0"
+                                [showCheckbox]="devSettings.massActionsEnabled() && !isGroup()"
+                                [selectedIds]="selectedIds()"
+                                [groups]="groups()"
+                                (groupChange)="onTableGroupChange($event)"
+                                (groupCreate)="onTableGroupCreate($event)"
+                                (rowsReordered)="onTableRowsReordered(bucket, $event)"
+                                (exerciseUpdated)="onExerciseUpdated($event)"
+                                (selectionToggle)="toggleSelection($event)"
+                                (selectionAllChange)="onTableSelectionAllChange(bucket, $event)"
+                            />
+                        }
+                    } @else {
+                        <div cdkDropList (cdkDropListDropped)="dropExercise(bucket, $event)" [cdkDropListDisabled]="!isGroup()" class="d-flex flex-column gap-2">
+                            @for (exercise of bucket.exercises; track exercise.id) {
+                                <div cdkDrag [cdkDragDisabled]="!isGroup()">
+                                    @if (courseId() !== undefined) {
+                                        @if (devSettings.exerciseRowVariant() === 'columnar') {
+                                            <jhi-exercise-row-columnar
+                                                class="flex-grow-1"
+                                                [exercise]="exercise"
+                                                [group]="bucket.group"
+                                                [courseId]="courseId()!"
+                                                [showTypeIcon]="view() !== 'type'"
+                                                [showDragHandle]="isGroup()"
+                                                [showCheckbox]="devSettings.massActionsEnabled() && exercise.id !== undefined"
+                                                [selected]="exercise.id !== undefined && isSelected(exercise.id)"
+                                                [owningGroup]="view() !== 'group' ? owningGroup(exercise) : undefined"
+                                                [groups]="view() !== 'group' ? groups() : []"
+                                                (selectedChange)="toggleSelection(exercise.id!)"
+                                                (groupChange)="changeExerciseGroup(exercise, $event)"
+                                                (groupCreate)="createGroupForExercise(exercise)"
+                                                (exerciseUpdated)="onExerciseUpdated($event)"
+                                            />
+                                        } @else {
+                                            <jhi-exercise-row-compact
+                                                class="flex-grow-1"
+                                                [exercise]="exercise"
+                                                [group]="bucket.group"
+                                                [courseId]="courseId()!"
+                                                [showTypeIcon]="view() !== 'type'"
+                                                [showDragHandle]="isGroup()"
+                                                [showCheckbox]="devSettings.massActionsEnabled() && exercise.id !== undefined"
+                                                [selected]="exercise.id !== undefined && isSelected(exercise.id)"
+                                                [owningGroup]="view() !== 'group' ? owningGroup(exercise) : undefined"
+                                                [groups]="view() !== 'group' ? groups() : []"
+                                                (selectedChange)="toggleSelection(exercise.id!)"
+                                                (groupChange)="changeExerciseGroup(exercise, $event)"
+                                                (groupCreate)="createGroupForExercise(exercise)"
+                                                (exerciseUpdated)="onExerciseUpdated($event)"
+                                            />
+                                        }
+                                    }
+                                </div>
+                            }
+                            <!-- Slim add exercises: link at bottom of each bucket -->
+                            @if (devSettings.addExerciseVariant() === 'slim' && courseId() !== undefined) {
+                                <div class="d-flex gap-2 mt-1 ps-1">
+                                    @if (bucket.exerciseType) {
+                                        <a [routerLink]="createRouteForType(courseId()!, bucket.exerciseType)" class="text-primary small">
+                                            <fa-icon [icon]="faPlus" /> Add {{ bucket.title }} exercise
+                                        </a>
+                                    } @else {
+                                        @for (typeOption of ALL_EXERCISE_TYPES; track typeOption.type) {
+                                            <a [routerLink]="createRouteForType(courseId()!, typeOption.type)" class="text-primary small"> + {{ typeOption.label }} </a>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </p-panel>
+            </div>
+        }
+    </div>
+
+    <jhi-exercise-management-dev-settings-modal [visible]="settingsVisible()" (visibleChange)="settingsVisible.set($event)" />
+    <jhi-exercise-add-modal
+        [visible]="addModalVisible()"
+        [mode]="addModalMode()"
+        [courseId]="courseId()"
+        (visibleChange)="addModalVisible.set($event)"
+        (groupCreate)="onAddModalGroupCreate()"
+    />
+}
