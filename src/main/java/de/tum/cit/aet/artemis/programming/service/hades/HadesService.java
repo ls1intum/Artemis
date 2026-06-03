@@ -178,9 +178,8 @@ public class HadesService implements StatelessCIService {
         ProjectType projectType = ProjectType.tryFromString(buildTriggerRequestDTO.additionalProperties().get("projectType"));
         var image = programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), Optional.ofNullable(projectType));
         var script = buildTriggerRequestDTO.buildScript();
-        var fullScript = "set -e && cd /shared && " + script;
         var executeMetadata = new HashMap<String, String>();
-        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, "", executeMetadata, fullScript, true));
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, workingDir, executeMetadata, script, true));
 
         // Create Parse Result Step
         var parseResultMetadata = new HashMap<String, String>();
