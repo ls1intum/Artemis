@@ -19,6 +19,7 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -143,13 +144,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {

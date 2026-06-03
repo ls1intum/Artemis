@@ -142,14 +142,33 @@
                             <div class="row">
                                 <div class="col-lg-4 col-sm-12">
                                     <div class="form-group">
-                                        <label for="quiz-duration-minutes" class="form-control-label" jhiTranslate="artemisApp.quizExercise.duration"></label>
+                                        <label for="quiz-duration-days" class="form-control-label" jhiTranslate="artemisApp.quizExercise.duration"></label>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <p-inputnumber
+                                                inputId="quiz-duration-days"
+                                                [(ngModel)]="duration.days"
+                                                (ngModelChange)="onDurationChange()"
+                                                [min]="0"
+                                                name="durationDays"
+                                                styleClass="duration-input"
+                                            />
+                                            <span jhiTranslate="artemisApp.quizExercise.days"></span>
+                                            <p-inputnumber
+                                                inputId="quiz-duration-hours"
+                                                [(ngModel)]="duration.hours"
+                                                (ngModelChange)="onDurationChange()"
+                                                [min]="0"
+                                                [max]="24"
+                                                name="durationHours"
+                                                styleClass="duration-input"
+                                            />
+                                            <span jhiTranslate="artemisApp.quizExercise.hours"></span>
                                             <p-inputnumber
                                                 inputId="quiz-duration-minutes"
                                                 [(ngModel)]="duration.minutes"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
-                                                [max]="600"
+                                                [max]="60"
                                                 name="durationMinutes"
                                                 styleClass="duration-input"
                                             />

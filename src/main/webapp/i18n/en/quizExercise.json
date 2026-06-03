@@ -152,6 +152,8 @@
             "startBatch": "Start Batch",
             "showNow": "Set Visible",
             "duration": "Duration",
+            "days": "days",
+            "hours": "hours",
             "minutes": "minutes",
             "seconds": "seconds",
             "minutesShort": "min",

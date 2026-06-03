@@ -651,6 +651,28 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(durationAsSeconds).toEqual(comp.quizExercise.duration);
             });
 
+            it('should support week-long durations', () => {
+                comp.duration = { days: 7, hours: 0, minutes: 0, seconds: 0 };
+                comp.onDurationChange();
+
+                expect(comp.quizExercise.duration).toBe(7 * 24 * 60 * 60);
+                expect(comp.duration.days).toBe(7);
+                expect(comp.duration.hours).toBe(0);
+                expect(comp.duration.minutes).toBe(0);
+                expect(comp.duration.seconds).toBe(0);
+            });
+
+            it('should normalize overflowing duration units', () => {
+                comp.duration = { days: 0, hours: 24, minutes: 60, seconds: 60 };
+                comp.onDurationChange();
+
+                expect(comp.quizExercise.duration).toBe(25 * 60 * 60 + 60);
+                expect(comp.duration.days).toBe(1);
+                expect(comp.duration.hours).toBe(1);
+                expect(comp.duration.minutes).toBe(1);
+                expect(comp.duration.seconds).toBe(0);
+            });
+
             it('should increase minutes when reaching 60 seconds', () => {
                 comp.duration = { minutes: 0, seconds: 60 };
                 comp.onDurationChange();
@@ -674,6 +696,36 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.onDurationChange();
                 expect(comp.quizExercise.duration).toBe(1530);
                 comp.isExamMode = false;
+            });
+
+            it('should display long persisted durations using days and hours', () => {
+                comp.duration = new Duration(0, 0);
+                comp.quizExercise.duration = 7 * 24 * 60 * 60 + 2 * 60 * 60 + 3 * 60 + 4;
+
+                comp.updateDuration();
+
+                expect(comp.duration.days).toBe(7);
+                expect(comp.duration.hours).toBe(2);
+                expect(comp.duration.minutes).toBe(3);
+                expect(comp.duration.seconds).toBe(4);
+            });
+
+            it('should validate batch start times against long durations', () => {
+                const now = dayjs();
+                comp.quizExercise.quizMode = QuizMode.INDIVIDUAL;
+                comp.quizExercise.releaseDate = now.subtract(1, 'hour');
+                comp.quizExercise.dueDate = now.add(6, 'days');
+                comp.quizExercise.duration = 7 * 24 * 60 * 60;
+                comp.quizExercise.quizBatches = [{ startTime: now } as QuizBatch];
+
+                comp.validateDate();
+
+                expect(comp.quizExercise.quizBatches[0].startTimeError).toBeTrue();
+
+                comp.quizExercise.dueDate = now.add(8, 'days');
+                comp.validateDate();
+
+                expect(comp.quizExercise.quizBatches[0].startTimeError).toBeFalse();
             });
         });
 

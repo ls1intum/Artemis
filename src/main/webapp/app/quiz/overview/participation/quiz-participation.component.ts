@@ -47,6 +47,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz',
@@ -505,13 +506,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     checkForQuizEnd() {

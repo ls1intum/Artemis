@@ -233,7 +233,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     */
     updateDuration(): void {
         const duration = dayjs.duration(this.quizExercise.duration ?? 0, 'seconds');
-        this.duration.minutes = 60 * duration.hours() + duration.minutes();
+        this.duration.minutes = Math.floor(duration.asMinutes());
         this.duration.seconds = duration.seconds();
     }
 }
