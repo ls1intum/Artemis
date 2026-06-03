@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,46 +20,69 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['../../programming-exercise-form.scss'],
     imports: [ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent, HelpIconComponent, CommonModule, TranslateDirective],
 })
-export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private profileService = inject(ProfileService);
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
-    @Input() programmingLanguage?: ProgrammingLanguage;
-    @Input() checkoutSolutionRepository = true;
-    @Input() isCreateOrEdit = false;
-    @Input() isEditMode = false;
-    @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseBuildConfig = input<ProgrammingExerciseBuildConfig>();
+    readonly programmingLanguage = input<ProgrammingLanguage>();
+    readonly checkoutSolutionRepository = input(true);
+    readonly isCreateOrEdit = input(false);
+    readonly isEditMode = input(false);
+    readonly submissionBuildPlanEvent = output<BuildPlanCheckoutDirectoriesDTO>();
 
     checkoutDirectorySubscription?: Subscription;
-    courseShortName?: string;
-    checkoutDirectories?: CheckoutDirectoriesDto;
+    readonly courseShortName = signal<string | undefined>(undefined);
+    readonly checkoutDirectories = signal<CheckoutDirectoriesDto | undefined>(undefined);
 
-    isLocalCIEnabled = true;
+    readonly isLocalCIEnabled = signal<boolean>(true);
 
-    ngOnInit() {
-        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-        this.updateCourseShortName();
-        if (this.isLocalCIEnabled) {
-            this.updateCheckoutDirectories();
-        }
+    // Single snapshot of the previous tracked-input values; consolidates the previousX fields.
+    private previousInputs: { programmingLanguage?: ProgrammingLanguage; checkoutSolutionRepository?: boolean } = {};
+
+    constructor() {
+        effect(() => {
+            const currentProgrammingLanguage = this.programmingLanguage();
+            const currentCheckoutSolutionRepository = this.checkoutSolutionRepository();
+            // Parent pushes buildConfig-only updates through this input while keeping the exercise
+            // reference stable; read it so the effect tracks that channel too.
+            this.programmingExerciseBuildConfig();
+            const currentProgrammingExercise = this.programmingExercise();
+
+            const programmingLanguageChanged = currentProgrammingLanguage !== this.previousInputs.programmingLanguage;
+            const checkoutSolutionRepositoryChanged = currentCheckoutSolutionRepository !== this.previousInputs.checkoutSolutionRepository;
+            this.previousInputs = { programmingLanguage: currentProgrammingLanguage, checkoutSolutionRepository: currentCheckoutSolutionRepository };
+
+            untracked(() => {
+                if (this.isLocalCIEnabled() && (programmingLanguageChanged || checkoutSolutionRepositoryChanged)) {
+                    if (this.isCreateOrEdit() && !this.isEditMode()) {
+                        this.resetProgrammingExerciseBuildCheckoutPaths();
+                    }
+                    this.updateCheckoutDirectories();
+                }
+
+                if (this.isCreateOrEdit() && this.isBuildConfigAvailable(currentProgrammingExercise.buildConfig)) {
+                    this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
+                }
+            });
+        });
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
-        const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
-        if (this.isLocalCIEnabled && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
-            if (this.isCreateOrEdit && !this.isEditMode) {
-                this.resetProgrammingExerciseBuildCheckoutPaths();
-            }
+    ngOnInit() {
+        this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.updateCourseShortName();
+        if (this.isLocalCIEnabled()) {
             this.updateCheckoutDirectories();
         }
-
-        const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
-        if (this.isCreateOrEdit && isBuildConfigChanged) {
-            this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
+        if (this.isCreateOrEdit() && this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
+            this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories()));
         }
+        // Prime previous-input snapshot before the effect's first tick so it sees no spurious change.
+        this.previousInputs = {
+            programmingLanguage: this.programmingLanguage(),
+            checkoutSolutionRepository: this.checkoutSolutionRepository(),
+        };
     }
 
     ngOnDestroy() {
@@ -67,7 +90,8 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private updateCheckoutDirectories() {
-        if (!this.programmingLanguage) {
+        const programmingLanguage = this.programmingLanguage();
+        if (!programmingLanguage) {
             return;
         }
 
@@ -75,38 +99,39 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
         const checkoutSolutionRepositoryDefault = true;
         this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? checkoutSolutionRepositoryDefault)
+            .getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage, this.checkoutSolutionRepository() ?? checkoutSolutionRepositoryDefault)
             .subscribe((checkoutDirectories) => {
-                if ((this.isCreateOrEdit && !this.isEditMode) || !this.isBuildConfigAvailable(this.programmingExercise.buildConfig)) {
-                    this.checkoutDirectories = checkoutDirectories;
+                if ((this.isCreateOrEdit() && !this.isEditMode()) || !this.isBuildConfigAvailable(this.programmingExercise().buildConfig)) {
+                    this.checkoutDirectories.set(checkoutDirectories);
                     this.submissionBuildPlanEvent.emit(checkoutDirectories.submissionBuildPlanCheckoutDirectories!);
                 } else {
-                    this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(checkoutDirectories);
+                    this.checkoutDirectories.set(this.setCheckoutDirectoriesFromBuildConfig(checkoutDirectories));
                 }
             });
     }
 
     private setCheckoutDirectoriesFromBuildConfig(checkoutDirectories?: CheckoutDirectoriesDto): CheckoutDirectoriesDto | undefined {
-        if (this.programmingExercise.buildConfig || checkoutDirectories) {
+        const programmingExercise = this.programmingExercise();
+        if (programmingExercise.buildConfig || checkoutDirectories) {
             checkoutDirectories = {
                 solutionBuildPlanCheckoutDirectories: {
                     solutionCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        this.addLeadingSlash(programmingExercise.buildConfig?.assignmentCheckoutPath) ||
                         checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
                     testCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        this.addLeadingSlash(programmingExercise.buildConfig?.testCheckoutPath) ||
                         checkoutDirectories?.solutionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
                         '/',
                 },
                 submissionBuildPlanCheckoutDirectories: {
                     exerciseCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.assignmentCheckoutPath) ||
+                        this.addLeadingSlash(programmingExercise.buildConfig?.assignmentCheckoutPath) ||
                         checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.exerciseCheckoutDirectory,
                     solutionCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.solutionCheckoutPath) ||
+                        this.addLeadingSlash(programmingExercise.buildConfig?.solutionCheckoutPath) ||
                         checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory,
                     testCheckoutDirectory:
-                        this.addLeadingSlash(this.programmingExercise.buildConfig?.testCheckoutPath) ||
+                        this.addLeadingSlash(programmingExercise.buildConfig?.testCheckoutPath) ||
                         checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.testCheckoutDirectory ||
                         '/',
                 },
@@ -116,10 +141,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private updateCourseShortName() {
-        if (!this.programmingExercise) {
-            return;
-        }
-        this.courseShortName = getCourseFromExercise(this.programmingExercise)?.shortName;
+        this.courseShortName.set(getCourseFromExercise(this.programmingExercise())?.shortName);
     }
 
     private addLeadingSlash(path?: string): string | undefined {
@@ -139,8 +161,12 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     }
 
     private resetProgrammingExerciseBuildCheckoutPaths() {
-        this.programmingExercise.buildConfig!.assignmentCheckoutPath = undefined;
-        this.programmingExercise.buildConfig!.testCheckoutPath = undefined;
-        this.programmingExercise.buildConfig!.solutionCheckoutPath = undefined;
+        const cfg = this.programmingExercise().buildConfig;
+        if (!cfg) {
+            return;
+        }
+        cfg.assignmentCheckoutPath = undefined;
+        cfg.testCheckoutPath = undefined;
+        cfg.solutionCheckoutPath = undefined;
     }
 }

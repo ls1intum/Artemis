@@ -1,16 +1,16 @@
 <ul class="list-group list-group-horizontal student-group">
-    @for (student of students; track student) {
+    @for (student of students(); track student) {
         <li class="list-group-item student-group-item" [class.has-error]="hasError(student)">
-            @if (renderLinks) {
+            @if (renderLinks()) {
                 <a [routerLink]="['/admin', 'user-management', student.login]">{{ student.name }} </a>
             }
-            @if (!renderLinks) {
+            @if (!renderLinks()) {
                 <span
                     >{{ student.name }}
                     @if (student.login) {
                         <span>({{ student.login }})</span>
                     }
-                    @if (withRegistrationNumber && student.visibleRegistrationNumber) {
+                    @if (withRegistrationNumber() && student.visibleRegistrationNumber) {
                         <span>({{ student.visibleRegistrationNumber }})</span>
                     }
                 </span>

@@ -1,6 +1,6 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -20,7 +20,6 @@ describe('Team Exercise Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TeamExerciseSearchComponent],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 LocalStorageService,
@@ -33,6 +32,10 @@ describe('Team Exercise Search Component', () => {
 
         fixture = TestBed.createComponent(TeamExerciseSearchComponent);
         comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('formats the search result with release date', () => {
@@ -141,9 +144,10 @@ describe('Team Exercise Search Component', () => {
     });
 
     it('successfully loads the exercise options', async () => {
-        comp.course = new Course();
-        comp.course.id = 1;
-        comp.ignoreExercises = [];
+        const course = new Course();
+        course.id = 1;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('ignoreExercises', []);
 
         expect(comp.exerciseOptions).toHaveLength(0);
 

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -8,14 +10,15 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { RepositoryType } from '../../code-editor/model/code-editor.model';
 
 describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProgrammingExerciseInstructorRepoDownloadComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorRepoDownloadComponent>;
     let service: ProgrammingExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
-            declarations: [ProgrammingExerciseInstructorRepoDownloadComponent, MockComponent(ButtonComponent)],
+            imports: [TranslateModule.forRoot(), ProgrammingExerciseInstructorRepoDownloadComponent, MockComponent(ButtonComponent)],
             providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         }).compileComponents();
 
@@ -25,8 +28,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     });
 
     afterEach(() => {
-        // completely restore all fakes created through the sandbox
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -35,17 +37,17 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     });
 
     it('should not download when there is no exercise', () => {
-        const spy = jest.spyOn(service, 'exportInstructorRepository');
+        const spy = vi.spyOn(service, 'exportInstructorRepository');
         component.exportRepository();
         expect(spy).not.toHaveBeenCalled();
     });
 
     it('should download the repos', () => {
-        component.exerciseId = 1;
+        fixture.componentRef.setInput('exerciseId', 1);
         const repoTypes: RepositoryType[] = [RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS, RepositoryType.AUXILIARY];
         repoTypes.forEach((repoType) => {
-            const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
-            component.repositoryType = repoType;
+            const exportInstructorRepositorySpy = vi.spyOn(service, 'exportInstructorRepository');
+            fixture.componentRef.setInput('repositoryType', repoType);
             component.exportRepository();
             expect(exportInstructorRepositorySpy).toHaveBeenCalledOnce();
             exportInstructorRepositorySpy.mockRestore();

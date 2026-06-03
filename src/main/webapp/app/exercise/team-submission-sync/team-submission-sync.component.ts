@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { distinctUntilChanged, filter, throttleTime } from 'rxjs/operators';
@@ -27,16 +27,16 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     // Sync settings
     readonly THROTTLE_TIME = 2000; // ms
 
-    @Input() exerciseType: ExerciseType;
-    @Input() submissionObservable?: Observable<Submission>;
-    @Input() submissionPatchObservable?: Observable<SubmissionPatch>;
-    @Input() participation: StudentParticipation;
+    readonly exerciseType = input.required<ExerciseType>();
+    readonly submissionObservable = input<Observable<Submission> | undefined>();
+    readonly submissionPatchObservable = input<Observable<SubmissionPatch> | undefined>();
+    readonly participation = input.required<StudentParticipation>();
 
-    @Output() receiveSubmission = new EventEmitter<Submission>();
-    @Output() receiveSubmissionPatch = new EventEmitter<SubmissionPatch>();
+    readonly receiveSubmission = output<Submission>();
+    readonly receiveSubmissionPatch = output<SubmissionPatch>();
     // Fires on every transition into the connected STOMP state (initial connect + each reconnect).
     // Consumers should re-announce their full local state in response.
-    @Output() reconnected = new EventEmitter<void>();
+    readonly reconnected = output<void>();
 
     currentUser: User;
     websocketTopic: string;
@@ -81,18 +81,21 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
      * updated submissions or submission patches based on those own changes via websockets
      */
     private setupSender() {
-        this.submissionObservable?.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true })).subscribe({
-            next: (submission: Submission) => {
-                if (submission.participation) {
-                    submission.participation.exercise = undefined;
-                    submission.participation.submissions = [];
-                }
-                this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
-            },
-            error: (error: unknown) => this.onError(error),
-        });
+        const submissionObservable = this.submissionObservable();
+        if (submissionObservable) {
+            submissionObservable.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true })).subscribe({
+                next: (submission: Submission) => {
+                    if (submission.participation) {
+                        submission.participation.exercise = undefined;
+                        submission.participation.submissions = [];
+                    }
+                    this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
+                },
+                error: (error: unknown) => this.onError(error),
+            });
+        }
 
-        this.submissionPatchObservable?.subscribe({
+        this.submissionPatchObservable()?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
                 this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), submissionPatch);
             },
@@ -119,11 +122,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     }
 
     private isSelf(user: User) {
-        return this.currentUser.login === user.login;
+        return this.currentUser?.login === user.login;
     }
 
     private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation.id}/team/${this.exerciseType}-submissions${path}`;
+        return `/topic/participations/${this.participation().id}/team/${this.exerciseType()}-submissions${path}`;
     }
 
     private onError(error: unknown) {

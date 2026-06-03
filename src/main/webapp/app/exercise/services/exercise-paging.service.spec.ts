@@ -1,8 +1,8 @@
-import { expect } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
@@ -15,6 +15,7 @@ import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-serv
 
 describe('Exercise Paging Service', () => {
     setupTestBed({ zoneless: true });
+
     let service: ExercisePagingService<any>;
     let httpMock: HttpTestingController;
 

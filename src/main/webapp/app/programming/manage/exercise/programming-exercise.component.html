@@ -3,7 +3,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (course.isAtLeastEditor) {
+                    @if (courseContext.isAtLeastEditor) {
                         <th class="d-md-table-cell">
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises)" [ngModel]="allChecked" />
                         </th>
@@ -14,7 +14,7 @@
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
-                    @if (course.presentationScore) {
+                    @if (courseContext.presentationScore) {
                         <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -123,7 +123,7 @@
                                 </div>
                             }
                         </td>
-                        @if (course.presentationScore) {
+                        @if (courseContext.presentationScore) {
                             <td class="d-md-table-cell">{{ programmingExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell">
@@ -215,8 +215,8 @@
                                             [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise)"
                                             deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                             [translateValues]="{
-                                                courseTitle: course.title,
-                                                courseType: course.testCourse
+                                                courseTitle: courseContext.title,
+                                                courseType: courseContext.testCourse
                                                     ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                                     : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                             }"
@@ -250,27 +250,27 @@
                     <fa-icon [icon]="faWrench" />
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected"></span>
                 </button>
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <jhi-programming-assessment-repo-export [programmingExercises]="selectedExercises" class="me-1" />
                 }
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <jhi-exercise-scores-export-button [exercises]="selectedExercises" />
                 }
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <button (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
                         <fa-icon [icon]="faCheckDouble" />
                         <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                     </button>
                 }
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <button
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [entityTitle]="'Multiple Programming Exercises'"
                         deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.multiple"
                         [translateValues]="{
-                            courseTitle: course.title,
-                            courseType: course.testCourse
+                            courseTitle: courseContext.title,
+                            courseType: courseContext.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"

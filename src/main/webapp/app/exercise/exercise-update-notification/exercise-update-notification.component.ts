@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, linkedSignal, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -8,12 +8,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [FormsModule, ArtemisTranslatePipe],
 })
 export class ExerciseUpdateNotificationComponent {
-    @Input() isCreation = false;
-    @Input() isImport: boolean;
-    @Input() notificationText?: string;
-    @Output() notificationTextChange: EventEmitter<string> = new EventEmitter<string>();
+    readonly isCreation = input(false);
+    readonly isImport = input(false);
+    readonly notificationText = input<string | undefined>();
+    readonly currentNotificationText = linkedSignal(() => this.notificationText());
+    readonly notificationTextChange = output<string>();
 
     onInputChanged() {
-        this.notificationTextChange.emit(this.notificationText);
+        this.notificationTextChange.emit(this.currentNotificationText()!);
     }
 }
