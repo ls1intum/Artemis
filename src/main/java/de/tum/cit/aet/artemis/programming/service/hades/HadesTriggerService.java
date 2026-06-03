@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
-import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -42,18 +41,15 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final HadesService hadesService;
 
-    private final LocalCIBuildConfigurationService buildConfigService;
-
     private final BuildPhaseEvaluationService buildPhaseEvaluationService;
 
     private final BuildPhasesTemplateService buildPhasesTemplateService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    public HadesTriggerService(HadesService hadesService, LocalCIBuildConfigurationService buildConfigService, BuildPhaseEvaluationService buildPhaseEvaluationService,
-            BuildPhasesTemplateService buildPhasesTemplateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+    public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.hadesService = hadesService;
-        this.buildConfigService = buildConfigService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
@@ -121,10 +117,17 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
+        StringBuilder script = new StringBuilder("set -e && cd /shared && ");
         for (BuildPhaseDTO phase : activePhases) {
-            log.debug("Phase '{}' script: {}", phase.name(), phase.script());
+            if (phase.script() != null && !phase.script().isBlank()) {
+                script.append(phase.script().strip()).append(" && ");
+            }
         }
 
-        return buildConfigService.createBuildScriptFromActivePhases(buildConfig, activePhases);
+        String result = script.toString();
+        if (result.endsWith(" && ")) {
+            result = result.substring(0, result.length() - 4);
+        }
+        return result;
     }
 }

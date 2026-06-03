@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 @Lazy
 @Service
-@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
+@Profile({ PROFILE_LOCALCI })
 public class LocalCIBuildConfigurationService {
 
     private final BuildScriptProviderService buildScriptProviderService;
