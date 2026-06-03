@@ -120,6 +120,20 @@ test.describe('Passkey', () => {
         await page.waitForURL('**/courses**');
     });
 
+    test('conditional mediation login succeeds with a registered passkey', async ({ page, virtualAuthenticator }) => {
+        const user = passkeyTestUser(test.info().title);
+        await registerPasskeyViaApi(page, user);
+
+        // Clear session and navigate to sign-in page.
+        // The virtual authenticator (automaticPresenceSimulation: true) automatically resolves
+        // the background navigator.credentials.get({ mediation: 'conditional' }) that the
+        // home component starts in prefillPasskeysIfPossible(), driving login without any
+        // explicit user interaction.
+        await page.context().clearCookies();
+        await page.goto('/sign-in');
+        await page.waitForURL('**/courses**');
+    });
+
     test('cannot login with a passkey after it was deleted', async ({ page, login, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
         // Disable conditional mediation for the same reason as "logs in" — prevents
