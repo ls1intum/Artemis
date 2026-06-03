@@ -91,6 +91,6 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
     }
 
     private hasDueDatePassed(): boolean {
-        return dayjs(this.exercise().dueDate).isBefore(dayjs());
+        return dayjs(this.dueDate() ?? this.exercise().dueDate).isBefore(dayjs());
     }
 }
