@@ -3,21 +3,51 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
+    <!-- changeSet-1: create the dedicated config table -->
     <changeSet id="20260527000001-1" author="artemis">
-        <addColumn tableName="course">
-            <column name="athena_formative_enabled" type="boolean" defaultValueBoolean="false">
+        <createTable tableName="course_athena_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false" unique="true"
+                             uniqueConstraintName="ux_course_athena_config_course_id"/>
+            </column>
+            <column name="formative_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="athena_grading_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="grading_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-        </addColumn>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="course_athena_config" baseColumnNames="course_id"
+                referencedTableName="course" referencedColumnNames="id"
+                constraintName="fk_course_athena_config_course_id"
+                onDelete="CASCADE"/>
     </changeSet>
 
+    <!-- changeSet-2: migrate any courses that had a flag set to true -->
     <changeSet id="20260527000001-2" author="artemis">
-        <!-- Clear Athena settings on all existing exercises so that DB state is consistent
-             with the new course-level flags, which default to false. -->
+        <sql>
+            INSERT INTO course_athena_config (course_id, formative_enabled, grading_enabled)
+            SELECT id, athena_formative_enabled, athena_grading_enabled
+            FROM course
+            WHERE athena_formative_enabled = TRUE OR athena_grading_enabled = TRUE
+        </sql>
+    </changeSet>
+
+    <!-- changeSet-3: drop the old columns from course -->
+    <changeSet id="20260527000001-3" author="artemis">
+        <dropColumn tableName="course" columnName="athena_formative_enabled"/>
+        <dropColumn tableName="course" columnName="athena_grading_enabled"/>
+    </changeSet>
+
+    <!-- changeSet-4 (unchanged): clear exercise Athena settings for consistency -->
+    <changeSet id="20260527000001-4" author="artemis">
         <sql>UPDATE exercise SET feedback_suggestion_module = NULL</sql>
         <sql>UPDATE exercise SET allow_manual_feedback_requests = FALSE</sql>
     </changeSet>
+
 </databaseChangeLog>
