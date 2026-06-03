@@ -97,12 +97,20 @@ test.describe('Passkey', () => {
 
     test('logs in with a registered passkey', async ({ page, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
+        // Disable conditional mediation so it cannot auto-complete login before the explicit
+        // button click — with automaticPresenceSimulation:true the virtual authenticator would
+        // otherwise resolve the background credentials.get() immediately, hide the form, and
+        // cause the subsequent click() to fail on a detached element.
+        await page.addInitScript(() => {
+            if (window.PublicKeyCredential) {
+                (window.PublicKeyCredential as unknown as Record<string, unknown>).isConditionalMediationAvailable = async () => false;
+            }
+        });
         await registerPasskeyViaApi(page, user);
 
         // Clear session and go to sign-in page
         await page.context().clearCookies();
         await page.goto('/sign-in');
-        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
 
         // Wait for the passkey login button to be stable before clicking
         await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
@@ -114,6 +122,14 @@ test.describe('Passkey', () => {
 
     test('cannot login with a passkey after it was deleted', async ({ page, login, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
+        // Disable conditional mediation for the same reason as "logs in" — prevents
+        // the background credentials.get() from triggering the error alert before the
+        // explicit button click does (which would produce a duplicate alert).
+        await page.addInitScript(() => {
+            if (window.PublicKeyCredential) {
+                (window.PublicKeyCredential as unknown as Record<string, unknown>).isConditionalMediationAvailable = async () => false;
+            }
+        });
         await registerPasskeyViaApi(page, user);
 
         // Delete the passkey via API
@@ -127,7 +143,6 @@ test.describe('Passkey', () => {
         // Clear session and try to login with passkey
         await page.context().clearCookies();
         await page.goto('/sign-in');
-        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
 
         // Wait for the passkey login button to be stable before clicking
         await page.locator('#passkey-login-button').waitFor({ state: 'visible' });
