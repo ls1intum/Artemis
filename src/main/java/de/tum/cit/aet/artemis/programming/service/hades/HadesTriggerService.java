@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +48,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final BuildPhasesTemplateService buildPhasesTemplateService;
 
-    @Autowired
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public HadesTriggerService(HadesService hadesService, LocalCIBuildConfigurationService buildConfigService, BuildPhaseEvaluationService buildPhaseEvaluationService,
@@ -76,7 +74,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
             // Create the submission repository DTO
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), null, null, null);
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), null, null, null);
 
             // Choose if script is bash or groovy: Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
@@ -119,6 +117,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
-        return buildConfigService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
+        return buildConfigService.createBuildScriptFromActivePhases(buildConfig, activePhases);
     }
 }
