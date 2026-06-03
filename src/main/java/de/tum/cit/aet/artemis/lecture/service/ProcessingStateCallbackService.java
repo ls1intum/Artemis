@@ -633,8 +633,13 @@ public class ProcessingStateCallbackService {
     /**
      * Saves the display page numbers received from PyRIS to the attachment.
      * The list maps slide numbers to the displayed page numbers detected in the PDF.
+     * A {@code null} payload is treated as "no update" so retries or legacy callbacks
+     * cannot erase an already persisted mapping.
      */
     private void saveDisplayPageNumbers(LectureUnitProcessingState state, @Nullable List<Integer> displayPageNumbers) {
+        if (displayPageNumbers == null) {
+            return;
+        }
         if (!(state.getLectureUnit() instanceof AttachmentVideoUnit attachmentVideoUnit)) {
             return;
         }

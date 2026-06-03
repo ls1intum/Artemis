@@ -426,7 +426,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldClearDisplayPageNumbersWhenNullOnSuccess() {
+        void shouldPreserveDisplayPageNumbersWhenNullOnSuccess() {
             Attachment attachment = new Attachment();
             attachment.setDisplayPageNumbers(List.of(1, 2, -1));
             testUnit.setAttachment(attachment);
@@ -439,8 +439,8 @@ class LectureContentProcessingServiceTest {
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).isNull();
-            verify(attachmentRepository).save(attachment);
+            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
+            verify(attachmentRepository, never()).save(attachment);
         }
 
         @Test
