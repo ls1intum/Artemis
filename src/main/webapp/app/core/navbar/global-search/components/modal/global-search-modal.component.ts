@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
-import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchInputComponent } from './search-input/search-input.component';
@@ -96,15 +96,31 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const hasFilter = filters.length > 0;
                     const hasCourseFilter = this.activeCourseId() !== undefined;
                     const trimmedQuery = query?.trim() || '';
-                    const hasValidQuery = trimmedQuery.length >= 3;
+                    const hasValidQuery = trimmedQuery.length >= MIN_SEARCH_QUERY_LENGTH;
+                    const isTooShort = trimmedQuery.length > 0 && !hasValidQuery;
 
-                    // No valid query and no filter (type or course) — clear results synchronously
-                    if (!hasValidQuery && !hasFilter && !hasCourseFilter) {
+                    // No input at all and no filter — clear results synchronously
+                    if (!trimmedQuery.length && !hasFilter && !hasCourseFilter) {
                         this.results.set([]);
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
                         this.searchError.set(undefined);
                         return EMPTY;
+                    }
+
+                    // Query too short for server search (1-2 chars) and no filter active —
+                    // show loading skeleton while user is typing, then after debounce show
+                    // the "too short" message without sending a request to the server.
+                    if (isTooShort && !hasFilter && !hasCourseFilter) {
+                        this.isLoading.set(true);
+                        this.searchError.set(undefined);
+                        return timer(SEARCH_DEBOUNCE_MS).pipe(
+                            switchMap(() => {
+                                this.isLoading.set(false);
+                                this.hasSearched.set(true);
+                                return of([]);
+                            }),
+                        );
                     }
 
                     this.searchError.set(undefined);
@@ -248,7 +264,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         // Show skeleton immediately while debounce waits, for a responsive feel
         const trimmedQuery = query?.trim() || '';
         const hasFilter = this.activeFilters().length > 0 || this.activeCourseId() !== undefined;
-        if (trimmedQuery.length >= 3 || hasFilter) {
+        if (trimmedQuery.length > 0 || hasFilter) {
             this.isLoading.set(true);
         }
 

@@ -19,7 +19,7 @@ import {
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
-import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -74,13 +74,21 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly activeFilters = input<string[]>([]);
 
     /**
-     * Weaviate uses trigram tokenization (3-char sliding windows), so a 3-character query
-     * produces only a single trigram and yields poor BM25 results.
-     * When true, the template shows a hint encouraging the user to type a longer query.
+     * True when the query is too short to send to the server (1-2 chars).
+     * The template shows a "please enter a longer search term" message.
+     */
+    protected readonly isTooShortQuery = computed(() => {
+        const len = this.searchQuery().trim().length;
+        return len > 0 && len < MIN_SEARCH_QUERY_LENGTH;
+    });
+
+    /**
+     * True when the query meets the minimum length but may still yield poor results
+     * due to few trigrams (3-5 chars). The template shows an additional hint.
      */
     protected readonly isShortQuery = computed(() => {
-        const trimmed = this.searchQuery().trim();
-        return trimmed.length === 3;
+        const len = this.searchQuery().trim().length;
+        return len >= MIN_SEARCH_QUERY_LENGTH && len <= SHORT_QUERY_MAX_LENGTH;
     });
 
     // Skeleton placeholder array for loading animation

@@ -38,6 +38,7 @@
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
+            "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",
             "shortQueryHint": "Dein Suchbegriff ist recht kurz. Verwende einen längeren Suchbegriff, um bessere Ergebnisse zu erhalten.",
             "searching": "Suche läuft...",
             "toNavigate": "zum Navigieren",

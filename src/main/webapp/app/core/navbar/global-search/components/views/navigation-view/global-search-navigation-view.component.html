@@ -43,9 +43,13 @@
         </div>
     } @else {
         <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisEnabled()">
-            <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
-            @if (isShortQuery()) {
-                <p class="text-body-tertiary small">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
+            @if (isTooShortQuery()) {
+                <p>{{ 'global.search.tooShortQueryHint' | artemisTranslate }}</p>
+            } @else {
+                <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
+                @if (isShortQuery()) {
+                    <p class="text-body-tertiary small">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
+                }
             }
         </div>
     }
