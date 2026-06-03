@@ -95,7 +95,7 @@ jobs:
 
   build-war:
     name: Build .war artifact
-    runs-on: ubuntu-latest
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     steps:
       - uses: actions/checkout@v6
         with:
@@ -164,68 +164,28 @@ jobs:
           asset_name: Artemis.war
           asset_content_type: application/x-webarchive
 
-  # Fast PR path: single-arch (linux/amd64) image that reuses the .war produced by
-  # `build-war` via the Dockerfile's `external_builder` stage. Skips the duplicate
-  # Angular + Gradle build that the reusable multi-arch workflow would otherwise
-  # run inside the image.
+  # PR path: single-arch (linux/amd64) image built through the shared ARC BuildKit
+  # reusable workflow. This intentionally exercises the same stateful BuildKit
+  # infrastructure used by release image builds.
   docker-pr:
     name: Build and Push Docker Image (PR, amd64)
     needs: build-war
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Download .war artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: Artemis.war
-          path: build/libs
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ghcr.io/ls1intum/artemis
-          tags: |
-            type=ref,event=pr
-      - name: Build and push (linux/amd64)
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./docker/artemis/Dockerfile
-          platforms: linux/amd64
-          # Skip the in-image .war build; COPY the artifact produced by `build-war` instead.
-          build-args: WAR_FILE_STAGE=external_builder
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      # Consumed by .github/actions/e2e-setup, which downloads the `docker-tag`
-      # artifact from the triggering Build run and pulls ghcr.io/ls1intum/artemis:<tag>.
-      - name: Save Docker tag to file
-        env:
-          DOCKER_TAG: ${{ steps.meta.outputs.version }}
-        run: |
-          printf '%s' "$DOCKER_TAG" > docker-tag.txt
-          echo "Using Docker tag: $DOCKER_TAG"
-      - name: Upload Docker tag as artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: docker-tag
-          path: docker-tag.txt
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image-self-hosted-buildkit.yml@feature/split-build-workflow-modes
+    with:
+      ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      runner-amd64: arc-buildkit-ls1intum-stud-amd64
+      runner-arm64: arc-buildkit-ls1intum-parma-arm64
+      runner-merge: arc-buildkit-ls1intum-stud-amd64
+      build-amd64: true
+      build-arm64: false
+      tags: |
+        type=ref,event=pr
 
   # Release / default-branch path: multi-arch publish via the shared reusable workflow.
   # Kept as-is because the reusable workflow runs its own checkout and cannot see the
@@ -246,18 +206,18 @@ jobs:
       tags: |
         type=ref,event=tag
 
-  # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path,
-  # so .github/actions/e2e-setup can consume it uniformly regardless of which docker
+  # Uploads the docker-tag artifact for both PR and release paths, so
+  # .github/actions/e2e-setup can consume it uniformly regardless of which Docker
   # job produced the image.
   save-docker-tag:
     name: Save Docker Image Tag
-    needs: docker-release
-    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
-    runs-on: ubuntu-latest
+    needs: [docker-pr, docker-release]
+    if: ${{ always() && (needs.docker-pr.result == 'success' || needs.docker-release.result == 'success') }}
+    runs-on: arc-buildkit-ls1intum-stud-amd64
     steps:
       - name: Save Docker tag to file
         env:
-          DOCKER_TAG: ${{ needs.docker-release.outputs.image_tag }}
+          DOCKER_TAG: ${{ needs.docker-pr.outputs.image_tag || needs.docker-release.outputs.image_tag }}
         run: |
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
