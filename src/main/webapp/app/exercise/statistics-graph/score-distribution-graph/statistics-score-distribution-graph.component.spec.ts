@@ -24,12 +24,12 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(StatisticsScoreDistributionGraphComponent);
         component = fixture.componentInstance;
-        component.averageScoreOfExercise = 75;
-        component.scoreDistribution = [0, 0, 0, 0, 0, 5, 0, 0, 0, 5];
-        component.numberOfExerciseScores = 10;
-        component.exerciseId = 1;
-        component.courseId = 2;
-        component.exerciseType = ExerciseType.FILE_UPLOAD;
+        fixture.componentRef.setInput('averageScoreOfExercise', 75);
+        fixture.componentRef.setInput('scoreDistribution', [0, 0, 0, 0, 0, 5, 0, 0, 0, 5]);
+        fixture.componentRef.setInput('numberOfExerciseScores', 10);
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('courseId', 2);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.FILE_UPLOAD);
 
         const navigationService = TestBed.inject(ArtemisNavigationUtilService);
         routeInNewTabStub = vi.spyOn(navigationService, 'routeInNewTab').mockImplementation(() => undefined);
@@ -43,7 +43,7 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
             expect(component.ngxData[index].value).toBe(data);
         });
 
-        component.numberOfExerciseScores = 0;
+        fixture.componentRef.setInput('numberOfExerciseScores', 0);
         component.ngOnInit();
         expectedRelativeData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         expectedRelativeData.forEach((data, index) => {
