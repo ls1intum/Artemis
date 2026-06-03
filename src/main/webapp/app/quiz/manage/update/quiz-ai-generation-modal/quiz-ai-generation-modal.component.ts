@@ -78,6 +78,8 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     courseCompetencies = signal<CourseCompetency[]>([]);
     selectedCompetencies = signal<CourseCompetency[]>([]);
     isLoadingCompetencies = signal(false);
+    /** Tracks the courseId for which a competency load was last attempted (success or failure). */
+    private competenciesLoadedForCourseId = signal<number | null>(null);
 
     readonly questionTypes: GeneratedQuestionType[] = ['single-choice', 'multiple-choice', 'true-false'];
     readonly languages: GenerationLanguage[] = ['en', 'de'];
@@ -107,11 +109,18 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     private competencySubscription?: Subscription;
 
     constructor() {
-        // Load competencies when the modal opens so we know whether to show the mode button
+        // Load competencies once per open/course cycle; guards against infinite retries on empty
+        // results or request failures by keying on competenciesLoadedForCourseId, not list length.
         effect(() => {
             const courseId = this.courseId();
-            if (this.visible() && courseId && this.courseCompetencies().length === 0 && !this.isLoadingCompetencies()) {
+            if (this.visible() && courseId && this.competenciesLoadedForCourseId() !== courseId && !this.isLoadingCompetencies()) {
                 this.loadCompetencies(courseId);
+            }
+        });
+        // Reset the load-guard when the modal closes so the next open cycle triggers a fresh load.
+        effect(() => {
+            if (!this.visible()) {
+                this.competenciesLoadedForCourseId.set(null);
             }
         });
         // If competencies finish loading and there are none, fall back to free-topic
@@ -125,7 +134,13 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     private loadCompetencies(courseId: number): void {
         this.isLoadingCompetencies.set(true);
         this.competencySubscription = from(this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId))
-            .pipe(finalize(() => this.isLoadingCompetencies.set(false)))
+            .pipe(
+                finalize(() => {
+                    this.isLoadingCompetencies.set(false);
+                    // Mark this courseId as attempted so the effect does not retry on empty list or error.
+                    this.competenciesLoadedForCourseId.set(courseId);
+                }),
+            )
             .subscribe({
                 next: (competencies) => this.courseCompetencies.set(competencies),
                 error: () => this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.competencyLoadFailed'),

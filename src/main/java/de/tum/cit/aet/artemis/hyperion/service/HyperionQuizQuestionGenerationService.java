@@ -150,7 +150,8 @@ public class HyperionQuizQuestionGenerationService {
         // relationSection ends with \n so the template's own newline creates a blank line before lectureSection
         String relationSection = relationLines.isBlank() ? "" : "## Competency Relations\nHow the selected competencies relate to each other:\n" + relationLines + "\n";
 
-        String lectureSection = context.lectureSnippets().isEmpty() ? "" : "## Relevant Lecture Content\n" + context.lectureSnippets().stream().collect(Collectors.joining("\n\n"));
+        String lectureSection = context.lectureSnippets().isEmpty() ? ""
+                : "## Relevant Lecture Content\n" + context.lectureSnippets().stream().map(HyperionUtils::sanitizeInput).collect(Collectors.joining("\n\n"));
 
         int difficulty = request.difficulty();
 

@@ -43,6 +43,8 @@ public class HyperionCompetencyContextService {
 
     private static final int LECTURE_SEARCH_LIMIT = 20;
 
+    private static final int MAX_EXERCISE_SUMMARIES = 10;
+
     private static final String PROMPT_EXTRACT_EXERCISE_INSIGHTS_SYSTEM = "/prompts/hyperion/extract_exercise_insights_system.st";
 
     private static final String PROMPT_EXTRACT_EXERCISE_INSIGHTS_USER = "/prompts/hyperion/extract_exercise_insights_user.st";
@@ -73,6 +75,8 @@ public class HyperionCompetencyContextService {
 
     /**
      * Returns whether competency-graph mode is available (Atlas module must be enabled).
+     *
+     * @return {@code true} if the Atlas module is present and competency APIs are available, {@code false} otherwise
      */
     public boolean isAvailable() {
         return courseCompetencyApi.isPresent();
@@ -109,7 +113,13 @@ public class HyperionCompetencyContextService {
 
         List<CourseCompetency> selected = competencyIds.stream().map(competencyById::get).filter(Objects::nonNull).toList();
 
+        Set<Long> distinctRequestedIds = competencyIds.stream().filter(Objects::nonNull).collect(Collectors.toSet());
         Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> missingIds = distinctRequestedIds.stream().filter(id -> !selectedIds.contains(id)).collect(Collectors.toSet());
+        if (!missingIds.isEmpty()) {
+            throw new BadRequestAlertException("Competencies not found in course " + courseId + ": " + missingIds, "QuizQuestionGeneration", "competencyNotFound");
+        }
+
         Set<CompetencyRelation> relations = competencyRelationApi.map(relApi -> relApi.findRelationsInvolvingCompetencies(courseId, selectedIds)).orElse(Set.of());
 
         List<String> contextSnippets = gatherContextSnippets(courseId, selected);
@@ -150,8 +160,9 @@ public class HyperionCompetencyContextService {
 
             // Exercises are passed through an intermediate LLM call that extracts core challenges
             // and learning objectives, avoiding raw problem statement text in the final prompt.
+            // Capped at MAX_EXERCISE_SUMMARIES to bound the number of synchronous LLM calls.
             competencyRelationApi.get().findExercisesByCompetencyIds(selectedIds).stream().filter(ex -> ex.getProblemStatement() != null && !ex.getProblemStatement().isBlank())
-                    .map(this::summarizeExercise).filter(Objects::nonNull).forEach(snippets::add);
+                    .limit(MAX_EXERCISE_SUMMARIES).map(this::summarizeExercise).filter(Objects::nonNull).forEach(snippets::add);
         }
 
         return snippets.stream().distinct().toList();
