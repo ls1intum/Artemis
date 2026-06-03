@@ -230,7 +230,7 @@ jobs:
   arc-e2e-test:
     name: ARC E2E Test
     needs: save-docker-tag
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ always() && github.event_name == 'pull_request' && needs.save-docker-tag.result == 'success' }}
     runs-on: arc-buildkit-ls1intum-theiaprod-amd64
     timeout-minutes: 120
     environment: playwright-e2e-tests
