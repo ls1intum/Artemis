@@ -3,39 +3,48 @@ import { test } from '../support/fixtures';
 import { admin } from '../support/users';
 import { BASE_API } from '../support/constants';
 
-const passkeyTestUser = { username: 'passkey_test_user', password: 'passkey_test_user' };
+function passkeyTestUser(testTitle: string) {
+    const id = testTitle.split(' ')[0].toLowerCase();
+    return { username: `passkey_e2e_${id}`, password: `passkey_e2e_${id}`, email: `passkey_e2e_${id}@example.com` };
+}
 
 test.describe('Passkey', () => {
-    test.beforeEach(async ({ page, login }) => {
+    test.beforeEach(async ({ page, login }, testInfo) => {
+        const user = passkeyTestUser(testInfo.title);
         await login(admin, '/courses');
         // Delete the user first to ensure clean state (removes any leftover passkeys from prior runs)
-        await page.request.delete(`${BASE_API}/core/admin/users/${passkeyTestUser.username}`, { failOnStatusCode: false });
+        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
         await page.request.post(`${BASE_API}/core/admin/users`, {
             data: {
-                login: passkeyTestUser.username,
-                password: passkeyTestUser.password,
+                login: user.username,
+                password: user.password,
                 firstName: 'Passkey',
                 lastName: 'TestUser',
-                email: 'passkey_test_user@example.com',
+                email: user.email,
                 authorities: ['ROLE_USER'],
             },
         });
     });
 
-    test.afterEach(async ({ page }) => {
+    test.afterEach(async ({ page }, testInfo) => {
+        const user = passkeyTestUser(testInfo.title);
         await page.context().clearCookies();
         await page.request.post(`api/core/public/authenticate`, {
             data: { username: admin.username, password: admin.password, rememberMe: true },
         });
-        await page.request.delete(`${BASE_API}/core/admin/users/${passkeyTestUser.username}`, { failOnStatusCode: false });
+        await page.request.delete(`${BASE_API}/core/admin/users/${user.username}`, { failOnStatusCode: false });
     });
 
-    test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, navigationBar, virtualAuthenticator }) => {
+    test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
+        const user = passkeyTestUser(test.info().title);
+        // Ensure the passkey setup modal is shown on every navigation, including the post-login redirect.
+        // The autoTestFixture init script suppresses the modal globally; this overrides it by removing
+        // the suppression key after that script runs (init scripts execute in registration order).
+        await page.addInitScript(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
         // Clear the admin session from beforeEach so we land on the sign-in page
         await page.context().clearCookies();
         await page.goto('/sign-in');
-        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
-        await loginPage.login(passkeyTestUser);
+        await loginPage.login(user);
 
         // Register passkey via the modal
         await page.getByRole('button', { name: 'Set Up Passkey' }).click();
@@ -47,15 +56,16 @@ test.describe('Passkey', () => {
         // Navigate to passkey settings and verify the passkey is listed
         await page.goto('/user-settings/passkeys');
         await expect(page.getByText('Your passkeys')).toBeVisible();
-        await expect(page.getByText('passkey_test_user@example.com')).toBeVisible();
+        await expect(page.getByText(user.email)).toBeVisible();
     });
 
     test('renames a passkey in user settings', async ({ page, login, virtualAuthenticator }) => {
+        const user = passkeyTestUser(test.info().title);
         // Register passkey programmatically via API + virtual authenticator
-        await registerPasskeyViaApi(page, passkeyTestUser);
+        await registerPasskeyViaApi(page, user);
 
         // Login and navigate to passkey settings
-        await login(passkeyTestUser, '/user-settings/passkeys');
+        await login(user, '/user-settings/passkeys');
         await expect(page.getByText('Your passkeys')).toBeVisible();
 
         // Click Edit on the first passkey
@@ -70,11 +80,12 @@ test.describe('Passkey', () => {
     });
 
     test('deletes a passkey in user settings', async ({ page, login, virtualAuthenticator }) => {
-        await registerPasskeyViaApi(page, passkeyTestUser);
+        const user = passkeyTestUser(test.info().title);
+        await registerPasskeyViaApi(page, user);
 
-        await login(passkeyTestUser, '/user-settings/passkeys');
+        await login(user, '/user-settings/passkeys');
         await expect(page.getByText('Your passkeys')).toBeVisible();
-        await expect(page.getByText('passkey_test_user@example.com').first()).toBeVisible();
+        await expect(page.getByText(user.email).first()).toBeVisible();
 
         // Delete the passkey
         await page.getByRole('button', { name: 'Delete' }).first().click();
@@ -84,8 +95,9 @@ test.describe('Passkey', () => {
         await expect(page.getByText('You have not registered any passkeys with Artemis yet.')).toBeVisible();
     });
 
-    test('logs in with a registered passkey', async ({ page, loginPage, virtualAuthenticator }) => {
-        await registerPasskeyViaApi(page, passkeyTestUser);
+    test('logs in with a registered passkey', async ({ page, virtualAuthenticator }) => {
+        const user = passkeyTestUser(test.info().title);
+        await registerPasskeyViaApi(page, user);
 
         // Clear session and go to sign-in page
         await page.context().clearCookies();
@@ -100,11 +112,12 @@ test.describe('Passkey', () => {
         await page.waitForURL('**/courses**');
     });
 
-    test('cannot login with a passkey after it was deleted', async ({ page, login, loginPage, virtualAuthenticator }) => {
-        await registerPasskeyViaApi(page, passkeyTestUser);
+    test('cannot login with a passkey after it was deleted', async ({ page, login, virtualAuthenticator }) => {
+        const user = passkeyTestUser(test.info().title);
+        await registerPasskeyViaApi(page, user);
 
         // Delete the passkey via API
-        await login(passkeyTestUser, '/courses');
+        await login(user, '/courses');
         const passkeysResponse = await page.request.get(`${BASE_API}/core/passkey/user`);
         const passkeys = await passkeysResponse.json();
         for (const passkey of passkeys) {
