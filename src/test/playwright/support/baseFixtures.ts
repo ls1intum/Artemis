@@ -3,6 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
+import { addE2EInitScript } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -116,32 +117,9 @@ const test = baseTest.extend<
     ],
     autoTestFixture: [
         async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
-            // Hide the notification popup overlay that can block clicks in e2e tests.
-            // This runs before every page load to ensure the overlay never intercepts pointer events.
-            await page.addInitScript(() => {
-                const injectStyle = () => {
-                    const style = document.createElement('style');
-                    style.textContent = 'jhi-course-notification-popup-overlay { display: none !important; }';
-                    document.head.appendChild(style);
-                };
-                if (document.head) {
-                    injectStyle();
-                } else {
-                    document.addEventListener('DOMContentLoaded', injectStyle);
-                }
-
-                // Suppress the passkey setup modal for all tests by setting a far-future reminder date.
-                // Tests that explicitly test passkey registration should clear this via
-                // page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'))
-                // after navigation but before login.
-                try {
-                    const futureDate = new Date();
-                    futureDate.setFullYear(futureDate.getFullYear() + 10);
-                    localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
-                } catch {
-                    // localStorage may not be available on about:blank — safe to ignore
-                }
-            });
+            // Add shared init scripts that suppress overlays (notification popup, passkey modal)
+            // which would block test interactions. See addE2EInitScript for details.
+            await addE2EInitScript(page);
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
