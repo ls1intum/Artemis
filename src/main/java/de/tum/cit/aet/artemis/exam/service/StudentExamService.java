@@ -709,7 +709,7 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam
@@ -746,7 +746,7 @@ public class StudentExamService {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + testRunId + "does not exist"));
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations);
+        setUpExerciseParticipationsAndSubmissions(testRun, generatedParticipations, false);
         // use the flag test run for all participations of the created test run
         generatedParticipations.forEach(studentParticipation -> studentParticipation.setTestRun(true));
         studentParticipationRepository.saveAll(generatedParticipations);
@@ -759,7 +759,7 @@ public class StudentExamService {
      */
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
+        setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, false);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         // Since students can participate in the test exam multiple times, we need to associate their exercise participations with a specific student exam
         if (!generatedParticipations.isEmpty()) {
@@ -775,7 +775,7 @@ public class StudentExamService {
      * @param studentExam             The studentExam for which the participations and submissions should be created
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
-    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
+    private void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
@@ -799,12 +799,21 @@ public class StudentExamService {
                     StudentParticipation participation = participationService.startExercise(exercise, student, true);
 
                     generatedParticipations.add(participation);
+
+                    if (!participation.isAtLeastInitialized()) {
+                        throw new IllegalStateException("Participation " + participation.getId() + " was not initialized after starting exercise " + exercise.getId()
+                                + " for student exam " + studentExam.getId() + " and student " + student.getParticipantIdentifier());
+                    }
+
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
                     log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
+                    if (failFast) {
+                        throw ex;
+                    }
                 }
             }
         }
@@ -831,7 +840,7 @@ public class StudentExamService {
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = studentExams.stream()
-                    .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
+                    .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true), threadPool)
                             .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
                                     generatedParticipations.size(), startedAt, lock))
                             .exceptionally(throwable -> {

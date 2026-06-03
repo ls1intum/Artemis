@@ -365,11 +365,7 @@ export class ExamStudentsComponent implements OnDestroy {
             });
 
         effect(() => {
-            const exam: Exam | undefined = this.routeData().exam;
-            if (exam) {
-                // setup exam information
-                this.examData$.next(exam);
-            }
+            this.fetchExamData();
         });
 
         effect((onCleanup) => {
@@ -388,6 +384,14 @@ export class ExamStudentsComponent implements OnDestroy {
                 exercisePreparationSubscription.unsubscribe();
             });
         });
+    }
+
+    private fetchExamData() {
+        const exam: Exam | undefined = this.routeData().exam;
+        if (exam) {
+            // setup exam information
+            this.examData$.next(exam);
+        }
     }
 
     ngOnDestroy() {
@@ -719,10 +723,15 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     private setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
+        const wasExercisePreparationRunning = this.exercisePreparationRunning();
+
         if (!newStatus || newStatus.overall === undefined) {
             this.exercisePreparationStatus.set(undefined);
             this.exercisePreparationEta.set(undefined);
             this.exercisePreparationRunning.set(false);
+            if (wasExercisePreparationRunning) {
+                this.fetchExamData();
+            }
             return;
         }
         const failedExams = newStatus.failed ?? 0;
@@ -746,7 +755,11 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
         } else {
             this.exercisePreparationEta.set(undefined);
-            this.isAllExercisesPrepared.set(remainingExams === 0 && failedExams === 0);
+            if (wasExercisePreparationRunning && !exPrepRunning) {
+                this.fetchExamData();
+            } else if (!exPrepRunning) {
+                this.isAllExercisesPrepared.set(failedExams === 0 && finishedExams >= newStatus.overall);
+            }
         }
     }
 

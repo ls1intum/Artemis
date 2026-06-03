@@ -50,7 +50,7 @@
                                                 <div class="position-absolute w-100 h-100">
                                                     <p-progress-bar
                                                         [value]="exercisePreparationPercentage()"
-                                                        color="var(--bs-success)"
+                                                        [color]="exPrepStatus.failed ? 'var(--bs-warning)' : 'var(--bs-success)'"
                                                         [showValue]="false"
                                                         [style]="{ height: '100%' }"
                                                     />

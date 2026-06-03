@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CommonModule } from '@angular/common';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -16,8 +16,8 @@ type CategoryFontSize = 'default' | 'small';
 export class CustomExerciseCategoryBadgeComponent {
     protected readonly faTimes = faTimes;
 
-    @Input({ required: true }) category: ExerciseCategory | FaqCategory;
-    @Input() displayRemoveButton = false;
-    @Input() onClick: () => void = () => {};
-    @Input() fontSize: CategoryFontSize = 'default';
+    readonly category = input.required<ExerciseCategory | FaqCategory>();
+    readonly displayRemoveButton = input(false);
+    readonly onClick = input<() => void>(() => {});
+    readonly fontSize = input<CategoryFontSize>('default');
 }

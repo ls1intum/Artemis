@@ -26,6 +26,7 @@ import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model'
 import { TableLazyLoadEvent } from 'primeng/table';
 import { ConfirmationService } from 'primeng/api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 
 describe('ExamStudentsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -569,5 +570,24 @@ describe('ExamStudentsComponent', () => {
             expect(component.attendanceCheckPassed(dto)).toBeFalsy();
             expect(component.didNotAttendExam(dto)).toBeFalsy();
         });
+    });
+
+    it('should not refresh exam data for cached completed exercise preparation status', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.isAllExercisesPrepared.set(false);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).not.toHaveBeenCalled();
+        expect(component.isAllExercisesPrepared()).toBe(true);
+    });
+
+    it('should refresh exam data when exercise preparation changes from running to completed', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.exercisePreparationRunning.set(true);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).toHaveBeenCalledOnce();
     });
 });

@@ -1,5 +1,5 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -21,8 +21,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class FeedbackNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
-    @Input() feedbackItemNode: FeedbackNode;
-    @Input() course?: Course;
+    readonly feedbackItemNode = input<FeedbackNode>(undefined!);
+    readonly course = input<Course>();
 
     // This is a workaround for type safety in the template
     feedbackItem: FeedbackItem;
@@ -34,10 +34,11 @@ export class FeedbackNodeComponent implements OnInit {
     faAngleDown = faAngleDown;
 
     ngOnInit(): void {
-        if (isFeedbackGroup(this.feedbackItemNode)) {
-            this.feedbackItemGroup = this.feedbackItemNode;
+        const feedbackItemNode = this.feedbackItemNode();
+        if (isFeedbackGroup(feedbackItemNode)) {
+            this.feedbackItemGroup = feedbackItemNode;
         } else {
-            this.feedbackItem = this.feedbackItemNode as FeedbackItem;
+            this.feedbackItem = feedbackItemNode as FeedbackItem;
         }
     }
 }

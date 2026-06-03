@@ -1,46 +1,46 @@
 <!-- TODO: Refactor Special Case 'Exercise' -->
-@if (sidebarItem) {
+@if (sidebarItem(); as item) {
     <div class="mx-1">
-        @if (sidebarType === 'exam') {
+        @if (sidebarType() === 'exam') {
             <div class="d-flex justify-content-between align-items-baseline">
-                <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="sidebarItem.title">
-                    @if (sidebarItem.icon) {
-                        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="item.title">
+                    @if (item.icon) {
+                        <fa-icon [fixedWidth]="true" [icon]="item.icon" />
                     }
-                    {{ sidebarItem.title }}
+                    {{ item.title }}
                 </span>
             </div>
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <div class="me-2 text-truncate" [ngClass]="{ 'fw-bold': sidebarItem.isAttempt }">
-                    {{ sidebarItem.subtitleLeft }}
+                <div class="me-2 text-truncate" [ngClass]="{ 'fw-bold': item.isAttempt }">
+                    {{ item.subtitleLeft }}
                 </div>
             </div>
             <div class="d-flex flex-column align-items-baseline">
                 <small
                     class="me-2 text-truncate fw-semibold small-title-color"
-                    jhiTranslate="{{ sidebarItem.isAttempt ? 'artemisApp.courseOverview.sidebar.submissionDate' : 'artemisApp.courseOverview.sidebar.start' }}"
+                    jhiTranslate="{{ item.isAttempt ? 'artemisApp.courseOverview.sidebar.submissionDate' : 'artemisApp.courseOverview.sidebar.start' }}"
                 ></small>
                 <small class="me-2 text-truncate fw-semibold">
-                    @if (sidebarItem.isAttempt) {
-                        {{ sidebarItem.submissionDate | artemisDate: 'long-date' }}
+                    @if (item.isAttempt) {
+                        {{ item.submissionDate | artemisDate: 'long-date' }}
                         -
-                        {{ sidebarItem.submissionDate | artemisDate: 'time' }}
+                        {{ item.submissionDate | artemisDate: 'time' }}
                     } @else {
-                        @if (sidebarItem.startDateWithTime) {
-                            {{ sidebarItem.startDateWithTime | artemisDate: 'long-date' }}
+                        @if (item.startDateWithTime) {
+                            {{ item.startDateWithTime | artemisDate: 'long-date' }}
                             -
-                            {{ sidebarItem.startDateWithTime | artemisDate: 'time' }}
+                            {{ item.startDateWithTime | artemisDate: 'time' }}
                         }
                     }
                 </small>
             </div>
             <hr class="my-1 mx-0 sidebar-divider" />
-            @if (sidebarItem.isAttempt) {
+            @if (item.isAttempt) {
                 <div class="d-flex flex-column align-items-baseline">
                     <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
                     <small class="me-2 fw-semibold">
-                        @if (sidebarItem.usedWorkingTime) {
-                            {{ sidebarItem.usedWorkingTime | artemisDurationFromSeconds }}
+                        @if (item.usedWorkingTime) {
+                            {{ item.usedWorkingTime | artemisDurationFromSeconds }}
                         } @else {
                             {{ '-' }}
                         }
@@ -50,27 +50,27 @@
                 <div class="d-flex flex-column align-items-baseline">
                     <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
                     <small class="me-2 text-truncate fw-semibold">
-                        @if (sidebarItem.studentExam) {
-                            <jhi-student-exam-working-time [studentExam]="sidebarItem.studentExam" />
-                        } @else if (sidebarItem.workingTime) {
-                            {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
+                        @if (item.studentExam) {
+                            <jhi-student-exam-working-time [studentExam]="item.studentExam" />
+                        } @else if (item.workingTime) {
+                            {{ item.workingTime | artemisDurationFromSeconds }}
                         }
                     </small>
                 </div>
                 <hr class="my-1 mx-0 sidebar-divider" />
-                @if (sidebarItem.testExam) {
+                @if (item.testExam) {
                     <div class="d-flex flex-column align-items-baseline">
                         <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
                         <small class="me-2 text-truncate fw-semibold">
-                            {{ sidebarItem.attempts }}
+                            {{ item.attempts }}
                         </small>
                     </div>
                 } @else {
                     <div class="d-flex flex-column align-items-baseline">
                         <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
                         <small class="me-2 text-truncate fw-semibold">
-                            @if (sidebarItem.attainablePoints) {
-                                {{ sidebarItem.attainablePoints }}
+                            @if (item.attainablePoints) {
+                                {{ item.attainablePoints }}
                             }
                         </small>
                     </div>
@@ -81,58 +81,58 @@
                 <span
                     id="test-sidebar-card-title"
                     class="small text-truncate me-2"
-                    [title]="sidebarItem.title"
-                    [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="sidebarType === 'conversation' ? (unreadCount() > 0 && !sidebarItem.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
+                    [title]="item.title"
+                    [class.muted]="item.conversation?.isMuted"
+                    [ngClass]="sidebarType() === 'conversation' ? (unreadCount() > 0 && !item.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
                 >
-                    @if (otherUser) {
+                    @if (otherUser()) {
                         <jhi-profile-picture
                             [imageSizeInRem]="'1.1'"
                             [fontSizeInRem]="'0.5'"
                             [imageId]="'sidebar-profile-picture'"
                             [defaultPictureId]="'sidebar-default-profile-picture'"
                             [isGray]="false"
-                            [authorId]="otherUser.id"
-                            [authorName]="otherUser.name"
-                            [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
+                            [authorId]="otherUser().id"
+                            [authorName]="otherUser().name"
+                            [imageUrl]="addPublicFilePrefix(otherUser().imageUrl)"
                             [isEditable]="false"
                         />
-                    } @else if (sidebarItem.icon) {
-                        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                    } @else if (displayIcon()) {
+                        <fa-icon [fixedWidth]="true" [icon]="displayIcon()" />
                     }
-                    {{ sidebarItem.title }}
+                    {{ item.title }}
                 </span>
                 <span>
-                    @if (sidebarItem.rightIcon) {
-                        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.rightIcon" />
+                    @if (item.rightIcon) {
+                        <fa-icon [fixedWidth]="true" [icon]="item.rightIcon" />
                     }
                 </span>
                 @if (unreadCount() > 0 && shouldDisplayUnreadCount()) {
-                    <span class="unread-count me-n2">{{ formattedUnreadCount }}</span>
+                    <span class="unread-count me-n2">{{ formattedUnreadCount() }}</span>
                 }
-                @let attendanceText = sidebarItem.attendanceText;
-                @let attendanceChipColor = sidebarItem.attendanceChipColor;
+                @let attendanceText = item.attendanceText;
+                @let attendanceChipColor = item.attendanceChipColor;
                 @if (attendanceText && attendanceChipColor) {
                     <div class="attendance-chip" [style.background-color]="attendanceChipColor">
                         {{ attendanceText }}
                     </div>
                 }
             </div>
-            <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': sidebarItem.subtitleLeft }">
+            <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': item.subtitleLeft }">
                 <small class="me-2 text-truncate">
-                    {{ sidebarItem.subtitleLeft }}
+                    {{ item.subtitleLeft }}
                 </small>
                 <small class="text-truncate d-inline">
-                    @if (sidebarType === 'exercise' && sidebarItem.exercise) {
+                    @if (sidebarType() === 'exercise' && item.exercise) {
                         <jhi-submission-result-status
                             class="text-truncate result"
-                            [exercise]="sidebarItem.exercise"
-                            [studentParticipation]="sidebarItem.studentParticipation"
+                            [exercise]="item.exercise"
+                            [studentParticipation]="item.studentParticipation"
                             [triggerLastGraded]="false"
                             [isInSidebarCard]="true"
                         />
                     } @else {
-                        {{ sidebarItem.subtitleRight }}
+                        {{ item.subtitleRight }}
                     }
                 </small>
             </div>

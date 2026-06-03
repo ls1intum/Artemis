@@ -83,10 +83,12 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -1112,6 +1114,29 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
+        ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
+        TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
+        exerciseGroup.addExercise(textExercise);
+        exam2.setNumberOfExercisesInExam(1);
+        examRepository.save(exam2);
+
+        examUtilService.addStudentExamWithUser(exam2, student1);
+        StudentParticipation failedPreparation = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, textExercise, student1);
+        studentParticipationRepository.save(failedPreparation);
+
+        assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
+        assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(textExercise.getId())).isZero();
+
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isOne();
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isFalse();
     }
 
     @Test

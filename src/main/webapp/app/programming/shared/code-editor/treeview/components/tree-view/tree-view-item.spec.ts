@@ -1,6 +1,10 @@
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('TreeviewItem', () => {
+    setupTestBed({ zoneless: true });
+
     it('should throw error if TreeItem param is null of undefined', () => {
         const error = new Error('Item must be defined');
         // @ts-ignore
@@ -48,9 +52,9 @@ describe('TreeviewItem', () => {
                 collapsed: false,
                 children: [{ text: 'Child 1', value: 11, collapsed: false } as TreeViewItem<number>],
             });
-            expect(treeviewItem.children[0].collapsed).toBeFalse();
+            expect(treeviewItem.children[0].collapsed).toBe(false);
             treeviewItem.setCollapsedRecursive(true);
-            expect(treeviewItem.children[0].collapsed).toBeTrue();
+            expect(treeviewItem.children[0].collapsed).toBe(true);
         });
     });
 
@@ -76,11 +80,11 @@ describe('TreeviewItem', () => {
                 value: 1,
                 children: [{ text: 'Child 1', value: 11 } as TreeViewItem<number>],
             });
-            expect(treeviewItem.children[0].disabled).toBeFalse();
+            expect(treeviewItem.children[0].disabled).toBe(false);
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBeTrue();
+            expect(treeviewItem.children[0].disabled).toBe(true);
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBeTrue();
+            expect(treeviewItem.children[0].disabled).toBe(true);
         });
     });
 

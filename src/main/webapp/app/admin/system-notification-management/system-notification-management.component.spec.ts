@@ -8,6 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PaginatorState } from 'primeng/paginator';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -184,6 +185,16 @@ describe('SystemNotificationManagementComponent', () => {
             component.loadPage(1);
 
             expect(router.navigate).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onPageChange (PrimeNG paginator)', () => {
+        it('converts the 0-indexed paginator event to the 1-indexed page', () => {
+            const loadPageSpy = vi.spyOn(component, 'loadPage');
+
+            component.onPageChange({ page: 2 } as PaginatorState);
+
+            expect(loadPageSpy).toHaveBeenCalledWith(3);
         });
     });
 

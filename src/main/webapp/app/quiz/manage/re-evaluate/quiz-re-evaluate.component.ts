@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChang
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -51,7 +51,6 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-ev
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private quizExerciseService = inject(QuizExerciseService);
     private route = inject(ActivatedRoute);
-    private modalServiceC = inject(NgbModal);
     private quizExercisePopupService = inject(QuizExercisePopupService);
     private changeDetector = inject(ChangeDetectorRef);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -60,7 +59,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     readonly reEvaluateDragAndDropQuestionComponents = viewChildren(ReEvaluateDragAndDropQuestionComponent);
 
-    modalService: NgbModal;
     popupService: QuizExercisePopupService;
 
     isSaving: boolean;
@@ -81,7 +79,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
             });
         });
         this.quizIsValid = true;
-        this.modalService = this.modalServiceC;
         this.popupService = this.quizExercisePopupService;
 
         /** Initialize constants **/
@@ -131,9 +128,11 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
                 files.set(filename, value.file);
             });
         }
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise, files).then((res) => {
-            res.result.then(() => {
-                this.savedEntity = cloneDeep(this.quizExercise);
+        this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise, files).then((res) => {
+            res?.onClose.subscribe((confirmed) => {
+                if (confirmed) {
+                    this.savedEntity = cloneDeep(this.quizExercise);
+                }
             });
         });
     }
@@ -162,6 +161,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     resetAll(): void {
         this.quizExercise = cloneDeep(this.savedEntity);
+        this.cacheValidation(this.changeDetector);
     }
 
     /**
