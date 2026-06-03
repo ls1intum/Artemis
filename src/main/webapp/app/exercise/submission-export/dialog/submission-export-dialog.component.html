@@ -1,30 +1,21 @@
-@if (!isLoading) {
-    <form name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id!)" #exportForm="ngForm">
-        <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></h4>
-            <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
-        </div>
+@if (!isLoading() && exercise()) {
+    @let currentExercise = exercise()!;
+    <form name="exportForm" role="form" (ngSubmit)="exportSubmissions(currentExercise.id!)" #exportForm="ngForm">
         <div class="modal-body">
             <p
                 [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.question'"
-                [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
+                [translateValues]="{ exerciseTitle: currentExercise.title, courseTitle: currentExercise.course?.title }"
             >
                 Confirm export
             </p>
-            <textarea
-                name="studentIds"
-                class="export-textarea"
-                [(ngModel)]="submissionExportOptions.participantIdentifierList"
-                required
-                [disabled]="submissionExportOptions.exportAllParticipants"
-            ></textarea>
+            <textarea name="studentIds" class="export-textarea" [(ngModel)]="participantIdentifierList" required [disabled]="exportAllParticipants()"></textarea>
             <!--
       Only show download all checkbox for instructors & admins.
       -->
-            @if (exercise.isAtLeastInstructor) {
+            @if (currentExercise.isAtLeastInstructor) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
+                        <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="exportAllParticipants" />
                         <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students </strong>
                     </label>
                 </div>
@@ -32,7 +23,7 @@
             <ng-container>
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
+                        <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="filterLateSubmissions" />
                         <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions"></strong>
                     </label>
                 </div>
@@ -42,8 +33,8 @@
                     >
                     <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip" />
                     <jhi-date-time-picker
-                        [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
-                        [disabled]="!this.submissionExportOptions.filterLateSubmissions"
+                        [(ngModel)]="filterLateSubmissionsDate"
+                        [disabled]="!filterLateSubmissions()"
                         [shouldDisplayTimeZoneWarning]="false"
                         name="filterLateSubmissionsDate"
                     />
@@ -51,15 +42,11 @@
             </ng-container>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+            <button type="button" class="btn btn-secondary" (click)="clear()">
                 <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button
-                type="submit"
-                [disabled]="(!submissionExportOptions.participantIdentifierList && !submissionExportOptions.exportAllParticipants) || exportInProgress"
-                class="btn btn-default"
-            >
-                @if (this.exportInProgress) {
+            <button type="submit" [disabled]="(!participantIdentifierList() && !exportAllParticipants()) || exportInProgress()" class="btn btn-default">
+                @if (exportInProgress()) {
                     <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                 }
                 <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export"></span>
