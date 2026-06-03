@@ -156,13 +156,18 @@ async function createCourse(client, index) {
         shortName,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
-        complaintsEnabled: false,
-        requestMoreFeedbackEnabled: false,
         courseInformationSharingConfiguration: 'COMMUNICATION_AND_MESSAGING',
         enrollmentEnabled: false,
         accuracyOfScores: 1,
         onlineCourse: false,
         timeZone: 'Europe/Berlin',
+        // Complaint settings: disable all by setting counts and time to 0
+        maxComplaints: 0,
+        maxTeamComplaints: 0,
+        maxComplaintTimeDays: 0,
+        maxRequestMoreFeedbackTimeDays: 0,
+        maxComplaintTextLimit: 0,
+        maxComplaintResponseTextLimit: 0,
     };
 
     // The admin course creation endpoint expects multipart form data
