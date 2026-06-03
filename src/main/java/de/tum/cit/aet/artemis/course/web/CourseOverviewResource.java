@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -99,10 +100,12 @@ public class CourseOverviewResource {
 
     private final FaqRepository faqRepository;
 
+    private final CourseAthenaConfigService courseAthenaConfigService;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
             Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository) {
+            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, CourseAthenaConfigService courseAthenaConfigService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -115,6 +118,7 @@ public class CourseOverviewResource {
         this.teamRepository = teamRepository;
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.faqRepository = faqRepository;
+        this.courseAthenaConfigService = courseAthenaConfigService;
     }
 
     /**
@@ -274,6 +278,10 @@ public class CourseOverviewResource {
 
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             userRepository.setUserCountsForCourse(course);
+        }
+
+        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            courseAthenaConfigService.stampAthenaConfig(course);
         }
 
         return ResponseEntity.ok(course);
