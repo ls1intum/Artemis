@@ -96,7 +96,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const hasFilter = filters.length > 0;
                     const hasCourseFilter = this.activeCourseId() !== undefined;
                     const trimmedQuery = query?.trim() || '';
-                    const hasValidQuery = trimmedQuery.length >= 2;
+                    const hasValidQuery = trimmedQuery.length >= 3;
 
                     // No valid query and no filter (type or course) — clear results synchronously
                     if (!hasValidQuery && !hasFilter && !hasCourseFilter) {
@@ -248,7 +248,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         // Show skeleton immediately while debounce waits, for a responsive feel
         const trimmedQuery = query?.trim() || '';
         const hasFilter = this.activeFilters().length > 0 || this.activeCourseId() !== undefined;
-        if (trimmedQuery.length >= 2 || hasFilter) {
+        if (trimmedQuery.length >= 3 || hasFilter) {
             this.isLoading.set(true);
         }
 

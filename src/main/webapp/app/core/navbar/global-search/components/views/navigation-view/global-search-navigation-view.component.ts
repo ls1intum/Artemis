@@ -74,13 +74,13 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly activeFilters = input<string[]>([]);
 
     /**
-     * Weaviate uses trigram tokenization (3-char sliding windows), so queries shorter than
-     * 4 characters produce very few or zero trigrams and yield poor BM25 results.
+     * Weaviate uses trigram tokenization (3-char sliding windows), so a 3-character query
+     * produces only a single trigram and yields poor BM25 results.
      * When true, the template shows a hint encouraging the user to type a longer query.
      */
     protected readonly isShortQuery = computed(() => {
         const trimmed = this.searchQuery().trim();
-        return trimmed.length >= 2 && trimmed.length <= 3;
+        return trimmed.length === 3;
     });
 
     // Skeleton placeholder array for loading animation
