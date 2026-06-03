@@ -25,8 +25,8 @@
  *   --student-password=<pass>  Password for test users (default: Password123!)
  *   --course-count=<n>         Number of courses to create (default: 10)
  *   --exercises-per-course=<n> Programming exercises per course (default: 5)
- *   --iterations=<n>           Benchmark iterations per endpoint (default: 20)
- *   --warmup=<n>               Warmup iterations (not measured) (default: 3)
+ *   --iterations=<n>           Benchmark iterations per endpoint (default: 100)
+ *   --warmup=<n>               Warmup iterations (not measured) (default: 10)
  *   --setup-data               Create test data before benchmarking
  *   --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
  *   --sql-analysis             SQL query analysis mode: run each endpoint once, capture
@@ -80,8 +80,8 @@ Options:
   --student-password=<pass>  Password for test users (default: Password123!)
   --course-count=<n>         Number of courses to create (default: 10)
   --exercises-per-course=<n> Programming exercises per course (default: 5)
-  --iterations=<n>           Benchmark iterations per endpoint (default: 20)
-  --warmup=<n>               Warmup iterations (not measured) (default: 3)
+  --iterations=<n>           Benchmark iterations per endpoint (default: 100)
+  --warmup=<n>               Warmup iterations (not measured) (default: 10)
   --setup-data               Create test data before benchmarking
   --course-id=<id>           Benchmark a specific course (auto-discovered if omitted)
   --sql-analysis             SQL query analysis mode (defaults --server-log to "server.log").
@@ -140,8 +140,8 @@ const config = {
     studentPassword: args['student-password'] || process.env.ARTEMIS_STUDENT_PASSWORD || 'Password123!',
     courseCount: parseInt(args['course-count'] || '10', 10),
     exercisesPerCourse: parseInt(args['exercises-per-course'] || '5', 10),
-    iterations: parseInt(args['iterations'] || '20', 10),
-    warmup: parseInt(args['warmup'] || '3', 10),
+    iterations: parseInt(args['iterations'] || '100', 10),
+    warmup: parseInt(args['warmup'] || '10', 10),
     setupData: args['setup-data'] === 'true',
     courseId: args['course-id'] ? parseInt(args['course-id'], 10) : null,
     sqlAnalysis: args['sql-analysis'] === 'true',
@@ -740,11 +740,26 @@ function appendResult(record) {
  */
 function appendSqlAnalysisSection(lines, sqlResult) {
     const stats = sqlResult.sqlStats;
+    const rtStats = sqlResult.responseTimeStats;
 
-    // Summary table
-    lines.push(`| Metric | Value |`);
-    lines.push(`|--------|-------|`);
-    lines.push(`| Response time | ${formatMs(sqlResult.elapsed)} |`);
+    // Response time statistics
+    if (rtStats) {
+        lines.push(`| Metric | Value |`);
+        lines.push(`|--------|-------|`);
+        lines.push(`| Iterations | ${rtStats.count} |`);
+        lines.push(`| Mean | ${formatMs(rtStats.mean)} |`);
+        lines.push(`| Median | ${formatMs(rtStats.median)} |`);
+        lines.push(`| Min | ${formatMs(rtStats.min)} |`);
+        lines.push(`| Max | ${formatMs(rtStats.max)} |`);
+        lines.push(`| P90 | ${formatMs(rtStats.p90)} |`);
+        lines.push(`| P95 | ${formatMs(rtStats.p95)} |`);
+        lines.push(`| Std Dev | ${formatMs(rtStats.stddev)} |`);
+        lines.push('');
+    }
+
+    // SQL query counts
+    lines.push(`| SQL Metric | Value |`);
+    lines.push(`|------------|-------|`);
     lines.push(`| Total queries | ${stats.totalQueries} |`);
     lines.push(`| SELECTs | ${stats.selects} |`);
     lines.push(`| INSERTs | ${stats.inserts} |`);
@@ -768,7 +783,8 @@ function appendSqlAnalysisSection(lines, sqlResult) {
         }
         if (metrics.preparing && metrics.executing) {
             const totalSqlMs = (metrics.preparing.ns + metrics.executing.ns) / 1_000_000;
-            const pct = sqlResult.elapsed > 0 ? ((totalSqlMs / sqlResult.elapsed) * 100).toFixed(1) : '?';
+            const refTime = rtStats?.median || 0;
+            const pct = refTime > 0 ? ((totalSqlMs / refTime) * 100).toFixed(1) : '?';
             lines.push(`| **Total SQL** | | **${totalSqlMs.toFixed(2)} ms** (${pct}% of response time) |`);
         }
     }
@@ -811,9 +827,7 @@ function writeMarkdownReport({ mode, snapshot, allCoursesStats, singleCourseStat
     lines.push(`| **Date** | ${ts} |`);
     lines.push(`| **Server** | ${config.serverUrl} |`);
     lines.push(`| **Mode** | ${mode === 'sql-analysis' ? 'SQL Analysis' : 'Response Time'} |`);
-    if (mode !== 'sql-analysis') {
-        lines.push(`| **Iterations** | ${config.iterations} (+ ${config.warmup} warmup) |`);
-    }
+    lines.push(`| **Iterations** | ${config.iterations} (+ ${config.warmup} warmup) |`);
     lines.push('');
 
     // Entity snapshot
@@ -945,9 +959,7 @@ async function main() {
     console.log('='.repeat(60));
     console.log(`Server URL : ${config.serverUrl}`);
     console.log(`Mode       : ${config.sqlAnalysis ? 'SQL Analysis' : 'Response Time'}`);
-    if (!config.sqlAnalysis) {
-        console.log(`Iterations : ${config.iterations} (+ ${config.warmup} warmup)`);
-    }
+    console.log(`Iterations : ${config.iterations} (+ ${config.warmup} warmup)`);
     if (args['label']) {
         console.log(`Label      : ${config.label}`);
     }
@@ -1136,17 +1148,22 @@ async function main() {
 }
 
 /**
- * SQL Analysis Mode: fires each endpoint exactly once (with a warmup request first),
- * captures the server log window, and counts SQL queries.
+ * SQL Analysis Mode: runs each endpoint warmup + iterations times.
+ * Response times are collected for all measured iterations (stats: mean, median, p95, etc.).
+ * SQL query details and session metrics are captured from the last iteration only
+ * (the queries are deterministic — only timing varies between runs).
  */
 async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
+    const iterations = config.iterations;
+    const warmup = config.warmup;
+
     console.log('\n' + '='.repeat(60));
     console.log('SQL QUERY ANALYSIS');
     console.log('='.repeat(60));
     console.log(`Server log : ${config.serverLog}`);
     console.log(`Label      : ${config.label}`);
+    console.log(`Iterations : ${iterations} (+ ${warmup} warmup)`);
     console.log();
-    console.log('Running one warmup request per endpoint, then one measured request.');
     console.log('Make sure the server was started with these settings in application-local.yml:');
     console.log('  spring.jpa.show-sql: true');
     console.log('  spring.jpa.properties.hibernate.format_sql: true          (for readable SQL)');
@@ -1160,13 +1177,12 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('Endpoint 1: GET /api/core/courses/for-dashboard');
     console.log('-'.repeat(60));
 
-    // Warmup (populates caches, establishes session — not measured)
-    await studentClient.get('/api/core/courses/for-dashboard');
-
-    const allCoursesResult = await runWithSqlCapture(
+    const allCoursesResult = await runSqlBenchmark(
         'GET /api/core/courses/for-dashboard',
         () => studentClient.get('/api/core/courses/for-dashboard'),
         config.serverLog,
+        warmup,
+        iterations,
     );
 
     printSqlAnalysis('GET /api/core/courses/for-dashboard', allCoursesResult);
@@ -1178,13 +1194,12 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
         console.log(`Endpoint 2: GET /api/core/courses/${courseId}/for-dashboard`);
         console.log('-'.repeat(60));
 
-        // Warmup
-        await studentClient.get(`/api/core/courses/${courseId}/for-dashboard`);
-
-        singleCourseResult = await runWithSqlCapture(
+        singleCourseResult = await runSqlBenchmark(
             `GET /api/core/courses/${courseId}/for-dashboard`,
             () => studentClient.get(`/api/core/courses/${courseId}/for-dashboard`),
             config.serverLog,
+            warmup,
+            iterations,
         );
 
         printSqlAnalysis(`GET /api/core/courses/${courseId}/for-dashboard`, singleCourseResult);
@@ -1198,8 +1213,9 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('='.repeat(60));
     console.log(`Label: ${config.label}`);
     console.log();
+    const allStats = allCoursesResult.responseTimeStats;
     console.log(`  GET /api/core/courses/for-dashboard`);
-    console.log(`    Response time : ${formatMs(allCoursesResult.elapsed)}`);
+    console.log(`    Response time : Mean ${formatMs(allStats.mean)} | Median ${formatMs(allStats.median)} | P95 ${formatMs(allStats.p95)}`);
     console.log(`    Total queries : ${allCoursesResult.sqlStats.totalQueries}`);
     console.log(`    SELECTs       : ${allCoursesResult.sqlStats.selects}`);
     console.log(`    Unique queries: ${allCoursesResult.sqlStats.uniqueQueries}`);
@@ -1210,9 +1226,10 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     }
 
     if (singleCourseResult) {
+        const singleStats = singleCourseResult.responseTimeStats;
         console.log();
         console.log(`  GET /api/core/courses/${courseId}/for-dashboard`);
-        console.log(`    Response time : ${formatMs(singleCourseResult.elapsed)}`);
+        console.log(`    Response time : Mean ${formatMs(singleStats.mean)} | Median ${formatMs(singleStats.median)} | P95 ${formatMs(singleStats.p95)}`);
         console.log(`    Total queries : ${singleCourseResult.sqlStats.totalQueries}`);
         console.log(`    SELECTs       : ${singleCourseResult.sqlStats.selects}`);
         console.log(`    Unique queries: ${singleCourseResult.sqlStats.uniqueQueries}`);
@@ -1234,11 +1251,11 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
         mode: 'sql-analysis',
         snapshot,
         allCourses: {
-            responseTimeMs: allCoursesResult.elapsed,
+            responseTimeStats: allCoursesResult.responseTimeStats,
             ...stripRaw(allCoursesResult.sqlStats),
         },
         singleCourse: singleCourseResult ? {
-            responseTimeMs: singleCourseResult.elapsed,
+            responseTimeStats: singleCourseResult.responseTimeStats,
             ...stripRaw(singleCourseResult.sqlStats),
         } : null,
         courseId,
@@ -1259,9 +1276,59 @@ async function runSqlAnalysisMode(studentClient, courseId, snapshot) {
     console.log('\nSQL analysis complete.');
 }
 
+/**
+ * Run warmup + iterations of a request, collecting response times for all
+ * measured iterations and SQL details from the last iteration only.
+ */
+async function runSqlBenchmark(label, requestFn, logPath, warmup, iterations) {
+    console.log(`\n  Running: ${label}`);
+    console.log(`  Warmup: ${warmup}, Measured iterations: ${iterations}`);
+
+    // Warmup (not measured)
+    for (let i = 0; i < warmup; i++) {
+        await requestFn();
+    }
+
+    // Measured iterations — collect response times
+    const timings = [];
+    for (let i = 0; i < iterations; i++) {
+        const isLast = (i === iterations - 1);
+
+        if (isLast) {
+            // Last iteration: also capture log for SQL analysis
+            const result = await runWithSqlCapture(label, requestFn, logPath);
+            timings.push(result.elapsed);
+
+            // Print progress
+            process.stdout.write(`  Progress: ${i + 1}/${iterations} (last: ${formatMs(result.elapsed)})\n`);
+
+            const responseTimeStats = computeStats(timings);
+            return { responseTimeStats, sqlStats: result.sqlStats, logSnippet: result.logSnippet };
+        }
+
+        const start = performance.now();
+        await requestFn();
+        const elapsed = performance.now() - start;
+        timings.push(elapsed);
+
+        if ((i + 1) % 10 === 0) {
+            process.stdout.write(`  Progress: ${i + 1}/${iterations} (last: ${formatMs(elapsed)})\r`);
+        }
+    }
+}
+
 function printSqlAnalysis(label, result) {
-    console.log(`\n  Response time: ${formatMs(result.elapsed)}`);
-    console.log(`  SQL queries executed:`);
+    const rtStats = result.responseTimeStats;
+    if (rtStats) {
+        console.log(`\n  Response time (${rtStats.count} iterations):`);
+        console.log(`    Mean    : ${formatMs(rtStats.mean)}`);
+        console.log(`    Median  : ${formatMs(rtStats.median)}`);
+        console.log(`    Min     : ${formatMs(rtStats.min)}`);
+        console.log(`    Max     : ${formatMs(rtStats.max)}`);
+        console.log(`    P95     : ${formatMs(rtStats.p95)}`);
+        console.log(`    Std Dev : ${formatMs(rtStats.stddev)}`);
+    }
+    console.log(`  SQL queries executed (from last iteration):`);
     console.log(`    Total   : ${result.sqlStats.totalQueries}`);
     console.log(`    SELECTs : ${result.sqlStats.selects}`);
     console.log(`    INSERTs : ${result.sqlStats.inserts}`);
@@ -1281,8 +1348,9 @@ function printSqlAnalysis(label, result) {
         }
         if (metrics.preparing && metrics.executing) {
             const totalSqlMs = (metrics.preparing.ns + metrics.executing.ns) / 1_000_000;
-            const pct = result.elapsed > 0 ? ((totalSqlMs / result.elapsed) * 100).toFixed(1) : '?';
-            console.log(`    Total SQL time              : ${totalSqlMs.toFixed(2)} ms (${pct}% of response time)`);
+            const refTime = rtStats?.median || 0;
+            const pct = refTime > 0 ? ((totalSqlMs / refTime) * 100).toFixed(1) : '?';
+            console.log(`    Total SQL time              : ${totalSqlMs.toFixed(2)} ms (${pct}% of median response time)`);
         }
     }
 
