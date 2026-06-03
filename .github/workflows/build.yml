@@ -235,11 +235,14 @@ jobs:
   docker-release:
     name: Build and Push Docker Image
     if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image-self-hosted-buildkit.yml@feature/split-build-workflow-modes
     with:
       ref: ${{ github.ref_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
+      runner-amd64: arc-buildkit-ls1intum-stud-amd64
+      runner-arm64: arc-buildkit-ls1intum-parma-arm64
+      runner-merge: arc-buildkit-ls1intum-stud-amd64
       tags: |
         type=ref,event=tag
 
