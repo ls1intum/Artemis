@@ -22,8 +22,11 @@ test.describe('Passkey', () => {
         });
     });
 
-    test.afterEach(async ({ page, login }) => {
-        await login(admin, '/courses');
+    test.afterEach(async ({ page }) => {
+        await page.context().clearCookies();
+        await page.request.post(`api/core/public/authenticate`, {
+            data: { username: admin.username, password: admin.password, rememberMe: true },
+        });
         await page.request.delete(`${BASE_API}/core/admin/users/${passkeyTestUser.username}`, { failOnStatusCode: false });
     });
 
