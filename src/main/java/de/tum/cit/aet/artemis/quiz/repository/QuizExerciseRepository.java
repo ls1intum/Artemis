@@ -22,7 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
 /**
  * Spring Data JPA repository for the QuizExercise entity.
@@ -64,17 +68,152 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.id = :quizExerciseId
+            """)
+    Optional<QuizExercise> findBaseWithEagerQuestionsAndStatisticsById(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Transactional(readOnly = true)
+    default Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId) {
+        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsById(quizExerciseId));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
             "quizBatches", "gradingCriteria" })
-    Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.id = :quizExerciseId
+            """)
+    Optional<QuizExercise> findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Transactional(readOnly = true)
+    default Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId) {
+        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
-    Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.id = :quizExerciseId
+            """)
+    Optional<QuizExercise> findBaseWithEagerQuestionsById(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Transactional(readOnly = true)
+    default Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId) {
+        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsById(quizExerciseId));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
-    Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+            WHERE qe.id = :quizExerciseId
+            """)
+    Optional<QuizExercise> findBaseWithEagerQuestionsAndCompetenciesById(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Transactional(readOnly = true)
+    default Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId) {
+        return withEagerQuestionChildCollections(findBaseWithEagerQuestionsAndCompetenciesById(quizExerciseId));
+    }
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM MultipleChoiceQuestion question
+                LEFT JOIN FETCH question.answerOptions
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<MultipleChoiceQuestion> findMultipleChoiceQuestionsWithAnswerOptionsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM DragAndDropQuestion question
+                LEFT JOIN FETCH question.dropLocations
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<DragAndDropQuestion> findDragAndDropQuestionsWithDropLocationsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM DragAndDropQuestion question
+                LEFT JOIN FETCH question.dragItems
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<DragAndDropQuestion> findDragAndDropQuestionsWithDragItemsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM DragAndDropQuestion question
+                LEFT JOIN FETCH question.correctMappings mapping
+                LEFT JOIN FETCH mapping.dragItem
+                LEFT JOIN FETCH mapping.dropLocation
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<DragAndDropQuestion> findDragAndDropQuestionsWithCorrectMappingsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM ShortAnswerQuestion question
+                LEFT JOIN FETCH question.spots
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<ShortAnswerQuestion> findShortAnswerQuestionsWithSpotsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM ShortAnswerQuestion question
+                LEFT JOIN FETCH question.solutions
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<ShortAnswerQuestion> findShortAnswerQuestionsWithSolutionsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    @Query("""
+            SELECT DISTINCT question
+            FROM ShortAnswerQuestion question
+                LEFT JOIN FETCH question.correctMappings mapping
+                LEFT JOIN FETCH mapping.spot
+                LEFT JOIN FETCH mapping.solution
+            WHERE question.exercise.id = :quizExerciseId
+            """)
+    List<ShortAnswerQuestion> findShortAnswerQuestionsWithCorrectMappingsByExerciseId(@Param("quizExerciseId") Long quizExerciseId);
+
+    private Optional<QuizExercise> withEagerQuestionChildCollections(Optional<QuizExercise> quizExercise) {
+        quizExercise.ifPresent(this::loadQuizQuestionChildCollections);
+        return quizExercise;
+    }
+
+    private void loadQuizQuestionChildCollections(QuizExercise quizExercise) {
+        if (quizExercise.getQuizQuestions() == null) {
+            return;
+        }
+
+        boolean hasMultipleChoiceQuestion = false;
+        boolean hasDragAndDropQuestion = false;
+        boolean hasShortAnswerQuestion = false;
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            hasMultipleChoiceQuestion = hasMultipleChoiceQuestion || quizQuestion instanceof MultipleChoiceQuestion;
+            hasDragAndDropQuestion = hasDragAndDropQuestion || quizQuestion instanceof DragAndDropQuestion;
+            hasShortAnswerQuestion = hasShortAnswerQuestion || quizQuestion instanceof ShortAnswerQuestion;
+        }
+
+        Long quizExerciseId = quizExercise.getId();
+        if (hasMultipleChoiceQuestion) {
+            findMultipleChoiceQuestionsWithAnswerOptionsByExerciseId(quizExerciseId);
+        }
+        if (hasDragAndDropQuestion) {
+            findDragAndDropQuestionsWithDropLocationsByExerciseId(quizExerciseId);
+            findDragAndDropQuestionsWithDragItemsByExerciseId(quizExerciseId);
+            findDragAndDropQuestionsWithCorrectMappingsByExerciseId(quizExerciseId);
+        }
+        if (hasShortAnswerQuestion) {
+            findShortAnswerQuestionsWithSpotsByExerciseId(quizExerciseId);
+            findShortAnswerQuestionsWithSolutionsByExerciseId(quizExerciseId);
+            findShortAnswerQuestionsWithCorrectMappingsByExerciseId(quizExerciseId);
+        }
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);

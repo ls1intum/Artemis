@@ -15,6 +15,8 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,11 +39,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
     // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
     // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
     // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "spots_order")
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "solutions_order")
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
@@ -51,7 +53,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
     // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<ShortAnswerMapping> correctMappings = new HashSet<>();
 
     @Column(name = "similarity_value")
@@ -407,26 +409,27 @@ public class ShortAnswerQuestion extends QuizQuestion {
     /**
      * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
      * via {@code getSpots().add(...)} / {@code getSolutions().add(...)} / {@code getCorrectMappings().add(...)}
-     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
+     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}. Each collection is guarded by
+     * {@code Hibernate.isInitialized} so a flush of an unrelated question change does not force-load lazy children.
      */
     @PrePersist
     @PreUpdate
     private void ensureChildBackReferences() {
-        if (spots != null) {
+        if (spots != null && Hibernate.isInitialized(spots)) {
             for (ShortAnswerSpot spot : spots) {
                 if (spot != null && spot.getQuestion() != this) {
                     spot.setQuestion(this);
                 }
             }
         }
-        if (solutions != null) {
+        if (solutions != null && Hibernate.isInitialized(solutions)) {
             for (ShortAnswerSolution solution : solutions) {
                 if (solution != null && solution.getQuestion() != this) {
                     solution.setQuestion(this);
                 }
             }
         }
-        if (correctMappings != null) {
+        if (correctMappings != null && Hibernate.isInitialized(correctMappings)) {
             for (ShortAnswerMapping mapping : correctMappings) {
                 if (mapping != null && mapping.getQuestion() != this) {
                     mapping.setQuestion(this);

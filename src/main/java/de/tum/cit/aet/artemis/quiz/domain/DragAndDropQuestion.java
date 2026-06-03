@@ -20,6 +20,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +59,11 @@ public class DragAndDropQuestion extends QuizQuestion {
     // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
     // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
     // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "drop_locations_order")
     private List<DropLocation> dropLocations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "drag_items_order")
     private List<DragItem> dragItems = new ArrayList<>();
 
@@ -76,7 +77,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     // still discriminates instances. With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
     // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
     public String getBackgroundFilePath() {
@@ -236,26 +237,27 @@ public class DragAndDropQuestion extends QuizQuestion {
     /**
      * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
      * via {@code getDropLocations().add(...)} / {@code getDragItems().add(...)} / {@code getCorrectMappings().add(...)}
-     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
+     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}. Each collection is guarded by
+     * {@code Hibernate.isInitialized} so a flush of an unrelated question change does not force-load lazy children.
      */
     @PrePersist
     @PreUpdate
     private void ensureChildBackReferences() {
-        if (dropLocations != null) {
+        if (dropLocations != null && Hibernate.isInitialized(dropLocations)) {
             for (DropLocation location : dropLocations) {
                 if (location != null && location.getQuestion() != this) {
                     location.setQuestion(this);
                 }
             }
         }
-        if (dragItems != null) {
+        if (dragItems != null && Hibernate.isInitialized(dragItems)) {
             for (DragItem item : dragItems) {
                 if (item != null && item.getQuestion() != this) {
                     item.setQuestion(this);
                 }
             }
         }
-        if (correctMappings != null) {
+        if (correctMappings != null && Hibernate.isInitialized(correctMappings)) {
             for (DragAndDropMapping mapping : correctMappings) {
                 if (mapping != null && mapping.getQuestion() != this) {
                     mapping.setQuestion(this);

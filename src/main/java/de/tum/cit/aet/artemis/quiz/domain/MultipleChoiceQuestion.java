@@ -15,6 +15,8 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -37,7 +39,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced the #12584 ID-regeneration class.
     // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
     // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @OrderColumn(name = "answer_options_order")
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
@@ -282,16 +284,19 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     /**
      * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any AnswerOption
      * added via {@code getAnswerOptions().add(...)} (bypassing {@link #addAnswerOption}) would otherwise INSERT with
-     * {@code question_id = NULL}. Mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
+     * {@code question_id = NULL}. Guarded by {@code Hibernate.isInitialized} so a flush of an unrelated question
+     * change does not force-load the lazy child collection. Mirrors
+     * {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
      */
     @PrePersist
     @PreUpdate
     private void ensureAnswerOptionBackReferences() {
-        if (answerOptions != null) {
-            for (AnswerOption option : answerOptions) {
-                if (option != null && option.getQuestion() != this) {
-                    option.setQuestion(this);
-                }
+        if (answerOptions == null || !Hibernate.isInitialized(answerOptions)) {
+            return;
+        }
+        for (AnswerOption option : answerOptions) {
+            if (option != null && option.getQuestion() != this) {
+                option.setQuestion(this);
             }
         }
     }

@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1319,6 +1320,38 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // Wait for async Weaviate update to complete and verify the updated dates
         QuizExercise reloadedQuizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertQuizExerciseExistsInWeaviate(weaviateService, reloadedQuizExercise));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFindByIdWithQuestionsInitializesQuizQuestionChildCollections() {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        QuizExercise loadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
+
+        assertThat(Hibernate.isInitialized(loadedQuiz.getQuizQuestions())).as("quiz questions are initialized").isTrue();
+        MultipleChoiceQuestion multipleChoiceQuestion = loadedQuiz.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance)
+                .map(MultipleChoiceQuestion.class::cast).findFirst().orElseThrow();
+        DragAndDropQuestion dragAndDropQuestion = loadedQuiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast)
+                .findFirst().orElseThrow();
+        ShortAnswerQuestion shortAnswerQuestion = loadedQuiz.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).map(ShortAnswerQuestion.class::cast)
+                .findFirst().orElseThrow();
+
+        assertThat(Hibernate.isInitialized(multipleChoiceQuestion.getAnswerOptions())).as("multiple choice answer options are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(dragAndDropQuestion.getDropLocations())).as("drag and drop locations are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(dragAndDropQuestion.getDragItems())).as("drag items are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(dragAndDropQuestion.getCorrectMappings())).as("drag and drop mappings are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(shortAnswerQuestion.getSpots())).as("short answer spots are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(shortAnswerQuestion.getSolutions())).as("short answer solutions are initialized").isTrue();
+        assertThat(Hibernate.isInitialized(shortAnswerQuestion.getCorrectMappings())).as("short answer mappings are initialized").isTrue();
+
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).isNotEmpty();
+        assertThat(dragAndDropQuestion.getDropLocations()).isNotEmpty();
+        assertThat(dragAndDropQuestion.getDragItems()).isNotEmpty();
+        assertThat(dragAndDropQuestion.getCorrectMappings()).isNotEmpty();
+        assertThat(shortAnswerQuestion.getSpots()).isNotEmpty();
+        assertThat(shortAnswerQuestion.getSolutions()).isNotEmpty();
+        assertThat(shortAnswerQuestion.getCorrectMappings()).isNotEmpty();
     }
 
     /**

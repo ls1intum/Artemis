@@ -521,7 +521,7 @@ If you genuinely need a `List` whose database position is meaningful and you can
         <li><strong>Bidirectional only.</strong> The relationship must be <code>@OneToMany(mappedBy = "...")</code> with the child entity owning the FK via its own <code>@ManyToOne</code> + explicit <code>@JoinColumn(name = "...")</code>. The unidirectional shape — <code>@OneToMany + @JoinColumn + @OrderColumn</code> — causes Hibernate to <code>DELETE</code>+<code>INSERT</code> the entire child collection on every parent save, regenerating primary keys and breaking in-flight references (this is the exact #12584 ID-regeneration bug).</li>
         <li><strong>One owning side.</strong> If the child has a <code>@ManyToOne</code> back-reference, the parent <em>must not</em> additionally declare <code>@JoinColumn(name = "...")</code> on its <code>@OneToMany</code>; both sides claiming the same column corrupts the FK on save.</li>
         <li><strong>Always set the back-reference</strong> when adding a child. Use a parent helper (<code>parent.addChild(child)</code> that calls <code>child.setParent(this)</code>) — never <code>parent.getChildren().add(child)</code> from outside.</li>
-        <li><strong>Defensive <code>@PrePersist</code> / <code>@PreUpdate</code> hook</strong> on the parent that re-asserts <code>child.setParent(this)</code> on every element. This catches every test factory and DTO mapper that bypasses the helper. See the four quiz-domain entities (<code>MultipleChoiceQuestion</code>, <code>DragAndDropQuestion</code>, <code>ShortAnswerQuestion</code>, <code>QuizExercise</code>) for the canonical implementation.</li>
+        <li><strong>Defensive <code>@PrePersist</code> / <code>@PreUpdate</code> hook</strong> on the parent that re-asserts <code>child.setParent(this)</code> on every initialized element. Guard the loop with <code>Hibernate.isInitialized(...)</code> so an unrelated flush does not force-load lazy child collections. This catches every test factory and DTO mapper that bypasses the helper. See the four quiz-domain entities (<code>MultipleChoiceQuestion</code>, <code>DragAndDropQuestion</code>, <code>ShortAnswerQuestion</code>, <code>QuizExercise</code>) for the canonical implementation.</li>
         <li><strong>No L2 cache</strong> on the collection (<code>@Cache</code> is forbidden cluster-wide anyway, see <a href="caching">caching guidelines</a>).</li>
         <li><strong>Always load the full collection before mutating it.</strong> A partial fetch (<code>JOIN FETCH ... WHERE ...</code> that filters child rows) returns a list with <code>null</code> padding at the missing index slots.</li>
         <li><strong>Name the order column explicitly:</strong> <code>@OrderColumn(name = "answer_options_order")</code>. Don't rely on Hibernate's default-naming heuristic surviving future changes.</li>
@@ -534,7 +534,7 @@ If you genuinely need a `List` whose database position is meaningful and you can
 
 ```java
 // MultipleChoiceQuestion.java — owning side declares the relationship
-@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
 @OrderColumn(name = "answer_options_order")
 private List<AnswerOption> answerOptions = new ArrayList<>();
 
@@ -549,11 +549,12 @@ public void addAnswerOption(AnswerOption answerOption) {
 @PrePersist
 @PreUpdate
 private void ensureAnswerOptionBackReferences() {
-    if (answerOptions != null) {
-        for (AnswerOption option : answerOptions) {
-            if (option != null && option.getQuestion() != this) {
-                option.setQuestion(this);
-            }
+    if (answerOptions == null || !Hibernate.isInitialized(answerOptions)) {
+        return;
+    }
+    for (AnswerOption option : answerOptions) {
+        if (option != null && option.getQuestion() != this) {
+            option.setQuestion(this);
         }
     }
 }
@@ -632,7 +633,7 @@ However, `DomainObject.hashCode()` is id-based by default, and `id` is `null` fo
 
 ```java
 // DragAndDropQuestion.java — parent declares the relationship as a Set
-@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
 private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 ```
 
@@ -685,7 +686,7 @@ Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long id);
 
 1. **Is the relationship unidirectional?** If the parent has both `@OneToMany ... @JoinColumn(name = "...")` *and* `@OrderColumn`, convert it to bidirectional (`mappedBy`) and let the child own the FK via its own `@ManyToOne` + `@JoinColumn`. This is the root cause of the #12584 ID-regeneration class of bugs and resolves the null-index error in nearly every case.
 2. **Is the FK column claimed twice?** If the child also has a `@ManyToOne` to the parent without an explicit `@JoinColumn`, JPA defaults to the same column the parent's `@JoinColumn` claims. Pick one owner — the child — and remove the parent's `@JoinColumn`.
-3. **Is the back-reference set on every child before save?** Add a `@PrePersist`/`@PreUpdate` hook on the parent that asserts `child.setParent(this)` on every element. See the four quiz-domain entities for the pattern.
+3. **Is the back-reference set on every child before save?** Add a `@PrePersist`/`@PreUpdate` hook on the parent that asserts `child.setParent(this)` on every initialized element. Guard the hook with `Hibernate.isInitialized(...)` so an unrelated flush does not force-load lazy child collections. See the four quiz-domain entities for the pattern.
 4. **Is the collection partially fetched?** A `JOIN FETCH ... WHERE ...` that filters child rows returns a list with `null` slots. Either fetch the full collection or stop using `@OrderColumn` and migrate to `Set` + `@OrderBy` on a domain field.
 5. **Is some code path saving children directly?** A `childRepository.save(...)` or `@Modifying @Query` that inserts/deletes child rows without going through the parent's collection desyncs the order column. Route through `parent.addChild(child)` + `parentRepository.save(parent)`.
 
