@@ -23,6 +23,14 @@ public class CourseAthenaConfigService {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
+    /**
+     * Upserts or deletes the {@link CourseAthenaConfig} row for the given course.
+     * If both flags are {@code false} the row is deleted (if present); otherwise it is created or updated.
+     *
+     * @param course           the course whose Athena config should be updated
+     * @param formativeEnabled whether formative (preliminary) Athena feedback is enabled
+     * @param gradingEnabled   whether graded Athena feedback suggestions are enabled
+     */
     public void updateConfig(Course course, boolean formativeEnabled, boolean gradingEnabled) {
         Optional<CourseAthenaConfig> existing = courseAthenaConfigRepository.findByCourseId(course.getId());
         if (!formativeEnabled && !gradingEnabled) {
@@ -40,6 +48,13 @@ public class CourseAthenaConfigService {
         }
     }
 
+    /**
+     * Reads the {@link CourseAthenaConfig} for the given course and sets the {@code @Transient}
+     * {@code athenaFormativeEnabled} and {@code athenaGradingEnabled} fields on the course object
+     * so they are included in JSON serialization.
+     *
+     * @param course the course whose transient Athena fields should be populated
+     */
     public void stampAthenaConfig(Course course) {
         courseAthenaConfigRepository.findByCourseId(course.getId()).ifPresentOrElse(config -> {
             course.setAthenaFormativeEnabled(config.isFormativeEnabled());
