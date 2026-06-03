@@ -316,6 +316,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(fixture.nativeElement.textContent).toContain('global.search.noResultsFound');
             });
 
+            it('should show short query hint when query is 2-3 characters and no results', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'ab');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toContain('global.search.shortQueryHint');
+            });
+
+            it('should not show short query hint when query is 4+ characters', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'abcd');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).not.toContain('global.search.shortQueryHint');
+            });
+
             it('should render error state', () => {
                 fixture.componentRef.setInput('searchError', 'error.message');
                 fixture.detectChanges();
