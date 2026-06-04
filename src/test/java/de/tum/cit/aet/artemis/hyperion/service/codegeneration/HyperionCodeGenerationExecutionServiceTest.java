@@ -673,6 +673,20 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void deleteObsoleteFiles_withGitkeepPlaceholderOutsideAllowedDirectory_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("config/.gitkeep"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(gitService, never()).getFileByName(eq(mockRepository), anyString());
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
     void deleteObsoleteFiles_withUnsafePaths_ignoresDeletionRequests() throws Exception {
         Repository mockRepository = mock(Repository.class);
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);

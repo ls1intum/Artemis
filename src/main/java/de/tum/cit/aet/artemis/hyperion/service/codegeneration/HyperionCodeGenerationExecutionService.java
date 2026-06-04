@@ -80,6 +80,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final String DELETABLE_SOURCE_PATH_PREFIX = "src/";
 
+    private static final String DELETABLE_TEST_PATH_PREFIX = "test/";
+
     private static final String DELETABLE_PLACEHOLDER_FILE_NAME = ".gitkeep";
 
     private static final String JUNIT_JUPITER_IMPORT = "org.junit.jupiter";
@@ -280,7 +282,7 @@ public class HyperionCodeGenerationExecutionService {
             HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         boolean deletedAnyFile = false;
         for (String deletedFile : deletedFiles) {
-            Optional<String> safePath = normalizeDeletablePath(deletedFile);
+            Optional<String> safePath = normalizeDeletablePath(deletedFile, repositoryType);
             if (safePath.isEmpty()) {
                 log.warn("Ignoring unsafe obsolete file path '{}' for exercise {}", deletedFile, exercise.getId());
                 continue;
@@ -297,7 +299,7 @@ public class HyperionCodeGenerationExecutionService {
         return deletedAnyFile;
     }
 
-    private Optional<String> normalizeDeletablePath(String rawPath) {
+    private Optional<String> normalizeDeletablePath(String rawPath, RepositoryType repositoryType) {
         if (rawPath == null || rawPath.isBlank()) {
             return Optional.empty();
         }
@@ -311,7 +313,10 @@ public class HyperionCodeGenerationExecutionService {
                 return Optional.empty();
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
-            if (!isDeletableSourcePath(normalized) && !isDeletablePlaceholderFile(normalized)) {
+            if (!isDeletablePlaceholderFileName(normalized) && !isDeletableSourcePath(normalized)) {
+                return Optional.empty();
+            }
+            if (isDeletablePlaceholderFileName(normalized) && !isDeletablePlaceholderFile(normalized, repositoryType)) {
                 return Optional.empty();
             }
             return Optional.of(normalized);
@@ -329,9 +334,24 @@ public class HyperionCodeGenerationExecutionService {
         return normalizedPath.startsWith(DELETABLE_SOURCE_PATH_PREFIX) && !normalizedPath.equals("src") && !normalizedPath.equals("src/");
     }
 
-    private boolean isDeletablePlaceholderFile(String normalizedPath) {
+    private boolean isDeletableTestPath(String normalizedPath) {
+        return normalizedPath.startsWith(DELETABLE_TEST_PATH_PREFIX) && !normalizedPath.equals("test") && !normalizedPath.equals("test/");
+    }
+
+    private boolean isDeletablePlaceholderFileName(String normalizedPath) {
         Path fileName = Path.of(normalizedPath).getFileName();
         return fileName != null && fileName.toString().equals(DELETABLE_PLACEHOLDER_FILE_NAME);
+    }
+
+    private boolean isDeletablePlaceholderFile(String normalizedPath, RepositoryType repositoryType) {
+        if (!isDeletablePlaceholderFileName(normalizedPath)) {
+            return false;
+        }
+        return switch (repositoryType) {
+            case TEMPLATE, SOLUTION -> isDeletableSourcePath(normalizedPath);
+            case TESTS -> isDeletableTestPath(normalizedPath);
+            default -> false;
+        };
     }
 
     /**
