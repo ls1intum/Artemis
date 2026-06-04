@@ -16,6 +16,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -121,6 +124,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     private User user;
 
     private ProgrammingExercise exercise;
+
+    @TempDir
+    private Path tempDir;
 
     @BeforeEach
     void setup() {
@@ -468,6 +474,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
         when(gitService.getFileByName(repository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
         doNothing().when(repositoryService).deleteFile(repository, "src/main/java/OldSort.java");
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
@@ -647,6 +654,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         when(gitService.getFileByName(mockRepository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java/OldSort.java"), exercise,
                 RepositoryType.TEMPLATE, publisher, 2);
@@ -663,6 +671,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         when(gitService.getFileByName(mockRepository, "test/OldTest.java")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/OldTest.java"), exercise, RepositoryType.TESTS,
                 publisher, 2);
@@ -673,12 +682,63 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void deleteObsoleteFiles_withSourceDirectoryPath_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("src/main/java"));
+        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
+
+        when(gitService.getFileByName(mockRepository, "src/main/java")).thenReturn(Optional.of(obsoleteDirectory));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java"), exercise, RepositoryType.TEMPLATE,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void deleteObsoleteFiles_withTestDirectoryPath_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("test"));
+        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
+
+        when(gitService.getFileByName(mockRepository, "test")).thenReturn(Optional.of(obsoleteDirectory));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test"), exercise, RepositoryType.TESTS, publisher, 2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void deleteObsoleteFiles_withTestSubdirectoryPath_ignoresDeletionRequest() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("test/old"));
+        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
+
+        when(gitService.getFileByName(mockRepository, "test/old")).thenReturn(Optional.of(obsoleteDirectory));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/old"), exercise, RepositoryType.TESTS, publisher,
+                2);
+
+        assertThat(deletedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
+    }
+
+    @Test
     void deleteObsoleteFiles_withGitkeepPlaceholder_deletesExistingFile() throws Exception {
         Repository mockRepository = mock(Repository.class);
         File obsoleteFile = mock(File.class);
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         when(gitService.getFileByName(mockRepository, "test/.gitkeep")).thenReturn(Optional.of(obsoleteFile));
+        when(obsoleteFile.isFile()).thenReturn(true);
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/.gitkeep"), exercise, RepositoryType.TESTS,
                 publisher, 2);

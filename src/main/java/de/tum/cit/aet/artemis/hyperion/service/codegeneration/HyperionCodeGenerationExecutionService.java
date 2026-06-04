@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRende
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -287,8 +288,13 @@ public class HyperionCodeGenerationExecutionService {
                 log.warn("Ignoring unsafe obsolete file path '{}' for exercise {}", deletedFile, exercise.getId());
                 continue;
             }
-            if (gitService.getFileByName(repository, safePath.get()).isEmpty()) {
+            Optional<File> obsoleteFile = gitService.getFileByName(repository, safePath.get());
+            if (obsoleteFile.isEmpty()) {
                 log.debug("Obsolete file {} does not exist in exercise {}, skipping deletion", safePath.get(), exercise.getId());
+                continue;
+            }
+            if (!obsoleteFile.get().isFile()) {
+                log.warn("Ignoring obsolete path '{}' for exercise {} because it is not a regular file", safePath.get(), exercise.getId());
                 continue;
             }
             repositoryService.deleteFile(repository, safePath.get());
