@@ -50,10 +50,14 @@ public class HyperionExerciseGenerationResource {
 
     private final ExerciseGenerationJobService jobService;
 
-    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseGenerationJobService jobService) {
+    private final AgentSystemPromptService agentSystemPromptService;
+
+    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseGenerationJobService jobService,
+            AgentSystemPromptService agentSystemPromptService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jobService = jobService;
+        this.agentSystemPromptService = agentSystemPromptService;
     }
 
     /**
@@ -70,7 +74,7 @@ public class HyperionExerciseGenerationResource {
         ProgrammingExercise exercise = loadExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+        String prompt = agentSystemPromptService.resolvePrompt(request, exercise);
         String jobId = jobService.startJob(user, exercise, prompt);
         log.info("Started agentic exercise generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new ExerciseGenerationJobStartDTO(jobId));

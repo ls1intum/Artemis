@@ -207,7 +207,7 @@ public class ExerciseGenerationOrchestrationService {
                 // spec-fidelity block is clearly framed as advisory so the agent prioritises the hard rejection but still adds the missing tests / cleans leaked phrasing.
                 currentPrompt = "Your previous attempt was rejected by the authoritative verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
-                        + "`sh verify.sh template` to confirm, then call submit again." + SpecFidelityCriticService.renderForRetryPrompt(specFidelityReport);
+                        + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
             return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);

@@ -70,6 +70,9 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
     @Autowired
     private AgentLoopRunner agentLoopRunner;
 
+    @Autowired
+    private AgentSystemPromptService agentSystemPromptService;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
@@ -156,7 +159,7 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
                 .draftProblemStatement();
         log.info("=== DRAFTED PROBLEM STATEMENT (spec-flow) ===\n{}", draftedStatement);
         assertThat(draftedStatement).as("the draft problem statement was generated").isNotBlank();
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement(draftedStatement)).as("the draft is a real spec, so spec mode engages").isTrue();
+        assertThat(agentSystemPromptService.isNonTrivialProblemStatement(draftedStatement)).as("the draft is a real spec, so spec mode engages").isTrue();
         exercise.setProblemStatement(draftedStatement);
 
         // Step 3: "Generate with AI" — agentic generation in spec mode (the instruction the resource sends when the prompt is empty and a statement is present).

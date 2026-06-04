@@ -193,14 +193,7 @@ public class GenerationPersistenceService {
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
-            deleteOrphanedFiles(repository, repositoryType, producedFiles.keySet());
-            for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
-                String path = entry.getKey();
-                if (gitService.getFileByName(repository, path).isPresent()) {
-                    repositoryService.deleteFile(repository, path);
-                }
-                repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
-            }
+            mirrorProducedFilesIntoWorkingCopy(repository, repositoryType, producedFiles);
             gitService.stageAllChanges(repository);
             gitService.commitToIsolatedBranchAndPush(repository, draftBranch, "Hyperion generation draft (needs review; NOT applied to the live exercise)", user);
             // Reset the working copy back to the untouched default branch so this checkout is not left sitting on the diverted commit for any later default-branch operation.
@@ -294,20 +287,34 @@ public class GenerationPersistenceService {
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
-            deleteOrphanedFiles(repository, repositoryType, producedFiles.keySet());
-            for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
-                String path = entry.getKey();
-                if (gitService.getFileByName(repository, path).isPresent()) {
-                    repositoryService.deleteFile(repository, path);
-                }
-                repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
-            }
+            mirrorProducedFilesIntoWorkingCopy(repository, repositoryType, producedFiles);
             repositoryService.commitChanges(repository, user);
             return gitService.getLastCommitHash(uri);
         }
         catch (Exception e) {
             // Propagate: the task service turns this into a clear failure event rather than a false "saved" message with a half-written exercise.
             throw new IllegalStateException("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Makes the repository's working copy EXACTLY mirror the sandbox-final {@code producedFiles}: removes the tracked files the agent did not produce (see
+     * {@link #deleteOrphanedFiles}) and then writes every produced file (replacing any existing one). Shared by the default-branch commit and the isolated draft-branch commit so
+     * both produce an identical tree from the same produced files; the caller decides how to commit it.
+     *
+     * @param repository     the checked-out repository working copy
+     * @param repositoryType the repository type
+     * @param producedFiles  the files to write (the sandbox-final tree)
+     * @throws IOException if writing a file into the working copy fails
+     */
+    private void mirrorProducedFilesIntoWorkingCopy(Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles) throws IOException {
+        deleteOrphanedFiles(repository, repositoryType, producedFiles.keySet());
+        for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
+            String path = entry.getKey();
+            if (gitService.getFileByName(repository, path).isPresent()) {
+                repositoryService.deleteFile(repository, path);
+            }
+            repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
         }
     }
 

@@ -238,7 +238,7 @@ public class SpecFidelityCriticService {
      * @param report the critic report
      * @return a retry-prompt fragment, or an empty string when there are no findings
      */
-    public static String renderForRetryPrompt(SpecFidelityReport report) {
+    public String renderForRetryPrompt(SpecFidelityReport report) {
         if (!report.hasFindings()) {
             return "";
         }

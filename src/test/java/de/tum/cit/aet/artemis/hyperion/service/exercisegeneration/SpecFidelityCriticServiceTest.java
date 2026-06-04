@@ -185,11 +185,13 @@ class SpecFidelityCriticServiceTest {
     /** The retry-prompt rendering folds both finding kinds into actionable, advisory-framed instructions, and is empty for an empty report. */
     @Test
     void renderForRetryPrompt_foldsFindingsAndIsEmptyWhenNone() {
-        assertThat(SpecFidelityCriticService.renderForRetryPrompt(SpecFidelityReport.empty())).isEmpty();
+        // renderForRetryPrompt is model-free, so a critic without a ChatClient suffices.
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
+        assertThat(critic.renderForRetryPrompt(SpecFidelityReport.empty())).isEmpty();
 
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "CJK", "no CJK test"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MECHANICS_LEAK, "make the tests fail", "leak")));
-        String rendered = SpecFidelityCriticService.renderForRetryPrompt(report);
+        String rendered = critic.renderForRetryPrompt(report);
         assertThat(rendered).contains("did NOT cause rejection").contains("No test covers this requirement").contains("CJK").contains("grader-mechanics phrasing")
                 .contains("make the tests fail");
     }

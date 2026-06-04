@@ -26,9 +26,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Tests the recovery path that turns a near-miss generation run into a saved draft plus actionable review comments instead of discarding it. It pins: every verification reason
- * becomes one problem-statement-anchored {@code CONSISTENCY_CHECK} finding, the agent's note becomes one more, the draft is persisted through the normal path, and the editor is
- * notified so the review panel updates live — and that an accepted-shaped outcome produces no recovery findings (the safety boundary: only a non-accepted run carries gaps).
+ * Tests the recovery path: a near-miss run becomes a persisted draft plus one problem-statement-anchored {@code CONSISTENCY_CHECK} finding per verification reason (and the agent's
+ * note), with the editor notified live. Pins the safety boundary that an accepted-shaped outcome produces no recovery findings.
  */
 class GenerationRecoveryServiceTest {
 

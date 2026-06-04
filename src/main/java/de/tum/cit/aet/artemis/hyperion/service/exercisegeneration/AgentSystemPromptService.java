@@ -164,7 +164,7 @@ public class AgentSystemPromptService {
      * @param problemStatement the exercise's current problem statement (may be {@code null})
      * @return {@code true} if it is non-trivial enough to be treated as the spec
      */
-    public static boolean isNonTrivialProblemStatement(@Nullable String problemStatement) {
+    public boolean isNonTrivialProblemStatement(@Nullable String problemStatement) {
         return problemStatement != null && problemStatement.strip().length() >= NON_TRIVIAL_PROBLEM_STATEMENT_MIN_CHARS;
     }
 
@@ -179,7 +179,7 @@ public class AgentSystemPromptService {
      * @param exercise the exercise being generated or adapted
      * @return the resolved instruction for the agent
      */
-    public static String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
+    public String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
         if (request.prompt() != null && !request.prompt().isBlank()) {
             return request.prompt();
         }

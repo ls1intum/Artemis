@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 class AgentSystemPromptServiceTest {
 
+    private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService();
+
     /** Marker phrase only present in the spec-mode default instruction. */
     private static final String SPEC_MODE_MARKER = "authoritative specification";
 
@@ -40,11 +42,11 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void isNonTrivialProblemStatement_distinguishesRealStatementsFromEmptyOrPlaceholder() {
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement(null)).isFalse();
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("")).isFalse();
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("   \n  ")).isFalse();
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("# TODO")).isFalse();
-        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("Implement a stack with push, pop and peek operations for integers.")).isTrue();
+        assertThat(systemPromptService.isNonTrivialProblemStatement(null)).isFalse();
+        assertThat(systemPromptService.isNonTrivialProblemStatement("")).isFalse();
+        assertThat(systemPromptService.isNonTrivialProblemStatement("   \n  ")).isFalse();
+        assertThat(systemPromptService.isNonTrivialProblemStatement("# TODO")).isFalse();
+        assertThat(systemPromptService.isNonTrivialProblemStatement("Implement a stack with push, pop and peek operations for integers.")).isTrue();
     }
 
     // ---- resolvePrompt: an explicit prompt always wins; otherwise the default is mode-aware (spec mode when a non-trivial statement is present, from-scratch otherwise)
@@ -56,7 +58,7 @@ class AgentSystemPromptServiceTest {
         // The exercise has a non-trivial statement, proving the explicit prompt wins over the mode-aware default.
         ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
 
-        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+        String prompt = systemPromptService.resolvePrompt(request, exercise);
 
         assertThat(prompt).isEqualTo("Make it about graph traversal.");
     }
@@ -67,7 +69,7 @@ class AgentSystemPromptServiceTest {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("   \n  ");
         ProgrammingExercise exercise = exerciseWithStatement("");
 
-        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+        String prompt = systemPromptService.resolvePrompt(request, exercise);
 
         assertThat(prompt).contains(FROM_SCRATCH_MARKER).doesNotContain(SPEC_MODE_MARKER);
     }
@@ -77,7 +79,7 @@ class AgentSystemPromptServiceTest {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null);
         ProgrammingExercise exercise = exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key.");
 
-        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+        String prompt = systemPromptService.resolvePrompt(request, exercise);
 
         assertThat(prompt).contains(SPEC_MODE_MARKER).doesNotContain(FROM_SCRATCH_MARKER);
     }
@@ -89,8 +91,8 @@ class AgentSystemPromptServiceTest {
         String just39 = "a".repeat(39);
         String exactly40 = "a".repeat(40);
 
-        String below = AgentSystemPromptService.resolvePrompt(request, exerciseWithStatement(just39));
-        String atThreshold = AgentSystemPromptService.resolvePrompt(request, exerciseWithStatement(exactly40));
+        String below = systemPromptService.resolvePrompt(request, exerciseWithStatement(just39));
+        String atThreshold = systemPromptService.resolvePrompt(request, exerciseWithStatement(exactly40));
 
         assertThat(below).contains(FROM_SCRATCH_MARKER).doesNotContain(SPEC_MODE_MARKER);
         assertThat(atThreshold).contains(SPEC_MODE_MARKER).doesNotContain(FROM_SCRATCH_MARKER);
@@ -98,20 +100,19 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_specMode_whenStatementPresent_tellsAgentToMatchIt() {
-        String prompt = new AgentSystemPromptService()
-                .build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
+        String prompt = systemPromptService.build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
         assertThat(prompt).contains("ALREADY CONTAINS the instructor's authoritative specification").contains("Treat it as the SPEC").doesNotContain("you write it");
     }
 
     @Test
     void build_fromScratch_whenStatementEmpty_tellsAgentToAuthorIt() {
-        String prompt = new AgentSystemPromptService().build(exerciseWithStatement(""));
+        String prompt = systemPromptService.build(exerciseWithStatement(""));
         assertThat(prompt).contains("you write it").doesNotContain("ALREADY CONTAINS the instructor's authoritative specification");
     }
 
     @Test
     void build_scaDisabled_omitsStaticCodeAnalysisGuidance() {
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).doesNotContain("STATIC CODE ANALYSIS IS ENABLED");
     }
 
@@ -119,13 +120,13 @@ class AgentSystemPromptServiceTest {
     void build_scaEnabled_tellsAgentTheSolutionMustBeScaClean() {
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
         exercise.setStaticCodeAnalysisEnabled(true);
-        String prompt = new AgentSystemPromptService().build(exercise);
+        String prompt = systemPromptService.build(exercise);
         assertThat(prompt).contains("STATIC CODE ANALYSIS IS ENABLED").contains("REFERENCE SOLUTION so it is CLEAN").contains("template need not be lint-clean");
     }
 
     @Test
     void build_taskBindingGuidance_isFrameworkAwareAndJvmProfileBindsToMethodNamesWithAresAnnotations() {
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         // The generic section must point at the language profile for the exact identifier, and the JVM profile must bind to method names and carry the Ares security annotations.
         assertThat(prompt).contains("test identifiers EXACTLY as this language's test runner").contains("the test METHOD name").contains("@WhitelistPath(\"target\")")
                 .contains("@BlacklistPath(\"target/test-classes\")");
@@ -136,7 +137,7 @@ class AgentSystemPromptServiceTest {
         // Regression guard: the agent repeatedly hallucinated a Codex-style apply_patch tool (and an ls tool), wasting turns and — via a silent bash apply_patch no-op — corrupting
         // its
         // model of the file state. The prompt must name the exact tool set and explicitly rule out apply_patch in both its tool-call and bash-command forms.
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, and submit").contains("NO apply_patch tool").contains("Never call apply_patch")
                 .contains("do NOT re-read a file whose contents you have already seen");
     }
@@ -146,7 +147,7 @@ class AgentSystemPromptServiceTest {
         // The per-language [task] naming rules are guides; the authoritative source is verify.sh's HYPERION_TESTNAME lines, which the agent must read and copy verbatim. This is
         // what
         // lets the agent self-correct when a framework's reported name differs from the profile's described rule (e.g. Dart group+test space-joining).
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.DART, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.DART, ""));
         assertThat(prompt).contains("HYPERION_TESTNAME").contains("exact identifier to bind each [task] to");
     }
 
@@ -154,7 +155,7 @@ class AgentSystemPromptServiceTest {
     void build_encodesAPlusQualityRules() {
         // The A+ enrichments: test every promised contract (not just behaviour), make the statement instructive (signatures + per-task descriptions), and clean up abandoned
         // harness files and now-unused dependencies before submitting.
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).contains("EVERY promise you make").contains("fluent self-return").contains("fenced code block showing the").contains("unused dependencies");
     }
 
@@ -181,13 +182,13 @@ class AgentSystemPromptServiceTest {
     @Test
     void build_mandatesStudentFacingTemplateAndCoverageSelfCheck() {
         // Audit found grader-note template comments (JS getter-throws hack) and under-coverage (Swift 3 tests, untested promises).
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).contains("STUDENT's starting point, not the grader's scratchpad").contains("re-read your tests against the problem statement");
     }
 
     @Test
     void build_kotlin_instructsToWriteEverythingInKotlin() {
-        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.KOTLIN, ""));
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.KOTLIN, ""));
         assertThat(prompt).contains("KOTLIN exercise").contains(".kt").contains("do NOT write any .java");
     }
 

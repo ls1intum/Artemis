@@ -25,9 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Tests the terminal-state handling of the async generation task: an accepted run persists clean with no recovery; a non-accepted run is RECOVERED (best-effort draft persisted +
- * review comments created) and emits the distinct {@code NEEDS_REVIEW} verdict rather than discarding the work; and a recovery failure falls back to {@code PARTIAL} without ever
- * looking accepted. These pin the safety boundary: only the accepted path is a clean success, and a recovered draft is always tagged with its open issues.
+ * Tests terminal-state handling of the async generation task: an accepted run persists clean ({@code SUCCESS}); a non-accepted run is recovered into a draft with review comments
+ * ({@code NEEDS_REVIEW}); and a recovery failure falls back to {@code PARTIAL}. Pins the safety boundary that only the accepted path is a clean success.
  */
 class ExerciseGenerationTaskServiceTest {
 

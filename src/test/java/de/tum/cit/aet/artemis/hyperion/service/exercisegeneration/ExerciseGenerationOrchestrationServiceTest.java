@@ -80,6 +80,10 @@ class ExerciseGenerationOrchestrationServiceTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         // The advisory critic is non-blocking; default it to no findings so the existing accept/reject-flow assertions are unaffected. Specific tests override it.
         when(specFidelityCritic.critique(any(), any(), any())).thenReturn(SpecFidelityReport.empty());
+        // renderForRetryPrompt is a pure, model-free renderer; delegate the mock to the real implementation so the orchestrator folds findings into the retry prompt exactly as in
+        // production (the rendering itself is covered by SpecFidelityCriticServiceTest).
+        SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new com.fasterxml.jackson.databind.ObjectMapper());
+        when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
 
         service = new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
                 specFidelityCritic, jobService, llmTokenUsageService, 100);
