@@ -1111,7 +1111,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
         programmingExercise.setId(null);
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        // AI generation now works for every language with a buildable scaffold; only the EMPTY language (no scaffold) is rejected.
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.EMPTY);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setMaxStaticCodeAnalysisPenalty(null);

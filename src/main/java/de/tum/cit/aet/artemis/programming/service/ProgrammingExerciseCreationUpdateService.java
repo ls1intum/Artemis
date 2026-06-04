@@ -247,8 +247,10 @@ public class ProgrammingExerciseCreationUpdateService {
         if (!moduleFeatureService.isHyperionEnabled()) {
             throw new BadRequestAlertException("Hyperion is disabled on this server", "ProgrammingExercise", "hyperionDisabled");
         }
-        if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            throw new BadRequestAlertException("AI generation is only supported for Java", "ProgrammingExercise", "aiGenerationUnsupportedLanguage");
+        // AI generation works on any language for which Artemis ships a buildable scaffold. The EMPTY language has no template skeleton to start from,
+        // so it cannot be cleared into a clean-but-buildable repository for agentic generation.
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.EMPTY) {
+            throw new BadRequestAlertException("AI generation is not supported for the EMPTY programming language", "ProgrammingExercise", "aiGenerationUnsupportedLanguage");
         }
     }
 

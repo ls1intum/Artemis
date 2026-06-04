@@ -1,0 +1,267 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+
+/**
+ * Unit test for the agent system prompt's spec-mode branching and the per-language generation profiles. The most error-prone, language-divergent thing a profile must encode is the
+ * [task]-binding identifier (it differs sharply per test framework), so the profile coverage is asserted here without a live build.
+ */
+class AgentSystemPromptServiceTest {
+
+    /** Marker phrase only present in the spec-mode default instruction. */
+    private static final String SPEC_MODE_MARKER = "authoritative specification";
+
+    /** Marker phrase only present in the from-scratch default instruction. */
+    private static final String FROM_SCRATCH_MARKER = "Generate a complete, correct programming exercise";
+
+    private static ProgrammingExercise exerciseWithStatement(String problemStatement) {
+        return exerciseWith(ProgrammingLanguage.JAVA, problemStatement);
+    }
+
+    private static ProgrammingExercise exerciseWith(ProgrammingLanguage language, String problemStatement) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(language);
+        exercise.setProblemStatement(problemStatement);
+        return exercise;
+    }
+
+    private static String profile(ProgrammingLanguage language) {
+        return LanguageGenerationProfile.guidanceFor(exerciseWith(language, ""));
+    }
+
+    @Test
+    void isNonTrivialProblemStatement_distinguishesRealStatementsFromEmptyOrPlaceholder() {
+        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement(null)).isFalse();
+        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("")).isFalse();
+        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("   \n  ")).isFalse();
+        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("# TODO")).isFalse();
+        assertThat(AgentSystemPromptService.isNonTrivialProblemStatement("Implement a stack with push, pop and peek operations for integers.")).isTrue();
+    }
+
+    // ---- resolvePrompt: an explicit prompt always wins; otherwise the default is mode-aware (spec mode when a non-trivial statement is present, from-scratch otherwise)
+    // ----------
+
+    @Test
+    void resolvePrompt_explicitPrompt_isHonoured() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
+        // The exercise has a non-trivial statement, proving the explicit prompt wins over the mode-aware default.
+        ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
+
+        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+
+        assertThat(prompt).isEqualTo("Make it about graph traversal.");
+    }
+
+    @Test
+    void resolvePrompt_blankPrompt_fallsBackToModeAwareDefault() {
+        // A blank (whitespace-only) prompt must be treated as "no prompt" and fall back to the from-scratch default for an empty exercise.
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("   \n  ");
+        ProgrammingExercise exercise = exerciseWithStatement("");
+
+        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+
+        assertThat(prompt).contains(FROM_SCRATCH_MARKER).doesNotContain(SPEC_MODE_MARKER);
+    }
+
+    @Test
+    void resolvePrompt_noPrompt_specMode_whenNonTrivialProblemStatement() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null);
+        ProgrammingExercise exercise = exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key.");
+
+        String prompt = AgentSystemPromptService.resolvePrompt(request, exercise);
+
+        assertThat(prompt).contains(SPEC_MODE_MARKER).doesNotContain(FROM_SCRATCH_MARKER);
+    }
+
+    @Test
+    void resolvePrompt_noPrompt_boundary_atNonTrivialThreshold() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null);
+        // The threshold is 40 stripped chars. 39 chars -> trivial (from-scratch); 40 chars -> non-trivial (spec mode).
+        String just39 = "a".repeat(39);
+        String exactly40 = "a".repeat(40);
+
+        String below = AgentSystemPromptService.resolvePrompt(request, exerciseWithStatement(just39));
+        String atThreshold = AgentSystemPromptService.resolvePrompt(request, exerciseWithStatement(exactly40));
+
+        assertThat(below).contains(FROM_SCRATCH_MARKER).doesNotContain(SPEC_MODE_MARKER);
+        assertThat(atThreshold).contains(SPEC_MODE_MARKER).doesNotContain(FROM_SCRATCH_MARKER);
+    }
+
+    @Test
+    void build_specMode_whenStatementPresent_tellsAgentToMatchIt() {
+        String prompt = new AgentSystemPromptService()
+                .build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
+        assertThat(prompt).contains("ALREADY CONTAINS the instructor's authoritative specification").contains("Treat it as the SPEC").doesNotContain("you write it");
+    }
+
+    @Test
+    void build_fromScratch_whenStatementEmpty_tellsAgentToAuthorIt() {
+        String prompt = new AgentSystemPromptService().build(exerciseWithStatement(""));
+        assertThat(prompt).contains("you write it").doesNotContain("ALREADY CONTAINS the instructor's authoritative specification");
+    }
+
+    @Test
+    void build_scaDisabled_omitsStaticCodeAnalysisGuidance() {
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).doesNotContain("STATIC CODE ANALYSIS IS ENABLED");
+    }
+
+    @Test
+    void build_scaEnabled_tellsAgentTheSolutionMustBeScaClean() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        exercise.setStaticCodeAnalysisEnabled(true);
+        String prompt = new AgentSystemPromptService().build(exercise);
+        assertThat(prompt).contains("STATIC CODE ANALYSIS IS ENABLED").contains("REFERENCE SOLUTION so it is CLEAN").contains("template need not be lint-clean");
+    }
+
+    @Test
+    void build_taskBindingGuidance_isFrameworkAwareAndJvmProfileBindsToMethodNamesWithAresAnnotations() {
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        // The generic section must point at the language profile for the exact identifier, and the JVM profile must bind to method names and carry the Ares security annotations.
+        assertThat(prompt).contains("test identifiers EXACTLY as this language's test runner").contains("the test METHOD name").contains("@WhitelistPath(\"target\")")
+                .contains("@BlacklistPath(\"target/test-classes\")");
+    }
+
+    @Test
+    void build_enumeratesTheRealToolSurfaceAndForbidsApplyPatch() {
+        // Regression guard: the agent repeatedly hallucinated a Codex-style apply_patch tool (and an ls tool), wasting turns and — via a silent bash apply_patch no-op — corrupting
+        // its
+        // model of the file state. The prompt must name the exact tool set and explicitly rule out apply_patch in both its tool-call and bash-command forms.
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, and submit").contains("NO apply_patch tool").contains("Never call apply_patch")
+                .contains("do NOT re-read a file whose contents you have already seen");
+    }
+
+    @Test
+    void build_pointsTaskBindingsAtTheAuthoritativeTestnameLines() {
+        // The per-language [task] naming rules are guides; the authoritative source is verify.sh's HYPERION_TESTNAME lines, which the agent must read and copy verbatim. This is
+        // what
+        // lets the agent self-correct when a framework's reported name differs from the profile's described rule (e.g. Dart group+test space-joining).
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.DART, ""));
+        assertThat(prompt).contains("HYPERION_TESTNAME").contains("exact identifier to bind each [task] to");
+    }
+
+    @Test
+    void build_encodesAPlusQualityRules() {
+        // The A+ enrichments: test every promised contract (not just behaviour), make the statement instructive (signatures + per-task descriptions), and clean up abandoned
+        // harness files and now-unused dependencies before submitting.
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("EVERY promise you make").contains("fluent self-return").contains("fenced code block showing the").contains("unused dependencies");
+    }
+
+    @Test
+    void cppProfile_enforcesByteIdenticalHeadersViaDiff() {
+        // The shared header is the contract; the C++ profile must make the agent prove identity (diff prints nothing) rather than merely intend it.
+        assertThat(profile(ProgrammingLanguage.C_PLUS_PLUS)).contains("diff -r solution/include template/include").contains("byte-identical");
+    }
+
+    @Test
+    void cSharpProfile_pinsNet8AndUsesThrowingStub() {
+        // Audit found the agent downgraded the solution to net6 (sandbox-invisible prod break) and the profile's "empty stub" was uncompilable (CS0161).
+        String guidance = profile(ProgrammingLanguage.C_SHARP);
+        assertThat(guidance).contains("net8.0").contains("throw new NotImplementedException();").contains("CS0161");
+    }
+
+    @Test
+    void rustProfile_prunesTheDeadStructuralHarnessAndUnusedDeps() {
+        // Audit found Rust shipped a dead syn/proc-macro harness + unused chrono/rand deps; the profile must name the prune + a grep self-check.
+        String guidance = profile(ProgrammingLanguage.RUST);
+        assertThat(guidance).contains("rust_template_test_macros").contains("grep -rn");
+    }
+
+    @Test
+    void build_mandatesStudentFacingTemplateAndCoverageSelfCheck() {
+        // Audit found grader-note template comments (JS getter-throws hack) and under-coverage (Swift 3 tests, untested promises).
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("STUDENT's starting point, not the grader's scratchpad").contains("re-read your tests against the problem statement");
+    }
+
+    @Test
+    void build_kotlin_instructsToWriteEverythingInKotlin() {
+        String prompt = new AgentSystemPromptService().build(exerciseWith(ProgrammingLanguage.KOTLIN, ""));
+        assertThat(prompt).contains("KOTLIN exercise").contains(".kt").contains("do NOT write any .java");
+    }
+
+    /** Languages present in the enum but with no Artemis exercise templates / not creatable in this deployment — they correctly get no generation profile. */
+    private static final java.util.Set<ProgrammingLanguage> LANGUAGES_WITHOUT_TEMPLATES = java.util.EnumSet.of(ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL,
+            ProgrammingLanguage.POWERSHELL, ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
+
+    @ParameterizedTest
+    @EnumSource(ProgrammingLanguage.class)
+    void everySupportedLanguageHasGenerationGuidanceThatExplainsTaskBindings(ProgrammingLanguage language) {
+        String guidance = profile(language);
+        if (LANGUAGES_WITHOUT_TEMPLATES.contains(language)) {
+            assertThat(guidance).as("no profile for the untemplated language %s", language).isEmpty();
+            return;
+        }
+        // Every creatable language gets a profile, and every profile must teach how a [task] binds for its framework (the most error-prone, divergent part).
+        assertThat(guidance).as("guidance for %s", language).isNotBlank();
+        assertThat(guidance).as("%s profile explains [task] bindings", language).contains("[task]");
+    }
+
+    @Test
+    void profiles_encodeEachFrameworksDivergentTaskNamingRule() {
+        // These are the per-framework rules the agent most often gets wrong; pin the salient phrase of each so a regression in the profile is caught.
+        assertThat(profile(ProgrammingLanguage.PYTHON)).contains("test METHOD name");
+        assertThat(profile(ProgrammingLanguage.JAVASCRIPT)).contains("underscore");
+        assertThat(profile(ProgrammingLanguage.TYPESCRIPT)).contains("underscore");
+        assertThat(profile(ProgrammingLanguage.RUBY)).contains("test METHOD name");
+        assertThat(profile(ProgrammingLanguage.R)).contains("DESCRIPTION STRING");
+        // Dart: the package:test full name is the space-joined group+test (group('reverseString')+test('reverse_non_empty') -> "reverseString reverse_non_empty"). Production
+        // prepends the
+        // dot test-FILE suite prefix (test.palindrome) ONLY with >=2 test files; with a SINGLE test file (the common case, one top-level suite) the prefix is DROPPED and the name
+        // is bare.
+        // The profile must teach the singular-suite exception (an earlier version wrongly prefixed single-file names, which would bind to nothing in production).
+        assertThat(profile(ProgrammingLanguage.DART)).contains("joined by SINGLE SPACES").contains("reverseString reverse_non_empty").contains("DROPPED")
+                .contains("TWO OR MORE test files");
+        assertThat(profile(ProgrammingLanguage.GO)).contains("TestXxx");
+        assertThat(profile(ProgrammingLanguage.RUST)).contains("#[test] fn");
+        // Catch2 reports a nested SECTION as the slash-joined path TEST_CASE/SECTION; the profile must teach both the flat-TEST_CASE name and the slash rule.
+        assertThat(profile(ProgrammingLanguage.C_PLUS_PLUS)).contains("TEST_CASE").contains("SLASH-joined");
+        assertThat(profile(ProgrammingLanguage.C_SHARP)).contains("[Test]");
+        assertThat(profile(ProgrammingLanguage.SWIFT)).contains("allTests");
+        assertThat(profile(ProgrammingLanguage.HASKELL)).contains("DOT-JOINED");
+        assertThat(profile(ProgrammingLanguage.BASH)).contains("@test");
+    }
+
+    @Test
+    void cProfile_dependsOnProjectType() {
+        ProgrammingExercise gcc = exerciseWith(ProgrammingLanguage.C, "");
+        gcc.setProjectType(ProjectType.GCC);
+        assertThat(LanguageGenerationProfile.guidanceFor(gcc)).contains("gcc project type");
+
+        ProgrammingExercise fact = exerciseWith(ProgrammingLanguage.C, "");
+        fact.setProjectType(ProjectType.FACT);
+        assertThat(LanguageGenerationProfile.guidanceFor(fact)).contains("fact project type");
+    }
+
+    @Test
+    void javaProfile_dependsOnProjectType_blackboxUsesDejagnuNotAres() {
+        // MAVEN_BLACKBOX is a DejaGnu (expect/stdin-stdout) harness with NO JUnit tests, so its guidance must NOT carry the Ares/JUnit conventions and must instead teach the
+        // black-box specifics and the dejagnu[<step>] [task] binding.
+        ProgrammingExercise blackbox = exerciseWith(ProgrammingLanguage.JAVA, "");
+        blackbox.setProjectType(ProjectType.MAVEN_BLACKBOX);
+        String blackboxGuidance = LanguageGenerationProfile.guidanceFor(blackbox);
+        assertThat(blackboxGuidance).contains("MAVEN_BLACKBOX").contains("DejaGnu").contains("dejagnu[public]").contains("dejagnu[advanced]").contains("dejagnu[secret]")
+                .contains("Tests.txt").contains("STDIN").contains("[task]");
+        // It must NOT carry the jvm()/Ares instruction surface — the annotation-usage example and the method-name binding rule are the distinctive markers of the JUnit profile.
+        // (The black-box text may NAME @Public/@StrictTimeout only to forbid them, so assert on the instructional phrases, not the bare tokens.)
+        assertThat(blackboxGuidance).doesNotContain("@WhitelistPath(\"target\")").doesNotContain("@BlacklistPath(\"target/test-classes\")")
+                .doesNotContain("every test class MUST be").doesNotContain("The [task] binding uses the test METHOD name");
+
+        // A normal Java project type (e.g. PLAIN_MAVEN) and the null default both keep the JUnit/Ares jvm() profile.
+        ProgrammingExercise plainMaven = exerciseWith(ProgrammingLanguage.JAVA, "");
+        plainMaven.setProjectType(ProjectType.PLAIN_MAVEN);
+        assertThat(LanguageGenerationProfile.guidanceFor(plainMaven)).contains("@Public").contains("@StrictTimeout");
+        assertThat(profile(ProgrammingLanguage.JAVA)).contains("@Public").contains("@StrictTimeout");
+    }
+}

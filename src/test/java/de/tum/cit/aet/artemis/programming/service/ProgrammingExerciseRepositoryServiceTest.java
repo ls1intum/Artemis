@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -54,7 +54,7 @@ class ProgrammingExerciseRepositoryServiceTest {
     }
 
     @Test
-    void clearRepositorySources_removesSourcesAndAddsGitkeep() throws Exception {
+    void clearRepositorySources_removesConventionalSrcAndAddsGitkeep() throws Exception {
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath.resolve("src"));
         FileUtils.writeStringToFile(repoPath.resolve("src/Main.java").toFile(), "class Main {}", StandardCharsets.UTF_8);
@@ -62,75 +62,103 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TEMPLATE, user);
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.TEMPLATE, user);
 
         try (var files = Files.list(repoPath.resolve("src"))) {
-            var filenames = files.map(path -> path.getFileName().toString()).sorted().toList();
-            assertThat(filenames).containsExactly(".gitkeep");
+            assertThat(files.map(path -> path.getFileName().toString()).sorted().toList()).containsExactly(".gitkeep");
         }
-
         verify(gitService).stageAllChanges(repository);
         verify(gitService).commitAndPush(eq(repository), eq("Cleared template sources for AI generation"), eq(true), same(user));
     }
 
     @Test
-    void clearRepositorySources_skipsWhenNoSrcDirectory() throws Exception {
+    void clearRepositorySources_doesNothingWhenNoSourceFilesOfTheLanguageExist() throws Exception {
+        // A repository with no conventional source directory and no language source files (only build manifests/dotfiles) has nothing to clear: no throw, no commit.
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
+        FileUtils.writeStringToFile(repoPath.resolve(".gitignore").toFile(), "target/", StandardCharsets.UTF_8);
 
         Repository repository = mockRepository(repoPath);
-        User user = new User();
 
-        assertThatThrownBy(() -> programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user)).isInstanceOf(java.io.IOException.class)
-                .hasMessageContaining("no source directory found");
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.SOLUTION, new User());
 
         verifyNoInteractions(gitService);
     }
 
     @Test
-    void clearRepositorySources_testsRepository_removesTestDirectoriesAndAddsGitkeep() throws Exception {
+    void clearRepositorySources_rootSourceLanguage_deletesLooseSourcesButKeepsBuildManifest() throws Exception {
+        // Go keeps sources at the repository root; the loose-source sweep must delete the .go files but keep go.mod so the scaffold stays buildable.
         Path repoPath = tempDir.resolve("repo");
-        Files.createDirectories(repoPath.resolve("test"));
-        Files.createDirectories(repoPath.resolve("behavior").resolve("test"));
-        Files.createDirectories(repoPath.resolve("structural").resolve("test"));
-        FileUtils.writeStringToFile(repoPath.resolve("test/SomeTest.java").toFile(), "class SomeTest {}", StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(repoPath.resolve("behavior/test/BehaviorTest.java").toFile(), "class BehaviorTest {}", StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(repoPath.resolve("structural/test/StructuralTest.java").toFile(), "class StructuralTest {}", StandardCharsets.UTF_8);
+        Files.createDirectories(repoPath.resolve("client"));
+        FileUtils.writeStringToFile(repoPath.resolve("bubblesort.go").toFile(), "package x", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("client/client.go").toFile(), "package main", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("go.mod").toFile(), "module artemis/x", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve(".gitignore").toFile(), "bin/", StandardCharsets.UTF_8);
 
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TESTS, user);
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.GO, repository, RepositoryType.SOLUTION, user);
 
-        try (var testFiles = Files.list(repoPath.resolve("test"));
-                var behaviorTestFiles = Files.list(repoPath.resolve("behavior").resolve("test"));
-                var structuralTestFiles = Files.list(repoPath.resolve("structural").resolve("test"))) {
-            assertThat(testFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
-            assertThat(behaviorTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
-            assertThat(structuralTestFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
-        }
-
-        verify(gitService).stageAllChanges(repository);
-        verify(gitService).commitAndPush(eq(repository), eq("Cleared tests sources for AI generation"), eq(true), same(user));
+        assertThat(repoPath.resolve("go.mod")).exists();
+        assertThat(repoPath.resolve(".gitignore")).exists();
+        assertThat(repoPath.resolve("bubblesort.go")).doesNotExist();
+        assertThat(repoPath.resolve("client/client.go")).doesNotExist();
+        verify(gitService).commitAndPush(eq(repository), eq("Cleared solution sources for AI generation"), eq(true), same(user));
     }
 
     @Test
-    void clearRepositorySources_testsRepository_removesTestsuiteDirectoryAndAddsGitkeep() throws Exception {
+    void clearRepositorySources_swift_clearsSourcesDirectoryButKeepsPackageSwiftManifest() throws Exception {
+        // Swift sources live under Sources/; Package.swift is a manifest that must survive even though it has a .swift extension (it is on the keep-list).
         Path repoPath = tempDir.resolve("repo");
-        Files.createDirectories(repoPath.resolve("testsuite").resolve("sample.tests"));
-        FileUtils.writeStringToFile(repoPath.resolve("testsuite/sample.tests/test.exp").toFile(), "pass", StandardCharsets.UTF_8);
+        Files.createDirectories(repoPath.resolve("Sources/AppLib"));
+        FileUtils.writeStringToFile(repoPath.resolve("Sources/AppLib/Sorter.swift").toFile(), "struct Sorter {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("Package.swift").toFile(), "// swift-tools-version:5.2", StandardCharsets.UTF_8);
 
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TESTS, user);
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.SWIFT, repository, RepositoryType.SOLUTION, user);
 
-        try (var testsuiteFiles = Files.list(repoPath.resolve("testsuite"))) {
-            assertThat(testsuiteFiles.map(path -> path.getFileName().toString()).toList()).containsExactly(".gitkeep");
-        }
+        assertThat(repoPath.resolve("Package.swift")).exists();
+        assertThat(repoPath.resolve("Sources/AppLib/Sorter.swift")).doesNotExist();
+        verify(gitService).commitAndPush(eq(repository), eq("Cleared solution sources for AI generation"), eq(true), same(user));
+    }
 
-        verify(gitService).stageAllChanges(repository);
-        verify(gitService).commitAndPush(eq(repository), eq("Cleared tests sources for AI generation"), eq(true), same(user));
+    @Test
+    void clearRepositorySources_keepsBuildManifestInsideSourceDirectory_ocamlDune() throws Exception {
+        // OCaml keeps a `dune` build file INSIDE src/ next to the sources; clearing must remove the .ml/.mli sources but KEEP src/dune (a blunt "empty the src/ dir" would break
+        // the build).
+        Path repoPath = tempDir.resolve("repo");
+        Files.createDirectories(repoPath.resolve("src"));
+        FileUtils.writeStringToFile(repoPath.resolve("src/assignment.ml").toFile(), "let add a b = a + b", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("src/assignment.mli").toFile(), "val add : int -> int -> int", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(repoPath.resolve("src/dune").toFile(), "(library (name assignment))", StandardCharsets.UTF_8);
+
+        Repository repository = mockRepository(repoPath);
+        User user = new User();
+
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.OCAML, repository, RepositoryType.SOLUTION, user);
+
+        assertThat(repoPath.resolve("src/dune")).as("the in-directory build manifest is kept").exists();
+        assertThat(repoPath.resolve("src/assignment.ml")).doesNotExist();
+        assertThat(repoPath.resolve("src/assignment.mli")).doesNotExist();
+        verify(gitService).commitAndPush(eq(repository), eq("Cleared solution sources for AI generation"), eq(true), same(user));
+    }
+
+    @Test
+    void clearRepositorySources_emptiedRepository_getsRootGitkeepFloor() throws Exception {
+        // A C/FACT solution is a single root exercise.c with no manifest; after clearing, a root .gitkeep keeps the repo a valid clone target.
+        Path repoPath = tempDir.resolve("repo");
+        Files.createDirectories(repoPath);
+        FileUtils.writeStringToFile(repoPath.resolve("exercise.c").toFile(), "int main(){return 0;}", StandardCharsets.UTF_8);
+
+        Repository repository = mockRepository(repoPath);
+
+        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.C, repository, RepositoryType.SOLUTION, new User());
+
+        assertThat(repoPath.resolve("exercise.c")).doesNotExist();
+        assertThat(repoPath.resolve(".gitkeep")).exists();
     }
 
     private Repository mockRepository(Path repoPath) {

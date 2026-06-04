@@ -68,10 +68,11 @@ class ProgrammingExerciseCreationUpdateServiceTest {
 
     @Test
     void createProgrammingExercise_emptyRepositoriesAndUnsupportedLanguage_throwsBadRequest() {
-        var exercise = createExercise(ProgrammingLanguage.PYTHON);
+        // The EMPTY programming language ships no buildable scaffold, so it cannot be used as an AI-generation starting point.
+        var exercise = createExercise(ProgrammingLanguage.EMPTY);
         when(moduleFeatureService.isHyperionEnabled()).thenReturn(true);
         assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, true)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("AI generation is only supported for Java");
+            assertThat(ex.getMessage()).isEqualTo("AI generation is not supported for the EMPTY programming language");
             assertThat(ex.getErrorKey()).isEqualTo("aiGenerationUnsupportedLanguage");
         });
         verifyNoInteractions(userRepository);

@@ -34,12 +34,7 @@ public class BuildScriptProviderService {
     public String buildTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, String fileExtension) {
         List<String> fileNameComponents = new ArrayList<>();
 
-        if (ProjectType.MAVEN_BLACKBOX.equals(projectType.orElse(null))) {
-            fileNameComponents.add("plain_" + projectType.get().name().toLowerCase());
-        }
-        else {
-            fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
-        }
+        fileNameComponents.add(templateFamilyFor(projectType.orElse(null)));
 
         if (staticAnalysis) {
             fileNameComponents.add("static");
@@ -48,6 +43,33 @@ public class BuildScriptProviderService {
             fileNameComponents.add("sequential");
         }
         return String.join("_", fileNameComponents) + "." + fileExtension;
+    }
+
+    /**
+     * Maps a project type to the build-template family whose script applies to it. Several project types differ only in their <em>repository layout</em>, not in the build command
+     * the CI runs: a Maven test repository is always built with {@code mvn clean test} and a Gradle one with {@code ./gradlew clean test}, regardless of how the assignment is laid
+     * out inside it. So {@link ProjectType#MAVEN_MAVEN} reuses the {@code plain_maven} family and {@link ProjectType#GRADLE_GRADLE} reuses the {@code plain_gradle} family, rather
+     * than each requiring its own (identical) phases template. Without this mapping those project types resolve to a non-existent {@code maven_maven.yaml} /
+     * {@code gradle_gradle.yaml}, leaving the exercise with an empty build script that runs no tests and synchronises no test cases. {@link ProjectType#MAVEN_BLACKBOX} keeps its
+     * own
+     * distinct {@code plain_maven_blackbox} family (a genuinely different build), and every other project type maps to its own name.
+     *
+     * @param projectType the project type, or {@code null} for a legacy project without one
+     * @return the lower-case template-family prefix (e.g. {@code "plain_maven"}, {@code "plain_gradle"}, {@code "plain_maven_blackbox"}, {@code "default"})
+     */
+    private static String templateFamilyFor(ProjectType projectType) {
+        if (projectType == null) {
+            return "default";
+        }
+        return switch (projectType) {
+            // MAVEN_MAVEN differs from PLAIN_MAVEN only in repository layout; the Maven build command is identical, so it reuses the plain_maven phases.
+            case MAVEN_MAVEN -> "plain_maven";
+            // GRADLE_GRADLE differs from PLAIN_GRADLE only in repository layout; the Gradle build command is identical, so it reuses the plain_gradle phases.
+            case GRADLE_GRADLE -> "plain_gradle";
+            // MAVEN_BLACKBOX is a genuinely distinct build with its own phases template; preserve its historical "plain_<name>" prefix.
+            case MAVEN_BLACKBOX -> "plain_" + projectType.name().toLowerCase();
+            default -> projectType.name().toLowerCase();
+        };
     }
 
     /**

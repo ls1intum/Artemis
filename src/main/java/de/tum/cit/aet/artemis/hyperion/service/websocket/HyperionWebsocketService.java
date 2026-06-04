@@ -39,7 +39,11 @@ public class HyperionWebsocketService {
             websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
             log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
         }
-        catch (InterruptedException | ExecutionException e) {
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
+        }
+        catch (ExecutionException e) {
             log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
         }
     }

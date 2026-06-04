@@ -1,0 +1,351 @@
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+
+/**
+ * Tests the persistence orchestration. It pins the production commit order (template → solution → tests last so the test-triggered build sees the final solution), that the
+ * problem statement is rewritten only when the agent actually changed it, that the canonical tests build is triggered with the tests commit, and that a mid-sequence commit
+ * failure is surfaced (not swallowed into a false success) so the exercise is never left half-written without anyone noticing.
+ */
+class GenerationPersistenceServiceTest {
+
+    private GitService gitService;
+
+    private RepositoryService repositoryService;
+
+    private ProgrammingExerciseParticipationService participationService;
+
+    private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    private ProgrammingSubmissionService programmingSubmissionService;
+
+    private ProgrammingExerciseCreationUpdateService creationUpdateService;
+
+    private ExerciseVersionService exerciseVersionService;
+
+    private GenerationPersistenceService service;
+
+    private ProgrammingExercise exercise;
+
+    private LocalVCRepositoryUri templateUri;
+
+    private LocalVCRepositoryUri solutionUri;
+
+    private LocalVCRepositoryUri testsUri;
+
+    private final User user = new User();
+
+    @BeforeEach
+    void setUp() {
+        gitService = mock(GitService.class);
+        repositoryService = mock(RepositoryService.class);
+        participationService = mock(ProgrammingExerciseParticipationService.class);
+        continuousIntegrationTriggerService = mock(ContinuousIntegrationTriggerService.class);
+        programmingSubmissionService = mock(ProgrammingSubmissionService.class);
+        creationUpdateService = mock(ProgrammingExerciseCreationUpdateService.class);
+        exerciseVersionService = mock(ExerciseVersionService.class);
+        service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
+                creationUpdateService, exerciseVersionService);
+
+        exercise = mock(ProgrammingExercise.class);
+        when(exercise.getId()).thenReturn(1L);
+        // Distinct URIs per repository so the tests-build trigger can be asserted to fire with the tests commit hash specifically.
+        templateUri = mock(LocalVCRepositoryUri.class);
+        solutionUri = mock(LocalVCRepositoryUri.class);
+        testsUri = mock(LocalVCRepositoryUri.class);
+        when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(templateUri);
+        when(exercise.getRepositoryURI(RepositoryType.SOLUTION)).thenReturn(solutionUri);
+        when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
+    }
+
+    private GenerationOutcome outcomeWith(Map<String, String> template, Map<String, String> solution, Map<String, String> tests, String problemStatement) {
+        GenerationOutcome outcome = mock(GenerationOutcome.class);
+        when(outcome.producedFiles(RepositoryType.TEMPLATE)).thenReturn(template);
+        when(outcome.producedFiles(RepositoryType.SOLUTION)).thenReturn(solution);
+        when(outcome.producedFiles(RepositoryType.TESTS)).thenReturn(tests);
+        when(outcome.producedProblemStatement()).thenReturn(problemStatement);
+        return outcome;
+    }
+
+    private Repository repository;
+
+    private void stubSuccessfulCheckoutAndCommits() throws Exception {
+        repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        // By default the scaffolded tree holds only the files the agent produces (no orphans), so the orphan sweep is a no-op unless a test stubs extra tracked files.
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests");
+    }
+
+    @Test
+    void persist_happyPath_commitsInProductionOrderTriggersTestsBuildAndCreatesVersion() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+        when(exercise.getProblemStatement()).thenReturn("old statement");
+
+        service.persist(exercise, user, outcome);
+
+        // Commit order: the only per-repository signal that differs by type is the file path written, so capturing createFile paths pins template → solution → tests last.
+        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+        verify(repositoryService, times(3)).createFile(any(), pathCaptor.capture(), any());
+        assertThat(pathCaptor.getAllValues()).as("repositories are committed template → solution → tests last").containsExactly("Template.java", "Solution.java", "Test.java");
+
+        // The problem statement changed, so it is rewritten.
+        verify(creationUpdateService).updateProblemStatement(exercise, "new statement", null);
+
+        // The canonical tests build is triggered with the tests commit specifically (so the build sees the final solution committed before it).
+        verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
+        verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
+
+        // A successful persist records a new exercise version.
+        verify(exerciseVersionService).createExerciseVersion(exercise, user);
+    }
+
+    @Test
+    void persist_removesOrphanedCanonicalTestSources_butKeepsHarness_soPersistedTreeMirrorsTheSandbox() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // The scaffolded TESTS repo still holds the canonical sample's orphaned test sources (a behaviour test for a DIFFERENT exercise and the previous structure oracle) PLUS the
+        // immutable build harness. The agent produced only its own test and the regenerated oracle. The persist must delete the orphaned SOURCES (so they cannot fail real grading)
+        // while never touching the harness (graded verbatim).
+        Map<String, FileType> trackedTestFiles = Map.of("test/de/test/StringsTest.java", FileType.FILE, "test/de/test/SortingExampleBehaviorTest.java", FileType.FILE,
+                "test/de/test/test.json", FileType.FILE, "test/de/test/OldClassTest.java", FileType.FILE, "pom.xml", FileType.FILE, "test", FileType.FOLDER);
+        // The tests repo is the last committed; return the orphan-bearing tracked set only for it (template/solution have no orphans here).
+        when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
+
+        // The sandbox-final tests tree the oracle validated: the agent's test plus the regenerated oracle (test.json kept, same path) — and the harness pom.xml.
+        Map<String, String> producedTests = Map.of("test/de/test/StringsTest.java", "...", "test/de/test/test.json", "[]", "pom.xml", "<project/>");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), producedTests, "");
+
+        service.persist(exercise, user, outcome);
+
+        // The orphaned canonical sources (a different exercise's behaviour test and a stale structural test class) are deleted so they cannot run in real grading.
+        verify(repositoryService).deleteFile(repository, "test/de/test/SortingExampleBehaviorTest.java");
+        verify(repositoryService).deleteFile(repository, "test/de/test/OldClassTest.java");
+        // The immutable harness (pom.xml) is NEVER deleted as an orphan even though the sweep saw it — it is in producedFiles and harness-protected besides.
+        verify(repositoryService, never()).deleteFile(repository, "pom.xml");
+        // A file the agent DID produce at the same path (test.json regenerated) is overwritten by the write path, not removed by the orphan sweep.
+        verify(repositoryService, never()).deleteFile(repository, "test/de/test/test.json");
+    }
+
+    @Test
+    void persist_preservesScaffoldedBinary_neverDeletedAsOrphanNorRewritten(@org.junit.jupiter.api.io.TempDir java.nio.file.Path workingTree) throws Exception {
+        // Gap 2: a Java PLAIN_GRADLE template/solution ships a binary gradle/wrapper/gradle-wrapper.jar the agent never edits. It cannot survive the UTF-8 String round-trip, so
+        // the
+        // read-back EXCLUDES it from producedFiles — which makes it look like an orphan to the sweep. The persist must (a) NOT delete it (it is the byte-exact scaffolded original
+        // already in the working tree) and (b) NOT rewrite it (it is absent from producedFiles), so it commits intact. A text source the agent produced is still written normally.
+        java.nio.file.Path wrapperDir = workingTree.resolve("gradle/wrapper");
+        byte[] wrapperBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };
+        org.apache.commons.io.FileUtils.writeByteArrayToFile(wrapperDir.resolve("gradle-wrapper.jar").toFile(), wrapperBytes);
+
+        stubSuccessfulCheckoutAndCommits();
+        when(repository.getLocalPath()).thenReturn(workingTree);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // The scaffolded TEMPLATE tree tracks the agent's source PLUS the binary wrapper jar (the latter excluded from producedFiles by the binary-safe read-back). Only the
+        // TEMPLATE
+        // sweep sees these tracked files; solution/tests have none here.
+        Map<String, FileType> trackedTemplateFiles = Map.of("src/de/test/BankAccount.java", FileType.FILE, "gradle/wrapper/gradle-wrapper.jar", FileType.FILE);
+        when(repositoryService.getFiles(any())).thenReturn(trackedTemplateFiles, Map.of(), Map.of());
+
+        Map<String, String> producedTemplate = Map.of("src/de/test/BankAccount.java", "class BankAccount {}");
+        GenerationOutcome outcome = outcomeWith(producedTemplate, Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        service.persist(exercise, user, outcome);
+
+        // The binary wrapper jar is NEVER deleted as an orphan (it is preserved byte-exact from the scaffold) and NEVER rewritten (it is not in producedFiles, so no createFile for
+        // it). The on-disk file remains the exact scaffolded bytes.
+        verify(repositoryService, never()).deleteFile(repository, "gradle/wrapper/gradle-wrapper.jar");
+        verify(repositoryService, never()).createFile(eq(repository), eq("gradle/wrapper/gradle-wrapper.jar"), any());
+        assertThat(java.nio.file.Files.readAllBytes(wrapperDir.resolve("gradle-wrapper.jar"))).as("scaffolded wrapper jar is byte-identical").containsExactly(wrapperBytes);
+        // The agent's text source is still written.
+        verify(repositoryService).createFile(eq(repository), eq("src/de/test/BankAccount.java"), any());
+    }
+
+    @Test
+    void persist_doesNotDeleteHarnessFile_evenWhenAbsentFromProducedFiles() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // Defensive: a flaky read-back dropped the harness pom.xml from producedFiles. The orphan sweep must NOT delete it — a build/harness/manifest file is graded verbatim and
+        // immutable by contract, so a missing-from-extraction harness can corrupt the build but must never be silently wiped from the repository.
+        Map<String, FileType> trackedTestFiles = Map.of("test/de/test/StringsTest.java", FileType.FILE, "pom.xml", FileType.FILE);
+        when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
+
+        Map<String, String> producedTests = Map.of("test/de/test/StringsTest.java", "...");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), producedTests, "");
+
+        service.persist(exercise, user, outcome);
+
+        verify(repositoryService, never()).deleteFile(repository, "pom.xml");
+    }
+
+    @Test
+    void persist_problemStatementUnchanged_doesNotRewriteIt() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // The agent re-emitted the identical statement: rewriting it would create a spurious version/diff, so it must be skipped.
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "same statement");
+        when(exercise.getProblemStatement()).thenReturn("same statement");
+
+        service.persist(exercise, user, outcome);
+
+        verify(creationUpdateService, never()).updateProblemStatement(any(), any(), any());
+    }
+
+    @Test
+    void persist_propagatesMidSequenceCommitFailure_andDoesNotCreateVersion() throws Exception {
+        Repository repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        // The template commit succeeds, but the solution commit then fails — the exact half-written scenario that must be surfaced rather than reported as success.
+        Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(repositoryService).commitChanges(any(), any());
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(IllegalStateException.class).hasMessageContaining("Failed to commit");
+        // A failed persist must not record a version that would imply the exercise was saved consistently.
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    // ================================================================================================================================================================
+    // W3 — recovery must never regress a working exercise. persistRecoveryDraft routes a from-scratch target to the in-place default-branch persist (nothing to lose) and an adapt
+    // target to an ISOLATED branch, leaving the live default branch byte-identical and triggering NO grading build of the broken draft.
+    // ================================================================================================================================================================
+
+    private final String jobId = "job-42";
+
+    /** All three repositories are empty (no tracked FILE) — a from-scratch target. */
+    private void stubEmptyRepositories() {
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+    }
+
+    /** The given repository type already tracks a real source file — an adapt of an already-working exercise. */
+    private void stubAdaptTarget() {
+        // The first getFiles() call in persistRecoveryDraft is the adapt probe (template); returning a tracked FILE there is enough to classify the whole run as adapt.
+        when(repositoryService.getFiles(any())).thenReturn(Map.of("src/de/test/BankAccount.java", FileType.FILE));
+    }
+
+    @Test
+    void persistRecoveryDraft_fromScratchTarget_committedInPlaceToDefaultBranch_andTriggersBuildAndVersion() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        stubEmptyRepositories();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
+
+        // From-scratch: there is nothing to lose, so the draft is committed to the live default branch in place exactly like an accepted run.
+        assertThat(result.liveExerciseUntouched()).isFalse();
+        assertThat(result.draftBranch()).isNull();
+        verify(repositoryService, times(3)).commitChanges(any(), eq(user));
+        // The canonical tests build IS triggered and a version IS recorded — this is a brand-new exercise being authored, not a working one being protected.
+        verify(continuousIntegrationTriggerService).triggerBuild(any(), eq("hash-tests"), eq(RepositoryType.TESTS));
+        verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        // It must NOT divert to an isolated branch.
+        verify(gitService, never()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_adaptTarget_divertsToIsolatedBranch_leavesLiveExerciseUntouched_noGradingBuildNoVersion() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        stubAdaptTarget();
+        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-hash");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+        when(exercise.getProblemStatement()).thenReturn("old statement");
+
+        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
+
+        // The live default branch is left byte-identical: the draft is on the isolated branch only.
+        assertThat(result.liveExerciseUntouched()).isTrue();
+        assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
+        // Every repository's draft is pushed to the SAME isolated branch; the live default branch is never committed to (no RepositoryService.commitChanges).
+        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
+        verify(repositoryService, never()).commitChanges(any(), any());
+        // CRITICAL: the broken draft must NOT be graded against the live exercise, and the live exercise must NOT be recorded as a new version (it did not change).
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+        // The live exercise's problem statement must NOT be overwritten by the broken draft's statement.
+        verify(creationUpdateService, never()).updateProblemStatement(any(), any(), any());
+        // The working copy is reset back to origin/HEAD so the diverted commit does not linger on the checkout.
+        verify(gitService, times(3)).resetToOriginHead(repository);
+    }
+
+    @Test
+    void persistRecoveryDraft_adaptDetectionThrows_failsClosedToAdapt_neverOverwritesLiveBranch() throws Exception {
+        // The adapt PROBE (the first getFiles call) blows up. The safe default is to TREAT IT AS ADAPT and never overwrite a possibly-working exercise; the subsequent orphan-sweep
+        // getFiles calls succeed (empty), so the diversion to the isolated branch proceeds normally.
+        stubSuccessfulCheckoutAndCommits();
+        when(repositoryService.getFiles(any())).thenThrow(new RuntimeException("repo inspection exploded")).thenReturn(Map.of());
+        when(gitService.commitToIsolatedBranchAndPush(any(), any(), any(), any())).thenReturn("draft-hash");
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
+
+        // The inspection error failed closed to adapt: the draft was diverted to the isolated branch and the live default branch was never touched.
+        assertThat(result.liveExerciseUntouched()).as("an inspection error must fail closed to 'do not overwrite'").isTrue();
+        verify(gitService, atLeastOnce()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
+        verify(repositoryService, never()).commitChanges(any(), any());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_adaptIsolatedPushFailsMidMultiRepo_propagates_andNeverTouchesDefaultBranch() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        stubAdaptTarget();
+        // Template diverts fine, but the next isolated push (solution) blows up — the multi-repo half-write scenario. Because we never touch the default branch in adapt mode, this
+        // can only ever half-write the ISOLATED branch (a throwaway draft), never half-regress the live exercise.
+        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-template")
+                .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class).hasMessageContaining("recovery draft");
+        // The live default branch was NEVER committed to, NEVER graded, NEVER versioned — the working exercise is intact despite the isolated-branch failure.
+        verify(repositoryService, never()).commitChanges(any(), any());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+}
