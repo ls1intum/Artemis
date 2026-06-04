@@ -14,8 +14,8 @@ export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreeP
 }
 
 export function convertTutorialGroupSessionDatesFromServer<T extends LegacyTutorialGroupSession | TutorialGroupSummarySession>(tutorialGroupSession: T): T {
-    tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
-    tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
+    tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start) as any;
+    tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end) as any;
     if (tutorialGroupSession.tutorialGroupFreePeriod) {
         tutorialGroupSession.tutorialGroupFreePeriod = convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupSession.tutorialGroupFreePeriod);
     }
@@ -36,8 +36,8 @@ export function convertTutorialGroupsConfigurationDatesFromServer(tutorialGroups
 
 export function convertTutorialGroupDatesFromServer<T extends TutorialGroup | TutorialGroupSummary>(tutorialGroup: T): T {
     if (tutorialGroup.tutorialGroupSchedule) {
-        tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive);
-        tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
+        tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive) as any;
+        tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive) as any;
     }
     if (tutorialGroup.tutorialGroupSessions) {
         tutorialGroup.tutorialGroupSessions.forEach((tutorialGroupSession: LegacyTutorialGroupSession | TutorialGroupSummarySession) =>

@@ -17,7 +17,7 @@ export function convertDateFromClient(date?: dayjs.Dayjs): string | undefined {
  * @param date the date sent by the server
  * @return the date as dayjs object if it is defined
  */
-export function convertDateFromServer(date?: dayjs.Dayjs): dayjs.Dayjs | undefined {
+export function convertDateFromServer(date?: dayjs.Dayjs | string | null): dayjs.Dayjs | undefined {
     return date ? dayjs(date) : undefined;
 }
 
