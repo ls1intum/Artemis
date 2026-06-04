@@ -313,7 +313,7 @@ public class HyperionCodeGenerationExecutionService {
                 return Optional.empty();
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
-            if (!isDeletablePlaceholderFileName(normalized) && !isDeletableSourcePath(normalized)) {
+            if (!isDeletablePathForRepositoryType(normalized, repositoryType)) {
                 return Optional.empty();
             }
             if (isDeletablePlaceholderFileName(normalized) && !isDeletablePlaceholderFile(normalized, repositoryType)) {
@@ -343,15 +343,19 @@ public class HyperionCodeGenerationExecutionService {
         return fileName != null && fileName.toString().equals(DELETABLE_PLACEHOLDER_FILE_NAME);
     }
 
-    private boolean isDeletablePlaceholderFile(String normalizedPath, RepositoryType repositoryType) {
-        if (!isDeletablePlaceholderFileName(normalizedPath)) {
-            return false;
-        }
+    private boolean isDeletablePathForRepositoryType(String normalizedPath, RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE, SOLUTION -> isDeletableSourcePath(normalizedPath);
             case TESTS -> isDeletableTestPath(normalizedPath);
             default -> false;
         };
+    }
+
+    private boolean isDeletablePlaceholderFile(String normalizedPath, RepositoryType repositoryType) {
+        if (!isDeletablePlaceholderFileName(normalizedPath)) {
+            return false;
+        }
+        return isDeletablePathForRepositoryType(normalizedPath, repositoryType);
     }
 
     /**

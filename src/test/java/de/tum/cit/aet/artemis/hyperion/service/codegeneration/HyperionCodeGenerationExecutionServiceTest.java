@@ -657,6 +657,22 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void deleteObsoleteFiles_withSafeTestFile_deletesExistingFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        when(gitService.getFileByName(mockRepository, "test/OldTest.java")).thenReturn(Optional.of(obsoleteFile));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/OldTest.java"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isTrue();
+        verify(repositoryService).deleteFile(mockRepository, "test/OldTest.java");
+        verify(publisher).fileDeleted("test/OldTest.java", RepositoryType.TESTS, 2);
+    }
+
+    @Test
     void deleteObsoleteFiles_withGitkeepPlaceholder_deletesExistingFile() throws Exception {
         Repository mockRepository = mock(Repository.class);
         File obsoleteFile = mock(File.class);
