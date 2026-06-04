@@ -2,11 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -19,11 +20,18 @@ describe('ResultHistoryComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal), provideHttpClient(), provideHttpClientTesting()],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(ResultHistoryComponent);
-        component = fixture.componentInstance;
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ResultHistoryComponent);
+                component = fixture.componentInstance;
+            });
     });
 
     afterEach(() => {

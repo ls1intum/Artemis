@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -24,7 +25,7 @@ export class LearningPathNavOverviewComponent {
     protected readonly faCheckCircle = faCheckCircle;
 
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly scienceService = inject(ScienceService);
@@ -70,6 +71,6 @@ export class LearningPathNavOverviewComponent {
     }
 
     openCompetencyGraph(): void {
-        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, this.learningPathId(), undefined);
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.dialogService, this.learningPathId(), undefined);
     }
 }

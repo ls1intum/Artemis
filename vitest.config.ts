@@ -125,6 +125,8 @@ export default defineConfig({
             'src/main/webapp/app/exercise/unreferenced-feedback/**/*.spec.ts', // include unreferenced feedback tests
             'src/main/webapp/app/exercise/util/**/*.spec.ts', // include exercise util tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
+            'src/main/webapp/app/exercise/result/**/*.spec.ts', // include exercise result tests
+            'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
             'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
             'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
             'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
@@ -236,6 +238,11 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
                 'src/main/webapp/app/notification/**/*.ts', // include all notification module for code coverage
+                'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
+                'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
+                'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
+                'src/main/webapp/app/exercise/result/**/*.ts', // include exercise result for code coverage
+                'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
                 'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
                 'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage

@@ -23,7 +23,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Subject } from 'rxjs';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExerciseHeadersInformationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -48,7 +48,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 MockProvider(ExerciseService),
                 MockProvider(ComplaintService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue({ onChildComponentLoaded: new Subject() }) } },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
