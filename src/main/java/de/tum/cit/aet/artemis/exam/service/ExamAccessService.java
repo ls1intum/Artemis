@@ -197,7 +197,7 @@ public class ExamAccessService {
         ZonedDateTime now = ZonedDateTime.now();
 
         if (exam.getEndDate().isBefore(now)) {
-            throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
+            throw new AccessForbiddenAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
         List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
@@ -209,7 +209,7 @@ public class ExamAccessService {
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
             boolean canExamBeStarted = now.isAfter(unlockDate);
             if (!canExamBeStarted) {
-                throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
+                throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
             }
             checkCanCreateNewTestExamAttemptElseThrow(exam, !studentExams.isEmpty(), now);
 
@@ -240,7 +240,7 @@ public class ExamAccessService {
 
         if (examType == ExamType.SIMULATION) {
             if (userHasAttempt) {
-                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed.", ENTITY_NAME, "simulationTestExamAttemptAlreadyExists");
+                throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed.", ENTITY_NAME, "simulationTestExamAttemptAlreadyExists", true);
             }
             return;
         }
@@ -249,7 +249,7 @@ public class ExamAccessService {
             final boolean simulationPhaseActive = now.isBefore(exam.getTestExamSimulationEndDate());
             if (simulationPhaseActive && userHasAttempt) {
                 throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed before the practice phase starts.", ENTITY_NAME,
-                        "simulationTestExamAttemptAlreadyExistsBeforePractice");
+                        "simulationTestExamAttemptAlreadyExistsBeforePractice", true);
             }
         }
     }
@@ -277,12 +277,12 @@ public class ExamAccessService {
 
         final boolean simulationPhaseOver = !now.isBefore(exam.getTestExamSimulationEndDate());
         if (examType == ExamType.SIMULATION && simulationPhaseOver) {
-            throw new AccessForbiddenAlertException("The simulation test exam phase has ended.", ENTITY_NAME, "simulationTestExamPhaseEnded");
+            throw new AccessForbiddenAlertException("The simulation test exam phase has ended.", ENTITY_NAME, "simulationTestExamPhaseEnded", true);
         }
 
         final boolean bufferPhaseActive = now.isBefore(exam.getTestExamPracticeStartDate());
         if (examType == ExamType.SIMULATION_AND_PRACTICE && simulationPhaseOver && bufferPhaseActive) {
-            throw new AccessForbiddenAlertException("The practice phase of the test exam has not started yet.", ENTITY_NAME, "testExamPracticePhaseNotStarted");
+            throw new AccessForbiddenAlertException("The practice phase of the test exam has not started yet.", ENTITY_NAME, "testExamPracticePhaseNotStarted", true);
         }
     }
 
