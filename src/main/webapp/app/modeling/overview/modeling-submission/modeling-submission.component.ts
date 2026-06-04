@@ -8,7 +8,7 @@ import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/fre
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
-import { type CollaborationUser, UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -241,7 +241,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || 'User';
         const id = user.login ?? (user.id !== undefined ? String(user.id) : undefined) ?? name;
         const imageUrl = this.accountService.getImageUrl();
-        return { id, name, imageUrl };
+        const color = collabColorFromName(name);
+        return { id, name, imageUrl, color };
     }
 
     private setupMode(): void {

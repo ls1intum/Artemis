@@ -142,7 +142,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 readonly: this.readOnly(),
                 scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
-                scale: 0.8,
                 collaborationEnabled,
                 collaboration: collaborationEnabled
                     ? {
