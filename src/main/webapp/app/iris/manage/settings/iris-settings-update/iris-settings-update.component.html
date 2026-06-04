@@ -232,10 +232,7 @@
                                             (ngModelChange)="rateLimitRequests.set($event ?? undefined)"
                                             [min]="0"
                                             [invalid]="!!rateLimitRequestsError()"
-                                            [placeholder]="
-                                                'artemisApp.iris.settings.rateLimitRequestsPlaceholder'
-                                                    | artemisTranslate: { default: applicationDefaults()?.requests || 'unlimited' }
-                                            "
+                                            [placeholder]="'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: rateLimitRequestsDefault() }"
                                         />
                                         @if (rateLimitRequestsError(); as error) {
                                             <div class="text-danger small mt-1">
@@ -252,10 +249,7 @@
                                             (ngModelChange)="rateLimitTimeframeHours.set($event ?? undefined)"
                                             [min]="1"
                                             [invalid]="!!rateLimitTimeframeError()"
-                                            [placeholder]="
-                                                'artemisApp.iris.settings.rateLimitTimeframePlaceholder'
-                                                    | artemisTranslate: { default: applicationDefaults()?.timeframeHours || 'unlimited' }
-                                            "
+                                            [placeholder]="'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: rateLimitTimeframeDefault() }"
                                         />
                                         @if (rateLimitTimeframeError(); as error) {
                                             <div class="text-danger small mt-1">

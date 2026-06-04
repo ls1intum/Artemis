@@ -95,9 +95,9 @@
                 },
                 "exampleConversationLabel": "Beispielgespräch auf diesem Niveau",
                 "additionalGuidelines": "Zusätzliche Richtlinien",
-                "additionalGuidelinesHelp": "Legen Sie zusätzliche Erwartungen fest, wie Iris mit Ihren Studierenden interagiert.",
+                "additionalGuidelinesHelp": "Lege zusätzliche Erwartungen fest, wie Iris mit deinen Studierenden interagiert.",
                 "additionalGuidelinesPlaceholder": "Verwende immer Python 3.12-Syntax.",
-                "globalRestriction": "Iris ist global eingeschränkt und stellt keine vollständigen Lösungen oder vollständigen Code-Blöcke bereit, unabhängig von Ihren Einstellungen.",
+                "globalRestriction": "Iris ist global eingeschränkt und stellt keine vollständigen Lösungen oder vollständigen Code-Blöcke bereit, unabhängig von deinen Einstellungen.",
                 "saveChanges": "Änderungen speichern",
                 "resetToDefault": "Auf Standard zurücksetzen",
                 "error": {

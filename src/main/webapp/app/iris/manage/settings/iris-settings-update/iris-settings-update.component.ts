@@ -8,6 +8,7 @@ import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -73,6 +74,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     public courseId?: number;
 
@@ -80,6 +82,12 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly settings = signal<IrisCourseSettingsDTO | undefined>(undefined);
     readonly effectiveRateLimit = signal<IrisRateLimitConfiguration | undefined>(undefined);
     readonly applicationDefaults = signal<IrisRateLimitConfiguration | undefined>(undefined);
+
+    // Localized default values for the rate-limit placeholders. Uses nullish
+    // coalescing so a configured default of 0 is preserved (not treated as
+    // "unlimited"), and falls back to a translated string instead of a raw literal.
+    readonly rateLimitRequestsDefault = computed(() => this.applicationDefaults()?.requests ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
+    readonly rateLimitTimeframeDefault = computed(() => this.applicationDefaults()?.timeframeHours ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
 
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
