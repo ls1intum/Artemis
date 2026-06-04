@@ -1,5 +1,5 @@
-@for (groupKey of Object.keys(groupedData); track groupKey; let i = $index) {
-    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length || sidebarItemAlwaysShow()[groupKey]) {
+@for (groupKey of Object.keys(groupedData()); track groupKey; let i = $index) {
+    @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length || sidebarItemAlwaysShow()[groupKey]) {
         <div id="test-accordion-item-container-{{ i }}" class="pointer">
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
@@ -7,23 +7,23 @@
                 (click)="toggleGroupCategoryCollapse(groupKey)"
             >
                 <div class="my-2">
-                    @if (showLeadingIcon) {
-                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon)?.[groupKey]" />
+                    @if (showLeadingIcon()) {
+                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon())?.[groupKey]" />
                     }
                     {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
-                    @if (!groupedData[groupKey].isHideCount) {
-                        ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
+                    @if (!groupedData()[groupKey].isHideCount) {
+                        ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length }})
                     }
                 </div>
                 <div class="icon-container pe-3">
-                    @if (totalUnreadMessagesPerGroup[groupKey] > 0 && collapseState[groupKey]) {
+                    @if (totalUnreadMessagesPerGroup[groupKey] > 0 && collapseStateInternal()[groupKey]) {
                         <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
                     }
-                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseStateInternal()[groupKey]" />
                 </div>
             </div>
-            @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
-                <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="bg-module">
+            @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length) {
+                <div id="test-accordion-item-content" [ngbCollapse]="collapseStateInternal()[groupKey]" class="bg-module">
                     <div class="p-2">
                         @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
                             @if (weekGroup.showDateHeader) {
@@ -41,14 +41,14 @@
                                 </div>
                             }
                             <div>
-                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem.id) {
+                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue(); let last = $last; track sidebarItem.id) {
                                     <div [ngClass]="{ 'mb-2': !last }">
                                         <!-- loading sidebarCard with help of a directive depending on its size input-->
                                         <div
                                             jhiSidebarCard
                                             [size]="sidebarItem.size"
-                                            [itemSelected]="itemSelected"
-                                            [sidebarType]="sidebarType"
+                                            [itemSelected]="itemSelected()"
+                                            [sidebarType]="sidebarType()"
                                             [sidebarItem]="sidebarItem"
                                             [groupKey]="groupKey"
                                             (onUpdateSidebar)="onUpdateSidebar.emit()"

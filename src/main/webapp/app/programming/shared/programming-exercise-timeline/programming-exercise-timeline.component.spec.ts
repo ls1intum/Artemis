@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 
 describe('ProgrammingExerciseTimelineComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProgrammingExerciseTimelineComponent;
     let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
 

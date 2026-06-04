@@ -29,12 +29,12 @@ describe('SidebarCardLargeComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardLargeComponent);
         component = fixture.componentInstance;
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             title: 'testTitle',
             id: 'testId',
             size: 'L',
-        };
-        component.itemSelected = true;
+        });
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.detectChanges();
     });
 
@@ -48,13 +48,13 @@ describe('SidebarCardLargeComponent', () => {
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         element.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id);
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
     it('should navigate to the item URL on click', async () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = true;
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();
@@ -67,7 +67,7 @@ describe('SidebarCardLargeComponent', () => {
 
     it('should navigate to the when no item was selected before', async () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = false;
+        fixture.componentRef.setInput('itemSelected', false);
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         itemElement.click();

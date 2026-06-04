@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, input, signal } from '@angular/core';
+import { Component, computed, effect, input, signal } from '@angular/core';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,61 +27,49 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
         ArtemisDurationFromSecondsPipe,
     ],
 })
-export class SidebarCardItemComponent implements OnInit, OnChanges {
-    @Input() sidebarItem: SidebarCardElement;
-    @Input() sidebarType?: SidebarTypes;
-    @Input() groupKey?: string;
-    unreadCount = input<number>(0);
-    otherUser: any;
+export class SidebarCardItemComponent {
+    readonly sidebarItem = input.required<SidebarCardElement>();
+    readonly sidebarType = input<SidebarTypes>();
+    readonly groupKey = input<string>();
+    readonly unreadCount = input<number>(0);
+    readonly otherUser = signal<any>(undefined);
 
     readonly faPeopleGroup = faPeopleGroup;
-    readonly shouldDisplayUnreadCount = signal<boolean>(false);
+    readonly shouldDisplayUnreadCount = computed<boolean>(() => !this.sidebarItem().conversation?.isMuted);
 
-    formattedUnreadCount: string = '';
-
-    ngOnInit(): void {
-        this.formattedUnreadCount = this.getFormattedUnreadCount();
-        this.extractMessageUser();
-        this.updateShouldDisplayUnreadCount();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        // Recompute unread count string if value changes
-        if (changes['unreadCount']) {
-            this.formattedUnreadCount = this.getFormattedUnreadCount();
-        }
-        if (changes['sidebarItem']) {
-            this.updateShouldDisplayUnreadCount();
-        }
-    }
+    /**
+     * The icon to display for the item. Group chats always use the group icon; all other items keep their own icon.
+     * Derived (instead of mutating the input) so the {@link sidebarItem} input stays immutable.
+     */
+    readonly displayIcon = computed(() => {
+        const item = this.sidebarItem();
+        return item.type === 'groupChat' ? this.faPeopleGroup : item.icon;
+    });
 
     /**
      * Converts the unread count into a human-friendly string (e.g. '99+' if >99).
      */
-    private getFormattedUnreadCount(): string {
+    readonly formattedUnreadCount = computed<string>(() => {
         if (this.unreadCount() > 99) {
             return '99+';
         }
         return this.unreadCount().toString() || '';
-    }
+    });
 
-    protected updateShouldDisplayUnreadCount(): void {
-        this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
+    constructor() {
+        effect(() => this.extractMessageUser());
     }
 
     /**
-     * Extracts and stores the "other user" in case the item is a one-to-one chat.
-     * If it's a group chat, sets the group icon explicitly.
+     * Extracts and stores the "other user" in case the item is a one-to-one chat. The group-chat icon is derived
+     * reactively via {@link displayIcon} rather than mutating the input here.
      */
     extractMessageUser(): void {
-        if (this.sidebarItem.type === 'oneToOneChat' && (this.sidebarItem.conversation as OneToOneChatDTO)?.members) {
-            this.otherUser = (this.sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser);
+        const sidebarItem = this.sidebarItem();
+        if (sidebarItem.type === 'oneToOneChat' && (sidebarItem.conversation as OneToOneChatDTO)?.members) {
+            this.otherUser.set((sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser));
         } else {
-            this.otherUser = null;
-        }
-
-        if (this.sidebarItem.type === 'groupChat') {
-            this.sidebarItem.icon = this.faPeopleGroup;
+            this.otherUser.set(undefined);
         }
     }
 

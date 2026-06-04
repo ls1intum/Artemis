@@ -1,8 +1,11 @@
+import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 // Mock Monaco Editor at the top before imports
-jest.mock('monaco-editor', () => ({
+vi.mock('monaco-editor', () => ({
     editor: {
-        createModel: jest.fn(),
-        createDiffEditor: jest.fn(),
+        createModel: vi.fn(),
+        createDiffEditor: vi.fn(),
     },
 }));
 
@@ -10,10 +13,12 @@ import * as monaco from 'monaco-editor';
 import { DiffInformation, FileStatus, __diffUtilsTesting, convertMonacoLineChanges, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
+    setupTestBed({ zoneless: true });
+
     let mockOriginalModel: monaco.editor.ITextModel;
     let mockModifiedModel: monaco.editor.ITextModel;
     let mockDiffListener: monaco.IDisposable;
-    let mockDiffEditor: jest.Mocked<Pick<monaco.editor.IStandaloneDiffEditor, 'setModel' | 'onDidUpdateDiff' | 'getLineChanges' | 'dispose'>>;
+    let mockDiffEditor: Mocked<Pick<monaco.editor.IStandaloneDiffEditor, 'setModel' | 'onDidUpdateDiff' | 'getLineChanges' | 'dispose'>>;
 
     // Helper function to setup Monaco mocks with common configuration
     const setupMonacoMocks = (lineChanges: monaco.editor.ILineChange[] = []) => {
@@ -35,24 +40,24 @@ describe('DiffUtils', () => {
 
     beforeEach(() => {
         // Reset mocks
-        jest.clearAllMocks();
+        vi.clearAllMocks();
 
-        const originalModelStub = { dispose: jest.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
-        const modifiedModelStub = { dispose: jest.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
+        const originalModelStub = { dispose: vi.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
+        const modifiedModelStub = { dispose: vi.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
 
         // Setup Monaco Editor mocks
         mockOriginalModel = originalModelStub as unknown as monaco.editor.ITextModel;
         mockModifiedModel = modifiedModelStub as unknown as monaco.editor.ITextModel;
-        mockDiffListener = { dispose: jest.fn() } satisfies monaco.IDisposable;
+        mockDiffListener = { dispose: vi.fn() } satisfies monaco.IDisposable;
 
         mockDiffEditor = {
-            setModel: jest.fn(),
-            onDidUpdateDiff: jest.fn().mockReturnValue(mockDiffListener),
-            getLineChanges: jest.fn(),
-            dispose: jest.fn(),
+            setModel: vi.fn(),
+            onDidUpdateDiff: vi.fn().mockReturnValue(mockDiffListener),
+            getLineChanges: vi.fn(),
+            dispose: vi.fn(),
         };
 
-        (monaco.editor.createModel as jest.Mock).mockImplementation((content: string) => {
+        (monaco.editor.createModel as ReturnType<typeof vi.fn>).mockImplementation((content: string) => {
             if (content === 'original') {
                 return mockOriginalModel;
             }
@@ -61,31 +66,31 @@ describe('DiffUtils', () => {
             }
 
             // For generated test content fall back to assigning models based on alternating calls.
-            const callIndex = (monaco.editor.createModel as jest.Mock).mock.calls.length;
+            const callIndex = (monaco.editor.createModel as ReturnType<typeof vi.fn>).mock.calls.length;
             return callIndex % 2 === 0 ? mockOriginalModel : mockModifiedModel;
         });
 
-        (monaco.editor.createDiffEditor as jest.Mock).mockReturnValue(mockDiffEditor);
+        (monaco.editor.createDiffEditor as ReturnType<typeof vi.fn>).mockReturnValue(mockDiffEditor);
 
         // Mock DOM elements with proper structure for the new getDiffHost() implementation
-        jest.spyOn(Document.prototype, 'createElement').mockImplementation(() => {
+        vi.spyOn(Document.prototype, 'createElement').mockImplementation(() => {
             const mockElement = {
                 style: {},
-                appendChild: jest.fn(),
-                removeChild: jest.fn(),
+                appendChild: vi.fn(),
+                removeChild: vi.fn(),
                 parentElement: {
-                    removeChild: jest.fn(),
+                    removeChild: vi.fn(),
                 },
             };
             return mockElement as unknown as HTMLElement;
         });
 
         // Mock document.body.appendChild to accept mock elements
-        jest.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => node as any);
+        vi.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => node as any);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('processRepositoryDiff', () => {
@@ -220,7 +225,7 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(originalFiles, modifiedFiles);
 
             expect(result.diffInformations).toHaveLength(2);
-            expect(result.diffInformations).toSatisfyAll((info) => info.fileStatus === FileStatus.RENAMED);
+            expect(result.diffInformations.every((info) => info.fileStatus === FileStatus.RENAMED)).toBe(true);
         });
 
         it('should fall back to zero changes if diff computation throws', async () => {
@@ -242,7 +247,7 @@ describe('DiffUtils', () => {
             const modifiedFiles = new Map([['error.txt', 'modified content']]);
 
             setupMonacoMocks();
-            (monaco.editor.createModel as jest.Mock).mockImplementationOnce(() => {
+            (monaco.editor.createModel as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
                 throw new Error('init error');
             });
 
@@ -262,7 +267,7 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(new Map([['big-file.txt', largeOriginal]]), new Map([['big-file.txt', largeModified]]));
 
             expect(monaco.editor.createDiffEditor).not.toHaveBeenCalled();
-            expect(result.totalLineChange.fileTooLarge).toBeTrue();
+            expect(result.totalLineChange.fileTooLarge).toBe(true);
             expect(result.totalLineChange.addedLineCount).toBeGreaterThan(0);
             expect(result.totalLineChange.removedLineCount).toBeGreaterThan(0);
             expect(result.diffInformations).toHaveLength(1);
@@ -270,7 +275,7 @@ describe('DiffUtils', () => {
         });
 
         it('should ignore timeout completion after diff results are processed', async () => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
 
             const originalFiles = new Map([['double-callback.txt', 'original content']]);
             const modifiedFiles = new Map([['double-callback.txt', 'modified content']]);
@@ -279,14 +284,14 @@ describe('DiffUtils', () => {
 
             try {
                 const resultPromise = processRepositoryDiff(originalFiles, modifiedFiles);
-                jest.runOnlyPendingTimers();
+                await vi.runOnlyPendingTimersAsync();
                 const result = await resultPromise;
 
                 expect(result.totalLineChange).toEqual({ addedLineCount: 1, removedLineCount: 1 });
                 expect(mockDiffListener.dispose).toHaveBeenCalledOnce();
                 expect(mockDiffEditor.dispose).toHaveBeenCalledOnce();
             } finally {
-                jest.useRealTimers();
+                vi.useRealTimers();
             }
         });
 
@@ -310,7 +315,7 @@ describe('DiffUtils', () => {
         });
 
         it('should resolve using the safety timeout when Monaco never updates', async () => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
 
             const originalFiles = new Map([['timeout.txt', 'original content']]);
             const modifiedFiles = new Map([['timeout.txt', 'modified content']]);
@@ -320,7 +325,7 @@ describe('DiffUtils', () => {
 
             try {
                 const promise = processRepositoryDiff(originalFiles, modifiedFiles);
-                jest.advanceTimersByTime(10000);
+                await vi.advanceTimersByTimeAsync(10000);
                 const result = await promise;
 
                 expect(result.totalLineChange.addedLineCount).toBeGreaterThanOrEqual(0);
@@ -328,7 +333,7 @@ describe('DiffUtils', () => {
                 expect(mockDiffListener.dispose).toHaveBeenCalledOnce();
                 expect(mockDiffEditor.dispose).toHaveBeenCalledOnce();
             } finally {
-                jest.useRealTimers();
+                vi.useRealTimers();
             }
         });
 
@@ -444,7 +449,7 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(originalFiles, modifiedFiles);
 
             expect(result.diffInformations).toHaveLength(2);
-            expect(result.diffInformations.map((info) => info.fileStatus)).toIncludeSameMembers([FileStatus.CREATED, FileStatus.DELETED]);
+            expect(result.diffInformations.map((info) => info.fileStatus).sort()).toEqual([FileStatus.CREATED, FileStatus.DELETED].sort());
         });
 
         it('should expose helper similarities for targeted edge cases', () => {
@@ -516,7 +521,7 @@ describe('DiffUtils', () => {
 
             mergeRenamedFiles(diffInformation);
 
-            expect(diffInformation.some((info) => info.fileStatus === FileStatus.RENAMED)).toBeFalse();
+            expect(diffInformation.some((info) => info.fileStatus === FileStatus.RENAMED)).toBe(false);
         });
 
         it('should skip merge when quick similarity check fails for large files', () => {
@@ -600,7 +605,7 @@ describe('DiffUtils', () => {
 
             const result = estimateLineChangeUsingSampling(original, modified);
 
-            expect(result.fileTooLarge).toBeTrue();
+            expect(result.fileTooLarge).toBe(true);
             expect(result.addedLineCount).toBe(1);
             expect(result.removedLineCount).toBe(1);
         });

@@ -1,3 +1,6 @@
+import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -5,21 +8,20 @@ import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMI
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingFeedbackItemService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingFeedbackItemService;
     const exercise = new ProgrammingExercise(undefined, undefined);
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingFeedbackItemService);
-            });
+        }).compileComponents();
+
+        service = TestBed.inject(ProgrammingFeedbackItemService);
     });
 
     it('should create submission policy feedback item', () => {
@@ -190,7 +192,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const wrongGroup = groups.find((group) => group.name === 'wrong');
         const feedbackInGroup = wrongGroup!.members[0].feedbackReference;
@@ -203,7 +205,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const correctGroup = groups.find((group) => group.name === 'correct');
         const feedbackInGroup = correctGroup!.members[0].feedbackReference;

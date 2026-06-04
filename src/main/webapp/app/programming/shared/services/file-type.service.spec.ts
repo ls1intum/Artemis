@@ -1,9 +1,13 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('FileTypeService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: FileTypeService;
 
     beforeEach(() => {
@@ -15,7 +19,7 @@ describe('FileTypeService', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([

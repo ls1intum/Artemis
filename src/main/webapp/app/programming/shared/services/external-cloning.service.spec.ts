@@ -1,7 +1,11 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 
 describe('ExternalCloningService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExternalCloningService;
     const baseUrl = 'https://artemis.tum.de';
 

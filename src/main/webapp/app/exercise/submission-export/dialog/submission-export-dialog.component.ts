@@ -1,5 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, computed, inject, input, model, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -14,6 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
@@ -24,34 +24,39 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private submissionExportService = inject(SubmissionExportService);
-    activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
     private alertService = inject(AlertService);
 
-    @Input() exerciseId: number;
-    @Input() exerciseType: ExerciseType;
+    readonly exerciseId = input.required<number>();
+    readonly exerciseType = input.required<ExerciseType>();
 
-    exercise: Exercise;
-    exportInProgress: boolean;
-    submissionExportOptions: SubmissionExportOptions;
-    isLoading = false;
+    readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly exportInProgress = signal(false);
+    readonly isLoading = signal(true);
+
+    readonly exportAllParticipants = model(false);
+    readonly filterLateSubmissions = model(false);
+    readonly filterLateSubmissionsDate = model<SubmissionExportOptions['filterLateSubmissionsDate']>(null);
+    readonly participantIdentifierList = model('');
+
+    readonly submissionExportOptions = computed<SubmissionExportOptions>(() => ({
+        exportAllParticipants: this.exportAllParticipants(),
+        filterLateSubmissions: this.filterLateSubmissions(),
+        filterLateSubmissionsDate: this.filterLateSubmissionsDate(),
+        participantIdentifierList: this.participantIdentifierList(),
+    }));
 
     // Icons
     faCircleNotch = faCircleNotch;
 
     ngOnInit() {
-        this.isLoading = true;
-        this.exportInProgress = false;
-        this.submissionExportOptions = {
-            exportAllParticipants: false,
-            filterLateSubmissions: false,
-            filterLateSubmissionsDate: null,
-            participantIdentifierList: '',
-        };
+        this.isLoading.set(true);
+        this.exportInProgress.set(false);
         this.exerciseService
-            .find(this.exerciseId)
+            .find(this.exerciseId())
             .pipe(
                 tap(({ body: exercise }) => {
-                    this.exercise = exercise!;
+                    this.exercise.set(exercise!);
                 }),
                 catchError((err) => {
                     this.alertService.error(err);
@@ -60,28 +65,28 @@ export class SubmissionExportDialogComponent implements OnInit {
                 }),
             )
             .subscribe(() => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
     }
 
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 
     exportSubmissions(exerciseId: number) {
-        this.exportInProgress = true;
-        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe({
+        this.exportInProgress.set(true);
+        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType(), this.submissionExportOptions()).subscribe({
             next: this.handleExportResponse,
             error: () => {
-                this.exportInProgress = false;
+                this.exportInProgress.set(false);
             },
         });
     }
 
     handleExportResponse = (response: HttpResponse<Blob>) => {
         this.alertService.success('artemisApp.instructorDashboard.exportSubmissions.successMessage');
-        this.activeModal.dismiss(true);
-        this.exportInProgress = false;
+        this.dialogRef.close(true);
+        this.exportInProgress.set(false);
         downloadZipFileFromResponse(response);
     };
 }

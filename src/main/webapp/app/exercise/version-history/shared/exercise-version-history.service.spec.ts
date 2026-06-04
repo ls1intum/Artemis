@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -38,7 +39,7 @@ describe('ExerciseVersionHistoryService', () => {
 
         expect(result.versions).toHaveLength(1);
         expect(result.versions[0].id).toBe(3);
-        expect(result.versions[0].createdDate?.isValid()).toBeTruthy();
+        expect(result.versions[0].createdDate?.isValid()).toBe(true);
         expect(result.nextPage).toBe(1);
         expect(result.totalItems).toBe(50);
     });

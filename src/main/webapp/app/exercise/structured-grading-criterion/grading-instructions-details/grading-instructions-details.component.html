@@ -1,5 +1,6 @@
+@let currentExercise = exercise();
 <!--- Template If Grading Instructions are not used in Assessment --->
-@if (!exercise.gradingInstructionFeedbackUsed) {
+@if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
         <div class="col-12 col-sm-auto d-flex me-1 mb-1">
             <button id="edit-mode" class="btn btn-block" (click)="switchMode()" [ngClass]="{ 'btn-secondary': showEditMode, 'btn-default': !showEditMode }">
@@ -13,7 +14,7 @@
             <!--- Edit Mode --->
             @if (showEditMode) {
                 <div>
-                    @for (criterion of exercise.gradingCriteria; track criterion) {
+                    @for (criterion of currentExercise.gradingCriteria; track criterion) {
                         <div>
                             <div class="row border p-2 criterion-title-row">
                                 <div class="col-md-9 text-start">
@@ -170,7 +171,7 @@
     </div>
 }
 <!--- Template If Grading Instructions are used in Assessment --->
-@if (exercise.gradingInstructionFeedbackUsed) {
+@if (currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
         <div class="grading-instructions-update-border">
             <div class="instructions pb-2 row-cols-2">
@@ -186,7 +187,7 @@
                     [showPreviewButton]="false"
                 />
             </div>
-            @for (criteria of exercise.gradingCriteria; track criteria) {
+            @for (criteria of currentExercise.gradingCriteria; track criteria) {
                 <div>
                     <div class="criteria-content pb-2">
                         <div class="row">
