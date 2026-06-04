@@ -487,6 +487,7 @@ test.describe('Exam participation', () => {
                 for (const student of students) {
                     const studentContext = await browser.newContext();
                     const studentPage = await studentContext.newPage();
+                    await addE2EInitScript(studentPage);
                     studentPages.push(studentPage);
 
                     await Commands.login(studentPage, student);

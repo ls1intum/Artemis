@@ -329,7 +329,8 @@ export async function newBrowserPage(browser: Browser) {
  * `baseFixtures.ts` and must also be applied to pages created by `newBrowserPage`.
  */
 export async function addE2EInitScript(page: Page) {
-    await page.addInitScript(() => {
+    // Register on the context so the suppression also applies to pages created later.
+    await page.context().addInitScript(() => {
         // Hide the notification popup overlay
         const injectStyle = () => {
             const style = document.createElement('style');
