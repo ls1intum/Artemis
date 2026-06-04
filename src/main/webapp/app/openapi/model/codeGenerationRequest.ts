@@ -26,3 +26,4 @@ export namespace CodeGenerationRequest {
     export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
 }
 
+

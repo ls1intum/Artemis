@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 
 
 /**
@@ -16,6 +17,6 @@ export interface QuizQuestionGenerationResponse {
     /**
      * Generated quiz questions
      */
-    questions: Array<any>;
+    questions: Array<GeneratedQuizQuestion>;
 }
 
