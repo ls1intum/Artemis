@@ -171,4 +171,11 @@ export interface SidebarCardElement {
     attendanceText?: string;
 
     attendanceChipColor?: string;
+
+    /**
+     * Optional nested cards. When set, this card acts as a header for a group of exercises (e.g. a
+     * course-level exercise group) and the nested cards are rendered indented underneath it. Existing
+     * sidebars do not set this, so their rendering is unaffected.
+     */
+    groupedItems?: SidebarCardElement[];
 }

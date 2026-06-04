@@ -43,16 +43,47 @@
                             <div>
                                 @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem.id) {
                                     <div [ngClass]="{ 'mb-2': !last }">
-                                        <!-- loading sidebarCard with help of a directive depending on its size input-->
-                                        <div
-                                            jhiSidebarCard
-                                            [size]="sidebarItem.size"
-                                            [itemSelected]="itemSelected"
-                                            [sidebarType]="sidebarType"
-                                            [sidebarItem]="sidebarItem"
-                                            [groupKey]="groupKey"
-                                            (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                        ></div>
+                                        <!-- Optional nested group: the header card and its exercises sit inside one container -->
+                                        @if (sidebarItem.groupedItems?.length) {
+                                            <div class="sidebar-group">
+                                                <div
+                                                    class="sidebar-group-header"
+                                                    jhiSidebarCard
+                                                    [size]="sidebarItem.size"
+                                                    [itemSelected]="itemSelected"
+                                                    [sidebarType]="sidebarType"
+                                                    [sidebarItem]="sidebarItem"
+                                                    [groupKey]="groupKey"
+                                                    (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                                ></div>
+                                                <div class="sidebar-group-content">
+                                                    @for (variant of sidebarItem.groupedItems; track variant.id) {
+                                                        <div>
+                                                            <div
+                                                                jhiSidebarCard
+                                                                [size]="variant.size"
+                                                                [itemSelected]="itemSelected"
+                                                                [sidebarType]="sidebarType"
+                                                                [sidebarItem]="variant"
+                                                                [groupKey]="groupKey"
+                                                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                                            ></div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        } @else {
+                                            <!-- loading sidebarCard with help of a directive depending on its size input-->
+                                            <div
+                                                jhiSidebarCard
+                                                [size]="sidebarItem.size"
+                                                [itemSelected]="itemSelected"
+                                                [sidebarType]="sidebarType"
+                                                [sidebarItem]="sidebarItem"
+                                                [groupKey]="groupKey"
+                                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                            ></div>
+                                        }
                                     </div>
                                 }
                             </div>

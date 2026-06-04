@@ -17,6 +17,27 @@ import { CourseExerciseGroup, ExerciseRelation, ExerciseRelationEndpointKind, Ex
 // Semester: Summer 2026  (2026-04-13 – 2026-07-24)
 const WEEK = (offsetWeeks: number): dayjs.Dayjs => dayjs('2026-04-13').add(offsetWeeks, 'week');
 
+// A generic markdown problem statement so the student exercise detail view has something to render.
+// Kept free of [task] / test-case syntax so it renders without participations or build results.
+function mockProblemStatement(title: string): string {
+    return (
+        `## ${title}\n\n` +
+        'In this exercise you will practice the concepts introduced in the corresponding lecture.\n\n' +
+        '### Background\n' +
+        'Read through the scenario carefully before you start. Pay attention to the expected inputs and outputs.\n\n' +
+        '### Your tasks\n' +
+        '1. Analyse the problem and sketch your approach.\n' +
+        '2. Implement the required functionality step by step.\n' +
+        '3. Verify your solution against the provided examples.\n\n' +
+        '### Example\n' +
+        '```\n' +
+        'Input:  [1, 2, 3, 4]\n' +
+        'Output: 10\n' +
+        '```\n\n' +
+        '> **Hint:** Break the problem into small steps and test each one before moving on.'
+    );
+}
+
 function base(id: number, title: string, shortName: string, week: number, durationDays = 7): Partial<Exercise> {
     return {
         id,
@@ -28,6 +49,7 @@ function base(id: number, title: string, shortName: string, week: number, durati
         assessmentDueDate: WEEK(week).add(durationDays + 3, 'day'),
         mode: ExerciseMode.INDIVIDUAL,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+        problemStatement: mockProblemStatement(title),
     };
 }
 
