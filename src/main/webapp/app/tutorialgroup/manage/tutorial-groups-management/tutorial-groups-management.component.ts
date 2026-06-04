@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, combineLatest, finalize } from 'rxjs';
@@ -25,7 +25,6 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/ser
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
@@ -70,7 +69,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     configuration: TutorialGroupsConfiguration;
 
     isLoading = false;
-    tutorialGroups: TutorialGroup[] = [];
+    tutorialGroups: TutorialGroupSummary[] = [];
     faPlus = faPlus;
     faUmbrellaBeach = faUmbrellaBeach;
 
@@ -100,7 +99,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
         const tutorialGroupObservable = this.tutorialGroupApiService
             .getTutorialGroupsForCourse(this.courseId, 'response')
-            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res as HttpResponse<TutorialGroup[]>)));
+            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res)));
         const tutorialGroupsConfigurationObservable = this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
 
         combineLatest([tutorialGroupObservable, tutorialGroupsConfigurationObservable])

@@ -4,6 +4,8 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
+import { TutorialGroupSummarySession } from 'app/openapi/model/tutorialGroupSummarySession';
 
 export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
     tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
@@ -11,7 +13,7 @@ export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreeP
     return tutorialGroupFreePeriod;
 }
 
-export function convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: LegacyTutorialGroupSession): LegacyTutorialGroupSession {
+export function convertTutorialGroupSessionDatesFromServer<T extends LegacyTutorialGroupSession | TutorialGroupSummarySession>(tutorialGroupSession: T): T {
     tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
     tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
     if (tutorialGroupSession.tutorialGroupFreePeriod) {
@@ -32,35 +34,37 @@ export function convertTutorialGroupsConfigurationDatesFromServer(tutorialGroups
     return tutorialGroupsConfiguration;
 }
 
-export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {
+export function convertTutorialGroupDatesFromServer<T extends TutorialGroup | TutorialGroupSummary>(tutorialGroup: T): T {
     if (tutorialGroup.tutorialGroupSchedule) {
         tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive);
         tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
     }
     if (tutorialGroup.tutorialGroupSessions) {
-        tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
+        tutorialGroup.tutorialGroupSessions.forEach((tutorialGroupSession: LegacyTutorialGroupSession | TutorialGroupSummarySession) =>
+            convertTutorialGroupSessionDatesFromServer(tutorialGroupSession),
+        );
     }
-    if (tutorialGroup.nextSession) {
+    if ('nextSession' in tutorialGroup && tutorialGroup.nextSession) {
         tutorialGroup.nextSession = convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
     }
-    if (tutorialGroup.course?.tutorialGroupsConfiguration) {
+    if ('course' in tutorialGroup && tutorialGroup.course?.tutorialGroupsConfiguration) {
         tutorialGroup.course.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(tutorialGroup.course?.tutorialGroupsConfiguration);
     }
     return tutorialGroup;
 }
 
-export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
+export function convertTutorialGroupArrayDatesFromServer<T extends TutorialGroup | TutorialGroupSummary>(tutorialGroups: T[]): T[] {
     if (tutorialGroups) {
-        tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
+        tutorialGroups.forEach((tutorialGroup: T) => {
             convertTutorialGroupDatesFromServer(tutorialGroup);
         });
     }
     return tutorialGroups;
 }
 
-export function convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
+export function convertTutorialGroupResponseArrayDatesFromServer<T extends TutorialGroup | TutorialGroupSummary>(res: HttpResponse<T[]>): HttpResponse<T[]> {
     if (res.body) {
-        res.body.forEach((tutorialGroup: TutorialGroup) => {
+        res.body.forEach((tutorialGroup: T) => {
             convertTutorialGroupDatesFromServer(tutorialGroup);
         });
     }

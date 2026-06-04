@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,7 +25,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     readonly isAtLeastInstructor = input(false);
     readonly course = input.required<Course>();
-    readonly tutorialGroup = input.required<TutorialGroup>();
+    readonly tutorialGroup = input.required<TutorialGroup | TutorialGroupSummary>();
 
     readonly tutorialGroupDeleted = output<void>();
     readonly registrationsChanged = output<void>();

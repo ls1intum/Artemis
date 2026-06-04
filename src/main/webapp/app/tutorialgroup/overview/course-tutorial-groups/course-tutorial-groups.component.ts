@@ -3,6 +3,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { filter, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
@@ -18,7 +19,6 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { HttpResponse } from '@angular/common/http';
 import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
@@ -54,7 +54,7 @@ export class CourseTutorialGroupsComponent {
     private sessionStorageService = inject(SessionStorageService);
 
     courseId = this.getCurrentCourseIdSignal();
-    tutorialGroups = signal<TutorialGroup[]>([]);
+    tutorialGroups = signal<Array<TutorialGroup | TutorialGroupSummary>>([]);
     tutorialLectures = signal<Lecture[]>([]);
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
@@ -109,7 +109,7 @@ export class CourseTutorialGroupsComponent {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId, 'response')
-            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res as HttpResponse<TutorialGroup[]>)))
+            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res)))
             .subscribe({
                 next: ({ body }) => {
                     const tutorialGroups = body ?? [];
@@ -120,10 +120,10 @@ export class CourseTutorialGroupsComponent {
             });
     }
 
-    private updateCachedTutorialGroups(tutorialGroups: TutorialGroup[], courseId: number) {
+    private updateCachedTutorialGroups(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>, courseId: number) {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
-            course.tutorialGroups = tutorialGroups;
+            course.tutorialGroups = tutorialGroups as TutorialGroup[];
             this.courseStorageService.updateCourse(course);
         }
     }
@@ -150,8 +150,8 @@ export class CourseTutorialGroupsComponent {
         this.courseStorageService.updateCourse(course);
     }
 
-    private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
-        const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
+    private prepareSidebarData(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>, tutorialLectures: Lecture[]) {
+        const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups as TutorialGroup[]);
         const tutorialLectureCardElements = this.courseOverviewService.mapLecturesToSidebarCardElements(tutorialLectures);
         const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
         const accordionGroups: AccordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
@@ -163,7 +163,7 @@ export class CourseTutorialGroupsComponent {
         });
     }
 
-    private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
+    private createAccordionGroups(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>, tutorialLectures: Lecture[]): AccordionGroups {
         const accordionGroups: AccordionGroups = {
             allGroups: { entityData: [] },
             registeredGroups: { entityData: [] },
@@ -176,7 +176,7 @@ export class CourseTutorialGroupsComponent {
 
         const hasUserAtLeastOneTutorialGroup = tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
         tutorialGroups.forEach((tutorialGroup) => {
-            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup as TutorialGroup);
             if (!hasUserAtLeastOneTutorialGroup) {
                 tutorialGroupCategory = 'allGroups';
             } else {
@@ -204,8 +204,8 @@ export class CourseTutorialGroupsComponent {
         return accordionGroups;
     }
 
-    private autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups: TutorialGroup[]) {
-        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
+    private autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>) {
+        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups as TutorialGroup[]);
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {

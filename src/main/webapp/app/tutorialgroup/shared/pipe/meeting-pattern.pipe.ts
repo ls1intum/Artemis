@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
+import { TutorialGroupSummarySchedule } from 'app/openapi/model/tutorialGroupSummarySchedule';
 import { TranslateService } from '@ngx-translate/core';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
@@ -22,7 +23,7 @@ export class MeetingPatternPipe implements PipeTransform {
      * @param includeRepetitionFrequency whether the repetition frequency should be included in the output.
      * @returns The translated meeting pattern.
      */
-    transform(schedule: TutorialGroupSchedule | undefined, includeRepetitionFrequency = false): string {
+    transform(schedule: TutorialGroupSchedule | TutorialGroupSummarySchedule | undefined, includeRepetitionFrequency = false): string {
         if (!schedule) {
             return '';
         }

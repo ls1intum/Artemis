@@ -19,12 +19,15 @@ const getAllOpenApiFiles = (dir: string): string[] => {
 
 const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any, renamedMethodsInFile: number) => {
     for (const clazz of sourceFile.getClasses()) {
+        const existingMethodNames = new Set(clazz.getMethods().map((m: any) => m.getName()));
         for (const method of clazz.getMethods()) {
             const oldName = method.getName();
             const newName = oldName.replace(/^_+/, "").replace(/\d+$/, "");
-            if (newName !== oldName) {
+            if (newName !== oldName && !existingMethodNames.has(newName)) {
                 method.getNameNode().rename(newName);
                 renamedMethodsInFile++;
+                existingMethodNames.delete(oldName);
+                existingMethodNames.add(newName);
                 console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
             }
         }

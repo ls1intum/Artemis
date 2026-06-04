@@ -1751,7 +1751,7 @@ components:
         hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
         explanation: {type: string, description: Optional explanation, maxLength: 2000,
           minLength: 0}
-      required: [text]
+      required: [correct, text]
     TutorialGroupFreePeriod:
       type: object
       properties:

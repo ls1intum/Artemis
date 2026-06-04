@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, TemplateRef, contentChild, effect, inject, input } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
@@ -30,7 +31,7 @@ export class TutorialGroupsTableComponent {
 
     readonly showChannelColumn = input(false);
 
-    readonly tutorialGroups = input<TutorialGroup[]>([]);
+    readonly tutorialGroups = input<Array<TutorialGroup | TutorialGroupSummary>>([]);
 
     readonly course = input.required<Course>();
 
@@ -77,7 +78,7 @@ export class TutorialGroupsTableComponent {
         });
     }
 
-    trackId(index: number, item: TutorialGroup) {
+    trackId(index: number, item: TutorialGroup | TutorialGroupSummary) {
         return item.id;
     }
 

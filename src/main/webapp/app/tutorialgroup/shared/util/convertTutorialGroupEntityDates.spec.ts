@@ -16,6 +16,8 @@ import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutoria
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Dayjs } from 'dayjs/esm';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
+import { TutorialGroupSummarySession } from 'app/openapi/model/tutorialGroupSummarySession';
 
 const START = '2026-03-26T10:00:00.000Z';
 const END = '2026-03-26T12:00:00.000Z';
@@ -157,5 +159,25 @@ describe('convertTutorialGroupEntityDates', () => {
 
         expect(dayjs.isDayjs(result.body?.[0].nextSession?.start)).toBe(true);
         expect(dayjs.isDayjs(result.body?.[0].nextSession?.end)).toBe(true);
+    });
+
+    it('should convert tutorial group summary response arrays from the server', () => {
+        const response = new HttpResponse<TutorialGroupSummary[]>({
+            body: [
+                {
+                    tutorialGroupSessions: [
+                        {
+                            start: START,
+                            end: END,
+                        } as TutorialGroupSummarySession,
+                    ],
+                } as TutorialGroupSummary,
+            ],
+        });
+
+        const result = convertTutorialGroupResponseArrayDatesFromServer(response);
+
+        expect(dayjs.isDayjs(result.body?.[0].tutorialGroupSessions?.[0].start)).toBe(true);
+        expect(dayjs.isDayjs(result.body?.[0].tutorialGroupSessions?.[0].end)).toBe(true);
     });
 });
