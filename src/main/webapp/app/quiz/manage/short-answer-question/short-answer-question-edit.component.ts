@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -12,7 +12,7 @@ import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-questio
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
-import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD, MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
@@ -69,7 +69,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
-    private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -103,6 +102,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     readonly questionMoveDown = output<void>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+    // Existing quiz validation rejects titles whose length reaches the shared threshold.
+    readonly MAX_QUESTION_TITLE_LENGTH = MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1;
 
     questionEditorText = '';
     showVisualMode: boolean;
@@ -182,6 +183,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
+    }
+
+    isQuestionTitleLengthLimitReached(): boolean {
+        return (this.shortAnswerQuestion.title?.length ?? 0) >= this.MAX_QUESTION_TITLE_LENGTH;
     }
 
     /**
@@ -360,13 +365,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             const spotForMapping = this.shortAnswerQuestion.spots?.find((spot) => spot.spotNr === id)!;
             this.shortAnswerQuestion.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
-    }
-
-    /**
-     * This function opens the modal for the help dialog.
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
@@ -793,6 +791,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     setQuestionEditorValue(text: string): void {
-        this.questionEditor().markdown = text;
+        this.questionEditor().setMarkdown(text);
     }
 }

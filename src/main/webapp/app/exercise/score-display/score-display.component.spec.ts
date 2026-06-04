@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -7,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ScoreDisplayComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ScoreDisplayComponent>;
     let component: ScoreDisplayComponent;
 

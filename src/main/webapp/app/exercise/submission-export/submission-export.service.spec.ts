@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -5,6 +7,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Submission Export Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: SubmissionExportService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -20,7 +24,7 @@ describe('Submission Export Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('check exercise url for text exercise', () => {
@@ -65,6 +69,6 @@ describe('Submission Export Service', () => {
             .subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(new Blob());
-        expect(expectedResult).toBeTrue();
+        expect(expectedResult).toBe(true);
     });
 });

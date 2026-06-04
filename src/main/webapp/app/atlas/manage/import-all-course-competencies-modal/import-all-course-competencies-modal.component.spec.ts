@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +16,7 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
     let component: ImportAllCourseCompetenciesModalComponent;
     let fixture: ComponentFixture<ImportAllCourseCompetenciesModalComponent>;
 
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
     let closeModalSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
@@ -32,22 +32,23 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
                     useClass: MockTranslateService,
                 },
                 {
-                    provide: NgbActiveModal,
+                    provide: DynamicDialogRef,
                     useValue: {
-                        close(result?: any): Promise<any | undefined> {
-                            return Promise.resolve(result);
-                        },
+                        close: vi.fn(),
                     },
+                },
+                {
+                    provide: DynamicDialogConfig,
+                    useValue: { data: { courseId } },
                 },
             ],
         }).compileComponents();
 
-        activeModal = TestBed.inject(NgbActiveModal);
-        closeModalSpy = vi.spyOn(activeModal, 'close');
+        dialogRef = TestBed.inject(DynamicDialogRef);
+        closeModalSpy = vi.spyOn(dialogRef, 'close');
 
         fixture = TestBed.createComponent(ImportAllCourseCompetenciesModalComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('courseId', courseId);
     });
 
     it('should initialize', () => {

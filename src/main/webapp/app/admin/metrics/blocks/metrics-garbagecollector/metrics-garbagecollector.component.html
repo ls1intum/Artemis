@@ -7,15 +7,15 @@
                     GC Live Data Size/GC Max Data Size ({{ garbageCollectorMetrics()['jvm.gc.live.data.size'] / 1048576 | number: '1.0-0' }}M /
                     {{ garbageCollectorMetrics()['jvm.gc.max.data.size'] / 1048576 | number: '1.0-0' }}M)
                 </span>
-                <ngb-progressbar
-                    [max]="garbageCollectorMetrics()['jvm.gc.max.data.size']"
-                    [value]="garbageCollectorMetrics()['jvm.gc.live.data.size']"
-                    [striped]="true"
-                    [animated]="false"
-                    type="success"
+                <p-progressbar
+                    [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size'])"
+                    [showValue]="false"
+                    color="var(--bs-success, #28a745)"
                 >
-                    <span> {{ (100 * garbageCollectorMetrics()['jvm.gc.live.data.size']) / garbageCollectorMetrics()['jvm.gc.max.data.size'] | number: '1.0-2' }}% </span>
-                </ngb-progressbar>
+                    <ng-template #content>
+                        {{ toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size']) | number: '1.0-2' }}%
+                    </ng-template>
+                </p-progressbar>
             </div>
         }
     </div>
@@ -27,15 +27,15 @@
                 GC Memory Promoted/GC Memory Allocated ({{ garbageCollectorMetrics()['jvm.gc.memory.promoted'] / 1048576 | number: '1.0-0' }}M /
                 {{ garbageCollectorMetrics()['jvm.gc.memory.allocated'] / 1048576 | number: '1.0-0' }}M)
             </span>
-            <ngb-progressbar
-                [max]="garbageCollectorMetrics()['jvm.gc.memory.allocated']"
-                [value]="garbageCollectorMetrics()['jvm.gc.memory.promoted']"
-                [striped]="true"
-                [animated]="false"
-                type="success"
+            <p-progressbar
+                [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated'])"
+                [showValue]="false"
+                color="var(--bs-success, #28a745)"
             >
-                <span> {{ (100 * garbageCollectorMetrics()['jvm.gc.memory.promoted']) / garbageCollectorMetrics()['jvm.gc.memory.allocated'] | number: '1.0-2' }}% </span>
-            </ngb-progressbar>
+                <ng-template #content>
+                    {{ toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated']) | number: '1.0-2' }}%
+                </ng-template>
+            </p-progressbar>
         </div>
     }
 </div>

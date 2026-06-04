@@ -802,7 +802,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
      */
     describe('CRLF normalization for problem statement sync', () => {
         const setupSyncTest = () => {
-            const mockModel = editor.create().getModel();
+            // getModel() is typed `MockTextModel | null` (matching Monaco); a freshly created editor always has a model.
+            const mockModel = editor.create().getModel()!;
             const setValueSpy = jest.spyOn(mockModel, 'setValue');
             const setEOLSpy = jest.spyOn(mockModel, 'setEOL');
             const mockEditorInstance = editor.create();

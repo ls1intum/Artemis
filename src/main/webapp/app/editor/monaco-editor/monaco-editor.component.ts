@@ -165,6 +165,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 readOnly: isReadOnly,
                 originalEditable: false,
                 renderSideBySide,
+                // When side-by-side is requested, prevent Monaco from silently collapsing to the inline
+                // (unified) view in narrow containers, so the split-view toggle is always honored.
+                useInlineViewWhenSpaceIsLimited: !renderSideBySide,
             });
         });
 
@@ -323,6 +326,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this._diffEditor.updateOptions({
                 originalEditable: false,
                 renderSideBySide: this.renderSideBySide(),
+                // See the options effect: keep the requested side-by-side layout instead of letting Monaco
+                // fall back to the inline view when the container is narrow.
+                useInlineViewWhenSpaceIsLimited: !this.renderSideBySide(),
             });
         }
 

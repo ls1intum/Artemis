@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SimpleChange } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -18,17 +20,19 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
 
-const collapse = jest.fn();
-const setSizes = jest.fn();
+const collapse = vi.fn();
+const setSizes = vi.fn();
 
-jest.mock('split.js', () => ({
-    default: jest.fn().mockImplementation(() => ({
+vi.mock('split.js', () => ({
+    default: vi.fn().mockImplementation(() => ({
         collapse,
         setSizes,
     })),
 }));
 
 describe('Plagiarism Split View Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: PlagiarismSplitViewComponent;
     let fixture: ComponentFixture<PlagiarismSplitViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
@@ -52,7 +56,7 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(TextSubmissionViewerComponent)],
+            imports: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(TextSubmissionViewerComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
@@ -70,7 +74,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('checks type of text exercise', () => {
@@ -78,27 +82,27 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBe(true);
     });
 
-    it('should parse text matches for comparison', fakeAsync(() => {
+    it('should parse text matches for comparison', async () => {
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
-        jest.spyOn(comp, 'parseTextMatches');
-        jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        vi.spyOn(comp, 'parseTextMatches');
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
         comp.ngOnChanges({
             exercise: { currentValue: textExercise } as SimpleChange,
             comparison: { currentValue: comparison } as SimpleChange,
         });
 
-        tick();
+        await Promise.resolve();
 
-        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBe(true);
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should subscribe to the split control subject', () => {
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
-        const subscribeSpy = jest.spyOn(splitControlSubject, 'subscribe');
+        const subscribeSpy = vi.spyOn(splitControlSubject, 'subscribe');
 
         comp.ngOnInit();
 
@@ -140,7 +144,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should parse text matches', () => {
-        jest.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map<string, FromToElement[]>());
+        vi.spyOn(comp, 'mapMatchesToElements').mockReturnValue(new Map<string, FromToElement[]>());
 
         const matches: PlagiarismMatch[] = [
             { startA: 0, startB: 0, length: 5 },

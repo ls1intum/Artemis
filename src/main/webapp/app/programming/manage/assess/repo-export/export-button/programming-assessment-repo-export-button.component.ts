@@ -46,7 +46,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
      * @param {MouseEvent} event - Mouse event
      */
     openRepoExportDialog(event: MouseEvent) {
-        this.buttonPressed.emit();
+        this.buttonPressed.emit(undefined);
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.programmingExercises = this.programmingExercises;

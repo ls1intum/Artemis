@@ -184,14 +184,11 @@
     <!-- Pagination for Decided Requests -->
     @if (totalDecidedCount() > decidedPageSize) {
         <div class="d-flex justify-content-center mt-3">
-            <ngb-pagination
-                [collectionSize]="totalDecidedCount()"
-                [page]="decidedPage()"
-                (pageChange)="decidedPage.set($event); onDecidedPageChange()"
-                [pageSize]="decidedPageSize"
-                [maxSize]="5"
-                [rotate]="true"
-                [boundaryLinks]="true"
+            <p-paginator
+                [first]="(decidedPage() - 1) * decidedPageSize"
+                [rows]="decidedPageSize"
+                [totalRecords]="totalDecidedCount()"
+                (onPageChange)="onDecidedPaginatorChange($event)"
             />
         </div>
     }

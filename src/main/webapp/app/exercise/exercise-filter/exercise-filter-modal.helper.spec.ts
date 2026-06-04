@@ -39,37 +39,37 @@ describe('satisfiesDifficultyFilter', () => {
         const difficultyFilter = undefined;
 
         const resultItemWithDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_1, difficultyFilter);
-        expect(resultItemWithDifficulty).toBeTrue();
+        expect(resultItemWithDifficulty).toBe(true);
 
         const resultItemWithoutDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_4, difficultyFilter);
-        expect(resultItemWithoutDifficulty).toBeTrue();
+        expect(resultItemWithoutDifficulty).toBe(true);
     });
 
     it('should return true if difficulty filter is []', () => {
         const difficultyFilter: DifficultyLevel[] = [];
 
         const resultItemWithDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_1, difficultyFilter);
-        expect(resultItemWithDifficulty).toBeTrue();
+        expect(resultItemWithDifficulty).toBe(true);
 
         const resultItemWithoutDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_4, difficultyFilter);
-        expect(resultItemWithoutDifficulty).toBeTrue();
+        expect(resultItemWithoutDifficulty).toBe(true);
     });
 
     it('should return true if difficulty is in difficulty filter', () => {
         const difficultyFilter = [DifficultyLevel.HARD];
 
         const resultItemWithDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_1, difficultyFilter);
-        expect(resultItemWithDifficulty).toBeTrue();
+        expect(resultItemWithDifficulty).toBe(true);
     });
 
     it('should return false if difficulty is NOT in difficulty filter', () => {
         const difficultyFilter = [DifficultyLevel.HARD];
 
         const resultItemWithDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_2, difficultyFilter);
-        expect(resultItemWithDifficulty).toBeFalse();
+        expect(resultItemWithDifficulty).toBe(false);
 
         const resultItemWithoutDifficulty = satisfiesDifficultyFilter(SIDEBAR_CARD_ELEMENT_4, difficultyFilter);
-        expect(resultItemWithoutDifficulty).toBeFalse();
+        expect(resultItemWithoutDifficulty).toBe(false);
     });
 });
 
@@ -78,27 +78,27 @@ describe('satisfiesCategoryFilter', () => {
         const categoryFilter: ExerciseCategory[] = [];
 
         const resultItemWithCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
-        expect(resultItemWithCategory).toBeTrue();
+        expect(resultItemWithCategory).toBe(true);
 
         const resultItemWithoutCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_5, categoryFilter);
-        expect(resultItemWithoutCategory).toBeTrue();
+        expect(resultItemWithoutCategory).toBe(true);
     });
 
     it('should return true category is included in difficulty filter', () => {
         const categoryFilter = [new ExerciseCategory('category1', '#691b0b')];
 
         const resultItemWithMatchingCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
-        expect(resultItemWithMatchingCategory).toBeTrue();
+        expect(resultItemWithMatchingCategory).toBe(true);
     });
 
     it('should return false if difficulty is NOT in difficulty filter', () => {
         const categoryFilter = [new ExerciseCategory('notExistingCategory', '#691b0b')];
 
         const resultItemWithCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_1, categoryFilter);
-        expect(resultItemWithCategory).toBeFalse();
+        expect(resultItemWithCategory).toBe(false);
 
         const resultItemWithoutCategory = satisfiesCategoryFilter(SIDEBAR_CARD_ELEMENT_5, categoryFilter);
-        expect(resultItemWithoutCategory).toBeFalse();
+        expect(resultItemWithoutCategory).toBe(false);
     });
 });
 
@@ -107,10 +107,10 @@ describe('satisfiesScoreFilter', () => {
         const scoreFilter = undefined;
 
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_1, true, scoreFilter);
-        expect(resultItemWithScore).toBeTrue();
+        expect(resultItemWithScore).toBe(true);
 
         const resultItemWithoutScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
-        expect(resultItemWithoutScore).toBeTrue();
+        expect(resultItemWithoutScore).toBe(true);
     });
 
     it('should return true if score filter is not applied', () => {
@@ -126,10 +126,10 @@ describe('satisfiesScoreFilter', () => {
         };
 
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_1, false, scoreFilter);
-        expect(resultItemWithScore).toBeTrue();
+        expect(resultItemWithScore).toBe(true);
 
         const resultItemWithoutScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, false, scoreFilter);
-        expect(resultItemWithoutScore).toBeTrue();
+        expect(resultItemWithoutScore).toBe(true);
     });
 
     it('should return true if score is in score filter', () => {
@@ -145,7 +145,7 @@ describe('satisfiesScoreFilter', () => {
         };
 
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_1, true, scoreFilter);
-        expect(resultItemWithScore).toBeTrue();
+        expect(resultItemWithScore).toBe(true);
     });
 
     it('should return false if score is NOT in score filter', () => {
@@ -161,10 +161,10 @@ describe('satisfiesScoreFilter', () => {
         };
 
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_1, true, scoreFilter);
-        expect(resultItemWithScore).toBeFalse();
+        expect(resultItemWithScore).toBe(false);
 
         const resultItemWithoutScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
-        expect(resultItemWithoutScore).toBeFalse();
+        expect(resultItemWithoutScore).toBe(false);
     });
 
     it('should return true if score of participation is not defined (not participated) and lower bound is 0', () => {
@@ -179,7 +179,7 @@ describe('satisfiesScoreFilter', () => {
             },
         };
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
-        expect(resultItemWithScore).toBeTrue();
+        expect(resultItemWithScore).toBe(true);
     });
 
     it('should return false if score of participation is not defined (not participated) and lower bound is NOT 0', () => {
@@ -194,7 +194,7 @@ describe('satisfiesScoreFilter', () => {
             },
         };
         const resultItemWithScore = satisfiesScoreFilter(SIDEBAR_CARD_ELEMENT_4, true, scoreFilter);
-        expect(resultItemWithScore).toBeFalse();
+        expect(resultItemWithScore).toBe(false);
     });
 });
 
@@ -203,10 +203,10 @@ describe('satisfiesPointsFilter', () => {
         const pointsFilter = undefined;
 
         const resultItemWithPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_1, true, pointsFilter);
-        expect(resultItemWithPoints).toBeTrue();
+        expect(resultItemWithPoints).toBe(true);
 
         const resultItemWithoutPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_4, true, pointsFilter);
-        expect(resultItemWithoutPoints).toBeTrue();
+        expect(resultItemWithoutPoints).toBe(true);
     });
 
     it('should return true if points filter is not applied', () => {
@@ -222,10 +222,10 @@ describe('satisfiesPointsFilter', () => {
         };
 
         const resultItemWithPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_1, false, pointsFilter);
-        expect(resultItemWithPoints).toBeTrue();
+        expect(resultItemWithPoints).toBe(true);
 
         const resultItemWithoutPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_4, false, pointsFilter);
-        expect(resultItemWithoutPoints).toBeTrue();
+        expect(resultItemWithoutPoints).toBe(true);
     });
 
     it('should return true if points is in points filter', () => {
@@ -241,7 +241,7 @@ describe('satisfiesPointsFilter', () => {
         };
 
         const resultItemWithPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_1, true, pointsFilter);
-        expect(resultItemWithPoints).toBeTrue();
+        expect(resultItemWithPoints).toBe(true);
     });
 
     it('should return false if points is NOT in points filter', () => {
@@ -257,10 +257,10 @@ describe('satisfiesPointsFilter', () => {
         };
 
         const resultItemWithPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_1, true, pointsFilter);
-        expect(resultItemWithPoints).toBeFalse();
+        expect(resultItemWithPoints).toBe(false);
 
         const resultItemWithoutPoints = satisfiesPointsFilter(SIDEBAR_CARD_ELEMENT_4, true, pointsFilter);
-        expect(resultItemWithoutPoints).toBeFalse();
+        expect(resultItemWithoutPoints).toBe(false);
     });
 });
 
@@ -295,7 +295,7 @@ describe('satisfiesFilters', () => {
         };
         const resultItem = satisfiesFilters(SIDEBAR_CARD_ELEMENT_1, filter);
 
-        expect(resultItem).toBeTrue();
+        expect(resultItem).toBe(true);
     });
 
     it('should return false if item does not satisfy the score filter', () => {
@@ -328,6 +328,6 @@ describe('satisfiesFilters', () => {
         };
         const resultItem = satisfiesFilters(SIDEBAR_CARD_ELEMENT_1, filter);
 
-        expect(resultItem).toBeTrue();
+        expect(resultItem).toBe(true);
     });
 });
