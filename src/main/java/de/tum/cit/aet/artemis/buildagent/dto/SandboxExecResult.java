@@ -16,15 +16,14 @@ import java.io.Serializable;
  */
 public record SandboxExecResult(int exitCode, String stdout, String stderr, boolean timedOut) implements Serializable {
 
-    /**
-     * @return {@code true} if the command finished with a zero exit code and did not time out
-     */
     public boolean isSuccess() {
         return exitCode == 0 && !timedOut;
     }
 
     /**
-     * @return the merged standard output and error, the form most useful as a single observation for the agent
+     * Merges stdout and stderr into the single observation form the agent reasons over.
+     *
+     * @return stdout and stderr joined (whichever are non-empty), or an empty string when both are empty
      */
     public String combinedOutput() {
         if (stderr == null || stderr.isEmpty()) {

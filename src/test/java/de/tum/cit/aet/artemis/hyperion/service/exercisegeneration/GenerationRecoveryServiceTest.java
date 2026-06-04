@@ -146,14 +146,7 @@ class GenerationRecoveryServiceTest {
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
     }
 
-    /**
-     * RECOVERY UNDER FAILURE (the half-commit mislabel, now FIXED). When the draft commit SUCCEEDS but the review-comment annotation throws afterwards, {@code recover} must NOT
-     * propagate the throwable: the draft IS durably committed, so re-reporting it as {@code PARTIAL} ("nothing saved / exercise left untouched") would mislabel a saved, unverified
-     * draft as if nothing happened. Instead recovery swallows the annotation failure and returns {@link GenerationRecoveryService#REVIEW_COMMENTS_FAILED} ({@code -1}), so the
-     * caller
-     * still emits {@code NEEDS_REVIEW} (never PARTIAL) with a degraded "review notes could not be attached" message. Only a failure of the persist STEP itself (nothing durable
-     * saved) propagates and maps to PARTIAL — covered separately.
-     */
+    /** When persist succeeds but the review-comment annotation throws, recover swallows it and returns the degraded sentinel rather than propagating (the draft IS saved). */
     @Test
     void recover_persistSucceedsThenThreadCreationThrows_returnsDegradedSentinel_neverPropagates() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one", "gap two"));
@@ -171,11 +164,7 @@ class GenerationRecoveryServiceTest {
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
     }
 
-    /**
-     * W3 FIX (adapt safety) at the recovery layer: when the persistence layer reports the draft was diverted to an isolated branch ({@code liveExerciseUntouched=true}), the
-     * {@code RecoveryResult} must faithfully carry that flag AND the draft branch up to the caller — this is the signal the task service turns into "your working exercise was left
-     * unchanged; the draft is on branch X". A blind {@code int} return (the old API) could not express this, so a failed adapt would have looked identical to an in-place save.
-     */
+    /** An adapt draft diverted to an isolated branch surfaces {@code liveExerciseUntouched=true} and the draft branch up to the caller. */
     @Test
     void recover_adaptTargetDivertedToIsolatedBranch_resultCarriesUntouchedFlagAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one"));
@@ -194,10 +183,7 @@ class GenerationRecoveryServiceTest {
         assertThat(result.reviewThreadCount()).isEqualTo(1);
     }
 
-    /**
-     * The adapt diversion must survive a degraded annotation too: even when the draft is diverted to an isolated branch AND the review-comment step then fails, the result still
-     * carries {@code liveExerciseUntouched=true} and the branch, so the caller can tell the instructor their working exercise is safe — never mislabel it as an in-place save.
-     */
+    /** The adapt diversion survives a degraded annotation: the result still carries {@code liveExerciseUntouched=true} and the branch even when thread creation fails. */
     @Test
     void recover_adaptDiverted_thenAnnotationFails_stillReportsUntouchedAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 1, List.of("gap"));
@@ -213,10 +199,7 @@ class GenerationRecoveryServiceTest {
         assertThat(result.draftBranch()).isEqualTo("hyperion-draft/job-x");
     }
 
-    /**
-     * RECOVERY ACCURACY: an outcome with no verification result at all (a budget-exhausted run that never produced a verifiable artifact) but a non-empty agent note must still
-     * yield exactly one finding (the note), never crash on the null verification. Guards the {@code verification != null} branch in {@code toFindings}.
-     */
+    /** A null verification with a non-empty agent note yields exactly the note finding and never crashes on the null branch in {@code toFindings}. */
     @Test
     void toFindings_nullVerification_withAgentNote_yieldsOnlyTheNoteFinding() {
         GenerationOutcome outcome = mock(GenerationOutcome.class);
@@ -232,11 +215,7 @@ class GenerationRecoveryServiceTest {
         });
     }
 
-    /**
-     * RECOVERY ACCURACY / robustness: a reason carrying control chars, RTL, emoji, a very long body, and a null entry must not crash thread mapping. The null reason is dropped;
-     * the
-     * hostile-but-non-blank reason survives verbatim (trimmed). This proves a malformed verifier reason cannot crash recovery thread creation.
-     */
+    /** A hostile reason (control chars, RTL, emoji, very long) survives trimmed and a null reason is dropped, so a malformed verifier reason cannot crash thread mapping. */
     @Test
     void toFindings_hostileAndNullReasons_doNotCrash_andSurviveSanely() {
         String hostile = "  ‮gap‬ 💩  \t" + "X".repeat(50_000) + "  ";
@@ -254,10 +233,7 @@ class GenerationRecoveryServiceTest {
 
     // --- Advisory spec-fidelity surfacing -----------------------------------------------------------------------------------------------------------------------------------
 
-    /**
-     * On the NON-ACCEPTED (recovery) path, the advisory spec-fidelity findings ride along with the hard verification gaps as additional review comments, so the instructor sees the
-     * brief-coverage gaps too. They are MEDIUM (advisory), distinct from the HIGH verification gates.
-     */
+    /** On the recovery path, advisory spec-fidelity findings ride along as MEDIUM comments next to the HIGH verification gaps. */
     @Test
     void toFindings_includesAdvisorySpecFidelityGaps() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one"));
@@ -276,10 +252,7 @@ class GenerationRecoveryServiceTest {
                 .satisfies(finding -> assertThat(finding.severity()).isEqualTo(Severity.MEDIUM));
     }
 
-    /**
-     * On the ACCEPTED path, {@code surfaceAdvisoryFindings} attaches the advisory gaps as review threads WITHOUT changing acceptance — the exercise stays a clean, persisted,
-     * verified exercise; the threads are pure advisory context. The created-thread count is returned and editors are notified.
-     */
+    /** On the accepted path, {@code surfaceAdvisoryFindings} attaches advisory threads, returns the count, and notifies editors without changing acceptance. */
     @Test
     void surfaceAdvisoryFindings_attachesThreadsWithoutAffectingAcceptance() {
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji", "no emoji test")));

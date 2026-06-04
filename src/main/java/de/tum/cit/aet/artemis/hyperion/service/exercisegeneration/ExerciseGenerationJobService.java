@@ -249,12 +249,7 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Metadata for an active whole-exercise generation job.
-     *
-     * @param jobId      the job id
-     * @param userLogin  the login of the instructor who started it
-     * @param exerciseId the target exercise id
-     * @param startedAt  when the job was claimed
+     * Metadata for an active whole-exercise generation job (claimed slot owner and claim time).
      */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt) implements Serializable {
 
@@ -279,10 +274,6 @@ public class ExerciseGenerationJobService {
 
     /**
      * The reconnection view of a run: its id, whether it is still running, and the events so far to replay.
-     *
-     * @param jobId   the job id
-     * @param running whether the run is still active (the client should keep listening on the websocket)
-     * @param events  the events produced so far, to replay into the transcript
      */
     public record JobStatus(String jobId, boolean running, List<ExerciseGenerationEventDTO> events) {
     }

@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
- * Tests the persistence orchestration. It pins the production commit order (template → solution → tests last so the test-triggered build sees the final solution), that the
- * problem statement is rewritten only when the agent actually changed it, that the canonical tests build is triggered with the tests commit, and that a mid-sequence commit
- * failure is surfaced (not swallowed into a false success) so the exercise is never left half-written without anyone noticing.
+ * Tests the persistence orchestration: the canonical tests build is triggered with the tests commit only after the solution was committed (so the build sees the final solution),
+ * the problem statement is rewritten only when the agent actually changed it, and a mid-sequence commit failure is surfaced (not swallowed into a false success) so the exercise is
+ * never left half-written without anyone noticing.
  */
 class GenerationPersistenceServiceTest {
 
@@ -124,15 +124,19 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcome);
 
-        // Commit order: the only per-repository signal that differs by type is the file path written, so capturing createFile paths pins template → solution → tests last.
-        ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
-        verify(repositoryService, times(3)).createFile(any(), pathCaptor.capture(), any());
-        assertThat(pathCaptor.getAllValues()).as("repositories are committed template → solution → tests last").containsExactly("Template.java", "Solution.java", "Test.java");
+        // The observable ordering contract: the tests build is triggered with the TESTS commit only AFTER the solution repository was committed, so the build sees the final
+        // solution.
+        // We assert it via the commit effect (the per-repository getLastCommitHash) rather than the raw file-write order, which is an implementation detail.
+        InOrder order = Mockito.inOrder(gitService, programmingSubmissionService, continuousIntegrationTriggerService);
+        order.verify(gitService).getLastCommitHash(solutionUri);
+        order.verify(gitService).getLastCommitHash(testsUri);
+        order.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
+        order.verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
 
         // The problem statement changed, so it is rewritten.
         verify(creationUpdateService).updateProblemStatement(exercise, "new statement", null);
 
-        // The canonical tests build is triggered with the tests commit specifically (so the build sees the final solution committed before it).
+        // The canonical tests build is triggered with the tests commit specifically.
         verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
         verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
 

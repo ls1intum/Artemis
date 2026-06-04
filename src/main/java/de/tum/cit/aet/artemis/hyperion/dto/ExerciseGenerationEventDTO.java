@@ -72,21 +72,10 @@ public record ExerciseGenerationEventDTO(Type type, @Nullable String message, @N
         PARTIAL
     }
 
-    /**
-     * @param type    the event kind
-     * @param message the message
-     * @return an event stamped with the current time
-     */
     public static ExerciseGenerationEventDTO of(Type type, @Nullable String message) {
         return new ExerciseGenerationEventDTO(type, message, null, null, Instant.now());
     }
 
-    /**
-     * @param message          the message
-     * @param completionStatus the terminal status
-     * @param verdict          the structured verification verdict, or {@code null}
-     * @return a terminal {@code DONE} event stamped with the current time, carrying the structured verdict
-     */
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable Verdict verdict) {
         return new ExerciseGenerationEventDTO(Type.DONE, message, completionStatus, verdict, Instant.now());
     }

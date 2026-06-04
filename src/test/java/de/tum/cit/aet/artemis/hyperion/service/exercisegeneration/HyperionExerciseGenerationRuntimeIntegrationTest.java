@@ -22,36 +22,12 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * HTTP/security-layer integration test for Hyperion agentic whole-exercise generation. It drives the REAL request path — {@code HyperionExerciseGenerationResource} (with its
- * {@code @EnforceAtLeastEditorInExercise} aspect) → the real {@code ExerciseGenerationJobService} (Hazelcast single-flight slot + replayable, owner-scoped transcript) → the status
- * and cancel endpoints — over MockMvc, exactly as an instructor's browser would, against the full Spring context with Testcontainers Postgres.
- * <p>
- * This test deliberately covers ONLY the runtime behaviour that genuinely needs the Spring context and the DB-backed authorization aspect AND that can be reached without running
- * the real (Docker/GPU) agent: the role/course authorization boundaries (which reject the request before any job is claimed and never reach the orchestrator), the per-course
- * cancel
- * scope, the {@code 204}-when-nothing-ran and {@code 404}-for-an-unknown-job edges, and the clean rejection of an unknown exercise id. It does this <em>without</em> a
- * {@code @MockitoSpyBean}, so it adds no per-test Spring context fork.
- * <p>
- * <b>What is covered elsewhere (and why).</b> The previous single class spied the orchestrator/persistence/recovery to drive controlled outcomes through the full async pipeline.
- * That coverage is preserved without spies by splitting it where it naturally lives:
- * <ul>
- * <li>{@link ExerciseGenerationTaskServiceTest} drives the REAL terminal-state handling end-to-end ({@code taskService.runAsync} with hand-mocked collaborators, no context):
- * accepted
- * &rarr;persist, rejected&rarr;recover ({@code NEEDS_REVIEW}/{@code PARTIAL}/degraded/diverted), cancelled, error, persist-only-on-acceptance, the half-commit degraded mislabel,
- * and
- * the persist-failure&rarr;ERROR path.</li>
- * <li>{@link ExerciseGenerationJobServiceTest} pins the single-flight {@code 409} (as the {@code ConflictException} the resource maps to {@code 409}), the transcript cap +
- * STARTED-head
- * preservation, the owner-scoped {@code getStatus} privacy boundary, the owner-only {@code requestCancellation} (non-owner refused), and the run-once cancel hook — against a real
- * embedded Hazelcast.</li>
- * </ul>
- * <b>Coverage genuinely not reproduced here:</b> the thin mapping of a <em>live</em> slot to its HTTP status (a {@code 409} on a concurrent start, a running {@code 200}/cancel
- * while a
- * run is in flight) and the cooperative mid-run cancel both require either a controllable orchestrator outcome (which only {@code @MockitoSpyBean}/{@code @MockitoBean} could
- * provide
- * here — both forbidden outside base classes and each forks a context) or a real Docker sandbox (unavailable in normal CI). Those service-level results are proven directly in the
- * two
- * unit tests above; only their trivial HTTP-status translation for a live slot is not asserted over MockMvc.
+ * HTTP/security-layer integration test for Hyperion agentic whole-exercise generation: drives the real request path — {@code HyperionExerciseGenerationResource} (with its
+ * {@code @EnforceAtLeastEditorInExercise} aspect) → {@code ExerciseGenerationJobService} → the status and cancel endpoints — over MockMvc against the full Spring context with
+ * Testcontainers Postgres. Covers only the runtime behaviour that needs the context and the DB-backed authorization aspect yet is reachable without the Docker/GPU agent: the
+ * role/course authorization boundaries, the per-course cancel scope, the 204/404 status edges, and rejection of an unknown exercise id — all without a {@code @MockitoSpyBean}, so
+ * it
+ * forks no Spring context. The terminal-state and single-flight service logic is proven in {@link ExerciseGenerationTaskServiceTest} and {@link ExerciseGenerationJobServiceTest}.
  */
 class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

@@ -33,26 +33,11 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * EXTENSIVE adapt-with-feedback evaluation. The adapt workflow — an instructor provides FEEDBACK on an existing, already-buildable exercise and the agent revises it while keeping
- * it verifiable — is the most under-tested generation path (the main E2E covers a single additive adapt). This gated, GPU-backed test drives the same real stack as
- * {@link HyperionExerciseGenerationEndToEndTest} (real scaffold via the production creation path, real sandbox container, real agent loop against the live GPU model, real
- * differential oracle) but systematically across the DIVERSE feedback categories an instructor actually uses, in several languages:
- * <ul>
- * <li><b>Additive</b> — add an edge-case / negative-number test.</li>
- * <li><b>Difficulty up</b> — tighten a complexity / behavioural requirement.</li>
- * <li><b>Difficulty down / simplify</b> — drop a constraint.</li>
- * <li><b>Bug-fix-driven</b> — feedback says a stated test fails; the agent must repair the solution and keep the differential.</li>
- * <li><b>Refactor</b> — rename / restructure while preserving the contract the tests grade.</li>
- * <li><b>Requirement change</b> — change a behavioural contract (e.g. throw instead of return a sentinel) consistently across statement, solution, template, and tests.</li>
- * <li><b>Contradictory / under-specified</b> — a self-contradicting brief; the agent must degrade gracefully (pick one coherent reading, stay verifiable) rather than thrash to a
- * broken or empty exercise.</li>
- * </ul>
- * For each scenario it captures the three signals Part B asks for: did the run CONVERGE (the differential oracle still accepts), was the FEEDBACK actually APPLIED (a
- * scenario-specific assertion on the produced artifacts, proving the agent did not merely re-submit the unchanged baseline), and was VERIFIABILITY preserved. Every run is exported
- * to {@code build/hyperion-e2e/adaptfb-*} for side-by-side diffing.
- * <p>
- * Gated behind {@code HYPERION_E2E_GPU} (live model + ~1 GB build image). The optional {@code HYPERION_ADAPT_SCENARIOS} env var (comma-separated scenario keys) narrows the run so
- * scenarios can be parallelised across isolated JVMs, exactly like the language-matrix filter in the sibling tests.
+ * Adapt-with-feedback evaluation: the agent revises an existing, already-buildable exercise from instructor feedback while keeping it verifiable, across diverse feedback
+ * categories
+ * (additive, difficulty up/down, bug-fix, refactor, requirement-change, contradictory) and several languages. Each case asserts the run CONVERGED (differential oracle still
+ * accepts), the FEEDBACK was actually APPLIED (a scenario-specific check, proving the baseline was not re-submitted unchanged), and VERIFIABILITY was preserved. Gated behind
+ * {@code HYPERION_E2E_GPU}; {@code HYPERION_ADAPT_SCENARIOS} narrows the run for parallel isolated JVMs.
  */
 @EnabledIfEnvironmentVariable(named = "HYPERION_E2E_GPU", matches = "true")
 class HyperionAdaptWithFeedbackEndToEndTest extends AbstractSpringIntegrationLocalCILocalVCTest {

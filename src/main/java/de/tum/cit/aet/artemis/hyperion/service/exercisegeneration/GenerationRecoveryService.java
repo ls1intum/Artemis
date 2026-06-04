@@ -83,25 +83,20 @@ public class GenerationRecoveryService {
     /**
      * The result of recovering a non-accepted generation run.
      *
-     * @param reviewThreadCount     the number of review-comment threads created (zero if no findings mapped), or {@link #REVIEW_COMMENTS_FAILED} ({@code -1}) when the draft was
-     *                                  persisted but its review comments could not be attached
-     * @param liveExerciseUntouched {@code true} if the draft was an adapt of an already-working exercise and was diverted to an isolated branch, leaving the live exercise
-     *                                  byte-identical (it keeps working and grading as before); {@code false} if the draft was committed to the default branch (a from-scratch
-     *                                  target, which had nothing to lose)
+     * @param reviewThreadCount     the number of review-comment threads created, or {@link #REVIEW_COMMENTS_FAILED} when the draft was persisted but its review comments could not
+     *                                  be
+     *                                  attached
+     * @param liveExerciseUntouched {@code true} if an adapt draft was diverted to an isolated branch leaving the live exercise byte-identical; {@code false} if committed to the
+     *                                  default branch (a from-scratch target)
      * @param draftBranch           the isolated branch the draft was diverted to when {@code liveExerciseUntouched} is {@code true}; {@code null} otherwise
      */
     public record RecoveryResult(int reviewThreadCount, boolean liveExerciseUntouched, String draftBranch) {
     }
 
     /**
-     * Recovers a non-accepted generation run: persists the best-effort produced files as a draft and creates review-comment threads describing
-     * every verification gap so the instructor can finish the exercise instead of losing the work.
-     * <p>
-     * <strong>Safety boundary (W3 fix).</strong> A non-accepted run must never regress a previously-working exercise. For an adapt of an already-working exercise the draft is
-     * BROKEN (it failed verification); committing it onto the live default branch would silently replace a working exercise with a failing one, with no clean restore. So the
-     * persistence layer ({@link GenerationPersistenceService#persistRecoveryDraft}) diverts an adapt draft to an isolated branch and leaves the live exercise untouched, while a
-     * from-scratch draft (nothing to lose) is still committed to the default branch and edited in place. The {@link RecoveryResult} carries which path was taken so the caller can
-     * tell the instructor whether their working exercise was preserved.
+     * Recovers a non-accepted generation run: persists the best-effort produced files as a draft (without regressing a working exercise, see
+     * {@link GenerationPersistenceService#persistRecoveryDraft}) and creates review-comment threads describing every verification gap so the instructor can finish the exercise
+     * instead of losing the work.
      *
      * @param exercise the target exercise (the draft is committed into its repositories or an isolated branch)
      * @param user     the instructor who started the run (commit author and review-comment author)
@@ -111,17 +106,11 @@ public class GenerationRecoveryService {
      * @throws RuntimeException only when the persist itself fails (nothing durable was saved); the caller maps that to {@code PARTIAL}
      */
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        // 1. Persist the best-effort files so the instructor's work survives — WITHOUT regressing a working exercise. For a from-scratch target this commits the sandbox-final tree
-        // to the default branch (orphan-mirrored, harness-protected) and records an exercise version, exactly as before. For an adapt of an already-working exercise it diverts the
-        // draft to an isolated branch and leaves the live default branch byte-identical, so a failed adapt can never replace a working exercise with a failing one. It does NOT
-        // mark
-        // the exercise accepted/verified — that distinction is carried by the review comments and the NEEDS_REVIEW terminal event, never by the persisted bytes.
-        // A failure HERE means nothing durable was saved, so it propagates and the caller reports PARTIAL ("nothing changed").
+        // 1. Persist the best-effort files (see persistRecoveryDraft). A failure here means nothing durable was saved, so it propagates and the caller reports PARTIAL.
         GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId);
 
-        // 2. The draft is now durably committed. From this point a failure must NOT be reported as "nothing saved" (the half-commit mislabel): the
-        // annotation step below is best-effort. If it throws, we swallow it (logged) and return REVIEW_COMMENTS_FAILED so the caller still emits
-        // NEEDS_REVIEW — never PARTIAL — but with an accurate, degraded message telling the instructor to treat the saved draft as unfinished.
+        // 2. The draft is now durably committed, so the best-effort annotation below must NOT be reported as "nothing saved" if it fails: we swallow it (logged) and return
+        // REVIEW_COMMENTS_FAILED so the caller still emits NEEDS_REVIEW (never PARTIAL) with a degraded message.
         try {
             // Translate the verification findings (and the agent's final note) into review threads on the now-persisted draft.
             List<ConsistencyIssueDTO> findings = toFindings(outcome);

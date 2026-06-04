@@ -116,7 +116,6 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 @Override
                 public void onNext(Frame item) {
                     String payload = new String(item.getPayload(), StandardCharsets.UTF_8);
-                    // Separate standard output from standard error by the Docker stream type so the agent gets a faithful observation.
                     if (item.getStreamType() == StreamType.STDERR) {
                         appendBounded(stderr, payload);
                     }

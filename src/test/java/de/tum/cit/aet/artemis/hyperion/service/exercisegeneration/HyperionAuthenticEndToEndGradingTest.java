@@ -78,61 +78,18 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
- * The culminating, fully-authentic Hyperion end-to-end test: real agentic GENERATION → real versioned PERSISTENCE → real LocalCI/LocalVC GRADING, with NOTHING mocked or faked in
- * the generation, persistence, sandbox, or grading paths.
+ * Fully-authentic Hyperion end-to-end test: real agentic generation (GPU + sandbox + differential oracle) → real versioned persistence → real LocalCI/LocalVC grading, nothing
+ * mocked in those paths. Proves that a model-generated exercise, once persisted through production, grades solution 100% / template 0% on the real pipeline — the loop the
+ * in-sandbox
+ * {@code verify.sh} oracle only proxies. Per (language × projectType): generate, persist (+{@code ExerciseVersion}, tests-build sync), then grade a SOLUTION and a TEMPLATE student
+ * submission and assert the production {@link Result#getScore()}.
  * <p>
- * <b>What this proves that nothing else does.</b> Every prior Hyperion acceptance signal stops at the in-sandbox {@code verify.sh} differential oracle
- * ({@link AuthoritativeVerificationService}). That oracle is a <i>proxy</i> for production grading. The deterministic {@code HyperionGeneratedExerciseGradingIntegrationTest}
- * proved
- * that the canonical (model-free) Java exercise grades correctly on the real LocalCI path, and {@code HyperionExerciseGenerationEndToEndTest} proved that the real model + real
- * sandbox produce an oracle-accepted exercise. Neither connected the two: nothing proved that the <i>model-generated</i> exercise, once <i>persisted through production</i>,
- * actually
- * grades correctly on the real pipeline. This test closes that loop for every generation-capable language.
- * <p>
- * <b>The chain, per (language × projectType).</b>
- * <ol>
- * <li><b>Generate</b> — scaffold through the production {@link ProgrammingExerciseCreationUpdateService#createProgrammingExercise(ProgrammingExercise, boolean)} path, then run the
- * real {@link ExerciseGenerationOrchestrationService#generate} which drives the real {@code InteractiveSandbox} (a real Docker container), the real agent loop (the mocked
- * {@code ChatModel} delegates to the live GPU endpoint), and the real differential oracle. We assert the oracle accepted.</li>
- * <li><b>Persist</b> — feed the real {@link GenerationOutcome} into the production {@link GenerationPersistenceService#persist} (commit order template → solution → tests, problem
- * statement update, real tests-build trigger for test-case synchronisation, and {@code ExerciseVersion} creation). We assert a version was recorded and the synchronised
- * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase} set is non-empty.</li>
- * <li><b>Grade</b> — on the real LocalCI Docker build + LocalVC checkout + Ares/JUnit report parsing + {@code ProgrammingExerciseGradingService} scoring: a student submission of
- * the
- * persisted SOLUTION scores 100% (every synchronised test case passes); a student submission of the persisted TEMPLATE scores 0% (it compiles but behaviourally fails). The score
- * comes from the production {@link Result#getScore()}, not from any sandbox proxy.</li>
- * </ol>
- * <p>
- * <b>Feasibility — sandbox vs LocalCI DockerClient coexistence (the crux).</b> Both the interactive sandbox and the LocalCI build path obtain their Docker client from the single
- * accessor {@code BuildAgentConfiguration#getDockerClient()} ({@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandboxService} calls it for every container op; the
- * build
- * agent calls it for every build). This test installs ONE real {@code DockerClient} on that accessor (the exact {@code switchToRealDockerClient} reflection plumbing from
- * {@code LocalCIDockerImageIntegrationTest}), so the real sandbox generation and the real LocalCI grading share it. There is no second Docker access path to reconcile.
- * <p>
- * <b>Gating.</b> Gated on BOTH {@code HYPERION_E2E_GPU=true} (it calls the external GPU model) and {@code @EnabledIf("isDockerAvailable")} (it pulls/runs ~1 GB execution images
- * and
- * runs real builds). It is a manual / nightly evaluation, never part of the fast CI suite.
- * <p>
- * <b>The orphaned-harness divergence this test once exposed, now CLOSED.</b> For a FROM-SCRATCH generation ({@code emptyRepositories=true}), the scaffold keeps the canonical
- * sample's tests repo VERBATIM ({@code ProgrammingExerciseRepositoryService}: "the test repository is kept intact") — including the sample's behaviour test and structure oracle
- * for
- * a DIFFERENT exercise (Java {@code SortingExampleBehaviorTest} + {@code test.json} for SortStrategy/Context/Policy; Python {@code behavior/behavior_test.py} +
- * {@code structural/structural_test.py}). The agent removes those sample test sources INSIDE the sandbox and writes its own, and {@link StructuralOracleSeedingService} regenerates
- * {@code test.json} for the generated classes; the sandbox {@code verify.sh} oracle runs that sandbox-final set and accepts. The bug was in PERSISTENCE: it used to OVERLAY the
- * produced files onto the scaffolded git tree, re-orphaning the canonical sources into the persisted tests repo, where real Artemis grading ran them and the different-topic
- * solution failed them (Java → ~44%, Python → 0%) despite the sandbox accepting. {@link GenerationPersistenceService#persist} now makes the committed tree MIRROR the sandbox-final
- * tree (deleting every tracked file the agent did not produce, except the immutable build harness), so the persisted tests repo contains ONLY the generated exercise's tests and
- * the
- * regenerated oracle. Both a FROM-SCRATCH Java PLAIN_MAVEN ({@link #javaPlainMaven_fromScratch_generatePersistGrade_authenticEndToEnd}) and the from-scratch non-Java matrix legs
- * now
- * grade solution 100% / template 0% on the REAL pipeline with NO orphaned structural cases (asserted explicitly). The {@code emptyRepositories=false} Java canonical-ADAPT scenario
- * still works too (the agent keeps the canonical harness, so nothing is orphaned); the deterministic proof that a canonical exercise persisted through this path grades 100% / 0%
- * lives in {@code HyperionGeneratedExerciseGradingIntegrationTest}.
- * <p>
- * <b>Residual, distinct divergence (NOT the orphan bug).</b> The sandbox oracle accepts a template that fails at least HALF its tests, plus the strict gate that every
- * {@code [task]}-bound test fails on the template; an unbound test whose placeholder accidentally returns the expected value can still pass on the real template, so a model that
- * under-binds or picks a too-lucky placeholder can land the real template above 0%. That is a template-QUALITY concern orthogonal to the orphaned-harness fix; each leg surfaces it
- * loudly (the divergence note + full feedback) rather than hiding it.
+ * Crux: the sandbox and the LocalCI build share one real {@code DockerClient} via {@code BuildAgentConfiguration#getDockerClient()} (the {@code switchToRealDockerClient}
+ * reflection
+ * plumbing from {@code LocalCIDockerImageIntegrationTest}). Gated on {@code HYPERION_E2E_GPU=true} and {@code @EnabledIf("isDockerAvailable")} — a manual/nightly run, never in
+ * fast
+ * CI. Each leg also asserts no orphaned canonical structural case survives into the persisted tests repo (the persist-mirror invariant), surfacing any sandbox-vs-real divergence
+ * loudly rather than hiding it.
  */
 @EnabledIfEnvironmentVariable(named = "HYPERION_E2E_GPU", matches = "true")
 @EnabledIf("isDockerAvailable")
@@ -316,43 +273,8 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
             template` to confirm the solution passes and the template fails, then submit.""";
 
     // ---- The Java proof leg ----------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /**
-     * The definitive single-config proof: Java PLAIN_MAVEN, the full authentic generate → persist (+version) → grade chain, asserting the persisted SOLUTION grades 100% and the
-     * persisted TEMPLATE grades 0% on the real LocalCI/LocalVC pipeline.
-     * <p>
-     * Scaffolds the full canonical Java exercise ({@code emptyRepositories=false}) and runs a real generation that makes a coherent additive change while keeping the canonical
-     * structure (which the scaffold's verbatim-kept Ares structural oracle grades) intact — the production "adapt the canonical exercise" flow. This is what lets the persisted
-     * exercise grade 100% / 0% on the real pipeline, where the sandbox {@code verify.sh} oracle alone cannot see the structural test cases.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void javaPlainMaven_generatePersistGrade_authenticEndToEnd() throws Exception {
-        runAuthenticChain(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, "HYPAJ", JAVA_CANONICAL_ADAPT_PROMPT, false);
-    }
-
-    /**
-     * Dedicated single-config proof for the Java PLAIN_GRADLE canonical-ADAPT scenario, the complement to {@link #javaPlainMaven_generatePersistGrade_authenticEndToEnd}. Exercises
-     * the Gradle structural-oracle / persist / real-{@code ./gradlew clean test} grading path: the persisted tests repo must carry no orphaned structural case and the persisted
-     * solution must grade 100% / template 0% on the real LocalCI pipeline.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void javaPlainGradle_adapt_generatePersistGrade_authenticEndToEnd() throws Exception {
-        runAuthenticChain(ProgrammingLanguage.JAVA, ProjectType.PLAIN_GRADLE, "HYPAJPG", JAVA_CANONICAL_ADAPT_PROMPT, false);
-    }
-
-    /**
-     * Dedicated single-config proof for the Java MAVEN_MAVEN canonical-ADAPT scenario (a Maven harness that builds the assignment as a Maven project). Exercises the path whose
-     * build-phase template was previously missing (so the persist-triggered tests build ran an empty script and synchronised zero test cases): with the {@code plain_maven} phases
-     * family now mapped for MAVEN_MAVEN, the tests build runs {@code mvn clean test}, synchronises the test cases, and the persisted solution grades 100% / template 0% on the real
-     * LocalCI pipeline.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void javaMavenMaven_adapt_generatePersistGrade_authenticEndToEnd() throws Exception {
-        runAuthenticChain(ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, "HYPAJMM", JAVA_CANONICAL_ADAPT_PROMPT, false);
-    }
+    // The canonical-ADAPT Java scenarios (PLAIN_MAVEN / PLAIN_GRADLE / MAVEN_MAVEN / GRADLE_GRADLE) run via the authenticMatrix; the distinct from-scratch, SCA-graded and
+    // gradle-wrapper-bytes legs follow.
 
     // A FROM-SCRATCH (emptyRepositories=true) Java prompt for a DIFFERENT topic than the canonical sorting sample. Before the persist-mirror fix this was the failing case: the
     // scaffolded TESTS repo keeps the canonical sample's behaviour test (SortingExampleBehaviorTest) and structure oracle (test.json for SortStrategy/Context/Policy) verbatim; the
@@ -368,11 +290,8 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
             with a [task] in the problem statement. Run `sh verify.sh solution` and `sh verify.sh template` to confirm the solution passes and the template fails, then submit.""";
 
     /**
-     * The fix proof: a FROM-SCRATCH (emptyRepositories=true) Java PLAIN_MAVEN generation of a DIFFERENT topic than the canonical sorting sample, asserting the persisted SOLUTION
-     * grades 100% and the persisted TEMPLATE grades 0% on the real LocalCI/LocalVC pipeline WITH NO orphaned canonical structural/behaviour cases. This is the configuration the
-     * persist-mirror fix repairs: the persisted tests repo now contains only the generated exercise's tests (plus the regenerated structure oracle), so the reference solution is
-     * no
-     * longer failed by a leftover sample test the sandbox oracle never ran.
+     * Persist-mirror fix proof: a from-scratch Java PLAIN_MAVEN exercise (different topic from the canonical sample) grades solution 100% / template 0% with no orphaned canonical
+     * case.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -389,13 +308,8 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
             your own. Bind every test with a [task] in the problem statement. Run `sh verify.sh solution` and `sh verify.sh template` to confirm, then submit.""";
 
     /**
-     * D2 SCA-parity proof (GPU-gated like the rest). Scaffolds a Java PLAIN_MAVEN exercise with static code analysis ENABLED and one category PROMOTED to GRADED with a positive
-     * penalty, so the {@code *_static.yaml} phases run the SCA tools in BOTH the sandbox and production, and production's {@code calculateTotalPenalty} would dock a solution with
-     * a
-     * graded violation. The new oracle gate REJECTS a reference solution that trips a graded SCA category, so for the run to be ACCEPTED the agent must produce an SCA-clean
-     * solution; the persisted solution then grades 100% / template 0% on the real LocalCI pipeline (a graded-but-clean solution loses no SCA points). This is the end-to-end
-     * closure
-     * of the divergence the deterministic {@link SandboxProductionParityDivergenceTest} and the oracle/script unit tests pin down without the GPU.
+     * D2 SCA-parity proof: with a GRADED SCA category and a positive penalty, the oracle accepts only an SCA-clean solution, which then grades 100% / template 0% on the real
+     * pipeline.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -404,16 +318,9 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
     }
 
     /**
-     * Gap 2 proof: a FROM-SCRATCH (emptyRepositories=true) Java PLAIN_GRADLE generation. PLAIN_GRADLE ships a BINARY {@code gradle/wrapper/gradle-wrapper.jar} in the template and
-     * solution repositories. The bug this closes: the extract/persist round-trip read every produced file as a UTF-8 String and re-wrote it as UTF-8, mangling that binary so the
-     * persisted wrapper was corrupt and the real Gradle build could not bootstrap. With the binary-safe fix the wrapper is excluded from the String pipeline on read-back and
-     * preserved byte-exact from the scaffold on persist. This leg asserts BOTH: (1) the persisted solution and template wrapper JAR is byte-identical to the canonical scaffold's,
-     * and (2) the real LocalCI Gradle build grades solution 100% / template 0%.
-     * <p>
-     * The wrapper bootstraps Gradle from {@code services.gradle.org} on first build, so the real grading needs network egress from the build container (this test's
-     * {@code DockerRunConfig} uses the regular build network). If that egress is unavailable the Gradle build cannot bootstrap; the leg then fails as a real build failure with the
-     * container log, which is reported honestly rather than masked — see the explicit wrapper-intact assertion, which still holds independently of whether the build could
-     * bootstrap.
+     * Binary-safe persist proof: a from-scratch Java PLAIN_GRADLE generation keeps the template/solution {@code gradle-wrapper.jar} byte-identical to the canonical scaffold (the
+     * extract/persist round-trip must not UTF-8-mangle it) and grades solution 100% / template 0% on the real Gradle build. The build bootstraps Gradle from the network, so a
+     * missing egress surfaces as a real build failure with the container log; the wrapper-intact assertion holds independently.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -458,13 +365,9 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
     // ---- The full language matrix ----------------------------------------------------------------------------------------------------------------------------------------------
 
     /**
-     * Every generation-capable (language × projectType) the generator supports, each running the full authentic generate → persist → grade chain with its real execution image.
-     * <p>
-     * Excluded by design (the differential oracle is structurally impossible — these are compile-only / no test-report toolchains, as the per-language profiles admit): Assembler,
-     * VHDL, OCaml, Bash, MATLAB. Java's MAVEN_MAVEN / GRADLE_GRADLE / PLAIN_GRADLE variants and C (GCC / FACT) are exercised here in addition to PLAIN_MAVEN; Kotlin is included
-     * but
-     * is known to be infra-gated on the canonical Kotlin Maven template toolchain (see the note in {@code HyperionExerciseGenerationEndToEndTest}). A config whose image is not
-     * present locally and cannot be pulled fails loudly as "infra-gated: image X unavailable" rather than being silently skipped.
+     * Every generation-capable (language × projectType) the generator supports, each running the full authentic generate → persist → grade chain on its real execution image.
+     * Compile-only / no-test-report toolchains (Assembler, VHDL, OCaml, Bash, MATLAB) are excluded because the differential oracle is structurally impossible for them. A config
+     * whose image cannot be pulled fails loudly as "infra-gated: image X unavailable" rather than being silently skipped.
      */
     static Stream<Arguments> authenticMatrix() {
         return applyFilter(Stream.of(
@@ -504,11 +407,7 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
         return Arguments.of(language, projectType, shortName, prompt, true);
     }
 
-    /**
-     * Optional comma-separated allowlist of languages (enum names) to run, via {@code HYPERION_MATRIX_LANGS}; empty/unset runs the full matrix. Lets several configs be validated
-     * in
-     * parallel by launching one isolated JVM per subset (each run is GPU + Docker heavy), without an in-process concurrency refactor of the shared per-test Docker switch.
-     */
+    /** Optional comma-separated language allowlist via {@code HYPERION_MATRIX_LANGS} (empty/unset runs the full matrix), so subsets can run in parallel isolated JVMs. */
     private static Stream<Arguments> applyFilter(Stream<Arguments> all) {
         String filter = System.getenv("HYPERION_MATRIX_LANGS");
         if (filter == null || filter.isBlank()) {
@@ -531,8 +430,7 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
     /**
      * Runs the full authentic chain for one config: real generation (GPU + sandbox + oracle) → real persistence (+version) → real LocalCI grading (solution 100%, template 0%).
      *
-     * @param emptyRepositories {@code false} for the Java canonical-adapt scenario (the canonical structural oracle is kept and must be honoured); {@code true} for from-scratch
-     *                              languages with no structural oracle.
+     * @param emptyRepositories {@code false} keeps the canonical structural oracle (Java adapt); {@code true} is from-scratch with no structural oracle.
      */
     private ProgrammingExercise runAuthenticChain(ProgrammingLanguage language, ProjectType projectType, String shortName, String prompt, boolean emptyRepositories)
             throws Exception {
@@ -731,10 +629,8 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
     }
 
     /**
-     * @param staticCodeAnalysisEnabled when {@code true}, enables SCA on the exercise, sets a positive {@code maxStaticCodeAnalysisPenalty}, the {@code *_static.yaml} build phases
-     *                                      (so the SCA tools run), creates the production default SCA categories, and PROMOTES one to {@code GRADED} with a positive penalty — so
-     *                                      production would dock a solution with that category's violations and the oracle's D2 SCA-parity gate is exercised end-to-end (the agent
-     *                                      must produce a lint-clean reference solution for the run to be accepted).
+     * @param staticCodeAnalysisEnabled when {@code true}, enables SCA with a positive penalty and the {@code *_static.yaml} phases, creates the default SCA categories and promotes
+     *                                      one to {@code GRADED} — so production would dock a violating solution and the oracle's D2 SCA-parity gate is exercised end-to-end.
      */
     private ProgrammingExercise scaffoldExercise(String shortName, ProgrammingLanguage language, ProjectType projectType, boolean emptyRepositories,
             boolean staticCodeAnalysisEnabled) throws Exception {

@@ -2,18 +2,13 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -33,12 +28,11 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * Verifies that the AI-generation scaffolding path — {@link ProgrammingExerciseCreationUpdateService#createProgrammingExercise(ProgrammingExercise, boolean)} with
- * {@code emptyRepositories=true} — works for EVERY Artemis-supported language and project type. It exercises the real production scaffold (template copy into the LocalVC
- * repositories followed by the source clearing), so a regression in the per-language template resolution or the source clearing fails here. It needs LocalVC and a Postgres
- * Testcontainer but NO LLM and NO build images, so it is fast; it is gated behind {@code HYPERION_SCAFFOLD_TEST} only to keep it out of the default fast suite.
+ * Verifies the AI-generation scaffolding path — {@link ProgrammingExerciseCreationUpdateService#createProgrammingExercise(ProgrammingExercise, boolean)} with
+ * {@code emptyRepositories=true} — for every Artemis-supported language and project type: the production scaffold (template copy + source clearing) must wire up all three
+ * repositories and, per the documented contract, clear the template/solution sources while keeping the tests repository intact. Needs only LocalVC + Postgres (no LLM, no build
+ * images), so it runs in the normal deterministic suite.
  */
-@EnabledIfEnvironmentVariable(named = "HYPERION_SCAFFOLD_TEST", matches = "true")
 class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "hypscaf";
@@ -86,7 +80,7 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         exercise.setTitle("Scaffold " + shortName);
         exercise.setChannelName("scaf-" + shortName.toLowerCase());
 
-        // The whole point: this must NOT throw for any configuration, and must produce an exercise with all three repositories wired up.
+        // Must NOT throw for any configuration, and must wire up all three repositories.
         ProgrammingExercise created = creationService.createProgrammingExercise(exercise, true);
 
         assertThat(created.getId()).as("%s %s exercise was persisted", language, projectType).isNotNull();
@@ -94,57 +88,69 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         assertThat(created.getSolutionRepositoryUri()).as("%s %s solution repository", language, projectType).isNotBlank();
         assertThat(created.getTestRepositoryUri()).as("%s %s test repository", language, projectType).isNotBlank();
 
-        // Export the three cleared repositories to disk (build/hyperion-scaffold/<config>/) so the scaffold contents can be inspected and reviewed against the canonical template —
-        // a passing creation call is necessary but not sufficient; the actual initialized files must be correct.
-        exportScaffold(created, exportDirectoryName(language, projectType));
+        List<Path> templateFiles = workingTreeFiles(created, RepositoryType.TEMPLATE);
+        List<Path> solutionFiles = workingTreeFiles(created, RepositoryType.SOLUTION);
+        List<Path> testFiles = workingTreeFiles(created, RepositoryType.TESTS);
+
+        // All three working trees are non-empty (clearing leaves the build scaffolding behind; the tests repo is copied verbatim).
+        assertThat(templateFiles).as("%s %s template working tree is non-empty", language, projectType).isNotEmpty();
+        assertThat(solutionFiles).as("%s %s solution working tree is non-empty", language, projectType).isNotEmpty();
+        assertThat(testFiles).as("%s %s tests working tree is non-empty", language, projectType).isNotEmpty();
+
+        // The emptyRepositories=true contract (ProgrammingExerciseRepositoryService#clearRepositoriesForAiGeneration): the language's source files are cleared from template and
+        // solution by extension (build manifests and the keep-list preserved), while the tests repository is kept intact. We replicate production's exact source filter and assert
+        // no
+        // clearable source survives in template or solution; the tests tree, copied verbatim and never cleared, stays non-empty (asserted above) — the asymmetry that the clearing
+        // was scoped to the code repos.
+        java.util.Set<String> sourceExtensions = sourceExtensionsFor(language);
+        assertThat(templateFiles).as("%s %s template sources were cleared", language, projectType).noneMatch(path -> isClearableSource(path, sourceExtensions));
+        assertThat(solutionFiles).as("%s %s solution sources were cleared", language, projectType).noneMatch(path -> isClearableSource(path, sourceExtensions));
     }
 
-    private static String exportDirectoryName(ProgrammingLanguage language, ProjectType projectType) {
-        return language.name().toLowerCase() + (projectType == null ? "" : "_" + projectType.name().toLowerCase());
-    }
-
-    private void exportScaffold(ProgrammingExercise exercise, String configName) throws Exception {
-        Path base = Path.of("build", "hyperion-scaffold", configName);
-        deleteRecursively(base);
-        for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS)) {
-            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURI(repositoryType), false, true);
-            copyWorkingTree(repository.getLocalPath(), base.resolve(repositoryType.name().toLowerCase()));
+    private List<Path> workingTreeFiles(ProgrammingExercise exercise, RepositoryType repositoryType) throws Exception {
+        Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURI(repositoryType), false, true);
+        Path root = repository.getLocalPath();
+        try (Stream<Path> walk = Files.walk(root)) {
+            return walk.filter(Files::isRegularFile).filter(path -> !root.relativize(path).startsWith(".git")).map(root::relativize).toList();
         }
     }
 
-    /** Copies a repository's working tree (excluding {@code .git}) to a target directory so the scaffolded files can be inspected. */
-    private static void copyWorkingTree(Path source, Path target) throws IOException {
-        try (Stream<Path> walk = Files.walk(source)) {
-            for (Path path : walk.toList()) {
-                Path relative = source.relativize(path);
-                if (relative.toString().isEmpty() || relative.startsWith(".git")) {
-                    continue;
-                }
-                Path destination = target.resolve(relative.toString());
-                if (Files.isDirectory(path)) {
-                    Files.createDirectories(destination);
-                }
-                else {
-                    // FileUtils.copyFile creates the parent directories and overwrites an existing destination, preserving bytes — the mandated replacement for Files.copy.
-                    FileUtils.copyFile(path.toFile(), destination.toFile());
-                }
-            }
+    // The keep-list ProgrammingExerciseRepositoryService preserves even though its name carries a source extension (Package.swift / build.sbt).
+    private static final java.util.Set<String> AI_GENERATION_KEEP_FILES = java.util.Set.of("Package.swift", "build.sbt");
+
+    private static boolean isClearableSource(Path path, java.util.Set<String> sourceExtensions) {
+        String fileName = path.getFileName().toString();
+        if (AI_GENERATION_KEEP_FILES.contains(fileName)) {
+            return false;
         }
+        String lower = fileName.toLowerCase(java.util.Locale.ROOT);
+        return sourceExtensions.stream().anyMatch(lower::endsWith);
     }
 
-    private static void deleteRecursively(Path path) throws IOException {
-        if (!Files.exists(path)) {
-            return;
-        }
-        try (Stream<Path> entries = Files.walk(path)) {
-            entries.sorted(Comparator.reverseOrder()).forEach(entry -> {
-                try {
-                    Files.delete(entry);
-                }
-                catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
+    /** Mirrors {@code ProgrammingExerciseRepositoryService#sourceExtensionsFor}: the lower-cased extensions that identify the language's clearable source files. */
+    private static java.util.Set<String> sourceExtensionsFor(ProgrammingLanguage language) {
+        return switch (language) {
+            case JAVA -> java.util.Set.of(".java");
+            case KOTLIN -> java.util.Set.of(".kt");
+            case PYTHON -> java.util.Set.of(".py");
+            case C -> java.util.Set.of(".c", ".h");
+            case C_PLUS_PLUS -> java.util.Set.of(".cpp", ".cc", ".cxx", ".hpp", ".hh", ".h");
+            case C_SHARP -> java.util.Set.of(".cs");
+            case GO -> java.util.Set.of(".go");
+            case RUST -> java.util.Set.of(".rs");
+            case SWIFT -> java.util.Set.of(".swift");
+            case HASKELL -> java.util.Set.of(".hs");
+            case OCAML -> java.util.Set.of(".ml", ".mli");
+            case JAVASCRIPT -> java.util.Set.of(".js");
+            case TYPESCRIPT -> java.util.Set.of(".ts");
+            case RUBY -> java.util.Set.of(".rb");
+            case R -> java.util.Set.of(".r");
+            case DART -> java.util.Set.of(".dart");
+            case VHDL -> java.util.Set.of(".vhd", ".vhdl");
+            case ASSEMBLER -> java.util.Set.of(".asm", ".s");
+            case BASH -> java.util.Set.of(".bash", ".sh");
+            case MATLAB -> java.util.Set.of(".m");
+            default -> java.util.Set.of();
+        };
     }
 }

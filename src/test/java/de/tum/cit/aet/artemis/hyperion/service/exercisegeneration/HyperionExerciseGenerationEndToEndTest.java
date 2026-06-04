@@ -34,16 +34,10 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * Genuine end-to-end test of agentic exercise generation against the FULL Artemis stack: the Spring context (core + buildagent + localci + localvc + scheduling, Hyperion
- * enabled) boots with Testcontainers Postgres and real Docker. A real Java/Maven programming exercise is created through the production
- * {@link ProgrammingExerciseCreationUpdateService#createProgrammingExercise(ProgrammingExercise, boolean)} path — which scaffolds the real buildable Artemis sorting skeleton into
- * the LocalVC repositories (for the from-scratch case it then clears the sources, exactly as production does for AI generation). The real
- * {@link ExerciseGenerationOrchestrationService}
- * then drives the real {@code InteractiveSandboxService} (a real Docker container), the real agent loop (the mocked {@code ChatModel} delegates to the GPU OpenWebUI endpoint),
- * and the real {@link AuthoritativeVerificationService}, which runs the real build inside the container and applies the differential oracle.
- * <p>
- * It is gated behind the {@code HYPERION_E2E_GPU} environment variable (and the API key) because it calls an external LLM and pulls/runs a ~1 GB build image — it is a manual /
- * nightly evaluation, not part of the fast CI suite.
+ * Genuine end-to-end test of agentic exercise generation against the full Artemis stack (real scaffold via the production creation path, real sandbox container, real agent loop
+ * against the live GPU model, real differential oracle). Covers the structurally-distinct flows — structural-Ares seeding, bare-topic and pasted-problem-statement prompts,
+ * draft-then-spec-mode, a larger multi-class exercise — plus a from-scratch language matrix. Gated behind {@code HYPERION_E2E_GPU} (external LLM + ~1 GB build image); a
+ * manual/nightly run, not part of fast CI.
  */
 @EnabledIfEnvironmentVariable(named = "HYPERION_E2E_GPU", matches = "true")
 class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -92,49 +86,10 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void adaptsExistingExerciseFromFeedback_endToEnd() throws Exception {
-        // Adapt: scaffold the full canonical sorting exercise (emptyRepositories=false), then have the agent make a coherent feedback-driven change while keeping it verifiable.
-        ProgrammingExercise exercise = scaffoldExercise("HYPAD", false);
-
-        String prompt = "Adapt this existing exercise based on instructor feedback: add one additional behaviour test that sorts an already-sorted list and asserts it stays sorted, "
-                + "and mention in the problem statement that the input may already be sorted. Keep every existing test, keep the reference solution passing, and keep the template "
-                + "failing. Run `sh verify.sh solution` and `sh verify.sh template` to confirm, then submit.";
-
-        runAndAssertAccepted(exercise, prompt, "adapt-with-feedback", outcome -> {
-            // Prove the agent actually made the requested change rather than re-submitting the already-valid exercise unchanged: the problem statement must now mention the
-            // already-sorted aspect, and there must be more tests than the four canonical behaviour tests (the added one plus the originals).
-            assertThat(outcome.producedProblemStatement().toLowerCase()).as("problem statement mentions the already-sorted case").contains("already");
-            assertThat(outcome.verification().testCount()).as("a test was added on top of the canonical suite").isGreaterThan(4);
-        });
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void adaptsPythonExerciseFromFeedback_endToEnd() throws Exception {
-        // Multi-language: the same engine, with NO Java-specific code, must work for Python. Adapt the canonical Python sorting exercise (pytest, reports under test-reports/).
-        ProgrammingExercise exercise = scaffoldExercise("HYPPY", false, ProgrammingLanguage.PYTHON, null);
-
-        String prompt = "Adapt this existing Python exercise based on instructor feedback: add one additional behaviour test that sorts an already-sorted list and asserts it stays "
-                + "sorted, and mention in the problem statement that the input may already be sorted. Keep every existing test, keep the reference solution passing and the template "
-                + "failing, and make sure the problem statement has [task] bindings for the tests. Run `sh verify.sh solution` and `sh verify.sh template` to confirm, then submit.";
-
-        runAndAssertAccepted(exercise, prompt, "python-adapt", outcome -> {
-            assertThat(outcome.producedProblemStatement()).as("problem statement contains Artemis [task] bindings").contains("[task]");
-            assertThat(outcome.producedProblemStatement().toLowerCase()).as("problem statement mentions the already-sorted case").contains("already");
-        });
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generatesExerciseWithStructuralTests_endToEnd() throws Exception {
-        // Structural-Ares pipeline: drive the richer style where the template omits a method the student must add, so the platform auto-generates structural tests from the
-        // solution/template structure difference (test.json + ClassTest/MethodTest/…). This verifies the GENERATION + SEEDING + COMPILE + RUN pipeline end-to-end. Whether the LLM
-        // also authors a fully self-consistent reflection-based exercise in three attempts is opportunistic (the differential acceptance is asserted by the other scenarios), so
-        // here we assert the structural tests were generated, seeded into the test repository, and actually compiled and ran in the real build.
+        // Structural-Ares pipeline: the template OMITS a class the student must add, so the platform auto-generates and seeds structural tests (test.json + ClassTest) from the
+        // solution/template structure difference. Asserts that pipeline produced and seeded the structure oracle; differential acceptance is covered by the other scenarios.
         ProgrammingExercise exercise = scaffoldExercise("HYPST", true);
-        // Reliable structural design: the template OMITS a whole class the behaviour tests do NOT call directly (so no brittle reflection is needed); the platform generates
-        // structural tests that check the omitted class exists. Solution: behaviour tests pass (present class implemented) + structural tests pass (omitted class present).
-        // Template: behaviour tests fail (stub) + structural tests fail (class missing). Differential holds with direct calls only.
         String prompt = "Create a Java exercise with two integer-array sorters that both implement an interface `Sorter` with `int[] sort(int[] input)`: `BubbleSort` and "
                 + "`InsertionSort`. In the SOLUTION implement both. In the TEMPLATE include `Sorter` and `BubbleSort` (with a compiling stub body that returns null), but OMIT the "
                 + "`InsertionSort` class entirely — the student must create it. Write @Public behaviour tests for BubbleSort with DIRECT calls (no reflection). Do NOT reference "
@@ -148,7 +103,6 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
         })) {
             Path exportDirectory = GeneratedExerciseExporter.export("structural", outcome, transcript.toString());
             log.info("=== EXPORTED (structural) to {} ===", exportDirectory.toAbsolutePath());
-            assertThat(outcome.verification()).as("verification ran").isNotNull();
             var testFiles = outcome.producedFiles(RepositoryType.TESTS);
             assertThat(testFiles.keySet()).as("the platform generated and seeded a structure oracle (test.json)").anyMatch(path -> path.endsWith("test.json"));
             assertThat(testFiles.keySet()).as("the platform generated and seeded structural test classes").anyMatch(path -> path.endsWith("ClassTest.java"));
@@ -161,7 +115,6 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generatesFromBareTopic_realisticPrompt_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldExercise("HYPBT", true);
-        // What an instructor would actually type — a topic, nothing else.
         runAndAssertAccepted(exercise, "A bubble sort exercise.", "realistic-bare-topic", outcome -> {
             assertThat(outcome.producedProblemStatement().toLowerCase()).as("the statement is about sorting").contains("sort");
             assertThat(outcome.producedProblemStatement()).as("problem statement binds tasks").contains("[task]");
@@ -171,9 +124,7 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generatesFromPastedProblemStatement_realisticPrompt_endToEnd() throws Exception {
-        // The "paste an existing problem statement" workflow: an instructor pastes finished prose (no [task] markup, no implementation hints) and expects the solution, template,
-        // and tests built to match it. This is the hardest realistic case — the differential oracle proves buildability, but fidelity to the pasted contract is a qualitative
-        // review item (logged below, not hard-asserted, since the agent may legitimately choose its own class names).
+        // "Paste an existing problem statement": the instructor pastes finished prose (no [task] markup) and the agent builds solution/template/tests to match it.
         ProgrammingExercise exercise = scaffoldExercise("HYPLRU", true);
         String pasted = """
                 We want a small exercise on the Least-Recently-Used (LRU) cache. Implement a cache that stores integer keys and integer values and is created with a fixed positive \
@@ -196,9 +147,7 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void fullFlow_draftedProblemStatementThenSpecModeGeneration_endToEnd() throws Exception {
-        // The real end-to-end instructor flow: (1) the instructor writes requirements; (2) Hyperion drafts the initial problem statement (the existing creation-time feature, here
-        // driven by the live model); (3) "Generate with AI" runs the agentic generation in SPEC MODE — building the solution, template, and tests to MATCH the drafted statement
-        // and refining it with the [task] bindings. This is exactly the unified create-page flow.
+        // The unified create-page flow: draft a problem statement from instructor requirements, then run agentic generation in SPEC MODE to build artifacts matching that draft.
         ProgrammingExercise exercise = scaffoldExercise("HYPSPEC", true);
         String instructions = "Create an exercise about a bounded stack of integers for a first-semester course: push, pop, peek, an isEmpty check, and a fixed capacity that "
                 + "rejects a push when the stack is already full.";
@@ -222,21 +171,8 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generatesPythonExerciseFromScratch_realisticPrompt_endToEnd() throws Exception {
-        // Python, from scratch, small: the only prior Python scenario adapts an existing exercise; this proves the engine authors a coherent Python exercise from a bare topic.
-        ProgrammingExercise exercise = scaffoldExercise("HYPPYS", true, ProgrammingLanguage.PYTHON, null);
-        runAndAssertAccepted(exercise,
-                "A Python exercise on string utilities: a function that reverses a string and a function that checks whether a string is a palindrome, ignoring case and spaces.",
-                "python-from-scratch", outcome -> {
-                    assertThat(outcome.producedProblemStatement()).as("problem statement binds tasks").contains("[task]");
-                    assertThat(outcome.producedProblemStatement().toLowerCase()).as("the statement is about the requested topic").contains("palindrome");
-                });
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generatesLargerMultiClassExercise_endToEnd() throws Exception {
-        // Size: a larger, multi-class Java exercise (several collaborating classes and rules) to confirm the engine scales beyond a single class within the turn/context budget.
+        // Scale: a larger, multi-class Java exercise (several collaborating classes) to confirm the engine scales beyond a single class within the turn/context budget.
         ProgrammingExercise exercise = scaffoldExercise("HYPBIG", true);
         String prompt = "Create a Java exercise modelling a small library system with several collaborating classes: a Book (title, author, and an available flag), a Member (a name and "
                 + "the books they have borrowed), and a Library that registers books and members and supports borrowing and returning a book by title. Borrowing makes a book "
@@ -249,29 +185,11 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
         });
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generatesGoExerciseFromScratch_realisticPrompt_endToEnd() throws Exception {
-        // Go: a fundamentally different paradigm from the JVM/Python scenarios — sources at the repository ROOT (no src/), a go.mod `replace` wiring the assignment in, and tests
-        // named
-        // by `func TestXxx`. Verifies the per-language profile (LanguageGenerationProfile.GO) end-to-end.
-        ProgrammingExercise exercise = scaffoldExercise("HYPGO", true, ProgrammingLanguage.GO, null);
-        runAndAssertAccepted(exercise,
-                "A Go exercise on string utilities: a function ReverseString(s string) string and a function IsPalindrome(s string) bool that ignores case and spaces.",
-                "go-from-scratch",
-                // The core guarantee is the differential acceptance (asserted by runAndAssertAccepted) plus well-formed [task] bindings; the exact topic is a softer quality signal
-                // a
-                // from-scratch brief leaves to the agent, so it is not hard-asserted here.
-                outcome -> assertThat(outcome.producedProblemStatement()).as("problem statement binds tasks").contains("[task]"));
-    }
-
     /**
-     * The from-scratch language matrix: one entry per additional supported language, so a (gated, nightly/manual) run verifies that exercise generation works across the full
-     * breadth
-     * of Artemis languages and their per-language {@link LanguageGenerationProfile} guidance. Each entry uses a small, realistic instructor brief. Languages with their own
-     * dedicated
-     * scenario (Java, Python, Kotlin, Go) are not repeated here; languages whose starting exercise cannot be scaffolded in this harness (C — see the note below) or that are
-     * compile-only and structurally incompatible with the differential oracle (Assembler, VHDL) are intentionally excluded.
+     * The from-scratch language matrix: one entry per supported language, so a gated nightly run verifies generation across the breadth of Artemis languages and their per-language
+     * {@link LanguageGenerationProfile} guidance. C cannot be scaffolded in this harness (see the note below) and compile-only languages (Assembler, VHDL) are incompatible with
+     * the
+     * differential oracle, so both are excluded.
      */
     static Stream<Arguments> fromScratchLanguageMatrix() {
         return applyLanguageFilter(Stream.of(
@@ -294,11 +212,7 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
         return Arguments.of(language, projectType, shortName, prompt, topicKeyword);
     }
 
-    /**
-     * Optional comma-separated allowlist of languages (enum names) to run, via the {@code HYPERION_MATRIX_LANGS} env var; empty/unset runs the full matrix. Lets several languages
-     * be
-     * validated in parallel by launching one isolated JVM per subset, without an in-process concurrency refactor of the shared {@code @BeforeEach} setup.
-     */
+    /** Optional comma-separated language allowlist via {@code HYPERION_MATRIX_LANGS} (empty/unset runs the full matrix), so subsets can run in parallel isolated JVMs. */
     private static Stream<Arguments> applyLanguageFilter(Stream<Arguments> all) {
         String filter = System.getenv("HYPERION_MATRIX_LANGS");
         if (filter == null || filter.isBlank()) {

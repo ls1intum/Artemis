@@ -124,12 +124,7 @@ class ExerciseGenerationTaskServiceTest {
         assertThat(terminal.verdict().accepted()).isFalse();
     }
 
-    /**
-     * W3 FIX: a failed ADAPT must tell the instructor their working exercise was PRESERVED and where the draft is. When recovery reports the draft was diverted to an isolated
-     * branch
-     * ({@code liveExerciseUntouched=true}), the NEEDS_REVIEW message must say the existing exercise was left unchanged and name the draft branch — so the instructor is not led to
-     * believe their live exercise was replaced by the failing draft.
-     */
+    /** A failed adapt diverted to an isolated branch surfaces a NEEDS_REVIEW message that says the live exercise was left unchanged and names the draft branch. */
     @Test
     void rejectedAdapt_divertedToIsolatedBranch_messageSaysLiveExerciseUntouchedAndNamesBranch() {
         VerificationResult rejected = new VerificationResult(false, false, true, 4, List.of("The solution does not pass its own tests."));
@@ -145,10 +140,7 @@ class ExerciseGenerationTaskServiceTest {
         assertThat(terminal.message()).contains("left unchanged").contains("hyperion-draft/job-1");
     }
 
-    /**
-     * Contrast: a from-scratch rejected run (committed in place, {@code liveExerciseUntouched=false}) must NOT claim anything was left unchanged — there was no working exercise to
-     * preserve, and the draft IS the exercise now. This pins that the "left unchanged" wording is adapt-specific and never leaks onto the from-scratch path.
-     */
+    /** A from-scratch rejected run committed in place must NOT claim anything was left unchanged — the "left unchanged" wording is adapt-specific. */
     @Test
     void rejectedFromScratch_committedInPlace_messageDoesNotClaimUntouched() {
         VerificationResult rejected = new VerificationResult(false, false, true, 4, List.of("The solution does not pass its own tests."));
@@ -178,9 +170,7 @@ class ExerciseGenerationTaskServiceTest {
     }
 
     /**
-     * The EGO-DEATH half-commit case: recovery persisted the best-effort draft but its review-thread step failed, so {@code recover} returns the degraded sentinel
-     * ({@link GenerationRecoveryService#REVIEW_COMMENTS_FAILED}) rather than throwing. The draft IS saved, so the run must be {@code NEEDS_REVIEW} (never {@code PARTIAL}) with an
-     * explicit "review notes could not be attached" message — a saved-but-unannotated draft must never be mislabelled as "nothing saved".
+     * When recovery returns the degraded sentinel (draft saved, annotation failed), the run is NEEDS_REVIEW (never PARTIAL) with a "review notes could not be attached" message.
      */
     @Test
     void rejectedRun_draftPersistedButAnnotationFails_reportsNeedsReviewDegraded_notPartial() {
@@ -197,11 +187,7 @@ class ExerciseGenerationTaskServiceTest {
         assertThat(terminal.message()).contains("review notes could not be attached");
     }
 
-    /**
-     * Failure injection on the persist hand-off of the ACCEPTED path: when {@code persist} throws, the run must surface as {@code ERROR} (not a silent half-save), and recovery
-     * must
-     * never be reached — the accepted path is the clean-success path only.
-     */
+    /** When {@code persist} throws on the accepted path, the run surfaces as ERROR (not a silent half-save) and recovery is never reached. */
     @Test
     void persistThrowsOnAcceptedPath_surfacesError_neverRecovers() {
         VerificationResult accepted = new VerificationResult(true, true, true, 4, List.of());

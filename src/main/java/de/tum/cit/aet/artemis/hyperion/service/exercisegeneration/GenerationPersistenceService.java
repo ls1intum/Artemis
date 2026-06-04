@@ -102,22 +102,12 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Persists a non-accepted (recovered) generation draft WITHOUT ever regressing a previously-working exercise.
-     * <p>
-     * <strong>The safety invariant.</strong> An accepted run overwrites the live exercise on purpose (that is the whole point of generation). A non-accepted run must not: if the
-     * target is an <em>adapt</em> of an already-working, shipped exercise, committing the best-effort BROKEN draft onto the default branch would silently replace a working
-     * exercise
-     * with a failing one (a real regression with no clean restore — the recorded {@link ExerciseVersion} is a read-only metadata snapshot, not a one-action git revert). So this
-     * method first decides, per repository, whether the target already carries committed content (adapt) or is empty (from-scratch):
-     * <ul>
-     * <li><strong>From-scratch</strong> (all of template/solution/tests are empty): there is nothing to lose, so the draft is committed to the default branch exactly as
-     * {@link #persist} does — the instructor opens the exercise and edits the draft in place.</li>
-     * <li><strong>Adapt</strong> (any repository already has committed content): the live default branch is left BYTE-IDENTICAL. The draft is pushed to an isolated branch
-     * ({@code hyperion-draft/<jobId>}) per repository instead, and NO CI build is triggered against the live solution. The working exercise keeps working and grading exactly as
-     * before; the recovered draft is preserved on the isolated branch for the instructor to diff/merge deliberately.</li>
-     * </ul>
-     * The decision is taken atomically across all three repositories (if ANY is an adapt target, ALL are diverted to isolated branches) so a partial commit can never half-regress
-     * the exercise — either every repository's default branch is untouched, or the from-scratch overwrite proceeds normally.
+     * Persists a non-accepted (recovered) generation draft WITHOUT ever regressing a previously-working exercise. A from-scratch target (all repositories empty) is committed to
+     * the
+     * default branch exactly as {@link #persist} does; an adapt target (any repository already carries committed content) is left byte-identical and the draft is diverted to an
+     * isolated branch with no CI build, so a broken draft can never replace a working exercise (the recorded {@link ExerciseVersion} is a read-only snapshot, not a git revert).
+     * The
+     * decision is taken atomically across all three repositories so a partial commit can never half-regress the exercise.
      *
      * @param exercise the exercise to persist the draft into
      * @param user     the instructor performing the generation (commit author)
@@ -126,23 +116,20 @@ public class GenerationPersistenceService {
      * @return the result describing whether the live exercise was left untouched and, if so, the isolated branch the draft was pushed to
      */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        // Decide adapt-vs-from-scratch up front, BEFORE writing anything, by inspecting whether any target repository already tracks content. Doing this first makes the choice
-        // atomic across all three repositories: a later commit failure can never leave the exercise half-overwritten, because in adapt mode the default branch is never touched at
-        // all.
+        // Decide adapt-vs-from-scratch before writing anything, so a later commit failure can never leave the exercise half-overwritten (in adapt mode the default branch is
+        // untouched).
         boolean adaptTarget = anyRepositoryHasContent(exercise);
         if (!adaptTarget) {
             // From-scratch: nothing to lose. Commit the draft to the default branch exactly as an accepted run does so it is editable in place.
             persist(exercise, user, outcome);
             return new RecoveryPersistResult(false, null);
         }
-        // Adapt: never overwrite the live default branch with a failing draft. Divert every repository's draft to an isolated branch and leave the working exercise byte-identical.
+        // Adapt: divert every repository's draft to an isolated branch and leave the live default branch byte-identical.
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), draftBranch);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), draftBranch);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), draftBranch);
-        // Deliberately NO triggerTestsBuild and NO createExerciseVersion: the live exercise did not change, so it must neither be re-graded against the broken draft nor recorded
-        // as a
-        // new version. The draft lives only on the isolated branch for review.
+        // No triggerTestsBuild and no createExerciseVersion: the live exercise did not change, so it must not be re-graded or re-versioned against the broken draft.
         log.info("Recovered adapt draft for exercise {} onto isolated branch {} (the live exercise was left untouched)", exercise.getId(), draftBranch);
         return new RecoveryPersistResult(true, draftBranch);
     }
@@ -233,9 +220,9 @@ public class GenerationPersistenceService {
      * @param outcome  the accepted generation outcome holding the produced files
      */
     public void persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
-        // 1. Commit each repository's produced files (template, solution, then tests last so the test-triggered build sees the final solution). The three repositories are separate
-        // git repositories, so this cannot be a single atomic transaction; we commit in a stable order and, if a later commit fails, report exactly which repositories were already
-        // written rather than claiming nothing changed — the instructor can then review the partially-saved exercise (the new ExerciseVersion below also snapshots the state).
+        // 1. Commit each repository's produced files, tests last so the test-triggered build sees the final solution. Three separate git repositories cannot commit atomically, so
+        // on
+        // a mid-sequence failure we report which repositories were already written rather than claiming nothing changed.
         List<RepositoryType> committed = new ArrayList<>();
         String testsCommitHash;
         try {
@@ -266,14 +253,13 @@ public class GenerationPersistenceService {
             }
         }
 
-        // 3. Trigger the canonical CI build for the tests. This is the one legitimate real build; its result drives the platform's test-case synchronisation and task binding,
-        // which complete asynchronously through the normal result-processing pipeline (exactly as a manual instructor edit to the tests repository does).
+        // 3. Trigger the canonical CI build for the tests; its result drives test-case synchronisation and task binding asynchronously, exactly as a manual edit to the tests repo
+        // does.
         if (testsCommitHash != null) {
             triggerTestsBuild(exercise, testsCommitHash);
         }
 
-        // 4. Record a new exercise version, snapshotting all repository commit hashes and refreshing search indexing / notifying open editors. Test-case synchronisation from the
-        // build above lands asynchronously; the version captures the committed repository state, which is the durable source of truth.
+        // 4. Record a new exercise version, snapshotting the committed repository state (the durable source of truth) and refreshing search indexing / notifying open editors.
         try {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
@@ -284,22 +270,10 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Writes the produced files into a repository's working copy and commits, making the committed tree EXACTLY mirror the sandbox-final {@code producedFiles}. A commit failure is
-     * propagated (not swallowed) so the caller does not report success after only some repositories were written.
-     * <p>
-     * <strong>Why the tree must mirror, not just overlay.</strong> The repository was scaffolded from the canonical sample before generation (for a from-scratch run the
-     * template/solution sources are cleared, but the TESTS repo is kept VERBATIM — the canonical behaviour test and structural oracle for a <em>different</em> exercise). The agent
-     * removes those sample test sources inside the sandbox and writes its own, so the sandbox-final tree the differential oracle accepted contains ONLY the generated exercise's
-     * tests. If persist merely overlaid {@code producedFiles} onto the scaffolded git tree it would leave the canonical sample's orphaned test sources behind (e.g. Java's
-     * {@code SortingExampleBehaviorTest.java} referencing classes the generated solution does not have, or Python's {@code behavior/behavior_test.py} /
-     * {@code structural/structural_test.py}). Those orphans never run in the sandbox {@code verify.sh} oracle but DO run in real Artemis grading, so the reference solution would
-     * score below 100% on the real pipeline while the sandbox accepted — the exact verify.sh-vs-production divergence. Deleting every tracked file absent from
-     * {@code producedFiles}
-     * closes it: the persisted tree is byte-for-byte the set the oracle validated.
-     * <p>
-     * Build/harness/manifest files (graded verbatim, protected by the harness-immutability gate) are never deleted even if a flaky read-back dropped them from
-     * {@code producedFiles},
-     * so a partial extraction can corrupt the build but can never silently wipe the harness. The agent legitimately edits only test SOURCE files; those ARE removed when orphaned.
+     * Writes the produced files into a repository's working copy and commits, making the committed tree EXACTLY mirror the sandbox-final {@code producedFiles} (see
+     * {@link #deleteOrphanedFiles} for why mirroring rather than overlaying is required). A commit failure is propagated, not swallowed, so the caller does not report success
+     * after
+     * only some repositories were written.
      *
      * @param exercise       the exercise being persisted
      * @param user           the commit author
@@ -356,11 +330,10 @@ public class GenerationPersistenceService {
             if (tracked.getValue() != FileType.FILE || producedPaths.contains(path) || ExerciseIntegrityGate.isHarnessFile(path)) {
                 continue;
             }
-            // Never delete a scaffolded BINARY (e.g. gradle/wrapper/gradle-wrapper.jar). A binary cannot survive the UTF-8 String round-trip, so it is deliberately EXCLUDED from
-            // producedFiles on read-back (WorkspaceArchive.readTar) — which would make it look like an orphan here. The agent never edits these, so the correct, byte-exact state
-            // is
-            // the scaffolded original already in the working tree: leave it untouched (do not delete, do not rewrite) so it commits intact. Detected by content (NUL/non-UTF-8), so
-            // a genuinely-textual run.sh/build.sh source is NOT mistaken for binary.
+            // Never delete a scaffolded binary (e.g. gradle/wrapper/gradle-wrapper.jar): it cannot survive the UTF-8 String round-trip so the read-back excludes it from
+            // producedFiles,
+            // which would make it look orphaned. The agent never edits it, so the byte-exact scaffolded original in the working tree is correct — leave it untouched so it commits
+            // intact.
             if (repositoryRoot != null && BinaryContent.isBinaryFile(repositoryRoot.resolve(path))) {
                 log.debug("Preserved scaffolded binary {} file {} (excluded from the String pipeline; kept byte-exact from the scaffold)", repositoryType, path);
                 continue;

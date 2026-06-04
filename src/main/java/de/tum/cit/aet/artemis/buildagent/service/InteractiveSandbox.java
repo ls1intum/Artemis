@@ -22,40 +22,39 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 public interface InteractiveSandbox {
 
     /**
-     * Creates and starts a warm, hardened container for a generation session and returns an opaque session handle (the container identifier).
+     * Creates and starts a warm, hardened container for a generation session.
      *
-     * @param spec the image and resource/network configuration for the session
-     * @return the session handle (container id) to pass to subsequent operations
+     * @param spec the container image, resource limits and seed inputs for the session
+     * @return an opaque session handle (the container id) used by every subsequent operation
      */
     String createSession(SandboxSessionSpec spec);
 
     /**
-     * Runs a command inside the session container and returns the captured output and exit code. Standard output and error are truncated to a bounded size before being
-     * returned so that large build logs cannot overflow the agent's context window.
+     * Runs a command inside the session container; it is executed without a shell unless the caller passes {@code sh -c ...}, and stdout/stderr are truncated to a bounded size so
+     * large build logs cannot overflow the agent's context window.
      *
-     * @param sessionId the session handle returned by {@link #createSession}
-     * @param command   the command and its arguments (executed without a shell unless the caller passes {@code sh -c ...})
-     * @param timeout   the maximum time to wait for the command to finish before it is killed
-     * @return the captured result
+     * @param sessionId the session handle
+     * @param timeout   the maximum time to wait for the command to finish
+     * @param command   the command and its arguments (run directly, not through a shell)
+     * @return the exit code and the bounded captured stdout/stderr
      */
     SandboxExecResult exec(String sessionId, Duration timeout, String... command);
 
     /**
-     * Copies a tar archive into the session container at the given destination path. Used to seed the workspace (problem statement and all repositories) at the start of a
-     * session and to write individual generated files.
+     * Copies a tar archive into the session container at the given absolute destination path. Used to seed the workspace and to write generated files.
      *
      * @param sessionId       the session handle
-     * @param destinationPath the absolute path inside the container to extract the archive into
-     * @param tarArchive      the tar archive stream
+     * @param destinationPath the absolute container path to extract the archive into
+     * @param tarArchive      the tar archive to copy in
      */
     void copyIn(String sessionId, String destinationPath, InputStream tarArchive);
 
     /**
-     * Reads a path out of the session container as a tar archive. Used to extract the produced files at the end of a session.
+     * Reads a path out of the session container as a tar archive, used to extract the produced files at the end of a session.
      *
      * @param sessionId the session handle
-     * @param path      the absolute path inside the container to read
-     * @return the tar archive stream of the path
+     * @param path      the absolute container path to read
+     * @return the path's contents as a tar archive
      */
     TarArchiveInputStream copyOut(String sessionId, String path);
 
