@@ -50,12 +50,13 @@ public class GenerationWorkspaceService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final SandboxBuildCommandService buildCommandFactory;
+    private final SandboxBuildCommandService sandboxBuildCommandService;
 
-    public GenerationWorkspaceService(GitService gitService, ProgrammingLanguageConfiguration programmingLanguageConfiguration, SandboxBuildCommandService buildCommandFactory) {
+    public GenerationWorkspaceService(GitService gitService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            SandboxBuildCommandService sandboxBuildCommandService) {
         this.gitService = gitService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-        this.buildCommandFactory = buildCommandFactory;
+        this.sandboxBuildCommandService = sandboxBuildCommandService;
     }
 
     /**
@@ -82,7 +83,7 @@ public class GenerationWorkspaceService {
         String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
-        textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, buildCommandFactory.verifyScriptContent(exercise));
+        textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
         for (RepositoryType repositoryType : SEEDED_REPOSITORIES) {

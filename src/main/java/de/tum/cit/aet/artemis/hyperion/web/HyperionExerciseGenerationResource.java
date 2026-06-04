@@ -86,10 +86,10 @@ public class HyperionExerciseGenerationResource {
     @GetMapping("programming-exercises/{exerciseId}/generate-exercise/status")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseGenerationStatusDTO> getExerciseGenerationStatus(@PathVariable long exerciseId) {
+        log.debug("REST request to get the agentic exercise generation status for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return jobService.getStatus(user, exercise).map(status -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.events())))
-                .orElseGet(() -> ResponseEntity.noContent().build());
+        return jobService.getStatus(user, exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**

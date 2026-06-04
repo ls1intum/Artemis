@@ -76,7 +76,7 @@ public class AuthoritativeVerificationService {
 
     private static final SecureRandom NONCE_RANDOM = new SecureRandom();
 
-    private final SandboxBuildCommandService buildCommandFactory;
+    private final SandboxBuildCommandService sandboxBuildCommandService;
 
     /**
      * Persisted SCA categories read the SAME way production grading does ({@code findByExerciseId}), so the SCA-parity gate decides from the authoritative category state rather
@@ -91,17 +91,18 @@ public class AuthoritativeVerificationService {
 
     // @Autowired disambiguates this from the package-private test constructor; with two constructors and no annotation Spring fails to instantiate the bean.
     @Autowired
-    public AuthoritativeVerificationService(SandboxBuildCommandService buildCommandFactory, Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
-        this(buildCommandFactory, AuthoritativeVerificationService::randomNonce, staticCodeAnalysisCategoryRepository);
-    }
-
-    AuthoritativeVerificationService(SandboxBuildCommandService buildCommandFactory, Supplier<String> nonceSupplier) {
-        this(buildCommandFactory, nonceSupplier, Optional.empty());
-    }
-
-    AuthoritativeVerificationService(SandboxBuildCommandService buildCommandFactory, Supplier<String> nonceSupplier,
+    public AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
             Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
-        this.buildCommandFactory = buildCommandFactory;
+        this(sandboxBuildCommandService, AuthoritativeVerificationService::randomNonce, staticCodeAnalysisCategoryRepository);
+    }
+
+    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService, Supplier<String> nonceSupplier) {
+        this(sandboxBuildCommandService, nonceSupplier, Optional.empty());
+    }
+
+    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService, Supplier<String> nonceSupplier,
+            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
+        this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.nonceSupplier = nonceSupplier;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
     }
@@ -167,12 +168,66 @@ public class AuthoritativeVerificationService {
         // Anti-forgery: the pristine script stamps this fresh per-run nonce onto every HYPERION_* marker, and the parser honors only nonce-bearing lines, so a marker the agent's
         // test code printed to stdout cannot forge a verdict.
         String nonce = nonceSupplier.get();
-        SandboxExecResult solutionRun = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommandFactory.pristineSolutionBuildCommand(nonce));
-        BuildSummary solution = BuildSummary.parse(solutionRun, nonce);
-        SandboxExecResult templateRun = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommandFactory.pristineTemplateBuildCommand(nonce));
-        BuildSummary template = BuildSummary.parse(templateRun, nonce);
+        BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(nonce), nonce);
+        BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(nonce), nonce);
 
-        // The solution must compile, run at least one test, and have every test pass.
+        int testCount = solution.tests();
+        boolean solutionPassed = checkSolutionPasses(solution, reasons);
+        boolean templateFailed = checkTemplateFails(solution, template, reasons);
+        EmitterSoundness emitterSoundness = checkEmitterSoundness(solution, template, reasons);
+
+        // The exercise must bind its tests to the problem statement via [task][title](testNames); without this the student sees no task checklist (a Maven project, not an Artemis
+        // exercise).
+        String problemStatement = readProblemStatement(sandbox, sessionId);
+        boolean problemStatementHasTasks = TASK_BINDING.matcher(problemStatement).find();
+        if (!problemStatementHasTasks) {
+            reasons.add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
+                    + "appear as a checklist for students.");
+        }
+
+        boolean taskBindingsResolve = checkTaskBindingsResolve(problemStatement, solution, testCount, seededStructuralTestNames, problemStatementHasTasks, reasons);
+        boolean noTaskTestPassesTemplate = checkNoTaskBoundTestPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
+        boolean noGradableTestPassesTemplate = checkNoGradableTestPassesTemplate(solution, template, reasons);
+        boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
+
+        // Sandbox-free integrity gates the build cannot see: a tampered graded-verbatim harness, or a solution leaked into the student-facing template. Both fail OPEN on genuinely
+        // empty inputs.
+        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles);
+        boolean harnessIntact = harnessTamperingReasons.isEmpty();
+        reasons.addAll(harnessTamperingReasons);
+        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
+        boolean noSolutionLeak = solutionLeakReasons.isEmpty();
+        reasons.addAll(solutionLeakReasons);
+
+        boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
+
+        boolean accepted = solutionPassed && templateFailed && testCount > 0 && emitterSoundness.solutionNamesComplete() && emitterSoundness.templateFailNamesSound()
+                && problemStatementHasTasks && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean && harnessIntact
+                && noSolutionLeak && extractionSound;
+        if (!accepted) {
+            log.info(
+                    "Authoritative verification failed: solution[{}], template[{}], namesComplete={}, failNamesSound={}, tasks={}, bindingsResolve={}, noTaskTestPassesTemplate={}, "
+                            + "noGradableTestPassesTemplate={}, solutionScaClean={}, harnessIntact={}, noSolutionLeak={}, extractionSound={}",
+                    solution, template, emitterSoundness.solutionNamesComplete(), emitterSoundness.templateFailNamesSound(), problemStatementHasTasks, taskBindingsResolve,
+                    noTaskTestPassesTemplate, noGradableTestPassesTemplate, solutionScaClean, harnessIntact, noSolutionLeak, extractionSound);
+        }
+        return new VerificationResult(accepted, solutionPassed, templateFailed, testCount, reasons);
+    }
+
+    /** Runs one PRISTINE (verifier-controlled) build for the given assignment command and parses its nonce-stamped {@code HYPERION_*} markers into a {@link BuildSummary}. */
+    private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String nonce) {
+        SandboxExecResult run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
+        return BuildSummary.parse(run, nonce);
+    }
+
+    /**
+     * The solution gate: the solution must compile, run at least one test, and have every test pass. Appends a rejection reason to {@code reasons} otherwise.
+     *
+     * @param solution the solution build summary
+     * @param reasons  the running list of rejection reasons (appended to on failure)
+     * @return {@code true} when the solution compiled, ran tests, and passed them all
+     */
+    private static boolean checkSolutionPasses(BuildSummary solution, List<String> reasons) {
         boolean solutionPassed = !solution.timedOut() && solution.exitCode() == 0 && solution.tests() > 0 && solution.failures() == 0 && solution.errors() == 0;
         if (solution.timedOut()) {
             reasons.add("The solution build timed out. The solution must compile and pass every test within the time limit.");
@@ -185,14 +240,24 @@ public class AuthoritativeVerificationService {
             reasons.add("The solution does not pass its own tests (" + solution.failures() + " failing, " + solution.errors() + " erroring of " + solution.tests()
                     + "). The solution must compile and pass every test.");
         }
+        return solutionPassed;
+    }
 
-        // The template must compile and run the SAME tests as the solution but fail at least half of them (a near-complete template that fails only one of many is not a real
-        // starting point, and tests()==0 means it did not compile).
+    /**
+     * The template gate: the template must compile and run the SAME tests as the solution but fail at least half of them (a near-complete template that fails only one of many is
+     * not
+     * a real starting point, and {@code tests()==0} means it did not compile). Appends a rejection reason to {@code reasons} otherwise.
+     *
+     * @param solution the solution build summary (its test count is the reference)
+     * @param template the template build summary
+     * @param reasons  the running list of rejection reasons (appended to on failure)
+     * @return {@code true} when the template compiled, ran the same tests, and (correctly) failed enough of them
+     */
+    private static boolean checkTemplateFails(BuildSummary solution, BuildSummary template, List<String> reasons) {
         int testCount = solution.tests();
         int templateFailing = template.failures() + template.errors();
         int requiredTemplateFailures = Math.max(1, testCount / 2);
         boolean templateCompiledAndRan = !template.timedOut() && template.tests() > 0;
-        boolean templateFailed = false;
         if (template.timedOut()) {
             reasons.add("The template build timed out; it must compile and fail the tests quickly.");
         }
@@ -216,17 +281,38 @@ public class AuthoritativeVerificationService {
         else {
             // A correctly-failing template. Trust the JUnit failure/error counts, NOT the exit code: some languages pipe the test run through a report converter (Go's
             // go-junit-report, Dart's tojunit) that exits 0 even when tests failed.
-            templateFailed = true;
+            return true;
         }
+        return false;
+    }
 
-        // Emitter soundness, fail-CLOSED: the pristine verify.sh always emits a TESTNAME per <testcase> and a TESTFAIL per failing one, so a missing/short set is evidence of a
-        // broken or forged emitter that would silently disable the binding-resolution and per-test gates below. We REJECT rather than skip.
+    /**
+     * Whether the per-test emission is sound enough to trust the binding-resolution and per-test gates.
+     *
+     * @param solutionNamesComplete  the solution recorded a test name for every test it ran
+     * @param templateFailNamesSound the template recorded WHICH tests failed for its failing/erroring run
+     */
+    private record EmitterSoundness(boolean solutionNamesComplete, boolean templateFailNamesSound) {
+    }
+
+    /**
+     * Emitter soundness, fail-CLOSED: the pristine {@code verify.sh} always emits a TESTNAME per {@code <testcase>} and a TESTFAIL per failing one, so a missing/short set is
+     * evidence of a broken or forged emitter that would silently disable the binding-resolution and per-test gates. We REJECT rather than skip, appending a reason for each gap.
+     *
+     * @param solution the solution build summary
+     * @param template the template build summary
+     * @param reasons  the running list of rejection reasons (appended to on failure)
+     * @return whether the solution name list and the template fail-name list are complete enough to trust
+     */
+    private static EmitterSoundness checkEmitterSoundness(BuildSummary solution, BuildSummary template, List<String> reasons) {
         boolean solutionNamesComplete = solution.tests() > 0 && solution.testNames().size() >= solution.tests();
         if (solution.tests() > 0 && !solutionNamesComplete) {
             reasons.add("The solution ran " + solution.tests() + " tests but the verifier only recorded " + solution.testNames().size()
                     + " test name(s). The per-test name list must be complete for the grading checks to run; an incomplete list means the test reports could not be parsed "
                     + "reliably (or the build emitted no per-test results), so the exercise cannot be verified. Ensure every test writes a JUnit <testcase> entry.");
         }
+        int templateFailing = template.failures() + template.errors();
+        boolean templateCompiledAndRan = !template.timedOut() && template.tests() > 0;
         boolean templateFailNamesSound = !(templateCompiledAndRan && templateFailing > 0 && template.testFailedNames().isEmpty());
         if (!templateFailNamesSound) {
             reasons.add("The template reported " + templateFailing
@@ -234,19 +320,24 @@ public class AuthoritativeVerificationService {
                     + "Without the failing-test names the verifier cannot confirm that every graded test fails on the template, so the exercise cannot be verified. Ensure the test "
                     + "reports record each failing <testcase> with its <failure>/<error>.");
         }
+        return new EmitterSoundness(solutionNamesComplete, templateFailNamesSound);
+    }
 
-        // The exercise must bind its tests to the problem statement via [task][title](testNames); without this the student sees no task checklist (a Maven project, not an Artemis
-        // exercise).
-        String problemStatement = readProblemStatement(sandbox, sessionId);
-        boolean problemStatementHasTasks = TASK_BINDING.matcher(problemStatement).find();
-        if (!problemStatementHasTasks) {
-            reasons.add("The problem statement has no Artemis task bindings. Add at least one line of the form [task][Title](testName) binding the graded tests to tasks so they "
-                    + "appear as a checklist for students.");
-        }
-
-        // A [task]'s names must be the real runner test names, not a @DisplayName or prose title; a binding that resolves to nothing silently shows no progress in Artemis, which
-        // the
-        // differential build cannot detect. Checked against the names verify.sh extracted; fails open when no trustworthy set was emitted.
+    /**
+     * The binding-resolution gate: a {@code [task]}'s names must be the real runner test names, not a {@code @DisplayName} or prose title; a binding that resolves to nothing
+     * silently shows no progress in Artemis, which the differential build cannot detect. Checked against the names {@code verify.sh} extracted; fails open when no trustworthy set
+     * was emitted.
+     *
+     * @param problemStatement          the produced problem statement
+     * @param solution                  the solution build summary (its test names are the resolution target)
+     * @param testCount                 the solution test count (a shorter name list than this fails the gate open)
+     * @param seededStructuralTestNames the authoritative seeded structural test names (exempt from resolution)
+     * @param problemStatementHasTasks  whether the problem statement contains any {@code [task]} binding at all
+     * @param reasons                   the running list of rejection reasons (appended to on failure)
+     * @return whether every {@code [task]} binding resolves to a real (or seeded-structural) test name
+     */
+    private static boolean checkTaskBindingsResolve(String problemStatement, BuildSummary solution, int testCount, Set<String> seededStructuralTestNames,
+            boolean problemStatementHasTasks, List<String> reasons) {
         List<String> unresolvedTaskBindings = unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         boolean taskBindingsResolve = unresolvedTaskBindings.isEmpty();
         if (problemStatementHasTasks && !taskBindingsResolve) {
@@ -254,10 +345,23 @@ public class AuthoritativeVerificationService {
                     + "method/function names (e.g. testSortsAscending), not a @DisplayName or a prose title — otherwise the task shows no result in Artemis. The actual test names are: "
                     + solution.testNames() + ". Fix the [task] lines (or rename the tests) so every binding references a real test name.");
         }
+        return taskBindingsResolve;
+    }
 
-        // Strict per-test differential: every [task]-bound test the SOLUTION passes must FAIL on the TEMPLATE. A graded test the template already satisfies (a `return 0` stub
-        // passing
-        // `fibonacci(0)==0`) hands the student a free point even if the count gate passed. Fails open when the name/fail sets are untrustworthy.
+    /**
+     * The strict per-test differential gate: every {@code [task]}-bound test the SOLUTION passes must FAIL on the TEMPLATE. A graded test the template already satisfies (a
+     * {@code return 0} stub passing {@code fibonacci(0)==0}) hands the student a free point even if the count gate passed. Fails open when the name/fail sets are untrustworthy.
+     *
+     * @param problemStatement         the produced problem statement
+     * @param solution                 the solution build summary
+     * @param template                 the template build summary
+     * @param problemStatementHasTasks whether the problem statement contains any {@code [task]} binding
+     * @param taskBindingsResolve      whether the bindings resolve (the gate only reports when they do)
+     * @param reasons                  the running list of rejection reasons (appended to on failure)
+     * @return whether no {@code [task]}-bound test passes on the template
+     */
+    private static boolean checkNoTaskBoundTestPassesTemplate(String problemStatement, BuildSummary solution, BuildSummary template, boolean problemStatementHasTasks,
+            boolean taskBindingsResolve, List<String> reasons) {
         List<String> taskTestsPassingOnTemplate = taskBoundTestsThatPassOnTemplate(problemStatement, solution, template);
         boolean noTaskTestPassesTemplate = taskTestsPassingOnTemplate.isEmpty();
         if (problemStatementHasTasks && taskBindingsResolve && !noTaskTestPassesTemplate) {
@@ -265,12 +369,21 @@ public class AuthoritativeVerificationService {
                     + ". Every graded ([task]-bound) test must FAIL on the template — the template's placeholder bodies must not accidentally satisfy a graded assertion (e.g. a "
                     + "`return 0` stub must not pass an `expected == 0` test). Strip the template so every graded test fails, or make the test assert behaviour the placeholder cannot meet.");
         }
+        return noTaskTestPassesTemplate;
+    }
 
-        // Production grades EVERY discovered test, not only the [task]-bound subset, so an unbound test that passes on the template still gives a bare-template student >0%
-        // (observed:
-        // a Python template at 22.2% from one unbound test). We require every solution-passing test to FAIL on the template, except the build/compile/configure gates
-        // (isBuildGateTest)
-        // that legitimately pass on both because the same-signature template compiles by design. Fails open under the same guards as the [task] gate.
+    /**
+     * The production-parity gate: production grades EVERY discovered test, not only the {@code [task]}-bound subset, so an unbound test that passes on the template still gives a
+     * bare-template student {@code >0%} (observed: a Python template at 22.2% from one unbound test). We require every solution-passing test to FAIL on the template, except the
+     * build/compile/configure gates ({@link #isBuildGateTest}) that legitimately pass on both because the same-signature template compiles by design. Fails open under the same
+     * guards as the {@code [task]} gate.
+     *
+     * @param solution the solution build summary
+     * @param template the template build summary
+     * @param reasons  the running list of rejection reasons (appended to on failure)
+     * @return whether no gradable test passes on the template
+     */
+    private static boolean checkNoGradableTestPassesTemplate(BuildSummary solution, BuildSummary template, List<String> reasons) {
         List<String> gradableTestsPassingOnTemplate = gradableTestsThatPassOnTemplate(solution, template);
         boolean noGradableTestPassesTemplate = gradableTestsPassingOnTemplate.isEmpty();
         if (!noGradableTestPassesTemplate) {
@@ -281,10 +394,20 @@ public class AuthoritativeVerificationService {
                     + "satisfy (do NOT leave an unbound test, or a too-lucky placeholder that accidentally returns the expected value). Build/compile/configure gate tests "
                     + "(e.g. C++ TestConfigure/CompileSort, C Compile) are exempt because they only check that the code compiles, which the template does by design.");
         }
+        return noGradableTestPassesTemplate;
+    }
 
-        // SCA-parity gate: SCA reports carry no <testcase>, so the differential oracle is blind to them while production folds a penalty into the score. verify.sh emits a
-        // HYPERION_SCA line per finding and ScaPenaltyParity flags those production would actually penalise (graded, positively-penalised category, matched to the persisted
-        // categories); silent and verdict-unchanged when none would dock.
+    /**
+     * The SCA-parity gate: SCA reports carry no {@code <testcase>}, so the differential oracle is blind to them while production folds a penalty into the score. {@code verify.sh}
+     * emits a {@code HYPERION_SCA} line per finding and {@link ScaPenaltyParity} flags those production would actually penalise (graded, positively-penalised category, matched to
+     * the persisted categories); silent and verdict-unchanged when none would dock.
+     *
+     * @param exercise the exercise whose SCA configuration governs grading
+     * @param solution the solution build summary (its SCA findings are checked)
+     * @param reasons  the running list of rejection reasons (appended to on failure)
+     * @return whether the solution produces no SCA finding production would penalise
+     */
+    private boolean checkSolutionScaClean(ProgrammingExercise exercise, BuildSummary solution, List<String> reasons) {
         List<String> penalisingScaFindings = penalisingScaFindings(exercise, solution);
         boolean solutionScaClean = penalisingScaFindings.isEmpty();
         if (!solutionScaClean) {
@@ -292,35 +415,25 @@ public class AuthoritativeVerificationService {
                     + ". With static code analysis enabled and a graded penalty, a student's score is docked for these — so the reference solution, which must grade 100%, would not. "
                     + "Make the reference solution clean of these graded SCA findings (fix the flagged code, or it must not trip the graded categories) before the exercise can ship.");
         }
+        return solutionScaClean;
+    }
 
-        // Sandbox-free integrity gates the build cannot see: a tampered graded-verbatim harness, or a solution leaked into the student-facing template. Both fail OPEN on genuinely
-        // empty inputs.
-        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles);
-        boolean harnessIntact = harnessTamperingReasons.isEmpty();
-        reasons.addAll(harnessTamperingReasons);
-        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
-        boolean noSolutionLeak = solutionLeakReasons.isEmpty();
-        reasons.addAll(solutionLeakReasons);
-
-        // Fail-CLOSED on a read-back gap: a repo seeded non-empty but extracted empty silently disables the harness/leak gates, so we reject rather than accept on that doubt. (A
-        // genuinely empty repo is reported as NOT failed and stays fail-open.)
+    /**
+     * Fail-CLOSED on a read-back gap: a repo seeded non-empty but extracted empty silently disables the harness/leak gates, so we reject rather than accept on that doubt. (A
+     * genuinely empty repo is reported as NOT failed and stays fail-open.)
+     *
+     * @param extractionFailedRepositories the repository directory names whose read-back failed (seeded non-empty but extracted empty)
+     * @param reasons                      the running list of rejection reasons (appended to on failure)
+     * @return whether every repository was read back successfully
+     */
+    private static boolean checkExtractionSound(Set<String> extractionFailedRepositories, List<String> reasons) {
         boolean extractionSound = extractionFailedRepositories == null || extractionFailedRepositories.isEmpty();
         if (!extractionSound) {
             reasons.add("The generated files for these repositories could not be read back for verification: " + extractionFailedRepositories
                     + ". The integrity checks (harness immutability, solution leak) cannot run on missing files, so the exercise cannot be verified. This is usually a transient "
                     + "read-back error; retry the generation.");
         }
-
-        boolean accepted = solutionPassed && templateFailed && testCount > 0 && solutionNamesComplete && templateFailNamesSound && problemStatementHasTasks && taskBindingsResolve
-                && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean && harnessIntact && noSolutionLeak && extractionSound;
-        if (!accepted) {
-            log.info(
-                    "Authoritative verification failed: solution[{}], template[{}], namesComplete={}, failNamesSound={}, tasks={}, bindingsResolve={}, noTaskTestPassesTemplate={}, "
-                            + "noGradableTestPassesTemplate={}, solutionScaClean={}, harnessIntact={}, noSolutionLeak={}, extractionSound={}",
-                    solution, template, solutionNamesComplete, templateFailNamesSound, problemStatementHasTasks, taskBindingsResolve, noTaskTestPassesTemplate,
-                    noGradableTestPassesTemplate, solutionScaClean, harnessIntact, noSolutionLeak, extractionSound);
-        }
-        return new VerificationResult(accepted, solutionPassed, templateFailed, testCount, reasons);
+        return extractionSound;
     }
 
     /**
@@ -328,7 +441,7 @@ public class AuthoritativeVerificationService {
      * agent tools (which only resolve under {@code /workspace}) could never have reached — so an agent edit to its own copy is irrelevant.
      */
     private void seedPristineVerifyScript(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        String script = buildCommandFactory.verifyScriptContent(exercise);
+        String script = sandboxBuildCommandService.verifyScriptContent(exercise);
         // Docker's copy-to-container requires the destination directory to already exist.
         sandbox.exec(sessionId, READ_TIMEOUT, "mkdir", "-p", SandboxBuildCommandService.PRISTINE_VERIFY_DIR);
         sandbox.copyIn(sessionId, SandboxBuildCommandService.PRISTINE_VERIFY_DIR, singleFileTar(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, script));

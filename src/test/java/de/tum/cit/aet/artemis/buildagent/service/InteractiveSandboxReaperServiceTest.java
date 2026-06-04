@@ -24,11 +24,11 @@ import com.github.dockerjava.api.model.Container;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 
 /**
- * Pure unit test (no Spring context, no real Docker) for the orphan-reaping logic of {@link HyperionGenSandboxReaperService}: only containers that are both older than the expiry
+ * Pure unit test (no Spring context, no real Docker) for the orphan-reaping logic of {@link InteractiveSandboxReaperService}: only containers that are both older than the expiry
  * threshold AND carry the {@link InteractiveSandboxService#SANDBOX_CONTAINER_PREFIX} prefix are force-removed. The prefix and age guards are the load-bearing safety mechanism — a
- * regression in either would let the reaper force-remove a live CI build container or a still-running generation session.
+ * regression in either would let the reaper force-remove a live CI build container or a still-running sandbox session.
  */
-class HyperionGenSandboxReaperServiceTest {
+class InteractiveSandboxReaperServiceTest {
 
     private static final int EXPIRY_MINUTES = 90;
 
@@ -36,7 +36,7 @@ class HyperionGenSandboxReaperServiceTest {
 
     private DockerClient dockerClient;
 
-    private HyperionGenSandboxReaperService service;
+    private InteractiveSandboxReaperService service;
 
     @BeforeEach
     void setUp() {
@@ -45,9 +45,9 @@ class HyperionGenSandboxReaperServiceTest {
         TaskScheduler taskScheduler = mock(TaskScheduler.class);
         when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClient);
         when(buildAgentConfiguration.isDockerAvailable()).thenReturn(true);
-        service = new HyperionGenSandboxReaperService(buildAgentConfiguration, taskScheduler);
+        service = new InteractiveSandboxReaperService(buildAgentConfiguration, taskScheduler);
         // The @PostConstruct scheduler hook only runs under Spring; the @Value-injected threshold must be set explicitly for this pure unit test.
-        ReflectionTestUtils.setField(service, "generationContainerExpiryMinutes", EXPIRY_MINUTES);
+        ReflectionTestUtils.setField(service, "sandboxContainerExpiryMinutes", EXPIRY_MINUTES);
     }
 
     /**

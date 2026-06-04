@@ -12,10 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
@@ -42,7 +46,7 @@ class AuthoritativeVerificationServiceTest {
      * rendering
      * it exercises the real re-seed path.
      */
-    private static SandboxBuildCommandService buildCommandFactory() {
+    private static SandboxBuildCommandService sandboxBuildCommandService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
         when(phases.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of());
         return new SandboxBuildCommandService(Optional.of(phases), Optional.of(new BuildScriptProviderService()));
@@ -55,7 +59,7 @@ class AuthoritativeVerificationServiceTest {
     private static final String TEST_NONCE = "HNtestnonce0123456789abcdef0123456789";
 
     private static AuthoritativeVerificationService newVerifier() {
-        return new AuthoritativeVerificationService(buildCommandFactory(), () -> TEST_NONCE);
+        return new AuthoritativeVerificationService(sandboxBuildCommandService(), () -> TEST_NONCE);
     }
 
     /**
@@ -794,7 +798,7 @@ class AuthoritativeVerificationServiceTest {
 
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(4242L)).thenReturn(categories);
-            var verifier = new AuthoritativeVerificationService(buildCommandFactory(), () -> TEST_NONCE, Optional.of(repo));
+            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), () -> TEST_NONCE, Optional.of(repo));
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
         }
 
@@ -874,39 +878,41 @@ class AuthoritativeVerificationServiceTest {
     @Nested
     class StructuralBindingExemption {
 
-        @Test
-        void shouldAcceptWhenBehaviourTestsBoundButAutoSeededStructuralTestsAreNot() {
-            // The exact W1 thrash: the agent bound its two behaviour tests; the seeder then injected testClass[Sorter]/testMethods[Sorter] (failing on the template, since the
-            // template omits the class). The agent never bound those structural tests. This must be ACCEPTED — and the structural tests still failed on the template (they ARE in
-            // the differential). Previously this was the kind of run that, when the agent ALSO copied the scaffold's structural-binding convention, forced a retry.
-            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
-            // Every test (behaviour AND structural) fails on the template: the structural ones because the class is absent, the behaviour ones because the stub is wrong.
-            VerificationResult result = verify(resultWithFails(4, 0, all, List.of()), resultWithFails(4, 1, all, all));
-            assertThat(result.accepted()).as("auto-seeded structural tests need no [task] binding; they remain in the differential").isTrue();
-        }
-
-        @Test
-        void shouldAcceptWhenStructuralTaskBindingResolvesToNothingBecauseSeederDeclined() {
-            // The from-scratch trap, no authoritative set supplied: the agent copied the scaffold convention and wrote [task][…](testClass[Helper]) for a class the conservative
-            // seeder ultimately did NOT enforce (Helper exists in both repos / is non-public), so testClass[Helper] resolves to NO real test. Before the fix this tripped
-            // unresolvedTaskBindings -> bindingsResolve=false -> forced retry. Now a structural-SHAPED binding is exempt from resolution: a dead cosmetic task that backs no real
-            // test is harmless. Every real behaviour test still fails on the template.
-            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Helper structure](testClass[Helper],testMethods[Helper])\n";
-            VerificationResult result = verify(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, all), ps);
+        /**
+         * The three structural-binding ACCEPT cases: a structural test/binding, in any of its forms, must NOT block acceptance and must NOT be reported as an unresolved binding,
+         * as long as every test still fails on the template (the differential stays fully enforced). The cases are:
+         * <ol>
+         * <li><b>unbound auto-seeded structural tests</b> — the exact W1 thrash: the agent bound only its two behaviour tests; the seeder later injected
+         * {@code testClass[Sorter]}/{@code testMethods[Sorter]} (failing on the template because it omits the class), which the agent never bound. Those need no {@code [task]}
+         * binding yet remain in the differential.</li>
+         * <li><b>a structural binding that resolves to nothing</b> — the from-scratch trap with no authoritative set: the agent copied the scaffold convention and bound
+         * {@code testClass[Helper]} for a class the conservative seeder ultimately declined to enforce, so it resolves to NO real test. A structural-SHAPED binding is exempt from
+         * resolution: a dead cosmetic task backing no real test is harmless.</li>
+         * <li><b>a structural binding in the authoritative seeded set</b> — {@code testClass[Sorter]} is in the seeder's own seeded set, so the binding resolves directly via that
+         * authority; it is also a real, template-failing test, so the differential is satisfied.</li>
+         * </ol>
+         */
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("structuralBindingAcceptCases")
+        void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds(String caseName, String problemStatement, List<String> allNames, Set<String> seededStructural) {
+            // Every test (behaviour AND structural) fails on the template, so the differential holds; the structural binding/test must not force a rejection or an
+            // unresolved-binding
+            // reason.
+            VerificationResult result = verifyWithSeededStructural(resultWithFails(allNames.size(), 0, allNames, List.of()),
+                    resultWithFails(allNames.size(), 1, allNames, allNames), problemStatement, seededStructural);
             assertThat(result.reasons()).as("a structural-shaped binding must not be reported as unresolved").noneMatch(r -> r.contains("match no actual test"));
-            assertThat(result.accepted()).isTrue();
+            assertThat(result.accepted()).as("a structural binding/test must not block acceptance while the differential holds").isTrue();
         }
 
-        @Test
-        void resolvesStructuralBinding_whenItIsInTheAuthoritativeSeededSet_evenIfExtractionMomentarilyLagsBindingValue() {
-            // The authoritative-set tightening: testClass[Sorter] is in the seeder's own seeded set, so the binding resolves directly via that authority. It is also a real,
-            // template-failing test here, so the differential is satisfied. Accepted.
-            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
-            String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n";
-            VerificationResult result = verifyWithSeededStructural(resultWithFails(4, 0, all, List.of()), resultWithFails(4, 1, all, all), ps,
-                    Set.of("testClass[Sorter]", "testMethods[Sorter]"));
-            assertThat(result.accepted()).isTrue();
+        private static Stream<Arguments> structuralBindingAcceptCases() {
+            List<String> behaviourPlusStructural = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
+            return Stream.of(Arguments.of("unbound auto-seeded structural tests", PROBLEM_STATEMENT_WITH_TASK, behaviourPlusStructural, Set.of()),
+                    Arguments.of("structural binding resolves to nothing because the seeder declined",
+                            "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Helper structure](testClass[Helper],testMethods[Helper])\n",
+                            List.of("sortsUnsortedArray", "sortsArrayWithDuplicates"), Set.of()),
+                    Arguments.of("structural binding resolves via the authoritative seeded set",
+                            "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n",
+                            behaviourPlusStructural, Set.of("testClass[Sorter]", "testMethods[Sorter]")));
         }
 
         @Test

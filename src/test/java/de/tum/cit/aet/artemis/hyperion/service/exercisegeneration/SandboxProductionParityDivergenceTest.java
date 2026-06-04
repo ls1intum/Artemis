@@ -4,17 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.condition.OS.LINUX;
 import static org.junit.jupiter.api.condition.OS.MAC;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.io.TempDir;
@@ -65,16 +60,6 @@ class SandboxProductionParityDivergenceTest {
             </testsuite>
             """;
 
-    /** Writes a UTF-8 text fixture via Apache {@link FileUtils} (the arch-mandated replacement for {@code Files.write*}), creating any missing parent directories. */
-    private static void writeString(Path path, CharSequence content) throws IOException {
-        FileUtils.writeStringToFile(path.toFile(), content.toString(), StandardCharsets.UTF_8);
-    }
-
-    /** Charset-explicit overload kept so the existing call sites that named the charset stay byte-identical. */
-    private static void writeString(Path path, CharSequence content, Charset charset) throws IOException {
-        FileUtils.writeStringToFile(path.toFile(), content.toString(), charset);
-    }
-
     /**
      * PRODUCTION side: the parser the real LocalCI pipeline uses drops the skipped testcase from BOTH the successful and the failed lists. So the persisted exercise's synced test
      * case {@code peek_does_not_remove} receives no feedback on the solution build, and production grades it as not-executed (0 credit) — the solution cannot reach 100%.
@@ -103,9 +88,9 @@ class SandboxProductionParityDivergenceTest {
     @EnabledOnOs({ LINUX, MAC })
     @Test
     void sandbox_verifyScript_excludesSkippedTestcase_matchingProduction(@TempDir Path tempDir) throws Exception {
-        Aggregate solution = aggregate(tempDir, "sol", SOLUTION_WITH_SKIP);
-        Emitted solutionEmit = emit(tempDir, "sol-emit", SOLUTION_WITH_SKIP);
-        Aggregate template = aggregate(tempDir, "tpl", TEMPLATE_WITH_SKIP);
+        var solution = aggregate(tempDir, "sol", SOLUTION_WITH_SKIP);
+        var solutionEmit = emit(tempDir, "sol-emit", SOLUTION_WITH_SKIP);
+        var template = aggregate(tempDir, "tpl", TEMPLATE_WITH_SKIP);
 
         // verify.sh now excludes the skipped testcase from the executed count: tests=2 (the two real tests), with skipped=1 recorded separately.
         assertThat(solution.tests()).as("verify.sh excludes the skipped <testcase> from the solution test count").isEqualTo(2);
@@ -131,7 +116,7 @@ class SandboxProductionParityDivergenceTest {
     @Test
     void parity_skippedTest_isExcludedInBothSandboxAndProduction(@TempDir Path tempDir) throws Exception {
         // Sandbox: the solution-passing names = every emitted HYPERION_TESTNAME (the solution passes them all; skipped cases are no longer emitted).
-        Emitted sandboxSolution = emit(tempDir, "div-sol", SOLUTION_WITH_SKIP);
+        var sandboxSolution = emit(tempDir, "div-sol", SOLUTION_WITH_SKIP);
         List<String> sandboxSolutionPassing = sandboxSolution.names();
 
         // Production: the solution-successful names = the parser's successful list.
@@ -179,24 +164,17 @@ class SandboxProductionParityDivergenceTest {
     @Test
     void sandbox_ignoresStaticCodeAnalysisReports_whileProductionWouldPenalizeThem(@TempDir Path tempDir) throws Exception {
         Path buildDir = Files.createDirectories(tempDir.resolve("sca"));
-        Path marker = buildDir.resolve(".hyperion-build-start");
-        writeString(marker, "");
-        Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
+        Path marker = VerifyScriptTestHarness.staleBuildStartMarker(buildDir);
         // The SCA phase writes its reports under target/ (Maven) — not into any of the JUnit report-glob locations and with no <testcase> content.
         Path target = Files.createDirectories(buildDir.resolve("target"));
-        writeString(target.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT, StandardCharsets.UTF_8);
-        writeString(target.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT, StandardCharsets.UTF_8);
+        VerifyScriptTestHarness.writeString(target.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT);
+        VerifyScriptTestHarness.writeString(target.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT);
 
         String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\n" + aggregationSnippet()
                 + "\necho \"tests=$tests failures=$failures errors=$errors skipped=$skipped\"\n";
         Path scriptFile = tempDir.resolve("sca-aggregate.sh");
-        writeString(scriptFile, script, StandardCharsets.UTF_8);
-        Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new IllegalStateException("sca aggregation snippet did not finish in time");
-        }
+        VerifyScriptTestHarness.writeString(scriptFile, script);
+        String output = VerifyScriptTestHarness.runSh(scriptFile);
         // The sandbox sees zero tests/failures from the SCA reports: they are invisible to its verdict. (A real solution would also have its JUnit reports; the point is the SCA
         // violation contributes NOTHING, so it cannot pull the sandbox verdict below a full pass — but production's SCA penalty pulls the real score below 100%.)
         assertThat(output).as("verify.sh aggregation ignores SpotBugs/Checkstyle reports (no <testcase>)").contains("tests=0").contains("failures=0").contains("errors=0");
@@ -254,11 +232,9 @@ class SandboxProductionParityDivergenceTest {
     /** Runs the live SCA emission block (sliced from the generated SCA-enabled script) against the SpotBugs/Checkstyle fixtures and returns the emitted findings. */
     private List<String> runScaSection(Path tempDir, String name) throws Exception {
         Path buildDir = Files.createDirectories(tempDir.resolve(name));
-        Path marker = buildDir.resolve(".hyperion-build-start");
-        writeString(marker, "");
-        Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
-        writeString(buildDir.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT, StandardCharsets.UTF_8);
-        writeString(buildDir.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT, StandardCharsets.UTF_8);
+        Path marker = VerifyScriptTestHarness.staleBuildStartMarker(buildDir);
+        VerifyScriptTestHarness.writeString(buildDir.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT);
+        VerifyScriptTestHarness.writeString(buildDir.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT);
 
         BuildPhasesTemplateService phases = org.mockito.Mockito.mock(BuildPhasesTemplateService.class);
         org.mockito.Mockito.when(phases.getDefaultBuildPlanPhasesFor(org.mockito.ArgumentMatchers.any()))
@@ -276,13 +252,8 @@ class SandboxProductionParityDivergenceTest {
 
         String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nMARK_SUFFIX=''\n" + scaSection + "\n";
         Path scriptFile = tempDir.resolve(name + "-sca.sh");
-        writeString(scriptFile, script, StandardCharsets.UTF_8);
-        Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new IllegalStateException("sca section did not finish in time");
-        }
+        VerifyScriptTestHarness.writeString(scriptFile, script);
+        String output = VerifyScriptTestHarness.runSh(scriptFile);
         List<String> findings = new ArrayList<>();
         for (String line : output.split("\n")) {
             if (line.startsWith("HYPERION_SCA ")) {
@@ -320,9 +291,9 @@ class SandboxProductionParityDivergenceTest {
     @Test
     void divergence_isClosed_oracleRejectsWhenSkippedSolutionTestFailsOnTemplate(@TempDir Path tempDir) throws Exception {
         // Build the solution/template counts and name sets exactly as the live verify.sh emits them.
-        Aggregate solution = aggregate(tempDir, "acc-sol", SOLUTION_WITH_SKIP);
-        Emitted solutionEmit = emit(tempDir, "acc-sol-emit", SOLUTION_WITH_SKIP);
-        Aggregate template = aggregate(tempDir, "acc-tpl", TEMPLATE_SKIPPED_TEST_FAILS);
+        var solution = aggregate(tempDir, "acc-sol", SOLUTION_WITH_SKIP);
+        var solutionEmit = emit(tempDir, "acc-sol-emit", SOLUTION_WITH_SKIP);
+        var template = aggregate(tempDir, "acc-tpl", TEMPLATE_SKIPPED_TEST_FAILS);
 
         // The skipped-on-solution test is no longer counted or named as a solution test (production parity).
         assertThat(solutionEmit.names()).as("the skipped-on-solution test is excluded from the solution name set").doesNotContain("peek_does_not_remove");
@@ -334,98 +305,17 @@ class SandboxProductionParityDivergenceTest {
         assertThat(solution.tests()).as("solution and template now report a DIFFERENT number of tests -> the oracle rejects").isNotEqualTo(template.tests());
     }
 
-    // ---- Live verify.sh snippet drivers (sliced from the shipped script, run under real sh; identical technique to SandboxBuildCommandServiceTest)
-    // -------------------------------
+    // ---- Live verify.sh snippet drivers: the aggregation/emit drivers are shared with SandboxBuildCommandServiceTest via VerifyScriptTestHarness. ----
 
-    private record Aggregate(int tests, int failures, int errors, int skipped) {
-    }
-
-    private Aggregate aggregate(Path tempDir, String name, String reportXml) throws Exception {
-        Path buildDir = Files.createDirectories(tempDir.resolve(name));
-        Path marker = buildDir.resolve(".hyperion-build-start");
-        writeString(marker, "");
-        Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
-        Path reportDir = Files.createDirectories(buildDir.resolve("test-results"));
-        writeString(reportDir.resolve("results.xml"), reportXml, StandardCharsets.UTF_8);
-
-        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\n" + aggregationSnippet()
-                + "\necho \"tests=$tests failures=$failures errors=$errors skipped=$skipped\"\n";
-        Path scriptFile = tempDir.resolve(name + "-aggregate.sh");
-        writeString(scriptFile, script, StandardCharsets.UTF_8);
-
-        Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new IllegalStateException("aggregation snippet did not finish in time");
-        }
-        int tests = 0;
-        int failures = 0;
-        int errors = 0;
-        int skipped = 0;
-        for (String token : output.trim().split("\\s+")) {
-            String[] kv = token.split("=", 2);
-            if (kv.length != 2) {
-                continue;
-            }
-            switch (kv[0]) {
-                case "tests" -> tests = Integer.parseInt(kv[1]);
-                case "failures" -> failures = Integer.parseInt(kv[1]);
-                case "errors" -> errors = Integer.parseInt(kv[1]);
-                case "skipped" -> skipped = Integer.parseInt(kv[1]);
-                default -> {
-                }
-            }
-        }
-        return new Aggregate(tests, failures, errors, skipped);
+    private VerifyScriptTestHarness.Aggregate aggregate(Path tempDir, String name, String reportXml) throws Exception {
+        return VerifyScriptTestHarness.aggregate(tempDir, name, reportXml);
     }
 
     private String aggregationSnippet() {
-        String fullScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
-        int start = fullScript.indexOf("xml=$(find");
-        int end = fullScript.indexOf("errors=$(sum_attr errors)");
-        assertThat(start).isNotNegative();
-        assertThat(end).isGreaterThan(start);
-        return fullScript.substring(start, end + "errors=$(sum_attr errors)".length());
+        return VerifyScriptTestHarness.aggregationSnippet();
     }
 
-    private record Emitted(List<String> names, List<String> failed) {
-    }
-
-    private Emitted emit(Path tempDir, String name, String reportXml) throws Exception {
-        Path reportDir = Files.createDirectories(tempDir.resolve(name).resolve("test-results"));
-        Path report = reportDir.resolve("results.xml");
-        writeString(report, reportXml, StandardCharsets.UTF_8);
-
-        String script = "MARK_SUFFIX=''\nxml='" + report + "'\n" + emitSnippet() + "\n";
-        Path scriptFile = tempDir.resolve(name + "-emit.sh");
-        writeString(scriptFile, script, StandardCharsets.UTF_8);
-
-        Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new IllegalStateException("emit snippet did not finish in time");
-        }
-        List<String> names = new ArrayList<>();
-        List<String> failed = new ArrayList<>();
-        for (String line : output.split("\n")) {
-            if (line.startsWith("HYPERION_TESTNAME ")) {
-                names.add(line.substring("HYPERION_TESTNAME ".length()).trim());
-            }
-            else if (line.startsWith("HYPERION_TESTFAIL ")) {
-                failed.add(line.substring("HYPERION_TESTFAIL ".length()).trim());
-            }
-        }
-        return new Emitted(names, failed);
-    }
-
-    private String emitSnippet() {
-        String fullScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
-        int start = fullScript.indexOf("emit_test_lines() {");
-        assertThat(start).isNotNegative();
-        int call = fullScript.indexOf("\nemit_test_lines\n", start);
-        assertThat(call).isGreaterThan(start);
-        return fullScript.substring(start, call + "\nemit_test_lines\n".length());
+    private VerifyScriptTestHarness.Emitted emit(Path tempDir, String name, String reportXml) throws Exception {
+        return VerifyScriptTestHarness.emit(tempDir, name, reportXml, "");
     }
 }

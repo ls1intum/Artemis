@@ -44,12 +44,12 @@ class SandboxBuildCommandServiceTest {
         return new SandboxBuildCommandService(Optional.of(phasesService), Optional.of(new BuildScriptProviderService()));
     }
 
-    /** Writes a UTF-8 text fixture via Apache {@link FileUtils} (the arch-mandated replacement for {@code Files.write*}), creating any missing parent directories. */
+    /** Writes a UTF-8 text fixture (delegating to the shared harness), creating any missing parent directories. */
     private static void writeString(Path path, CharSequence content) throws IOException {
-        FileUtils.writeStringToFile(path.toFile(), content.toString(), StandardCharsets.UTF_8);
+        VerifyScriptTestHarness.writeString(path, content);
     }
 
-    /** Charset-explicit overload kept so the existing call sites that named the charset stay byte-identical. */
+    /** Charset-explicit overload kept for the call sites that name the charset; only UTF-8 is ever passed. */
     private static void writeString(Path path, CharSequence content, Charset charset) throws IOException {
         FileUtils.writeStringToFile(path.toFile(), content.toString(), charset);
     }
@@ -230,8 +230,8 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void catch2_testCount_isTestCaseCount_andEqualBetweenSolutionAndTemplate(@TempDir Path tempDir) throws Exception {
-            Aggregate solution = aggregate(tempDir, "sol", CATCH2_SOLUTION);
-            Aggregate template = aggregate(tempDir, "tpl", CATCH2_TEMPLATE);
+            var solution = aggregate(tempDir, "sol", CATCH2_SOLUTION);
+            var template = aggregate(tempDir, "tpl", CATCH2_TEMPLATE);
 
             // The bug: under the old attribute-sum the solution reported tests=14 and the template tests=7, tripping the "different number of tests" gate. Counting <testcase>
             // elements yields 3 for BOTH, so the differential oracle sees the same suite and the template is no longer falsely rejected.
@@ -248,8 +248,8 @@ class SandboxBuildCommandServiceTest {
         void surefireStyle_testCount_unchanged_attributeEqualsTestCaseElements(@TempDir Path tempDir) throws Exception {
             // For a conventional JUnit reporter (tests="N" == #<testcase>), counting elements gives the same value the attribute sum gave: the change is a no-op for every
             // framework except Catch2.
-            Aggregate solution = aggregate(tempDir, "sol", SUREFIRE_SOLUTION);
-            Aggregate template = aggregate(tempDir, "tpl", SUREFIRE_TEMPLATE);
+            var solution = aggregate(tempDir, "sol", SUREFIRE_SOLUTION);
+            var template = aggregate(tempDir, "tpl", SUREFIRE_TEMPLATE);
 
             assertThat(solution.tests()).isEqualTo(3);
             assertThat(template.tests()).isEqualTo(3);
@@ -257,73 +257,13 @@ class SandboxBuildCommandServiceTest {
             assertThat(template.failures()).isEqualTo(3);
         }
 
-        /** The four aggregated counters {@code verify.sh} computes from the JUnit XML. */
-        private record Aggregate(int tests, int failures, int errors, int skipped) {
-        }
-
         /**
          * Writes the fixture XML into a fresh report directory and runs the real aggregation snippet (sliced from the generated {@code verify.sh}) against it under {@code sh},
          * returning the four counters the script would print. Executing the live snippet (rather than a reimplementation) is what makes this a regression guard for the shipped
          * shell.
          */
-        private Aggregate aggregate(Path tempDir, String name, String reportXml) throws Exception {
-            Path buildDir = Files.createDirectories(tempDir.resolve(name));
-            // The aggregation now filters on -newer "$BUILD_START_MARKER"; create the marker with an OLD mtime so the report written below is strictly newer and is counted (the
-            // real script stamps the marker just before the build phases, so genuine reports are always newer than it).
-            Path marker = buildDir.resolve(".hyperion-build-start");
-            writeString(marker, "");
-            Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
-            Path reportDir = Files.createDirectories(buildDir.resolve("test-results"));
-            writeString(reportDir.resolve("results.xml"), reportXml, StandardCharsets.UTF_8);
-
-            String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\n" + aggregationSnippet()
-                    + "\necho \"tests=$tests failures=$failures errors=$errors skipped=$skipped\"\n";
-            Path scriptFile = tempDir.resolve(name + "-aggregate.sh");
-            writeString(scriptFile, script, StandardCharsets.UTF_8);
-
-            Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                throw new IllegalStateException("aggregation snippet did not finish in time");
-            }
-            return parse(output);
-        }
-
-        /**
-         * Slices the report-aggregation block out of the live generated {@code verify.sh}: from the {@code xml=$(find …)} line through {@code errors=$(sum_attr errors)} (the last
-         * counter assignment, after the skipped-aware {@code tests} computation). This is the exact shell that ships, so a change to the script that regresses the counters fails
-         * this test.
-         */
-        private String aggregationSnippet() {
-            String fullScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
-            int start = fullScript.indexOf("xml=$(find");
-            int end = fullScript.indexOf("errors=$(sum_attr errors)");
-            assertThat(start).as("aggregation block start marker present in verify.sh").isNotNegative();
-            assertThat(end).as("aggregation block end marker present in verify.sh").isGreaterThan(start);
-            return fullScript.substring(start, end + "errors=$(sum_attr errors)".length());
-        }
-
-        private static Aggregate parse(String output) {
-            int tests = 0;
-            int failures = 0;
-            int errors = 0;
-            int skipped = 0;
-            for (String token : output.trim().split("\\s+")) {
-                String[] kv = token.split("=", 2);
-                if (kv.length != 2) {
-                    continue;
-                }
-                switch (kv[0]) {
-                    case "tests" -> tests = Integer.parseInt(kv[1]);
-                    case "failures" -> failures = Integer.parseInt(kv[1]);
-                    case "errors" -> errors = Integer.parseInt(kv[1]);
-                    case "skipped" -> skipped = Integer.parseInt(kv[1]);
-                    default -> {
-                    }
-                }
-            }
-            return new Aggregate(tests, failures, errors, skipped);
+        private VerifyScriptTestHarness.Aggregate aggregate(Path tempDir, String name, String reportXml) throws Exception {
+            return VerifyScriptTestHarness.aggregate(tempDir, name, reportXml);
         }
     }
 
@@ -469,28 +409,28 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void dart_nestedFileSuite_isDotPrefixedOntoTheGroupAndTestName(@TempDir Path tempDir) throws Exception {
-            Emitted e = emit(tempDir, "dart", DART);
+            var e = emit(tempDir, "dart", DART);
             assertThat(e.names()).containsExactly("test.palindrome.reverseString reverse_non_empty", "test.palindrome.isPalindrome palindrome_true");
             assertThat(e.failed()).containsExactly("test.palindrome.isPalindrome palindrome_true");
         }
 
         @Test
         void rust_singularTopLevelSuite_yieldsBareNames(@TempDir Path tempDir) throws Exception {
-            Emitted e = emit(tempDir, "rust", RUST);
+            var e = emit(tempDir, "rust", RUST);
             assertThat(e.names()).containsExactly("test_fibonacci_of_0", "test_fibonacci_of_10");
             assertThat(e.failed()).containsExactly("test_fibonacci_of_10");
         }
 
         @Test
         void surefire_singularRootSuite_yieldsBareNames_andIgnoresClassname(@TempDir Path tempDir) throws Exception {
-            Emitted e = emit(tempDir, "sure", SUREFIRE);
+            var e = emit(tempDir, "sure", SUREFIRE);
             assertThat(e.names()).containsExactly("stack_initially_empty", "push_then_pop");
             assertThat(e.failed()).containsExactly("push_then_pop");
         }
 
         @Test
         void multipleTopLevelSuites_includeEachSuiteName(@TempDir Path tempDir) throws Exception {
-            Emitted e = emit(tempDir, "multi", MULTI);
+            var e = emit(tempDir, "multi", MULTI);
             assertThat(e.names()).containsExactly("SuiteA.t1", "SuiteB.t2");
             assertThat(e.failed()).containsExactly("SuiteB.t2");
         }
@@ -501,58 +441,17 @@ class SandboxBuildCommandServiceTest {
             // The live emit awk uses MARK="HYPERION_TESTNAME$MARK_SUFFIX"; when the verifier passes a nonce (MARK_SUFFIX=" <nonce>"), every emitted name/fail line carries it, so
             // the
             // nonce-anchored parser honors them — and a same-named line WITHOUT the nonce (an agent test's stdout forgery) is distinguishable.
-            Emitted e = emit(tempDir, "nonce", RUST, " HN-the-nonce");
+            var e = emit(tempDir, "nonce", RUST, " HN-the-nonce");
             assertThat(e.names()).containsExactly("HN-the-nonce test_fibonacci_of_0", "HN-the-nonce test_fibonacci_of_10");
             assertThat(e.failed()).containsExactly("HN-the-nonce test_fibonacci_of_10");
         }
 
-        private record Emitted(List<String> names, List<String> failed) {
+        private VerifyScriptTestHarness.Emitted emit(Path tempDir, String name, String reportXml) throws Exception {
+            return VerifyScriptTestHarness.emit(tempDir, name, reportXml, "");
         }
 
-        private Emitted emit(Path tempDir, String name, String reportXml) throws Exception {
-            return emit(tempDir, name, reportXml, "");
-        }
-
-        private Emitted emit(Path tempDir, String name, String reportXml, String markSuffix) throws Exception {
-            Path reportDir = Files.createDirectories(tempDir.resolve(name).resolve("test-results"));
-            Path report = reportDir.resolve("results.xml");
-            writeString(report, reportXml, StandardCharsets.UTF_8);
-
-            // Drive the live emit block with xml set to the fixture report, exactly as verify.sh sets it from `find`; MARK_SUFFIX models the per-run nonce the verifier passes.
-            String script = "MARK_SUFFIX='" + markSuffix + "'\nxml='" + report + "'\n" + emitSnippet() + "\n";
-            Path scriptFile = tempDir.resolve(name + "-emit.sh");
-            writeString(scriptFile, script, StandardCharsets.UTF_8);
-
-            Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                throw new IllegalStateException("emit snippet did not finish in time");
-            }
-            List<String> names = new java.util.ArrayList<>();
-            List<String> failed = new java.util.ArrayList<>();
-            for (String line : output.split("\n")) {
-                if (line.startsWith("HYPERION_TESTNAME ")) {
-                    names.add(line.substring("HYPERION_TESTNAME ".length()));
-                }
-                else if (line.startsWith("HYPERION_TESTFAIL ")) {
-                    failed.add(line.substring("HYPERION_TESTFAIL ".length()));
-                }
-            }
-            return new Emitted(names, failed);
-        }
-
-        /**
-         * Slices the {@code emit_test_lines()} function definition AND its invocation out of the live generated {@code verify.sh}: from {@code emit_test_lines() {} through the
-         * standalone {@code emit_test_lines} call line. This is the exact shell that ships, so a change to the awk that regresses the recorded names fails this test.
-         */
-        private String emitSnippet() {
-            String fullScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
-            int start = fullScript.indexOf("emit_test_lines() {");
-            assertThat(start).as("emit_test_lines definition present in verify.sh").isNotNegative();
-            int call = fullScript.indexOf("\nemit_test_lines\n", start);
-            assertThat(call).as("emit_test_lines invocation present in verify.sh").isGreaterThan(start);
-            return fullScript.substring(start, call + "\nemit_test_lines\n".length());
+        private VerifyScriptTestHarness.Emitted emit(Path tempDir, String name, String reportXml, String markSuffix) throws Exception {
+            return VerifyScriptTestHarness.emit(tempDir, name, reportXml, markSuffix);
         }
     }
 

@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,7 +41,8 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
  * them as observations. The isolation posture therefore matches CI builds (resource-limited; the container runs untrusted code but holds no credentials and no database access);
  * it is not additionally locked down (no extra capability dropping or network confinement beyond what the build host config provides).
  * <p>
- * Containers are named with the {@value #SANDBOX_CONTAINER_PREFIX} prefix so a dedicated reaper can distinguish them from CI build containers and never reap a live session.
+ * Containers are named with the {@value #SANDBOX_CONTAINER_PREFIX} prefix so that {@link InteractiveSandboxReaperService} can distinguish them from CI build containers and never
+ * reap a live session.
  */
 @Lazy
 @Service
@@ -49,8 +52,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxService.class);
 
     /**
-     * Name prefix for interactive generation containers. Distinct from the {@code local-ci-} prefix used by CI build containers so that the CI container reapers never match a
-     * live generation session and the dedicated generation reaper only matches these.
+     * Name prefix for interactive sandbox containers. Distinct from the {@code local-ci-} prefix used by CI build containers so that the CI container reapers never match a live
+     * sandbox session and {@link InteractiveSandboxReaperService} only matches these.
      */
     public static final String SANDBOX_CONTAINER_PREFIX = "hyperion-gen-";
 
@@ -75,22 +78,23 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         if (!buildAgentConfiguration.isDockerAvailable()) {
             throw new LocalCIException("Docker is not available. Cannot create interactive sandbox session.");
         }
-        String containerName = SANDBOX_CONTAINER_PREFIX + java.util.UUID.randomUUID();
+        String containerName = SANDBOX_CONTAINER_PREFIX + UUID.randomUUID();
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        // hostConfig() returns a fresh HostConfig per call, so adjusting it here does not affect any other container.
         HostConfig hostConfig = buildAgentConfiguration.hostConfig();
-        // A generation container is long-lived and explicitly torn down by destroySession (and the reaper as a backstop), so it must NOT auto-remove on stop: auto-remove would
+        // A sandbox container is long-lived and explicitly torn down by destroySession (and the reaper as a backstop), so it must NOT auto-remove on stop: auto-remove would
         // race with the explicit removal and can delete the container out from under an in-flight exec.
         hostConfig.withAutoRemove(false);
         if (spec.runConfig() != null && spec.runConfig().network() != null && !spec.runConfig().network().isBlank()) {
             hostConfig.withNetworkMode(spec.runConfig().network());
         }
-        try (var createCommand = dockerClient.createContainerCmd(spec.image())) {
+        try (final var createCommand = dockerClient.createContainerCmd(spec.image())) {
             // The container's main process is an idle wait-loop that keeps the container warm until the stop sentinel appears, mirroring the regular build container pattern.
             // The session is driven entirely by separate `docker exec` calls, so the container stays available across many fast agent iterations.
             var response = createCommand.withName(containerName).withHostConfig(hostConfig).withEntrypoint()
                     .withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while [ ! -f " + STOP_SENTINEL + " ]; do sleep 0.5; done").exec();
             String containerId = response.getId();
-            try (var startCommand = dockerClient.startContainerCmd(containerId)) {
+            try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
                 startCommand.exec();
             }
             log.info("Started interactive sandbox session {} (container {})", containerName, containerId);
@@ -101,7 +105,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Override
     public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        try (var execCreateCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
+        try (final var execCreateCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             ExecCreateCmdResponse execCreateResponse = execCreateCommand.exec();
             String execId = execCreateResponse.getId();
 
@@ -126,6 +130,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
                 @Override
                 public void onError(Throwable throwable) {
+                    log.error("Error while executing sandbox command: {} in session {}", String.join(" ", command), sessionId, throwable);
                     errorRef.set(throwable);
                     latch.countDown();
                 }
@@ -156,7 +161,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             }
 
             int exitCode;
-            try (var inspectCommand = dockerClient.inspectExecCmd(execId)) {
+            try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
                 InspectExecResponse inspectResponse = inspectCommand.exec();
                 Long exitCodeLong = inspectResponse.getExitCodeLong();
                 exitCode = exitCodeLong != null ? exitCodeLong.intValue() : -1;
@@ -168,7 +173,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Override
     public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        try (var copyCommand = dockerClient.copyArchiveToContainerCmd(sessionId).withTarInputStream(tarArchive).withRemotePath(destinationPath)) {
+        try (final var copyCommand = dockerClient.copyArchiveToContainerCmd(sessionId).withTarInputStream(tarArchive).withRemotePath(destinationPath)) {
             copyCommand.exec();
         }
     }
@@ -176,9 +181,16 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Override
     public TarArchiveInputStream copyOut(String sessionId, String path) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        try (var copyCommand = dockerClient.copyArchiveFromContainerCmd(sessionId, path)) {
+        try (final var copyCommand = dockerClient.copyArchiveFromContainerCmd(sessionId, path)) {
             InputStream archiveStream = copyCommand.exec();
-            return new TarArchiveInputStream(archiveStream);
+            try {
+                return new TarArchiveInputStream(archiveStream);
+            }
+            catch (RuntimeException e) {
+                // Ensure the underlying stream is closed if the TarArchiveInputStream wrapper cannot be constructed, so we never leak the Docker response stream.
+                closeQuietly(archiveStream);
+                throw e;
+            }
         }
     }
 
@@ -195,7 +207,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         catch (RuntimeException e) {
             log.debug("Could not write stop sentinel for sandbox session {} (will force-remove): {}", sessionId, e.getMessage());
         }
-        try (var removeCommand = dockerClient.removeContainerCmd(sessionId).withForce(true)) {
+        try (final var removeCommand = dockerClient.removeContainerCmd(sessionId).withForce(true)) {
             removeCommand.exec();
         }
         catch (NotFoundException e) {
@@ -203,6 +215,15 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
         catch (RuntimeException e) {
             log.warn("Failed to remove interactive sandbox session {}: {}", sessionId, e.getMessage());
+        }
+    }
+
+    private static void closeQuietly(InputStream stream) {
+        try {
+            stream.close();
+        }
+        catch (IOException e) {
+            log.debug("Failed to close sandbox archive stream: {}", e.getMessage());
         }
     }
 

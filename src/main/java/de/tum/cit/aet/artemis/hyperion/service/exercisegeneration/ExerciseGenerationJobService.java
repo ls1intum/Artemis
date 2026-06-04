@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -148,16 +149,16 @@ public class ExerciseGenerationJobService {
      *
      * @param user     the requesting user
      * @param exercise the exercise
-     * @return the transcript (with a {@code running} flag derived from the live slot), or empty if none is retained for this user
+     * @return the reconnection view (with a {@code running} flag derived from the live slot), or empty if none is retained for this user
      */
-    public Optional<JobStatus> getStatus(User user, ProgrammingExercise exercise) {
+    public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         JobTranscript transcript = transcriptMap.get(key(exercise.getId()));
         if (transcript == null || !transcript.userLogin().equals(user.getLogin())) {
             return Optional.empty();
         }
         JobInfo active = jobMap.get(key(exercise.getId()));
         boolean running = active != null && active.jobId().equals(transcript.jobId()) && !transcript.done();
-        return Optional.of(new JobStatus(transcript.jobId(), running, transcript.events()));
+        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.events()));
     }
 
     /**
@@ -270,11 +271,5 @@ public class ExerciseGenerationJobService {
 
         @Serial
         private static final long serialVersionUID = 1L;
-    }
-
-    /**
-     * The reconnection view of a run: its id, whether it is still running, and the events so far to replay.
-     */
-    public record JobStatus(String jobId, boolean running, List<ExerciseGenerationEventDTO> events) {
     }
 }
