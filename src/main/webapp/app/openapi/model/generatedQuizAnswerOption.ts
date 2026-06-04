@@ -20,7 +20,7 @@ export interface GeneratedQuizAnswerOption {
     /**
      * Whether this option is correct
      */
-    correct?: boolean;
+    correct: boolean;
     /**
      * Optional hint
      */

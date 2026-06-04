@@ -109,7 +109,7 @@ export class CourseTutorialGroupsComponent {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)))
+            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res as HttpResponse<TutorialGroup[]>)))
             .subscribe({
                 next: ({ body }) => {
                     const tutorialGroups = body ?? [];

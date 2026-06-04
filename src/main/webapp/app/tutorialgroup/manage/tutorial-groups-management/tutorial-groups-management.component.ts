@@ -100,7 +100,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
         const tutorialGroupObservable = this.tutorialGroupApiService
             .getTutorialGroupsForCourse(this.courseId, 'response')
-            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)));
+            .pipe(map((res) => convertTutorialGroupResponseArrayDatesFromServer(res as HttpResponse<TutorialGroup[]>)));
         const tutorialGroupsConfigurationObservable = this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
 
         combineLatest([tutorialGroupObservable, tutorialGroupsConfigurationObservable])

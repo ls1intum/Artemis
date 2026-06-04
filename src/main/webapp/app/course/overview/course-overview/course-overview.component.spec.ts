@@ -567,7 +567,7 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
 
-        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
+        const tutorialGroupsResponse = new HttpResponse({
             body: [new TutorialGroup()],
             status: 200,
         });
@@ -576,7 +576,7 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse as HttpResponse<TutorialGroupSummary[]>));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
