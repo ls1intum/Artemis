@@ -124,6 +124,8 @@
             <strong>
                 @if (succeeded()) {
                     <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultSuccess"></span>
+                } @else if (needsReview()) {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultNeedsReview"></span>
                 } @else if (event.type === 'CANCELLED') {
                     <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultCancelled"></span>
                 } @else if (event.type === 'ERROR') {

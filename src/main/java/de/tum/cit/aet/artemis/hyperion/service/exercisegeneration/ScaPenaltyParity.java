@@ -109,8 +109,8 @@ final class ScaPenaltyParity {
                 if (!mapping.tool().name().equalsIgnoreCase(tool)) {
                     continue;
                 }
-                // Exact category match (production semantics), or the conservative tool-wide match for an undetermined category.
-                if (unknownCategory || mapping.category().equals(rawCategory) || mapping.category().equalsIgnoreCase(rawCategory)) {
+                // Category match (production semantics), or the conservative tool-wide match for an undetermined category.
+                if (unknownCategory || mapping.category().equalsIgnoreCase(rawCategory)) {
                     return true;
                 }
             }

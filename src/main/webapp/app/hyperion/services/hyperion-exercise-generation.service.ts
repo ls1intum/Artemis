@@ -17,7 +17,11 @@ export interface ExerciseGenerationStatus {
 }
 
 /**
- * REST client for the agentic whole-exercise generation endpoints (matches {@code HyperionExerciseGenerationResource}). Hand-written; TODO replace with the generated OpenAPI client once these endpoints are included.
+ * REST client for the agentic whole-exercise generation endpoints (matches {@code HyperionExerciseGenerationResource}).
+ *
+ * Kept hand-written rather than delegating to the generated {@code HyperionExerciseGenerationApiService}: the generated models type every field optional
+ * (the component relies on {@code jobId}/{@code running}/{@code events} being present), the generated cancel returns {@code Observable<any>}, and the
+ * status call must normalise the 204 empty body to {@code undefined}. Fold this into the generated client once those gaps are addressed.
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {

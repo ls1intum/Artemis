@@ -971,6 +971,7 @@
                 "diffError": "Could not load the changes to review.",
                 "streamError": "Lost the connection to the generation progress stream.",
                 "resultSuccess": "Generated and saved.",
+                "resultNeedsReview": "A draft was saved for review, but it did not fully pass verification. Resolve the review comments before using the exercise.",
                 "resultPartial": "Generation finished, but the exercise could not be verified. Nothing was changed.",
                 "resultCancelled": "Generation was cancelled. Nothing was changed.",
                 "resultError": "Generation failed. Nothing was changed.",

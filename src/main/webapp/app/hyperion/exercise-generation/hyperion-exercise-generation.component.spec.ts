@@ -112,6 +112,12 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(alertService.success).not.toHaveBeenCalled();
         expect(alertService.info).toHaveBeenCalledWith('artemisApp.programmingExercise.generateExercise.needsReview');
         expect(completed).toEqual([true]);
+
+        fixture.detectChanges();
+        // The in-panel result banner must reflect that a draft was saved, not the "nothing was changed" partial message.
+        const banner = (fixture.nativeElement as HTMLElement).querySelector('.generation-result')?.textContent ?? '';
+        expect(banner).toContain('resultNeedsReview');
+        expect(banner).not.toContain('resultPartial');
     });
 
     it('shows an error alert when starting fails', () => {

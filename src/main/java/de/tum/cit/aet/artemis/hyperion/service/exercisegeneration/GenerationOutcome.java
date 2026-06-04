@@ -33,9 +33,8 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String errorMessage;
 
     /**
-     * Advisory spec-fidelity / coverage findings (the brief-coverage axis the differential oracle is blind to). Never empty-by-contract and never consulted by
-     * {@link #isAccepted()}
-     * — purely advisory. Empty when the critic found nothing or was skipped.
+     * Advisory spec-fidelity / coverage findings (the brief-coverage axis the differential oracle is blind to). Purely advisory: never consulted by {@link #isAccepted()}. Empty
+     * when the critic found nothing or was skipped.
      */
     private final SpecFidelityReport specFidelityReport;
 

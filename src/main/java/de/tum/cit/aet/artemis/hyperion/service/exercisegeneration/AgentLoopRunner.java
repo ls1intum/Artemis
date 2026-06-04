@@ -308,15 +308,14 @@ public class AgentLoopRunner {
      */
     static String sanitizeToolName(String name) {
         if (name == null || name.isEmpty()) {
-            return name == null ? "" : name;
+            return "";
         }
         if (!name.contains("<|")) {
             return name.strip();
         }
         // Everything before the first control token is the real tool name; the control token and whatever channel noise follows it are leakage.
         String leading = name.substring(0, name.indexOf("<|"));
-        String stripped = HARMONY_CONTROL_TOKEN.matcher(leading).replaceAll("").strip();
-        return stripped;
+        return HARMONY_CONTROL_TOKEN.matcher(leading).replaceAll("").strip();
     }
 
     /**

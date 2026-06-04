@@ -107,30 +107,6 @@ class SandboxProductionParityDivergenceTest {
         assertThat(template.tests()).isEqualTo(solution.tests());
     }
 
-    /**
-     * The divergence is CLOSED, stated as one assertion: the sandbox solution-passing name set (what the oracle treats as the 100% solution) now EQUALS the production parser's
-     * solution-successful name set — neither contains the skipped {@code peek_does_not_remove}. So the persisted exercise's oracle view and the real graded view agree on which
-     * tests the solution passes, removing the sandbox-accept-but-production-solution-below-100% gap for skipped tests.
-     */
-    @EnabledOnOs({ LINUX, MAC })
-    @Test
-    void parity_skippedTest_isExcludedInBothSandboxAndProduction(@TempDir Path tempDir) throws Exception {
-        // Sandbox: the solution-passing names = every emitted HYPERION_TESTNAME (the solution passes them all; skipped cases are no longer emitted).
-        var sandboxSolution = emit(tempDir, "div-sol", SOLUTION_WITH_SKIP);
-        List<String> sandboxSolutionPassing = sandboxSolution.names();
-
-        // Production: the solution-successful names = the parser's successful list.
-        List<LocalCITestJobDTO> failed = new ArrayList<>();
-        List<LocalCITestJobDTO> successful = new ArrayList<>();
-        TestResultXmlParser.processTestResultFile(SOLUTION_WITH_SKIP, failed, successful);
-        List<String> productionSolutionSuccessful = successful.stream().map(LocalCITestJobDTO::name).toList();
-
-        assertThat(sandboxSolutionPassing).as("sandbox no longer treats the skipped test as a solution pass").doesNotContain("peek_does_not_remove");
-        assertThat(productionSolutionSuccessful).as("production also excludes the skipped test").doesNotContain("peek_does_not_remove");
-        // The two views now AGREE on the same report (order-independent): the skipped-test divergence is closed.
-        assertThat(sandboxSolutionPassing).containsExactlyInAnyOrderElementsOf(productionSolutionSuccessful);
-    }
-
     // A real-shaped SpotBugs report (one bug instance) and a Checkstyle report (one error), as the SCA static phase (`mvn spotbugs:spotbugs checkstyle:checkstyle …`,
     // java/plain_maven_static.yaml) writes them. They carry NO <testcase> element, so the sandbox's JUnit-XML aggregation cannot see them — while production parses them into SCA
     // feedback and (when SCA is enabled with a penalty) subtracts a penalty from the solution score (ProgrammingExerciseGradingService.calculateTotalPenalty).

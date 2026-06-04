@@ -141,9 +141,8 @@ public class ExerciseGenerationOrchestrationService {
             String currentPrompt = userPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
-            // The latest advisory spec-fidelity report (brief-coverage axis the verifier is blind to). Recomputed each attempt against the produced artifacts; the one from the
-            // final
-            // attempt is attached to the outcome and surfaced as advisory review comments. NEVER consulted by the accept/reject verdict.
+            // Recomputed each attempt; the final attempt's report is attached to the outcome and surfaced as advisory review comments. NEVER consulted by the accept/reject
+            // verdict.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);

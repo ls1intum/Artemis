@@ -189,5 +189,4 @@ public class AgentSystemPromptService {
         }
         return "Generate a complete, correct programming exercise: a reference solution that passes all tests, a template that compiles but fails the tests, and meaningful tests.";
     }
-
 }

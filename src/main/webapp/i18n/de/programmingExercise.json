@@ -971,6 +971,7 @@
                 "diffError": "Die Änderungen konnten nicht geladen werden.",
                 "streamError": "Die Verbindung zum Fortschritts-Stream der Generierung ist abgebrochen.",
                 "resultSuccess": "Generiert und gespeichert.",
+                "resultNeedsReview": "Ein Entwurf wurde zur Überprüfung gespeichert, hat die Verifizierung aber nicht vollständig bestanden. Behebe die Review-Kommentare, bevor du die Aufgabe verwendest.",
                 "resultPartial": "Die Generierung ist abgeschlossen, aber die Aufgabe konnte nicht verifiziert werden. Es wurde nichts geändert.",
                 "resultCancelled": "Die Generierung wurde abgebrochen. Es wurde nichts geändert.",
                 "resultError": "Die Generierung ist fehlgeschlagen. Es wurde nichts geändert.",
