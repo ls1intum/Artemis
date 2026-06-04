@@ -341,15 +341,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
-            """)
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
             WHERE p.initializationDate = (
                 SELECT MAX(p2.initializationDate)
                 FROM StudentParticipation p2
@@ -1496,22 +1487,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Finds all grade scores for all exercises in multiple courses, including individual and team exercises.
-     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
-     *
-     * @param courseIds the ids of multiple course for which to find all grade scores
-     * @param studentId the id of the student for which to find all grade scores
-     * @return a set of {@link CourseGradeScoreDTO}
-     */
-    default Set<CourseGradeScoreDTO> findGradeScoresForAllExercisesForCoursesAndStudent(Collection<Long> courseIds, long studentId) {
-        // Distinguish between individual and team participations for performance reasons
-        Set<CourseGradeScoreDTO> individualGradeScores = findIndividualGradesByCourseIdAndStudentId(courseIds, studentId);
-        Set<CourseGradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(courseIds, studentId);
-        Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
-        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
-    }
-
-    /**
      * Count the number of presentation scores for a participant (regular or team exercise) in a course.
      * This query handles both individual participations and team participations where the participant is a team member.
      *
@@ -1678,4 +1653,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);
         return page.map(StudentParticipation::getId);
     }
+
+    /**
+     * Counts all participations for an exercise that are properly initialized (INITIALIZED or FINISHED state), excluding test runs.
+     * Matches the frontend validation: participations must be in a state where students can work on the exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the number of participations in INITIALIZED or FINISHED state
+     */
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.exercise exercise
+            WHERE exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND (p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
+                    OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
+            """)
+    Long countInitializedParticipationsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
 }
