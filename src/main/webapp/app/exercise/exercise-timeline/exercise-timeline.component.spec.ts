@@ -96,7 +96,7 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemUndefined: false,
+            isOtherRequiredItemDateUndefined: false,
             tooltip: undefined,
         });
         expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
@@ -104,7 +104,7 @@ describe('ExerciseTimeline', () => {
         assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemUndefined: true,
+            isOtherRequiredItemDateUndefined: true,
             tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
         });
         expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
