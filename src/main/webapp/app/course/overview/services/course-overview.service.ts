@@ -18,6 +18,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -82,7 +83,7 @@ export class CourseOverviewService {
     readonly faHashtag = faHashtag;
     readonly faLock = faLock;
 
-    getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
+    getUpcomingTutorialGroup(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary> | undefined): TutorialGroup | TutorialGroupSummary | undefined {
         if (!tutorialGroups?.length) {
             return undefined;
         }
@@ -379,7 +380,7 @@ export class CourseOverviewService {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
 
-    mapTutorialGroupsToSidebarCardElements(tutorialGroups: TutorialGroup[]) {
+    mapTutorialGroupsToSidebarCardElements(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>) {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
 
@@ -420,7 +421,7 @@ export class CourseOverviewService {
         };
     }
 
-    mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup): SidebarCardElement {
+    mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup | TutorialGroupSummary): SidebarCardElement {
         const [attendanceText, averageAttendanceRatio] = this.computeAttendanceChipData(tutorialGroup);
         const attendanceChipColor = this.computeAttendanceChipColor(averageAttendanceRatio);
         const [subtitleLeft, subtitleRight] = this.computeTutorialSidebarCardSubtitles(tutorialGroup.nextSession?.start, tutorialGroup.nextSession?.end);

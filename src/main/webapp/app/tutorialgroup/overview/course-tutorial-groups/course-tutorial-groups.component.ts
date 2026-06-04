@@ -123,7 +123,7 @@ export class CourseTutorialGroupsComponent {
     private updateCachedTutorialGroups(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>, courseId: number) {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
-            course.tutorialGroups = tutorialGroups as TutorialGroup[];
+            course.tutorialGroups = tutorialGroups;
             this.courseStorageService.updateCourse(course);
         }
     }
@@ -151,7 +151,7 @@ export class CourseTutorialGroupsComponent {
     }
 
     private prepareSidebarData(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>, tutorialLectures: Lecture[]) {
-        const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups as TutorialGroup[]);
+        const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
         const tutorialLectureCardElements = this.courseOverviewService.mapLecturesToSidebarCardElements(tutorialLectures);
         const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
         const accordionGroups: AccordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
@@ -176,7 +176,7 @@ export class CourseTutorialGroupsComponent {
 
         const hasUserAtLeastOneTutorialGroup = tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
         tutorialGroups.forEach((tutorialGroup) => {
-            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup as TutorialGroup);
+            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
             if (!hasUserAtLeastOneTutorialGroup) {
                 tutorialGroupCategory = 'allGroups';
             } else {
@@ -205,7 +205,7 @@ export class CourseTutorialGroupsComponent {
     }
 
     private autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups: Array<TutorialGroup | TutorialGroupSummary>) {
-        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups as TutorialGroup[]);
+        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
