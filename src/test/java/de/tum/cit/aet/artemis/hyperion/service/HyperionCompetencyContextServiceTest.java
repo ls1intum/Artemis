@@ -97,14 +97,10 @@ class HyperionCompetencyContextServiceTest {
     }
 
     @Test
-    void computeContext_returnsEmptyWhenNoCompetenciesMatchIds() {
+    void computeContext_throwsBadRequestWhenRequestedCompetencyNotInCourse() {
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of());
-        when(competencyRelationApi.findRelationsInvolvingCompetencies(anyLong(), anySet())).thenReturn(Set.of());
 
-        CompetencyContext context = service.computeContext(42L, List.of(999L));
-
-        assertThat(context.competencies()).isEmpty();
-        assertThat(context.lectureSnippets()).isEmpty();
+        assertThatThrownBy(() -> service.computeContext(42L, List.of(999L))).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("competencyNotFound");
     }
 
     @Test
