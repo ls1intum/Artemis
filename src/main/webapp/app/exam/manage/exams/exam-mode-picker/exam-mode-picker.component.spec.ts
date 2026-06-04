@@ -8,9 +8,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-const exam = {
+const exam = () => ({
     id: 2,
-};
+});
 describe('ExamModePickerComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -32,8 +32,8 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should be in readonly mode', () => {
-        const examCopy = { ...exam };
-        fixture.componentRef.setInput('exam', exam);
+        const examCopy = exam();
+        fixture.componentRef.setInput('exam', examCopy);
         fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
         component.setExamMode(true);
@@ -41,7 +41,7 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should set exam mode test', () => {
-        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('exam', exam());
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
@@ -50,11 +50,31 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should set exam mode test false', () => {
-        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('exam', { ...exam(), examType: ExamType.PRACTICE });
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
         expect(component.exam().examType).toBe(ExamType.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
+    });
+
+    it('should update the active button after changing the exam mode', () => {
+        fixture.componentRef.setInput('exam', exam());
+        fixture.componentRef.setInput('disableInput', false);
+        fixture.detectChanges();
+
+        component.setExamMode(true);
+        fixture.detectChanges();
+
+        const standardMode = fixture.nativeElement.querySelector('#standard-mode') as HTMLElement;
+        const testMode = fixture.nativeElement.querySelector('#test-mode') as HTMLElement;
+        expect(standardMode.classList.contains('btn-success')).toBe(false);
+        expect(testMode.classList.contains('btn-primary')).toBe(true);
+
+        component.setExamMode(false);
+        fixture.detectChanges();
+
+        expect(standardMode.classList.contains('btn-success')).toBe(true);
+        expect(testMode.classList.contains('btn-primary')).toBe(false);
     });
 });

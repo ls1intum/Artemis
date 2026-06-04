@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { Exam, ExamType, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -11,10 +11,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class ExamModePickerComponent {
     readonly exam = input.required<Exam>();
-    readonly isTestExam = computed(() => isTestExam(this.exam()));
     readonly disableInput = input.required<boolean>();
 
     examModeChanged = output();
+
+    protected isTestExam(): boolean {
+        return isTestExam(this.exam());
+    }
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
