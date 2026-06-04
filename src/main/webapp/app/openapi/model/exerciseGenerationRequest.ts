@@ -9,10 +9,7 @@
  */
 
 
-export interface TutorialGroupFreePeriod { 
-    id?: number;
-    start?: string;
-    end?: string;
-    reason?: string;
+export interface ExerciseGenerationRequest { 
+    prompt?: string;
 }
 

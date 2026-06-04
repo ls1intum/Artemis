@@ -201,6 +201,18 @@ describe('ProgrammingExerciseDetailComponent', () => {
         jest.restoreAllMocks();
     });
 
+    describe('autoStartGeneration from navigation state', () => {
+        it('should not request auto-start by default', () => {
+            expect((comp as any).autoStartGeneration()).toBeFalse();
+        });
+
+        it('should request auto-start when the navigation state flags it', () => {
+            (router as unknown as MockRouter).currentNavigation.mockReturnValue({ extras: { state: { autoStartExerciseGeneration: true } } } as any);
+            const autoStartFixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
+            expect((autoStartFixture.componentInstance as any).autoStartGeneration()).toBeTrue();
+        });
+    });
+
     it('should reload on participation change', fakeAsync(() => {
         const fetchRepositoryFilesSpy = jest.spyOn(comp, 'fetchRepositoryFiles');
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });

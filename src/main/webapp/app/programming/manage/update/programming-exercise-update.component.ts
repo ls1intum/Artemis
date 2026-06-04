@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -59,12 +59,11 @@ import { FileService } from 'app/foundation/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -101,7 +100,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly router = inject(Router);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
@@ -1001,7 +999,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Handles successful save and navigates to the template repository in the code editor.
+     * Handles successful save and navigates to the detail page, requesting the agentic exercise-generation panel to auto-start.
      *
      * @param exercise the created exercise
      */
@@ -1014,48 +1012,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.openCodeEditorForTemplate(exercise);
-    }
-
-    /**
-     * Navigates to the code editor for the template repository of the exercise.
-     *
-     * @param exercise the created exercise
-     */
-    private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
-        if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
-        if (!courseId) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
-        if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate(
-                [
-                    'course-management',
-                    courseId,
-                    'exams',
-                    exercise.exerciseGroup.exam.id,
-                    'exercise-groups',
-                    exercise.exerciseGroup.id,
-                    'programming-exercises',
-                    exercise.id,
-                    'code-editor',
-                    RepositoryType.TEMPLATE,
-                    exercise.templateParticipation.id,
-                ],
-                navigationExtras,
-            );
-        } else {
-            this.router.navigate(
-                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
-                navigationExtras,
-            );
-        }
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise, { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } });
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(error: HttpErrorResponse) {

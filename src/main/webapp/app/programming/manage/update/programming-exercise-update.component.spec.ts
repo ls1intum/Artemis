@@ -29,7 +29,6 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -59,7 +58,7 @@ jest.mock('y-monaco', () => ({
     })),
 }));
 
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -367,7 +366,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
-        it('should call automatic setup with empty repositories and navigate to template editor', () => {
+        it('should call automatic setup with empty repositories and navigate to the detail page with auto-start state', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
             entity.course = course;
@@ -392,14 +391,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id], {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
+            });
             expect(comp.isGeneratingWithAi()).toBeFalse();
         });
 
-        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+        it('should navigate to the exam detail page with auto-start state after AI exercise creation in exam mode', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs();
             const exerciseGroup = new ExerciseGroup();
@@ -423,10 +421,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id], {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
+            });
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {

@@ -36,26 +36,26 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
     }
 
     /**
-     * @endpoint delete /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
+     * @endpoint delete /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
      * @param courseId 
      * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupFreePeriodId 
+     * @param tutorialFreePeriodId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling _delete.');
         }
         if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
             throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling _delete.');
         }
-        if (tutorialGroupFreePeriodId === null || tutorialGroupFreePeriodId === undefined) {
-            throw new Error('Required parameter tutorialGroupFreePeriodId was null or undefined when calling _delete.');
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling _delete.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -82,11 +82,84 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialGroupFreePeriodId", value: tutorialGroupFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods
+     * @param courseId 
+     * @param tutorialGroupsConfigurationId 
+     * @param tutorialGroupFreePeriodRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public create(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
+    public create(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
+    public create(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
+    public create(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling create.');
+        }
+        if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling create.');
+        }
+        if (tutorialGroupFreePeriodRequest === null || tutorialGroupFreePeriodRequest === undefined) {
+            throw new Error('Required parameter tutorialGroupFreePeriodRequest was null or undefined when calling create.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<TutorialGroupFreePeriod>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: tutorialGroupFreePeriodRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -171,26 +244,88 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
     }
 
     /**
-     * @endpoint get /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
+     * @endpoint delete /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
      * @param courseId 
      * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupFreePeriodId 
+     * @param tutorialFreePeriodId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
-    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
-    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
-    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public delete(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling delete1.');
+        }
+        if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling delete1.');
+        }
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling delete1.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint get /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
+     * @param courseId 
+     * @param tutorialGroupsConfigurationId 
+     * @param tutorialFreePeriodId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling getOneOfConfiguration.');
         }
         if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
             throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling getOneOfConfiguration.');
         }
-        if (tutorialGroupFreePeriodId === null || tutorialGroupFreePeriodId === undefined) {
-            throw new Error('Required parameter tutorialGroupFreePeriodId was null or undefined when calling getOneOfConfiguration.');
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling getOneOfConfiguration.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -218,7 +353,7 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialGroupFreePeriodId", value: tutorialGroupFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<TutorialGroupFreePeriod>('get', `${basePath}${localVarPath}`,
             {
@@ -234,27 +369,167 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
     }
 
     /**
-     * @endpoint put /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
+     * @endpoint get /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
      * @param courseId 
      * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupFreePeriodId 
+     * @param tutorialFreePeriodId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
+    public getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling getOneOfConfiguration1.');
+        }
+        if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling getOneOfConfiguration1.');
+        }
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling getOneOfConfiguration1.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<TutorialGroupFreePeriod>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint put /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
+     * @param courseId 
+     * @param tutorialGroupsConfigurationId 
+     * @param tutorialFreePeriodId 
      * @param tutorialGroupFreePeriodRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling update.');
+        }
+        if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update.');
+        }
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling update.');
+        }
+        if (tutorialGroupFreePeriodRequest === null || tutorialGroupFreePeriodRequest === undefined) {
+            throw new Error('Required parameter tutorialGroupFreePeriodRequest was null or undefined when calling update.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<TutorialGroupFreePeriod>('put', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: tutorialGroupFreePeriodRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint put /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}
+     * @param courseId 
+     * @param tutorialGroupsConfigurationId 
+     * @param tutorialFreePeriodId 
+     * @param tutorialGroupFreePeriodRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupFreePeriod>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupFreePeriod>>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupFreePeriod>>;
+    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number, tutorialGroupFreePeriodRequest: TutorialGroupFreePeriodRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling update1.');
         }
         if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
             throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update1.');
         }
-        if (tutorialGroupFreePeriodId === null || tutorialGroupFreePeriodId === undefined) {
-            throw new Error('Required parameter tutorialGroupFreePeriodId was null or undefined when calling update1.');
+        if (tutorialFreePeriodId === null || tutorialFreePeriodId === undefined) {
+            throw new Error('Required parameter tutorialFreePeriodId was null or undefined when calling update1.');
         }
         if (tutorialGroupFreePeriodRequest === null || tutorialGroupFreePeriodRequest === undefined) {
             throw new Error('Required parameter tutorialGroupFreePeriodRequest was null or undefined when calling update1.');
@@ -294,7 +569,7 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialGroupFreePeriodId", value: tutorialGroupFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialFreePeriodId", value: tutorialFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<TutorialGroupFreePeriod>('put', `${basePath}${localVarPath}`,
             {

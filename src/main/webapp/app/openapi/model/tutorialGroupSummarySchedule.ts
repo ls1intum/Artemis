@@ -9,10 +9,14 @@
  */
 
 
-export interface TutorialGroupFreePeriod { 
+export interface TutorialGroupSummarySchedule { 
     id?: number;
-    start?: string;
-    end?: string;
-    reason?: string;
+    dayOfWeek?: number;
+    startTime?: string;
+    endTime?: string;
+    repetitionFrequency?: number;
+    location?: string;
+    validFromInclusive?: string;
+    validToInclusive?: string;
 }
 

@@ -7,12 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ExerciseGenerationEvent } from './exerciseGenerationEvent';
 
 
-export interface TutorialGroupFreePeriod { 
-    id?: number;
-    start?: string;
-    end?: string;
-    reason?: string;
+export interface ExerciseGenerationStatus { 
+    jobId?: string;
+    running?: boolean;
+    events?: Array<ExerciseGenerationEvent>;
 }
 

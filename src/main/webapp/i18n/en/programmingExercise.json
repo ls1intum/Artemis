@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "generateWithAi": "Generate with AI",
             "home": {
                 "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
@@ -327,62 +328,6 @@
                     "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
                 },
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
-            },
-            "codeGeneration": {
-                "creationAssistance": "Creation Assistance",
-                "generateCode": "Generate Code",
-                "generateWithAi": "Generate with AI",
-                "generating": "Generating...",
-                "runningTitle": "Code generation in progress",
-                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
-                "description": "Generate solution, template, and test code using AI",
-                "tooltip": "AI Code Generation - Generate solution, template, and test code",
-                "confirmTitle": "Confirm Code Generation",
-                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed.",
-                "warning": "{{repositoryType}} code generation completed with issues.",
-                "error": "{{repositoryType}} code generation failed. Please try again later.",
-                "timeoutDetails": "The generation timed out after waiting too long for a response.",
-                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
-                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "noRepositorySelected": "Select at least one repository before starting code generation.",
-                "settingsTitle": "Generation Settings",
-                "settingsTooltip": "Select repositories to generate",
-                "statusTitle": "Generation Status",
-                "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Selected Feedback Threads",
-                    "description": "These selected threads will be forwarded as feedback context for code generation.",
-                    "count": "{{count}} selected",
-                    "empty": "No threads are currently selected as feedback.",
-                    "showThreads": "Show Threads",
-                    "hideThreads": "Hide Threads",
-                    "viewThread": "View Thread",
-                    "line": "Line {{line}}",
-                    "unknownLocation": "Unknown location"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "File Activity",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created or updated yet.",
-                "attempts": "Attempts made: {{attempts}}",
-                "status": {
-                    "idle": "Not started",
-                    "queued": "Queued",
-                    "running": "Running",
-                    "success": "Completed",
-                    "warning": "Completed with issues",
-                    "error": "Failed",
-                    "skipped": "Skipped",
-                    "skippedMessage": "Skipped because a previous repository generation failed.",
-                    "fileCreated": "created",
-                    "fileUpdated": "updated"
-                }
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -977,6 +922,64 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "generateExercise": {
+                "title": "Generate exercise with AI",
+                "description": "Use an AI agent to generate or revise a complete exercise (problem statement, solution, template, and tests). The result is only saved if it is verified: the solution passes all tests and the template fails them.",
+                "promptLabel": "Instructions (optional)",
+                "promptPlaceholder": "Describe the exercise to create, or the feedback to address when revising an existing one. Leave empty for a general generation.",
+                "promptHint": "Leave empty to build from the problem statement above (if there is one). Add details or constraints to steer the result.",
+                "examplesLabel": "Examples:",
+                "example1Label": "Recursion (Java)",
+                "example1Prompt": "A Java exercise on recursion: implement factorial and an iterative-vs-recursive Fibonacci, with tests covering base cases and a few larger inputs.",
+                "example2Label": "Strings (Python)",
+                "example2Prompt": "A Python exercise on string manipulation: a palindrome check that ignores case and spaces, and a word-frequency counter, with tests for empty and edge-case inputs.",
+                "example3Label": "Add edge cases",
+                "example3Prompt": "Keep the current problem, but add tests for empty input and boundary values, and update the problem statement's task list to match.",
+                "generate": "Generate exercise",
+                "retry": "Try again",
+                "retryHint": "The previous run was not saved. Add guidance below addressing the issues, then try again.",
+                "cancel": "Cancel",
+                "cancelling": "Cancelling…",
+                "runningHint": "This usually takes a few minutes. Progress streams here; the exercise is only saved once it is verified.",
+                "phase": {
+                    "preparing": "Preparing the workspace",
+                    "authoring": "Authoring the exercise",
+                    "verifying": "Verifying the exercise",
+                    "saving": "Saving the exercise",
+                    "done": "Finishing up"
+                },
+                "attempt": "Attempt {{ attempt }} of {{ total }}",
+                "elapsed": "Elapsed {{ time }}",
+                "filesChanged": "Files changed ({{ count }})",
+                "fileCreated": "new",
+                "fileEdited": "edited",
+                "repo": {
+                    "solution": "Solution",
+                    "template": "Template",
+                    "tests": "Tests",
+                    "other": "Other"
+                },
+                "showLog": "Show agent log",
+                "hideLog": "Hide agent log",
+                "reviewChanges": "Review changes",
+                "success": "The exercise was generated and saved. Review the changes.",
+                "needsReview": "A draft exercise was generated but did not fully pass verification. It was saved for you to finish, and the open issues were added as review comments — resolve them before using the exercise.",
+                "startError": "Could not start exercise generation. Please try again later.",
+                "alreadyRunning": "Exercise generation is already running for this exercise.",
+                "cancelError": "Could not cancel the generation.",
+                "diffError": "Could not load the changes to review.",
+                "streamError": "Lost the connection to the generation progress stream.",
+                "resultSuccess": "Generated and saved.",
+                "resultPartial": "Generation finished, but the exercise could not be verified. Nothing was changed.",
+                "resultCancelled": "Generation was cancelled. Nothing was changed.",
+                "resultError": "Generation failed. Nothing was changed.",
+                "gateSolutionMet": "Solution passes",
+                "gateSolutionUnmet": "Solution fails",
+                "gateTemplateMet": "Template fails as required",
+                "gateTemplateUnmet": "Template unexpectedly passes",
+                "gateTests": "tests",
+                "reasonsHeading": "Why it was not accepted"
             }
         },
         "error": {
