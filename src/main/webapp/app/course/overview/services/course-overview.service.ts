@@ -19,6 +19,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
+import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSummarySession } from 'app/openapi/model/tutorialGroupSummarySession';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -90,7 +92,7 @@ export class CourseOverviewService {
         const now = dayjs();
         const futureGroups = tutorialGroups.filter((group) => {
             const start = group.nextSession?.start;
-            return start?.isAfter(now);
+            return start && dayjs(start).isAfter(now);
         });
         if (!futureGroups.length) {
             return undefined;
@@ -98,7 +100,7 @@ export class CourseOverviewService {
         return futureGroups.reduce((earliest, current) => {
             const earliestStart = earliest.nextSession?.start;
             const currentStart = current.nextSession?.start;
-            return currentStart?.isBefore(earliestStart) ? current : earliest;
+            return currentStart && earliestStart && dayjs(currentStart).isBefore(dayjs(earliestStart)) ? current : earliest;
         });
     }
 
@@ -424,7 +426,10 @@ export class CourseOverviewService {
     mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup | TutorialGroupSummary): SidebarCardElement {
         const [attendanceText, averageAttendanceRatio] = this.computeAttendanceChipData(tutorialGroup);
         const attendanceChipColor = this.computeAttendanceChipColor(averageAttendanceRatio);
-        const [subtitleLeft, subtitleRight] = this.computeTutorialSidebarCardSubtitles(tutorialGroup.nextSession?.start, tutorialGroup.nextSession?.end);
+        const [subtitleLeft, subtitleRight] = this.computeTutorialSidebarCardSubtitles(
+            tutorialGroup.nextSession?.start ? dayjs(tutorialGroup.nextSession.start) : undefined,
+            tutorialGroup.nextSession?.end ? dayjs(tutorialGroup.nextSession.end) : undefined,
+        );
         return {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
@@ -436,14 +441,17 @@ export class CourseOverviewService {
         };
     }
 
-    private computeAttendanceChipData(tutorialGroup: TutorialGroup): [attendanceText?: string, averageAttendanceRatio?: number] {
+    private computeAttendanceChipData(tutorialGroup: TutorialGroup | TutorialGroupSummary): [attendanceText?: string, averageAttendanceRatio?: number] {
         const capacity = tutorialGroup.capacity;
         if (capacity === undefined) {
             return [undefined, undefined];
         }
         let averageAttendanceRatio: number | undefined;
         let attendanceText: string | undefined;
-        const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
+        const sessionsWithAttendance =
+            (tutorialGroup.tutorialGroupSessions as Array<LegacyTutorialGroupSession | TutorialGroupSummarySession>)?.filter(
+                (session) => session.attendanceCount !== undefined && session.attendanceCount !== null,
+            ) ?? [];
         if (sessionsWithAttendance.length !== 0) {
             const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
             averageAttendanceRatio = averageAttendance / capacity;

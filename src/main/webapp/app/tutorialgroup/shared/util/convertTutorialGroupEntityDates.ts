@@ -6,10 +6,11 @@ import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tu
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { TutorialGroupSummarySession } from 'app/openapi/model/tutorialGroupSummarySession';
+import { TutorialGroupFreePeriod as TutorialGroupFreePeriodOpenApi } from 'app/openapi/model/tutorialGroupFreePeriod';
 
-export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
-    tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-    tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
+export function convertTutorialGroupFreePeriodDatesFromServer<T extends TutorialGroupFreePeriod | TutorialGroupFreePeriodOpenApi>(tutorialGroupFreePeriod: T): T {
+    tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start) as any;
+    tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end) as any;
     return tutorialGroupFreePeriod;
 }
 
@@ -23,12 +24,12 @@ export function convertTutorialGroupSessionDatesFromServer<T extends LegacyTutor
 }
 
 export function convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
-    tutorialGroupsConfiguration.tutorialPeriodStartInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodStartInclusive);
-    tutorialGroupsConfiguration.tutorialPeriodEndInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodEndInclusive);
+    tutorialGroupsConfiguration.tutorialPeriodStartInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodStartInclusive) as any;
+    tutorialGroupsConfiguration.tutorialPeriodEndInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodEndInclusive) as any;
     if (tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
         tutorialGroupsConfiguration.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
-            tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-            tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
+            tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start) as any;
+            tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end) as any;
         });
     }
     return tutorialGroupsConfiguration;
