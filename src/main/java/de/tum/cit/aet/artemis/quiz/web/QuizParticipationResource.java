@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWit
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionQuestionConnector;
 
 /**
  * REST controller for managing quiz participations.
@@ -120,6 +121,7 @@ public class QuizParticipationResource {
             submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         }
         submission.setResults(List.of(result));
+        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(submission, exercise);
         participation.setSubmissions(Set.of(submission));
 
         participation.setExercise(exercise);
@@ -189,6 +191,7 @@ public class QuizParticipationResource {
         }
 
         submission.setResults(List.of(result));
+        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(submission, exercise);
         participation.setSubmissions(Set.of(submission));
         participation.setExercise(exercise);
 

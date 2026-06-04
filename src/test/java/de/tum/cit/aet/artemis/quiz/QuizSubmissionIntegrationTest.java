@@ -7,6 +7,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -34,6 +37,8 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -73,6 +78,7 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAn
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
@@ -91,6 +97,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseTestRepository;
@@ -1008,6 +1017,85 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
             // check whether submission date was set
             assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStartParticipationAfterSavingSubmissionReturnsFullyPopulatedQuestions() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+
+            var result = request.performMvcRequest(post("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation")).andExpect(status().isOk()).andReturn();
+            JsonNode response = request.getObjectMapper().readTree(result.getResponse().getContentAsString());
+            JsonNode submittedMcQuestion = null;
+            for (JsonNode submission : response.path("submissions")) {
+                for (JsonNode submittedAnswer : submission.path("submittedAnswers")) {
+                    if ("multiple-choice".equals(submittedAnswer.path("quizQuestion").path("type").asText())) {
+                        submittedMcQuestion = submittedAnswer.path("quizQuestion");
+                    }
+                }
+            }
+            MultipleChoiceQuestion originalMcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance)
+                    .map(MultipleChoiceQuestion.class::cast).findFirst().orElseThrow();
+
+            assertThat(submittedMcQuestion).isNotNull();
+            assertThat(submittedMcQuestion.path("answerOptions")).hasSize(originalMcQuestion.getAnswerOptions().size());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testCalculateAllResultsWithSavedSubmission() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+
+            quizSubmissionService.calculateAllResults(quizExercise.getId());
+
+            List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
+            assertThat(results).singleElement().satisfies(result -> assertThat(result.isRated()).isTrue());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetParticipationResultAfterEvaluationReturnsFullyPopulatedQuestions() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+
+            StudentParticipation participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null,
+                    StudentParticipation.class, HttpStatus.OK);
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
+            request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+
+            quizExerciseTestRepository.updateDueDate(quizExercise.getId(), ZonedDateTime.now().minusMinutes(1));
+            quizSubmissionService.calculateAllResults(quizExercise.getId());
+
+            var result = request.performMvcRequest(get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/participations/" + participation.getId() + "/result"))
+                    .andExpect(status().isOk()).andReturn();
+            JsonNode response = request.getObjectMapper().readTree(result.getResponse().getContentAsString());
+            JsonNode submittedMcQuestion = null;
+            for (JsonNode submission : response.path("submissions")) {
+                for (JsonNode submittedAnswer : submission.path("submittedAnswers")) {
+                    if ("multiple-choice".equals(submittedAnswer.path("quizQuestion").path("type").asText())) {
+                        submittedMcQuestion = submittedAnswer.path("quizQuestion");
+                    }
+                }
+            }
+            MultipleChoiceQuestion originalMcQuestion = quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance)
+                    .map(MultipleChoiceQuestion.class::cast).findFirst().orElseThrow();
+
+            assertThat(submittedMcQuestion).isNotNull();
+            assertThat(submittedMcQuestion.path("answerOptions")).hasSize(originalMcQuestion.getAnswerOptions().size());
         }
 
         @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

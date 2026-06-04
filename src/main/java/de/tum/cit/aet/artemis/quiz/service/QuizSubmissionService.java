@@ -196,6 +196,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             }
             QuizSubmission quizSubmission = (QuizSubmission) quizSubmissionOptional.get();
             quizSubmission.setParticipation(participation);
+            QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(quizSubmission, quizExercise);
 
             if (quizSubmission.isSubmitted()) {
                 if (quizSubmission.getType() == null) {
