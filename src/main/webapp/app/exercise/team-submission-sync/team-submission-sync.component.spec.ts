@@ -189,16 +189,16 @@ describe('Team Submission Sync Component', () => {
 
     it('should re-broadcast initial Yjs sync + awareness sync for modeling exercises on every STOMP (re)connect', () => {
         const mock = websocketService as unknown as MockWebsocketService;
-        component.exerciseType = ExerciseType.MODELING;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         const expectedTopic = '/topic/participations/3/team/modeling-submissions/patch';
-        const generateInitialSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
-        const generateInitialAwarenessSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
 
-        const reconnectedSpy = jest.fn();
+        const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
-        component.submissionObservable = undefined;
-        const sendSpy = jest.spyOn(websocketService, 'send');
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
 
@@ -208,12 +208,12 @@ describe('Team Submission Sync Component', () => {
         expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
         expect(sendSpy.mock.calls[1][0]).toBe(expectedTopic);
         expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         // Disconnect — no fresh sync, no fresh reconnect signal
         mock.setConnectionState(new ConnectionState(false, true));
         expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         // Reconnect — both initial messages + reconnect signal fire again
         mock.setConnectionState(new ConnectionState(true, true));
