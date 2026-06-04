@@ -51,9 +51,14 @@ test.describe('Passkey', () => {
     test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, virtualAuthenticator }) => {
         const user = passkeyTestUser(test.info().title);
         // Ensure the passkey setup modal is shown on every navigation, including the post-login redirect.
-        // The autoTestFixture init script suppresses the modal globally; this overrides it by removing
-        // the suppression key after that script runs (init scripts execute in registration order).
-        await page.addInitScript(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
+        // The autoTestFixture init script suppresses the modal globally via localStorage AND CSS;
+        // this overrides both by removing the suppression key and re-enabling the dialog.
+        await page.addInitScript(() => {
+            localStorage.removeItem('earliestSetupPasskeyReminderDate');
+            const style = document.createElement('style');
+            style.textContent = '.p-dialog-mask:has(.passkey-setup-dialog) { display: flex !important; }';
+            document.head.appendChild(style);
+        });
         // Clear the admin session from beforeEach so we land on the sign-in page
         await page.context().clearCookies();
         await page.goto('/sign-in');

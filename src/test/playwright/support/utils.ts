@@ -334,7 +334,12 @@ export async function addE2EInitScript(page: Page) {
         // Hide the notification popup overlay
         const injectStyle = () => {
             const style = document.createElement('style');
-            style.textContent = 'jhi-course-notification-popup-overlay { display: none !important; }';
+            style.textContent = [
+                'jhi-course-notification-popup-overlay { display: none !important; }',
+                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
+                // CSS backup for the localStorage suppression below.
+                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
+            ].join('\n');
             document.head.appendChild(style);
         };
         if (document.head) {
