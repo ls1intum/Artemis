@@ -356,6 +356,30 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
+     * Counts the number of unique, active students who have an initialized participation
+     * for a specific exercise and are explicitly assigned this exact exercise variant
+     * in their current exam.
+     *
+     * Should be used for exam dashboard to ignore test run submissions
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @param examId     the exam id we are interested in
+     * @return the total number of students who currently participate in given exam and in given exercise
+     *
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM StudentParticipation p
+            JOIN StudentExam se ON p.student.id = se.user.id
+            JOIN se.exercises e
+            WHERE p.exercise.id = :exerciseId
+            AND se.exam.id = :examId
+            AND e.id = :exerciseId
+            AND p.testRun = FALSE
+            """)
+    long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
+
+    /**
      * Should be used for exam dashboard to ignore test run submissions
      *
      * @param exerciseIds the exercise id we are interested in
