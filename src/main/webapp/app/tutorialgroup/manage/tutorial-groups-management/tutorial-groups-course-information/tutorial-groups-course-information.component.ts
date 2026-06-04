@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -11,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [SidePanelComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class TutorialGroupsCourseInformationComponent {
-    tutorialGroups = input<TutorialGroup[]>([]);
+    tutorialGroups = input<Array<TutorialGroup | TutorialGroupSummary>>([]);
 
     get totalNumberOfRegistrations(): number {
         return this.tutorialGroups().reduce((acc, tutorialGroup) => acc + (tutorialGroup.numberOfRegisteredUsers ?? 0), 0);

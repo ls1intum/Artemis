@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorialGroupSummary';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { VerticalProgressBarComponent } from 'app/tutorialgroup/manage/vertical-progress-bar/vertical-progress-bar.component';
 
@@ -12,5 +13,5 @@ import { VerticalProgressBarComponent } from 'app/tutorialgroup/manage/vertical-
 })
 export class TutorialGroupUtilizationIndicatorComponent {
     readonly Math = Math;
-    tutorialGroup = input.required<TutorialGroup>();
+    tutorialGroup = input.required<TutorialGroup | TutorialGroupSummary>();
 }
