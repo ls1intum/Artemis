@@ -442,7 +442,8 @@
                 "review": {
                     "reviewedAs": "Befragung wurde",
                     "accepted": "akzeptiert",
-                    "rejected": "abgelehnt"
+                    "rejected": "abgelehnt",
+                    "pointsVerified": "Punkte bestätigt"
                 }
             }
         },

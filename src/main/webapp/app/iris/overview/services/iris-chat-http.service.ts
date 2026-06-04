@@ -12,6 +12,7 @@ import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-req
 import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -163,5 +164,9 @@ export class IrisChatHttpService {
 
     startPromptingMode<T extends IrisSession>(identifier: string): Response<T> {
         return this.httpClient.patch<T>(`${this.apiPrefix}/${identifier}/sessions/current/prompting`, null, { observe: 'response' });
+    }
+
+    getLatestEvent(participationId: number): Observable<EventType> {
+        return this.httpClient.get<EventType>(`${this.apiPrefix}/programming-exercise-chat/${participationId}/latest-event`);
     }
 }

@@ -53,7 +53,8 @@
                         [course]="exercise.course"
                     />
                     @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisPromptUserSettings?.enabled) {
-                        <jhi-start-prompting-button [exercise]="exercise" [smallButtons]="false" />
+                        <jhi-start-prompting-button [exercise]="exercise" [smallButtons]="false" [participation]="gradedStudentParticipation" />
+                        <jhi-information-box [informationBoxData]="irisVerifiedScore" />
                     }
                 </div>
                 <!-- RESULTS START -->

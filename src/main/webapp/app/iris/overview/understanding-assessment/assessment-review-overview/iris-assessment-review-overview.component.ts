@@ -119,7 +119,7 @@ export class IrisAssessmentReviewOverviewComponent implements OnInit {
                                 searchedAndFilteredParticipations: [],
                             };
 
-                            return this.participationService.findAllParticipationsNonZeroLatestScoreByExercise(exercise.id!).pipe(
+                            return this.participationService.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!).pipe(
                                 map((participationsResponse) => {
                                     this.handleNewParticipations(viewExercise, participationsResponse);
 
@@ -233,7 +233,7 @@ export class IrisAssessmentReviewOverviewComponent implements OnInit {
         this.isLoading = true;
 
         const requests = this.exercises.map((e) =>
-            this.participationService.findAllParticipationsNonZeroLatestScoreByExercise(e.exercise.id!).pipe(
+            this.participationService.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(e.exercise.id!).pipe(
                 map((res) => ({
                     exercise: e,
                     response: res,
@@ -268,15 +268,15 @@ export class IrisAssessmentReviewOverviewComponent implements OnInit {
     private filterParticipationByProp = (participation: ProgrammingExerciseStudentParticipation, filterProp = this.reviewCriteria.filterProp): boolean => {
         switch (filterProp) {
             case FilterProp.REVIEWABLE:
-                return participation.irisVerdictReview === IrisVerdictReview.REVIEWABLE;
+                return participation.irisAssessment?.verdictReview === IrisVerdictReview.REVIEWABLE;
             case FilterProp.NEEDS_REVIEW:
-                return participation.irisVerdictReview === IrisVerdictReview.NEEDS_REVIEW;
+                return participation.irisAssessment?.verdictReview === IrisVerdictReview.NEEDS_REVIEW;
             case FilterProp.ACCEPTED:
-                return participation.irisVerdictReview === IrisVerdictReview.ACCEPTED;
+                return participation.irisAssessment?.verdictReview === IrisVerdictReview.ACCEPTED;
             case FilterProp.REJECTED:
-                return participation.irisVerdictReview === IrisVerdictReview.REJECTED;
+                return participation.irisAssessment?.verdictReview === IrisVerdictReview.REJECTED;
             case FilterProp.MISSING:
-                return participation.irisVerdictReview === undefined || participation.irisVerdictReview === null;
+                return participation.irisAssessment?.verdictReview === undefined || participation.irisAssessment?.verdictReview === null;
             case FilterProp.ALL:
             default:
                 return true;

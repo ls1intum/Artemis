@@ -82,6 +82,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseIdAndStudentLogin(long exerciseId, String username);
+
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -201,6 +204,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
+    @EntityGraph(attributePaths = { "submissions", "submissions.results", "student", "irisAssessment" })
+    List<ProgrammingExerciseStudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
     }
@@ -208,13 +214,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findWithTeamStudentsByIdElseThrow(long participationId) {
         return getValueElseThrow(findWithTeamStudentsById(participationId), participationId);
     }
-
-    default ProgrammingExerciseStudentParticipation findWithIrisReasoningByIdElseThrow(long participationId) {
-        return getValueElseThrow(findWithIrisReasoningById(participationId), participationId);
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "irisReasoning" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithIrisReasoningById(long participationId);
 
     /**
      * Remove the build plan id from all participations of the given exercise.

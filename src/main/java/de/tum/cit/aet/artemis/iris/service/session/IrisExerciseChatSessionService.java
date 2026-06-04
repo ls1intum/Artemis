@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
@@ -13,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,15 +38,20 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisPipeEvent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedPromptUserSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -55,7 +66,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * Service to handle the chat subsystem of Iris including prompting mode if enabled.
@@ -89,15 +99,21 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseParticipationService participationService;
+    private final IrisAssessmentService irisAssessmentService;
+
+    private final IrisAssessmentRepository irisAssessmentRepository;
+
+    private final TaskScheduler taskScheduler;
+
+    private final Map<Long, ScheduledFuture<?>> quizTimers = new ConcurrentHashMap<>();
 
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
-            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            ProgrammingExerciseParticipationService participationService) {
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, IrisAssessmentService irisAssessmentService,
+            IrisAssessmentRepository irisAssessmentRepository, TaskScheduler taskScheduler) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
@@ -111,7 +127,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
-        this.participationService = participationService;
+        this.irisAssessmentService = irisAssessmentService;
+        this.irisAssessmentRepository = irisAssessmentRepository;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
@@ -331,25 +349,32 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * Informs Iris prompting pipeline when new points were achieved in the latest build.
      */
     private boolean checkIfExplainPromptingMode(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(studentParticipation.getProgrammingExercise(), false);
+        var student = studentParticipation.getStudent().orElseThrow();
+        var exercise = studentParticipation.getProgrammingExercise();
+
+        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
         var settings = combinedSettings.irisPromptUserSettings();
         if (!settings.enabled()) {
             return false;
         }
 
-        // Check if new highest number of points were achieved
-        boolean newUnverifiedScore = latestSubmission.getLatestResult() != null
-                && (studentParticipation.getIrisVerifiedScore() == null || latestSubmission.getLatestResult().getScore() > studentParticipation.getIrisVerifiedScore());
+        // An Assessment object is needed because from now on are Iris Pipeline Events saved (even when no assessment session is started)
+        IrisAssessment assessment = irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId())
+                .orElseGet(() -> irisAssessmentService.createNewAssessment(studentParticipation));
+        var verifiedScore = assessment.getVerifiedScore();
 
-        log.info("verified score is: {}\nscore is: {}\n", studentParticipation.getIrisVerifiedScore(), latestSubmission.getLatestResult().getScore());
+        // Check if new highest number of points were achieved
+        boolean newUnverifiedScore = latestSubmission.getLatestResult() != null && (verifiedScore == null || latestSubmission.getLatestResult().getScore() > verifiedScore);
+
+        log.info("verified score is: {}\nscore is: {}\n", verifiedScore, latestSubmission.getLatestResult().getScore());
 
         if (newUnverifiedScore) {
             log.info("User {} has achieved a new high score which now must be verified", studentParticipation.getParticipant().getName());
-            var user = studentParticipation.getStudent().orElseThrow();
-            var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+            var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, student, false);
+
             try {
-                CompletableFuture
-                        .runAsync(() -> requestAndHandleResponsePromptUser(session, Optional.of("build_with_points"), Optional.of(settings), Optional.of(latestSubmission)));
+                CompletableFuture.runAsync(() -> requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.BUILD_WITH_POINTS.name()), Optional.of(settings),
+                        Optional.of(latestSubmission)));
             }
             catch (Exception e) {
                 log.error("Error while sending build with points message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
@@ -479,13 +504,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
         session.setInPromptingModePipeline(true);
         irisExerciseChatSessionRepository.save(session);
-        participationService.resetVerdictAndReasoning(user, exercise);
+        irisAssessmentService.resetVerdictAndReasoning(user, exercise);
 
         try {
             // Run async to allow the session to be returned immediately
             CompletableFuture.runAsync(() -> {
-                requestAndHandleResponsePromptUser(session, Optional.of("user_initiates_prompting"), Optional.empty(), Optional.empty());
-                requestAndHandleResponsePromptUser(session, Optional.of("first_question"), Optional.empty(), Optional.empty());
+                requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.USER_INITIATES_PROMPTING.name()), Optional.empty(), Optional.empty());
+                requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.FIRST_QUESTION.name()), Optional.empty(), Optional.empty());
             });
         }
         catch (Exception e) {
@@ -512,62 +537,17 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         // only handle events when sent with pipeline results
         if (statusUpdate.result() != null) {
-            handleEventFromIris(job, statusUpdate);
+            irisAssessmentService.handleEventFromIris(job, statusUpdate);
         }
         return super.handleStatusUpdate(job, statusUpdate);
     }
 
-    private void handleEventFromIris(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        if (statusUpdate.event() == null) {
-            return;
-        }
-
-        var session = irisExerciseChatSessionRepository.findByIdElseThrow(job.sessionId());
-        var user = userRepository.findByIdElseThrow(session.getUserId());
-        Exercise exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
-        user.hasAcceptedExternalLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        checkIfExamExercise(exercise);
-
-        switch (statusUpdate.event()) {
-            case "prompting_finished":
-                irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-                session.setInPromptingModePipeline(false);
-                irisExerciseChatSessionRepository.save(session);
-
-                try {
-                    if (statusUpdate.verdict() == null) {
-                        throw new Error("Prompting finished without verdict");
-                    }
-                    participationService.saveAndHandleVerdict(user, exercise, statusUpdate.verdict());
-                }
-                catch (Exception e) {
-                    log.error("Error while processing prompting mode verdict and reasoning {}", statusUpdate.verdict(), e);
-                }
-                break;
-            case "next_question":
-                try {
-                    irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-                    if (statusUpdate.verdict() == null) {
-                        throw new Error("Prompting finished without verdict");
-                    }
-                    participationService.addReasoning(user, exercise, statusUpdate.verdict().reasoning());
-
-                    session.setQuestionsAsked(session.getQuestionsAsked() + 1);
-                    irisExerciseChatSessionRepository.save(session);
-                }
-                catch (Exception e) {
-                    log.error("Error while processing prompting mode reasoning {}", statusUpdate.verdict(), e);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-
-    public List<IrisQAExchangeDTO> getQAExchangeDTOList(ProgrammingExerciseStudentParticipation participation, Exercise exercise, User user) {
+    public List<IrisQAExchangeDTO> getQAExchangeDTOList(IrisAssessment assessment, Exercise exercise, User user) {
         var session = irisExerciseChatSessionRepository.findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
-        var reasoning = participation.getIrisReasoning();
+        if (assessment == null) {
+            throw new ConflictException("Iris Assessment is missing so QAExchangeList cannot be retrieved", "Iris", "irisAssessmentMissing");
+        }
+        var reasoning = assessment.getReasoning();
         if (reasoning == null || reasoning.isEmpty()) {
             throw new ConflictException("Iris reasoning is missing for assessment", "Iris", "irisReasoningMissing");
         }
@@ -578,9 +558,72 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var irisMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.LLM)).toList();
         var userMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.USER)).toList();
 
-        return IntStream
-                .range(0, Math.min(Math.min(irisMessages.size(), userMessages.size()), reasoning.size())).mapToObj(i -> new IrisQAExchangeDTO(i,
-                        irisMessages.get(i).getContent().getFirst().getContentAsString(), userMessages.get(i).getContent().getFirst().getContentAsString(), reasoning.get(i)))
-                .toList();
+        int maxSize = Math.max(Math.max(irisMessages.size(), userMessages.size()), reasoning.size());
+
+        return IntStream.range(0, maxSize).mapToObj(i -> new IrisQAExchangeDTO(i, i < irisMessages.size() ? irisMessages.get(i).getContent().getFirst().getContentAsString() : "",
+                i < userMessages.size() ? userMessages.get(i).getContent().getFirst().getContentAsString() : "", i < reasoning.size() ? reasoning.get(i) : "")).toList();
+    }
+
+    /**
+     * Registers a tab-defocus event while in prompting mode.
+     * The quiz is stopped and the pipeline is called with the tab_defocus event (which results in saving the corresponding verdict and reasoning).
+     *
+     * @param exercise of the exercise
+     * @param user     of the exercise
+     */
+    public void registerDefocusForCurrentSession(ProgrammingExercise exercise, User user) {
+        user.hasAcceptedExternalLLMUsageElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
+        checkIfExamExercise(exercise);
+
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
+        if (!session.isInPromptingModePipeline()) {
+            throw new IllegalStateException("Tab defocus was detected while not in prompting mode");
+        }
+
+        stopTimerForSession(session);
+
+        try {
+            CompletableFuture.runAsync(() -> {
+                requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.TAB_DEFOCUS.name()), Optional.empty(), Optional.empty());
+            });
+        }
+        catch (Exception e) {
+            log.error("Error while sending tab_defocus message to Iris for user {}", user.getName(), e);
+        }
+    }
+
+    public IrisQuizTimerDTO startTimerForCurrentSession(ProgrammingExercise exercise, User user) {
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
+        if (!session.isInPromptingModePipeline()) {
+            throw new IllegalStateException("Timer was started while not in prompting mode");
+        }
+        ZonedDateTime expiresAt = ZonedDateTime.now().plusSeconds(IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS);
+
+        // schedule pipeline to run with TIMER_RAN_OUT event when expiresAt is reached
+        ScheduledFuture<?> future = taskScheduler.schedule(
+                () -> requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.TIMER_RAN_OUT.name()), Optional.empty(), Optional.empty()), expiresAt.toInstant());
+
+        quizTimers.put(session.getId(), future);
+
+        return new IrisQuizTimerDTO(expiresAt, IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS);
+    }
+
+    public void stopTimerForCurrentSession(ProgrammingExercise exercise, User user) {
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
+
+        stopTimerForSession(session);
+    }
+
+    private void stopTimerForSession(IrisProgrammingExerciseChatSession session) {
+        log.info("Stopping timer for session {}, timers={}", session.getId(), quizTimers.keySet());
+        // cancel pipeline task
+        ScheduledFuture<?> future = quizTimers.remove(session.getId());
+
+        if (future != null) {
+            log.info("done={}, cancelled={}", future.isDone(), future.isCancelled());
+            future.cancel(false);
+        }
     }
 }

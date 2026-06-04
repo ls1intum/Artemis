@@ -3,7 +3,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, catchError, from, map, of, tap, throwError } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { EventType, IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
@@ -81,14 +82,12 @@ export class IrisChatService implements OnDestroy {
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
-    runInfo: BehaviorSubject<IrisRunInfo | undefined> = new BehaviorSubject<IrisRunInfo | undefined>(undefined);
-    activities: BehaviorSubject<IrisActivityItem[]> = new BehaviorSubject<IrisActivityItem[]>([]);
-    suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
-    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
-    liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
-    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
-    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
-    latestEvent: BehaviorSubject<EventType | undefined> = new BehaviorSubject(undefined);
+    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
+    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    latestEvent: Subject<EventType | undefined> = new Subject<EventType | undefined>();
+    stopTimer$ = new Subject<void>();
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers
@@ -671,7 +670,7 @@ export class IrisChatService implements OnDestroy {
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 if (payload.event) {
-                    this.latestEvent = payload.event;
+                    this.latestEvent.next(payload.event);
                 }
                 this.handleMessageWebsocketPayload(payload);
                 break;
@@ -1090,6 +1089,13 @@ export class IrisChatService implements OnDestroy {
 
     public currentLatestEvent(): Observable<EventType | undefined> {
         return this.latestEvent.asObservable();
+    }
+
+    public loadLatestEvent(participationId: number | undefined): Observable<EventType | undefined> {
+        if (participationId === undefined) {
+            throw new Error('participation id is undefined');
+        }
+        return this.http.getLatestEvent(participationId);
     }
 
     public startPromptingMode(): Observable<IrisExerciseChatSession> {

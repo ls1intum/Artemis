@@ -80,6 +80,7 @@
                 "graded": "Graded"
             },
             "startPrompting": "Assess understanding",
+            "verifiedScore": "Verified score",
             "reviewIrisAssessment": {
                 "needsReview": "Needs review",
                 "missing": "Missing assessment",

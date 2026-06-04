@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
+import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
+import { EntityResponseType } from 'app/exercise/participation/participation.service';
 
 @Injectable({ providedIn: 'root' })
 export class IrisAssessmentReviewService {
@@ -12,25 +14,29 @@ export class IrisAssessmentReviewService {
 
     /**
      * accepts the answers of the last prompting mode chat and makes the submission points count
-     * @param participationId The unique identifier of the participation
+     * @param assessmentId The unique identifier of the assessment
      */
-    acceptAnswers(participationId: number): Observable<HttpResponse<StudentParticipation>> {
-        return this.http.patch<StudentParticipation>(`${this.resourceUrl}/${participationId}/accept`, {}, { observe: 'response' });
+    acceptAnswers(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
+        return this.http.patch<StudentParticipation>(`${this.resourceUrl}/${assessmentId}/accept`, {}, { observe: 'response' });
     }
 
     /**
      * rejects the answers of the last prompting mode chat and makes the submission points NOT count
-     * @param participationId The unique identifier of the participation
+     * @param assessmentId The unique identifier of the assessment
      */
-    rejectAnswers(participationId: number): Observable<HttpResponse<StudentParticipation>> {
-        return this.http.patch<StudentParticipation>(`${this.resourceUrl}/${participationId}/reject`, {}, { observe: 'response' });
+    rejectAnswers(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
+        return this.http.patch<StudentParticipation>(`${this.resourceUrl}/${assessmentId}/reject`, {}, { observe: 'response' });
     }
 
     /**
      * gets the QAExchange objects of the last prompting mode chat
-     * @param participationId The unique identifier of the participation
+     * @param assessmentId The unique identifier of the assessment
      */
-    getAssessmentChat(participationId: number): Observable<HttpResponse<QAExchangeDTO[]>> {
-        return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${participationId}`, { observe: 'response' });
+    getAssessmentChat(assessmentId: number): Observable<HttpResponse<QAExchangeDTO[]>> {
+        return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${assessmentId}/chat`, { observe: 'response' });
+    }
+
+    findWithPoints(assessmentId: number): Observable<EntityResponseType> {
+        return this.http.get<IrisAssessment>(`${this.resourceUrl}/${assessmentId}`, { observe: 'response' });
     }
 }

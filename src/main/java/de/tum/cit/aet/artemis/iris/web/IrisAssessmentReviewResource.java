@@ -17,11 +17,12 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentPointDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * REST controller for managing client requests from the iris-assessment review page.
@@ -34,66 +35,85 @@ public class IrisAssessmentReviewResource {
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ProgrammingExerciseParticipationService participationService;
+    private final IrisAssessmentService irisAssessmentService;
 
-    protected IrisAssessmentReviewResource(IrisExerciseChatSessionService irisExerciseChatSessionService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ProgrammingExerciseParticipationService participationService) {
+    private final IrisAssessmentRepository irisAssessmentRepository;
+
+    protected IrisAssessmentReviewResource(IrisExerciseChatSessionService irisExerciseChatSessionService, AuthorizationCheckService authorizationCheckService,
+            IrisAssessmentService irisAssessmentService, IrisAssessmentRepository irisAssessmentRepository) {
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.participationService = participationService;
+        this.irisAssessmentService = irisAssessmentService;
+        this.irisAssessmentRepository = irisAssessmentRepository;
     }
 
     /**
-     * GET assessment-review/{participationId}: Retrieve the assessment chat of a participation
+     * GET assessment-review/{assessmentId}/chat: Retrieve the assessment chat
      *
-     * @param participationId of the participation
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the QAExchangeDTO objects for the participation or {@code 404 (Not Found)} if no
+     * @param assessmentId of the assessment
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the QAExchangeDTO objects for the assessment or {@code 404 (Not Found)} if no
      *         assessment exists
      */
-    @GetMapping("{participationId}")
-    public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long participationId) {
-        var participation = programmingExerciseStudentParticipationRepository.findWithIrisReasoningByIdElseThrow(participationId);
-        var user = participation.getStudent().orElseThrow();
-        var exercise = validate(participation.getExercise());
+    @GetMapping("{assessmentId}/chat")
+    public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long assessmentId) {
+        var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(assessmentId);
+        var user = assessment.getStudent();
+        var exercise = validate(assessment.getExercise());
 
-        return ResponseEntity.ok(irisExerciseChatSessionService.getQAExchangeDTOList(participation, exercise, user));
+        return ResponseEntity.ok(irisExerciseChatSessionService.getQAExchangeDTOList(assessment, exercise, user));
     }
 
     /**
-     * PATCH assessment-review/{participationId}/accept: Accepts the answers of the assessment belonging to a participation (updates (old) verified score
+     * PATCH assessment-review/{assessmentId}/accept: Accepts the answers of the assessment (updates (old) verified score
      * depending on iris verdict and previous assessment)
      *
-     * @param participationId of the participation
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated participation or {@code 404 (Not Found)} if no participation exists
+     * @param assessmentId of the assessment
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated assessment or {@code 404 (Not Found)} if no assessment exists
      */
-    @PatchMapping("{participationId}/accept")
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> acceptAnswers(@PathVariable Long participationId) {
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        validate(participation.getExercise());
+    @PatchMapping("{assessmentId}/accept")
+    public ResponseEntity<IrisAssessment> acceptAnswers(@PathVariable Long assessmentId) {
+        var assessment = irisAssessmentRepository.findByIdElseThrow(assessmentId);
+        validate(assessment.getExercise());
+        var updatedAssessment = irisAssessmentService.acceptAnswers(assessment);
+        reduceAssessmentFields(updatedAssessment);
 
-        return ResponseEntity.ok(participationService.acceptAnswers(participation));
+        return ResponseEntity.ok(updatedAssessment);
     }
 
     /**
-     * PATCH assessment-review/{participationId}/reject: Rejects the answers of the assessment belonging to a participation (updates (old) verified score
+     * PATCH assessment-review/{assessmentId}/reject: Rejects the answers of the assessment (updates (old) verified score
      * depending on iris verdict and previous assessment)
      *
-     * @param participationId of the participation
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated participation or {@code 404 (Not Found)} if no participation exists
+     * @param assessmentId of the assessment
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated assessment or {@code 404 (Not Found)} if no assessment exists
      */
 
-    @PatchMapping("{participationId}/reject")
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> rejectAnswers(@PathVariable Long participationId) {
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        validate(participation.getExercise());
+    @PatchMapping("{assessmentId}/reject")
+    public ResponseEntity<IrisAssessment> rejectAnswers(@PathVariable Long assessmentId) {
+        var assessment = irisAssessmentRepository.findByIdElseThrow(assessmentId);
+        validate(assessment.getExercise());
+        var updatedAssessment = irisAssessmentService.rejectAnswers(assessment);
+        reduceAssessmentFields(updatedAssessment);
 
-        return ResponseEntity.ok(participationService.rejectAnswers(participation));
+        return ResponseEntity.ok(updatedAssessment);
+    }
+
+    /**
+     * GET assessment-review/{assessmentId}: Gets the assessment for a given id
+     * depending on iris verdict and previous assessment)
+     *
+     * @param assessmentId of the assessment
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the assessment or {@code 404 (Not Found)} if no assessment exists
+     */
+
+    @GetMapping("{assessmentId}")
+    public ResponseEntity<IrisAssessmentPointDTO> findWithPoints(@PathVariable Long assessmentId) {
+        var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(assessmentId);
+        validate(assessment.getExercise());
+
+        return ResponseEntity.ok(getIrisAssessmentPointDTO(assessment));
     }
 
     private Exercise validate(Exercise exercise) {
@@ -107,5 +127,18 @@ public class IrisAssessmentReviewResource {
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
 
         return exercise;
+    }
+
+    private void reduceAssessmentFields(IrisAssessment assessment) {
+        assessment.setReasoning(null);
+        assessment.setVerdict(null);
+        assessment.setExercise(null);
+        assessment.setStudent(null);
+    }
+
+    private IrisAssessmentPointDTO getIrisAssessmentPointDTO(IrisAssessment assessment) {
+        return new IrisAssessmentPointDTO(assessment.getId(), assessment.getStudent(), assessment.getExercise(), assessment.getVerdict(), assessment.getVerdictReview(),
+                assessment.getVerifiedScore(), assessment.getVerifiedScoreOld(), assessment.getReasoning(), assessment.getLastEvent(),
+                irisAssessmentService.getVerifiedPoints(assessment), irisAssessmentService.getVerifiedPointsOld(assessment));
     }
 }

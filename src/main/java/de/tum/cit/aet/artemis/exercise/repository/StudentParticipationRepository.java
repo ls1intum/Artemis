@@ -71,9 +71,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         // @formatter:on
     }
 
-    @EntityGraph(attributePaths = { "submissions", "submissions.results", "student" })
-    List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentByExerciseId(@Param("exerciseId") long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Set<StudentParticipation> findWithTeamInformationByExerciseId(long exerciseId);
 

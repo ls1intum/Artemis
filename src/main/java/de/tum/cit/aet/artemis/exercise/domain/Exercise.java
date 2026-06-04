@@ -326,12 +326,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * This method exists for serialization. The utility method getCourseViaExerciseGroupOrCourseMember should be used
-     * to get a course for the exercise.
+     * to get a course for the exercise (unless it is not an exam exercise in every case).
      *
      * @return the course class member
      */
     @JsonProperty
-    protected Course getCourse() {
+    public Course getCourse() {
         return course;
     }
 

@@ -160,7 +160,7 @@ export const routes: Routes = [
         canDeactivate: [canLeaveCodeEditorTutorAssessmentContainer],
     },
     {
-        path: 'programming-exercises/:exerciseId/iris-assessment/:participationId',
+        path: 'programming-exercises/:exerciseId/iris-assessment/:assessmentId',
         component: IrisAssessmentReviewComponent,
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,

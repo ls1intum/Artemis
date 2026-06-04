@@ -80,6 +80,7 @@
                 "graded": "Bewertet"
             },
             "startPrompting": "Verständnis prüfen",
+            "verifiedScore": "Bestätigte Punkte",
             "reviewIrisAssessment": {
                 "needsReview": "Review nötig",
                 "missing": "Überprüfung fehlt",

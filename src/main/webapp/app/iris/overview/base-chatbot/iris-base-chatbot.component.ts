@@ -40,6 +40,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { Subscription, interval } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -77,6 +78,8 @@ import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import dayjs from 'dayjs/esm';
+import { QuizTimerBarComponent } from 'app/iris/overview/understanding-assessment/quiz-timer-bar/quiz-timer-bar.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -141,6 +144,8 @@ import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.mode
         AsPipe,
         MarkdownDirective,
         ChatHistoryItemComponent,
+        NgClass,
+        QuizTimerBarComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
@@ -333,6 +338,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly isSuggestionAnimating = signal(false);
 
 
+    // Remaining seconds of quiz timer bar
+    readonly remainingSeconds = signal<number | undefined>(undefined);
+
+
     // Animation state (internal tracking)
     private shouldAnimate = false;
     // Ensures the onboarding tour is offered at most once per mount even though
@@ -367,6 +376,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly closeClicked = output<void>();
     readonly showClearSessionButton = input<boolean>(true);
     readonly showOnlyPromptingModeMessage = input<boolean>(false);
+    readonly currentlyPrompting = input<boolean>(false);
+    readonly promptingInitiated = input<boolean>(false);
+    readonly timerExpiresAt = input<dayjs.Dayjs | undefined>(undefined);
+    readonly timeLimit = input.required<number>();
+    readonly timerExpired = output<void>();
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
@@ -772,6 +786,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 untracked(() => this.interpolatedLabels.set([]));
                 return;
             }
+        }, 150);
+
+        this.updateRemainingSeconds();
+        this.timerSubscription = interval(1000).subscribe(() => {
+            if (this.currentlyPrompting) {
+                this.updateRemainingSeconds();
+            }
+        });
             const labels = keys.map((key) => this.translateService.instant(key));
             // Fisher-Yates shuffle for random display order
             for (let i = labels.length - 1; i > 0; i--) {
@@ -1546,6 +1568,24 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             default:
                 return undefined;
         }
+    }
+
+    getRemainingSeconds() {
+        return this.timerExpiresAt == undefined ? undefined : this.timerExpiresAt.diff(dayjs(), 'second');
+    }
+
+    private updateRemainingSeconds(): void {
+        this.remainingSeconds = this.getRemainingSeconds();
+
+        if (this.remainingSeconds !== undefined && this.remainingSeconds < 0) {
+            this.timerSubscription?.unsubscribe();
+            this.onTimerExpired();
+        }
+    }
+
+    private onTimerExpired(): void {
+        //call updateStateDialog(), and set currentlyPrompting and promptingInitiated to false
+        this.timerExpired.emit();
     }
 
     protected readonly ChatServiceMode = ChatServiceMode;

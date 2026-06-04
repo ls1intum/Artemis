@@ -67,6 +67,7 @@
             }
             },
             "onlyPromptingEnabled": "Exercise Chat is disabled. I only assess your understanding."
+            "secondsLeft": "seconds left"
         }
     }
 }

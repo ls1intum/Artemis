@@ -2,39 +2,141 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20260427-1-add-default" author="PeterNiedermoser">
+    <changeSet id="20260427-add-iris-assessment-table" author="PeterNiedermoser">
 
-        <createTable tableName="participation_iris_reasoning">
-            <column name="participation_id" type="BIGINT">
+        <!-- ===================== -->
+        <!-- TABLE: iris_assessment -->
+        <!-- ===================== -->
+        <createTable tableName="iris_assessment">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="verdict" type="VARCHAR(255)"/>
+            <column name="verified_score" type="DOUBLE"/>
+            <column name="verified_score_old" type="DOUBLE"/>
+            <column name="student_id" type="bigint"/>
+            <column name="exercise_id" type="bigint"/>
+        </createTable>
+
+        <createIndex indexName="fk_iris_assessment_student_id" tableName="iris_assessment">
+            <column name="student_id"/>
+        </createIndex>
+        <createIndex indexName="fk_iris_assessment_exercise_id" tableName="iris_assessment">
+            <column name="exercise_id"/>
+        </createIndex>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="iris_assessment" constraintName="fk_iris_assessment_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_assessment" constraintName="fk_iris_assessment_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+
+
+
+
+        <!-- ===================== -->
+        <!-- TABLE: iris_reasoning -->
+        <!-- ===================== -->
+        <createTable tableName="iris_reasoning">
+
+            <column name="iris_assessment_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
 
             <column name="reason" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
+
+            <column name="position" type="int">
+                <constraints nullable="false"/>
+            </column>
+
         </createTable>
 
+
+        <!-- ===================== -->
+        <!-- PRIMARY KEY -->
+        <!-- ===================== -->
         <addPrimaryKey
-                tableName="participation_iris_reasoning"
-                columnNames="participation_id, reason"
-                constraintName="pk_participation_iris_reasoning"/>
+                tableName="iris_reasoning"
+                columnNames="iris_assessment_id, reason"
+                constraintName="pk_iris_reasoning"/>
 
+
+        <!-- ===================== -->
+        <!-- FOREIGN KEY -->
+        <!-- ===================== -->
         <addForeignKeyConstraint
-                baseTableName="participation_iris_reasoning"
-                baseColumnNames="participation_id"
-                referencedTableName="participation"
+                baseTableName="iris_reasoning"
+                baseColumnNames="iris_assessment_id"
+                referencedTableName="iris_assessment"
                 referencedColumnNames="id"
-                constraintName="fk_participation_iris_reasoning"/>
+                constraintName="fk_iris_assessment_iris_reasoning"/>
 
-        <createIndex tableName="participation_iris_reasoning"
-                     indexName="idx_participation_iris_reasoning">
-            <column name="participation_id"/>
+
+        <!-- ===================== -->
+        <!-- UNIQUE CONSTRAINT -->
+        <!-- ===================== -->
+        <addUniqueConstraint
+                tableName="iris_reasoning"
+                columnNames="iris_assessment_id, position"
+                constraintName="uk_iris_reasoning_position"/>
+
+
+        <!-- ===================== -->
+        <!-- INDEX -->
+        <!-- ===================== -->
+        <createIndex tableName="iris_reasoning"
+                     indexName="idx_iris_assessment_iris_reasoning">
+            <column name="iris_assessment_id"/>
         </createIndex>
 
+
+        <!-- ===================== -->
+        <!-- DB-SPECIFIC ENUM COLUMNS -->
+        <!-- ===================== -->
+
+        <!-- MySQL / H2 -->
+        <sql dbms="mysql,h2">
+            ALTER TABLE iris_assessment
+                ADD verdict_review ENUM('REVIEWABLE','NEEDS_REVIEW','ACCEPTED','REJECTED'),
+                ADD last_event ENUM('BUILD_WITH_POINTS', 'USER_INITIATES_PROMPTING', 'FIRST_QUESTION', 'NEXT_QUESTION', 'PROMPTING_FINISHED');
+        </sql>
+
+        <!-- Postgres -->
+        <sql dbms="postgresql">
+            ALTER TABLE iris_assessment
+                ADD verdict_review VARCHAR(20),
+                ADD last_event VARCHAR(30);
+        </sql>
+
+
+        <!-- ===================== -->
+        <!-- ADD FKs FOR EXISTING TABLES -->
+        <!-- ===================== -->
+
+        <!-- PARTICIPATION -->
         <addColumn tableName="participation">
-            <column name="iris_verdict" type="VARCHAR(255)"/>
-            <column name="iris_verified_score" type="DOUBLE"/>
+            <column name="iris_assessment_id" type="BIGINT">
+                <constraints nullable="true" unique="true"/>
+            </column>
         </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="participation"
+                baseColumnNames="iris_assessment_id"
+                referencedTableName="iris_assessment"
+                referencedColumnNames="id"
+                constraintName="fk_participation_iris_assessment"/>
+
+        <!-- PARTICIPANT_SCORE -->
+        <addColumn tableName="participant_score">
+            <column name="iris_assessment_id" type="BIGINT">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="participant_score"
+                baseColumnNames="iris_assessment_id"
+                referencedTableName="iris_assessment"
+                referencedColumnNames="id"
+                constraintName="fk_participant_score_iris_assessment"/>
 
     </changeSet>
 </databaseChangeLog>

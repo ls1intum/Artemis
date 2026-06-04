@@ -243,6 +243,60 @@ $iris-z-index-dropdown: 1050;
     padding: 3px 5px;
 }
 
+.info-button {
+    cursor: pointer;
+    vertical-align: middle;
+    padding-left: 3px;
+    font-size: 13px;
+    color: var(--blue);
+}
+
+.chat-body {
+    height: 100%;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border: 2px solid transparent;
+    border-radius: 8px;
+
+    &.not-accepted {
+        height: 100%;
+    }
+
+    .messages {
+        padding: 0 10px 10px;
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 5px;
+        flex: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--bs-border-color) transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--bs-border-color);
+            border-radius: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        > div:first-child {
+            margin-top: 5px;
+        }
+    }
+}
+
+.chat-body.colored-border {
+    border-color: var(--warning);
+}
+
 .empty-chat-message {
     width: 100%;
     display: flex;

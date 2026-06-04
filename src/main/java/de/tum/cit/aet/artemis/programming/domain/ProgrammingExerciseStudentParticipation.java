@@ -1,18 +1,11 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import jakarta.annotation.Nullable;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -25,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
@@ -43,27 +37,9 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     private String branch;
 
     @Nullable
-    @Column(name = "iris_verdict")
-    private String irisVerdict;
-
-    @Nullable
-    @Enumerated(EnumType.STRING)
-    @Column(name = "iris_verdict_review")
-    private IrisVerdictReview irisVerdictReview;
-
-    @Nullable
-    @Column(name = "iris_verified_score")
-    private Double irisVerifiedScore;
-
-    @Nullable
-    @Column(name = "iris_verified_score_old")
-    private Double irisVerifiedScoreOld;
-
-    @ElementCollection
-    @CollectionTable(name = "participation_iris_reasoning", joinColumns = @JoinColumn(name = "participation_id"))
-    @OrderColumn(name = "position")
-    @Column(name = "reason")
-    private List<String> irisReasoning = new ArrayList<>();
+    @OneToOne
+    @JoinColumn(name = "iris_assessment_id", referencedColumnName = "id", unique = true)
+    private IrisAssessment irisAssessment;
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -110,51 +86,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
-    @Nullable
-    public List<String> getIrisReasoning() {
-        return irisReasoning;
-    }
-
-    public void setIrisReasoning(@Nullable List<String> irisReasoning) {
-        this.irisReasoning = irisReasoning;
-    }
-
-    @Nullable
-    public String getIrisVerdict() {
-        return irisVerdict;
-    }
-
-    public void setIrisVerdict(@Nullable String irisVerdict) {
-        this.irisVerdict = irisVerdict;
-    }
-
-    @Nullable
-    public IrisVerdictReview getIrisVerdictReview() {
-        return irisVerdictReview;
-    }
-
-    public void setIrisVerdictReview(@Nullable IrisVerdictReview irisVerdictReview) {
-        this.irisVerdictReview = irisVerdictReview;
-    }
-
-    @Nullable
-    public Double getIrisVerifiedScore() {
-        return irisVerifiedScore;
-    }
-
-    public void setIrisVerifiedScore(@Nullable Double irisVerifiedScore) {
-        this.irisVerifiedScore = irisVerifiedScore;
-    }
-
-    @Nullable
-    public Double getIrisVerifiedScoreOld() {
-        return irisVerifiedScoreOld;
-    }
-
-    public void setIrisVerifiedScoreOld(@Nullable Double irisVerifiedScoreOld) {
-        this.irisVerifiedScoreOld = irisVerifiedScoreOld;
-    }
-
     @Override
     @JsonIgnore
     // NOTE: this is a helper method to avoid casts in other classes that want to access the underlying exercise
@@ -185,4 +116,12 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
                 + getIndividualDueDate() + "'" + ", presentationScore=" + getPresentationScore() + "}";
     }
 
+    @Nullable
+    public IrisAssessment getIrisAssessment() {
+        return irisAssessment;
+    }
+
+    public void setIrisAssessment(@Nullable IrisAssessment assessment) {
+        this.irisAssessment = assessment;
+    }
 }

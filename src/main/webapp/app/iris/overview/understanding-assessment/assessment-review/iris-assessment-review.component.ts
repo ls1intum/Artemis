@@ -8,8 +8,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription, finalize, forkJoin, map, switchMap, take } from 'rxjs';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,6 +16,7 @@ import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { IrisAssessmentReviewService } from 'app/iris/overview/services/iris-assessment-review.service';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
+import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
 
 @Component({
     selector: 'jhi-iris-assessment-review',
@@ -29,7 +28,6 @@ export class IrisAssessmentReviewComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
-    private participationService = inject(ParticipationService);
     private irisAssessmentReviewService = inject(IrisAssessmentReviewService);
 
     protected readonly faCheck = faCheck;
@@ -39,7 +37,8 @@ export class IrisAssessmentReviewComponent implements OnInit {
 
     course: Course;
     exercise: ProgrammingExercise;
-    participation: ProgrammingExerciseStudentParticipation;
+    assessment: IrisAssessment;
+
     rows: QAExchangeDTO[];
 
     paramSub: Subscription;
@@ -53,36 +52,50 @@ export class IrisAssessmentReviewComponent implements OnInit {
                     forkJoin({
                         courseRes: this.courseService.find(params['courseId']),
                         exerciseRes: this.exerciseService.find(params['exerciseId']),
-                        participationRes: this.participationService.find(params['participationId']),
-                        rowsRes: this.irisAssessmentReviewService.getAssessmentChat(params['participationId']),
+                        assessmentRes: this.irisAssessmentReviewService.findWithPoints(params['assessmentId']),
+                        rowsRes: this.irisAssessmentReviewService.getAssessmentChat(params['assessmentId']),
                     }),
                 ),
-                map(({ courseRes, exerciseRes, participationRes, rowsRes }) => ({
+                map(({ courseRes, exerciseRes, assessmentRes, rowsRes }) => ({
                     course: courseRes.body!,
                     exercise: exerciseRes.body!,
-                    participation: participationRes.body!,
+                    assessment: assessmentRes.body!,
                     rows: rowsRes.body!,
                 })),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(({ course, exercise, participation, rows }) => {
+            .subscribe(({ course, exercise, assessment, rows }) => {
                 this.course = course;
                 this.exercise = exercise;
-                this.participation = participation;
+                this.assessment = assessment;
                 this.rows = rows;
             });
     }
 
     acceptAnswers() {
-        this.participation.irisVerdictReview = IrisVerdictReview.ACCEPTED;
-        this.irisAssessmentReviewService.acceptAnswers(this.participation.id!).subscribe();
+        if (this.assessment.verdictReview === IrisVerdictReview.REJECTED || this.assessment.verdict === IrisVerdict.SUSPICIOUS) {
+            this.swapVerifiedPoints();
+        }
+        this.assessment.verdictReview = IrisVerdictReview.ACCEPTED;
+
+        this.irisAssessmentReviewService.acceptAnswers(this.assessment.id!).subscribe();
     }
 
     rejectAnswers() {
-        this.participation.irisVerdictReview = IrisVerdictReview.REJECTED;
-        this.irisAssessmentReviewService.rejectAnswers(this.participation.id!).subscribe();
+        if (this.assessment.verdictReview === IrisVerdictReview.ACCEPTED || this.assessment.verdict === IrisVerdict.UNSUSPICIOUS) {
+            this.swapVerifiedPoints();
+        }
+        this.assessment.verdictReview = IrisVerdictReview.REJECTED;
+
+        this.irisAssessmentReviewService.rejectAnswers(this.assessment.id!).subscribe();
+    }
+
+    swapVerifiedPoints() {
+        const newVerifiedPoints = this.assessment.verifiedPointsOld;
+        this.assessment.verifiedPointsOld = this.assessment.verifiedPoints;
+        this.assessment.verifiedPoints = newVerifiedPoints;
     }
 
     translateIrisVerdict(verdict: IrisVerdict) {
@@ -100,6 +113,19 @@ export class IrisAssessmentReviewComponent implements OnInit {
                 return 'accepted';
             case IrisVerdictReview.REJECTED:
                 return 'rejected';
+        }
+    }
+
+    getPointChangeString(buttonEffect: IrisVerdictReview): string {
+        if (this.assessment.verdictReview === IrisVerdictReview.ACCEPTED || this.assessment.verdictReview === IrisVerdictReview.REJECTED) {
+            return this.assessment.verdictReview === buttonEffect ? '' : ' ' + (this.assessment.verifiedPoints ?? 0) + ' → ' + (this.assessment.verifiedPointsOld ?? 0);
+        } else if (
+            (this.assessment.verdict === IrisVerdict.SUSPICIOUS && buttonEffect === IrisVerdictReview.ACCEPTED) ||
+            (this.assessment.verdict === IrisVerdict.UNSUSPICIOUS && buttonEffect === IrisVerdictReview.REJECTED)
+        ) {
+            return ' ' + (this.assessment.verifiedPoints ?? 0) + ' → ' + (this.assessment.verifiedPointsOld ?? 0);
+        } else {
+            return ' ' + (this.assessment.verifiedPoints ?? 0);
         }
     }
 

@@ -8,6 +8,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { Subscription } from 'rxjs';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-start-prompting-button',
@@ -22,6 +23,8 @@ export class IrisStartPromptingButtonComponent implements OnInit, OnDestroy {
     @Input()
     exercise: Exercise;
     @Input()
+    participation: StudentParticipation | undefined;
+    @Input()
     smallButtons: boolean;
     @Input()
     hideLabelMobile = false;
@@ -35,7 +38,15 @@ export class IrisStartPromptingButtonComponent implements OnInit, OnDestroy {
     faBrain = faBrain;
 
     ngOnInit() {
-        this.eventSubscription = this.irisChatService.latestEvent.subscribe((event) => {
+        // Initialize with latest event from Server
+        if (this.participation !== undefined) {
+            this.irisChatService.loadLatestEvent(this.participation.id).subscribe((event) => {
+                this.isEnabled = event === EventType.BUILD_WITH_POINTS;
+            });
+        }
+
+        // From now on enabled status is set by events received by websocket messages
+        this.eventSubscription = this.irisChatService.currentLatestEvent().subscribe((event) => {
             this.isEnabled = event === EventType.BUILD_WITH_POINTS;
         });
     }

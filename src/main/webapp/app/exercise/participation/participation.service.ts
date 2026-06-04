@@ -133,12 +133,12 @@ export class ParticipationService {
             );
     }
 
-    findAllParticipationsNonZeroLatestScoreByExercise(exerciseId: number): Observable<EntityArrayResponseType> {
+    findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
         return this.http
-            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations/non-zero-latest-score`, {
+            .get<ProgrammingExerciseStudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations/non-zero-latest-score`, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+            .pipe(map((res: HttpResponse<ProgrammingExerciseStudentParticipation[]>) => this.processParticipationEntityArrayResponseType(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {

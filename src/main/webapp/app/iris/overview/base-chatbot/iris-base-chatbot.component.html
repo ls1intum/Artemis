@@ -206,7 +206,7 @@
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
-                        @if (!isChatHistoryAvailable() && messages().length >= 1 && this.showClearSessionButton) {
+                        @if (!isChatHistoryAvailable() && messages().length >= 1 &&  !this.promptingInitiated) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -231,7 +231,7 @@
                 </div>
             </div>
         }
-        <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
+        <div class="chat-body" [class.empty-state]="isEmptyState()" [class.colored-border]="currentlyPrompting()" #chatBody>
             @if (messages()?.length || liveAssistantDraft()) {
                 <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
@@ -305,7 +305,7 @@
                                                 </div>
                                             }
                                         }
-
+                                        @if (!message.inPromptingMode) {
                                         <div class="rate-message-buttons toolbox">
                                             <button
                                                 class="btn btn-sm rate-button-not-clicked"
@@ -342,6 +342,7 @@
                                                 </button>
                                             }
                                         </div>
+                                        }
                                     </div>
                                 }
                             </div>
@@ -377,6 +378,7 @@
                                 <jhi-iris-thinking-bubble [message]="thinkingMessage()" />
                             </div>
                         }
+                        <jhi-quiz-timer-bar [open]="currentlyPrompting && remainingSeconds !== undefined" [timeLimit]="timeLimit" [remainingSeconds]="remainingSeconds" />
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [runInfo]="runInfo()" />
                         }

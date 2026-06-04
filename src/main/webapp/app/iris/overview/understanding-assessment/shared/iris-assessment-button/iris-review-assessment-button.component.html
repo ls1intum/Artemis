@@ -3,11 +3,11 @@
     [buttonIcon]="faBrain"
     [ngClass]="{ 'btn-success': !needsAttention, 'btn-danger': needsAttention }"
     [jhiFeatureToggle]="FeatureToggle.PromptingMode"
-    [overwriteDisabled]="participation.irisVerdictReview === undefined"
+    [overwriteDisabled]="participation.irisAssessment?.verdictReview === undefined || participation.irisAssessment?.verdictReview === null"
     [buttonLabel]="getLabel() | artemisTranslate"
     [smallButton]="smallButton"
     [hideLabelMobile]="hideLabelMobile"
-    [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'iris-assessment', participation.id]"
+    [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'iris-assessment', irisAssessment?.id]"
     placement="right auto"
     container="body"
 ></button>

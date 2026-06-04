@@ -1,0 +1,155 @@
+package de.tum.cit.aet.artemis.iris.domain.promptuser;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.annotation.Nullable;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+
+/**
+ * An IrisAssessment represents the current state and results of verifying the understanding of a student.
+ */
+@Entity
+@Table(name = "iris_assessment")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class IrisAssessment extends DomainObject {
+
+    @ManyToOne
+    private User student;
+
+    @ManyToOne
+    private Exercise exercise;
+
+    @Nullable
+    @Column(name = "verdict")
+    private String verdict;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verdict_review")
+    private IrisVerdictReview verdictReview;
+
+    @Nullable
+    @Column(name = "verified_score")
+    private Double verifiedScore;
+
+    @Nullable
+    @Column(name = "verified_score_old")
+    private Double verifiedScoreOld;
+
+    @ElementCollection
+    @CollectionTable(name = "iris_reasoning", joinColumns = @JoinColumn(name = "iris_assessment_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "reason")
+    private List<String> reasoning = new ArrayList<>();
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "last_event")
+    private IrisPipeEvent lastEvent;
+
+    protected IrisAssessment() {
+    }
+
+    public IrisAssessment(User student, Exercise exercise) {
+        this.student = student;
+        this.exercise = exercise;
+    }
+
+    @Nullable
+    public String getVerdict() {
+        return verdict;
+    }
+
+    public void setVerdict(@Nullable String verdict) {
+        this.verdict = verdict;
+    }
+
+    @Nullable
+    public IrisVerdictReview getVerdictReview() {
+        return verdictReview;
+    }
+
+    public void setVerdictReview(@Nullable IrisVerdictReview verdictReview) {
+        this.verdictReview = verdictReview;
+    }
+
+    @Nullable
+    public Double getVerifiedScore() {
+        return verifiedScore;
+    }
+
+    public void setVerifiedScore(@Nullable Double verifiedScore) {
+        this.verifiedScore = verifiedScore;
+    }
+
+    @Nullable
+    public Double getVerifiedScoreOld() {
+        return verifiedScoreOld;
+    }
+
+    public void setVerifiedScoreOld(@Nullable Double verifiedScoreOld) {
+        this.verifiedScoreOld = verifiedScoreOld;
+    }
+
+    public List<String> getReasoning() {
+        return reasoning;
+    }
+
+    public void setReasoning(List<String> reasoning) {
+        this.reasoning = reasoning;
+    }
+
+    @Nullable
+    public IrisPipeEvent getLastEvent() {
+        return lastEvent;
+    }
+
+    public void setLastEvent(@Nullable IrisPipeEvent lastEvent) {
+        this.lastEvent = lastEvent;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public User getStudent() {
+        return student;
+    }
+
+    public void setStudent(User student) {
+        this.student = student;
+    }
+
+    @Override
+    public String toString() {
+        Long userId = getStudent() != null ? getStudent().getId() : null;
+        Long exerciseId = getExercise() != null ? getExercise().getId() : null;
+
+        return "IrisAssessment{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", verdict=" + verdict + ", verdictReview=" + verdictReview
+                + ", verifiedScore=" + verifiedScore + ", verifiedScoreOld=" + verifiedScoreOld + ", lastEvent=" + lastEvent + '}';
+    }
+}

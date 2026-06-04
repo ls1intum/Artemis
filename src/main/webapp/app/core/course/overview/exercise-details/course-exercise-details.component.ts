@@ -34,7 +34,7 @@ import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.servi
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -59,6 +59,8 @@ import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStartPromptingButtonComponent } from 'app/iris/overview/understanding-assessment/start-prompting-button/start-prompting-button.component';
+import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -97,6 +99,7 @@ interface InstructorActionItem {
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
         IrisStartPromptingButtonComponent,
+        InformationBoxComponent,
     ],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
@@ -112,7 +115,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
-    private readonly irisChatService = inject(IrisChatService);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -157,6 +159,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
+    irisVerifiedScore: InformationBox = {
+        title: 'artemisApp.exerciseActions.verifiedScore',
+        content: {
+            type: 'string',
+            value: '',
+        },
+        isContentComponent: false,
+    };
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -201,6 +211,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.loadComplaintAndLatestRatedResult();
+            this.updateIrisVerifiedScoreDisplay();
         });
     }
 
@@ -294,6 +305,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             this.exercise.studentParticipations = this.studentParticipations;
             this.updateStudentParticipations();
+            this.updateIrisVerifiedScoreDisplay();
             this.sortResults();
             // Add exercise to studentParticipation, as the result component is dependent on its existence.
             this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
@@ -356,6 +368,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
         this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
         this.numberOfPracticeResults = this.practiceStudentParticipation?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
+    }
+
+    private updateIrisVerifiedScoreDisplay() {
+        const verifiedPoints = (this.gradedStudentParticipation as ProgrammingExerciseStudentParticipation).irisAssessment?.verifiedScore ?? 0;
+        if (this.exercise.type === ExerciseType.PROGRAMMING && !this.exercise.exerciseGroup && this.irisSettings?.irisPromptUserSettings?.enabled) {
+            this.irisVerifiedScore.content.value = `${verifiedPoints} / ${this.exercise.maxPoints}`;
+        }
     }
 
     /**
@@ -421,13 +440,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
         }
         return undefined;
-    }
-
-    /**
-     * Returns the latest iris event transmitted by websocket.
-     */
-    get latestEvent(): EventType | undefined {
-        return this.irisChatService.latestEvent.getValue();
     }
 
     private onError(error: string) {

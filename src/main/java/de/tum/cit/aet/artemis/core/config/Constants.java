@@ -201,6 +201,8 @@ public final class Constants {
     // This value determines the initial value of the upper question limit in Iris sub-settings for prompting mode.
     public static final int IRIS_PROMPTING_MODE_MAX_QUESTION_INIT = 5;
 
+    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS = 15;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";

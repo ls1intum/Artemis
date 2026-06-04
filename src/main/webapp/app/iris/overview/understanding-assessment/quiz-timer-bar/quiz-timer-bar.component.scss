@@ -1,0 +1,54 @@
+.quiz-timer-bar {
+    transition: all 0.3s;
+    opacity: 0;
+    overflow: hidden;
+    background: var(--bs-body-bg);
+    border-top: 0 solid var(--border-color);
+
+    .display {
+        white-space: nowrap;
+        overflow: hidden;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        max-height: 1.5lh;
+        min-height: 1.5lh;
+        padding: 3px 5px;
+
+        .message {
+            font-size: 80%;
+        }
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.15);
+        overflow: hidden;
+        flex: 1;
+        min-height: 3px;
+        max-height: 3px;
+        transform-origin: left center;
+        transition: all 0.5s linear;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--success);
+        transition: width 1s linear;
+
+        &.warning {
+            background-color: var(--warning);
+        }
+
+        &.danger {
+            background-color: var(--danger);
+        }
+    }
+
+    &.open {
+        border-top-width: 1px;
+        opacity: 1;
+    }
+}

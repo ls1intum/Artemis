@@ -442,7 +442,8 @@
                 "review": {
                     "reviewedAs": "Conversation was",
                     "accepted": "accepted",
-                    "rejected": "rejected"
+                    "rejected": "rejected",
+                    "pointsVerified": "points verified"
                 }
             }
         },

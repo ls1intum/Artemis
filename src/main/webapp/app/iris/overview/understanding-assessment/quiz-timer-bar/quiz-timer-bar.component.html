@@ -1,0 +1,15 @@
+<div class="quiz-timer-bar" [class.open]="open">
+    <div class="display">
+        <fa-icon [icon]="faStopwatch" />
+        <div>{{ displayedRemainingSeconds }} {{ 'artemisApp.exerciseChatbot.secondsLeft' | artemisTranslate }}</div>
+    </div>
+    <div class="progress-bar">
+        <div
+            class="progress-fill"
+            [style.width.%]="progress"
+            [class.success]="progress > 50"
+            [class.warning]="progress <= 50 && progress > 20"
+            [class.danger]="progress <= 20"
+        ></div>
+    </div>
+</div>

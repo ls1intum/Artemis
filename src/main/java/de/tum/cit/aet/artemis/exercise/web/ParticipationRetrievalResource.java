@@ -42,6 +42,11 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.QuizParticipationService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
  * REST controller for retrieving information about participations.
@@ -68,9 +73,15 @@ public class ParticipationRetrievalResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public ParticipationRetrievalResource(ParticipationService participationService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, QuizParticipationService quizParticipationService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
@@ -78,6 +89,48 @@ public class ParticipationRetrievalResource {
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionRepository = submissionRepository;
+        this.quizParticipationService = quizParticipationService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
+     *
+     * @param exerciseId        The participationId of the exercise
+     * @param withLatestResults Whether the manual and latest {@link Result results} for the participations should also be fetched
+     * @return A list of all participations for the exercise
+     */
+    @GetMapping("exercises/{exerciseId}/participations")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withLatestResults) {
+        log.debug("REST request to get all Participations for Exercise {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        Set<StudentParticipation> participations;
+        if (withLatestResults) {
+            participations = participationService.findByExerciseIdWithLatestSubmissionResultAndAssessmentNote(exercise.getId(), exercise.isTeamMode());
+        }
+        else {
+            if (exercise.isTeamMode()) {
+                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            }
+
+            Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+            participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+        }
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
+            // remove unnecessary data to reduce response size
+            participation.setExercise(null);
+        }).collect(Collectors.toSet());
+
+        return ResponseEntity.ok(participations);
     }
 
     /**
@@ -219,18 +272,19 @@ public class ParticipationRetrievalResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participations/non-zero-highest-score : get all the participations for an exercise if latest score > 0 was achieved
+     * GET /exercises/:exerciseId/participations/non-zero-latest-score : get all the participations for a programming exercise if latest score > 0 was achieved
      *
-     * @param exerciseId The participationId of the exercise
-     * @return A list of all participations for the exercise
+     * @param exerciseId The exerciseId of the programming exercise
+     * @return A list of all programming student participations for the exercise
      */
     @GetMapping("exercises/{exerciseId}/participations/non-zero-latest-score")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<ProgrammingExerciseStudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations with non-zero highest score for Exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        Set<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentByExerciseId(exercise.getId()).stream()
+        Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerStudentAndEagerAssessmentByExerciseId(exercise.getId()).stream()
                 .filter(p -> p.findLatestResult() != null && p.findLatestResult().getScore() > 0).collect(Collectors.toSet());
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);

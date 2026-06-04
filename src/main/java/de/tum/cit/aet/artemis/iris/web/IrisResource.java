@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Conditional(IrisEnabled.class)
 @Lazy
@@ -49,14 +50,20 @@ public class IrisResource {
 
     private final PyrisWebhookService pyrisWebhookService;
 
+    protected final IrisSettingsService irisSettingsService;
+
     public IrisResource(UserRepository userRepository, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PyrisWebhookService pyrisWebhookService) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PyrisWebhookService pyrisWebhookService,
+            IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
+
+        this.irisSettingsService = irisSettingsService;
+
     }
 
     /**
@@ -102,5 +109,4 @@ public class IrisResource {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
-
 }

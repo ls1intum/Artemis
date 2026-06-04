@@ -10,6 +10,7 @@ import { IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RouterLink } from '@angular/router';
+import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
@@ -29,17 +30,22 @@ export class IrisReviewAssessmentButtonComponent implements OnInit {
     hideLabelMobile = false;
 
     needsAttention = false;
+    irisAssessment: IrisAssessment | undefined;
 
     readonly faBrain = faBrain;
 
     ngOnInit() {
-        this.needsAttention = this.participation.irisVerdictReview === IrisVerdictReview.NEEDS_REVIEW || this.participation.irisVerdictReview === undefined;
+        this.irisAssessment = this.participation.irisAssessment;
+        this.needsAttention =
+            this.irisAssessment?.verdictReview === IrisVerdictReview.NEEDS_REVIEW ||
+            this.irisAssessment?.verdictReview === undefined ||
+            this.irisAssessment?.verdictReview === null;
     }
 
     getLabel(): string {
         const label = 'artemisApp.exerciseActions.reviewIrisAssessment.';
 
-        switch (this.participation.irisVerdictReview) {
+        switch (this.irisAssessment?.verdictReview) {
             case IrisVerdictReview.REVIEWABLE:
                 return label + 'reviewable';
             case IrisVerdictReview.NEEDS_REVIEW:

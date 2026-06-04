@@ -15,10 +15,10 @@
 
 logging:
     level:
-        ROOT: DEBUG
-        de.tum.cit.aet.artemis: DEBUG
-        tech.jhipster: DEBUG
-        liquibase: ERROR
+        ROOT: INFO
+        de.tum.cit.aet.artemis: INFO
+        tech.jhipster: INFO
+        liquibase: INFO
 
 spring:
     devtools:
