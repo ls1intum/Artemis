@@ -28,7 +28,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
@@ -67,7 +66,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         RouterLink,
         ResultHistoryComponent,
         ResizeableContainerComponent,
-        TeamParticipateInfoBoxComponent,
         FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,

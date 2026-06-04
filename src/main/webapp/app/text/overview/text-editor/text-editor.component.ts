@@ -6,7 +6,6 @@ import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import dayjs from 'dayjs/esm';
@@ -58,7 +57,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         RouterLink,
         ResultHistoryComponent,
         ResizeableContainerComponent,
-        TeamParticipateInfoBoxComponent,
         TranslateDirective,
         FormsModule,
         TeamSubmissionSyncComponent,
