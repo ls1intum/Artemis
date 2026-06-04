@@ -138,11 +138,17 @@ public class HyperionCompetencyContextService {
 
         // Semantic search via Pyris: retrieves pre-indexed lecture content most relevant to the
         // selected competency titles, scoped to this course via the courseIds filter.
+        // Pyris may be unavailable; skip the lecture section rather than failing the whole request.
         if (irisLectureSearchApi.isPresent()) {
             String query = selected.stream().map(CourseCompetency::getTitle).filter(Objects::nonNull).collect(Collectors.joining(", "));
             if (!query.isBlank()) {
-                irisLectureSearchApi.get().searchLectures(query, LECTURE_SEARCH_LIMIT, List.of(courseId)).stream()
-                        .map(r -> formatSnippet(r.lectureName(), r.lectureUnitName(), r.snippet())).forEach(snippets::add);
+                try {
+                    irisLectureSearchApi.get().searchLectures(query, LECTURE_SEARCH_LIMIT, List.of(courseId)).stream()
+                            .map(r -> formatSnippet(r.lectureName(), r.lectureUnitName(), r.snippet())).forEach(snippets::add);
+                }
+                catch (Exception e) {
+                    log.warn("Pyris lecture search unavailable, skipping lecture context for course [{}]: {}", courseId, e.getMessage());
+                }
             }
         }
 
