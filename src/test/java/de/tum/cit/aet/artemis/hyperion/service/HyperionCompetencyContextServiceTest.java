@@ -100,7 +100,8 @@ class HyperionCompetencyContextServiceTest {
     void computeContext_throwsBadRequestWhenRequestedCompetencyNotInCourse() {
         when(courseCompetencyApi.findAllForCourse(42L)).thenReturn(Set.of());
 
-        assertThatThrownBy(() -> service.computeContext(42L, List.of(999L))).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("not found in course");
+        assertThatThrownBy(() -> service.computeContext(42L, List.of(999L))).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("not found in course")
+                .extracting(ex -> ((BadRequestAlertException) ex).getErrorKey()).isEqualTo("competencyNotFound");
     }
 
     @Test
