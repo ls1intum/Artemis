@@ -54,13 +54,13 @@ public class IrisGlobalSearchResource {
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
      *
-     * @param requestDTO the search request containing query and limit
+     * @param requestDTO the search request containing query, limit, and optional courseIds filter
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO) {
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit()));
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds()));
     }
 
     /**

@@ -1,28 +1,19 @@
-import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
-import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseDetailStatisticsComponent', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExerciseDetailStatisticsComponent>;
     let component: ExerciseDetailStatisticsComponent;
 
     const exercise = {
         id: 1,
+        type: ExerciseType.TEXT,
         course: {
             id: 2,
         },
@@ -42,33 +33,26 @@ describe('ExerciseDetailStatisticsComponent', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DoughnutChartComponent), ExerciseDetailStatisticsComponent],
-            providers: [
-                { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: TranslateService, useClass: MockTranslateService },
-                LocalStorageService,
-                SessionStorageService,
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseDetailStatisticsComponent],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseDetailStatisticsComponent);
-                component = fixture.componentInstance;
-            });
-    });
+            .overrideTemplate(ExerciseDetailStatisticsComponent, '')
+            .compileComponents();
 
-    beforeEach(() => {
-        component.exercise = exercise;
-        component.doughnutStats = exerciseStatistics;
+        fixture = TestBed.createComponent(ExerciseDetailStatisticsComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('doughnutStats', exerciseStatistics);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
     });
 
     it('should initialize chart data', () => {
         fixture.detectChanges();
-        expect(component.doughnutStats.absoluteAveragePoints).toBe(5);
-        expect(component.doughnutStats.participationsInPercent).toBe(100);
-        expect(component.doughnutStats.resolvedPostsInPercent).toBe(50);
+
+        expect(component.doughnutStats()?.absoluteAveragePoints).toBe(5);
+        expect(component.doughnutStats()?.participationsInPercent).toBe(100);
+        expect(component.doughnutStats()?.resolvedPostsInPercent).toBe(50);
+        expect(component.course.id).toBe(2);
     });
 });

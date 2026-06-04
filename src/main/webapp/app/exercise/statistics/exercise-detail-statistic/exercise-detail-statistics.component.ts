@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,9 +11,9 @@ import { DoughnutChartComponent } from '../doughnut-chart/doughnut-chart.compone
     imports: [DoughnutChartComponent],
 })
 export class ExerciseDetailStatisticsComponent implements OnInit {
-    @Input() exercise: Exercise;
-    @Input() doughnutStats: ExerciseManagementStatisticsDto;
-    @Input() exerciseType: ExerciseType;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly doughnutStats = input<ExerciseManagementStatisticsDto>(undefined!);
+    readonly exerciseType = input<ExerciseType>(undefined!);
 
     course: Course;
     isCommunicationEnabled = isCommunicationEnabled;
@@ -21,6 +21,6 @@ export class ExerciseDetailStatisticsComponent implements OnInit {
     readonly DoughnutChartType = DoughnutChartType;
 
     ngOnInit() {
-        this.course = getCourseFromExercise(this.exercise)!;
+        this.course = getCourseFromExercise(this.exercise())!;
     }
 }
