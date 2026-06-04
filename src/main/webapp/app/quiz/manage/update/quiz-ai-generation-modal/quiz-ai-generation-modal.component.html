@@ -162,9 +162,6 @@
                     <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
                 }
             </button>
-            <button pButton type="button" severity="secondary" outlined class="w-100 mt-2" [disabled]="!canGenerate() || isLoadingPromptPreview()" (click)="previewPrompt()">
-                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.previewPrompt"></span>
-            </button>
         </section>
 
         <section class="quiz-ai-generation-preview">
@@ -175,9 +172,7 @@
                 }
             </div>
 
-            @if (promptPreview()) {
-                <pre class="prompt-preview">{{ promptPreview() }}</pre>
-            } @else if (!hasGeneratedQuestions()) {
+            @if (!hasGeneratedQuestions()) {
                 <div class="preview-empty">
                     <h6 jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
                     <p class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>

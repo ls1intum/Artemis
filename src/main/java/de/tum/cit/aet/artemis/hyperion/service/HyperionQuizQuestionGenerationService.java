@@ -118,27 +118,6 @@ public class HyperionQuizQuestionGenerationService {
         return new QuizQuestionGenerationResponseDTO(questions);
     }
 
-    /**
-     * Builds and returns the user prompt for the given request without calling the LLM.
-     * Used to preview the prompt that would be sent to the AI.
-     * TODO: remove
-     *
-     * @param course  the course context
-     * @param request the quiz generation configuration
-     * @return the rendered user prompt string
-     */
-    public String previewPrompt(Course course, QuizQuestionGenerationRequestDTO request) {
-        String optionalPrompt = sanitizeInput(request.optionalPrompt());
-        String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationType::getValue).collect(Collectors.joining(", "));
-        var outputConverter = new BeanOutputConverter<>(GeneratedQuestionsOutput.class);
-
-        boolean isCompetencyMode = request.competencyIds() != null && !request.competencyIds().isEmpty();
-        if (isCompetencyMode) {
-            return buildCompetencyModePrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
-        }
-        return buildFreeTopicPrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
-    }
-
     private String buildFreeTopicPrompt(Course course, QuizQuestionGenerationRequestDTO request, String optionalPrompt, String requestedQuestionTypes,
             BeanOutputConverter<GeneratedQuestionsOutput> outputConverter) {
         String topic = sanitizeInput(request.topic());
