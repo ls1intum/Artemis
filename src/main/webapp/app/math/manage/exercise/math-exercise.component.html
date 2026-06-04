@@ -43,7 +43,7 @@
                         </td>
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="mathExercise" /></td>
                         <td class="text-end" style="white-space: nowrap">
-                            <div class="d-flex gap-1 justify-content-end flex-wrap">
+                            <div class="d-flex gap-1 justify-content-end flex-nowrap">
                                 @if (mathExercise.isAtLeastTutor) {
                                     <a pButton size="small" severity="info" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'scores']">
                                         <fa-icon [icon]="faTable" />
@@ -59,12 +59,6 @@
                                     >
                                         <fa-icon [icon]="faListAlt" />
                                         <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                                    </a>
-                                }
-                                @if (mathExercise.isAtLeastTutor) {
-                                    <a pButton size="small" severity="success" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'submissions']">
-                                        <fa-icon [icon]="faBook" />
-                                        <span class="d-none d-md-inline ms-1" jhiTranslate="todoSubmissions">Submissions</span>
                                     </a>
                                 }
                                 <a pButton size="small" severity="warn" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'edit']">

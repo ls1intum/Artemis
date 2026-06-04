@@ -73,6 +73,10 @@
                     "name": "Dateiupload-Aufgaben",
                     "description": "Aktiviert Dateiupload-Aufgaben zum Einreichen von Dokumenten, Bildern und anderen Dateien."
                 },
+                "math": {
+                    "name": "Mathematik-Aufgaben",
+                    "description": "Aktiviert Mathematik-Aufgaben, bei denen Studierende schrittweise Herleitungen erstellen, die automatisch überprüft werden."
+                },
                 "lecture": {
                     "name": "Vorlesungen",
                     "description": "Aktiviert die Vorlesungsverwaltung mit Einheiten, Folien, Videos und Anhängen."

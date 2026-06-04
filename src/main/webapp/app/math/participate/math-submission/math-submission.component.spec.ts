@@ -7,7 +7,9 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ConfirmationService } from 'primeng/api';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MathSubmissionComponent } from 'app/math/participate/math-submission/math-submission.component';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
@@ -20,6 +22,7 @@ describe('MathSubmissionComponent', () => {
     let component: MathSubmissionComponent;
     let fixture: ComponentFixture<MathSubmissionComponent>;
     let mathSubmissionService: MathSubmissionService;
+    let alertService: AlertService;
 
     const mockExercise = (): MathExercise => {
         const ex = new MathExercise(undefined);
@@ -47,6 +50,8 @@ describe('MathSubmissionComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
                 MockProvider(MathSubmissionService),
+                MockProvider(ConfirmationService),
+                MockProvider(ArtemisTranslatePipe, { transform: (key: string) => key }),
                 MockProvider(TranslateService, {
                     instant: (key: string) => key,
                     get: (key: string) => of(key) as any,
@@ -66,7 +71,13 @@ describe('MathSubmissionComponent', () => {
         fixture = TestBed.createComponent(MathSubmissionComponent);
         component = fixture.componentInstance;
         mathSubmissionService = TestBed.inject(MathSubmissionService);
+        alertService = TestBed.inject(AlertService);
     });
+
+    const initWith = (submission: MathSubmission) => {
+        vi.spyOn(mathSubmissionService, 'getDataForMathEditor').mockReturnValue(of(new HttpResponse({ body: submission })));
+        component.ngOnInit();
+    };
 
     it('should load the existing submission and exercise on init', () => {
         const exercise = mockExercise();
@@ -105,6 +116,47 @@ describe('MathSubmissionComponent', () => {
 
         component.submit();
 
+        expect(updateSpy).toHaveBeenCalled();
+        expect(updateSpy.mock.calls[0][0].submitted).toBe(true);
+    });
+
+    it('should show a success toast after saving', () => {
+        const submission = mockSubmission(mockParticipation(mockExercise()));
+        initWith(submission);
+        vi.spyOn(mathSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const successSpy = vi.spyOn(alertService, 'success');
+
+        component.save();
+
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.mathExercise.saveSuccessful');
+    });
+
+    it('should show a success toast after submitting', () => {
+        const submission = mockSubmission(mockParticipation(mockExercise()));
+        initWith(submission);
+        vi.spyOn(mathSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { ...submission, submitted: true } as any })));
+        const successSpy = vi.spyOn(alertService, 'success');
+
+        component.submit();
+
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.mathExercise.submitSuccessful');
+    });
+
+    it('should ask for confirmation before re-submitting an already submitted solution', () => {
+        const submission = mockSubmission(mockParticipation(mockExercise()));
+        submission.submitted = true;
+        initWith(submission);
+        const updateSpy = vi.spyOn(mathSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const confirmSpy = vi.spyOn((component as any).confirmationService, 'confirm');
+
+        component.submit();
+
+        // The dialog is opened and nothing is persisted until the student confirms.
+        expect(confirmSpy).toHaveBeenCalled();
+        expect(updateSpy).not.toHaveBeenCalled();
+
+        // Confirming runs the persist callback.
+        confirmSpy.mock.calls[0][0].accept!();
         expect(updateSpy).toHaveBeenCalled();
         expect(updateSpy.mock.calls[0][0].submitted).toBe(true);
     });

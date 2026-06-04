@@ -52,6 +52,10 @@
             "saveFailed": "Math could not be saved",
             "submitSuccessful": "Math submitted successfully",
             "submitFailed": "Math could not be submitted",
+            "resubmitConfirm": {
+                "title": "Submit again?",
+                "message": "You have already submitted this solution. Submitting again will overwrite your previous submission. Continue?"
+            },
             "error": "An error occurred while loading the math exercise",
             "score": "Score",
             "assessedSubmission": "Your math has been assessed.",

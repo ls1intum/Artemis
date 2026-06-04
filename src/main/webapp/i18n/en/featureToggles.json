@@ -73,6 +73,10 @@
                     "name": "File Upload Exercises",
                     "description": "Enables file upload exercises for submitting documents, images, and other files."
                 },
+                "math": {
+                    "name": "Math Exercises",
+                    "description": "Enables math exercises where students build step-by-step derivations that are checked automatically."
+                },
                 "lecture": {
                     "name": "Lectures",
                     "description": "Enables lecture management with units, slides, videos, and attachments."

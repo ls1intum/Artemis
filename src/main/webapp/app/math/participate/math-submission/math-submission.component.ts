@@ -11,6 +11,9 @@ import { MathSubmissionService } from 'app/math/participate/service/math-submiss
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TextareaModule } from 'primeng/textarea';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 /**
  * Minimal scaffold editor for math exercises: it loads the participation's latest submission and lets the
@@ -20,12 +23,15 @@ import { TextareaModule } from 'primeng/textarea';
     selector: 'jhi-math-submission',
     templateUrl: './math-submission.component.html',
     styleUrls: ['./math-submission.component.scss'],
-    imports: [FormsModule, TranslateDirective, ButtonModule, CardModule, TextareaModule],
+    imports: [FormsModule, TranslateDirective, ButtonModule, CardModule, TextareaModule, ConfirmDialog],
+    providers: [ConfirmationService],
 })
 export class MathSubmissionComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private mathSubmissionService = inject(MathSubmissionService);
     private alertService = inject(AlertService);
+    private confirmationService = inject(ConfirmationService);
+    private translatePipe = inject(ArtemisTranslatePipe);
 
     participationId = input<number>();
 
@@ -55,6 +61,18 @@ export class MathSubmissionComponent implements OnInit {
     }
 
     submit() {
+        // Guard against silently overwriting a solution that was already submitted: ask for confirmation first.
+        if (this.submission()?.submitted) {
+            this.confirmationService.confirm({
+                header: this.translatePipe.transform('artemisApp.mathExercise.resubmitConfirm.title'),
+                message: this.translatePipe.transform('artemisApp.mathExercise.resubmitConfirm.message'),
+                acceptLabel: this.translatePipe.transform('global.form.confirm'),
+                rejectLabel: this.translatePipe.transform('global.form.cancel'),
+                rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+                accept: () => this.persist(true),
+            });
+            return;
+        }
         this.persist(true);
     }
 
@@ -74,6 +92,7 @@ export class MathSubmissionComponent implements OnInit {
                     this.content.set(response.body.content ?? '');
                 }
                 this.isSaving.set(false);
+                this.alertService.success(submitted ? 'artemisApp.mathExercise.submitSuccessful' : 'artemisApp.mathExercise.saveSuccessful');
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);

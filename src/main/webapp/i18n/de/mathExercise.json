@@ -52,6 +52,10 @@
             "saveFailed": "Mathematik konnte nicht gespeichert werden",
             "submitSuccessful": "Mathematik erfolgreich abgegeben",
             "submitFailed": "Mathematik konnte nicht abgegeben werden",
+            "resubmitConfirm": {
+                "title": "Erneut abgeben?",
+                "message": "Du hast diese Lösung bereits abgegeben. Eine erneute Abgabe überschreibt deine vorherige Abgabe. Fortfahren?"
+            },
             "error": "Ein Fehler ist beim Laden der Mathematik-Aufgabe aufgetreten",
             "score": "Punkte",
             "assessedSubmission": "Ihr Mathematik wurde bewertet.",
