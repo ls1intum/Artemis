@@ -146,7 +146,7 @@ class HyperionCodeGenerationTaskServiceTest {
         service.runJobAsync("job-5", user, exercise, 1L, RepositoryType.TEMPLATE, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), publisherCaptor.capture());
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), isNull(), publisherCaptor.capture());
 
         reset(websocket);
         publisherCaptor.getValue().fileDeleted("src/main/java/Obsolete.java", RepositoryType.TEMPLATE, 3);
