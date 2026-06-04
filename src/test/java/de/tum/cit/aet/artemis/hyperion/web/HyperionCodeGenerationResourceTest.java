@@ -121,7 +121,7 @@ class HyperionCodeGenerationResourceTest {
 
         assertThatThrownBy(() -> resource.generateCode(1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Code generation is only supported for Java exercises");
-        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
     }
 
     @Test

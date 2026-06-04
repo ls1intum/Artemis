@@ -13,7 +13,7 @@ Your task is to complete the template code based on the template plan and existi
 **Current Repository Structure:**
 {{repositoryStructure}}
 
-If an existing source file under `/src/` is obsolete after this regenerated template, include its path in `deletedFiles`. Do not include paths outside `/src/`, build files, configuration files, documentation, or hidden files.
+If an existing source file under `/src/` is obsolete after this regenerated template, include its path in `deletedFiles`. Do not include paths outside `/src/`, build files, configuration files, documentation, or hidden files, except `.gitkeep` placeholder files may be included when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`.
 
 **Build Environment Context:**
 {{buildEnvironmentContext}}
@@ -45,7 +45,7 @@ Treat the issues above as hard constraints. Be critical and explicit:
 4. Verify the fix aligns with the problem statement, the plan, and existing repository patterns.
 5. If multiple fixes are possible, pick the most conservative change and justify it.
 
-**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+**Important:** Only modify files in the `/src/` directory. Do not change build files, configuration files, or any files outside the source directory. Do not place JUnit files in production source paths such as `src/*.java` or `src/main/java/...`. Only create or edit test-source files such as `src/test/java/...` when the exercise explicitly asks students to implement tests and the repository structure supports that path.
 First, think step-by-step for each file and method.
 1.  **Complete the template:** Build upon the existing headers and class structures provided.
 2.  **Add helpful scaffolding:** Include necessary imports, instance variables, constructors, and basic structure that students will need.
@@ -56,4 +56,4 @@ First, think step-by-step for each file and method.
 
 After your analysis, provide the template code as a JSON object. The JSON object must contain:
 - "files": an array of objects, where each object has a "path" and "content" key with the complete template code.
-- "deletedFiles": an array of obsolete source file paths under `/src/` that should be removed. Use an empty array if no source files should be removed.
+- "deletedFiles": an array of obsolete source file paths under `/src/` and explicitly obsolete `.gitkeep` placeholder paths that should be removed. Do not include source files only because a `.gitkeep` placeholder is being removed. Use an empty array if no files should be removed.

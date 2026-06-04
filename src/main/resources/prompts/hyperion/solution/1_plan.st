@@ -10,7 +10,7 @@ Your task is to create a detailed implementation plan.
 **Current Repository Structure:**
 {{repositoryStructure}}
 
-When planning the regenerated solution, identify existing files under `/src/` that become obsolete because they are no longer part of the needed solution structure. Only source files under `/src/` may be removed.
+When planning the regenerated solution, identify existing files under `/src/` that become obsolete because they are no longer part of the needed solution structure. Only source files under `/src/` may be removed, except `.gitkeep` placeholder files may also be removed when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`; delete source files only when they are independently obsolete or explicitly requested.
 
 **Build Environment Context:**
 {{buildEnvironmentContext}}
@@ -43,7 +43,7 @@ Note: The above represents build logs and test feedback from a previous attempt.
 First, think step-by-step to analyze the problem.
 1.  **Deconstruct the requirements:** Identify the core functionalities, constraints, and goals mentioned in the problem statement.
 2.  **Identify necessary components:** Based on the requirements, list the classes, methods, and data structures that will be needed. Think about how they will interact.
-3.  **Identify obsolete source files:** List existing `/src/` files that should be deleted because they are not needed after regeneration.
+3.  **Identify obsolete files:** List existing `/src/` files that should be deleted because they are not needed after regeneration. Also list `.gitkeep` placeholder files only when they are explicitly obsolete or selected feedback requests their removal. Do not delete sibling source files merely because a `.gitkeep` placeholder is removed.
 4.  **Outline the logic:** For each method, describe the high-level logic and algorithms to be used.
 
 After your analysis, provide your final implementation plan as a JSON object. The JSON object must contain a single key "solutionPlan" with the detailed plan as a string.

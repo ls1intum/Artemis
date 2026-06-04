@@ -27,9 +27,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -609,6 +609,38 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void publishGeneratedFiles_withJavaTestFileInProductionSourceForSolution_ignoresFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/HokkaidoMarioTest.java", "import org.junit.jupiter.api.Test;\nclass HokkaidoMarioTest {}");
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isFalse();
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(publisher, never()).newFile(anyString(), any(), anyInt());
+        verify(publisher, never()).fileUpdated(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void publishGeneratedFiles_withJavaTestFileInTestSourceForSolution_createsFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/test/java/HokkaidoMarioTest.java", "import org.junit.jupiter.api.Test;\nclass HokkaidoMarioTest {}");
+
+        when(gitService.getFileByName(mockRepository, "src/test/java/HokkaidoMarioTest.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(mockRepository), eq("src/test/java/HokkaidoMarioTest.java"), any());
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isTrue();
+        verify(repositoryService).createFile(eq(mockRepository), eq("src/test/java/HokkaidoMarioTest.java"), any());
+        verify(publisher).newFile("src/test/java/HokkaidoMarioTest.java", RepositoryType.SOLUTION, 1);
+    }
+
+    @Test
     void deleteObsoleteFiles_withSafeSourceFile_deletesExistingFile() throws Exception {
         Repository mockRepository = mock(Repository.class);
         File obsoleteFile = mock(File.class);
@@ -625,12 +657,29 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void deleteObsoleteFiles_withGitkeepPlaceholder_deletesExistingFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+
+        when(gitService.getFileByName(mockRepository, "test/.gitkeep")).thenReturn(Optional.of(obsoleteFile));
+
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/.gitkeep"), exercise, RepositoryType.TESTS,
+                publisher, 2);
+
+        assertThat(deletedAnyFile).isTrue();
+        verify(repositoryService).deleteFile(mockRepository, "test/.gitkeep");
+        verify(publisher).fileDeleted("test/.gitkeep", RepositoryType.TESTS, 2);
+    }
+
+    @Test
     void deleteObsoleteFiles_withUnsafePaths_ignoresDeletionRequests() throws Exception {
         Repository mockRepository = mock(Repository.class);
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository,
-                List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", ""), exercise, RepositoryType.TEMPLATE, publisher, 1);
+                List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", "../.gitkeep", "src/../.gitkeep", ""), exercise,
+                RepositoryType.TEMPLATE, publisher, 1);
 
         assertThat(deletedAnyFile).isFalse();
         verify(gitService, never()).getFileByName(eq(mockRepository), anyString());

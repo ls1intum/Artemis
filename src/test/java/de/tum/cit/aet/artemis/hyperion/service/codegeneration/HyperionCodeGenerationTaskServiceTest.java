@@ -143,7 +143,7 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_whenPublisherSendsFileDeletion_forwardsIterationInPayload() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-5", user, exercise, 1L, RepositoryType.TEMPLATE, false, cleanup);
+        service.runJobAsync("job-5", user, exercise, 1L, RepositoryType.TEMPLATE, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
         verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), publisherCaptor.capture());

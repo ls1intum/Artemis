@@ -45,7 +45,7 @@ import { HyperionCompletionStatus, HyperionEvent, HyperionWebsocketService } fro
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';

@@ -13,7 +13,7 @@ Your task is to generate the boilerplate code for each file based on the solutio
 **Current Repository Structure:**
 {{repositoryStructure}}
 
-If the regenerated solution no longer needs an existing source file, keep it out of the generated files and preserve it as obsolete for the final response. Only files under `/src/` may be deleted.
+If the regenerated solution no longer needs an existing source file, keep it out of the generated files and preserve it as obsolete for the final response. Only files under `/src/` may be deleted. `.gitkeep` placeholder files may be preserved as obsolete only when they were already listed in the file structure response. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`.
 
 **Build Environment Context:**
 {{buildEnvironmentContext}}

@@ -13,7 +13,7 @@ Your task is to create a detailed plan for generating template code that provide
 **Current Repository Structure:**
 {{repositoryStructure}}
 
-When planning the regenerated template, identify existing files under `/src/` that become obsolete because they are no longer part of the needed starter structure. Only source files under `/src/` may be removed.
+When planning the regenerated template, identify existing files under `/src/` that become obsolete because they are no longer part of the needed starter structure. Only source files under `/src/` may be removed, except `.gitkeep` placeholder files may also be removed when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`; delete source files only when they are independently obsolete or explicitly requested.
 
 **Build Environment Context:**
 {{buildEnvironmentContext}}
@@ -56,7 +56,7 @@ First, think step-by-step to analyze what template code should be created.
 2.  **Identify scaffolding needs:** Determine what structure, method signatures, and class hierarchies students need as a starting point.
 3.  **Separate scaffolding from solution logic:** Explicitly identify which logic must remain unimplemented because it belongs to the student task.
 4.  **Plan template content:** Decide what to include (class shells, method signatures, basic structure) and what to remove (implementation logic, specific algorithms, hidden edge-case handling).
-5.  **Identify obsolete source files:** List existing `/src/` files that should be deleted because they are not needed after regeneration.
+5.  **Identify obsolete files:** List existing `/src/` files that should be deleted because they are not needed after regeneration. Also list `.gitkeep` placeholder files only when they are explicitly obsolete or selected feedback requests their removal. Do not delete sibling source files merely because a `.gitkeep` placeholder is removed.
 6.  **Ensure compilability without solving the task:** The template must compile and provide clear TODO markers or fail-fast placeholders where students should add implementation.
 7.  **Check difficulty preservation:** Verify that the template does not already handle important cases that the tests are intended to check against student code.
 

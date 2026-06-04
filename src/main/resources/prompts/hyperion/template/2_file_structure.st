@@ -10,7 +10,7 @@ Based on the following template plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
-Existing `/src/` files that are no longer needed after this regenerated template structure should be marked as obsolete. Do not mark files outside `/src/` for deletion.
+Existing `/src/` files that are no longer needed after this regenerated template structure should be marked as obsolete. Do not mark files outside `/src/` for deletion, except `.gitkeep` placeholder files may be marked obsolete when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`.
 
 **Build Environment Context:**
 {{buildEnvironmentContext}}
@@ -40,7 +40,7 @@ Treat the issues above as hard constraints. Be critical and explicit:
 4. Verify the structure stays consistent with the plan and repository conventions.
 5. If multiple structures are possible, pick the most conservative and justify it.
 
-**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+**Important:** Only modify files in the `/src/` directory. Do not change build files, configuration files, or any files outside the source directory. Do not place JUnit files in production source paths such as `src/*.java` or `src/main/java/...`. Only create test-source files such as `src/test/java/...` when the exercise explicitly asks students to implement tests and the repository structure supports that path.
 First, think step-by-step.
 1.  **Analyze the plan:** Review the template structure mentioned in the template plan - what classes, interfaces, and components should be scaffolded for students.
 2.  **Apply conventions:** Consider the standard project layout and file naming conventions for the given programming language.
@@ -48,7 +48,7 @@ First, think step-by-step.
 4.  **List the files:** Create a minimal list of all the template files that need to be created, including their full paths from the repository root.
 
 After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.
-You may also include a "deletedFiles" array with obsolete file paths under `/src/`.
+You may also include a "deletedFiles" array with obsolete file paths under `/src/` and explicitly obsolete `.gitkeep` placeholder paths. Do not include source files only because a `.gitkeep` placeholder is being removed.
 
 **Example Output:**
 {

@@ -296,9 +296,13 @@
                                                                             (click)="toggleFeedbackSummaryRepository(summary.repositoryType)"
                                                                         >
                                                                             @if (isFeedbackSummaryRepositoryExpanded(summary.repositoryType)) {
-                                                                                {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.hideThreads' | artemisTranslate }}
+                                                                                {{
+                                                                                    'artemisApp.programmingExercise.codeGeneration.selectedFeedback.hideThreads' | artemisTranslate
+                                                                                }}
                                                                             } @else {
-                                                                                {{ 'artemisApp.programmingExercise.codeGeneration.selectedFeedback.showThreads' | artemisTranslate }}
+                                                                                {{
+                                                                                    'artemisApp.programmingExercise.codeGeneration.selectedFeedback.showThreads' | artemisTranslate
+                                                                                }}
                                                                             }
                                                                         </button>
                                                                     </div>
@@ -309,7 +313,13 @@
                                                                                     <span class="code-generation-feedback-summary-thread__location">
                                                                                         {{ thread.locationLabel }}
                                                                                     </span>
-                                                                                    <button pButton type="button" text size="small" (click)="navigateToSelectedFeedbackThread(thread)">
+                                                                                    <button
+                                                                                        pButton
+                                                                                        type="button"
+                                                                                        text
+                                                                                        size="small"
+                                                                                        (click)="navigateToSelectedFeedbackThread(thread)"
+                                                                                    >
                                                                                         {{
                                                                                             'artemisApp.programmingExercise.codeGeneration.selectedFeedback.viewThread'
                                                                                                 | artemisTranslate
@@ -325,7 +335,7 @@
                                                     }
                                                 </div>
                                             </div>
-                                         </p-popover>
+                                        </p-popover>
                                     }
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->

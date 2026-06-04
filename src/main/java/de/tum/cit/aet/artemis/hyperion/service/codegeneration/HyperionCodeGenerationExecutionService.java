@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -78,6 +79,14 @@ public class HyperionCodeGenerationExecutionService {
     private static final int MAX_FEEDBACK_SUMMARY_TEXT_LENGTH = 500;
 
     private static final String DELETABLE_SOURCE_PATH_PREFIX = "src/";
+
+    private static final String DELETABLE_PLACEHOLDER_FILE_NAME = ".gitkeep";
+
+    private static final String JUNIT_JUPITER_IMPORT = "org.junit.jupiter";
+
+    private static final String JUNIT_TEST_ANNOTATION = "@Test";
+
+    private static final String JAVA_TEST_SOURCE_PATH_PREFIX = "src/test/";
 
     /**
      * Holds repository setup results
@@ -271,7 +280,7 @@ public class HyperionCodeGenerationExecutionService {
             HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         boolean deletedAnyFile = false;
         for (String deletedFile : deletedFiles) {
-            Optional<String> safePath = normalizeDeletableSourcePath(deletedFile);
+            Optional<String> safePath = normalizeDeletablePath(deletedFile);
             if (safePath.isEmpty()) {
                 log.warn("Ignoring unsafe obsolete file path '{}' for exercise {}", deletedFile, exercise.getId());
                 continue;
@@ -288,18 +297,21 @@ public class HyperionCodeGenerationExecutionService {
         return deletedAnyFile;
     }
 
-    private Optional<String> normalizeDeletableSourcePath(String rawPath) {
+    private Optional<String> normalizeDeletablePath(String rawPath) {
         if (rawPath == null || rawPath.isBlank()) {
             return Optional.empty();
         }
         String sanitizedPath = rawPath.replace('\\', '/').trim();
         try {
+            if (containsParentTraversal(sanitizedPath)) {
+                return Optional.empty();
+            }
             Path normalizedPath = Path.of(sanitizedPath).normalize();
             if (normalizedPath.isAbsolute()) {
                 return Optional.empty();
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
-            if (!normalized.startsWith(DELETABLE_SOURCE_PATH_PREFIX) || normalized.equals("src") || normalized.equals("src/") || normalized.contains("/../")) {
+            if (!isDeletableSourcePath(normalized) && !isDeletablePlaceholderFile(normalized)) {
                 return Optional.empty();
             }
             return Optional.of(normalized);
@@ -307,6 +319,19 @@ public class HyperionCodeGenerationExecutionService {
         catch (InvalidPathException e) {
             return Optional.empty();
         }
+    }
+
+    private boolean containsParentTraversal(String path) {
+        return Path.of(path).normalize().startsWith("..") || List.of(path.split("/")).contains("..");
+    }
+
+    private boolean isDeletableSourcePath(String normalizedPath) {
+        return normalizedPath.startsWith(DELETABLE_SOURCE_PATH_PREFIX) && !normalizedPath.equals("src") && !normalizedPath.equals("src/");
+    }
+
+    private boolean isDeletablePlaceholderFile(String normalizedPath) {
+        Path fileName = Path.of(normalizedPath).getFileName();
+        return fileName != null && fileName.toString().equals(DELETABLE_PLACEHOLDER_FILE_NAME);
     }
 
     /**
@@ -536,7 +561,7 @@ public class HyperionCodeGenerationExecutionService {
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, boolean useSelectedFeedback, GenerationExecutionProgress executionProgress)
             throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-      
+
         CodeGenerationResponseDTO generationResponse = useSelectedFeedback
                 ? strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads)
                 : strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
@@ -568,17 +593,58 @@ public class HyperionCodeGenerationExecutionService {
             HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         boolean publishedAnyFile = false;
         for (GeneratedFileDTO file : generatedFiles) {
-            boolean existed = gitService.getFileByName(repository, file.path()).isPresent();
-            updateSingleFile(repository, file, exercise);
+            Optional<GeneratedFileDTO> safeFile = normalizeGeneratedFile(file, exercise, repositoryType);
+            if (safeFile.isEmpty()) {
+                log.warn("Ignoring generated file '{}' for {} repository in exercise {}", file != null ? file.path() : null, repositoryType, exercise.getId());
+                continue;
+            }
+            GeneratedFileDTO normalizedFile = safeFile.get();
+            boolean existed = gitService.getFileByName(repository, normalizedFile.path()).isPresent();
+            updateSingleFile(repository, normalizedFile, exercise);
             publishedAnyFile = true;
             if (existed) {
-                publisher.fileUpdated(file.path(), repositoryType, iteration);
+                publisher.fileUpdated(normalizedFile.path(), repositoryType, iteration);
             }
             else {
-                publisher.newFile(file.path(), repositoryType, iteration);
+                publisher.newFile(normalizedFile.path(), repositoryType, iteration);
             }
         }
         return publishedAnyFile;
+    }
+
+    private Optional<GeneratedFileDTO> normalizeGeneratedFile(GeneratedFileDTO file, ProgrammingExercise exercise, RepositoryType repositoryType) {
+        if (file == null || file.path() == null || file.path().isBlank()) {
+            return Optional.empty();
+        }
+        String sanitizedPath = file.path().replace('\\', '/').trim();
+        try {
+            if (containsParentTraversal(sanitizedPath)) {
+                return Optional.empty();
+            }
+            Path normalizedPath = Path.of(sanitizedPath).normalize();
+            if (normalizedPath.isAbsolute()) {
+                return Optional.empty();
+            }
+            String normalized = normalizedPath.toString().replace('\\', '/');
+            if (isJavaTestFileInProductionSourcePath(normalized, file.content(), exercise, repositoryType)) {
+                return Optional.empty();
+            }
+            return Optional.of(new GeneratedFileDTO(normalized, file.content()));
+        }
+        catch (InvalidPathException e) {
+            return Optional.empty();
+        }
+    }
+
+    private boolean isJavaTestFileInProductionSourcePath(String path, String content, ProgrammingExercise exercise, RepositoryType repositoryType) {
+        if ((repositoryType != RepositoryType.SOLUTION && repositoryType != RepositoryType.TEMPLATE) || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            return false;
+        }
+        return isProductionSourcePath(path) && content != null && (content.contains(JUNIT_JUPITER_IMPORT) || content.contains(JUNIT_TEST_ANNOTATION));
+    }
+
+    private boolean isProductionSourcePath(String path) {
+        return path.startsWith(DELETABLE_SOURCE_PATH_PREFIX) && !path.startsWith(JAVA_TEST_SOURCE_PATH_PREFIX);
     }
 
     private CompletionDetails buildCompletionDetails(RepositoryType repositoryType, boolean generatedFilesCommitted, boolean deletionOnly, BuildResultOutcome buildResultOutcome) {

@@ -222,7 +222,7 @@ module.exports = {
             // Lowered (83 -> 82.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest)
             // and merging develop, which dropped the global statements average to ~82.95.
             statements: 82.5,
-            branches: 72.9,
+            branches: 73,
             // Lowered (->71) after moving BOTH the well-covered foundation and shared-ui modules fully out of
             // Jest (now under Vitest), which removed those functions from the Jest denominator. Measured global
             // functions ~71.43 with both modules excluded, so the floor is set just below that.
