@@ -1,20 +1,18 @@
 <div class="frame">
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
+            @let isInvalid = internalItem.isBeforePreviousDate || internalItem.isOtherRequiredItemDateUndefined || (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div
                     class="timeline-graphic-circle"
                     [class.required]="internalItem.kind === 'required'"
                     [class.optional]="internalItem.kind === 'optional'"
-                    [class.valid]="!internalItem.isBeforePreviousDate && !internalItem.isInputRequiredButUndefined"
-                    [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                    [class.valid]="!isInvalid"
+                    [class.invalid]="isInvalid"
                 >
                     @if (internalItem.internalDate !== undefined) {
-                        <div
-                            class="timeline-graphic-circle-dot"
-                            [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
-                        ></div>
+                        <div class="timeline-graphic-circle-dot" [class.invalid]="isInvalid"></div>
                     }
                 </div>
                 <div class="timeline-graphic-line"></div>
@@ -45,10 +43,10 @@
                         appendTo="body"
                         showOnFocus="false"
                         [baseZIndex]="1050"
-                        [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        [invalid]="isInvalid"
                         [disabled]="readonly()"
                     />
-                    @if (internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)) {
+                    @if (isInvalid) {
                         <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.tooltip" tooltipPosition="right"></i>
                     }
                 </div>

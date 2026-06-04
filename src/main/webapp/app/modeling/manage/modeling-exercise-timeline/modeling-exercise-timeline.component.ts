@@ -16,6 +16,11 @@ export class ModelingExerciseTimelineComponent {
     timelineStatus = output<ExerciseTimelineStatus>();
 
     private buildTimelineItems(): TimelineItem[] {
+        const dueDateItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.dueDate',
+            date: this.dueDate,
+        };
         return [
             {
                 kind: 'optional',
@@ -27,15 +32,12 @@ export class ModelingExerciseTimelineComponent {
                 labelStringKey: 'artemisApp.exercise.startDate',
                 date: this.startDate,
             },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.dueDate',
-                date: this.dueDate,
-            },
+            dueDateItem,
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
+                otherRequiredItem: dueDateItem,
             },
         ];
     }

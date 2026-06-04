@@ -135,7 +135,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         });
         effect(() => {
             this.timelineStatus();
-            this.calculateFormSectionStatus();
+            void this.calculateFormSectionStatus();
         });
     }
 
