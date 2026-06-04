@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 export const adminSbomRoute: Route[] = [
     {

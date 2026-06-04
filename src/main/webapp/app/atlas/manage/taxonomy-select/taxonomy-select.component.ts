@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 
 @Component({

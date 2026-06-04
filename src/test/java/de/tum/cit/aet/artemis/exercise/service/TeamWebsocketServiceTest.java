@@ -61,7 +61,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     private String importFromExerciseUrl(Exercise sourceExercise) {
-        return "/api/exercise/exercises/" + modelingExercise.getId() + "/teams/import-from-exercise/" + sourceExercise.getId() + "?importStrategyType="
+        return "/api/exercise/exercises/" + modelingExercise.getId() + "/teams/import-from-exercise?sourceExerciseId=" + sourceExercise.getId() + "&importStrategyType="
                 + TeamImportStrategyType.PURGE_EXISTING;
     }
 

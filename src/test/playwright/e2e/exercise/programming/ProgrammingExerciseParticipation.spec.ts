@@ -91,8 +91,16 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
                     const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
                     await expect(sshKeyNotFoundAlert).toBeVisible();
+                    // SSH-setup happens in a separate page context, then we reload the main
+                    // page. Under heavy multi-node CI load the reload-vs-SSH-key-registration
+                    // race occasionally lands the main page on /courses (Angular's
+                    // auth/router fall-back) instead of the exercise route. Navigate to the
+                    // exercise URL explicitly so the subsequent `makeSubmission` reliably
+                    // finds `.code-button`. A direct goto is idempotent — it costs ~200ms on
+                    // the happy path and eliminates the drift-recovery branch.
+                    const exerciseUrl = `/courses/${course.id}/exercises/${exercise.id!}`;
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);
-                    await page.reload();
+                    await page.goto(exerciseUrl);
                     await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.ssh, sshAlgorithm);
                     const participation = await waitForParticipationBuildToFinish(participationId);
                     ProgrammingExerciseOverviewPage.verifyResultScore(participation, cAllSuccessful.expectedResult);
@@ -223,11 +231,18 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             });
 
             test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
+                // The shared beforeEach runs 3 student submissions and waits for 3 C builds,
+                // which alone consumes most of the default slow-test budget under CI load.
+                // `test.slow()` triples the budget so the verification steps still fit.
+                test.slow();
                 await login(instructor, '/');
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
                 await courseManagementExercises.openExerciseParticipations(exercise.id!);
-                await programmingExerciseParticipations.getParticipation(team.name!).waitFor({ state: 'visible' });
+                // The participations table fills asynchronously after navigation; give it a
+                // generous timeout because under heavy parallel load both the API response
+                // and Angular's grid-render can be slow.
+                await programmingExerciseParticipations.getParticipation(team.name!).waitFor({ state: 'visible', timeout: 60_000 });
                 await programmingExerciseParticipations.checkParticipationTeam(team.name!, team.name!);
                 const studentUsernames = submissions.map(({ student }) => student.username!);
                 await programmingExerciseParticipations.checkParticipationStudents(team.name!, studentUsernames);
@@ -260,9 +275,28 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
             await login(instructor);
             await waitForExerciseBuildToFinish(exercise.id!);
-            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
+            // Under multi-node CI load the course-management lazy chunk occasionally fails to
+            // resolve and Angular's auth/router fall-back lands the page on /courses instead.
+            // Verify the URL after navigation and re-issue the goto if it drifted — without
+            // this the subsequent `openCloneMenu` reloads /courses forever and times out.
+            const participationsUrl = `/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`;
+            const expectedParticipationsUrl = new RegExp(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations(?:[/?#].*)?$`);
+            const gotoParticipations = async () => {
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    await page.goto(participationsUrl);
+                    const settled = await page.waitForURL(expectedParticipationsUrl, { timeout: 15000 }).then(
+                        () => true,
+                        () => false,
+                    );
+                    if (settled) {
+                        return;
+                    }
+                }
+                throw new Error(`Failed to navigate to participations page after 2 attempts — landed on ${page.url()}`);
+            };
+            await gotoParticipations();
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
-            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
+            await gotoParticipations();
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
             await programmingExerciseSubmissions.checkInstructorSubmission(60000);
             await programmingExerciseSubmissions.checkStudentSubmission();

@@ -1,23 +1,23 @@
-import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User } from 'app/account/user/user.model';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';
 import { TeamDeleteButtonComponent } from './team-update-dialog/team-delete-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamParticipationTableComponent } from './team-participation-table/team-participation-table.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team',
@@ -48,20 +48,23 @@ export class TeamComponent implements OnInit {
 
     ButtonSize = ButtonSize;
 
-    team: Team;
-    exercise: Exercise;
-    isLoading: boolean;
-    isTransitioning: boolean;
+    team = signal<Team | undefined>(undefined);
+    exercise = signal<Exercise | undefined>(undefined);
+    isLoading = signal(false);
+    isTransitioning = signal(false);
 
-    currentUser: User;
-    isAdmin = false;
-    isTeamOwner = false;
+    currentUser = signal<User | undefined>(undefined);
+    isAdmin = signal(false);
+    readonly isTeamOwner = computed(() => {
+        const currentUser = this.currentUser();
+        const team = this.team();
+        return currentUser !== undefined && team !== undefined && currentUser.id === team.owner?.id;
+    });
 
     constructor() {
         this.accountService.identity().then((user: User) => {
-            this.currentUser = user;
-            this.isAdmin = this.accountService.isAdmin();
-            this.setTeamOwnerFlag();
+            this.currentUser.set(user);
+            this.isAdmin.set(this.accountService.isAdmin());
         });
     }
 
@@ -74,11 +77,10 @@ export class TeamComponent implements OnInit {
                 this.setLoadingState(true);
                 this.exerciseService.find(params['exerciseId']).subscribe({
                     next: (exerciseResponse) => {
-                        this.exercise = exerciseResponse.body!;
-                        this.teamService.find(this.exercise, params['teamId']).subscribe({
+                        this.exercise.set(exerciseResponse.body!);
+                        this.teamService.find(this.exercise()!, params['teamId']).subscribe({
                             next: (teamResponse) => {
-                                this.team = teamResponse.body!;
-                                this.setTeamOwnerFlag();
+                                this.team.set(teamResponse.body!);
                                 this.setLoadingState(false);
                             },
                             error: this.onLoadError,
@@ -91,24 +93,18 @@ export class TeamComponent implements OnInit {
         });
     }
 
-    private setTeamOwnerFlag() {
-        if (this.currentUser && this.team) {
-            this.isTeamOwner = this.currentUser.id === this.team.owner?.id;
-        }
-    }
-
     private setLoadingState(loading: boolean) {
-        if (this.exercise && this.team && !this.isLoading) {
-            this.isTransitioning = loading;
+        if (this.exercise() && this.team() && !this.isLoading()) {
+            this.isTransitioning.set(loading);
         } else {
-            this.isLoading = loading;
+            this.isLoading.set(loading);
         }
     }
 
-    private onLoadError(error: any) {
+    private onLoadError = (error: any) => {
         this.alertService.error(error.message);
-        this.isLoading = false;
-    }
+        this.isLoading.set(false);
+    };
 
     /**
      * Called when the team was updated by TeamUpdateButtonComponent
@@ -116,7 +112,7 @@ export class TeamComponent implements OnInit {
      * @param team Updated team
      */
     onTeamUpdate(team: Team) {
-        this.team = team;
+        this.team.set(team);
     }
 
     /**
@@ -125,6 +121,7 @@ export class TeamComponent implements OnInit {
      * Navigates back to the overviews of teams for the exercise.
      */
     onTeamDelete() {
-        this.router.navigate(['/course-management', this.exercise.course?.id, 'exercises', this.exercise.id, 'teams']);
+        const exercise = this.exercise();
+        this.router.navigate(['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams']);
     }
 }

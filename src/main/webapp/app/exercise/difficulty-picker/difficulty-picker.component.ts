@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 
 @Component({
@@ -12,15 +12,15 @@ import { NgClass } from '@angular/common';
 export class DifficultyPickerComponent {
     readonly DifficultyLevel = DifficultyLevel;
 
-    @Input() exercise: Exercise;
-    @Output() ngModelChange = new EventEmitter();
+    readonly exercise = input<Exercise>(undefined!);
+    readonly ngModelChange = output();
 
     /**
      * Sets the difficulty level of an exercise and emits the changes to the parent component to notice changes
      * @param level chosen level of difficulty {DifficultyLevel}
      */
     setDifficulty(level?: DifficultyLevel) {
-        this.exercise.difficulty = level;
+        this.exercise().difficulty = level;
         this.ngModelChange.emit();
     }
 }

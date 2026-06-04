@@ -270,7 +270,7 @@ public class CourseMaterialImportService {
 
     private Optional<ProgrammingExercise> importProgrammingExercise(ProgrammingExercise exercise, Course targetCourse) {
         var optionalOriginal = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exercise.getId());
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }

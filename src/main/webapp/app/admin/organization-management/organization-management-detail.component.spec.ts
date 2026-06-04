@@ -11,9 +11,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { MockProvider } from 'ng-mocks';
 
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';

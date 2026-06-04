@@ -1,8 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/map.extension';
+import 'app/foundation/util/array.extension';
 import path from 'path';
 
 /**

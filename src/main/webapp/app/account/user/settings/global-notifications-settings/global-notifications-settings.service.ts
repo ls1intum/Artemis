@@ -5,7 +5,7 @@ import { GlobalNotificationType } from 'app/account/user/settings/global-notific
 
 @Injectable({ providedIn: 'root' })
 export class GlobalNotificationSettingsService {
-    private resourceUrl = 'api/communication/global-notification-settings';
+    private resourceUrl = 'api/notification/global-notification-settings';
 
     private httpClient = inject(HttpClient);
 

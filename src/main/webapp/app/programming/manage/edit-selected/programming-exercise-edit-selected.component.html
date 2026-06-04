@@ -42,11 +42,26 @@
                     </div>
                     <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                         <div class="form-group-narrow mt-2">
-                            <div>
-                                <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
-                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip" />
-                            </div>
-                            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false" />
+                            @let exampleSolutionPublicationDateSet =
+                                !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
+                            <jhi-programming-exercise-update-timeline
+                                id="timeline"
+                                [isExamMode]="false"
+                                [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
+                                [exercise]="newProgrammingExercise"
+                                [(releaseDate)]="newProgrammingExercise.releaseDate"
+                                [(startDate)]="newProgrammingExercise.startDate"
+                                [(dueDate)]="newProgrammingExercise.dueDate"
+                                [(buildAndTestStudentSubmissionsAfterDueDate)]="newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [(assessmentDueDate)]="newProgrammingExercise.assessmentDueDate"
+                                [(exampleSolutionPublicationDate)]="newProgrammingExercise.exampleSolutionPublicationDate"
+                                [(assessmentType)]="newProgrammingExercise.assessmentType"
+                                [(allowFeedbackRequests)]="newProgrammingExercise.allowFeedbackRequests"
+                                [(allowComplaintsForAutomaticAssessments)]="newProgrammingExercise.allowComplaintsForAutomaticAssessments"
+                                [(releaseTestsWithExampleSolution)]="newProgrammingExercise.releaseTestsWithExampleSolution"
+                                [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
+                                [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
+                            />
                             <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
                                 <fa-icon [icon]="faSave" />
                                 <span jhiTranslate="entity.action.save"></span>

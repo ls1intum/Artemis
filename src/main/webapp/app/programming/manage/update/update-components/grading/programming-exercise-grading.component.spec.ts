@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockDirective } from 'ng-mocks';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseUpdateTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
@@ -27,11 +27,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     const route = {
         queryParams: of({}),
-        url: {
-            pipe: () => ({
-                subscribe: () => {},
-            }),
-        },
+        url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
     } as ActivatedRoute;
 
     beforeEach(() => {
@@ -52,6 +48,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp = fixture.componentInstance;
 
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.importOptions = { recreateBuildPlans: false, updateTemplate: false, setTestCaseVisibilityToAfterDueDate: false };
         fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
             includeExerciseInCourseScoreCalculation: true,
             points: true,
@@ -170,9 +167,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const calculateFormStatusSpy = jest.spyOn(comp, 'calculateFormStatus');
 
         comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
-        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseLifecycleComponent;
+        comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseUpdateTimelineComponent;
 
-        comp.ngAfterContentInit();
+        comp.ngAfterViewInit();
 
         (comp.submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
         comp.lifecycleComponent.formValidChanges.next(false);
@@ -252,7 +249,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
             },
             {
                 name: 'timeline',
-                selector: 'jhi-programming-exercise-lifecycle',
+                selector: 'jhi-programming-exercise-update-timeline',
                 field: ProgrammingExerciseInputField.TIMELINE,
             },
             {

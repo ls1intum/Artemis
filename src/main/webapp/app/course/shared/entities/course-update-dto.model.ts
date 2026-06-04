@@ -1,4 +1,4 @@
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 

@@ -12,15 +12,15 @@ import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.PasskeyType;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 /**
  * Repository implementation for managing user credentials in the context of WebAuthn authentication.

@@ -6,7 +6,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Language } from 'app/course/shared/entities/course.model';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('LanguageTableCellComponent', () => {
     setupTestBed({ zoneless: true });

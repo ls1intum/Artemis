@@ -1,0 +1,57 @@
+<ng-container>
+    @if (canArchive()) {
+        <button
+            [jhiFeatureToggle]="FeatureToggle.Exports"
+            [overwriteDisabled]="isBeingArchived()"
+            type="button"
+            [attr.data-mode]="archiveMode()"
+            id="archiveButton"
+            class="btn btn-sm btn-warning"
+            (click)="openArchiveWarningDialog()"
+        >
+            <fa-icon [hidden]="!isBeingArchived()" animation="spin" [icon]="faCircleNotch" />
+            <fa-icon [hidden]="isBeingArchived()" [icon]="faArchive" />&nbsp;
+            <span>{{ archiveButtonText() }}</span>
+        </button>
+    }
+    @if (displayDownloadArchiveButton()) {
+        <button [disabled]="isBeingArchived()" type="button" [attr.data-mode]="archiveMode()" class="btn btn-sm btn-primary" (click)="downloadArchive()">
+            <fa-icon [icon]="faDownload" />&nbsp;
+            <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
+        </button>
+    }
+    @if (canCleanup() && archiveMode() === 'Course') {
+        <button
+            [disabled]="isBeingArchived()"
+            [attr.data-mode]="archiveMode()"
+            jhiDeleteButton
+            [buttonSize]="ButtonSize.SMALL"
+            [actionType]="ActionType.Cleanup"
+            [entityTitle]="currentCourse()?.title!"
+            deleteQuestion="artemisApp.course.cleanup.question"
+            (delete)="cleanup()"
+            [dialogError]="dialogError$"
+            deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+            style="margin-right: 0 !important"
+        >
+            <fa-icon [icon]="faEraser" />
+        </button>
+    }
+    @if (canCleanup() && archiveMode() === 'Exam') {
+        <button
+            [disabled]="isBeingArchived()"
+            [attr.data-mode]="archiveMode()"
+            jhiDeleteButton
+            [buttonSize]="ButtonSize.SMALL"
+            [actionType]="ActionType.Cleanup"
+            [entityTitle]="currentExam()?.title!"
+            deleteQuestion="artemisApp.exam.cleanup.question"
+            (delete)="cleanup()"
+            [dialogError]="dialogError$"
+            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+            style="margin-right: 0 !important"
+        >
+            <fa-icon [icon]="faEraser" />
+        </button>
+    }
+</ng-container>

@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
-import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
+import { SubjectObservablePair } from 'app/foundation/util/rxjs.utils';
 import { AccountService } from 'app/core/auth/account.service';
 
 /**

@@ -451,7 +451,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-run`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
         req.flush(expected);
         await Promise.resolve();
@@ -468,7 +468,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-run/${mockStudentExam.id}`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-runs/${mockStudentExam.id}`,
         });
         req.flush(expected);
         await Promise.resolve();

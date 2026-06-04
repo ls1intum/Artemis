@@ -12,7 +12,7 @@ import { EditTextUnitComponent } from 'app/lecture/manage/lecture-units/edit-tex
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { Alert, AlertService } from 'app/shared/service/alert.service';
+import { Alert, AlertService } from 'app/foundation/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

@@ -14,8 +14,8 @@ describe('CourseRequestService', () => {
     let service: CourseRequestService;
     let httpMock: HttpTestingController;
 
-    const resourceUrl = 'api/core/course-requests';
-    const adminResourceUrl = 'api/core/admin/course-requests';
+    const resourceUrl = 'api/course/course-requests';
+    const adminResourceUrl = 'api/admin/course-requests';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -3,8 +3,8 @@ import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.m
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/shared/constants/input.constants';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 import { InvalidFlaggedQuestions, checkForInvalidFlaggedQuestions, computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';

@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSettingsService } from './user-settings.service';
-import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
 import { User } from 'app/account/user/user.model';

@@ -12,8 +12,8 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
-import { AlertService } from 'app/shared/service/alert.service';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import {
     CreateTutorialGroupSessionEvent,
     DeleteTutorialGroupEvent,

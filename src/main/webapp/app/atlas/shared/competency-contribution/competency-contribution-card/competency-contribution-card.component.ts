@@ -5,8 +5,8 @@ import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawe
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { HIGH_COMPETENCY_LINK_WEIGHT, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-contribution-card',

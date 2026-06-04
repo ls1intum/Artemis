@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';

@@ -9,7 +9,7 @@ import { registerLocaleData } from '@angular/common';
 import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs/esm';
 import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
-import { artemisIconPack } from 'app/shared/icons/icons';
+import { artemisIconPack } from 'app/foundation/icons/icons';
 
 ProdConfig();
 MonacoConfig();

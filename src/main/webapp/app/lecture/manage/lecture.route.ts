@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';

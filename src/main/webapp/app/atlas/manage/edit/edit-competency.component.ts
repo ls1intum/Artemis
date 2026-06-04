@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -9,7 +9,7 @@ import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/compe
 
 import { EditCourseCompetencyComponent } from 'app/atlas/manage/edit/edit-course-competency.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-competency',

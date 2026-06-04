@@ -39,11 +39,11 @@ import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/c
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -204,8 +204,8 @@ describe('CodeEditorStudentIntegration', () => {
         // Repository should be locked because due date has passed and it's not practice mode
         expect(container.repositoryIsLocked).toBeTrue();
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
-        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeTrue();
-        expect(container.codeEditorContainer.actions.disableActions).toBeTrue();
+        expect(container.codeEditorContainer()!.fileBrowser.disableActions).toBeTrue();
+        expect(container.codeEditorContainer()!.actions.disableActions).toBeTrue();
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {

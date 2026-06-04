@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
@@ -27,10 +26,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
-import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
@@ -43,10 +42,9 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 
 /**
  * REST controller for managing the current user's account.
@@ -54,7 +52,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessT
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_ACCOUNT_PREFIX })
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
@@ -65,59 +64,31 @@ public class AccountResource {
 
     private final UserService userService;
 
-    private final UserCreationService userCreationService;
-
     private final AccountService accountService;
 
     private final FileService fileService;
 
-    private final ProfileService profileService;
-
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
-            ProfileService profileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
-        this.profileService = profileService;
     }
 
     /**
-     * PUT /account : update the provided account.
+     * PUT basic-information : update the basic information (name, email, language, image) of the current user's account.
      *
      * @param userDTO the current user information.
      * @return the ResponseEntity with status 200 (OK) when the user information is updated.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
-    @PutMapping("account")
+    @PutMapping("basic-information")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
-        User currentUser = userRepository.getUser();
-
-        // Allow internal users to update their account even when registration is disabled
-        if (accountService.isRegistrationDisabled() && !currentUser.isInternal()) {
-            throw new AccessForbiddenException("Can't edit user information as user registration is disabled");
-        }
-
-        // When SAML2 is active, names and email are synced from the IdP — only langKey can be changed
-        if (profileService.isSaml2Active()) {
-            currentUser.setLangKey(userDTO.getLangKey());
-            userService.saveUser(currentUser);
-            return ResponseEntity.ok().build();
-        }
-
-        final String userLogin = currentUser.getLogin();
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
-            throw new EmailAlreadyUsedException();
-        }
-
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
-
+        accountService.updateBasicInformationOfCurrentUser(userDTO);
         return ResponseEntity.ok().build();
     }
 
@@ -128,7 +99,7 @@ public class AccountResource {
      * @return the ResponseEntity with status 200 (OK) when the password has been changed.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
-    @PostMapping("account/change-password")
+    @PostMapping("change-password")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         User user = userRepository.getUser();
@@ -144,12 +115,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/user-vcs-access-token : creates a vcsAccessToken for a user
+     * PUT user-vcs-access-token : creates a vcsAccessToken for a user
      *
      * @param expiryDate The expiry date which should be set for the token
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @PutMapping("account/user-vcs-access-token")
+    @PutMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
         User user = userRepository.getUser();
@@ -169,11 +140,11 @@ public class AccountResource {
     }
 
     /**
-     * DELETE account/user-vcs-access-token : deletes the vcsAccessToken of a user
+     * DELETE user-vcs-access-token : deletes the vcsAccessToken of a user
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @DeleteMapping("account/user-vcs-access-token")
+    @DeleteMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();
@@ -184,13 +155,13 @@ public class AccountResource {
     }
 
     /**
-     * GET account/participation-vcs-access-token : get the vcsToken for of a user for a participation
+     * GET participation-vcs-access-token : get the vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
-    @GetMapping("account/participation-vcs-access-token")
+    @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
@@ -201,13 +172,13 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/participation-vcs-access-token : add a vcsToken for of a user for a participation
+     * PUT participation-vcs-access-token : add a vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
-    @PutMapping("account/participation-vcs-access-token")
+    @PutMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
@@ -218,12 +189,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/profile-picture : upload a profile picture
+     * PUT profile-picture : upload a profile picture
      *
      * @param file the image file that is being uploaded
      * @return the ResponseEntity with status 200 (OK) and with body of current user
      */
-    @PutMapping("account/profile-picture")
+    @PutMapping("profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update profile picture for logged-in user");
@@ -254,11 +225,11 @@ public class AccountResource {
     }
 
     /**
-     * DELETE account/profile-picture : remove current users profile picture
+     * DELETE profile-picture : remove current users profile picture
      *
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("account/profile-picture")
+    @DeleteMapping("profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
         log.debug("REST request to remove profile picture for logged-in user");
@@ -271,12 +242,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/enable-memiris : sets the memirisEnabled flag for the user to true or false.
+     * PUT enable-memiris : sets the memirisEnabled flag for the user to true or false.
      *
      * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("account/enable-memiris")
+    @PutMapping("enable-memiris")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
         User user = userRepository.getUser();

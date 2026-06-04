@@ -4,12 +4,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { onError } from 'app/shared/util/global.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
 @Component({

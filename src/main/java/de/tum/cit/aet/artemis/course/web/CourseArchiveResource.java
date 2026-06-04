@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -51,7 +52,8 @@ import de.tum.cit.aet.artemis.course.service.CourseArchiveService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
 @Lazy
 public class CourseArchiveResource {
 

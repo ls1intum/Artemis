@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,7 +79,7 @@ class HyperionCodeGenerationJobServiceTest {
     void startJob_withNewJob_runsTaskAndReturnsJobId() {
         when(jobMap.putIfAbsent(eq("42"), any(HyperionCodeGenerationJobService.JobInfo.class))).thenReturn(null);
 
-        String jobId = service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, true);
+        String jobId = service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, true, null);
 
         ArgumentCaptor<HyperionCodeGenerationJobService.JobInfo> jobCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationJobService.JobInfo.class);
         verify(jobMap).putIfAbsent(eq("42"), jobCaptor.capture());
@@ -88,7 +89,7 @@ class HyperionCodeGenerationJobServiceTest {
         assertThat(createdJob.exerciseId()).isEqualTo(42L);
         assertThat(createdJob.repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         assertThat(jobId).isEqualTo(createdJob.jobId());
-        verify(taskService).runJobAsync(eq(jobId), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), eq(true), any(Runnable.class));
+        verify(taskService).runJobAsync(eq(jobId), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), eq(true), isNull(), any(Runnable.class));
     }
 
     @Test
@@ -96,9 +97,9 @@ class HyperionCodeGenerationJobServiceTest {
         HyperionCodeGenerationJobService.JobInfo existingJob = new HyperionCodeGenerationJobService.JobInfo("job-1", "testuser", 42L, RepositoryType.SOLUTION, Instant.now());
         when(jobMap.putIfAbsent(eq("42"), any(HyperionCodeGenerationJobService.JobInfo.class))).thenReturn(existingJob);
 
-        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, false)).isInstanceOf(ConflictException.class)
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.SOLUTION, false, null)).isInstanceOf(ConflictException.class)
                 .hasMessageContaining("Code generation already running for this exercise");
-        verify(taskService, never()).runJobAsync(eq("job-1"), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), eq(false), any(Runnable.class));
+        verify(taskService, never()).runJobAsync(eq("job-1"), eq(user), eq(exercise), eq(1L), eq(RepositoryType.SOLUTION), eq(false), isNull(), any(Runnable.class));
     }
 
     @Test
@@ -106,7 +107,7 @@ class HyperionCodeGenerationJobServiceTest {
         HyperionCodeGenerationJobService.JobInfo existingJob = new HyperionCodeGenerationJobService.JobInfo("job-2", "other", 42L, RepositoryType.TEMPLATE, Instant.now());
         when(jobMap.putIfAbsent(eq("42"), any(HyperionCodeGenerationJobService.JobInfo.class))).thenReturn(existingJob);
 
-        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.TEMPLATE, false)).isInstanceOf(ConflictException.class)
+        assertThatThrownBy(() -> service.startJob(user, exercise, 1L, RepositoryType.TEMPLATE, false, null)).isInstanceOf(ConflictException.class)
                 .hasMessageContaining("Code generation already running for this exercise");
     }
 

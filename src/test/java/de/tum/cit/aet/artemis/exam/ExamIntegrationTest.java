@@ -83,10 +83,12 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -1136,6 +1138,29 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
+        ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
+        TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
+        exerciseGroup.addExercise(textExercise);
+        exam2.setNumberOfExercisesInExam(1);
+        examRepository.save(exam2);
+
+        examUtilService.addStudentExamWithUser(exam2, student1);
+        StudentParticipation failedPreparation = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, textExercise, student1);
+        studentParticipationRepository.save(failedPreparation);
+
+        assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
+        assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(textExercise.getId())).isZero();
+
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isOne();
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLatestExamEndDate() throws Exception {
         // Setup exam and user
 
@@ -1258,7 +1283,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         course.setEndDate(now().minusMinutes(5));
         course = courseRepository.save(course);
 
-        request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.put("/api/course/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
         await().atMost(Duration.ofSeconds(30)).until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
@@ -2017,10 +2042,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
-        quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
-        quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
-        quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
-        quiz.addQuestions(QuizExerciseFactory.createDragAndDropQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quiz.addQuestion(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
+        quiz.addQuestion(QuizExerciseFactory.createSingleChoiceQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createDragAndDropQuestion());
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 

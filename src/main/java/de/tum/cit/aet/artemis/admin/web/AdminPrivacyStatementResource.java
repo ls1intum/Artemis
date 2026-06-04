@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.PrivacyStatementDTO;
 import de.tum.cit.aet.artemis.admin.service.LegalDocumentService;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -26,7 +27,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminPrivacyStatementResource {
 
     private final LegalDocumentService legalDocumentService;

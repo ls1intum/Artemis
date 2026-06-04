@@ -6,9 +6,9 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -17,6 +17,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,6 +35,7 @@ describe('ExamExerciseOverviewPageComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

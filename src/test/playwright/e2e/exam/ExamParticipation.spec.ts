@@ -222,6 +222,11 @@ test.describe('Exam participation', () => {
         });
 
         test('Reloads exam result page and ensures that everything is as expected', async ({ page, login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
+            // Full exam-participation flow (startParticipation → submit → hand-in → summary →
+            // reload + re-verify → instructor verifySubmitted) plus the post-reload toHaveValue
+            // wait can exceed the 90s @slow budget when the conduction view lazy-chunks slowly.
+            // Lift to 270s via test.slow() — observed worst case ~140s.
+            test.slow();
             await examParticipation.startParticipation(studentFour, course, exam);
             const textExerciseIndex = 0;
             const textExercise = exerciseArray[textExerciseIndex];
@@ -328,7 +333,7 @@ test.describe('Exam participation', () => {
                 examManagement,
                 waitForParticipationBuildToFinish,
             }) => {
-                // Git clone + push + CI build takes longer under parallel CI load
+                // Git clone + push + CI build takes longer under parallel CI load.
                 test.slow();
                 await examParticipation.startParticipation(studentTwo, course, exam);
                 // Intercept the participation ID when navigating to the exercise.

@@ -77,7 +77,7 @@ describe('CourseMaterialImportService', () => {
                 expect(summary).toEqual(mockSummary);
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-summary/${sourceCourseId}`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockSummary);
         });
@@ -92,7 +92,7 @@ describe('CourseMaterialImportService', () => {
                 },
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-summary/${sourceCourseId}`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
             req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
         });
     });
@@ -114,7 +114,7 @@ describe('CourseMaterialImportService', () => {
                 expect(result).toEqual(mockResult);
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-material`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-material`);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual(options);
             req.flush(mockResult);
@@ -146,7 +146,7 @@ describe('CourseMaterialImportService', () => {
                 expect(result).toEqual(emptyResult);
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-material`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-material`);
             req.flush(emptyResult);
         });
 
@@ -168,7 +168,7 @@ describe('CourseMaterialImportService', () => {
                 },
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-material`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-material`);
             req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
         });
 
@@ -199,7 +199,7 @@ describe('CourseMaterialImportService', () => {
                 expect(result.errors).toHaveLength(2);
             });
 
-            const req = httpMock.expectOne(`api/core/courses/${targetCourseId}/import-material`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-material`);
             req.flush(resultWithErrors);
         });
     });

@@ -20,13 +20,14 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreateRequestDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDTO;
 
 @Conditional(PlagiarismEnabled.class)
 @Lazy
@@ -48,30 +49,25 @@ public class PlagiarismAnswerPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and answer post and associated post validity,
-     * determines the associated post, the answer post's author,
-     * sets resolves post to false by default,
-     * persists the answer post, and sends a notification to affected user groups
+     * Checks course, user and associated post validity,
+     * determines the answer post's author and persists the answer post on the parent post resolved
+     * by {@code request.post().id()}, then broadcasts the update.
      *
-     * @param courseId   id of the course the answer post belongs to
-     * @param answerPost answer post to create
+     * @param courseId id of the course the answer post belongs to
+     * @param request  payload carrying the parent post id and the new answer's content
      * @return created answer post that was persisted
      */
-    public AnswerPost createAnswerPost(Long courseId, AnswerPost answerPost) {
+    public AnswerPost createAnswerPost(Long courseId, PlagiarismAnswerPostCreateRequestDTO request) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-
-        // check
-        if (answerPost.getId() != null) {
-            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
-        }
-
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
-        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
-        parseUserMentions(course, answerPost.getContent());
+        Post post = postRepository.findPostByIdElseThrow(request.post().id());
+        parseUserMentions(course, request.content());
 
+        AnswerPost answerPost = new AnswerPost();
         // use post from database rather than user input
         answerPost.setPost(post);
+        answerPost.setContent(request.content());
         // set author to current user
         answerPost.setAuthor(user);
         setAuthorRoleForPosting(answerPost, course);
@@ -87,44 +83,64 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     /**
      * Checks course, user and associated post validity,
-     * updates non-restricted field of the post, persists the post,
-     * and ensures that sensitive information is filtered out
+     * updates non-restricted fields of the answer post, persists it,
+     * and ensures that sensitive information is filtered out.
      *
      * @param courseId     id of the course the answer post belongs to
      * @param answerPostId id of the answer post to update
-     * @param answerPost   answer post to update
+     * @param request      update payload carrying the fields the caller may mutate
      * @return updated answer post that was persisted
      */
-    public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, AnswerPost answerPost) {
+    public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, PlagiarismAnswerPostUpdateRequestDTO request) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // checks
-        if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idNull");
-        }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        parseUserMentions(course, answerPost.getContent());
+        parseUserMentions(course, request.content());
 
-        AnswerPost updatedAnswerPost;
+        // Authorization model preserves the pre-refactor contract:
+        //
+        // * Resolve-flag change and content edit are authorization-distinct. The resolving permission
+        // (`mayMarkAnswerPostAsResolvingElseThrow` — parent-post author or instructor) is orthogonal to
+        // the content-edit permission (`mayUpdateOrDeleteAnswerPostElseThrow` — answer author). An
+        // instructor can toggle resolve on someone else's answer without being allowed to rewrite its
+        // content.
+        // * If the resolve flag is actually changing, the request is treated primarily as a resolve
+        // operation. Sending the existing content alongside (a common frontend pattern) does not trigger
+        // the content-edit authorization. If the request additionally carries *different* content, the
+        // content edit is independently authorized — this closes the CodeRabbit-flagged corner case where
+        // a single PUT that changed both fields silently dropped the content because only the resolve
+        // branch ran.
+        // * If the resolve flag is unchanged, the request is treated as a content edit; the ownership
+        // check fires even for no-op edits, matching the original `else` branch that always asserted
+        // ownership before writing content back, so a non-author cannot probe the endpoint with a
+        // same-content PUT.
+        // `resolvesPost` is a boxed Boolean on the DTO; null means "field not provided, do not toggle".
 
-        // determine if the update operation is to mark the answer post as resolving the original post
-        if (!Objects.equals(existingAnswerPost.doesResolvePost(), answerPost.doesResolvePost())) {
-            // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
+        boolean resolveFlagChanging = request.resolvesPost() != null && !Objects.equals(existingAnswerPost.doesResolvePost(), request.resolvesPost());
+        if (resolveFlagChanging) {
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
-            existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
-            // sets the post as resolved if there exists any resolving answer
+            existingAnswerPost.setResolvesPost(request.resolvesPost());
+            // re-evaluate the parent post's resolved status — any resolving answer keeps the post marked as resolved
             existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerPost.getPost());
+
+            if (request.content() != null && !Objects.equals(existingAnswerPost.getContent(), request.content())) {
+                mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
+                existingAnswerPost.setContent(request.content());
+                existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            }
         }
         else {
-            // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
             mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
-            existingAnswerPost.setContent(answerPost.getContent());
-            existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            if (request.content() != null && !Objects.equals(existingAnswerPost.getContent(), request.content())) {
+                existingAnswerPost.setContent(request.content());
+                existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            }
         }
-        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+
+        AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }

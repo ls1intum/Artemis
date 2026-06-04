@@ -11,8 +11,8 @@ import { HttpResponse } from '@angular/common/http';
 
 import { EditLtiConfigurationComponent } from './edit-lti-configuration.component';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

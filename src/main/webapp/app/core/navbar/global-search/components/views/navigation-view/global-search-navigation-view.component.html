@@ -1,26 +1,15 @@
-<!-- Action button: Ask Iris AI (visible when iris enabled and split view not already open, index 0) -->
-@if (irisEnabled && !irisOpen()) {
-    <div #selectableItem>
-        <jhi-global-search-action-item
-            [title]="'global.search.askIris' | artemisTranslate"
-            [description]="'global.search.askIrisDescription' | artemisTranslate"
-            [selected]="selectedIndex() === 0"
-            accentColor="var(--global-search-iris-accent)"
-            secondaryAccentColor="var(--global-search-iris-accent-secondary)"
-            (clicked)="viewSelected.emit(SearchView.Iris)"
-        >
-            <jhi-iris-logo slot="icon" [size]="IrisLogoSize.TEXT" aria-hidden="true" />
-        </jhi-global-search-action-item>
-    </div>
+<!-- Iris inline answer card -->
+@if (irisEnabled()) {
+    <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
 }
 
 <!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
-@if (irisEnabled && showLectureButton()) {
+@if (irisEnabled() && showLectureButton()) {
     <div #selectableItem>
         <jhi-global-search-action-item
             [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
             [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
-            [selected]="selectedIndex() === (irisOpen() ? 0 : 1)"
+            [selected]="selectedIndex() === LECTURE_SEARCH_ACTION_INDEX"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
             (clicked)="viewSelected.emit(SearchView.Lecture)"
@@ -40,7 +29,7 @@
 <!-- Results list when searching or filter is active -->
 @if (showResults() && !isLoading() && !searchError()) {
     @if (results().length > 0) {
-        <div class="search-results-list mt-3">
+        <div class="search-results-list" [class.mt-3]="irisEnabled()">
             @for (result of results(); track result.id; let i = $index) {
                 <div #selectableItem>
                     <jhi-global-search-result-item
@@ -53,13 +42,13 @@
             }
         </div>
     } @else {
-        <div class="no-results-state mt-3 p-3 text-center text-secondary">
+        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisEnabled()">
             <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
         </div>
     }
 } @else if (isLoading()) {
     <!-- Skeleton loading placeholders -->
-    <div class="search-results-list mt-3">
+    <div class="search-results-list" [class.mt-3]="irisEnabled()">
         @for (_ of skeletonItems; track $index) {
             <div class="skeleton-result-item p-3" aria-hidden="true">
                 <div class="d-flex align-items-start gap-3">
@@ -80,7 +69,7 @@
     </div>
 } @else {
     <!-- Searchable entities list (initial state) -->
-    <div class="entity-list mt-3">
+    <div class="entity-list" [class.mt-3]="irisEnabled()">
         @for (entity of searchableEntities; track entity.id; let i = $index) {
             <div #selectableItem>
                 <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === actionButtonCount() + i" (entityClick)="onEntityItemClick($event)" />

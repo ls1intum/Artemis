@@ -48,7 +48,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+                .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -61,7 +61,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+                .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -72,6 +72,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
-        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendSync(any(User.class), anyString(), anyString(), anyMap()));
     }
 }

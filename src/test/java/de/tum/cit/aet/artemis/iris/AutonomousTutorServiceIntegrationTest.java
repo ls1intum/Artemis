@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
@@ -125,7 +125,8 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
-        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostDTO.class));
+        // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
+        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -140,7 +141,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         assertThat(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId())).hasSize(initialCount);
-        verify(websocketMessagingService, never()).sendMessage(any(String.class), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(any(String.class), any(PostBroadcastDTO.class));
     }
 
     @Test

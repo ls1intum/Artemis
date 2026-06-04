@@ -27,6 +27,9 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -124,11 +127,10 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         return answerPostRepository.save(answerPost);
     }
 
-    private Post createPostViaApi(Conversation conversation) throws Exception {
-        Post post = new Post();
-        post.setConversation(conversation);
-        post.setContent("Test message in " + conversation.getClass().getSimpleName());
-        return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", post, Post.class, HttpStatus.CREATED);
+    private PostResponseDTO createPostViaApi(Conversation conversation) throws Exception {
+        CreatePostDTO postToCreate = new CreatePostDTO("Test message in " + conversation.getClass().getSimpleName(), null, false,
+                new CreatePostConversationDTO(conversation.getId()));
+        return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postToCreate, PostResponseDTO.class, HttpStatus.CREATED);
     }
 
     @Nested
@@ -324,17 +326,17 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         void testCreatePostInPrivateChannel_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-priv");
-            Post sentinelPost = createPostViaApi(publicChannel);
+            PostResponseDTO sentinelPost = createPostViaApi(publicChannel);
 
             // Create post in private channel via API
             Channel privateChannel = createPrivateChannel("filter-private");
-            Post privatePost = createPostViaApi(privateChannel);
+            PostResponseDTO privatePost = createPostViaApi(privateChannel);
 
             // Wait for sentinel to appear, proving async Weaviate operations have been processed
-            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.id());
 
             // Assert the private channel post was NOT indexed
-            assertThat(queryPostProperties(weaviateService, privatePost.getId())).isNull();
+            assertThat(queryPostProperties(weaviateService, privatePost.id())).isNull();
         }
 
         @Test
@@ -342,18 +344,18 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         void testCreatePostInOneToOneChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-dm");
-            Post sentinelPost = createPostViaApi(publicChannel);
+            PostResponseDTO sentinelPost = createPostViaApi(publicChannel);
 
             // Create post in one-to-one chat via API
             User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
             Conversation oneToOneChat = conversationUtilService.createOneToOneChat(course, instructor, tutor);
-            Post dmPost = createPostViaApi(oneToOneChat);
+            PostResponseDTO dmPost = createPostViaApi(oneToOneChat);
 
             // Wait for sentinel to appear, proving async Weaviate operations have been processed
-            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.id());
 
             // Assert the direct message post was NOT indexed
-            assertThat(queryPostProperties(weaviateService, dmPost.getId())).isNull();
+            assertThat(queryPostProperties(weaviateService, dmPost.id())).isNull();
         }
 
         @Test
@@ -361,18 +363,18 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         void testCreatePostInGroupChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-gc");
-            Post sentinelPost = createPostViaApi(publicChannel);
+            PostResponseDTO sentinelPost = createPostViaApi(publicChannel);
 
             // Create post in group chat via API
             User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
             Conversation groupChat = conversationUtilService.createGroupChat(course, instructor, tutor);
-            Post gcPost = createPostViaApi(groupChat);
+            PostResponseDTO gcPost = createPostViaApi(groupChat);
 
             // Wait for sentinel to appear, proving async Weaviate operations have been processed
-            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.id());
 
             // Assert the group chat post was NOT indexed
-            assertThat(queryPostProperties(weaviateService, gcPost.getId())).isNull();
+            assertThat(queryPostProperties(weaviateService, gcPost.id())).isNull();
         }
     }
 }

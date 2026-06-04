@@ -5,7 +5,7 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('GradingPresentationsComponent', () => {

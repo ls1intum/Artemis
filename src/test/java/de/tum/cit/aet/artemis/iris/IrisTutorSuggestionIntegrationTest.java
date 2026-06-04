@@ -320,7 +320,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private static String tutorSuggestionUrl(long sessionId) {
-        return "/api/iris/tutor-suggestion/" + sessionId + "/sessions";
+        return "/api/iris/tutor-suggestion/posts/" + sessionId + "/sessions";
     }
 
     private static String irisSessionUrl(long sessionId) {

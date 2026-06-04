@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class BuildPhasesTemplateService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/programming/phases/templates';
+    private resourceUrl = 'api/localci/phases/templates';
 
     getTemplate(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean): Observable<BuildPlanPhases> {
         const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns);

@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, input, output, viewChild } from '@angu
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ChipModule } from 'primeng/chip';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchEntityType } from '../../../models/searchable-entity.model';
 
 @Component({

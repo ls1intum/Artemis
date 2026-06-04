@@ -5,8 +5,8 @@ import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/Plagiarism
 import { NgbDropdown, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * A file name that additionally stores if a plagiarism match has been found for it.

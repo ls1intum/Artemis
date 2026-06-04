@@ -1,7 +1,7 @@
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { MODULE_FEATURE_APOLLON, MODULE_FEATURE_ATHENA, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const programmingLanguageFeatures: ProgrammingLanguageFeature[] = [
     {

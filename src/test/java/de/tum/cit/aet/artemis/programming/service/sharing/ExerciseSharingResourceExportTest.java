@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
@@ -88,7 +88,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         assertThat(progrO).isPresent();
         ProgrammingExercise progr = progrO.get();
         MvcResult result = requestUtilService
-                .performMvcRequest(post("/api/programming/sharing/export/" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+                .performMvcRequest(post("/api/programming/sharing/export?exerciseId=" + progr.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isInternalServerError()).andReturn();
 
         String content = result.getResponse().getContentAsString();
@@ -110,7 +110,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     private void testExportWithRepositories() throws Exception {
 
         MvcResult result = requestUtilService
-                .performMvcRequest(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+                .performMvcRequest(
+                        post("/api/programming/sharing/export?exerciseId=" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN + ";charset=UTF-8")).andExpect(status().isOk()).andReturn();
         String jsonResult = result.getResponse().getContentAsString();
 
@@ -143,7 +144,8 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testExportWithRepositoriesAsStudentNotAuthorized() throws Exception {
         requestUtilService
-                .performMvcRequest(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+                .performMvcRequest(
+                        post("/api/programming/sharing/export?exerciseId=" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError());
     }
 

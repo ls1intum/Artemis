@@ -19,13 +19,18 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Use only imports, classes, constructors, methods, fields, annotations, and utilities that exist in the provided repository context or in the files you are generating.
 2. Do not reference invented helpers such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless those helpers are already present in the context or are explicitly generated in the output.
 3. Match the actual package structure and constructor signatures of the production code exactly.
 4. If a helper is not present, generate headers that construct test data inline instead of depending on a missing abstraction.
 
-If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which test classes, methods, and files each issue touches.
 2. Explain the mismatch between required test APIs and the current headers.

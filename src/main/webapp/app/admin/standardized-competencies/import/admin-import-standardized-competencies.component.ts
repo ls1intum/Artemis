@@ -13,21 +13,21 @@ import {
     convertToKnowledgeAreaForTree,
     sourceToString,
 } from 'app/atlas/shared/entities/standardized-competency.model';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/shared/service/alert.service';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -46,8 +46,7 @@ interface ImportCount {
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
         FontAwesomeModule,
-        NgbCollapse,
-        NgbTooltipModule,
+        TooltipModule,
         ArtemisTranslatePipe,
         TranslateDirective,
         HtmlForMarkdownPipe,

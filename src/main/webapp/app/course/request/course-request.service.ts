@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 import { User } from 'app/account/user/user.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 interface BaseCourseRequestDTO {
     title: string;
@@ -37,8 +37,8 @@ interface CourseRequestsAdminOverviewDTO {
 export class CourseRequestService {
     private http = inject(HttpClient);
 
-    private readonly resourceUrl = 'api/core/course-requests';
-    private readonly adminResourceUrl = 'api/core/admin/course-requests';
+    private readonly resourceUrl = 'api/course/course-requests';
+    private readonly adminResourceUrl = 'api/admin/course-requests';
 
     create(courseRequest: BaseCourseRequest): Observable<CourseRequest> {
         const dto = this.convertRequestToDTO(courseRequest);

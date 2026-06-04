@@ -10,7 +10,7 @@ import { of } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { HttpResponse } from '@angular/common/http';
-import { LtiService } from 'app/shared/service/lti.service';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 describe('CourseLecturesComponent', () => {

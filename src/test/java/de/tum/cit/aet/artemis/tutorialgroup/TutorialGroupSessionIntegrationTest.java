@@ -126,6 +126,19 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         }
 
         @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void createSession_asTutorOfGroupWithInvalidTimeZone_shouldReturnBadRequest() throws Exception {
+            Course course = courseRepository.findByIdElseThrow(exampleCourseId);
+            course.setTimeZone("Invalid/Zone");
+            courseRepository.save(course);
+
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+                    SESSION_END_12_00, SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
         @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
             CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
@@ -277,6 +290,21 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             Course course = courseRepository.findByIdElseThrow(exampleCourseId);
             course.setTimeZone(null);
+            courseRepository.save(course);
+
+            CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
+                    SESSION_END_12_00, SESSION_LOCATION, null);
+            request.putWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void updateSession_asTutorOfGroupWithInvalidTimeZone_shouldReturnBadRequest() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            Course course = courseRepository.findByIdElseThrow(exampleCourseId);
+            course.setTimeZone("Invalid/Zone");
             courseRepository.save(course);
 
             CreateOrUpdateTutorialGroupSessionRequestDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionRequestDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,

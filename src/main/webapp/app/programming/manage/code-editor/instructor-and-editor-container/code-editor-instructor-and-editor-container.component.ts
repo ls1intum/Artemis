@@ -28,27 +28,28 @@ import {
     faTimesCircle,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
 import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionCompletionStatus, HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
@@ -57,7 +58,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
@@ -69,7 +70,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -119,6 +120,21 @@ interface CodeGenerationFileActivity {
 interface CodeGenerationIterationActivityGroup {
     iteration?: number;
     activities: CodeGenerationFileActivity[];
+}
+
+interface CodeGenerationSelectedFeedbackThread {
+    threadId: number;
+    targetType: CommentThreadLocationType;
+    auxiliaryRepositoryId?: number;
+    filePath?: string;
+    lineNumber?: number;
+    locationLabel: string;
+}
+
+interface CodeGenerationSelectedFeedbackRepositorySummary {
+    repositoryType: SupportedCodeGenerationRepositoryType;
+    threadCount: number;
+    threads: CodeGenerationSelectedFeedbackThread[];
 }
 
 interface CodeGenerationRepositoryStatus {
@@ -266,6 +282,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private codeGenAlertService = inject(AlertService);
     private sessionStorageService = inject(SessionStorageService);
     private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
     private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
@@ -288,10 +305,31 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly codeGenerationStatuses = signal<CodeGenerationRepositoryStatus[]>(
         SUPPORTED_CODE_GENERATION_REPOSITORIES.map((repositoryType) => this.createCodeGenerationStatus(repositoryType)),
     );
+    readonly expandedFeedbackSummaryRepositories = signal<SupportedCodeGenerationRepositoryType[]>([]);
     readonly codeGenerationActivityLog = computed(() =>
         this.codeGenerationStatuses()
             .flatMap((status) => status.fileActivities)
             .sort((left, right) => right.timestamp - left.timestamp),
+    );
+    readonly codeGenerationSelectedFeedbackSummaries = computed<CodeGenerationSelectedFeedbackRepositorySummary[]>(() => {
+        const threadsById = new Map(this.exerciseReviewCommentService.threads().map((thread) => [thread.id, thread]));
+
+        return this.supportedCodeGenerationRepositories.map((repositoryType) => {
+            const selectedThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(repositoryType);
+            const threads = selectedThreadIds
+                .map((threadId) => threadsById.get(threadId))
+                .filter((thread): thread is CommentThread => thread !== undefined)
+                .map((thread) => this.mapThreadToSelectedFeedbackThread(thread));
+
+            return {
+                repositoryType,
+                threadCount: threads.length,
+                threads,
+            };
+        });
+    });
+    readonly totalSelectedFeedbackThreadCount = computed(() =>
+        this.codeGenerationSelectedFeedbackSummaries().reduce((threadCount, summary) => threadCount + summary.threadCount, 0),
     );
 
     constructor() {
@@ -367,11 +405,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.noRepositorySelected' });
             return;
         }
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.confirmTitle';
-        modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.confirmText';
-        modalRef.componentInstance.translateText = true;
-        modalRef.result.then(() => this.startCodeGeneration(repositories)).catch(() => {});
+        const dialogRef = openConfirmAutofocusDialog(
+            this.dialogService,
+            {
+                title: 'artemisApp.programmingExercise.codeGeneration.confirmTitle',
+                text: 'artemisApp.programmingExercise.codeGeneration.confirmText',
+                translateText: true,
+            },
+            { width: '30rem' },
+        );
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
+                this.startCodeGeneration(repositories);
+            }
+        });
     }
 
     /**
@@ -575,10 +622,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
         // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
+        const request: CodeGenerationRequest = { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
         if (initialAutoGeneration) {
-            return { repositoryType, checkOnly, initialAutoGeneration: true } as unknown as CodeGenerationRequest;
+            request.initialAutoGeneration = true;
         }
-        return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
+        if (!checkOnly) {
+            const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
+                repositoryType,
+                repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+            );
+            if (selectedFeedbackThreadIds.length > 0) {
+                request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
+            }
+        }
+        return request;
     }
 
     /**
@@ -905,6 +962,42 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 iteration: iteration === 'unknown' ? undefined : iteration,
                 activities,
             }));
+    }
+
+    /**
+     * Toggles the selected-feedback details for a repository in the generation settings popover.
+     * @param repositoryType repository whose selected threads should be shown or hidden
+     */
+    toggleFeedbackSummaryRepository(repositoryType: SupportedCodeGenerationRepositoryType): void {
+        this.expandedFeedbackSummaryRepositories.update((expandedRepositories) =>
+            expandedRepositories.includes(repositoryType)
+                ? expandedRepositories.filter((expandedRepositoryType) => expandedRepositoryType !== repositoryType)
+                : [...expandedRepositories, repositoryType],
+        );
+    }
+
+    /**
+     * Returns whether the selected-feedback details for a repository are currently expanded.
+     * @param repositoryType repository to inspect
+     * @returns true if the repository summary is expanded
+     */
+    isFeedbackSummaryRepositoryExpanded(repositoryType: SupportedCodeGenerationRepositoryType): boolean {
+        return this.expandedFeedbackSummaryRepositories().includes(repositoryType);
+    }
+
+    /**
+     * Navigates from the generation settings popover to a selected feedback thread.
+     * @param thread selected feedback thread summary entry
+     */
+    navigateToSelectedFeedbackThread(thread: CodeGenerationSelectedFeedbackThread): void {
+        this.codeGenerationSettingsPopover()?.hide();
+        this.onNavigateToReviewCommentLocation({
+            threadId: thread.threadId,
+            targetType: thread.targetType,
+            filePath: thread.filePath,
+            lineNumber: thread.lineNumber,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+        });
     }
 
     private getCodeGenerationExecutionState(event: Extract<HyperionEvent, { type: 'DONE' }>): Extract<CodeGenerationExecutionState, 'success' | 'warning' | 'error'> {
@@ -1675,6 +1768,33 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         return content;
+    }
+
+    private mapThreadToSelectedFeedbackThread(thread: CommentThread): CodeGenerationSelectedFeedbackThread {
+        const filePath = thread.filePath ?? thread.initialFilePath ?? undefined;
+        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+
+        return {
+            threadId: thread.id,
+            targetType: thread.targetType,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+            filePath,
+            lineNumber,
+            locationLabel: this.getSelectedFeedbackThreadLocationLabel(filePath, lineNumber),
+        };
+    }
+
+    private getSelectedFeedbackThreadLocationLabel(filePath?: string, lineNumber?: number): string {
+        if (filePath && lineNumber !== undefined && lineNumber > 0) {
+            return `${filePath}:${lineNumber}`;
+        }
+        if (filePath) {
+            return filePath;
+        }
+        if (lineNumber !== undefined && lineNumber > 0) {
+            return this.translateService.instant('artemisApp.programmingExercise.codeGeneration.selectedFeedback.line', { line: lineNumber });
+        }
+        return this.translateService.instant('artemisApp.programmingExercise.codeGeneration.selectedFeedback.unknownLocation');
     }
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {

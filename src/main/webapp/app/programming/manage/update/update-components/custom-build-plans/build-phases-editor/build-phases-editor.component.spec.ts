@@ -7,7 +7,7 @@ import { BuildPhasesEditorComponent } from './build-phases-editor.component';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { BuildPhaseEditorComponent } from './build-phase/build-phase-editor.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildPhasesEditorComponent', () => {

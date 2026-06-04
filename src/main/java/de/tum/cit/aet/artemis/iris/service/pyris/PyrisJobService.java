@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -133,6 +134,18 @@ public class PyrisJobService {
         var job = new AutonomousTutorJob(token, postId, courseId);
         getPyrisJobMap().put(token, job);
         return token;
+    }
+
+    /**
+     * Adds a new global search answer job to the job map.
+     * The job stores the requesting user's login so that WebSocket status updates can be routed.
+     *
+     * @param userLogin the login of the user who initiated the search
+     * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
+     */
+    public void addGlobalSearchAnswerJob(String userLogin, String runId) {
+        var job = new GlobalSearchAnswerJob(runId, userLogin);
+        getPyrisJobMap().put(runId, job);
     }
 
     /**

@@ -11,6 +11,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -52,7 +53,7 @@ public record UpdateProgrammingExerciseDTO(
         String testRepositoryUri, String solutionRepositoryUri, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage, String packageName,
         boolean showTestNamesToStudents, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean testCasesChanged, String projectKey,
-        @Nullable SubmissionPolicy submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution,
+        @Nullable SubmissionPolicy submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution, @Nullable AssessmentType assessmentType,
 
         // Build config
         UpdateProgrammingExerciseBuildConfigDTO buildConfig) implements CompetencyLinksHolderDTO {
@@ -102,6 +103,7 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(),
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(), exercise.getShowTestNamesToStudents(),
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(), exercise.getSubmissionPolicy(),
-                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
+                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
     }
 }

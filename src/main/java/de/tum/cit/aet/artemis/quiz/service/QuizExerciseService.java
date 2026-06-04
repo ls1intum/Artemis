@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -68,6 +67,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -260,8 +260,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<DragAndDropMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<DragAndDropMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : dndDTO.correctMappings()) {
             boolean mappingExists = existingMappings.stream()
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
@@ -273,7 +273,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
-                originalQuestion.getCorrectMappings().add(newMapping);
+                originalQuestion.addCorrectMapping(newMapping);
                 recalculationNecessary = true;
             }
         }
@@ -454,7 +454,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setSpot(spot);
         newMapping.setSolution(solution);
-        originalQuestion.getCorrectMappings().add(newMapping);
+        originalQuestion.addCorrectMapping(newMapping);
         return true;
     }
 
@@ -470,8 +470,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<ShortAnswerMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : saDTO.correctMappings()) {
             if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {
                 recalculationNecessary = true;
@@ -1234,13 +1234,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        QuizBatch synchronizedBatch = dto.quizBatch();
-        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dto.duration() == null) {
+        ZonedDateTime synchronizedBatchStartTime = dto.quizBatchStartTime();
+        if (synchronizedBatchStartTime == null || dto.duration() == null) {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatchStartTime,
+                synchronizedBatchStartTime.plusSeconds(dto.duration()), null, null));
     }
 
     /**

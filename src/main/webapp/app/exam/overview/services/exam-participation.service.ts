@@ -11,13 +11,13 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { SidebarCardElement } from 'app/shared/types/sidebar';
+import { SidebarCardElement } from 'app/foundation/types/sidebar';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -149,7 +149,7 @@ export class ExamParticipationService {
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/test-runs/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);

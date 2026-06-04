@@ -116,7 +116,8 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(textExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
 
-        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(newTextExercise).isNotNull();

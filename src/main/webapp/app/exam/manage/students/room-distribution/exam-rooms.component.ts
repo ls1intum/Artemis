@@ -7,19 +7,19 @@ import {
     ExamRoomOverviewNumberOfAvailable,
     ExamRoomUploadInformationDTO,
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 /**
  * Component for managing exam rooms.

@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**

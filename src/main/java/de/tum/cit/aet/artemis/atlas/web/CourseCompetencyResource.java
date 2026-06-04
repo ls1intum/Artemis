@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,10 +32,12 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
@@ -56,10 +59,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -333,9 +335,9 @@ public class CourseCompetencyResource {
      * @param competencyRelationId the id of the competency relation
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @DeleteMapping("courses/{courseId}/course-competencies/relations/{relationId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId) {
+    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId) {
         log.info("REST request to remove a competency relation: {}", competencyRelationId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
@@ -358,14 +360,20 @@ public class CourseCompetencyResource {
      */
     @PostMapping("courses/{courseId}/course-competencies/generate-from-description")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody PyrisCompetencyExtractionInputDTO input) {
+    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @Valid @RequestBody CompetencyGenerationRequestDTO input) {
         var api = irisCompetencyApi.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
+        var currentCompetencyDTOs = Optional.ofNullable(input.currentCompetencies()).orElse(List.of());
+        if (currentCompetencyDTOs.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestAlertException("currentCompetencies must not contain null elements", ENTITY_NAME, "nullCurrentCompetency");
+        }
+        var currentCompetencies = currentCompetencyDTOs.stream()
+                .map(competency -> new IrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
 
         // Start the Iris competency generation pipeline for the given course.
         // The generated competencies will be sent async over the websocket on the topic /topic/iris/competencies/{courseId}
-        api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), input.currentCompetencies());
+        api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), currentCompetencies);
 
         return ResponseEntity.accepted().build();
     }
@@ -378,9 +386,9 @@ public class CourseCompetencyResource {
      * @param updateCourseCompetencyRelationDTO the new relation type
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{relationId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId,
             @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
         log.info("REST request to update a competency relation: {}", competencyRelationId);
         courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);
