@@ -83,6 +83,62 @@ export const courseRoutes: Routes = [
         canActivate: [UserRouteAccessService],
         children: [
             {
+                // Original student exercise overview backed by mock data (dev only).
+                // Declared before the real `exercises` route so `original` is not parsed as an :exerciseId.
+                path: 'exercises/original',
+                loadComponent: () => import('app/core/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.exercises',
+                    hasSidebar: true,
+                    showRefreshButton: true,
+                },
+                canActivate: [UserRouteAccessService],
+                children: [
+                    {
+                        // Mock exercise detail (problem statement etc.) shown in the right panel on click.
+                        path: ':exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        pathMatch: 'full',
+                    },
+                ],
+            },
+            {
+                // Experimental student exercise overview (redesign canvas) backed by mock data (dev only).
+                // Currently identical to /original; the redesign will diverge here later.
+                path: 'exercises/experimental',
+                loadComponent: () => import('app/core/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.exercises',
+                    hasSidebar: true,
+                    showRefreshButton: true,
+                },
+                canActivate: [UserRouteAccessService],
+                children: [
+                    {
+                        // Mock exercise detail (problem statement etc.) shown in the right panel on click.
+                        path: ':exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        pathMatch: 'full',
+                    },
+                ],
+            },
+            {
                 path: CourseOverviewRoutePath.EXERCISES,
                 loadComponent: () => import('app/core/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
