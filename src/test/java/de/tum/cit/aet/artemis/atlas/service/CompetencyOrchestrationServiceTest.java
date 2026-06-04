@@ -1,13 +1,17 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR;
+import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.FAILED;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.IN_PROGRESS;
+import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.PARTIAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -16,6 +20,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,7 +38,10 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -152,7 +161,7 @@ class CompetencyOrchestrationServiceTest {
         when(programmingExerciseRepository.findById(77L)).thenReturn(Optional.of(foreignQueued));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
-        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L), Set.of())));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L))));
         when(contentExtractionService.extractContent(clicked)).thenThrow(new RuntimeException("stop after queued"));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
@@ -174,7 +183,7 @@ class CompetencyOrchestrationServiceTest {
         when(programmingExerciseRepository.findById(33L)).thenReturn(Optional.of(queued));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
-        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L), Set.of())));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
         // Both calls to extractContent throw so we can verify ordering without driving the full LLM path.
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenThrow(new RuntimeException("stop"));
 
@@ -183,6 +192,42 @@ class CompetencyOrchestrationServiceTest {
         InOrder order = inOrder(contentExtractionService);
         order.verify(contentExtractionService).extractContent(queued);
         order.verify(contentExtractionService).extractContent(clicked);
+    }
+
+    @Test
+    void run_partialWhenExceptionAfterAppliedActions() {
+        ProgrammingExercise exercise = courseExercise(15L);
+        when(programmingExerciseRepository.findByIdElseThrow(15L)).thenReturn(exercise);
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(toolCallbackFactory.createOrchestratorProvider()).thenReturn(mock(org.springframework.ai.tool.ToolCallbackProvider.class));
+
+        ChatClient mockChatClient = mock(ChatClient.class);
+        ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
+        when(mockChatClient.prompt()).thenReturn(spec);
+        when(spec.system(anyString())).thenReturn(spec);
+        when(spec.user(anyString())).thenReturn(spec);
+        when(spec.options(any())).thenReturn(spec);
+        when(spec.toolCallbacks(any(org.springframework.ai.tool.ToolCallbackProvider.class))).thenReturn(spec);
+        when(spec.toolContext(anyMap())).thenAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> ctx = invocation.getArgument(0);
+            OrchestratorToolsService.AppliedActionsBuffer buffer = (OrchestratorToolsService.AppliedActionsBuffer) ctx.get(OrchestratorToolsService.APPLIED_ACTIONS_KEY);
+            buffer.actions().add(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"));
+            return spec;
+        });
+        when(spec.call()).thenThrow(new RuntimeException("LLM connection lost"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).run(15L);
+
+        assertThat(result.status()).isEqualTo(PARTIAL);
+        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
+        assertThat(result.appliedActions()).hasSize(1);
+        assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
     }
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {

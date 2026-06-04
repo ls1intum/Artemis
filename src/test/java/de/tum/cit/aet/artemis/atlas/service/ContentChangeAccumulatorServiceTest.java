@@ -69,11 +69,9 @@ class ContentChangeAccumulatorServiceTest {
 
     @Test
     void record_mergesMultipleEventsIntoSameCourseBucket() {
-        service.record(1L, 10L, false);
+        service.record(1L, 10L);
         clock.advanceSeconds(5);
-        service.record(1L, 11L, false);
-        clock.advanceSeconds(5);
-        service.record(1L, 20L, true);
+        service.record(1L, 11L);
 
         assertThat(service.listDueCourseIds()).isEmpty();
         assertThat(service.claimDueBatch(1L)).isEmpty();
@@ -81,16 +79,15 @@ class ContentChangeAccumulatorServiceTest {
 
     @Test
     void claimDueBatch_drainsBucketOnceDebounceWindowElapses() {
-        service.record(1L, 10L, false);
-        service.record(1L, 20L, true);
+        service.record(1L, 10L);
+        service.record(1L, 11L);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
 
         assertThat(service.listDueCourseIds()).containsExactly(1L);
 
         Optional<BatchClaim> claim = service.claimDueBatch(1L);
         assertThat(claim).isPresent();
-        assertThat(claim.get().exerciseIds()).containsExactly(10L);
-        assertThat(claim.get().lectureUnitIds()).containsExactly(20L);
+        assertThat(claim.get().exerciseIds()).containsExactlyInAnyOrder(10L, 11L);
 
         assertThat(service.claimDueBatch(1L)).isEmpty();
     }
@@ -98,13 +95,13 @@ class ContentChangeAccumulatorServiceTest {
     @Test
     void claimDueBatch_respectsPerDayCap() {
         for (int i = 0; i < DAILY_CAP; i++) {
-            service.record(1L, 100L + i, false);
+            service.record(1L, 100L + i);
             clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
             Optional<BatchClaim> claim = service.claimDueBatch(1L);
             assertThat(claim).as("run #%d", i + 1).isPresent();
         }
 
-        service.record(1L, 999L, false);
+        service.record(1L, 999L);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         assertThat(service.claimDueBatch(1L)).isEmpty();
 
@@ -115,30 +112,10 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
-    void claimDueBatch_lectureOnlyBatchesDoNotConsumeDailyCap() {
-        // Drain DAILY_CAP lecture-only batches; per cap should not be consumed because no
-        // orchestrator run actually fires for lecture-only batches.
-        for (int i = 0; i < DAILY_CAP + 2; i++) {
-            service.record(1L, 100L + i, true);
-            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
-            Optional<BatchClaim> claim = service.claimDueBatch(1L);
-            assertThat(claim).as("lecture-only run #%d", i + 1).isPresent();
-            assertThat(claim.get().exerciseIds()).isEmpty();
-        }
-
-        // A programming-exercise change should still fire after the lecture-only drains.
-        service.record(1L, 999L, false);
-        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
-        Optional<BatchClaim> exerciseClaim = service.claimDueBatch(1L);
-        assertThat(exerciseClaim).isPresent();
-        assertThat(exerciseClaim.get().exerciseIds()).containsExactly(999L);
-    }
-
-    @Test
     void listDueCourseIds_keepsCoursesIndependent() {
-        service.record(1L, 10L, false);
+        service.record(1L, 10L);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
-        service.record(2L, 20L, false);
+        service.record(2L, 20L);
 
         assertThat(service.listDueCourseIds()).containsExactly(1L);
         assertThat(service.claimDueBatch(2L)).isEmpty();
@@ -146,12 +123,12 @@ class ContentChangeAccumulatorServiceTest {
 
     @Test
     void mergeEntryProcessorReplaysAcrossSerialization() {
-        service.record(1L, 10L, false);
+        service.record(1L, 10L);
         ContentChangeAccumulator first = hazelcastInstance.<Long, ContentChangeAccumulator>getMap(ContentChangeAccumulatorService.MAP_NAME).get(1L);
         assertThat(first).isNotNull();
         assertThat(first.exerciseIds()).containsExactly(10L);
 
-        service.record(1L, 11L, false);
+        service.record(1L, 11L);
         ContentChangeAccumulator second = hazelcastInstance.<Long, ContentChangeAccumulator>getMap(ContentChangeAccumulatorService.MAP_NAME).get(1L);
         assertThat(second).isNotNull();
         assertThat(second.exerciseIds()).containsExactlyInAnyOrder(10L, 11L);
@@ -160,12 +137,12 @@ class ContentChangeAccumulatorServiceTest {
     @Test
     void claimBatchNow_doesNotConsumeDailyCap() {
         for (int i = 0; i < DAILY_CAP; i++) {
-            service.record(1L, 100L + i, false);
+            service.record(1L, 100L + i);
             clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
             assertThat(service.claimDueBatch(1L)).as("scheduled run #%d", i + 1).isPresent();
         }
 
-        service.record(1L, 200L, false);
+        service.record(1L, 200L);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         assertThat(service.claimDueBatch(1L)).as("scheduled cap must be exhausted").isEmpty();
 
@@ -173,7 +150,7 @@ class ContentChangeAccumulatorServiceTest {
         assertThat(manualClaim).as("manual flush must bypass daily cap").isPresent();
         assertThat(manualClaim.get().exerciseIds()).containsExactly(200L);
 
-        service.record(1L, 300L, false);
+        service.record(1L, 300L);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         assertThat(service.claimDueBatch(1L)).as("manual flush must not have freed scheduled quota").isEmpty();
     }

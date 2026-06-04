@@ -1,13 +1,4 @@
 <form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
-                {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
-            </span>
-            <span>({{ exercise.title }})</span>
-        </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
     <div class="modal-body">
         <div class="form-group">
             <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName"></label>
@@ -78,18 +69,18 @@
                 @if (searchingOwnerFailed) {
                     <span class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed"></span>
                 }
-                @if (team.id && team.owner?.id !== pendingTeam.owner?.id) {
-                    <span jhiTranslate="artemisApp.team.ownerChangeWarning" [translateValues]="{ shortName: team.shortName }" class="label-inline-message text-danger">
-                        This will change the tutor for the team {{ team.shortName }} in the whole course!
+                @if (team().id && team().owner?.id !== pendingTeam.owner?.id) {
+                    <span jhiTranslate="artemisApp.team.ownerChangeWarning" [translateValues]="{ shortName: team().shortName }" class="label-inline-message text-danger">
+                        This will change the tutor for the team {{ team().shortName }} in the whole course!
                     </span>
                 }
             </div>
             <jhi-team-owner-search
                 id="teamOwner"
-                [inputDisabled]="!exercise.isAtLeastInstructor"
-                [course]="exercise.course!"
-                [exercise]="exercise"
-                [team]="team"
+                [inputDisabled]="!exercise().isAtLeastInstructor"
+                [course]="exercise().course!"
+                [exercise]="exercise()"
+                [team]="team()"
                 (selectOwner)="onSelectOwner($event)"
                 (searching)="searchingOwner = $event"
                 (searchQueryTooShort)="searchingOwnerQueryTooShort = $event"
@@ -118,9 +109,9 @@
             </div>
             <jhi-team-student-search
                 id="teamStudents"
-                [course]="exercise.course!"
-                [exercise]="exercise"
-                [team]="team"
+                [course]="exercise().course!"
+                [exercise]="exercise()"
+                [team]="team()"
                 [studentsFromPendingTeam]="pendingTeam.students || []"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -54,7 +53,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
-        verify(accumulator).record(COURSE_ID, EXERCISE_ID, false);
+        verify(accumulator).record(COURSE_ID, EXERCISE_ID);
     }
 
     @Test
@@ -64,7 +63,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
+        verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
     @Test
@@ -77,7 +76,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
+        verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
     @Test
@@ -91,7 +90,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
+        verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
     @Test
@@ -100,7 +99,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(null));
 
-        verify(accumulator, never()).record(anyLong(), anyLong(), anyBoolean());
+        verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
     @Test
@@ -111,7 +110,7 @@ class AutonomousCompetencyExerciseEventListenerTest {
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise));
 
-        verify(accumulator, times(2)).record(COURSE_ID, EXERCISE_ID, false);
+        verify(accumulator, times(2)).record(COURSE_ID, EXERCISE_ID);
     }
 
     private ProgrammingExercise courseExercise() {

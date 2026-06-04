@@ -46,9 +46,13 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         this.setupContentHeightListeners();
 
         effect(() => {
+            // Monaco has no dedicated "force side-by-side" flag: it is expressed as renderSideBySide=true plus
+            // useInlineViewWhenSpaceIsLimited=false. Render side-by-side whenever it is allowed or forced, and only
+            // permit the narrow-container inline fallback when neither is the case, so an explicitly enabled (or
+            // forced) split view is always honored regardless of width.
             this._editor.updateOptions({
-                renderSideBySide: this.allowSplitView(),
-                useInlineViewWhenSpaceIsLimited: !this.forceSideBySide(),
+                renderSideBySide: this.allowSplitView() || this.forceSideBySide(),
+                useInlineViewWhenSpaceIsLimited: !this.allowSplitView() && !this.forceSideBySide(),
             });
         });
 

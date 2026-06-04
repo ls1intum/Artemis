@@ -23,7 +23,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -46,8 +46,7 @@ interface ImportCount {
     templateUrl: './admin-import-standardized-competencies.component.html',
     imports: [
         FontAwesomeModule,
-        NgbCollapse,
-        NgbTooltipModule,
+        TooltipModule,
         ArtemisTranslatePipe,
         TranslateDirective,
         HtmlForMarkdownPipe,

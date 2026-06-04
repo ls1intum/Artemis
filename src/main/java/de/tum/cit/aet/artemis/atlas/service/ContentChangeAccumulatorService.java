@@ -31,11 +31,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 
 /**
  * Distributed per-course accumulator backed by the Hazelcast map
- * {@code atlas-content-change-accumulator}. Content change events (exercise version created or
- * lecture unit edited) call {@link #record(long, long, boolean)} to merge the content id into the
- * course's bucket. After the debounce window elapses the scheduler calls
- * {@link #claimDueBatch(long)} to atomically drain and reset the bucket, applying the per-day cap
- * before returning a batch.
+ * {@code atlas-content-change-accumulator}. Exercise version created events call
+ * {@link #record(long, long)} to merge the exercise id into the course's bucket. After the
+ * debounce window elapses the scheduler calls {@link #claimDueBatch(long)} to atomically drain
+ * and reset the bucket, applying the per-day cap before returning a batch.
  * <p>
  * Every mutation uses {@link IMap#executeOnKey} so that concurrent updates from different nodes
  * linearise against the single partition owner — we never read-modify-write on the client side,
@@ -83,18 +82,16 @@ public class ContentChangeAccumulatorService {
     }
 
     /**
-     * Record a content change for a course. Caller must have already filtered exam exercises and
+     * Record an exercise change for a course. Caller must have already filtered exam exercises and
      * other ineligible content — this method does not revalidate.
      *
-     * @param courseId      the course the content belongs to
-     * @param contentId     id of the exercise or lecture unit that changed
-     * @param isLectureUnit {@code true} to merge into {@code lectureUnitIds}, {@code false} for
-     *                          exercises
+     * @param courseId   the course the exercise belongs to
+     * @param exerciseId id of the exercise that changed
      */
-    public void record(long courseId, long contentId, boolean isLectureUnit) {
+    public void record(long courseId, long exerciseId) {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        map.executeOnKey(courseId, new MergeEntryProcessor(contentId, isLectureUnit, now, today));
+        map.executeOnKey(courseId, new MergeEntryProcessor(exerciseId, now, today));
     }
 
     /**
@@ -198,14 +195,14 @@ public class ContentChangeAccumulatorService {
     }
 
     /** The completion snapshot returned by {@link #claimDueBatch(long)}. */
-    public record BatchClaim(Set<Long> exerciseIds, Set<Long> lectureUnitIds) implements Serializable {
+    public record BatchClaim(Set<Long> exerciseIds) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
     }
 
     /**
-     * Hazelcast-side merge: append a single id into the per-course accumulator, bumping
+     * Hazelcast-side merge: append a single exercise id into the per-course accumulator, bumping
      * {@code lastEventTime} so the debounce window restarts. Runs atomically on the partition
      * owner — concurrent calls across nodes linearise through this processor, so no event is lost.
      */
@@ -214,17 +211,14 @@ public class ContentChangeAccumulatorService {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        private final long contentId;
-
-        private final boolean isLectureUnit;
+        private final long exerciseId;
 
         private final Instant now;
 
         private final LocalDate today;
 
-        MergeEntryProcessor(long contentId, boolean isLectureUnit, Instant now, LocalDate today) {
-            this.contentId = contentId;
-            this.isLectureUnit = isLectureUnit;
+        MergeEntryProcessor(long exerciseId, Instant now, LocalDate today) {
+            this.exerciseId = exerciseId;
             this.now = now;
             this.today = today;
         }
@@ -233,7 +227,7 @@ public class ContentChangeAccumulatorService {
         public Void process(java.util.Map.Entry<Long, ContentChangeAccumulator> entry) {
             ContentChangeAccumulator current = entry.getValue();
             ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
-            entry.setValue(next.with(contentId, isLectureUnit, now));
+            entry.setValue(next.with(exerciseId, now));
             return null;
         }
     }
@@ -277,16 +271,12 @@ public class ContentChangeAccumulatorService {
             if (now != null && debounceWindow != null && current.lastEventTime().plus(debounceWindow).isAfter(now)) {
                 return null;
             }
-            // Lecture-only batches are deferred by the scheduler (orchestrator does not yet accept
-            // lecture units), so the daily cap is irrelevant to them. Gating their claim by the cap
-            // would leave the bucket re-firing every tick until its TTL expires.
-            boolean batchTriggersOrchestration = !current.exerciseIds().isEmpty();
             int effectiveDailyCount = today.equals(current.dailyRunCountDate()) ? current.dailyRunCount() : 0;
-            if (countQuota && batchTriggersOrchestration && effectiveDailyCount >= dailyCap) {
+            if (countQuota && effectiveDailyCount >= dailyCap) {
                 return null;
             }
-            BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
-            entry.setValue(current.claim(today, countQuota && batchTriggersOrchestration));
+            BatchClaim claim = new BatchClaim(current.exerciseIds());
+            entry.setValue(current.claim(today, countQuota));
             return claim;
         }
     }

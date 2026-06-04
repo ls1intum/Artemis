@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,6 +34,7 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
@@ -41,10 +44,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * Advisory competency-management orchestrator. {@link #run(long)} drives a tool-calling LLM loop
- * that inspects course state via {@link OrchestratorToolsService} and returns a natural-language
- * summary; no mutations are persisted today. Course context is injected via {@code ToolContext}
- * so the LLM cannot forge the course id.
+ * Entry point for autonomous competency management runs.
+ * <p>
+ * {@link #run(long)} drives a tool-calling LLM loop: the model is given the exercise as anchor
+ * text and can call {@link OrchestratorToolsService}'s read tools to inspect course state and
+ * the five write tools ({@code createCompetency}, {@code editCompetency},
+ * {@code assignExerciseToCompetency}, {@code unassignExerciseFromCompetency},
+ * {@code deleteCompetency}) to mutate it. Every successful mutation is appended to a
+ * per-run applied-actions list held in the Spring AI {@code ToolContext}.
+ * <p>
+ * Course context is injected via {@code ToolContext} (see {@link OrchestratorToolsService}) so
+ * the LLM cannot forge the course id through tool arguments.
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -125,12 +135,20 @@ public class CompetencyOrchestrationService {
     }
 
     /**
-     * Runs one orchestration pass. Result status is SUCCESS, FAILED (with a
-     * {@link CompetencyOrchestrationResultDTO.FailureReason}), or IN_PROGRESS when another run
-     * is already active for the same course.
+     * Run one orchestration pass for the given programming exercise. The orchestrator plans
+     * internally and executes its plan by calling write tools — each tool call mutates state
+     * immediately and appends to the applied-actions list returned in the result.
      *
-     * @param exerciseId the programming exercise to orchestrate
-     * @return the orchestration result
+     * @param exerciseId the programming exercise to orchestrate competencies for
+     * @return one of:
+     *         <ul>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#SUCCESS} with the LLM's summary message and the applied actions;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#PARTIAL} when the LLM threw after committing at least one action — the partial audit trail is included so the
+     *         caller can review/revert;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#FAILED} with {@link CompetencyOrchestrationResultDTO.FailureReason#LLM_ERROR} if the call failed before any action
+     *         committed, or {@link CompetencyOrchestrationResultDTO.FailureReason#NO_CHAT_CLIENT} if no ChatClient is configured;</li>
+     *         <li>{@link CompetencyOrchestrationResultDTO.Status#IN_PROGRESS} if a run is already active for the same course.</li>
+     *         </ul>
      */
     public CompetencyOrchestrationResultDTO run(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -246,33 +264,48 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
+            // Map.of key order is irrelevant: the prompt template references both placeholders by
+            // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex
+            // guarantees neither user-supplied string can break out and reposition the other.
             systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
         }
+        // Synchronized list: Spring AI's roadmap supports parallel tool calls; the orchestrator's
+        // write tools all go through OrchestratorToolsService.appendAction which only adds.
+        List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
-            content = callChatClient(systemPrompt, courseId);
+            content = callChatClient(systemPrompt, courseId, appliedActions);
         }
         catch (Exception ex) {
-            log.warn("Atlas orchestrator LLM call failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
-            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+            log.warn("Atlas orchestrator LLM call failed for exercise {} after applying {} action(s): {}", exerciseId, appliedActions.size(), ex.getMessage(), ex);
+            if (appliedActions.isEmpty()) {
+                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+            }
+            return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).", List.copyOf(appliedActions),
+                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
         }
-        log.info("Atlas orchestrator completed for exercise {} (course {})", exerciseId, courseId);
+        log.info("Atlas orchestrator completed for exercise {} (course {}) with {} applied action(s)", exerciseId, courseId, appliedActions.size());
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-        return CompetencyOrchestrationResultDTO.success(summary);
+        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
     }
 
-    /** Drives the Spring AI tool-calling loop; caller guarantees {@link #chatClient} is non-null. */
-    private String callChatClient(String systemPrompt, long courseId) {
+    /**
+     * Drive the Spring AI tool-calling loop. {@link #run(long)} guarantees {@link #chatClient} is
+     * non-null before we get here, so no null check is needed and no null is returned. Returns the
+     * (possibly empty) final assistant message; the orchestrator's mutations have already been
+     * appended to {@code appliedActions} via the typed buffer in the tool context.
+     */
+    private String callChatClient(String systemPrompt, long courseId, List<AppliedActionDTO> appliedActions) {
         ToolCallingChatOptions options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolsService.COURSE_ID_KEY, courseId);
-        var promptSpec = chatClient.prompt().system(systemPrompt)
-                .user("Inspect the listed exercise change and produce an advisory summary of the competency changes you would recommend.").options(options)
-                .toolContext(toolContext);
+        toolContext.put(OrchestratorToolsService.APPLIED_ACTIONS_KEY, new OrchestratorToolsService.AppliedActionsBuffer(appliedActions));
+        var promptSpec = chatClient.prompt().system(systemPrompt).user("Plan and execute the competency-management actions required by the listed exercise change.")
+                .options(options).toolContext(toolContext);
         if (orchestratorToolCallbackProvider != null) {
             promptSpec = promptSpec.toolCallbacks(orchestratorToolCallbackProvider);
         }

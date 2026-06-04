@@ -32,12 +32,10 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
  * {@code claimDueBatch} → per-exercise orchestrator invocations prevents a concurrent tick on
  * another node from draining the same batch twice.
  * <p>
- * Adapter note: develop's {@link CompetencyOrchestrationService} exposes only the
- * single-exercise {@code run(exerciseId)} method, so this scheduler loops the claimed batch
- * sequentially rather than calling a batched entry point. Lecture-unit-only batches are claimed
- * but not orchestrated (the orchestrator does not yet accept lecture units) — the accumulator
- * still drains them so they will not re-fire after the debounce window. When the orchestrator's
- * batched signature lands, replace {@link #processBatch} with a single call.
+ * Adapter note: {@link CompetencyOrchestrationService} exposes only the single-exercise
+ * {@code run(exerciseId)} method, so this scheduler loops the claimed batch sequentially rather
+ * than calling a batched entry point. When the orchestrator's batched signature lands, replace
+ * {@link #processBatch} with a single call.
  */
 @Conditional(AtlasEnabled.class)
 @Profile(PROFILE_SCHEDULING)
@@ -110,15 +108,6 @@ public class ContentChangeScheduler {
                 return;
             }
             BatchClaim claim = maybeClaim.get();
-            if (claim.exerciseIds().isEmpty()) {
-                // Lecture-unit-only batches are deferred until the orchestrator batched signature
-                // lands; we still drained the accumulator so they won't re-fire on the next tick.
-                if (!claim.lectureUnitIds().isEmpty()) {
-                    log.debug("atlas.automatic course {} drained {} lecture unit(s) — deferred (orchestrator does not yet accept lecture units)", courseId,
-                            claim.lectureUnitIds().size());
-                }
-                return;
-            }
             processBatch(courseId, runId, claim);
         }
         finally {
@@ -142,7 +131,7 @@ public class ContentChangeScheduler {
                     // Concurrent course orchestration — requeue and let the next tick pick it up
                     // instead of consuming the change event as a permanent failure.
                     log.info("atlas.automatic course {} requeueing exercise {} (run {}): concurrent run in progress", courseId, exerciseId, runId);
-                    accumulator.record(courseId, exerciseId, false);
+                    accumulator.record(courseId, exerciseId);
                 }
                 else {
                     failure++;

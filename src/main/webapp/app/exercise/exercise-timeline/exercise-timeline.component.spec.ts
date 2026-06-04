@@ -1,12 +1,15 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
+import { vi } from 'vitest';
 
 import { ExerciseTimelineComponent, TimelineItem } from './exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseTimeline', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseTimelineComponent;
     let fixture: ComponentFixture<ExerciseTimelineComponent>;
 
@@ -18,6 +21,7 @@ describe('ExerciseTimeline', () => {
 
         fixture = TestBed.createComponent(ExerciseTimelineComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('timelineItems', []);
         await fixture.whenStable();
     });
 
@@ -85,7 +89,7 @@ describe('ExerciseTimeline', () => {
         const initialDate = dayjs('2026-01-01T10:00:00Z');
         const newDate = new Date('2026-01-02T10:00:00Z');
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
-        const setSpy = jest.spyOn(item.date, 'set');
+        const setSpy = vi.spyOn(item.date, 'set');
 
         component.updateDate(item, initialDate.toDate());
 
@@ -93,7 +97,7 @@ describe('ExerciseTimeline', () => {
 
         component.updateDate(item, newDate);
 
-        expect(item.date()?.isSame(dayjs(newDate))).toBeTrue();
+        expect(item.date()?.isSame(dayjs(newDate))).toBe(true);
 
         component.updateDate(item, null);
 
@@ -118,7 +122,7 @@ describe('ExerciseTimeline', () => {
 
         component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
 
-        expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBeTrue();
+        expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
         expect(component.internalTimelineItems()[0].internalDate).toEqual(item.date()?.toDate());
     });
 

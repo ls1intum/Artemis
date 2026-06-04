@@ -1,19 +1,20 @@
+@let currentExercise = exercise();
 <div class="panel-wrapper">
     <div class="panel-header" jhiTranslate="artemisApp.exercise.details"></div>
     <div class="vertLine"></div>
     <div class="panel-body">
         <div class="label-column">
-            @if (exercise.releaseDate) {
+            @if (currentExercise.releaseDate) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.releaseDate"></div>
             }
-            @if (exercise.startDate) {
+            @if (currentExercise.startDate) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.startDate"></div>
             }
             <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.submissionDue"></div>
-            @if (exercise.exampleSolutionPublicationDate) {
+            @if (currentExercise.exampleSolutionPublicationDate) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDate"></div>
             }
-            @if (exercise.assessmentDueDate) {
+            @if (currentExercise.assessmentDueDate) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.assessmentDue"></div>
             }
             @if (individualComplaintDueDate) {
@@ -25,22 +26,22 @@
         </div>
 
         <div class="value-column">
-            @if (exercise.releaseDate) {
-                <div>{{ exercise.releaseDate | artemisDate }}</div>
+            @if (currentExercise.releaseDate) {
+                <div>{{ currentExercise.releaseDate | artemisDate }}</div>
             }
-            @if (exercise.startDate) {
-                <div>{{ exercise.startDate | artemisDate }}</div>
+            @if (currentExercise.startDate) {
+                <div>{{ currentExercise.startDate | artemisDate }}</div>
             }
             @if (dueDate) {
                 <div>{{ dueDate | artemisDate }}</div>
             } @else {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
             }
-            @if (exercise.exampleSolutionPublicationDate) {
-                <div>{{ exercise.exampleSolutionPublicationDate | artemisDate }}</div>
+            @if (currentExercise.exampleSolutionPublicationDate) {
+                <div>{{ currentExercise.exampleSolutionPublicationDate | artemisDate }}</div>
             }
-            @if (exercise.assessmentDueDate) {
-                <div>{{ exercise.assessmentDueDate | artemisDate }}</div>
+            @if (currentExercise.assessmentDueDate) {
+                <div>{{ currentExercise.assessmentDueDate | artemisDate }}</div>
             }
             @if (individualComplaintDueDate) {
                 <div>{{ individualComplaintDueDate | artemisDate }}</div>

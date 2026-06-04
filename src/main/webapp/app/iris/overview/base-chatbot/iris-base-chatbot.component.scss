@@ -92,51 +92,47 @@ $iris-z-index-dropdown: 1050;
     }
 }
 
-// Suggestion enter animation using CSS Grid for height + opacity
+// Suggestion enter animation. The container reserves its full height immediately (no height/layout
+// animation) and only fades and slides in. This is deliberate: the suggestions arrive after the
+// messages and the message list auto-scrolls to the bottom when the user is already there (e.g.
+// right after a page refresh). If the container grew its height *after* that scroll — as the
+// previous grid `0fr → 1fr` animation did, especially with its 1s delay — the now-taller container
+// ended up below the fold and was cut off. Animating only opacity/transform keeps the scrollable
+// height correct from the first frame, so whatever scroll-to-bottom fires lands at the true bottom
+// and the whole container stays visible.
 .suggestion-entering {
-    display: grid;
-    grid-template-rows: 0fr;
     opacity: 0;
     animation: suggestion-enter 0.3s 1s ease-in-out forwards;
-
-    > * {
-        overflow: hidden;
-    }
 }
 
 @keyframes suggestion-enter {
     from {
-        grid-template-rows: 0fr;
         opacity: 0;
+        transform: translateY(8px);
     }
 
     to {
-        grid-template-rows: 1fr;
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
-// Suggestion leave animation
+// Suggestion leave animation. Mirrors the enter animation (opacity/transform only) so it likewise
+// does not change the scrollable height while leaving.
 .suggestion-leaving {
-    display: grid;
-    grid-template-rows: 1fr;
     opacity: 1;
     animation: suggestion-leave 0.3s ease-in-out forwards;
-
-    > * {
-        overflow: hidden;
-    }
 }
 
 @keyframes suggestion-leave {
     from {
-        grid-template-rows: 1fr;
         opacity: 1;
+        transform: translateY(0);
     }
 
     to {
-        grid-template-rows: 0fr;
         opacity: 0;
+        transform: translateY(8px);
     }
 }
 
@@ -438,12 +434,7 @@ pre {
         flex: 1;
         min-height: 0;
         align-items: stretch; // stretch children to full width
-        gap: 4px;
         margin: 0 16px;
-
-        &.not-accepted {
-            height: 100%;
-        }
 
         .messages-inner,
         .chat-input,
@@ -483,9 +474,9 @@ pre {
             .messages-inner {
                 display: flex;
                 flex-direction: column;
-                gap: 40px;
+                gap: 24px;
                 margin-inline: auto;
-                padding-bottom: 8px;
+                padding-bottom: 40px;
             }
         }
     }
@@ -533,6 +524,7 @@ pre {
     }
 
     &-inner {
+        position: relative;
         display: flex;
     }
 
@@ -748,8 +740,7 @@ pre {
 
 .scroll-to-bottom {
     position: absolute;
-    bottom: 100px;
-    top: auto;
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     width: 30px;
@@ -761,7 +752,6 @@ pre {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
     z-index: 1;
     border: 1px solid var(--bs-border-color);
 }

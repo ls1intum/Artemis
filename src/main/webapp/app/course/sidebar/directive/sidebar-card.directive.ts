@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, Type, ViewContainerRef, inject } from '@angular/core';
+import { ComponentRef, Directive, OnDestroy, OnInit, OutputRefSubscription, Type, ViewContainerRef, effect, inject, input, output } from '@angular/core';
 import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
@@ -7,18 +7,33 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Directive({
     selector: '[jhiSidebarCard]',
 })
-export class SidebarCardDirective implements OnInit, OnChanges, OnDestroy {
+export class SidebarCardDirective implements OnInit, OnDestroy {
     viewContainerRef = inject(ViewContainerRef);
 
-    @Input() size = 'M';
-    @Input() sidebarItem: SidebarCardElement;
-    @Input() sidebarType?: SidebarTypes;
-    @Input() itemSelected?: boolean;
-    @Input() groupKey?: string;
+    readonly size = input('M');
+    readonly sidebarItem = input<SidebarCardElement>();
+    readonly sidebarType = input<SidebarTypes>();
+    readonly itemSelected = input<boolean>();
+    readonly groupKey = input<string>();
 
-    @Output() onUpdateSidebar = new EventEmitter<void>();
+    readonly onUpdateSidebar = output<void>();
 
-    private componentRef: ComponentRef<any>;
+    private componentRef: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
+    private updateSubscription?: OutputRefSubscription;
+
+    constructor() {
+        // Re-apply inputs whenever any bound signal input changes (replaces ngOnChanges).
+        effect(() => {
+            // Track all inputs so the effect re-runs on any change.
+            this.sidebarItem();
+            this.sidebarType();
+            this.itemSelected();
+            this.groupKey();
+            if (this.componentRef) {
+                this.assignAttributes();
+            }
+        });
+    }
 
     ngOnInit() {
         const cards: { [key: string]: Type<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent> } = {
@@ -27,20 +42,18 @@ export class SidebarCardDirective implements OnInit, OnChanges, OnDestroy {
             L: SidebarCardLargeComponent,
         };
 
-        const cardType = cards[this.size];
+        const cardType = cards[this.size()];
         if (cardType) {
             this.componentRef = this.viewContainerRef.createComponent(cardType);
-            this.assignAttributes();
-        }
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (this.componentRef) {
+            if (this.size() === 'S') {
+                this.updateSubscription = (this.componentRef.instance as SidebarCardSmallComponent).onUpdateSidebar.subscribe(() => this.onUpdateSidebar.emit());
+            }
             this.assignAttributes();
         }
     }
 
     ngOnDestroy() {
+        this.updateSubscription?.unsubscribe();
         if (this.componentRef) {
             this.componentRef.destroy();
         }
@@ -48,17 +61,16 @@ export class SidebarCardDirective implements OnInit, OnChanges, OnDestroy {
 
     private assignAttributes() {
         if (this.componentRef) {
-            if (this.groupKey !== undefined) {
-                this.componentRef.instance.groupKey = this.groupKey;
+            if (this.groupKey() !== undefined) {
+                this.componentRef.setInput('groupKey', this.groupKey());
             }
 
-            this.componentRef.instance.itemSelected = this.itemSelected;
-            this.componentRef.instance.sidebarType = this.sidebarType;
-            this.componentRef.instance.sidebarItem = this.sidebarItem;
-            this.componentRef.instance.sidebarItem.title = this.removeChannelPrefix(this.sidebarItem.title);
-
-            if (this.size == 'S') {
-                this.componentRef.instance.onUpdateSidebar = this.onUpdateSidebar;
+            this.componentRef.setInput('itemSelected', this.itemSelected());
+            this.componentRef.setInput('sidebarType', this.sidebarType());
+            const sidebarItem = this.sidebarItem();
+            if (sidebarItem) {
+                // Do not mutate the signal input value; pass a shallow copy with the cleaned-up title instead.
+                this.componentRef.setInput('sidebarItem', { ...sidebarItem, title: this.removeChannelPrefix(sidebarItem.title) });
             }
         }
     }
@@ -76,7 +88,7 @@ export class SidebarCardDirective implements OnInit, OnChanges, OnDestroy {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
 
-        if (channelTypes.includes(<string>this.groupKey)) {
+        if (channelTypes.includes(<string>this.groupKey())) {
             prefixes.forEach((prefix) => {
                 if (name?.startsWith(prefix)) {
                     name = name.substring(prefix.length);

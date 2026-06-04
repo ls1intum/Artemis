@@ -73,6 +73,6 @@ public class AutonomousCompetencyExerciseEventListener {
             return;
         }
         log.debug("atlas.automatic recorded exercise change courseId={} exerciseId={}", course.getId(), exercise.getId());
-        accumulator.record(course.getId(), exercise.getId(), false);
+        accumulator.record(course.getId(), exercise.getId());
     }
 }

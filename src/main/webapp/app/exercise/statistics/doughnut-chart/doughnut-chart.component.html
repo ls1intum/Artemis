@@ -10,10 +10,10 @@
     <div class="doughnut-chart-container position-relative" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             @if (receivedStats) {
-                <h2 class="text-center">{{ currentPercentage }}%</h2>
+                <h2 class="text-center">{{ currentPercentage() }}%</h2>
             }
             @if (receivedStats) {
-                <h4 class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+                <h4 class="text-center">{{ currentAbsolute() }} / {{ currentMax() }}</h4>
             }
             @if (!receivedStats) {
                 <h1 class="text-center" style="z-index: 1">

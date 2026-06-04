@@ -13,6 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathNavOverviewComponent', () => {
@@ -36,6 +37,7 @@ describe('LearningPathNavOverviewComponent', () => {
                 },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
+                MockProvider(DialogService),
             ],
         })
             .overrideComponent(LearningPathNavOverviewComponent, {

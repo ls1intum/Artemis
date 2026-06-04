@@ -25,40 +25,41 @@
                 >
                     <span jhiTranslate="{{ plagiarismResult ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
-                <ng-template #toggleDeleteModal let-modal>
-                    <div class="modal-header">
-                        <h4 class="modal-title">
-                            <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.title"></span>
-                        </h4>
-                        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+                <p-dialog
+                    [(visible)]="cleanUpModalVisible"
+                    [modal]="true"
+                    [closable]="true"
+                    [dismissableMask]="true"
+                    [draggable]="false"
+                    [appendTo]="'body'"
+                    [header]="'artemisApp.plagiarism.cleanUp.confirmDialog.title' | artemisTranslate"
+                    [style]="{ width: '35rem' }"
+                >
+                    <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question"></p>
+                    <div class="form-check flex-grow-0">
+                        <input
+                            id="deleteAllPlagiarismComparisons"
+                            class="form-check-input"
+                            type="checkbox"
+                            [checked]="deleteAllPlagiarismComparisons"
+                            (change)="toggleDeleteAllPlagiarismComparisons()"
+                        />
+                        <label for="deleteAllPlagiarismComparisons" class="form-check-label" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
                     </div>
-                    <div class="modal-body">
-                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question"></p>
-                        <div class="form-check flex-grow-0">
-                            <input
-                                id="deleteAllPlagiarismComparisons"
-                                class="form-check-input"
-                                type="checkbox"
-                                [checked]="deleteAllPlagiarismComparisons"
-                                (change)="toggleDeleteAllPlagiarismComparisons()"
-                            />
-                            <label for="deleteAllPlagiarismComparisons" class="form-check-label" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
-                        </div>
-                        @if (deleteAllPlagiarismComparisons) {
-                            <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
-                        }
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
+                    @if (deleteAllPlagiarismComparisons) {
+                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
+                    }
+                    <ng-template #footer>
+                        <button type="button" class="btn btn-danger" (click)="confirmCleanUp()">
                             <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
                         </button>
-                    </div>
-                </ng-template>
+                    </ng-template>
+                </p-dialog>
                 @if (exercise.isAtLeastInstructor && plagiarismResult) {
                     <button
                         [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
                         class="check-plagiarism btn btn-danger"
-                        (click)="openCleanUpModal(toggleDeleteModal)"
+                        (click)="openCleanUpModal()"
                         [overwriteDisabled]="detectionInProgress"
                     >
                         <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>

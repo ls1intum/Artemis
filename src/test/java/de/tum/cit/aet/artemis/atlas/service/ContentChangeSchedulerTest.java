@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,10 +29,10 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 /**
- * Behaviour of {@link ContentChangeScheduler} — the per-tick adapter that drives develop's
+ * Behaviour of {@link ContentChangeScheduler} — the per-tick adapter that drives the
  * single-exercise orchestrator from accumulated batches. Verifies the feature-toggle kill switch,
- * the lock-collision skip, lecture-unit-only deferral, the per-exercise success/failure tally,
- * and the WebSocket completion broadcast.
+ * the lock-collision skip, the per-exercise success/failure tally, and the WebSocket completion
+ * broadcast.
  */
 @ExtendWith(MockitoExtension.class)
 class ContentChangeSchedulerTest {
@@ -75,8 +74,8 @@ class ContentChangeSchedulerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
-        when(orchestrationService.run(10L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok 10"));
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L))));
+        when(orchestrationService.run(10L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok 10", List.of()));
         when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.failed("nope 11", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
 
         scheduler.tick();
@@ -108,32 +107,18 @@ class ContentChangeSchedulerTest {
     }
 
     @Test
-    void tick_lectureUnitOnlyBatch_drainsButDoesNotOrchestrate() {
-        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
-        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(), Set.of(99L))));
-
-        scheduler.tick();
-
-        verify(orchestrationService, never()).run(anyLong());
-        verify(websocketMessagingService, never()).sendMessage(anyString(), any(AutoOrchestrationSummaryDTO.class));
-        verify(accumulator).releaseLock(COURSE_ID);
-    }
-
-    @Test
     void tick_inProgressResult_requeuesAndExcludesFromSummary() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L))));
         when(orchestrationService.run(10L)).thenReturn(CompetencyOrchestrationResultDTO.inProgress("Already running"));
-        when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok"));
+        when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok", List.of()));
 
         scheduler.tick();
 
         // The IN_PROGRESS exercise should be requeued — not counted as a permanent failure.
-        verify(accumulator).record(COURSE_ID, 10L, false);
+        verify(accumulator).record(COURSE_ID, 10L);
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(org.mockito.ArgumentMatchers.eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
@@ -147,9 +132,9 @@ class ContentChangeSchedulerTest {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L), Set.of())));
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(10L, 11L))));
         when(orchestrationService.run(10L)).thenThrow(new IllegalStateException("boom"));
-        when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok"));
+        when(orchestrationService.run(11L)).thenReturn(CompetencyOrchestrationResultDTO.success("ok", List.of()));
 
         scheduler.tick();
 

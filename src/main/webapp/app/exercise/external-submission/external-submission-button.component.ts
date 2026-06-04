@@ -1,10 +1,11 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateService } from '@ngx-translate/core';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-external-submission',
@@ -22,12 +23,13 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     imports: [ButtonComponent],
 })
 export class ExternalSubmissionButtonComponent {
-    private modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() exercise: Exercise;
+    readonly exercise = input.required<Exercise>();
 
     // Icons
     faPlus = faPlus;
@@ -38,7 +40,14 @@ export class ExternalSubmissionButtonComponent {
      */
     openExternalSubmissionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ExternalSubmissionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exercise = this.exercise;
+        this.dialogService.open(ExternalSubmissionDialogComponent, {
+            header: this.translateService.instant('artemisApp.submission.createExternal'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            inputValues: { exercise: this.exercise() },
+        });
     }
 }
