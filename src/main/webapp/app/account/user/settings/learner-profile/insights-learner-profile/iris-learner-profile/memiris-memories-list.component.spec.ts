@@ -3,12 +3,14 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MemirisMemoriesListComponent } from './memiris-memories-list.component';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 
 describe('MemirisMemoriesListComponent', () => {
     setupTestBed({ zoneless: true });
@@ -17,6 +19,8 @@ describe('MemirisMemoriesListComponent', () => {
     let component: MemirisMemoriesListComponent;
     let http: { getUserMemoryData: ReturnType<typeof vi.fn>; getUserMemory: ReturnType<typeof vi.fn>; deleteUserMemory: ReturnType<typeof vi.fn> };
     let alerts: { error: ReturnType<typeof vi.fn> };
+    let dialogService: { open: ReturnType<typeof vi.fn> };
+    let onClose: Subject<string[] | undefined>;
 
     const mockMemories = [
         { id: 'm1', title: 'Memory 1', content: '', learnings: [], connections: [], slept_on: false, deleted: false },
@@ -29,6 +33,8 @@ describe('MemirisMemoriesListComponent', () => {
     const mockConns = [{ id: 'c1', connectionType: 'related', memories: ['m1', 'm2'], description: 'desc', weight: 0.7 }];
 
     beforeEach(async () => {
+        onClose = new Subject<string[] | undefined>();
+        dialogService = { open: vi.fn().mockReturnValue({ onClose } as unknown as DynamicDialogRef) };
         await TestBed.configureTestingModule({
             imports: [MemirisMemoriesListComponent],
             providers: [
@@ -39,6 +45,7 @@ describe('MemirisMemoriesListComponent', () => {
                     deleteUserMemory: vi.fn().mockReturnValue(of(void 0)),
                 }),
                 MockProvider(AlertService, { error: vi.fn() }),
+                { provide: DialogService, useValue: dialogService },
             ],
         }).compileComponents();
 
@@ -91,6 +98,38 @@ describe('MemirisMemoriesListComponent', () => {
         expect(dataSpy).toHaveBeenCalledTimes(1);
         expect(component.memories()).toHaveLength(1);
         expect(component.deleting()['m1']).toBe(false);
+    });
+
+    it('should open the resolve-conflicts dialog with conflict groups and details, and apply deletions on close', async () => {
+        const conflictMemories = [
+            { id: 'm1', title: 'Memory 1', content: '', learnings: [], connections: ['cc'], slept_on: false, deleted: false },
+            { id: 'm2', title: 'Memory 2', content: '', learnings: [], connections: ['cc'], slept_on: false, deleted: false },
+        ];
+        const conflictConns = [{ id: 'cc', connectionType: 'CONFLICT', memories: ['m1', 'm2'], description: 'conflict', weight: 0.9 }];
+        (http.getUserMemoryData as ReturnType<typeof vi.fn>).mockReturnValueOnce(of({ memories: conflictMemories, learnings: [], connections: conflictConns } as any));
+        await component.loadMemories();
+        expect(component.hasConflicts()).toBe(true);
+
+        component.openResolveConflictsModal();
+
+        expect(dialogService.open).toHaveBeenCalledTimes(1);
+        const [opened, config] = dialogService.open.mock.calls[0];
+        expect(opened).toBe(ResolveMemoriesConflictsModalComponent);
+        expect(config.data.conflictGroups).toEqual([['m1', 'm2']]);
+        expect(config.data.details['m1']).toBeTruthy();
+        expect(config.data.details['m2']).toBeTruthy();
+
+        // Resolving the conflict (deleting m1) should remove it from the list without reloading
+        onClose.next(['m1']);
+        expect(component.memories()).toHaveLength(1);
+        expect(component.memories()[0].id).toBe('m2');
+    });
+
+    it('should keep state when the resolve-conflicts dialog is dismissed', async () => {
+        await component.loadMemories();
+        component.openResolveConflictsModal();
+        onClose.next(undefined);
+        expect(component.memories()).toHaveLength(2);
     });
 
     it('should show alerts on errors for list and delete', async () => {

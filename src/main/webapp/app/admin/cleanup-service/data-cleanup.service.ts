@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 export interface CleanupServiceExecutionRecordDTO {
     executionDate: dayjs.Dayjs;
@@ -51,7 +51,7 @@ export interface SubmissionVersionsCleanupCountDTO extends CleanupCount {
 
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
-    private readonly adminResourceUrl = 'api/core/admin/cleanup';
+    private readonly adminResourceUrl = 'api/admin/cleanup';
     private http = inject(HttpClient);
 
     /**

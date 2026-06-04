@@ -15,11 +15,11 @@ import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tu
 import dayjs from 'dayjs/esm';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Validation, ValidationStatus } from 'app/shared/util/validation';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Validation, ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
 import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';

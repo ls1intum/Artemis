@@ -5,14 +5,14 @@ import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 // Mock the fullscreen utility before importing the component
-vi.mock('app/shared/util/fullscreen.util', () => ({
+vi.mock('app/foundation/util/fullscreen.util', () => ({
     enterFullscreen: vi.fn(),
     exitFullscreen: vi.fn(),
     isFullScreen: vi.fn(),
 }));
 
 import { FullscreenComponent } from './fullscreen.component';
-import * as fullscreenUtil from 'app/shared/util/fullscreen.util';
+import * as fullscreenUtil from 'app/foundation/util/fullscreen.util';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

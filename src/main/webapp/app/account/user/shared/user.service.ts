@@ -9,7 +9,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 export class UserService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/core/users';
+    public resourceUrl = 'api/account/users';
 
     /**
      * Search for a user on the server by login or name.

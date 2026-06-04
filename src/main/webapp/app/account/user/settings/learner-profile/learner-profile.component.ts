@@ -3,9 +3,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseLearnerProfileComponent } from 'app/account/user/settings/learner-profile/course-learner-profile/course-learner-profile.component';
 import { FeedbackLearnerProfileComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/feedback-learner-profile.component';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { captureException } from '@sentry/angular';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { InsightsLearnerProfileComponent } from 'app/account/user/settings/learner-profile/insights-learner-profile/insights-learner-profile.component';
 
 @Component({

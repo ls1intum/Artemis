@@ -7,10 +7,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -19,8 +19,8 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';

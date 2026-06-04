@@ -83,7 +83,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
         lectureTranscriptionRepository.save(transcription);
 
         // Perform GET request
-        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk())
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk())
                 .andExpect(jsonPath("$.lectureUnitId").value(lectureUnit.getId())).andExpect(jsonPath("$.language").value("en")).andExpect(jsonPath("$.segments").isArray())
                 .andExpect(jsonPath("$.segments[0].startTime").value(0.0)).andExpect(jsonPath("$.segments[0].endTime").value(5.0))
                 .andExpect(jsonPath("$.segments[0].text").value("Hello world")).andExpect(jsonPath("$.segments[1].startTime").value(5.0))
@@ -94,14 +94,14 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void getTranscript_notFound() throws Exception {
         // Perform GET request for non-existent transcription
-        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isNotFound());
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getTranscript_asStudent_forbidden() throws Exception {
         // Students should not be able to access transcripts without proper permissions
-        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
     }
 
     @Test
@@ -112,13 +112,13 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
         transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
         lectureTranscriptionRepository.save(transcription);
 
-        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isOk())
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isOk())
                 .andExpect(content().string("COMPLETED"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void getTranscriptStatus_notFound() throws Exception {
-        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isNotFound());
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isNotFound());
     }
 }

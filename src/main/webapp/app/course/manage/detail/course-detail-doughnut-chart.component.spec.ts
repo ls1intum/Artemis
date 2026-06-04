@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PieChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     setupTestBed({ zoneless: true });

@@ -395,7 +395,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration";
+        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configurations";
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {

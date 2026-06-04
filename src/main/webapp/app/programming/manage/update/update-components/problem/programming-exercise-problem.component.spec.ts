@@ -15,7 +15,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, DoCheck, IterableDiffer, IterableDiffers, OnInit, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-free-days-overview',

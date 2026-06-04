@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 

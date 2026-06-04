@@ -10,10 +10,10 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from '../../../shared/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({

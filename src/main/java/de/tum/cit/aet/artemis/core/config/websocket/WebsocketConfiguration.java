@@ -5,11 +5,11 @@ import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNon
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
-import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
-import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobAdminDestination;
-import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobCourseDestination;
-import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
-import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
+import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildAgentDestination;
+import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildJobAdminDestination;
+import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildJobCourseDestination;
+import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
+import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;

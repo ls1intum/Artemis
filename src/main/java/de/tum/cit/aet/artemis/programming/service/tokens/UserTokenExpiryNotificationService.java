@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @Lazy

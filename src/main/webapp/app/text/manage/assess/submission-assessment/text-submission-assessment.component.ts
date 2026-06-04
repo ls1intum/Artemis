@@ -12,11 +12,11 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { notUndefined } from 'app/shared/util/string-pure.utils';
-import { onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/foundation/util/string-pure.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import {
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
@@ -25,7 +25,7 @@ import {
     setSubmissionResultByCorrectionRound,
 } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
@@ -38,11 +38,11 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({

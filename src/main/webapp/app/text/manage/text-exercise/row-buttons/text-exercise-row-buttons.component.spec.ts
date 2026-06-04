@@ -11,7 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseRowButtonsComponent } from 'app/text/manage/text-exercise/row-buttons/text-exercise-row-buttons.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

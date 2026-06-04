@@ -3,7 +3,7 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';

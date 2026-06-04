@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, input } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -23,7 +23,7 @@ export class FeedbackCollapseComponent implements OnInit {
      */
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
-    @Input() feedback: FeedbackItem;
+    readonly feedback = input<FeedbackItem>(undefined!);
     previewText?: string;
     isCollapsed = true;
 
@@ -34,7 +34,7 @@ export class FeedbackCollapseComponent implements OnInit {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
-        this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
+        this.previewText = this.computeFeedbackPreviewText(this.feedback().text);
     }
 
     /**
@@ -43,7 +43,7 @@ export class FeedbackCollapseComponent implements OnInit {
      * @return One line of text with at most {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.
      */
     private computeFeedbackPreviewText(text?: string): string | undefined {
-        if (this.feedback.feedbackReference.hasLongFeedbackText) {
+        if (this.feedback().feedbackReference.hasLongFeedbackText) {
             return text?.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
         }
 

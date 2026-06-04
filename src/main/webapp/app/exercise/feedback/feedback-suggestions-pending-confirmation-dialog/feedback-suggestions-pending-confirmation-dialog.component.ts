@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { faBan, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 
@@ -12,7 +12,7 @@ import { NgClass } from '@angular/common';
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgClass],
 })
 export class FeedbackSuggestionsPendingConfirmationDialogComponent {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
 
     // Icons
     faBan = faBan;
@@ -22,6 +22,6 @@ export class FeedbackSuggestionsPendingConfirmationDialogComponent {
      * Close the confirmation dialog
      */
     close(confirm: boolean): void {
-        this.activeModal.close(confirm);
+        this.dialogRef.close(confirm);
     }
 }

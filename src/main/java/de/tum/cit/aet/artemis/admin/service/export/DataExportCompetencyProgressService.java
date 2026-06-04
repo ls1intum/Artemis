@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.UserCompetencyProgressExportDTO;
 
 /**
  * Service for creating competency progress data exports for GDPR compliance.

@@ -131,7 +131,7 @@ public class RatingResource {
      * @param pageable - Pagination information (page, size, sort)
      * @return List of RatingListItemDTO with pagination info in headers
      */
-    @GetMapping("course/{courseId}/rating")
+    @GetMapping({ "courses/{courseId}/rating", "course/{courseId}/rating" })
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, Pageable pageable) {
         Page<RatingListItemDTO> ratings = ratingService.getAllRatingsForDashboard(courseId, pageable);

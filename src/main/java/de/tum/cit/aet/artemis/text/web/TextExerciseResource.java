@@ -233,7 +233,7 @@ public class TextExerciseResource {
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme
-    @GetMapping("text-editor/{participationId}")
+    @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();

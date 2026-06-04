@@ -8,12 +8,12 @@ import { AbstractDialogComponent } from 'app/communication/course-conversations-
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';

@@ -5,9 +5,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { Subject, of, throwError } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -22,7 +21,8 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
+import { DialogService } from 'primeng/dynamicdialog';
 
 function setupCanvasAndImageMocks() {
     const createMockCanvas = () => {
@@ -110,19 +110,15 @@ describe('ApollonDiagramDetail Component', () => {
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
     let alertService: AlertService;
     let cleanupCanvasAndImageMocks: (() => void) | undefined;
+    let dialogClose: Subject<any>;
 
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     const v3Model = testClassDiagramV3 as unknown as UMLModel;
     const v4Model = testClassDiagramV4 as unknown as UMLModel;
 
-    // Properly typed mock for modal service that actually invokes callbacks
-    const mockModalService = {
-        open: vi.fn().mockReturnValue({
-            componentInstance: {},
-            result: Promise.resolve(),
-            close: vi.fn(),
-        }),
+    const mockDialogService = {
+        open: vi.fn(() => ({ onClose: dialogClose })),
     };
 
     beforeEach(async () => {
@@ -133,6 +129,8 @@ describe('ApollonDiagramDetail Component', () => {
 
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(testClassDiagramV3);
+        dialogClose = new Subject<any>();
+        mockDialogService.open.mockClear();
 
         await TestBed.configureTestingModule({
             imports: [ApollonDiagramDetailComponent],
@@ -142,7 +140,7 @@ describe('ApollonDiagramDetail Component', () => {
                 AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,
-                { provide: NgbModal, useValue: mockModalService },
+                { provide: DialogService, useValue: mockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -549,17 +547,16 @@ describe('ApollonDiagramDetail Component', () => {
             fixture.componentInstance.isSaved = false;
             fixture.componentInstance.confirmExitDetailView(true);
 
-            expect(mockModalService.open).toHaveBeenCalledOnce();
+            expect(mockDialogService.open).toHaveBeenCalledOnce();
         });
 
-        it('should emit closeModal after modal confirmation', async () => {
+        it('should emit closeModal after dialog confirmation', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
             fixture.componentInstance.isSaved = false;
             fixture.componentInstance.confirmExitDetailView(true);
 
-            // Wait for modal promise to resolve
-            await Promise.resolve();
+            dialogClose.next({ confirmed: true });
 
             expect(emitSpy).toHaveBeenCalledOnce();
         });

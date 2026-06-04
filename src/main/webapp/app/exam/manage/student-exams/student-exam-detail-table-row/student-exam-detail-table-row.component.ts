@@ -2,15 +2,15 @@ import { Component, effect, input } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 @Component({

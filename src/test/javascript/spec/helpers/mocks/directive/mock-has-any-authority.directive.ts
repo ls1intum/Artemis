@@ -1,5 +1,5 @@
 import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority } from 'app/foundation/constants/authority.constants';
 
 @Directive({
     selector: '[jhiHasAnyAuthority]',

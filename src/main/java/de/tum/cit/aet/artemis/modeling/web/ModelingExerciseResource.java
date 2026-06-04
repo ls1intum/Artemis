@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.Operati
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -72,6 +71,7 @@ import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**
@@ -410,19 +410,22 @@ public class ModelingExerciseResource {
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link ModelingExerciseImportService}.
      *
-     * @param sourceExerciseId The ID of the original exercise which should get
-     *                             imported
-     * @param importedExercise The new exercise containing values that should get
-     *                             overwritten in the imported exercise, s.a. the title
-     *                             or difficulty
+     * @param sourceExerciseIdQuery The ID of the original exercise which should get (provided as a query parameter; preferred)
+     * @param sourceExerciseIdPath  The ID of the original exercise which should get (provided as a legacy path variable; deprecated)
+     *                                  imported
+     * @param importedExercise      The new exercise containing values that should get
+     *                                  overwritten in the imported exercise, s.a. the title
+     *                                  or difficulty
      * @return The imported exercise (200), a not found error (404) if the template
      *         does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("modeling-exercises/import/{sourceExerciseId}")
+    @PostMapping({ "modeling-exercises/import", "modeling-exercises/import/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+    public ResponseEntity<ModelingExercise> importExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");

@@ -928,7 +928,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
 
-        Course course = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
+        Course course = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);

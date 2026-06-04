@@ -35,7 +35,7 @@ describe('ApollonDiagramService', () => {
 
     it('should create a diagram', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -54,7 +54,7 @@ describe('ApollonDiagramService', () => {
 
     it('should update a diagram', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -74,7 +74,7 @@ describe('ApollonDiagramService', () => {
     it('should find a diagram', () => {
         // Set up
         const diagramId = 1;
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams/${diagramId}`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<ApollonDiagram>;
@@ -94,7 +94,7 @@ describe('ApollonDiagramService', () => {
     it('should delete a diagram', () => {
         // Set up
         const diagramId = 1;
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams/${diagramId}`;
         const responseObject = apollonDiagram;
 
         let response: HttpResponse<void>;
@@ -113,7 +113,7 @@ describe('ApollonDiagramService', () => {
 
     it('should get diagrams by course', () => {
         // Set up
-        const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
+        const url = `${resourceUrl}/courses/${courseId}/apollon-diagrams`;
         const responseObject = [apollonDiagram];
 
         let response: HttpResponse<ApollonDiagram[]>;

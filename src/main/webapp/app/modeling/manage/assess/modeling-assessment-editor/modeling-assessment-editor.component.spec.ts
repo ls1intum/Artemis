@@ -23,8 +23,8 @@ import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submissi
 import { ModelingAssessmentEditorComponent } from 'app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -37,7 +37,7 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

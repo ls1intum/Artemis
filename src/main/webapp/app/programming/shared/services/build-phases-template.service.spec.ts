@@ -29,7 +29,7 @@ describe('BuildPhasesTemplateService', () => {
     it('builds the language/project endpoint and passes boolean query params', () => {
         service.getTemplate(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false).subscribe();
 
-        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/phases/templates/JAVA/PLAIN_MAVEN');
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/localci/phases/templates/JAVA/PLAIN_MAVEN');
         expect(req.request.params.get('staticAnalysis')).toBe('true');
         expect(req.request.params.get('sequentialRuns')).toBe('false');
         req.flush({ phases: [] });
@@ -38,7 +38,7 @@ describe('BuildPhasesTemplateService', () => {
     it('omits project type path segment and defaults booleans to false', () => {
         service.getTemplate(ProgrammingLanguage.KOTLIN).subscribe();
 
-        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/phases/templates/KOTLIN');
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/localci/phases/templates/KOTLIN');
         expect(req.request.params.get('staticAnalysis')).toBe('false');
         expect(req.request.params.get('sequentialRuns')).toBe('false');
         req.flush({ phases: [] });

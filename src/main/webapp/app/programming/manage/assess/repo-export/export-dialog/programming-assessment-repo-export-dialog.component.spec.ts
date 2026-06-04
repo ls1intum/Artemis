@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -12,7 +12,7 @@ import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/a
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

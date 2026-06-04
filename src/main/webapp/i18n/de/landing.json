@@ -83,7 +83,9 @@
                 "mobileApps": {
                     "category": "Mobile Apps",
                     "description": "Eigene iOS- und Android-Apps ermöglichen Studierenden den Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen mit einer nahtlosen mobilen Erfahrung.",
-                    "imageAlt": "Mobile Apps"
+                    "imageAlt": "Mobile Apps",
+                    "appStoreAlt": "Laden im App Store",
+                    "playStoreAlt": "Jetzt bei Google Play"
                 }
             }
         },

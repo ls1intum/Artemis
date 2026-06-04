@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -12,6 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Exercise Search Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamExerciseSearchComponent;
     let fixture: ComponentFixture<TeamExerciseSearchComponent>;
 
@@ -29,6 +32,10 @@ describe('Team Exercise Search Component', () => {
 
         fixture = TestBed.createComponent(TeamExerciseSearchComponent);
         comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('formats the search result with release date', () => {
@@ -64,8 +71,8 @@ describe('Team Exercise Search Component', () => {
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
-        jest.spyOn(comp.selectExercise, 'emit');
-        jest.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
+        vi.spyOn(comp.selectExercise, 'emit');
+        vi.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
 
         comp.onAutocompleteSelect(exercise);
 
@@ -88,7 +95,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with lowercase term', () => {
@@ -97,7 +104,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with partial term start', () => {
@@ -106,7 +113,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with partial term end', () => {
@@ -115,7 +122,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise without whitespace', () => {
@@ -124,7 +131,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
 
-        expect(matchesExercise).toBeFalse();
+        expect(matchesExercise).toBe(false);
     });
 
     it('searchMatchesExercise with incorrect searchTerm', () => {
@@ -133,13 +140,14 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);
 
-        expect(matchesExercise).toBeFalse();
+        expect(matchesExercise).toBe(false);
     });
 
     it('successfully loads the exercise options', async () => {
-        comp.course = new Course();
-        comp.course.id = 1;
-        comp.ignoreExercises = [];
+        const course = new Course();
+        course.id = 1;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('ignoreExercises', []);
 
         expect(comp.exerciseOptions).toHaveLength(0);
 

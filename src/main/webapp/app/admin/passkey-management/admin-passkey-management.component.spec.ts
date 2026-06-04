@@ -5,7 +5,7 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminPasskeyManagementComponent } from './admin-passkey-management.component';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription } from 'rxjs';
@@ -14,7 +14,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);
 
-    @Input() includedInOverallScore: IncludedInOverallScore | undefined;
+    readonly includedInOverallScore = input<IncludedInOverallScore>();
     public translatedEnum = '';
     public translatedTooltip = '';
     public badgeClass: string;
@@ -43,11 +43,12 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChang
     }
 
     private setBadgeAttributes(): void {
-        if (!this.includedInOverallScore) {
+        const includedInOverallScore = this.includedInOverallScore();
+        if (!includedInOverallScore) {
             return;
         }
 
-        switch (this.includedInOverallScore) {
+        switch (includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
                 this.badgeClass = 'bg-warning';
                 this.translatedEnum = this.translateService.instant('artemisApp.exercise.includedAsBonus');

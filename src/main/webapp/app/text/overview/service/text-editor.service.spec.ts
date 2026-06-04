@@ -74,7 +74,7 @@ describe('TextEditorService', () => {
             expect(participation.id).toBe(participationId);
         });
 
-        const req = httpMock.expectOne('api/text/text-editor/123');
+        const req = httpMock.expectOne('api/text/participations/123/text-editor');
         expect(req.request.method).toBe('GET');
         expect(req.request.params.keys()).toHaveLength(0);
         req.flush(mockParticipation);
@@ -92,7 +92,7 @@ describe('TextEditorService', () => {
             expect(participation.id).toBe(participationId);
         });
 
-        const req = httpMock.expectOne(`api/text/text-editor/123?resultId=${resultId}`);
+        const req = httpMock.expectOne(`api/text/participations/123/text-editor?resultId=${resultId}`);
         expect(req.request.method).toBe('GET');
         expect(req.request.params.get('resultId')).toBe(resultId.toString());
         req.flush(mockParticipation);

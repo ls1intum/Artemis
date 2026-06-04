@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { MockComponent, MockDirective } from 'ng-mocks';

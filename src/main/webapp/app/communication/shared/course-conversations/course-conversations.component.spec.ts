@@ -9,7 +9,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { CourseWideSearchComponent } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -22,19 +22,19 @@ import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/rout
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
-import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
-import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
+import { SidebarEventService } from 'app/course/sidebar/service/sidebar-event.service';
+import { SidebarAccordionComponent } from 'app/course/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -48,7 +48,7 @@ import {
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

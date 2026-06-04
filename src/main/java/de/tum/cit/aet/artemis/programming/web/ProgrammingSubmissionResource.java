@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -55,7 +56,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -129,7 +129,7 @@ public class ProgrammingSubmissionResource {
      *         not available.
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
-    @PostMapping("programming-submissions/{participationId}/trigger-build")
+    @PostMapping({ "participations/{participationId}/trigger-build", "programming-submissions/{participationId}/trigger-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
@@ -170,7 +170,7 @@ public class ProgrammingSubmissionResource {
      *         build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
+    @PostMapping({ "participations/{participationId}/trigger-failed-build", "programming-submissions/{participationId}/trigger-failed-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {

@@ -118,7 +118,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
 
-        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.NOT_FOUND, Bonus.class);
+        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.NOT_FOUND, Bonus.class);
 
     }
 
@@ -131,7 +131,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBonusForTargetExam() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
         assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
@@ -148,7 +148,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
 
-        Bonus savedBonus = request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.CREATED);
+        Bonus savedBonus = request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.CREATED);
 
         assertThat(savedBonus.getId()).isGreaterThan(0);
         assertBonusesAreEqualIgnoringId(savedBonus, newBonus);
@@ -158,7 +158,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
 
     }
 
@@ -173,52 +173,52 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
 
         // Source grading scale must have GradeType.BONUS.
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         bonusToExamGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.saveAll(List.of(courseGradingScale, bonusToExamGradingScale));
 
         // BonusTo grading scale must have GradeType.GRADE.
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), courseBonus, HttpStatus.FORBIDDEN);
+        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId(), courseBonus, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithMismatchingIdsInPathAndBodyConflict() throws Exception {
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId() + 1, courseBonus, HttpStatus.CONFLICT);
+        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId() + 1, courseBonus, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
 
         BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
         foundBonus.setBonusStrategy(newBonusStrategy);
         foundBonus.setWeight(-foundBonus.getWeight());
 
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
         assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
@@ -228,7 +228,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
 
         foundBonus.setBonusStrategy(BonusStrategy.POINTS);
         foundBonus.setWeight(-foundBonus.getWeight());
@@ -236,8 +236,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
         foundBonus.setSourceGradingScale(sourceExamGradingScale);
 
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
         assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
@@ -248,10 +248,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteBonus() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
 
-        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), HttpStatus.OK);
-        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.NOT_FOUND, Bonus.class);
+        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), HttpStatus.OK);
+        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.NOT_FOUND, Bonus.class);
 
     }
 
@@ -379,7 +379,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         bonusToPoints = 125;
         sourcePoints = 75;
         request.get(
-                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
                         + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
                 HttpStatus.BAD_REQUEST, BonusExampleDTO.class);
 
@@ -387,7 +387,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         bonusToPoints = 110;
         sourcePoints = 150;
         request.get(
-                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
                         + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
                 HttpStatus.BAD_REQUEST, BonusExampleDTO.class);
 
@@ -397,7 +397,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private BonusExampleDTO calculateFinalGradeAtServer(BonusStrategy bonusStrategy, double weight, double bonusToPoints, double sourcePoints, String expectedExamGrade,
             double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long sourceGradingScaleId) throws Exception {
         BonusExampleDTO bonusExample = request.get(
-                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
                         + "&sourceGradingScaleId=" + sourceGradingScaleId + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
                 HttpStatus.OK, BonusExampleDTO.class);
         assertThat(bonusExample.examGrade()).isEqualTo(expectedExamGrade);
@@ -444,7 +444,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         double sourcePoints = 75;
 
         request.get(
-                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
                         + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
                 HttpStatus.BAD_REQUEST, BonusExampleDTO.class);
 

@@ -35,9 +35,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
@@ -49,7 +46,6 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -61,6 +57,11 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy

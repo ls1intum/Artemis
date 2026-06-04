@@ -6,16 +6,16 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
-import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { filter, switchMap } from 'rxjs';
 
 @Component({

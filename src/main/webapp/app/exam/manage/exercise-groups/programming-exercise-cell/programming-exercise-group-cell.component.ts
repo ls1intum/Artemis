@@ -4,7 +4,7 @@ import { ProgrammingExerciseParticipationType } from 'app/programming/shared/ent
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';

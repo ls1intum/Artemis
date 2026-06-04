@@ -3,7 +3,7 @@ import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest, forkJoin } from 'rxjs';
@@ -9,7 +9,7 @@ import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/p
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-prerequisite',

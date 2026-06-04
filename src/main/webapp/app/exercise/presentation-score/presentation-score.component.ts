@@ -1,16 +1,16 @@
-import { Component, DoCheck, Input, OnDestroy, inject } from '@angular/core';
+import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { Subscription } from 'rxjs';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',
@@ -24,8 +24,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
                             class="form-check-input custom-control-input"
                             id="field_presentationScoreEnabled"
                             name="presentationScoreEnabled"
-                            [ngModel]="exercise.presentationScoreEnabled"
-                            (ngModelChange)="exercise.presentationScoreEnabled = !exercise.presentationScoreEnabled"
+                            [ngModel]="exercise().presentationScoreEnabled"
+                            (ngModelChange)="exercise().presentationScoreEnabled = $event"
                         />
                         <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
                             >Presentation Score Enabled</label
@@ -49,14 +49,15 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
 
     private readonly gradingService = inject(GradingService);
 
-    @Input() exercise: Exercise;
+    readonly exercise = input<Exercise>(undefined!);
 
     private gradeStepsDTO?: GradeStepsDTO;
     private gradeStepsDTOSub?: Subscription;
 
     ngDoCheck(): void {
-        if (!this.gradeStepsDTOSub && this.exercise.course?.id) {
-            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(this.exercise.course.id).subscribe((gradeStepsDTO) => {
+        const exercise = this.exercise();
+        if (!this.gradeStepsDTOSub && exercise.course?.id) {
+            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(exercise.course.id).subscribe((gradeStepsDTO) => {
                 if (gradeStepsDTO.body) {
                     this.gradeStepsDTO = gradeStepsDTO.body;
                 }
@@ -75,10 +76,10 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
     }
 
     private isBasicPresentation(): boolean {
-        return !!this.exercise.course?.presentationScore;
+        return !!this.exercise().course?.presentationScore;
     }
 
     private isGradedPresentation(): boolean {
-        return !!(this.exercise.course && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0);
+        return !!(this.exercise().course && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0);
     }
 }

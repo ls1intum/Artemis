@@ -3,15 +3,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

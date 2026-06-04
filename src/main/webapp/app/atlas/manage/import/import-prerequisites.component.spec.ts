@@ -10,7 +10,7 @@ import { ImportPrerequisitesComponent } from 'app/atlas/manage/import/import-pre
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

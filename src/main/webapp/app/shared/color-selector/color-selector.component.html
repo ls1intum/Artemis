@@ -1,9 +1,0 @@
-@if (showColorSelector) {
-    <div class="color-selector" [style.top.px]="colorSelectorPosition.top" [style.left.px]="colorSelectorPosition.left" [style.height.px]="height">
-        @for (tagColor of tagColors; track tagColor) {
-            <div class="tag-color-selector" (click)="selectColorForTag(tagColor)">
-                <div class="color-element" [ngStyle]="{ backgroundColor: tagColor }"></div>
-            </div>
-        }
-    </div>
-}

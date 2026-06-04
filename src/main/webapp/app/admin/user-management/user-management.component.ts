@@ -1,36 +1,37 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
-import { isErrorAlert, onError } from 'app/shared/util/global.utils';
+import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { NgClass } from '@angular/common';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -121,9 +122,9 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         SortDirective,
         SortByDirective,
         ProfilePictureComponent,
-        NgbHighlight,
+        SearchHighlightComponent,
         ItemCountComponent,
-        NgbPagination,
+        PaginatorModule,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -564,6 +565,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
+    }
+
+    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
     }
 
     private handleNavigation(): void {

@@ -5,14 +5,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockComponent } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -60,7 +60,11 @@ describe('CompetencyGraphModalComponent', () => {
                     provide: AlertService,
                     useClass: MockAlertService,
                 },
-                MockProvider(NgbActiveModal),
+                MockProvider(DynamicDialogRef),
+                {
+                    provide: DynamicDialogConfig,
+                    useValue: { data: { learningPathId } },
+                },
                 MockProvider(ScienceService),
             ],
         })
@@ -77,8 +81,6 @@ describe('CompetencyGraphModalComponent', () => {
 
         fixture = TestBed.createComponent(CompetencyGraphModalComponent);
         component = fixture.componentInstance;
-
-        fixture.componentRef.setInput('learningPathId', learningPathId);
     });
 
     it('should initialize', () => {

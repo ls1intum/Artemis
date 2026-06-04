@@ -3,7 +3,7 @@ import { DebugElement, EmbeddedViewRef, getDebugNode } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';

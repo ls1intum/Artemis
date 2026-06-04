@@ -1,13 +1,13 @@
 import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { Validation, ValidationStatus } from 'app/shared/util/validation';
+import { Validation, ValidationStatus } from 'app/foundation/util/validation';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 
 @Component({

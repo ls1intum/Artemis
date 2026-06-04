@@ -3,9 +3,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('PdfDropZoneComponent', () => {
     setupTestBed({ zoneless: true });

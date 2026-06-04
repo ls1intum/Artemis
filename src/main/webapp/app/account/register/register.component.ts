@@ -2,15 +2,15 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, 
 import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/account/user/user.model';
-import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
+import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/foundation/constants/error.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Type definition for the user registration form controls.

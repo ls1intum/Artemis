@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -17,9 +17,9 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { AppliedActionType, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { MockProvider } from 'ng-mocks';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
@@ -38,7 +38,7 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import dayjs from 'dayjs/esm';
 
@@ -465,13 +465,24 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp = fixture.componentInstance;
     };
 
-    it('should open the orchestration result dialog with the LLM summary when the run succeeds', async () => {
+    it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
         recreateFixtureWithAtlasModule();
 
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
         jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Success,
-            summary: 'I would link this exercise to the Recursion competency at weight 1.0.',
+            summary: 'Assigned this exercise to Recursion.',
+            appliedActions: [
+                {
+                    type: AppliedActionType.Assign,
+                    competencyId: 42,
+                    competencyTitle: 'Recursion',
+                    exerciseId: 123,
+                    weight: 1.0,
+                    detail: 'Linked exercise to Recursion (weight 1.00).',
+                    justification: 'Exercise tests recursion patterns.',
+                },
+            ],
         });
         comp.programmingExercise = buildInstructorExerciseForDialog();
         await comp.triggerAtlasOrchestrator();
@@ -479,7 +490,42 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
         expect(dialog.visible()).toBeTrue();
-        expect(dialog.summary()).toBe('I would link this exercise to the Recursion competency at weight 1.0.');
+        expect(dialog.summaryMessage()).toBe('Assigned this exercise to Recursion.');
+        expect(dialog.appliedActions()).toHaveLength(1);
+        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Assign);
+    });
+
+    it('should show warning toast and dialog when orchestrator returns PARTIAL', async () => {
+        recreateFixtureWithAtlasModule();
+
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Partial,
+            summary: 'Orchestrator failed after applying 1 action(s).',
+            appliedActions: [
+                {
+                    type: AppliedActionType.Create,
+                    competencyId: 7,
+                    competencyTitle: 'Loops',
+                    detail: 'Created competency Loops',
+                    justification: 'Exercise teaches loops',
+                },
+            ],
+        });
+        comp.programmingExercise = buildInstructorExerciseForDialog();
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            type: AlertType.WARNING,
+            message: 'Orchestrator failed after applying 1 action(s).',
+            disableTranslation: true,
+        });
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeTrue();
+        expect(dialog.appliedActions()).toHaveLength(1);
+        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Create);
     });
 
     it('should error when Atlas orchestrator returns FAILED', async () => {
@@ -500,6 +546,16 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'model not configured', disableTranslation: true });
         const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
         expect(dialog.visible()).toBeFalse();
+    });
+
+    it('should error when Atlas orchestrator request throws', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
+        comp.programmingExercise = mockProgrammingExercise;
+        await comp.triggerAtlasOrchestrator();
+        // The catch path uses onError(), which addAlerts the underlying error message.
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'boom', disableTranslation: true });
     });
 
     it('should error on generate structure oracle', () => {

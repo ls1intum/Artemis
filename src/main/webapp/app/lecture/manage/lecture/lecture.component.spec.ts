@@ -4,11 +4,11 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture/lecture.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -17,11 +17,11 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -31,7 +31,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { PdfUploadTarget } from 'app/lecture/manage/pdf-upload-target-dialog/pdf-upload-target-dialog.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Lecture', () => {
     setupTestBed({ zoneless: true });

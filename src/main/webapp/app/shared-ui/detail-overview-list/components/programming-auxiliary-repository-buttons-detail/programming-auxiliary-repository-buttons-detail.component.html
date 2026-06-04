@@ -1,0 +1,31 @@
+@let data = detail().data;
+<ul>
+    @for (auxiliaryRepository of data.auxiliaryRepositories; track auxiliaryRepository.id) {
+        @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && data.exerciseId) {
+            <li class="mt-2">
+                <span>Repository: {{ auxiliaryRepository.name }}</span>
+                <jhi-code-button
+                    class="ms-2"
+                    [smallButtons]="true"
+                    [repositoryUri]="auxiliaryRepository.repositoryUri"
+                    [routerLinkForRepositoryView]="['.', 'repository', RepositoryType.AUXILIARY, auxiliaryRepository.id]"
+                />
+                <jhi-programming-exercise-instructor-repo-download
+                    class="ms-2"
+                    [exerciseId]="data.exerciseId"
+                    [repositoryType]="RepositoryType.AUXILIARY"
+                    [auxiliaryRepositoryId]="auxiliaryRepository.id"
+                />
+                <div class="auxiliaryRepositoryDescription">
+                    @if (!auxiliaryRepository.checkoutDirectory) {
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
+                    }
+                    <ng-template #noCheckoutDirectorySetTooltip>
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                    </ng-template>
+                </div>
+            </li>
+        }
+    }
+</ul>

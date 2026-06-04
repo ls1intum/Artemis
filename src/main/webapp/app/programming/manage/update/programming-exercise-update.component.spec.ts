@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -25,10 +25,10 @@ import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/upda
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -44,13 +44,14 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercis
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 jest.mock('y-monaco', () => ({
     MonacoBinding: jest.fn().mockImplementation(() => ({
@@ -262,6 +263,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(entity.title).toBe('My Exercise');
+        }));
+
+        it('should send the assessmentType on saving', fakeAsync(() => {
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 1;
+            entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            entity.releaseDate = dayjs();
+            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: entity,
+                    }),
+                ),
+            );
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+            tick();
+
+            expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
+            expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         }));
 
         it('should fail on error', async () => {

@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -22,7 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Subject, of, throwError } from 'rxjs';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -42,7 +42,7 @@ import {
     metisUser2,
     plagiarismPost,
 } from 'test/helpers/sample/metis-sample-data';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';

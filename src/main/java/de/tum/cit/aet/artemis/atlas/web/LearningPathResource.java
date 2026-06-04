@@ -193,7 +193,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the learning path
      */
-    @GetMapping("learning-path/{learningPathId}")
+    @GetMapping({ "learning-paths/{learningPathId}", "learning-path/{learningPathId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get learning path with id: {}", learningPathId);
@@ -211,7 +211,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which the graph should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the graph
      */
-    @GetMapping("learning-path/{learningPathId}/competency-graph")
+    @GetMapping({ "learning-paths/{learningPathId}/competency-graph", "learning-path/{learningPathId}/competency-graph" })
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
@@ -248,7 +248,7 @@ public class LearningPathResource {
      * @param repeatedTest       whether the learning object is part of a repeated test
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
-    @GetMapping("learning-path/{learningPathId}/relative-navigation")
+    @GetMapping({ "learning-paths/{learningPathId}/relative-navigation", "learning-path/{learningPathId}/relative-navigation" })
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
             @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId, @RequestParam(defaultValue = "false") boolean repeatedTest) {
@@ -268,7 +268,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which the navigation information should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
-    @GetMapping("learning-path/{learningPathId}/navigation")
+    @GetMapping({ "learning-paths/{learningPathId}/navigation", "learning-path/{learningPathId}/navigation" })
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
         log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
@@ -283,7 +283,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which the navigation overview should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
      */
-    @GetMapping("learning-path/{learningPathId}/navigation-overview")
+    @GetMapping({ "learning-paths/{learningPathId}/navigation-overview", "learning-path/{learningPathId}/navigation-overview" })
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
@@ -310,7 +310,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path to start
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
-    @PatchMapping("learning-path/{learningPathId}/start")
+    @PatchMapping({ "learning-paths/{learningPathId}/start", "learning-path/{learningPathId}/start" })
     @EnforceAtLeastStudent
     public ResponseEntity<Void> startLearningPathForCurrentUser(@PathVariable long learningPathId) {
         log.debug("REST request to start learning path with id: {}", learningPathId);
@@ -339,7 +339,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the progress in the body
      */
-    @GetMapping("learning-path/{learningPathId}/competency-progress")
+    @GetMapping({ "learning-paths/{learningPathId}/competency-progress", "learning-path/{learningPathId}/competency-progress" })
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);
@@ -361,7 +361,7 @@ public class LearningPathResource {
      * @param learningPathId the id of the learning path for which to get the competencies
      * @return the ResponseEntity with status 200 (OK) and with the competencies in the body
      */
-    @GetMapping("learning-path/{learningPathId}/competencies")
+    @GetMapping({ "learning-paths/{learningPathId}/competencies", "learning-path/{learningPathId}/competencies" })
     @EnforceAtLeastStudent
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
@@ -383,7 +383,7 @@ public class LearningPathResource {
      * @param competencyId   the id of the competency for which to get the learning objects
      * @return the ResponseEntity with status 200 (OK) and with the learning objects in the body
      */
-    @GetMapping("learning-path/{learningPathId}/competencies/{competencyId}/learning-objects")
+    @GetMapping({ "learning-paths/{learningPathId}/competencies/{competencyId}/learning-objects", "learning-path/{learningPathId}/competencies/{competencyId}/learning-objects" })
     @EnforceAtLeastStudent
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -8,8 +8,8 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -19,7 +19,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private quizExerciseService = inject(QuizExerciseService);
     private quizReEvaluateService = inject(QuizReEvaluateService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -54,6 +55,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * Reset saving status, load the quiz by id and back it up.
      */
     ngOnInit(): void {
+        this.quizExercise = this.dialogConfig.data.quizExercise;
+        this.files = this.dialogConfig.data.files;
         this.isSaving = false;
         this.quizExerciseService.find(this.quizExercise.id!).subscribe((res) => {
             this.backUpQuiz = res.body!;
@@ -65,7 +68,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * Closes the modal
      */
     clear(): void {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     /**
@@ -267,7 +270,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * Close modal and navigate to the overview page
      */
     closeAndNavigate(): void {
-        this.activeModal.close();
+        // Close with a truthy result so the opener persists the saved entity (cancel closes with undefined).
+        this.dialogRef.close(true);
         // It doesn't navigate without the timeout...
         setTimeout(() => this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise));
     }

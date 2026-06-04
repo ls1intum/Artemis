@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseImportButtonComponent } from './exercise-import-button.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -8,12 +10,16 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Subject } from 'rxjs';
 
 describe('ExerciseImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExerciseImportButtonComponent;
     let fixture: ComponentFixture<ExerciseImportButtonComponent>;
     let dialogService: DialogService;
@@ -26,6 +32,7 @@ describe('ExerciseImportButtonComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: DialogService, useClass: MockDialogService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
             ],
         }).compileComponents();
@@ -50,14 +57,14 @@ describe('ExerciseImportButtonComponent', () => {
 
         const onCloseSubject = new Subject<Exercise | undefined>();
         const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        const openSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-        const routerSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
-        const beforeNavigateSpy = jest.spyOn(component.beforeNavigate, 'emit');
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        const routerSpy = vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+        const beforeNavigateSpy = vi.spyOn(component.beforeNavigate, 'emit');
 
         component.openImportModal();
 
-        expect(beforeNavigateSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(beforeNavigateSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledTimes(1);
         expect(openSpy).toHaveBeenCalledWith(
             expectedComponent,
             expect.objectContaining({
@@ -73,13 +80,15 @@ describe('ExerciseImportButtonComponent', () => {
         await fixture.whenStable();
 
         if (id && exerciseType === ExerciseType.PROGRAMMING) {
-            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
+            expect(routerSpy).toHaveBeenCalledTimes(1);
+            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
         } else if (!id && exerciseType === ExerciseType.PROGRAMMING) {
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'import-from-file'], {
                 state: { programmingExerciseForImportFromFile: { id: undefined, maxPoints: 1 } },
             });
         } else {
-            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
+            expect(routerSpy).toHaveBeenCalledTimes(1);
+            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
         }
     });
 });

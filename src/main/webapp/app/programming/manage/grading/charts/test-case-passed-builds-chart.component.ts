@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

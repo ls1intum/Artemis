@@ -10,7 +10,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-bar',

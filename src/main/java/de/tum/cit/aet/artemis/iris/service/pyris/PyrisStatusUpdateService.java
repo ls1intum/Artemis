@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
@@ -18,18 +19,21 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 @Lazy
@@ -38,6 +42,8 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 public class PyrisStatusUpdateService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
+
+    private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
 
     private final PyrisJobService pyrisJobService;
 
@@ -51,15 +57,18 @@ public class PyrisStatusUpdateService {
 
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
+    private final IrisWebsocketService irisWebsocketService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
+        this.irisWebsocketService = irisWebsocketService;
     }
 
     /**
@@ -86,6 +95,38 @@ public class PyrisStatusUpdateService {
         var updatedJob = competencyGenerationService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+    }
+
+    /**
+     * Handles a webhook status update for a global search Iris answer job.
+     * <p>
+     * Logic (matching the webhook contract):
+     * <ul>
+     * <li>Thinking callback ({@code stages[0].state == IN_PROGRESS}): sends {@code isThinking=true} to the user via WebSocket.</li>
+     * <li>Result callback (all stages terminal): sends {@code isThinking=false} with the final answer (or null) via WebSocket, then removes the job.</li>
+     * </ul>
+     *
+     * @param job          the global search answer job
+     * @param statusUpdate the status update payload from Pyris
+     */
+    public void handleStatusUpdate(GlobalSearchAnswerJob job, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) {
+        var stages = statusUpdate.stages();
+        boolean hasStages = stages != null && !stages.isEmpty();
+        boolean isTerminal = hasStages && stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+        boolean isThinking = hasStages && stages.getFirst().state() == PyrisStageState.IN_PROGRESS;
+
+        if (isThinking) {
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            pyrisJobService.updateJob(job);
+        }
+        else if (isTerminal) {
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
+                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
+            pyrisJobService.removeJob(job);
+        }
+        else {
+            pyrisJobService.updateJob(job);
+        }
     }
 
     /**

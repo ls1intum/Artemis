@@ -1,4 +1,4 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { User } from 'app/account/user/user.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 

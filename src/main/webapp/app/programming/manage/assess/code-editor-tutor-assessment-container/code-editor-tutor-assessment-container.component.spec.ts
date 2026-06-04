@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,7 +21,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -40,7 +41,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
@@ -49,8 +50,8 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { EntityResponseType } from 'app/exercise/result/result.service';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import dayjs from 'dayjs/esm';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -160,13 +161,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 SessionStorageService,
                 LocalStorageService,
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -852,25 +853,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
-        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(true) } as NgbModalRef); // Confirm dismissal
+        const modalOpenStub = jest.spyOn(comp['dialogService'], 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef); // Confirm dismissal
         comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).toHaveBeenCalled();
         // Dismissal should clear all feedback suggestions
-        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbackSuggestions).toHaveLength(0);
     });
 
     it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
-        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(false) } as NgbModalRef); // Cancel suggestion dismissal
+        const modalOpenStub = jest.spyOn(comp['dialogService'], 'open').mockReturnValue({ onClose: of(false) } as DynamicDialogRef); // Cancel suggestion dismissal
         comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).toHaveBeenCalled();
         // Cancelling should keep everything intact
-        expect(comp.feedbackSuggestions).not.toBeEmpty();
+        expect(comp.feedbackSuggestions).not.toHaveLength(0);
     });
 
     it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
-        const modalOpenStub = jest.spyOn(comp['modalService'], 'open');
+        const modalOpenStub = jest.spyOn(comp['dialogService'], 'open');
         comp.feedbackSuggestions = [];
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).not.toHaveBeenCalled();

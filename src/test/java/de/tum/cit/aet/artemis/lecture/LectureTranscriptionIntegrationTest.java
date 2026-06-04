@@ -64,7 +64,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2));
         lectureTranscriptionRepository.save(new LectureTranscription("en", segments, lectureUnit));
 
-        LectureTranscriptionDTO retrieved = request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.OK, LectureTranscriptionDTO.class);
+        LectureTranscriptionDTO retrieved = request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.OK, LectureTranscriptionDTO.class);
         assertThat(retrieved).isNotNull();
         assertThat(retrieved.language()).isEqualTo("en");
         assertThat(retrieved.segments()).hasSize(2);
@@ -74,12 +74,12 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLectureTranscription_notFound() throws Exception {
-        request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.NOT_FOUND, LectureTranscriptionDTO.class);
+        request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.NOT_FOUND, LectureTranscriptionDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetLectureTranscription_forbiddenForStudent() throws Exception {
-        request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.FORBIDDEN, LectureTranscriptionDTO.class);
+        request.get("/api/lecture/lecture-units/" + lectureUnit.getId() + "/transcript", HttpStatus.FORBIDDEN, LectureTranscriptionDTO.class);
     }
 }

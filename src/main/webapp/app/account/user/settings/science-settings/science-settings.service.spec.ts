@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { SettingId } from 'app/foundation/constants/user-settings.constants';
 import { Subject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -13,7 +13,7 @@ import { SCIENCE_SETTING_LOCAL_STORAGE_KEY, ScienceSettingsService } from 'app/a
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Setting } from 'app/account/user/settings/user-settings.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,

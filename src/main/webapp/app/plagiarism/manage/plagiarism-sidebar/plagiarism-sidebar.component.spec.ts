@@ -1,19 +1,23 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: PlagiarismSidebarComponent;
     let fixture: ComponentFixture<PlagiarismSidebarComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -24,7 +28,7 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('displays the run details', () => {
-        jest.spyOn(comp.showRunDetailsChange, 'emit');
+        vi.spyOn(comp.showRunDetailsChange, 'emit');
 
         comp.displayRunDetails();
         expect(comp.showRunDetailsChange.emit).toHaveBeenCalledWith(true);

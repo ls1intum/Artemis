@@ -15,8 +15,8 @@ import {
     viewChildren,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
@@ -31,8 +31,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
-import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
-import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
+import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
 interface RelatedThreadLocation {
     threadId: number;

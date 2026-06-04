@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -5,13 +7,17 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LLMSelectionModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LLMSelectionModalComponent;
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
@@ -26,24 +32,24 @@ describe('LLMSelectionModalComponent', () => {
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
-            emitChoice: jest.fn(),
+            emitChoice: vi.fn(),
         };
 
         const themeServiceMock = {
-            currentTheme: Theme.LIGHT,
+            currentTheme: signal(Theme.LIGHT),
         };
 
         const routerMock = {
-            navigate: jest.fn(),
+            navigate: vi.fn(),
         };
 
         const profileServiceMock = {
-            isLLMDeploymentEnabled: jest.fn().mockReturnValue(false),
+            isLLMDeploymentEnabled: vi.fn().mockReturnValue(false),
         };
 
         const accountServiceMock = {
             userIdentity: userIdentitySignal,
-            setUserEnabledMemiris: jest.fn(),
+            setUserEnabledMemiris: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -54,6 +60,7 @@ describe('LLMSelectionModalComponent', () => {
                 { provide: Router, useValue: routerMock },
                 { provide: ProfileService, useValue: profileServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -65,7 +72,7 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should create', () => {
@@ -73,14 +80,14 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     it('should initialize with isVisible false', () => {
-        expect(component.isVisible).toBeFalse();
+        expect(component.isVisible).toBe(false);
     });
 
     describe('open', () => {
         it('should set isVisible to true', () => {
             component.isVisible = false;
             component.open();
-            expect(component.isVisible).toBeTrue();
+            expect(component.isVisible).toBe(true);
         });
     });
 
@@ -88,13 +95,13 @@ describe('LLMSelectionModalComponent', () => {
         it('should set isVisible to false', () => {
             component.isVisible = true;
             component.close();
-            expect(component.isVisible).toBeFalse();
+            expect(component.isVisible).toBe(false);
         });
     });
 
     describe('selectCloud', () => {
         it('should emit cloud choice', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
 
             component.selectCloud();
 
@@ -108,7 +115,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should close the modal', () => {
-            const closeSpy = jest.spyOn(component, 'close');
+            const closeSpy = vi.spyOn(component, 'close');
 
             component.selectCloud();
 
@@ -120,13 +127,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectCloud();
 
-            expect(component.isVisible).toBeFalse();
+            expect(component.isVisible).toBe(false);
         });
     });
 
     describe('selectLocal', () => {
         it('should emit local choice', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
 
             component.selectLocal();
 
@@ -140,7 +147,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should close the modal', () => {
-            const closeSpy = jest.spyOn(component, 'close');
+            const closeSpy = vi.spyOn(component, 'close');
 
             component.selectLocal();
 
@@ -152,13 +159,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectLocal();
 
-            expect(component.isVisible).toBeFalse();
+            expect(component.isVisible).toBe(false);
         });
     });
 
     describe('selectNone', () => {
         it('should emit NO_AI choice', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
 
             component.selectNone();
 
@@ -172,7 +179,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should close the modal', () => {
-            const closeSpy = jest.spyOn(component, 'close');
+            const closeSpy = vi.spyOn(component, 'close');
 
             component.selectNone();
 
@@ -184,13 +191,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectNone();
 
-            expect(component.isVisible).toBeFalse();
+            expect(component.isVisible).toBe(false);
         });
     });
 
     describe('onBackdropClick', () => {
         it('should emit NONE choice when backdrop is clicked', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
@@ -209,7 +216,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should close modal when target equals currentTarget', () => {
-            const closeSpy = jest.spyOn(component, 'close');
+            const closeSpy = vi.spyOn(component, 'close');
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
@@ -219,7 +226,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should not close modal when target does not equal currentTarget', () => {
-            const closeSpy = jest.spyOn(component, 'close');
+            const closeSpy = vi.spyOn(component, 'close');
             const target = document.createElement('div');
             const currentTarget = document.createElement('div');
             const event = { target, currentTarget } as any;
@@ -230,9 +237,9 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should NOT emit choice when clicking inside modal content (target !== currentTarget)', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
-            const emitChoiceSpy = jest.spyOn(modalService, 'emitChoice');
-            const closeSpy = jest.spyOn(component, 'close');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
+            const emitChoiceSpy = vi.spyOn(modalService, 'emitChoice');
+            const closeSpy = vi.spyOn(component, 'close');
 
             const target = document.createElement('div');
             const currentTarget = document.createElement('div');
@@ -246,9 +253,9 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should emit choice and close when clicking backdrop (target === currentTarget)', () => {
-            const choiceSpy = jest.spyOn(component.choice, 'emit');
-            const emitChoiceSpy = jest.spyOn(modalService, 'emitChoice');
-            const closeSpy = jest.spyOn(component, 'close');
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
+            const emitChoiceSpy = vi.spyOn(modalService, 'emitChoice');
+            const closeSpy = vi.spyOn(component, 'close');
 
             const backdrop = document.createElement('div');
             const event = { target: backdrop, currentTarget: backdrop } as any;
@@ -263,7 +270,7 @@ describe('LLMSelectionModalComponent', () => {
 
     describe('onLearnMoreClick', () => {
         it('should prevent default event behavior', () => {
-            const event = { preventDefault: jest.fn() } as any;
+            const event = { preventDefault: vi.fn() } as any;
 
             component.onLearnMoreClick(event);
 
@@ -271,7 +278,7 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should navigate to /ai-experience-info', () => {
-            const event = { preventDefault: jest.fn() } as any;
+            const event = { preventDefault: vi.fn() } as any;
 
             component.onLearnMoreClick(event);
 
@@ -279,8 +286,8 @@ describe('LLMSelectionModalComponent', () => {
         });
 
         it('should close the modal after navigation', () => {
-            const closeSpy = jest.spyOn(component, 'close');
-            const event = { preventDefault: jest.fn() } as any;
+            const closeSpy = vi.spyOn(component, 'close');
+            const event = { preventDefault: vi.fn() } as any;
 
             component.onLearnMoreClick(event);
 
@@ -289,11 +296,11 @@ describe('LLMSelectionModalComponent', () => {
 
         it('should set isVisible to false after learn more click', () => {
             component.isVisible = true;
-            const event = { preventDefault: jest.fn() } as any;
+            const event = { preventDefault: vi.fn() } as any;
 
             component.onLearnMoreClick(event);
 
-            expect(component.isVisible).toBeFalse();
+            expect(component.isVisible).toBe(false);
         });
     });
 
@@ -339,7 +346,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
         });
 
         it('should read memirisEnabled=true from userIdentity when modal opens', () => {
@@ -347,7 +354,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
         });
 
         it('should read memirisEnabled=false from userIdentity when modal opens', () => {
@@ -355,7 +362,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
         });
 
         it('should update memirisEnabled each time the modal is opened', () => {
@@ -363,11 +370,11 @@ describe('LLMSelectionModalComponent', () => {
 
             userIdentitySignal.set({ memirisEnabled: false } as User);
             openModalSubject.next(undefined);
-            expect(component.memirisEnabled).toBeFalse();
+            expect(component.memirisEnabled).toBe(false);
 
             userIdentitySignal.set({ memirisEnabled: true } as User);
             openModalSubject.next(undefined);
-            expect(component.memirisEnabled).toBeTrue();
+            expect(component.memirisEnabled).toBe(true);
         });
     });
 

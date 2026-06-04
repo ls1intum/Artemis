@@ -9,7 +9,7 @@ import org.springframework.data.ldap.repository.config.EnableLdapRepositories;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
-import de.tum.cit.aet.artemis.core.config.LdapEnabled;
+import de.tum.cit.aet.artemis.account.config.LdapEnabled;
 
 @Configuration
 @Conditional(LdapEnabled.class)

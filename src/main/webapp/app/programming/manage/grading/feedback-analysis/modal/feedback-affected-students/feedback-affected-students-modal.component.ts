@@ -2,10 +2,10 @@ import { Component, effect, inject, input, signal, untracked } from '@angular/co
 
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 
 @Component({

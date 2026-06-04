@@ -195,9 +195,10 @@ public class ConversationMessageResource {
      * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
-    @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
+    @PutMapping("courses/{courseId}/messages/{messageId}/display-priority")
     @EnforceAtLeastStudent
-    public ResponseEntity<PostResponseDTO> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+    public ResponseEntity<PostResponseDTO> updateDisplayPriority(@PathVariable Long courseId, @PathVariable("messageId") Long postId,
+            @RequestParam DisplayPriority displayPriority) {
         // Note: authorization is checked in the service method
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(PostResponseDTO.from(postWithUpdatedDisplayPriority));

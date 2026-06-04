@@ -21,7 +21,7 @@ import { User } from 'app/account/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
@@ -182,7 +182,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // GIVEN
         const exportCSVStub = vi.spyOn(resultService, 'triggerDownloadCSV');
         const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
-        component.exercise = exercise1;
+        fixture.componentRef.setInput('exercise', exercise1);
 
         // WHEN
         component.exportResults(false, false);
@@ -244,7 +244,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const getResultsStub = vi
             .spyOn(resultService, 'getResultsWithPointsPerGradingCriterion')
             .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
-        component.exercises = [exercise1, exercise2];
+        fixture.componentRef.setInput('exercises', [exercise1, exercise2]);
 
         // WHEN
         component.exportResults(false, false);
@@ -292,7 +292,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // @ts-ignore (stubbing a private method)
         const exportAsCsvStub = vi.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
         const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         // WHEN
         component.exportResults(withTestCases, withFeedback);

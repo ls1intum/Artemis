@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyCatalogDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',
@@ -39,6 +39,6 @@ export class AdminStandardizedCompetencyService {
     }
 
     exportStandardizedCompetencyCatalog() {
-        return this.httpClient.get<string>(`${this.resourceURL}/export`, { observe: 'response' });
+        return this.httpClient.get<StandardizedCompetencyCatalogDTO>(`${this.resourceURL}/export`, { observe: 'response' });
     }
 }

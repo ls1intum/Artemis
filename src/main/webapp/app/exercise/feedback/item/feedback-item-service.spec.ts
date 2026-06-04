@@ -1,23 +1,25 @@
+import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FeedbackItemService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: FeedbackItemServiceImpl;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(FeedbackItemServiceImpl);
-            });
+        }).compileComponents();
+
+        service = TestBed.inject(FeedbackItemServiceImpl);
     });
 
     it('should create generic feedback item', () => {
@@ -84,9 +86,9 @@ describe('FeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items) as FeedbackGroup[];
 
-        expect(groups.find((group) => group.name === 'wrong')?.members).toBeArrayOfSize(4);
-        expect(groups.find((group) => group.name === 'info')?.members).toBeArrayOfSize(3);
-        expect(groups.find((group) => group.name === 'correct')?.members).toBeArrayOfSize(2);
+        expect(groups.find((group) => group.name === 'wrong')?.members).toHaveLength(4);
+        expect(groups.find((group) => group.name === 'info')?.members).toHaveLength(3);
+        expect(groups.find((group) => group.name === 'correct')?.members).toHaveLength(2);
     });
 
     it('should filter out subsequent SGI feedback for group credit calculation', () => {
@@ -102,7 +104,7 @@ describe('FeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(2);
+        expect(groups).toHaveLength(2);
 
         const infoGroup = groups.find((group) => group.name === 'info');
         expect(infoGroup?.credits).toBe(0);
@@ -114,12 +116,12 @@ describe('FeedbackItemService', () => {
             members: [],
         } as Partial<FeedbackGroup>;
 
-        expect(isFeedbackGroup(<FeedbackNode>feedbackGroup)).toBeTrue();
+        expect(isFeedbackGroup(<FeedbackNode>feedbackGroup)).toBe(true);
 
         const feedbackItem = {
             name: 'feedbackItem',
         } as Partial<FeedbackGroup>;
 
-        expect(isFeedbackGroup(<FeedbackNode>feedbackItem)).toBeFalse();
+        expect(isFeedbackGroup(<FeedbackNode>feedbackItem)).toBe(false);
     });
 });

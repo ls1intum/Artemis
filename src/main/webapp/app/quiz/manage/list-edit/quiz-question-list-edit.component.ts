@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -11,7 +12,7 @@ import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-ch
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
 import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
@@ -33,7 +34,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
     ],
 })
 export class QuizQuestionListEditComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
@@ -256,14 +257,27 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
+        const ref = this.dialogService.open(ApollonDiagramImportDialogComponent, {
+            width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: { courseId: this.courseId() },
+        });
+        if (!ref) {
+            return;
+        }
 
-        const courseIdValue = this.courseId();
-
-        const instance = modalRef.componentInstance;
-        instance.courseId = signal(courseIdValue);
-
-        const question = await modalRef.result;
+        const question = await firstValueFrom(ref.onClose, { defaultValue: undefined });
         if (question) {
             this.addQuestion(question);
         }

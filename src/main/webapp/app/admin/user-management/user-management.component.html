@@ -162,16 +162,16 @@
                                 />
                             </td>
                             <td>
-                                <ngb-highlight [result]="user.login" [term]="searchTerm()" />
+                                <jhi-search-highlight [result]="user.login" [term]="searchTerm()" />
                             </td>
                             <td>
-                                <ngb-highlight [result]="user.email" [term]="searchTerm()" />
+                                <jhi-search-highlight [result]="user.email" [term]="searchTerm()" />
                             </td>
                             <td>
-                                <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm()" />
+                                <jhi-search-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm()" />
                             </td>
                             <td>
-                                <ngb-highlight [result]="user.name" [term]="searchTerm()" />
+                                <jhi-search-highlight [result]="user.name" [term]="searchTerm()" />
                             </td>
                             <td>
                                 @if (user.activated) {
@@ -227,15 +227,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
-                <ngb-pagination
-                    [collectionSize]="totalItems()"
-                    [page]="page()"
-                    (pageChange)="page.set($event); transition()"
-                    [pageSize]="itemsPerPage"
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [boundaryLinks]="true"
-                />
+                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
             </div>
         </div>
     }

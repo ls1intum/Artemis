@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { WebauthnService } from './webauthn.service';
 import { WebauthnApiService } from './webauthn-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { InvalidCredentialError } from './entities/errors/invalid-credential.error';
 import { UserAbortedPasskeyCreationError } from './entities/errors/user-aborted-passkey-creation.error';
 import { InvalidStateError } from './entities/errors/invalid-state.error';
@@ -11,7 +11,7 @@ import { PasskeyAbortError } from './entities/errors/passkey-abort.error';
 import { User } from 'app/account/user/user.model';
 import * as credentialUtil from './util/credential.util';
 import * as credentialOptionUtil from './util/credential-option.util';
-import { encodeAsBase64Url } from 'app/shared/util/base64.util';
+import { encodeAsBase64Url } from 'app/foundation/util/base64.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
 

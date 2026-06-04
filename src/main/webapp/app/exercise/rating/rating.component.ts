@@ -1,11 +1,11 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-rating',
@@ -21,7 +21,7 @@ export class RatingComponent implements OnInit, OnChanges {
     public disableRating = false;
     private previousResultId?: number;
 
-    @Input() result?: Result;
+    readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
 
     ngOnInit(): void {
@@ -36,10 +36,11 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     loadRating() {
-        if (!this.result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const result = this.result();
+        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
             return;
         }
-        this.ratingService.getRating(this.result.id).subscribe((rating) => {
+        this.ratingService.getRating(result.id).subscribe((rating) => {
             this.rating = rating ?? 0;
         });
     }
@@ -50,7 +51,8 @@ export class RatingComponent implements OnInit, OnChanges {
      */
     onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
-        if (this.disableRating || !this.result) {
+        const result = this.result();
+        if (this.disableRating || !result) {
             return;
         }
 
@@ -61,9 +63,9 @@ export class RatingComponent implements OnInit, OnChanges {
         let observable: Observable<number>;
         // set/update feedback on the server
         if (oldRating) {
-            observable = this.ratingService.updateRating(this.rating, this.result.id!);
+            observable = this.ratingService.updateRating(this.rating, result.id!);
         } else {
-            observable = this.ratingService.createRating(this.rating, this.result.id!);
+            observable = this.ratingService.createRating(this.rating, result.id!);
         }
 
         observable.subscribe((rating) => (this.rating = rating)).add(() => (this.disableRating = false));

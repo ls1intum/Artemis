@@ -1,8 +1,8 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -15,18 +15,24 @@ import {
     ExerciseMappingPreviewViewModel,
     RelationGraphPreview,
 } from 'app/atlas/shared/entities/chat-message.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 
 interface WeightOption {
     label: string;
     value: number;
+}
+
+export interface AgentChatModalData {
+    courseId: number;
+    /** Invoked whenever the agent likely created/modified competencies, so the opener can refresh its list. */
+    onCompetencyChanged?: () => void;
 }
 
 @Component({
@@ -56,7 +62,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -94,6 +101,18 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngOnInit(): void {
+        const data = this.dialogConfig?.data as AgentChatModalData | undefined;
+        if (!data) {
+            // Fail closed: without a payload we have no course context, so do not load history or wire callbacks.
+            return;
+        }
+
+        this.courseId.set(data.courseId);
+        if (data.onCompetencyChanged) {
+            const onCompetencyChanged = data.onCompetencyChanged;
+            this.competencyChanged.subscribe(() => onCompetencyChanged());
+        }
+
         this.agentChatService.getConversationHistory(this.courseId()).subscribe({
             next: (history) => {
                 if (history.length === 0) {
@@ -121,7 +140,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected closeModal(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 
     protected sendMessage(): void {

@@ -54,8 +54,6 @@
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Action",
             "actions": {
-                "askIrisTitle": "Ask Iris",
-                "askIrisDescription": "Chat with Iris AI assistant",
                 "lectureSearchTitle": "Lecture Search",
                 "lectureSearchDescription": "Search through lecture content and slides"
             },
@@ -88,12 +86,12 @@
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
             "searchFailed": "Search failed. Please try again.",
-            "askIris": "Ask Iris AI",
-            "askIrisDescription": "Get an AI-generated answer from your lecture content",
-            "irisAnswerTitle": "Iris AI Answer",
-            "irisAnswerSources": "Sources",
-            "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
-            "continueInIris": "Continue conversation in Iris"
+            "irisAnswerShowMore": "Show more",
+            "irisAnswerShowLess": "Show less",
+            "irisAnswerMore": "more",
+            "irisAnswerThinking": "Iris is thinking…",
+            "irisCollapseSources": "Show fewer sources",
+            "irisAiBadge": "AI"
         },
         "menu": {
             "home": "Home",

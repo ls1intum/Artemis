@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -6,15 +8,15 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Observable, ReplaySubject, of } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,10 +26,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PlagiarismCaseInstructorDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseInstructorDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    let saveVerdictSpy: jest.SpyInstance;
+    let saveVerdictSpy: ReturnType<typeof vi.spyOn>;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, plagiarismCaseId: 1 }) } } as any as ActivatedRoute;
 
@@ -63,22 +67,22 @@ describe('Plagiarism Cases Instructor View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCaseInstructorDetailViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
-        saveVerdictSpy = jest.spyOn(plagiarismCasesService, 'saveVerdict');
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
+        saveVerdictSpy = vi.spyOn(plagiarismCasesService, 'saveVerdict');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should set plagiarism case and exercises on initialization', fakeAsync(() => {
+    it('should set plagiarism case and exercises on initialization', async () => {
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
         expect(component.plagiarismCase).toEqual(plagiarismCase);
         expect(component.currentAccount?.id).toBe(99);
-    }));
+    });
 
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
         component.courseId = 1;
@@ -90,18 +94,18 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(() => component.saveNoPlagiarismVerdict()).toThrow(Error);
     });
 
-    it('should save plagiarism case plagiarism verdict', fakeAsync(() => {
+    it('should save plagiarism case plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
         component.saveVerdict();
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
-    }));
+    });
 
-    it('should save plagiarism case warning verdict', fakeAsync(() => {
+    it('should save plagiarism case warning verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
@@ -109,11 +113,11 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.plagiarismCase = { id: 1 };
         component.verdictMessage = 'message';
         component.saveWarningVerdict();
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' });
-    }));
+    });
 
-    it('should save plagiarism case point deduction verdict', fakeAsync(() => {
+    it('should save plagiarism case point deduction verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
@@ -121,24 +125,24 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.plagiarismCase = { id: 1 };
         component.verdictPointDeduction = 80;
         component.savePointDeductionVerdict();
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 });
-    }));
+    });
 
-    it('should save plagiarism case no plagiarism verdict', fakeAsync(() => {
+    it('should save plagiarism case no plagiarism verdict', async () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.NO_PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
         component.saveNoPlagiarismVerdict();
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
-    }));
+    });
 
     it('should create student notification for course exercise', () => {
         const translateService = TestBed.inject(TranslateService);
-        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         component.plagiarismCase = plagiarismCase;
         component.currentAccount = { id: 99, name: 'user' } as User;
@@ -162,7 +166,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should create student notification for exam exercise', () => {
         const translateService = TestBed.inject(TranslateService);
-        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         const examTitle = 'Exam Title';
         const examPlagiarismCase = {
@@ -191,7 +195,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should create student notification with empty names and titles', () => {
         const translateService = TestBed.inject(TranslateService);
-        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         component.plagiarismCase = {
             ...plagiarismCase,
@@ -218,7 +222,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should notify student', () => {
-        const successSpy = jest.spyOn(TestBed.inject(AlertService), 'success');
+        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
 
         component.courseId = 1;
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
@@ -231,53 +235,53 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(successSpy).toHaveBeenCalledWith('artemisApp.plagiarism.plagiarismCases.studentNotified');
     });
 
-    it('should not display post unrelated to the current plagiarism case', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+    it('should not display post unrelated to the current plagiarism case', async () => {
+        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
 
-        expect(component.posts).toBeEmpty();
+        expect(component.posts).toHaveLength(0);
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
-        tick();
+        await Promise.resolve();
 
         expect(component.posts).toHaveLength(1);
         expect(component.posts[0].id).toBe(relevantPost.id);
 
         const irrelevantPost = { id: 2 };
         postsSubject.next([irrelevantPost]);
-        tick();
+        await Promise.resolve();
 
         expect(component.posts).toHaveLength(1);
         expect(component.posts[0].id).toBe(relevantPost.id);
-    }));
+    });
 
-    it('should delete post successfully', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+    it('should delete post successfully', async () => {
+        const metisPostsSpy = vi.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 
         postsSubject.next([]);
 
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
 
-        expect(component.posts).toBeEmpty();
+        expect(component.posts).toHaveLength(0);
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
-        tick();
+        await Promise.resolve();
 
         expect(component.posts).toHaveLength(1);
         expect(component.posts[0].id).toBe(relevantPost.id);
 
         postsSubject.next([]);
-        expect(component.posts).toBeEmpty();
-    }));
+        expect(component.posts).toHaveLength(0);
+    });
 });

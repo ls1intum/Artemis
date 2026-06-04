@@ -8,7 +8,10 @@
 import '@angular/compiler';
 import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { vi } from 'vitest';
+import * as jestExtendedMatchers from 'jest-extended';
+import { expect, vi } from 'vitest';
+
+expect.extend(jestExtendedMatchers);
 
 // Provide a jest-compatible global so that legacy mocks (e.g. jest-canvas-mock) work under Vitest.
 // Must be set before requiring jest-canvas-mock, hence the synchronous require below.
@@ -16,7 +19,7 @@ import { vi } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 require('jest-canvas-mock');
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import dayjs from 'dayjs/esm';
 import relativeTime from 'dayjs/esm/plugin/relativeTime';
