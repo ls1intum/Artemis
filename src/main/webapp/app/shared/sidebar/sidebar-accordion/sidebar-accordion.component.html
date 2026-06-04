@@ -46,19 +46,36 @@
                                         <!-- Optional nested group: the header card and its exercises sit inside one container -->
                                         @if (sidebarItem.groupedItems?.length) {
                                             <div class="sidebar-group">
-                                                <div
-                                                    class="sidebar-group-header"
-                                                    jhiSidebarCard
-                                                    [size]="sidebarItem.size"
-                                                    [itemSelected]="itemSelected"
-                                                    [sidebarType]="sidebarType"
-                                                    [sidebarItem]="sidebarItem"
-                                                    [groupKey]="groupKey"
-                                                    (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                                ></div>
+                                                @if (sidebarItem.groupHeaderStyle === 'label') {
+                                                    <div class="sidebar-group-label">
+                                                        <div class="sidebar-group-title d-flex align-items-center gap-2">
+                                                            @if (sidebarItem.icon) {
+                                                                <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                                                            }
+                                                            <span class="fw-semibold text-truncate">{{ sidebarItem.title }}</span>
+                                                            @if (sidebarItem.subtitleLeft) {
+                                                                <span class="ms-auto text-muted small">{{ sidebarItem.subtitleLeft }}</span>
+                                                            }
+                                                        </div>
+                                                        @if (sidebarItem.groupPickHint) {
+                                                            <div class="sidebar-group-hint">{{ sidebarItem.groupPickHint }}</div>
+                                                        }
+                                                    </div>
+                                                } @else {
+                                                    <div
+                                                        class="sidebar-group-header"
+                                                        jhiSidebarCard
+                                                        [size]="sidebarItem.size"
+                                                        [itemSelected]="itemSelected"
+                                                        [sidebarType]="sidebarType"
+                                                        [sidebarItem]="sidebarItem"
+                                                        [groupKey]="groupKey"
+                                                        (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                                    ></div>
+                                                }
                                                 <div class="sidebar-group-content">
                                                     @for (variant of sidebarItem.groupedItems; track variant.id) {
-                                                        <div>
+                                                        <div class="sidebar-group-variant">
                                                             <div
                                                                 jhiSidebarCard
                                                                 [size]="variant.size"
@@ -68,6 +85,14 @@
                                                                 [groupKey]="groupKey"
                                                                 (onUpdateSidebar)="onUpdateSidebar.emit()"
                                                             ></div>
+                                                            @if (sidebarItem.groupSelectable) {
+                                                                <p-checkbox
+                                                                    class="sidebar-group-checkbox"
+                                                                    [binary]="true"
+                                                                    [ngModel]="variant.selected"
+                                                                    (ngModelChange)="onGroupVariantSelected(sidebarItem, variant, $event)"
+                                                                />
+                                                            }
                                                         </div>
                                                     }
                                                 </div>

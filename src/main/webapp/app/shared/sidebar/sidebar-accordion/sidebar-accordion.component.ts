@@ -4,6 +4,8 @@ import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { CheckboxModule } from 'primeng/checkbox';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -18,7 +20,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, FormsModule, CheckboxModule, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     protected readonly Object = Object;
@@ -124,5 +126,11 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
         return WeekGroupingUtil.getGroupedByWeek(this.groupedData[groupKey].entityData, this.storageId, groupKey, this.searchValue);
+    }
+
+    /** Single-select within a group: selecting an exercise clears the others (max one selected). */
+    onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
+        group.groupedItems?.forEach((item) => (item.selected = false));
+        variant.selected = checked;
     }
 }

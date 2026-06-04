@@ -178,4 +178,25 @@ export interface SidebarCardElement {
      * sidebars do not set this, so their rendering is unaffected.
      */
     groupedItems?: SidebarCardElement[];
+
+    /**
+     * How the group header is rendered when {@link groupedItems} is set: 'card' (default) shows the
+     * header as a normal sidebar card/tile; 'label' shows just the title (with icon and subtitle) as a
+     * plain, non-clickable heading.
+     */
+    groupHeaderStyle?: 'card' | 'label';
+
+    /**
+     * Optional helper line shown below a 'label' group title (e.g. "Pick 1 of 3"). Only rendered when set.
+     */
+    groupPickHint?: string;
+
+    /**
+     * When true on a group header, each nested exercise gets a checkbox for single-select (max one
+     * selected per group). Only meaningful together with {@link groupedItems}.
+     */
+    groupSelectable?: boolean;
+
+    /** Whether this (nested) exercise is currently selected within its group. */
+    selected?: boolean;
 }

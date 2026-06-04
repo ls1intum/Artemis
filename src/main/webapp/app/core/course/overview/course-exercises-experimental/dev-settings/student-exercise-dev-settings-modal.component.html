@@ -1,0 +1,26 @@
+<p-dialog header="Student Exercises Dev Settings" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" [style]="{ width: '420px' }">
+    <div class="d-flex flex-column gap-3">
+        <div>
+            <label class="fw-semibold d-block mb-2">View Version</label>
+            <p-selectbutton
+                [options]="versionOptions"
+                [ngModel]="devSettings.viewVersion()"
+                (ngModelChange)="devSettings.setViewVersion($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+        </div>
+        @if (devSettings.viewVersion() === 'grouped') {
+            <div>
+                <label class="fw-semibold d-block mb-2">Group Title</label>
+                <p-selectbutton
+                    [options]="groupHeaderOptions"
+                    [ngModel]="devSettings.groupHeaderStyle()"
+                    (ngModelChange)="devSettings.setGroupHeaderStyle($event)"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                />
+            </div>
+        }
+    </div>
+</p-dialog>

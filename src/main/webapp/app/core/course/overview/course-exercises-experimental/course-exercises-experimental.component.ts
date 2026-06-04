@@ -3,7 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGear, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { ButtonModule } from 'primeng/button';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,6 +13,8 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { StudentExerciseDevSettingsService, StudentExerciseViewVersion } from './dev-settings/student-exercise-dev-settings.service';
+import { StudentExerciseDevSettingsModalComponent } from './dev-settings/student-exercise-dev-settings-modal.component';
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
     future: true,
@@ -40,17 +44,16 @@ function emptyAccordionGroups(): AccordionGroups {
 
 /**
  * Experimental student exercise overview. Reuses the real exercise sidebar unchanged (search, filter,
- * date/week grouping all preserved). The only addition is that exercises belonging to the same
- * course-level group are nested under a single group header card (via the sidebar's optional
- * {@link SidebarCardElement.groupedItems}). Ungrouped exercises behave exactly as before. The detail
- * (problem statement etc.) opens in the right-hand pane. Dev-only; reachable at
- * /courses/:courseId/exercises/experimental.
+ * date/week grouping all preserved). Exercises belonging to the same course-level group are nested under
+ * a single group header card (via the sidebar's optional {@link SidebarCardElement.groupedItems}). A
+ * dev-settings gear (see {@link StudentExerciseDevSettingsService}) switches between view versions so we
+ * can iterate on different designs. Dev-only; reachable at /courses/:courseId/exercises/experimental.
  */
 @Component({
     selector: 'jhi-course-exercises-experimental',
     templateUrl: './course-exercises-experimental.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    styleUrls: ['../course-overview/course-overview.scss', './course-exercises-experimental.component.scss'],
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective, FaIconComponent, ButtonModule, StudentExerciseDevSettingsModalComponent],
 })
 export class CourseExercisesExperimentalComponent {
     private readonly route = inject(ActivatedRoute);
@@ -58,21 +61,23 @@ export class CourseExercisesExperimentalComponent {
     private readonly mockService = inject(ExerciseManagementMockService);
     private readonly courseOverviewService = inject(CourseOverviewService);
     private readonly destroyRef = inject(DestroyRef);
+    protected readonly devSettings = inject(StudentExerciseDevSettingsService);
 
     private readonly _exerciseSelected = signal(false);
     readonly exerciseSelected = computed(() => this._exerciseSelected());
 
     readonly courseId = signal(0);
-    readonly sidebarData: SidebarData;
+    readonly settingsVisible = signal(false);
+    readonly sidebarData = computed(() => this.buildSidebarData(this.devSettings.viewVersion()));
 
     // The overview only wires its collapse toggle to known child components, so this view is never collapsed.
     protected readonly isCollapsed = false;
+    protected readonly faGear = faGear;
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor() {
         this.courseId.set(Number(this.route.parent?.snapshot.params.courseId));
-        this.sidebarData = this.buildSidebarData();
 
         this.updateSelection();
         this.router.events
@@ -91,17 +96,40 @@ export class CourseExercisesExperimentalComponent {
         this._exerciseSelected.set(!!this.route.firstChild);
     }
 
-    /**
-     * Builds the sidebar data using the same date-category accordion as the real view. Each course-level
-     * exercise group becomes a single group header card (placed by its due date) whose variant cards are
-     * nested via {@link SidebarCardElement.groupedItems}; ungrouped exercises are mapped as usual.
-     */
-    private buildSidebarData(): SidebarData {
-        const groups = this.mockService.getGroups();
+    private buildSidebarData(version: StudentExerciseViewVersion): SidebarData {
         const exercises = this.mockService.getExercises();
 
+        // Flat: the unmodified original behaviour — every exercise listed individually.
+        if (version === 'flat') {
+            const sorted = this.courseOverviewService.sortExercises(exercises);
+            return {
+                groupByCategory: true,
+                sidebarType: 'exercise',
+                storageId: 'exercise',
+                groupedData: this.courseOverviewService.groupExercisesByDueDate(sorted),
+                ungroupedData: this.courseOverviewService.mapExercisesToSidebarCardElements(sorted),
+            };
+        }
+
+        // Grouped: exercises in the same course-level group are nested under a single group header card.
+        const grouped = this.buildGroupedData(exercises);
+        return {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+            storageId: 'exercise',
+            groupedData: grouped.groupedData,
+            ungroupedData: grouped.ungroupedData,
+        };
+    }
+
+    /**
+     * Builds the date-category accordion where each course-level exercise group becomes a single group
+     * header card (placed by its due date) whose variant cards are nested via groupedItems; ungrouped
+     * exercises are mapped as usual.
+     */
+    private buildGroupedData(exercises: Exercise[]): Pick<SidebarData, 'groupedData' | 'ungroupedData'> {
         const groupByExerciseId = new Map<number, CourseExerciseGroup>();
-        for (const group of groups) {
+        for (const group of this.mockService.getGroups()) {
             for (const member of group.exercises ?? []) {
                 if (member.id !== undefined) {
                     groupByExerciseId.set(member.id, group);
@@ -130,18 +158,14 @@ export class CourseExercisesExperimentalComponent {
             }
         }
 
-        return {
-            groupByCategory: true,
-            sidebarType: 'exercise',
-            storageId: 'exercise',
-            groupedData,
-            ungroupedData,
-        };
+        return { groupedData, ungroupedData };
     }
 
     /** A group rendered as a sidebar card (same design) with the group icon, group due date and its variant cards nested. */
     private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
+        const headerSetting = this.devSettings.groupHeaderStyle();
+        const showHint = headerSetting === 'label-hint' || headerSetting === 'label-select';
         return {
             title: group.title ?? '',
             // Opens the first variant on click; the nested variant cards let the student pick a specific one.
@@ -150,6 +174,9 @@ export class CourseExercisesExperimentalComponent {
             subtitleLeft: dueDate?.format('MMM DD, YYYY'),
             startDate: dueDate,
             size: 'M',
+            groupHeaderStyle: headerSetting === 'card' ? 'card' : 'label',
+            groupPickHint: showHint ? `Pick 1 of ${members.length}` : undefined,
+            groupSelectable: headerSetting === 'label-select',
             groupedItems: members.map((member) => this.courseOverviewService.mapExerciseToSidebarCardElement(member)),
         };
     }
