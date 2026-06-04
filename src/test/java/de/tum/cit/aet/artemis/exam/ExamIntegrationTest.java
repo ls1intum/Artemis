@@ -1150,7 +1150,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         studentParticipationRepository.save(failedPreparation);
 
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
-        assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(textExercise.getId())).isZero();
+        assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(textExercise.getId(), exam2.getId())).isZero();
 
         ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
