@@ -446,9 +446,14 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             // Non-admins cannot change variant or rate limits — restore the originals.
             settingsToSave.variant = originalSettingsValue.variant;
             settingsToSave.rateLimit = originalSettingsValue.rateLimit;
-        } else {
-            // Admin: reconstruct rateLimit from the current form fields.
+        } else if (this.isFormValid()) {
+            // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
+        } else {
+            // Admin with an invalid rate-limit form (e.g. one field filled, one empty):
+            // never auto-save a partial/invalid override. Keep the persisted rateLimit
+            // so flipping the enabled toggle does not corrupt the rate-limit configuration.
+            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
         }
 
         this.irisSettingsService

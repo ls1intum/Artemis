@@ -399,6 +399,30 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(savedSettings.enabled).toBe(false);
             expect(component.settings()!.supportLevel).toBe('high');
         });
+
+        it('should not auto-save a partial rateLimit when the form is invalid (admin)', async () => {
+            await initComponent();
+            component.isAdmin.set(true);
+
+            // Admin leaves the rate-limit form in an invalid, partial state:
+            // only requests is filled, timeframe is empty.
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(undefined);
+            expect(component.isFormValid()).toBe(false);
+
+            const updateSpy = irisSettingsService.updateCourseSettings as ReturnType<typeof vi.fn>;
+            updateSpy.mockClear();
+            updateSpy.mockImplementation((_courseId: number, settings: IrisCourseSettingsDTO) => of(new HttpResponse({ body: { ...mockResponse, settings } })));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            // The auto-save must keep the persisted rateLimit rather than sending the
+            // partial { requests: 200, timeframeHours: undefined } override.
+            const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
+            expect(savedSettings.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+            expect(savedSettings.enabled).toBe(false);
+        });
     });
 
     describe('getCustomInstructionsLength', () => {
