@@ -84,34 +84,18 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/2_file_structure.st", templateVariables);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/3_headers.st", templateVariables);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());

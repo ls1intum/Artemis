@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -146,10 +147,28 @@ public abstract class HyperionCodeGenerationService {
         String normalizedSelectedFeedbackThreads = normalizeSelectedFeedbackThreads(selectedFeedbackThreads);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+        CodeGenerationResponseDTO fileStructureResponse = defineFileStructure(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
                 normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
+        CodeGenerationResponseDTO headersResponse = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, fileStructureResponse);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, headersResponse);
 
-        return coreLogicResponse;
+        return mergeStageDeletedFiles(coreLogicResponse, solutionPlanResponse, fileStructureResponse, headersResponse);
+    }
+
+    private CodeGenerationResponseDTO mergeStageDeletedFiles(CodeGenerationResponseDTO finalResponse, CodeGenerationResponseDTO... stageResponses) {
+        LinkedHashSet<String> deletedFiles = new LinkedHashSet<>();
+        for (CodeGenerationResponseDTO stageResponse : stageResponses) {
+            if (stageResponse != null) {
+                deletedFiles.addAll(stageResponse.getDeletedFiles());
+            }
+        }
+        if (finalResponse != null) {
+            deletedFiles.addAll(finalResponse.getDeletedFiles());
+            return new CodeGenerationResponseDTO(finalResponse.getSolutionPlan(), finalResponse.getFiles(), List.copyOf(deletedFiles));
+        }
+        return new CodeGenerationResponseDTO(null, List.of(), List.copyOf(deletedFiles));
     }
 
     public CodeGenerationResponseDTO generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
@@ -628,8 +647,17 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
+                selectedFeedbackThreads);
+        return generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads,
+                fileStructure);
+    }
+
     protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
-            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure)
+            throws NetworkingException;
 
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
@@ -652,8 +680,15 @@ public abstract class HyperionCodeGenerationService {
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
+                selectedFeedbackThreads);
+        return generateCoreLogic(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads, headers);
+    }
+
     protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException;
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException;
 
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
