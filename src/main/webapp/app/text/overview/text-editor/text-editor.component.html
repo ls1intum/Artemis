@@ -68,6 +68,11 @@
         >
             <!--region Left Panel-->
             <div left-body class="text-editor-grid ps-2 pb-2 w-100">
+                @if (textExercise?.teamMode && isActive) {
+                    <div class="grid-area-team-info pb-4 ps-md-2">
+                        <jhi-team-participate-info-box [exercise]="textExercise" [participation]="participation" [typing$]="textEditorInputObservable" [dockedToRightSide]="true" />
+                    </div>
+                }
                 <div class="grid-area-main">
                     <div>
                         <span
