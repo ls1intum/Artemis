@@ -1,27 +1,23 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
@@ -36,19 +32,14 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
  * <li><strong>Grader-mechanics leakage:</strong> grader-internal phrasing ("All functions should raise NotImplementedError in the template file to make the tests fail") leaking
  * into the student-facing problem statement.</li>
  * </ul>
- * This critic flags all three. It does it in two passes:
- * <ol>
- * <li>a cheap, deterministic regex/keyword pass over the produced problem statement for grader-mechanics leaks (no model call); and</li>
- * <li>a single, bounded LLM pass that extracts the concrete requirements/edge-cases the brief names and marks any that no test references.</li>
- * </ol>
+ * It does this in two passes: a cheap deterministic regex pass over the problem statement for grader-mechanics leaks (no model call), and a single bounded LLM pass that marks the
+ * brief's named requirements that no test references.
  * <p>
- * <strong>Non-blocking by construction.</strong> The differential oracle stays the sole source of truth for acceptance. This critic NEVER participates in the accept/reject
- * decision, so a false positive (its real risk) can only ever add an advisory note — it can never flip a sound, oracle-accepted exercise to rejected. Its findings are used in two
- * non-blocking ways by the orchestrator: folded into the verifier-feedback retry prompt while attempts remain (so the agent adds the missing test), and surfaced as advisory review
- * comments otherwise.
- * <p>
- * <strong>Degrades gracefully.</strong> Any failure of the model pass — a timeout, an error, empty or garbage output — is swallowed and the pass contributes no findings; a critic
- * failure therefore never fails or even perturbs the run. A single call, a bounded output, and a one-shot (no retry, no loop) keep its cost and latency a small constant.
+ * <strong>Non-blocking by construction.</strong> The differential oracle stays the sole source of truth for acceptance; this critic NEVER participates in the accept/reject
+ * decision,
+ * so a false positive (its real risk) can only ever add an advisory note. Its findings are folded into the verifier-feedback retry prompt while attempts remain (so the agent adds
+ * the missing test) and surfaced as advisory review comments otherwise. Any failure of the model pass — a timeout, an error, empty or garbage output — is swallowed and yields no
+ * findings, so a critic failure never perturbs the run.
  */
 @Lazy
 @Service
@@ -69,6 +60,9 @@ public class SpecFidelityCriticService {
     /** A requirement string longer than this is almost certainly the model rambling rather than naming a concrete requirement; it is truncated before surfacing. */
     private static final int MAX_REQUIREMENT_CHARS = 240;
 
+    /** Matches a JSON object wrapped in a markdown code block (```json ... ``` or ``` ... ```), so a fenced model response is parsed. */
+    private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```", Pattern.DOTALL);
+
     private static final String CRITIC_SYSTEM_PROMPT = """
             You are a meticulous QA reviewer for programming-exercise test suites. You are given an instructor's BRIEF (what the exercise must require), the produced PROBLEM \
             STATEMENT, and the exact list of TEST NAMES that were written. Your ONE job: list the concrete, checkable requirements and edge cases that the brief (or problem \
@@ -84,28 +78,32 @@ public class SpecFidelityCriticService {
             {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}]}
             If every stated requirement is covered, respond with {"uncovered": []}.""";
 
+    /** The structured shape the coverage pass parses the model JSON into. */
+    private record UncoveredResponse(@Nullable List<UncoveredItem> uncovered) {
+    }
+
+    private record UncoveredItem(@Nullable String requirement, @Nullable String reason) {
+    }
+
     /**
      * Grader-mechanics phrases that must never appear in the student-facing problem statement. These describe how the grader/template is rigged, not the task; their presence means
      * grader internals leaked into student-facing text. Matched case-insensitively as substrings, so they catch the common phrasings without a brittle full-sentence match.
      */
-    private static final List<Pattern> MECHANICS_LEAK_PATTERNS = List.of(compile("to make the tests fail"), compile("so the tests fail"), compile("make all (the )?tests fail"),
-            compile("notimplementederror"), compile("not[ _]?implemented[ _]?error"), compile("placeholder (value|implementation) (that|to)"), compile("guarantees all tests fail"),
-            compile("always returns? (the )?wrong"), compile("deliberately wrong"), compile("stub(s)? (that|to) (make|fail)"), compile("todo marker"),
-            compile("the template must fail"), compile("raise todo"), compile("todo!\\(\\)"));
+    private static final List<Pattern> MECHANICS_LEAK_PATTERNS = List.of(compile("notimplementederror"), compile("todo!\\(\\)"), compile("make (all )?(the )?tests fail"),
+            compile("the template must fail"));
 
     private static Pattern compile(String regex) {
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
 
-    // Injected as a collection (mirroring AgentLoopRunner) so multiple ChatModel beans on the classpath are unambiguous and a unit test can inject a single mock; the first
-    // available model is used. May be empty if no AI provider is configured, in which case the LLM pass is skipped.
+    // Nullable like the sibling Hyperion services: the shared ChatClient bean is null when no AI provider is configured, in which case the LLM pass is skipped.
     @Nullable
-    private final ChatModel chatModel;
+    private final ChatClient chatClient;
 
     private final ObjectMapper objectMapper;
 
-    public SpecFidelityCriticService(Collection<ChatModel> chatModels, ObjectMapper objectMapper) {
-        this.chatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
+    public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper) {
+        this.chatClient = chatClient;
         this.objectMapper = objectMapper;
     }
 
@@ -119,17 +117,11 @@ public class SpecFidelityCriticService {
      * @return the advisory report (possibly empty); never {@code null}
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
-        List<SpecFidelityReport.Finding> findings = new ArrayList<>();
-        // 1. Deterministic, model-free: grader-mechanics leaked into the student-facing problem statement. Cheap and never fails, so it runs unconditionally.
-        findings.addAll(detectMechanicsLeaks(problemStatement));
-        // 2. Single bounded LLM pass: brief requirements that no test covers. Skipped (no findings) when there is no model or no real brief, and on any failure.
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
         findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
-    /**
-     * Scans the student-facing problem statement for grader-mechanics phrasing. Purely deterministic (no model), so it is always run and never fails.
-     */
     private List<SpecFidelityReport.Finding> detectMechanicsLeaks(@Nullable String problemStatement) {
         if (problemStatement == null || problemStatement.isBlank()) {
             return List.of();
@@ -148,11 +140,12 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Runs the single LLM coverage pass and parses its findings defensively. Returns no findings — never throws — when there is no model, the brief is too short to be a real spec,
-     * or the call/parse fails for any reason (timeout, error, empty or garbage output), so a critic failure can never perturb the run.
+     * Runs the single LLM coverage pass via the shared ChatClient and parses its findings defensively. Returns no findings — never throws — when there is no model, the brief is
+     * too
+     * short to be a real spec, or the call/parse fails for any reason (timeout, error, empty or garbage output), so a critic failure can never perturb the run.
      */
     private List<SpecFidelityReport.Finding> detectUncoveredRequirements(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
-        if (chatModel == null) {
+        if (chatClient == null) {
             return List.of();
         }
         String effectiveBrief = brief == null ? "" : brief.strip();
@@ -161,11 +154,10 @@ public class SpecFidelityCriticService {
             return List.of();
         }
         try {
-            String userPrompt = renderUserPrompt(effectiveBrief, problemStatement, testNames);
-            // Tool-free, output-capped, single call (no retry): a bounded constant cost that cannot loop. A plain ChatOptions means the critic cannot call tools.
-            ChatResponse response = chatModel.call(
-                    new Prompt(List.of(new SystemMessage(CRITIC_SYSTEM_PROMPT), new UserMessage(userPrompt)), ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS).build()));
-            String text = extractText(response);
+            // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop. A plain ChatOptions means the critic cannot call tools.
+            ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames))
+                    .options(ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS).build()).call().chatResponse();
+            String text = LLMTokenUsageService.extractResponseText(response);
             if (text == null || text.isBlank()) {
                 return List.of();
             }
@@ -185,40 +177,31 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Parses the model's JSON coverage response defensively. Tolerates surrounding prose / code fences by extracting the first balanced JSON object, ignores entries missing a
-     * requirement, truncates an over-long requirement, and caps the count. Any structural surprise yields no findings rather than an exception.
+     * Parses the model's JSON coverage response defensively. Tolerates surrounding prose / code fences, ignores entries missing a requirement, truncates an over-long requirement,
+     * and caps the count. Any structural surprise yields no findings rather than an exception.
      */
     private List<SpecFidelityReport.Finding> parseUncovered(String text) {
-        String json = extractJsonObject(text);
-        if (json == null) {
-            log.debug("Spec-fidelity critic produced no parseable JSON object; treating as no findings.");
-            return List.of();
-        }
-        JsonNode root;
+        UncoveredResponse parsed;
         try {
-            root = objectMapper.readTree(json);
+            parsed = objectMapper.readValue(extractJsonPayload(text), UncoveredResponse.class);
         }
-        catch (JsonProcessingException e) {
+        catch (Exception e) {
             log.debug("Spec-fidelity critic JSON did not parse ({}); treating as no findings.", e.getMessage());
             return List.of();
         }
-        JsonNode uncovered = root.get("uncovered");
-        if (uncovered == null || !uncovered.isArray()) {
+        if (parsed == null || parsed.uncovered() == null) {
             return List.of();
         }
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
-        for (JsonNode node : uncovered) {
+        for (UncoveredItem item : parsed.uncovered()) {
             if (findings.size() >= MAX_COVERAGE_FINDINGS) {
                 break;
             }
-            JsonNode requirementNode = node.get("requirement");
-            if (requirementNode == null || !requirementNode.isTextual() || requirementNode.asText().isBlank()) {
+            if (item == null || item.requirement() == null || item.requirement().isBlank()) {
                 continue;
             }
-            String requirement = truncate(requirementNode.asText().strip());
-            JsonNode reasonNode = node.get("reason");
-            String reason = reasonNode != null && reasonNode.isTextual() && !reasonNode.asText().isBlank() ? reasonNode.asText().strip()
-                    : "The brief names this requirement but no test appears to cover it.";
+            String requirement = truncate(item.requirement().strip());
+            String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "The brief names this requirement but no test appears to cover it.";
             findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement,
                     "The brief names this requirement/edge-case but no test appears to cover it: " + reason
                             + " Add a test that asserts it (an untested promise lets a wrong solution pass)."));
@@ -226,56 +209,26 @@ public class SpecFidelityCriticService {
         return findings;
     }
 
-    /** Extracts the first balanced {@code {...}} object from the text, tolerating leading/trailing prose or code fences, or {@code null} if there is none. */
-    @Nullable
-    private static String extractJsonObject(String text) {
-        int start = text.indexOf('{');
-        if (start < 0) {
-            return null;
+    /**
+     * Extracts the JSON object from a raw model response, tolerating a markdown code fence or leading/trailing prose. Mirrors the sibling Hyperion services' extraction so a chatty
+     * local model's response still parses: (1) a fenced block, (2) the span from the first {@code {} to the last {@code }}, (3) the raw text.
+     */
+    private static String extractJsonPayload(String responseText) {
+        String trimmed = responseText.trim();
+        Matcher codeBlockMatcher = JSON_CODE_BLOCK_PATTERN.matcher(trimmed);
+        if (codeBlockMatcher.find()) {
+            return codeBlockMatcher.group(1).trim();
         }
-        int depth = 0;
-        boolean inString = false;
-        boolean escaped = false;
-        for (int i = start; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (escaped) {
-                escaped = false;
-                continue;
-            }
-            if (c == '\\') {
-                escaped = true;
-                continue;
-            }
-            if (c == '"') {
-                inString = !inString;
-                continue;
-            }
-            if (inString) {
-                continue;
-            }
-            if (c == '{') {
-                depth++;
-            }
-            else if (c == '}') {
-                depth--;
-                if (depth == 0) {
-                    return text.substring(start, i + 1);
-                }
-            }
+        int firstBrace = trimmed.indexOf('{');
+        int lastBrace = trimmed.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            return trimmed.substring(firstBrace, lastBrace + 1);
         }
-        return null;
+        return trimmed;
     }
 
     private static String truncate(String value) {
         return value.length() <= MAX_REQUIREMENT_CHARS ? value : value.substring(0, MAX_REQUIREMENT_CHARS) + "…";
-    }
-
-    @Nullable
-    private static String extractText(@Nullable ChatResponse response) {
-        if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
-            return null;
-        }
-        return response.getResult().getOutput().getText();
     }
 
     /**

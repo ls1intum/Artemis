@@ -305,23 +305,6 @@ class ExerciseGenerationOrchestrationServiceTest {
     }
 
     /**
-     * Per-attempt turn-budget telemetry is recorded: one entry per agent run, in order, so verifier-feedback thrash (later attempts pinned at the cap) is observable after the
-     * fact.
-     * <p>
-     * Mutation: not appending {@code loopResult.turns()} per attempt makes the size/order assertion fail.
-     */
-    @Test
-    void attemptTurnCounts_recordOneEntryPerAttemptInOrder() {
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 12, "a"),
-                new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 30, "b"), new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 30, "c"));
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenReturn(rejected("still failing"));
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.attemptTurnCounts()).as("one turn-count per attempt, in order").containsExactly(12, 30, 30);
-        }
-    }
-
-    /**
      * The critic is fed the test names parsed from the produced problem statement's [task] bindings, so its coverage judgment sees which tests exist. Confirms the wiring that
      * turns [task](a,b) into the critic's test-name input.
      */

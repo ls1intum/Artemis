@@ -80,7 +80,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     /** The structured verification verdict on the terminal event, if any, for the scannable result chips. */
     readonly verdict = computed<ExerciseGenerationVerdict | undefined>(() => this.finalEvent()?.verdict);
 
-    // The structured view re-derives from the (bounded: the server caps a run's transcript) event list; computed memoizes it so it parses once per change, not once per template read.
     /** The structured, human-friendly view of the run derived from the raw transcript (current phase, attempt, files changed). */
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
     readonly phaseKey = computed(() => this.progress().phase);
@@ -113,7 +112,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private readonly actionButtons = viewChild<{ nativeElement: HTMLElement }>('actionButtons');
 
     private jobSubscription?: Subscription;
-    private dialogRef?: DynamicDialogRef;
+    private dialogRef?: DynamicDialogRef | null;
     /** Guards the one-shot auto-start so it can never refire (e.g. on a later status reprobe). */
     private autoStartHandled = false;
     /** Ticks the elapsed-time counter once per second while a run is in flight. */
@@ -122,8 +121,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private terminalFocusHandled = false;
 
     constructor() {
-        // Keep the transcript scrolled to the latest line as events arrive, unless the user has scrolled up to read earlier output. afterRenderEffect runs after the DOM has been
-        // updated, which is the correct phase for a signal-driven DOM write (no setTimeout needed).
+        // Keep the transcript pinned to the latest line as events arrive, unless the user has scrolled up to read earlier output.
         afterRenderEffect(() => {
             this.progressEvents();
             const container = this.transcriptContainer()?.nativeElement;
@@ -135,8 +133,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             }
         });
 
-        // When a run finishes, move focus once to the obvious next action so the outcome is announced and keyboard/screen-reader users are not left on the now-removed Cancel button
-        // (which would drop focus to <body>): on success the "Review changes" payoff, otherwise the Generate/"Try again" button. Set the guard unconditionally so it fires at most once.
+        // On a terminal outcome, move focus once to the next action (the now-removed Cancel button would otherwise drop focus to <body>, stranding keyboard/SR users).
         afterRenderEffect(() => {
             if (!this.finalEvent() || this.terminalFocusHandled) {
                 return;
@@ -284,16 +281,13 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             this.cancelling.set(false);
             this.stopTimer();
             this.teardownSubscription();
-            const success = event.type === 'DONE' && event.completionStatus === 'SUCCESS';
-            const needsReview = event.type === 'DONE' && event.completionStatus === 'NEEDS_REVIEW';
-            if (success) {
+            if (this.succeeded()) {
                 this.alertService.success('artemisApp.programmingExercise.generateExercise.success');
-            } else if (needsReview) {
-                // A near-miss was recovered: a draft was saved with review comments. Treat as a (non-error) completion so the editor reloads the draft and surfaces the review panel.
+            } else if (this.needsReview()) {
                 this.alertService.info('artemisApp.programmingExercise.generateExercise.needsReview');
             }
-            // A recovered draft also changed the exercise, so signal completion to let the editor reload the persisted draft and its new review comments.
-            this.generationCompleted.emit(success || needsReview);
+            // A recovered draft also changed the exercise, so signal completion (review too) to let the editor reload the persisted draft and its review comments.
+            this.generationCompleted.emit(this.succeeded() || this.needsReview());
         }
     }
 

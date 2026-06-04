@@ -153,7 +153,7 @@
                             | artemisTranslate
                     "
                 />
-                <p-tag severity="info" [value]="(v.testCount || 0) + ' ' + ('artemisApp.programmingExercise.generateExercise.gateTests' | artemisTranslate)" />
+                <p-tag severity="info" [value]="v.testCount + ' ' + ('artemisApp.programmingExercise.generateExercise.gateTests' | artemisTranslate)" />
             </div>
             @if (!v.accepted && v.reasons.length > 0) {
                 <div class="generation-verdict-reasons mt-2">

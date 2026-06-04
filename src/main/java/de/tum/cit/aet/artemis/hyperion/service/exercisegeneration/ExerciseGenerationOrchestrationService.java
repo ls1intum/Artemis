@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +117,6 @@ public class ExerciseGenerationOrchestrationService {
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, BooleanSupplier cancelled, Consumer<String> progress) {
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
-        // Record token usage for every model call (the agent loop and its summarization calls); the service skips silently when the provider reports no usage.
         Long courseId = courseIdOf(exercise);
         Consumer<ChatResponse> usageSink = chatResponse -> llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(courseId).withExercise(exercise.getId()).withUser(user.getId()));
@@ -143,15 +141,14 @@ public class ExerciseGenerationOrchestrationService {
             String currentPrompt = userPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
-            // Per-attempt turn-budget telemetry: one entry per agent run, so a later attempt pinned at the cap (thrash) is observable after the fact without re-running.
-            List<Integer> attemptTurnCounts = new ArrayList<>(MAX_GENERATION_ATTEMPTS);
             // The latest advisory spec-fidelity report (brief-coverage axis the verifier is blind to). Recomputed each attempt against the produced artifacts; the one from the
             // final
             // attempt is attached to the outcome and surfaced as advisory review comments. NEVER consulted by the accept/reject verdict.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
-                attemptTurnCounts.add(loopResult.turns());
+                // Log per-attempt turn usage so verifier-feedback thrash (later attempts pinned at the cap) is observable in the logs without re-running.
+                log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
                     destroyQuietly(sandbox, sessionId);
@@ -213,7 +210,7 @@ public class ExerciseGenerationOrchestrationService {
                         + "`sh verify.sh template` to confirm, then call submit again." + SpecFidelityCriticService.renderForRetryPrompt(specFidelityReport);
             }
 
-            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport, attemptTurnCounts);
+            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);
         }
         catch (RuntimeException e) {
             // Destroy the session here since the caller will not get a usable outcome to close.

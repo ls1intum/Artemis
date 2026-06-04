@@ -92,13 +92,9 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
-    void buildCommands_targetTheVerifyScriptPerAssignment() {
+    void pristineBuildCommands_targetTheVerifierOwnedScriptAndStampTheNonce() {
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
-        // The agent self-checks with its in-workspace copy.
-        assertThat(factory.solutionBuildCommand()).isEqualTo("sh /workspace/verify.sh solution");
-        assertThat(factory.templateBuildCommand()).isEqualTo("sh /workspace/verify.sh template");
-        // The authoritative verifier runs the PRISTINE copy outside /workspace — the path the agent's tools (which only resolve under /workspace) could never have written — and
-        // passes the per-run anti-forgery nonce as the second argument so the script stamps it onto every marker.
+        // The authoritative verifier runs the PRISTINE copy outside /workspace (unreachable by the agent's tools) and passes the per-run nonce as the second argument.
         assertThat(factory.pristineSolutionBuildCommand("HNabc123")).isEqualTo("sh /opt/hyperion/verify.sh solution 'HNabc123'");
         assertThat(factory.pristineTemplateBuildCommand("HNabc123")).isEqualTo("sh /opt/hyperion/verify.sh template 'HNabc123'");
     }

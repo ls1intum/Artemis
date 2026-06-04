@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -19,9 +20,11 @@ import org.springframework.ai.chat.prompt.Prompt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Adversarial unit tests for the spec-fidelity / coverage critic, with the {@link ChatModel} mocked so no GPU is needed. They pin the three defect classes the differential oracle
- * is blind to (uncovered brief requirement, fully-covered brief, grader-mechanics leak), and — crucially — the critic's two non-negotiable safety properties: it degrades
- * gracefully on any model failure, and it produces structured, capped, defensively-parsed findings that can never explode.
+ * Adversarial unit tests for the spec-fidelity / coverage critic. The critic talks to the model through the shared {@link ChatClient}; the tests wrap a mocked {@link ChatModel} in
+ * a real {@code ChatClient} (mirroring the sibling Hyperion service tests) so the fluent plumbing is exercised end-to-end without a GPU. They pin the three defect classes the
+ * differential oracle is blind to (uncovered brief requirement, fully-covered brief, grader-mechanics leak), and — crucially — the critic's two non-negotiable safety properties:
+ * it
+ * degrades gracefully on any model failure, and it produces structured, capped, defensively-parsed findings that can never explode.
  */
 class SpecFidelityCriticServiceTest {
 
@@ -34,7 +37,7 @@ class SpecFidelityCriticServiceTest {
     private SpecFidelityCriticService criticReturning(ChatResponse response) {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(response);
-        return new SpecFidelityCriticService(List.of(chatModel), objectMapper);
+        return new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
     }
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
@@ -81,12 +84,12 @@ class SpecFidelityCriticServiceTest {
     }
 
     /**
-     * The mechanics-leak pass needs NO model at all: even with no ChatModel configured (empty collection), the deterministic leak check still fires while the coverage pass is
-     * silently skipped. Proves the model-free check is independent of the LLM pass.
+     * The mechanics-leak pass needs NO model at all: even with no ChatClient configured (null), the deterministic leak check still fires while the coverage pass is silently
+     * skipped. Proves the model-free check is independent of the LLM pass.
      */
     @Test
     void mechanicsLeak_firesEvenWithNoModelConfigured() {
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(List.of(), objectMapper);
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
 
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "todo!() in the template; the template must fail every test.", List.of("test_x"));
 
@@ -100,7 +103,7 @@ class SpecFidelityCriticServiceTest {
     void modelError_degradesGracefully() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("gpu timeout"));
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(List.of(chatModel), objectMapper);
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
 
@@ -127,7 +130,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.hasFindings()).isFalse();
     }
 
-    /** JSON embedded in prose / a code fence is still parsed (defensive extraction of the first balanced object). */
+    /** JSON embedded in prose / a code fence is still parsed (defensive payload extraction). */
     @Test
     void jsonWrappedInProse_isStillParsed() {
         SpecFidelityCriticService critic = criticReturning(
@@ -143,7 +146,7 @@ class SpecFidelityCriticServiceTest {
     @Test
     void trivialBrief_skipsModelCall() {
         ChatModel chatModel = mock(ChatModel.class);
-        SpecFidelityCriticService critic = new SpecFidelityCriticService(List.of(chatModel), objectMapper);
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
 
         SpecFidelityReport report = critic.critique("too short", "Clean statement.", List.of("test_x"));
 

@@ -341,6 +341,35 @@ describe('ProgrammingExerciseDetailComponent', () => {
         }));
     });
 
+    describe('onExerciseGenerated', () => {
+        it('should refetch and re-render the exercise when a run completed', fakeAsync(() => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 321;
+            comp.programmingExercise = exercise;
+            const reloaded = new ProgrammingExercise(new Course(), undefined);
+            reloaded.id = 321;
+            const findStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: reloaded })));
+            const handleRouteDataSpy = jest.spyOn(comp as any, 'handleRouteData');
+
+            comp.onExerciseGenerated(true);
+            tick();
+
+            expect(findStub).toHaveBeenCalledExactlyOnceWith(321);
+            expect(handleRouteDataSpy).toHaveBeenCalledWith(reloaded);
+        }));
+
+        it('should not refetch the exercise when a run did not complete', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 321;
+            comp.programmingExercise = exercise;
+            const findStub = jest.spyOn(exerciseService, 'find');
+
+            comp.onExerciseGenerated(false);
+
+            expect(findStub).not.toHaveBeenCalled();
+        });
+    });
+
     describe('canAccessParticipationsAndScores', () => {
         /**
          * Helper to compute canAccessParticipationsAndScores like ngOnInit does.

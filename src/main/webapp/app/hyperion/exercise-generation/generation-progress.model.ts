@@ -26,8 +26,7 @@ export interface GenerationProgress {
     files: GenerationFileChange[];
 }
 
-// The agent loop emits one transcript line per tool call as "Turn <n>: <tool> <arg>". For the file tools (write_file/edit_file) the server renders the full file path as the
-// argument (see AgentLoopRunner#describeToolCall), so the path is everything after the tool name; for other tools the argument is a command or JSON and is ignored here.
+// Transcript tool-call line "Turn <n>: <tool> <arg>"; for write_file/edit_file the arg is the full path (see AgentLoopRunner#describeToolCall).
 const TOOL_LINE = /^Turn\s+\d+:\s+(\w+)\s*(.*)$/;
 const ATTEMPT = /attempt\s+(\d+)\s+of\s+(\d+)/i;
 

@@ -42,14 +42,10 @@ public class SandboxBuildCommandService {
 
     static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
-    private static final String VERIFY_SCRIPT_PATH = GenerationWorkspaceService.WORKSPACE + "/" + VERIFY_SCRIPT_NAME;
-
     /**
-     * Verifier-owned directory OUTSIDE {@code /workspace} where the authoritative verifier re-seeds a pristine {@code verify.sh} immediately before each verification run. The
-     * agent
-     * can write anywhere under {@code /workspace} (and overwrite the {@code /workspace/verify.sh} self-check copy), but the agent tools only ever resolve paths relative to
-     * {@code /workspace} ({@link SandboxAgentTools#workspaceRelativePath}), so a path here is unreachable through the tools. The grader therefore runs a script the agent never
-     * touched, which is what makes the verdict non-forgeable.
+     * Verifier-owned directory OUTSIDE {@code /workspace} where the authoritative verifier re-seeds a pristine {@code verify.sh} before each run. The agent tools only resolve
+     * paths
+     * under {@code /workspace}, so a path here is unreachable through them — the grader runs a script the agent never touched, which is what makes the verdict non-forgeable.
      */
     static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
@@ -101,22 +97,7 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * @return the command that runs the verification with the solution as the assignment (expected to pass)
-     */
-    public String solutionBuildCommand() {
-        return verifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-    }
-
-    /**
-     * @return the command that runs the verification with the template as the assignment (expected to fail)
-     */
-    public String templateBuildCommand() {
-        return verifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
-    }
-
-    /**
-     * @param nonce the per-run anti-forgery nonce the pristine script stamps onto every {@code HYPERION_*} marker line; the verifier accepts only marker lines bearing this exact
-     *                  nonce, so a line the agent's test code prints to stdout (which never carries this freshly-generated, unguessable token) is ignored
+     * @param nonce the per-run anti-forgery nonce the pristine script stamps onto every {@code HYPERION_*} marker; the verifier honors only nonce-bearing lines
      * @return the command that runs the PRISTINE (verifier-controlled, outside {@code /workspace}) verification with the solution as the assignment
      */
     public String pristineSolutionBuildCommand(String nonce) {
@@ -125,19 +106,14 @@ public class SandboxBuildCommandService {
 
     /**
      * @param nonce the per-run anti-forgery nonce (see {@link #pristineSolutionBuildCommand})
-     * @return the command that runs the PRISTINE (verifier-controlled, outside {@code /workspace}) verification with the template as the assignment
+     * @return the command that runs the PRISTINE verification with the template as the assignment
      */
     public String pristineTemplateBuildCommand(String nonce) {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), nonce);
     }
 
-    private static String verifyInvocation(String assignmentDirectory) {
-        return "sh " + VERIFY_SCRIPT_PATH + " " + assignmentDirectory;
-    }
-
     private static String pristineVerifyInvocation(String assignmentDirectory, String nonce) {
-        // The nonce is the script's second argument; verify.sh stamps it onto every emitted marker so the verifier can reject any HYPERION_* line a build phase (the agent's test
-        // code) printed to stdout — such a line cannot carry the per-run nonce. Quote it defensively even though it is hex.
+        // The nonce is the script's second argument; quoted defensively even though it is hex.
         return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory + " '" + nonce + "'";
     }
 
@@ -179,23 +155,19 @@ public class SandboxBuildCommandService {
                 cp -a "$WORKSPACE/tests/." "$TEST_DEST"/ 2>/dev/null || true
                 mkdir -p "$BUILD_DIR/assignment"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$BUILD_DIR/assignment"/ 2>/dev/null || true
-                # Substitute the CI directory placeholders inside the COPIED test harness/build files, exactly as ProgrammingExerciseRepositoryService.replacePlaceholders bakes them
-                # in at real exercise-creation time, so a seeded harness (e.g. Haskell's test.cabal hs-source-dirs, a tsconfig project reference) resolves against THIS build tree
-                # without the agent ever having to edit it. The chosen assignment is always copied into assignment/, so both the student parent and the solution working directory
-                # map to "assignment" here (the graded test executable builds against the submission = the copied assignment in both runs); the test working directory is the build
-                # root ("."). This is a build-tree copy only; the seeded source files the agent edits and the verifier reads back are untouched.
+                # Substitute the CI directory placeholders inside the COPIED test harness, exactly as production exercise-creation does, so a seeded harness resolves against THIS build
+                # tree without the agent editing it. Both the student parent and solution working directory map to assignment/ (where the chosen assignment is copied in both runs); the
+                # test working directory is the build root. Build-tree copy only — the seeded source files are untouched.
                 find "$TEST_DEST" -type f 2>/dev/null | while IFS= read -r f; do
                     sed -e 's#${studentWorkingDirectory}#/assignment/src#g' \\
                         -e 's#${studentParentWorkingDirectoryName}#assignment#g' \\
                         -e 's#${solutionWorkingDirectory}#assignment#g' \\
                         -e 's#${testWorkingDirectory}#.#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
-                # Anti-forgery: the agent can plant fake JUnit report XML into its tests/ tree, and `cp -a` above preserves that file's old mtime in the build tree. Delete EVERY
-                # report XML that already exists in the assembled build tree BEFORE the phases run, so only reports the phases write THIS run are aggregated. The same report globs the
-                # aggregation step searches are deleted here, so a planted surefire-reports/foo.xml (or any declared report path) cannot survive into the count.
+                # Anti-forgery: delete every pre-existing report XML before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
+                # this run are aggregated.
                 find "$BUILD_DIR" -type f \\( %s \\) -delete 2>/dev/null || true
-                # A reference marker stamped immediately before the phases; the aggregation below counts only reports NEWER than it, so a planted report that somehow escaped the
-                # delete (or one re-copied by a phase) still cannot be summed unless the build itself produced it this run.
+                # Reference marker; the aggregation counts only reports NEWER than it, so a planted report that escaped the delete still cannot be summed.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
                 # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template and is the verdict.
@@ -206,21 +178,12 @@ public class SandboxBuildCommandService {
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
                 }
                 %s
-                # Aggregate the JUnit XML the runner wrote (the language's declared report paths plus the common per-language locations), summing the testsuite counters across all
-                # reports. Only reports written AFTER the build-start marker count, so a planted report can never inflate the result. Absent reports => 0 (e.g. a compile error means
-                # the runner never wrote any).
+                # Aggregate the JUnit XML the runner wrote this run (newer than the build-start marker). Absent reports => 0 (e.g. a compile error means the runner never wrote any).
                 xml=$(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null)
-                # Anti-forgery (report-text): the name/count/failure extraction below uses grep/awk, NOT a real XML parser, so a graded test that genuinely PASSES could otherwise
-                # forge a FAILED-looking verdict by printing markup-looking text — a phantom <testcase>, a forged failures="N", a stray HYPERION_TESTFAIL — into its OWN captured
-                # <system-out>/<failure>/CDATA/comment, none of which production's Jackson XmlMapper (de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser) treats as
-                # structure (it records <failure>/<error>/<system-out> bodies as text, never as elements). Before any grep/awk reads a report, run a small POSIX-awk lexer over each
-                # one that DELETES the bytes that are character data rather than markup: <!-- ... --> comments, <![CDATA[ ... ]]> sections, and the text content (body) of
-                # <system-out>/<system-err>/<failure>/<error> elements — while KEEPING those elements' own start/end tags, so a real <failure>/<error> still flags its testcase and a
-                # real <testcase>'s attributes (name=, message= on the kept failure) are untouched. CDATA and comments are consumed as units even inside a suppressed body, so a
-                # literal </failure> hidden in CDATA cannot prematurely end suppression. Namespace prefixes are stripped when matching (ns:failure), attributes appear in any order,
-                # self-closing tags (<failure .../>) carry no body, and a tag is recognized only at a real "<" — so the scrubbed counts/names agree with what TestResultXmlParser
-                # records from the well-formed XML. The downstream count_testcases/sum_attr/emit_test_lines read the scrubbed copies via the reassigned $xml, so the hardening covers
-                # every consumer with no change to their logic. Absent reports (compile error) => $xml empty => no scrub, and the consumers already short-circuit on empty $xml.
+                # Anti-forgery (report-text): the grep/awk below is not a real XML parser, so a passing test could forge a FAILED-looking verdict by printing markup-looking text into
+                # its own <system-out>/<failure>/CDATA/comment (which production's TestResultXmlParser records as text, never structure). Scrub each report first: delete comments, CDATA
+                # sections, and the bodies of <system-out>/<system-err>/<failure>/<error> while KEEPING their start/end tags, so the scrubbed counts/names match what TestResultXmlParser
+                # records. Consumers read the scrubbed copies via the reassigned $xml; empty $xml (compile error) skips the scrub.
                 if [ -n "$xml" ]; then
                     SCRUB_DIR=$(mktemp -d /tmp/hyperion-scrub.XXXXXX) || exit 70
                     scrubbed_xml=""
@@ -228,8 +191,7 @@ public class SandboxBuildCommandService {
                     for report in $xml; do
                         scrub_n=$((scrub_n + 1))
                         scrubbed_report="$SCRUB_DIR/report-$scrub_n.xml"
-                        # Lexer: walk the report byte-by-byte. suppress holds the local name of the element whose body we are dropping ("" = not suppressing). We keep markup and
-                        # delete only character data, so the grep/awk below see exactly the element structure TestResultXmlParser sees.
+                        # Lexer: walk byte-by-byte; suppress holds the local name of the element whose body is being dropped ("" = not suppressing).
                         awk '
                         { buf = buf $0 "\\n" }
                         END {
@@ -273,36 +235,27 @@ public class SandboxBuildCommandService {
                     if [ -z "$xml" ]; then echo 0; return; fi
                     grep -ho "$1=\\"[0-9]*\\"" $xml 2>/dev/null | tr -dc '0-9\\n' | awk '{ s += $1 } END { print s + 0 }'
                 }
-                # The test count is the number of <testcase> ELEMENTS, not the testsuite tests="N" attribute. For every framework Artemis ships these agree, EXCEPT Catch2 (C++),
-                # whose JUnit reporter sets tests="N" to the assertion count, not the test-case count, and (because REQUIRE is fatal) evaluates fewer assertions in a failing template
-                # than in a passing solution — which made the attribute sum disagree between the two and falsely tripped the "different number of tests" gate. Counting <testcase>
-                # elements (the same unit Artemis grades by, and the same pattern used for the test-name lines below) is the test count both runs share. Absent reports => 0.
+                # Count <testcase> ELEMENTS, not the testsuite tests="N" attribute: they agree for every framework except Catch2 (C++), whose tests="N" is the assertion count and so
+                # differs between a passing solution and a fewer-assertion failing template, falsely tripping the "different number of tests" gate.
                 count_testcases() {
                     if [ -z "$xml" ]; then echo 0; return; fi
                     grep -ho '<testcase[^>]*>' $xml 2>/dev/null | wc -l | tr -dc '0-9'
                 }
-                # A <testcase> carrying a <skipped> child is graded by production (TestResultXmlParser) as NOT EXECUTED: it is placed in NEITHER the successful nor the failed set. The
-                # oracle must mirror that exactly, otherwise a test SKIPPED on the solution (but present/failing on the template) is wrongly counted as a passing solution test and the
-                # exercise is accepted even though that test scores 0 for a real student. So count skipped cases (one <skipped> element per skipped case) and exclude them from the
-                # executed test count below and from the emitted names. Counting <skipped> ELEMENTS (not the testsuite skipped="N" attribute) is reliable across frameworks that omit it.
+                # A <testcase> with a <skipped> child is graded by production as NOT EXECUTED (neither successful nor failed); the oracle must mirror that, excluding it from the
+                # executed count and the emitted names, else a test skipped on the solution but failing on the template is wrongly counted as a solution pass.
                 count_skipped_cases() {
                     if [ -z "$xml" ]; then echo 0; return; fi
-                    grep -ho '<skipped[ />]' $xml 2>/dev/null | wc -l | tr -dc '0-9'
+                    grep -Eho '<skipped([[:space:]/>]|$)' $xml 2>/dev/null | wc -l | tr -dc '0-9'
                 }
                 all_testcases=$(count_testcases)
                 skipped=$(count_skipped_cases)
                 tests=$((all_testcases - skipped))
                 failures=$(sum_attr failures)
                 errors=$(sum_attr errors)
-                # Emit, for every JUnit <testcase>, the EXACT name Artemis records it under (the identifier [task] bindings match against), and a fail line for every testcase that
-                # carries a <failure>/<error>. The name is composed the SAME way de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser does: the dot-joined names of the
-                # enclosing <testsuite> elements are PREPENDED to the <testcase name>, EXCEPT that a SINGULAR top-level testsuite contributes no prefix (root <testsuite>, or the sole
-                # child of a root <testsuites>). The exception drops only the SINGULAR TOP-LEVEL suite's name; any suite nested BELOW it is always prefixed. So a SINGLE Dart test file
-                # whose tojunit report is just one top-level <testsuite name="test.palindrome"> drops that name and yields the BARE "reverseString reverse_non_empty" (NOT a
-                # "test.palindrome."-prefixed name); but a file-suite nested under an outer suite (or a report with multiple top-level suites) keeps its own name as a prefix
-                # ("test.palindrome.reverseString reverse_non_empty"). Likewise Rust's nextest singular top-level suite yields the bare "test_x". Each report file is parsed
-                # independently (the file is passed to awk twice: pass 1 counts top-level suites to apply the singular-suite exception, pass 2 emits). awk over the XML keeps the script
-                # POSIX and build-tool-agnostic.
+                # Emit the EXACT name Artemis records each <testcase> under (what [task] bindings match against) plus a fail line per failing testcase, composing the name the SAME way
+                # TestResultXmlParser does: the dot-joined enclosing <testsuite> names PREPENDED to the <testcase name>, EXCEPT a SINGULAR top-level testsuite contributes no prefix (so
+                # a single Dart/Rust file-suite yields the bare name, while a nested or multi-suite report keeps its prefix). Each report is passed to awk twice: pass 1 counts top-level
+                # suites for the singular-suite exception, pass 2 emits.
                 emit_test_lines() {
                     [ -z "$xml" ] && return
                     for report in $xml; do

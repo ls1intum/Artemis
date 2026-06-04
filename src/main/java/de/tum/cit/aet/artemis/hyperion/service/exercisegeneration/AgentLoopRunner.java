@@ -239,7 +239,6 @@ public class AgentLoopRunner {
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }
 
-            // Carry the full updated conversation (assistant tool-call message + tool results) into the next turn.
             conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
             // Bound each tool result the moment it enters the context, so a single oversized build log or file dump cannot blow the window before compaction even gets a chance.
             capToolResponses(conversation);

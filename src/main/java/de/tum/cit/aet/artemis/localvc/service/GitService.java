@@ -457,8 +457,11 @@ public class GitService extends AbstractGitService {
      * branch still sees the exact pre-call state. This is used to land a best-effort generation draft for review on an adapt target without regressing the working exercise that is
      * already live on the default branch.
      * <p>
-     * The current branch ref in the local working copy is intentionally NOT advanced — the local commit lives only as the pushed isolated branch — so a subsequent default-branch
-     * checkout of the same working copy is not affected. The caller is responsible for having staged the desired tree (e.g. via {@link #stageAllChanges(Repository)}).
+     * Note: JGit's commit DOES advance the LOCAL checked-out branch ref to the new commit; only the REMOTE default branch is protected (by the single-branch refspec). A caller
+     * that
+     * reuses this working copy on the default branch afterwards MUST reset it (e.g. via {@link #resetToOriginHead(Repository)}) — the generation draft persistence relies on
+     * exactly
+     * that. The caller is responsible for having staged the desired tree (e.g. via {@link #stageAllChanges(Repository)}).
      *
      * @param repo           the local repository whose staged working tree is committed
      * @param isolatedBranch the short name of the isolated remote branch to create/update (e.g. {@code hyperion-draft/<jobId>}); must not be the default branch

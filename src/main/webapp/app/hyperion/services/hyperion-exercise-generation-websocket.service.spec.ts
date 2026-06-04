@@ -6,15 +6,15 @@ import { ExerciseGenerationEvent, HyperionExerciseGenerationWebsocketService } f
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 class MockWebsocketService {
-    subjects = new Map<string, Subject<any>>();
+    subjects = new Map<string, Subject<ExerciseGenerationEvent>>();
     subscribeCalls: string[] = [];
     unsubscribeCalls: string[] = [];
 
-    subscribe(channel: string): Observable<any> {
+    subscribe(channel: string): Observable<ExerciseGenerationEvent> {
         this.subscribeCalls.push(channel);
         let subj = this.subjects.get(channel);
         if (!subj) {
-            subj = new Subject<any>();
+            subj = new Subject<ExerciseGenerationEvent>();
             this.subjects.set(channel, subj);
         }
         return new Observable((subscriber) => {

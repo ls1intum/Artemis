@@ -241,10 +241,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     /**
      * Reloads the exercise after an agentic generation run has saved changes, so the detail view reflects the new repositories and problem statement.
      *
-     * @param success whether the generation produced and saved a verified exercise
+     * @param completed whether the run saved an exercise (true for a verified success and for a recovered needs-review draft)
      */
-    onExerciseGenerated(success: boolean): void {
-        if (success && this.programmingExercise?.id) {
+    onExerciseGenerated(completed: boolean): void {
+        if (completed && this.programmingExercise?.id) {
             this.programmingExerciseService
                 .find(this.programmingExercise.id)
                 .pipe(takeUntilDestroyed(this.destroyRef))

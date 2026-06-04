@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
-import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -40,24 +39,8 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     private final SpecFidelityReport specFidelityReport;
 
-    /**
-     * Per-attempt turn-budget telemetry: the model-turn count of each generation attempt, in order. One entry per agent run, so {@code [12, 30, 30]} means three attempts that took
-     * 12, 30, then 30 turns — making verifier-feedback thrash (later attempts pinned at the cap) observable without re-running. Empty for a cancelled/error outcome.
-     */
-    private final List<Integer> attemptTurnCounts;
-
-    /**
-     * Convenience overload without the advisory spec-fidelity report and turn-budget telemetry, defaulting both to empty. Used by tests that construct a controlled outcome and do
-     * not exercise the critic / telemetry; the orchestrator always uses the full constructor.
-     */
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId,
-            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox) {
-        this(loopResult, verification, sessionId, orchestrator, sandbox, SpecFidelityReport.empty(), List.of());
-    }
-
-    GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId,
-            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport,
-            List<Integer> attemptTurnCounts) {
+            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;
@@ -65,7 +48,6 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = sandbox;
         this.errorMessage = null;
         this.specFidelityReport = specFidelityReport;
-        this.attemptTurnCounts = List.copyOf(attemptTurnCounts);
     }
 
     private GenerationOutcome(AgentLoopResult loopResult, @Nullable String errorMessage) {
@@ -76,7 +58,6 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = null;
         this.errorMessage = errorMessage;
         this.specFidelityReport = SpecFidelityReport.empty();
-        this.attemptTurnCounts = List.of();
     }
 
     static GenerationOutcome cancelled(AgentLoopResult loopResult) {
@@ -93,11 +74,6 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     public SpecFidelityReport specFidelityReport() {
         return specFidelityReport;
-    }
-
-    /** @return the per-attempt model-turn counts, in order; empty for a cancelled/error outcome. Telemetry only — makes verifier-feedback thrash observable. */
-    public List<Integer> attemptTurnCounts() {
-        return attemptTurnCounts;
     }
 
     /**

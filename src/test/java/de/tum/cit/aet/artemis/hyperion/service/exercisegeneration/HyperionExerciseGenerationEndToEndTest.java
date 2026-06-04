@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -247,27 +246,6 @@ class HyperionExerciseGenerationEndToEndTest extends AbstractSpringIntegrationLo
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION).keySet().stream().filter(path -> path.endsWith(".java")).count())
                     .as("the larger exercise produced multiple solution classes").isGreaterThanOrEqualTo(2);
             assertThat(outcome.producedProblemStatement()).as("problem statement binds tasks").contains("[task]");
-        });
-    }
-
-    @Test
-    @Disabled("""
-            Generation produces correct, clean Kotlin (verified: all-.kt solution/template/tests, no stray .java, idiomatic code, Ares @Public/@StrictTimeout/@Whitelist/@Blacklist \
-            annotations, and method-name [task] bindings) after the Kotlin-specific prompt guidance was added. It is NOT accepted only because the verification build reports 0 tests: \
-            the canonical Artemis Kotlin Maven template pins Kotlin 1.3.72 (jvmTarget 1.8) and, assembled by verify.sh on the java17-25 image, does not emit JUnit reports — the same \
-            toolchain a hand-written Kotlin exercise uses, so this is an Artemis Kotlin-template/image limitation, not a Hyperion generation defect. Re-enable once the Kotlin template \
-            toolchain verifies in the sandbox.""")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generatesKotlinExerciseFromScratch_realisticPrompt_endToEnd() throws Exception {
-        // Kotlin, from scratch: a JVM language that is NOT Java, exercising the same engine and (Java/Kotlin-shared) guidance on the Maven JVM toolchain with Kotlin sources.
-        // Kotlin ships only language-level templates (templates/kotlin/{exercise,solution,test}) with no project-type subdirectory, so the project type must be null (as the
-        // production factory sets it) — a non-null type would make exercise creation look for a non-existent templates/kotlin/<type>/ directory.
-        ProgrammingExercise exercise = scaffoldExercise("HYPKT", true, ProgrammingLanguage.KOTLIN, null);
-        String prompt = "A Kotlin exercise on a bounded integer stack for a first-semester course: push, pop, peek, an isEmpty check, and a fixed capacity that rejects a push when "
-                + "the stack is already full.";
-        runAndAssertAccepted(exercise, prompt, "kotlin-from-scratch", outcome -> {
-            assertThat(outcome.producedProblemStatement()).as("problem statement binds tasks").contains("[task]");
-            assertThat(outcome.producedProblemStatement().toLowerCase()).as("the statement is about the requested topic").contains("stack");
         });
     }
 

@@ -243,8 +243,4 @@ class ExerciseGenerationTaskServiceTest {
         assertThat(terminalEvent().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
     }
 
-    /** The single outcome stubbed for the current run (orchestrator returns the same instance). */
-    private GenerationOutcome stubbedOutcome() {
-        return orchestrator.generate(exercise, user, "do it", "job-1", null, null);
-    }
 }
