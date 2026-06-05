@@ -67,10 +67,14 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             """)
     List<QuizExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     @Query("""
-            SELECT qe
+            SELECT DISTINCT qe
             FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions qq
+                LEFT JOIN FETCH qq.quizQuestionStatistic
+                LEFT JOIN FETCH qe.quizPointStatistic
+                LEFT JOIN FETCH qe.categories
+                LEFT JOIN FETCH qe.quizBatches
             WHERE qe.id = :quizExerciseId
             """)
     Optional<QuizExercise> findBaseWithEagerQuestionsAndStatisticsById(@Param("quizExerciseId") Long quizExerciseId);
@@ -80,11 +84,17 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsById(quizExerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
-            "quizBatches", "gradingCriteria" })
     @Query("""
-            SELECT qe
+            SELECT DISTINCT qe
             FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions qq
+                LEFT JOIN FETCH qq.quizQuestionStatistic
+                LEFT JOIN FETCH qe.quizPointStatistic
+                LEFT JOIN FETCH qe.categories
+                LEFT JOIN FETCH qe.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH qe.quizBatches
+                LEFT JOIN FETCH qe.gradingCriteria
             WHERE qe.id = :quizExerciseId
             """)
     Optional<QuizExercise> findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(@Param("quizExerciseId") Long quizExerciseId);
@@ -94,10 +104,10 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     @Query("""
-            SELECT qe
+            SELECT DISTINCT qe
             FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions
             WHERE qe.id = :quizExerciseId
             """)
     Optional<QuizExercise> findBaseWithEagerQuestionsById(@Param("quizExerciseId") Long quizExerciseId);
@@ -107,10 +117,12 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return withInitializedQuestionChildCollections(findBaseWithEagerQuestionsById(quizExerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
     @Query("""
-            SELECT qe
+            SELECT DISTINCT qe
             FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions
+                LEFT JOIN FETCH qe.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE qe.id = :quizExerciseId
             """)
     Optional<QuizExercise> findBaseWithEagerQuestionsAndCompetenciesById(@Param("quizExerciseId") Long quizExerciseId);
@@ -254,10 +266,15 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param exerciseId the id of the exercise to fetch
      * @return {@link QuizExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
     @Query("""
-            SELECT qe
+            SELECT DISTINCT qe
             FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions
+                LEFT JOIN FETCH qe.competencyLinks
+                LEFT JOIN FETCH qe.categories
+                LEFT JOIN FETCH qe.teamAssignmentConfig
+                LEFT JOIN FETCH qe.gradingCriteria
+                LEFT JOIN FETCH qe.plagiarismDetectionConfig
             WHERE qe.id = :exerciseId
             """)
     Optional<QuizExercise> findBaseForVersioningById(@Param("exerciseId") Long exerciseId);

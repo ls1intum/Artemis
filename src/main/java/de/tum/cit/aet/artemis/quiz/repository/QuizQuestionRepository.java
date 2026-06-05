@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,10 +14,13 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
 /**
  * Spring Data JPA repository for the QuizQuestion entity.
@@ -49,6 +53,13 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             """)
     Slice<QuizQuestion> findAllQuizQuestionsByCourseIdWithDueDateBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, Pageable pageable);
 
+    @Transactional(readOnly = true)
+    default Slice<QuizQuestion> findAllWithChildCollectionsByCourseIdWithDueDateBefore(long courseId, ZonedDateTime now, Pageable pageable) {
+        Slice<QuizQuestion> slice = findAllQuizQuestionsByCourseIdWithDueDateBefore(courseId, now, pageable);
+        slice.getContent().forEach(this::initializeChildCollections);
+        return slice;
+    }
+
     @Query("""
             SELECT q
             FROM QuizQuestion q
@@ -56,6 +67,13 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             """)
     Slice<QuizQuestion> findAllQuizQuestionsByCourseIdWithDueDateBeforeNotIn(@Param("ids") Set<Long> ids, @Param("courseId") long courseId, @Param("now") ZonedDateTime now,
             Pageable pageable);
+
+    @Transactional(readOnly = true)
+    default Slice<QuizQuestion> findAllWithChildCollectionsByCourseIdWithDueDateBeforeNotIn(Set<Long> ids, long courseId, ZonedDateTime now, Pageable pageable) {
+        Slice<QuizQuestion> slice = findAllQuizQuestionsByCourseIdWithDueDateBeforeNotIn(ids, courseId, now, pageable);
+        slice.getContent().forEach(this::initializeChildCollections);
+        return slice;
+    }
 
     @Query("""
             SELECT COUNT(q) > 0
@@ -94,5 +112,85 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
      */
     default QuizQuestion findByIdAndCourseIdElseThrow(long questionId, long courseId) {
         return getValueElseThrow(findByIdAndCourseId(questionId, courseId), questionId);
+    }
+
+    @Query("""
+            SELECT DISTINCT q
+            FROM MultipleChoiceQuestion q
+                LEFT JOIN FETCH q.answerOptions
+            WHERE q.id = :questionId
+            """)
+    Optional<MultipleChoiceQuestion> findMultipleChoiceWithAnswerOptionsById(@Param("questionId") long questionId);
+
+    @Query("""
+            SELECT DISTINCT q
+            FROM DragAndDropQuestion q
+                LEFT JOIN FETCH q.dropLocations
+                LEFT JOIN FETCH q.dragItems
+            WHERE q.id = :questionId
+            """)
+    List<DragAndDropQuestion> findDragAndDropWithDropLocationsAndDragItemsById(@Param("questionId") long questionId);
+
+    @Query("""
+            SELECT DISTINCT q
+            FROM DragAndDropQuestion q
+                LEFT JOIN FETCH q.correctMappings mapping
+                LEFT JOIN FETCH mapping.dragItem
+                LEFT JOIN FETCH mapping.dropLocation
+            WHERE q.id = :questionId
+            """)
+    Optional<DragAndDropQuestion> findDragAndDropWithCorrectMappingsById(@Param("questionId") long questionId);
+
+    @Query("""
+            SELECT DISTINCT q
+            FROM ShortAnswerQuestion q
+                LEFT JOIN FETCH q.spots
+                LEFT JOIN FETCH q.solutions
+            WHERE q.id = :questionId
+            """)
+    List<ShortAnswerQuestion> findShortAnswerWithSpotsAndSolutionsById(@Param("questionId") long questionId);
+
+    @Query("""
+            SELECT DISTINCT q
+            FROM ShortAnswerQuestion q
+                LEFT JOIN FETCH q.correctMappings mapping
+                LEFT JOIN FETCH mapping.spot
+                LEFT JOIN FETCH mapping.solution
+            WHERE q.id = :questionId
+            """)
+    Optional<ShortAnswerQuestion> findShortAnswerWithCorrectMappingsById(@Param("questionId") long questionId);
+
+    /**
+     * Find a quiz question by id, scoped to a specific course, with all lazy child collections initialized.
+     * Required for training-mode submission endpoints where OSIV is disabled and child collections
+     * (answer options, drag items, spots, etc.) must be available for scoring.
+     *
+     * @param questionId the id of the quiz question
+     * @param courseId   the id of the course the question's exercise must belong to
+     * @return the quiz question with initialized child collections
+     * @throws de.tum.cit.aet.artemis.core.exception.EntityNotFoundException if no question with the given id exists in the course
+     */
+    @Transactional(readOnly = true)
+    default QuizQuestion findByIdAndCourseIdWithChildCollectionsElseThrow(long questionId, long courseId) {
+        QuizQuestion question = findByIdAndCourseIdElseThrow(questionId, courseId);
+        initializeChildCollections(question);
+        return question;
+    }
+
+    default void initializeChildCollections(QuizQuestion question) {
+        long questionId = question.getId();
+        switch (question) {
+            case MultipleChoiceQuestion ignored -> findMultipleChoiceWithAnswerOptionsById(questionId);
+            case DragAndDropQuestion ignored -> {
+                findDragAndDropWithDropLocationsAndDragItemsById(questionId);
+                findDragAndDropWithCorrectMappingsById(questionId);
+            }
+            case ShortAnswerQuestion ignored -> {
+                findShortAnswerWithSpotsAndSolutionsById(questionId);
+                findShortAnswerWithCorrectMappingsById(questionId);
+            }
+            default -> {
+            }
+        }
     }
 }

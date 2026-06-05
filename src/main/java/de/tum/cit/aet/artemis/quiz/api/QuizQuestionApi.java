@@ -38,11 +38,11 @@ public class QuizQuestionApi implements AbstractApi {
 
     public Slice<QuizQuestion> findAllQuizQuestionsByCourseIdAvailableForPractice(long courseId, Pageable pageable) {
         ZonedDateTime now = ZonedDateTime.now();
-        return quizQuestionRepository.findAllQuizQuestionsByCourseIdWithDueDateBefore(courseId, now, pageable);
+        return quizQuestionRepository.findAllWithChildCollectionsByCourseIdWithDueDateBefore(courseId, now, pageable);
     }
 
     public Slice<QuizQuestion> findAllQuizQuestionsByCourseIdAvailableForPracticeNotIn(Set<Long> ids, long courseId, Pageable pageable) {
         ZonedDateTime now = ZonedDateTime.now();
-        return quizQuestionRepository.findAllQuizQuestionsByCourseIdWithDueDateBeforeNotIn(ids, courseId, now, pageable);
+        return quizQuestionRepository.findAllWithChildCollectionsByCourseIdWithDueDateBeforeNotIn(ids, courseId, now, pageable);
     }
 }

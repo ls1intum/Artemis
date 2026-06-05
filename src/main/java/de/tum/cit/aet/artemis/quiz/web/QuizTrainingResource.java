@@ -129,7 +129,7 @@ public class QuizTrainingResource {
 
         // Look up the quiz question scoped to the authorized course so a student cannot submit (and receive
         // solutions for) a question from a different course they have no role in by passing its id in the path.
-        QuizQuestion quizQuestion = quizQuestionRepository.findByIdAndCourseIdElseThrow(quizQuestionId, courseId);
+        QuizQuestion quizQuestion = quizQuestionRepository.findByIdAndCourseIdWithChildCollectionsElseThrow(quizQuestionId, courseId);
         SubmittedAnswer submittedAnswer = quizSubmissionService.convertSubmittedAnswerForTraining(submittedAnswerDTO, quizQuestion);
 
         SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestion, user.getId(), courseId, submittedAnswer, isRated, answeredAt);
