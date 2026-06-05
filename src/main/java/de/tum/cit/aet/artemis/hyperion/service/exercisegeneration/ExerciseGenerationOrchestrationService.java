@@ -99,8 +99,11 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     private InteractiveSandbox requireSandbox() {
-        return interactiveSandbox.orElseThrow(() -> new IllegalStateException(
-                "No interactive sandbox is available on this node. Agentic exercise generation requires a co-located build agent (single-node integrated deployment)."));
+        // The sandbox is either co-located (local InteractiveSandboxService on an integrated node) or a multi-node relay (RemoteInteractiveSandboxClient on a core-only node that
+        // drives a container on a remote build agent). Exactly one is wired per topology; only a node with neither core+buildagent nor a reachable build agent has none.
+        return interactiveSandbox.orElseThrow(
+                () -> new IllegalStateException("No interactive sandbox is available on this node. Agentic exercise generation requires either a co-located build agent or a "
+                        + "reachable build agent in the cluster to host the sandbox container."));
     }
 
     /**
