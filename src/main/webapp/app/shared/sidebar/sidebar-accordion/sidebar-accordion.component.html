@@ -63,7 +63,12 @@
                                                             }
                                                         </div>
                                                         @if (sidebarItem.groupPickHint) {
-                                                            <div class="sidebar-group-hint">{{ sidebarItem.groupPickHint }}</div>
+                                                            <div class="sidebar-group-hint" [ngClass]="sidebarItem.subtitleLeftClass" [title]="sidebarItem.subtitleLeftTooltip">
+                                                                @if (sidebarItem.subtitleLeftIcon) {
+                                                                    <fa-icon [icon]="sidebarItem.subtitleLeftIcon" />
+                                                                }
+                                                                {{ sidebarItem.groupPickHint }}
+                                                            </div>
                                                         }
                                                     </div>
                                                 } @else {

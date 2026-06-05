@@ -210,6 +210,15 @@ export interface SidebarCardElement {
      */
     groupConnected?: boolean;
 
+    /** Optional icon shown before {@link subtitleLeft} (and the group hint), e.g. a warning triangle. */
+    subtitleLeftIcon?: IconProp;
+
+    /** Optional CSS class(es) applied to {@link subtitleLeft} (and the group hint), e.g. 'text-warning'. */
+    subtitleLeftClass?: string;
+
+    /** Optional tooltip (native title) for {@link subtitleLeft} (and the group hint). */
+    subtitleLeftTooltip?: string;
+
     /** Whether this (nested) exercise is currently selected within its group. */
     selected?: boolean;
 }

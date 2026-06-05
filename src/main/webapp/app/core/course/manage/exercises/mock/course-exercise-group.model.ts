@@ -41,6 +41,18 @@ export class CourseExerciseGroup {
     exercises?: Exercise[];
 }
 
+/**
+ * How many of a group's exercises a student may hand in for graded assessment (read-only mock value).
+ * Shared by the group detail page and the sidebar so both show the same limit.
+ * TODO temporary test override: groups with more than 2 variants allow handing in 2.
+ */
+export function handInLimitFor(group: CourseExerciseGroup | undefined): number {
+    if ((group?.exercises?.length ?? 0) > 2) {
+        return 2;
+    }
+    return group?.handInLimit ?? 1;
+}
+
 /** Directed relation type between exercises and/or groups. Kept deliberately simple, no payload. */
 export enum ExerciseRelationType {
     /** `source` must be completed before `target` (source is a prerequisite of target). */

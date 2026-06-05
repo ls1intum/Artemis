@@ -3,16 +3,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { faLayerGroup, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TimeGroupCategory } from 'app/shared/types/sidebar';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { StudentExerciseDevSettingsService, StudentExerciseViewVersion } from './dev-settings/student-exercise-dev-settings.service';
 import { StudentExerciseDevSettingsModalComponent } from './dev-settings/student-exercise-dev-settings-modal.component';
+import { GroupHandInSelectionService } from './group-hand-in-selection.service';
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
     future: true,
@@ -58,6 +59,7 @@ export class CourseExercisesExperimentalComponent {
     private readonly router = inject(Router);
     private readonly mockService = inject(ExerciseManagementMockService);
     private readonly courseOverviewService = inject(CourseOverviewService);
+    private readonly selectionService = inject(GroupHandInSelectionService);
     private readonly destroyRef = inject(DestroyRef);
     protected readonly devSettings = inject(StudentExerciseDevSettingsService);
 
@@ -161,7 +163,7 @@ export class CourseExercisesExperimentalComponent {
         return { groupedData, ungroupedData };
     }
 
-    /** A group rendered as a sidebar card (same design) with the group icon, group due date and its variant cards nested. */
+    /** A group rendered as a sidebar card (same design) with the group icon, hand-in limit and its variant cards nested. */
     private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
         const sidebarStyle = this.devSettings.groupSidebarStyle();
@@ -170,6 +172,13 @@ export class CourseExercisesExperimentalComponent {
         const connected = sidebarStyle === 'connected';
         const selectable = sidebarStyle === 'select';
         const clickable = !selectable;
+
+        // Below the title we show how many exercises have been handed in out of the hand-in limit (instead
+        // of a date). Until at least one is handed in it reads "0 / Y" in warning yellow with a triangle and
+        // a tooltip prompting the student to open the group and pick exercises.
+        const handedInCount = group.id !== undefined ? this.selectionService.getSubmittedSelection(group.id).length : 0;
+        const handInText = `Handed in: ${handedInCount} / ${handInLimitFor(group)}`;
+        const nothingHandedIn = handedInCount === 0;
         return {
             title: group.title ?? '',
             // For the connected card header, route to the group page (id = group id, sub-route 'group').
@@ -177,7 +186,12 @@ export class CourseExercisesExperimentalComponent {
             id: (connected ? group.id : members[0]?.id) ?? group.id ?? '',
             targetComponentSubRoute: connected ? 'group' : undefined,
             icon: faLayerGroup,
-            subtitleLeft: dueDate?.format('MMM DD, YYYY'),
+            // Card header shows the hand-in status below the title; the label header uses the hint line instead.
+            subtitleLeft: connected ? handInText : undefined,
+            groupPickHint: connected ? undefined : handInText,
+            subtitleLeftIcon: nothingHandedIn ? faTriangleExclamation : undefined,
+            subtitleLeftClass: nothingHandedIn ? 'text-warning fw-semibold' : undefined,
+            subtitleLeftTooltip: nothingHandedIn ? 'No exercise handed in yet — click the group to select exercises and hand them in.' : undefined,
             startDate: dueDate,
             size: 'M',
             groupHeaderStyle: connected ? 'card' : 'label',
@@ -185,7 +199,6 @@ export class CourseExercisesExperimentalComponent {
             groupClickable: clickable ? 'group' : undefined,
             // Clicking the group opens its mock detail page (the variant is chosen by the click-action setting).
             routerLink: clickable ? `/courses/${this.courseId()}/exercises/experimental/group/${group.id}` : undefined,
-            groupPickHint: selectable ? `Pick 1 of ${members.length}` : undefined,
             groupSelectable: selectable,
             groupedItems: members.map((member) => this.courseOverviewService.mapExerciseToSidebarCardElement(member)),
         };

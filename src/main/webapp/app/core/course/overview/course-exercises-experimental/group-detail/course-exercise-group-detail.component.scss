@@ -30,9 +30,9 @@
     }
 }
 
-// Header information boxes match the exercise header's box classes; just give them a min width.
+// Header information boxes fit their text, like the real exercise header (jhi-information-box .mw-content).
 .info-box {
-    min-width: 7rem;
+    max-width: fit-content;
 }
 
 .exercise-option {
@@ -51,15 +51,57 @@
     min-width: 0;
 }
 
-// The tile is wrapped in a link that opens the exercise; the inner card is display-only so its own
-// (wrong-context) routerLink never fires and clicks fall through to the wrapping link.
-.tile-link {
-    min-width: 0;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
+// Multiselect tile: the select checkbox sits inside the tile, just after the difficulty colour stripe
+// and before the title. The tile content is padded left to clear the (vertically centred) checkbox.
+.tile-select {
+    &__checkbox {
+        position: absolute;
+        left: 0.9rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+    }
 }
 
-.tile-static {
-    pointer-events: none;
+// Larger selectable exercise tile (tiles / exercise page): a difficulty-coloured left stripe, then the
+// checkbox, then the title + status and a metadata row (difficulty, points, due date, categories).
+.exercise-tile {
+    overflow: hidden;
+    background-color: var(--module-bg);
+    transition:
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
+
+    // Difficulty colour stripe down the left edge (clipped to the rounded corners by overflow: hidden).
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 5px;
+        background-color: var(--bs-border-color);
+    }
+
+    &--easy::before {
+        background-color: var(--bs-success);
+    }
+
+    &--medium::before {
+        background-color: var(--bs-warning);
+    }
+
+    &--hard::before {
+        background-color: var(--bs-danger);
+    }
+
+    &--selected {
+        border-color: var(--bs-primary) !important;
+        background-color: var(--bs-primary-bg-subtle);
+    }
+
+    &__link {
+        display: block;
+        padding: 0.75rem 0.75rem 0.75rem 2.4rem;
+        color: inherit;
+        text-decoration: none;
+    }
 }

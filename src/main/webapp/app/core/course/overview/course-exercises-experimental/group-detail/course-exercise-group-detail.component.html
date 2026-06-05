@@ -19,7 +19,14 @@
                                 Selection submitted
                             </span>
                         }
-                        <button type="button" class="btn btn-primary btn-sm" (click)="submitSelection()" [disabled]="!hasUnsubmittedChanges()">Submit selection</button>
+                        <button
+                            jhi-exercise-action-button
+                            [buttonIcon]="faPaperPlane"
+                            [buttonLabel]="'Submit selection'"
+                            [hideLabelMobile]="false"
+                            [overwriteDisabled]="!hasUnsubmittedChanges()"
+                            (click)="submitSelection()"
+                        ></button>
                     </div>
                 </div>
 
@@ -36,7 +43,20 @@
                     </div>
                     <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
                         <div class="text-body-tertiary">Hand-in limit</div>
-                        <div class="text-body">{{ countTowardsScore() }} of {{ exercises().length }}</div>
+                        <div class="text-body">{{ countTowardsScore() }} / {{ exercises().length }}</div>
+                    </div>
+                    <div
+                        class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold"
+                        [class.border-warning]="handedInCount() === 0"
+                        [title]="handedInCount() === 0 ? 'No exercise handed in yet — select exercises below and submit.' : undefined"
+                    >
+                        <div class="text-body-tertiary">Handed in</div>
+                        <div [class.text-warning]="handedInCount() === 0" [class.text-body]="handedInCount() !== 0">
+                            @if (handedInCount() === 0) {
+                                <fa-icon [icon]="faTriangleExclamation" />
+                            }
+                            {{ handedInCount() }} / {{ countTowardsScore() }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -55,19 +75,7 @@
                             </div>
                             <div class="d-flex flex-column gap-2">
                                 @for (exercise of exercises(); track exercise.id) {
-                                    <div class="d-flex align-items-center gap-2">
-                                        <p-checkbox
-                                            [binary]="true"
-                                            [ngModel]="isSelected(exercise)"
-                                            (ngModelChange)="toggle(exercise, $event)"
-                                            [disabled]="!isSelected(exercise) && atSelectionLimit()"
-                                        />
-                                        <a class="flex-grow-1 tile-link" [routerLink]="exerciseLink(exercise)">
-                                            <div class="tile-static">
-                                                <jhi-medium-sidebar-card [sidebarItem]="cardFor(exercise)!" sidebarType="exercise" />
-                                            </div>
-                                        </a>
-                                    </div>
+                                    <ng-container [ngTemplateOutlet]="selectableTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
                                 }
                             </div>
                         </div>
@@ -110,8 +118,8 @@
                             <div class="fs-6">{{ group.maxPoints ?? '—' }}</div>
                         </div>
                         <div class="col-6 col-md-4">
-                            <div class="text-secondary text-uppercase small fw-semibold mb-1">Counts towards score</div>
-                            <div class="fs-6">{{ countTowardsScore() }} of {{ exercises().length }}</div>
+                            <div class="text-secondary text-uppercase small fw-semibold mb-1">Hand-in limit</div>
+                            <div class="fs-6">{{ countTowardsScore() }} / {{ exercises().length }}</div>
                         </div>
                     </div>
 
@@ -123,19 +131,7 @@
                     @if (useTiles()) {
                         <div class="d-flex flex-column gap-2">
                             @for (exercise of exercises(); track exercise.id) {
-                                <div class="d-flex align-items-center gap-2">
-                                    <p-checkbox
-                                        [binary]="true"
-                                        [ngModel]="isSelected(exercise)"
-                                        (ngModelChange)="toggle(exercise, $event)"
-                                        [disabled]="!isSelected(exercise) && atSelectionLimit()"
-                                    />
-                                    <a class="flex-grow-1 tile-link" [routerLink]="exerciseLink(exercise)">
-                                        <div class="tile-static">
-                                            <jhi-medium-sidebar-card [sidebarItem]="cardFor(exercise)!" sidebarType="exercise" />
-                                        </div>
-                                    </a>
-                                </div>
+                                <ng-container [ngTemplateOutlet]="selectableTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
                             }
                         </div>
                     } @else {
@@ -183,3 +179,43 @@
         </div>
     }
 }
+
+<!-- Larger selectable exercise tile, shared by the "tiles" and "exercise page" layouts. -->
+<ng-template #selectableTile let-exercise>
+    <div
+        class="tile-select exercise-tile position-relative border rounded-3"
+        [class.exercise-tile--easy]="exercise.difficulty === DifficultyLevel.EASY"
+        [class.exercise-tile--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
+        [class.exercise-tile--hard]="exercise.difficulty === DifficultyLevel.HARD"
+        [class.exercise-tile--selected]="isSelected(exercise)"
+    >
+        <p-checkbox
+            class="tile-select__checkbox"
+            [binary]="true"
+            [ngModel]="isSelected(exercise)"
+            (ngModelChange)="toggle(exercise, $event)"
+            [disabled]="!isSelected(exercise) && atSelectionLimit()"
+        />
+        <a class="exercise-tile__link" [routerLink]="exerciseLink(exercise)">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-semibold text-truncate flex-grow-1 min-width-0">
+                    <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
+                    {{ exercise.title }}
+                </span>
+                <jhi-submission-result-status class="flex-shrink-0" [exercise]="exercise" />
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                @if (exercise.difficulty) {
+                    <jhi-difficulty-level [difficultyLevel]="exercise.difficulty" />
+                }
+                @if (exercise.maxPoints) {
+                    <span class="text-secondary small">{{ exercise.maxPoints }} Points</span>
+                }
+                @if (exercise.dueDate) {
+                    <span class="text-secondary small">Due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
+                }
+                <jhi-exercise-categories [exercise]="exercise" [isSmall]="true" />
+            </div>
+        </a>
+    </div>
+</ng-template>

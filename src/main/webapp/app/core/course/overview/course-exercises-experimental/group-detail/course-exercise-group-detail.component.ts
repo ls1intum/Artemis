@@ -2,22 +2,25 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faComments, faLayerGroup, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faComments, faLayerGroup, faPaperPlane, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Checkbox } from 'primeng/checkbox';
 import { Tag } from 'primeng/tag';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
-import { SidebarCardElement } from 'app/shared/types/sidebar';
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { StudentExerciseDevSettingsService } from '../dev-settings/student-exercise-dev-settings.service';
+import { GroupHandInSelectionService } from '../group-hand-in-selection.service';
 
 type TagSeverity = 'success' | 'warn' | 'danger' | 'secondary';
 
@@ -34,29 +37,35 @@ type TagSeverity = 'success' | 'warn' | 'danger' | 'secondary';
     imports: [
         FormsModule,
         RouterLink,
+        NgTemplateOutlet,
         FaIconComponent,
         Checkbox,
         Tag,
-        SidebarCardMediumComponent,
+        DifficultyLevelComponent,
+        ExerciseCategoriesComponent,
+        SubmissionResultStatusComponent,
         ResizablePanelsComponent,
         PanelDirective,
         DiscussionSectionComponent,
         CompetencyContributionComponent,
+        ExerciseActionButtonComponent,
         ArtemisDatePipe,
     ],
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly mockService = inject(ExerciseManagementMockService);
-    private readonly courseOverviewService = inject(CourseOverviewService);
     private readonly devSettings = inject(StudentExerciseDevSettingsService);
+    private readonly selectionService = inject(GroupHandInSelectionService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly faComments = faComments;
     protected readonly faCheck = faCheck;
+    protected readonly faPaperPlane = faPaperPlane;
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly getIcon = getIcon;
+    protected readonly DifficultyLevel = DifficultyLevel;
 
     protected readonly group = signal<CourseExerciseGroup | undefined>(undefined);
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
@@ -72,37 +81,22 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly useTiles = computed(() => this.devSettings.groupClickAction() === 'tiles');
     // The 'exercise page' click action mimics the exercise detail layout (header + resizable split with communication).
     protected readonly useExercisePage = computed(() => this.devSettings.groupClickAction() === 'exercise-page');
-    private readonly cardByExerciseId = computed(() => {
-        const map = new Map<number, SidebarCardElement>();
-        for (const exercise of this.exercises()) {
-            if (exercise.id !== undefined) {
-                map.set(exercise.id, this.courseOverviewService.mapExerciseToSidebarCardElement(exercise));
-            }
-        }
-        return map;
-    });
 
     // How many of the group's exercises count towards the score (read-only); caps the selection.
-    // TODO temporary test override: groups with more than 2 variants allow selecting 2.
-    protected readonly countTowardsScore = computed(() => {
-        const group = this.group();
-        if ((group?.exercises?.length ?? 0) > 2) {
-            return 2;
-        }
-        return group?.handInLimit ?? 1;
-    });
+    protected readonly countTowardsScore = computed(() => handInLimitFor(this.group()));
 
     // The only thing the student can change: which exercises they want assessed.
     protected readonly selectedExercises = signal<Exercise[]>([]);
 
+    // How many exercises have actually been handed in (submitted) for this group; mirrors the sidebar.
+    protected readonly handedInCount = computed(() => {
+        const groupId = this.group()?.id;
+        return groupId !== undefined ? this.selectionService.getSubmittedSelection(groupId).length : 0;
+    });
+
     // Track which selection has been submitted, so the submit button only enables on unsubmitted changes.
     private readonly submittedSelectionKey = signal('');
-    private readonly currentSelectionKey = computed(() =>
-        this.selectedExercises()
-            .map((exercise) => exercise.id)
-            .sort((a, b) => (a ?? 0) - (b ?? 0))
-            .join(','),
-    );
+    private readonly currentSelectionKey = computed(() => this.keyForIds(this.selectedIds()));
     protected readonly hasUnsubmittedChanges = computed(() => this.currentSelectionKey() !== this.submittedSelectionKey());
     protected readonly hasSubmitted = signal(false);
 
@@ -112,17 +106,40 @@ export class CourseExerciseGroupDetailComponent {
         this.courseId = Number(this.route.parent?.parent?.snapshot.params['courseId']);
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const groupId = Number(params['groupId']);
-            this.group.set(this.mockService.getGroups().find((candidate) => candidate.id === groupId));
-            this.selectedExercises.set([]);
-            this.submittedSelectionKey.set('');
-            this.hasSubmitted.set(false);
+            const group = this.mockService.getGroups().find((candidate) => candidate.id === groupId);
+            this.group.set(group);
+
+            // Restore any previously handed-in selection so reopening the group reflects it (and no
+            // "unsubmitted changes" warning shows for an already-submitted selection).
+            const submittedIds = this.selectionService.getSubmittedSelection(groupId);
+            this.selectedExercises.set((group?.exercises ?? []).filter((exercise) => exercise.id !== undefined && submittedIds.includes(exercise.id)));
+            this.submittedSelectionKey.set(this.keyForIds(submittedIds));
+            this.hasSubmitted.set(submittedIds.length > 0);
         });
     }
 
-    /** Mock submit: records the current selection as the submitted one (nothing is persisted). */
+    /** Mock submit: records the current selection as the submitted one (kept in the shared selection store). */
     protected submitSelection(): void {
         this.submittedSelectionKey.set(this.currentSelectionKey());
         this.hasSubmitted.set(true);
+        const groupId = this.group()?.id;
+        if (groupId !== undefined) {
+            this.selectionService.submitSelection(groupId, this.selectedIds());
+        }
+    }
+
+    /** Selected exercise ids (mock exercises always carry an id). */
+    private selectedIds(): number[] {
+        return this.selectedExercises()
+            .map((exercise) => exercise.id)
+            .filter((id): id is number => id !== undefined);
+    }
+
+    private keyForIds(ids: number[]): string {
+        return ids
+            .slice()
+            .sort((a, b) => a - b)
+            .join(',');
     }
 
     protected isSelected(exercise: Exercise): boolean {
@@ -146,10 +163,6 @@ export class CourseExerciseGroupDetailComponent {
 
     protected exerciseLink(exercise: Exercise): string {
         return `/courses/${this.courseId}/exercises/experimental/${exercise.id}`;
-    }
-
-    protected cardFor(exercise: Exercise): SidebarCardElement | undefined {
-        return exercise.id !== undefined ? this.cardByExerciseId().get(exercise.id) : undefined;
     }
 
     protected difficultySeverity(difficulty?: DifficultyLevel): TagSeverity {
