@@ -656,6 +656,7 @@ export class GradingComponent implements OnInit {
 
         const selectedIndex = this.gradingScale.gradeSteps.length - 2;
         this.setPercentageInterval(selectedIndex);
+        this.changeDetectorRef.markForCheck();
     }
 
     private createGradeStepBasic(): void {
@@ -729,6 +730,9 @@ export class GradingComponent implements OnInit {
 
             previousGradeStep = currentGradeStep;
         }
+        // Re-render the grade-step rows (bounds/points columns) after in-place mutations so the
+        // editor stays consistent under zoneless change detection.
+        this.changeDetectorRef.markForCheck();
     }
 
     setPointsInterval(selectedIndex: number, newPointsInterval: number): void {
