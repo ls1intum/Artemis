@@ -453,7 +453,7 @@ export class ExamManagementService {
             examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
             examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
             gracePeriod: exam.gracePeriod,
-            testExamPracticeStartDelay: exam.testExamPracticeStartDelay ?? 0,
+            testExamPracticeStartDate: convertDateFromClient(exam.testExamPracticeStartDate),
             workingTime: exam.workingTime ?? 0,
             startText: exam.startText,
             endText: exam.endText,
@@ -505,6 +505,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.testExamPracticeStartDate = convertDateFromServer(exam.testExamPracticeStartDate);
 
         if (exam.course) {
             this.accountService.setAccessRightsForCourse(exam.course);
@@ -583,7 +584,7 @@ interface ExamImportDTO {
     examStudentReviewStart?: string;
     examStudentReviewEnd?: string;
     gracePeriod?: number;
-    testExamPracticeStartDelay?: number;
+    testExamPracticeStartDate?: string;
     workingTime: number;
     startText?: string;
     endText?: string;

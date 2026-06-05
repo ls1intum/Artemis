@@ -317,6 +317,31 @@ describe('ExamUpdateComponent', () => {
             expect(component.workingTimeInMinutes).toBe(60);
         });
 
+        it('should default the practice start date to the simulation end date for simulation and practice test exams', () => {
+            fixture.detectChanges();
+            examWithoutExercises.examType = ExamType.SIMULATION_AND_PRACTICE;
+            examWithoutExercises.startDate = dayjs().startOf('minute');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.testExamPracticeStartDate = undefined;
+
+            component.onTestExamTypeChange();
+
+            expect(examWithoutExercises.testExamPracticeStartDate?.isSame(examWithoutExercises.startDate.add(1, 'hour'))).toBe(true);
+        });
+
+        it('should validate the practice start date for simulation and practice test exams', () => {
+            fixture.detectChanges();
+            examWithoutExercises.examType = ExamType.SIMULATION_AND_PRACTICE;
+            examWithoutExercises.startDate = dayjs().startOf('minute');
+            examWithoutExercises.workingTime = 3600;
+
+            examWithoutExercises.testExamPracticeStartDate = examWithoutExercises.startDate.add(59, 'minutes');
+            expect(component.isValidTestExamPracticeStartDate).toBe(false);
+
+            examWithoutExercises.testExamPracticeStartDate = examWithoutExercises.startDate.add(1, 'hour');
+            expect(component.isValidTestExamPracticeStartDate).toBe(true);
+        });
+
         it('validates the working time for test exams correctly', () => {
             examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.workingTime = undefined;

@@ -553,11 +553,11 @@
                 "modeExplanation": {
                     "simulation": "Students can start one live attempt during the configured working window. No repeat attempts are available afterwards.",
                     "practice": "Students can start repeatable practice attempts during the configured working window.",
-                    "simulationAndPractice": "Students can start one live attempt first. Repeatable practice attempts open after the live working time and the configured practice start delay have passed."
+                    "simulationAndPractice": "Students can start one live attempt first. Repeatable practice attempts open at the configured practice start time."
                 },
-                "practiceStartDelay": "Practice start delay (minutes)",
-                "practiceStartDelayTooltip": "The buffer after the simulation phase ends before repeatable practice attempts become available.",
-                "practiceStartDelayInvalid": "The practice start delay must be 0 or greater.",
+                "practiceStartDate": "Start of practice window",
+                "practiceStartDateTooltip": "The date and time when repeatable practice attempts become available after the simulation phase.",
+                "practiceStartDateInvalid": "The start of the practice window must be set at or after the simulation phase ends.",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"

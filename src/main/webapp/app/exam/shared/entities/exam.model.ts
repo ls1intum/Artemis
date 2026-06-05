@@ -32,8 +32,7 @@ export class Exam implements BaseEntity {
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
-    // buffer in minutes between simulation and repeatable practice phases of a test exam
-    public testExamPracticeStartDelay?: number;
+    public testExamPracticeStartDate?: dayjs.Dayjs;
     public examiner?: string;
     public moduleNumber?: string;
     public courseName?: string;
@@ -68,7 +67,6 @@ export class Exam implements BaseEntity {
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
         this.examType = ExamType.REAL; // default value
-        this.testExamPracticeStartDelay = 0; // default value
         this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)

@@ -442,7 +442,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetOrCreateStudentExamElseThrow_testExamEnded() {
         testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("examHasAlreadyEnded");
+                });
     }
 
     @Test
@@ -487,7 +492,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeBlocksDuringPracticeStartDelay() {
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeBlocksBeforePracticeStartDate() {
         configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(1), 1800, 180, 60, ZonedDateTime.now().plusHours(2));
         markStudentExamSubmitted(studentExamForTestExam1);
 
@@ -524,12 +529,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
     }
 
-    private void configureExamType(Exam exam, ExamType examType, ZonedDateTime startDate, int workingTime, int gracePeriod, int testExamPracticeStartDelay, ZonedDateTime endDate) {
+    private void configureExamType(Exam exam, ExamType examType, ZonedDateTime startDate, int workingTime, int gracePeriod, int minutesUntilPracticeStart, ZonedDateTime endDate) {
         exam.setVisibleDate(startDate.minusMinutes(10));
         exam.setStartDate(startDate);
         exam.setWorkingTime(workingTime);
         exam.setGracePeriod(gracePeriod);
-        exam.setTestExamPracticeStartDelay(testExamPracticeStartDelay);
+        exam.setTestExamPracticeStartDate(startDate.plusSeconds(workingTime).plusMinutes(minutesUntilPracticeStart));
         exam.setEndDate(endDate);
         exam.setExamType(examType);
         examRepository.save(exam);

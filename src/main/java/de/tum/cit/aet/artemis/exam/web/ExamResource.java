@@ -85,6 +85,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
@@ -567,8 +568,10 @@ public class ExamResource {
         if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
         }
-        if (exam.isTestExam() && exam.getTestExamPracticeStartDelay() < 0) {
-            throw new BadRequestAlertException("A test exam practice start delay cannot be negative", ENTITY_NAME, "testExamPracticeStartDelayNegative");
+        if (exam.getExamType() == ExamType.SIMULATION_AND_PRACTICE
+                && (exam.getTestExamPracticeStartDate() == null || exam.getTestExamPracticeStartDate().isBefore(exam.getTestExamSimulationEndDate()))) {
+            throw new BadRequestAlertException("A combined test exam practice start date must be set at or after the simulation phase", ENTITY_NAME,
+                    "testExamPracticeStartDateInvalid");
         }
     }
 

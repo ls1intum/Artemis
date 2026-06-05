@@ -8,9 +8,7 @@
             <column name="exam_type" type="varchar(32)" defaultValue="REAL">
                 <constraints nullable="false"/>
             </column>
-            <column name="test_exam_practice_start_delay" type="integer" defaultValueNumeric="0">
-                <constraints nullable="false"/>
-            </column>
+            <column name="test_exam_practice_start_date" type="datetime(3)"/>
         </addColumn>
         <update tableName="exam">
             <column name="exam_type" value="PRACTICE"/>

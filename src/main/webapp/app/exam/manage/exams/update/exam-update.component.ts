@@ -123,7 +123,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 // test exam only feature automatic assessment
                 if (isTestExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
-                    exam.testExamPracticeStartDelay = exam.testExamPracticeStartDelay ?? 0;
+                    this.setDefaultTestExamPracticeStartDate(exam);
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
                 }
@@ -231,7 +231,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             if (this.exam.examType === ExamType.REAL) {
                 this.exam.examType = ExamType.PRACTICE;
             }
-            this.exam.testExamPracticeStartDelay = this.exam.testExamPracticeStartDelay ?? 0;
+            this.setDefaultTestExamPracticeStartDate(this.exam);
             if (this.usesExamWindowWorkingTime) {
                 this.updateExamWorkingTime();
             } else {
@@ -245,11 +245,26 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onTestExamTypeChange() {
+        this.setDefaultTestExamPracticeStartDate(this.exam);
         if (this.usesExamWindowWorkingTime) {
             this.updateExamWorkingTime();
         } else {
             this.roundWorkingTime();
         }
+    }
+
+    private setDefaultTestExamPracticeStartDate(exam: Exam) {
+        if (exam.examType !== ExamType.SIMULATION_AND_PRACTICE || exam.testExamPracticeStartDate) {
+            return;
+        }
+        exam.testExamPracticeStartDate = this.getTestExamSimulationEndDate(exam);
+    }
+
+    private getTestExamSimulationEndDate(exam = this.exam): dayjs.Dayjs | undefined {
+        if (!exam?.startDate || exam.workingTime === undefined) {
+            return undefined;
+        }
+        return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
     }
 
     get usesExamWindowWorkingTime(): boolean {
@@ -433,7 +448,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
-        const examValidTestExamPracticeStartDelay = this.isValidTestExamPracticeStartDelay;
+        const examValidTestExamPracticeStartDate = this.isValidTestExamPracticeStartDate;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
@@ -443,7 +458,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examValidExampleSolutionPublicationDate &&
             examValidNumberOfExercises &&
             examValidGracePeriod &&
-            examValidTestExamPracticeStartDelay
+            examValidTestExamPracticeStartDate
         );
     }
 
@@ -504,11 +519,17 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
     }
 
-    get isValidTestExamPracticeStartDelay(): boolean {
+    get isValidTestExamPracticeStartDate(): boolean {
         if (!isTestExam(this.exam) || this.exam.examType !== ExamType.SIMULATION_AND_PRACTICE) {
             return true;
         }
-        return this.exam.testExamPracticeStartDelay !== undefined && this.exam.testExamPracticeStartDelay !== null && this.exam.testExamPracticeStartDelay >= 0;
+        const simulationEndDate = this.getTestExamSimulationEndDate();
+        return (
+            !!simulationEndDate &&
+            !!this.exam.testExamPracticeStartDate &&
+            dayjs(this.exam.testExamPracticeStartDate).isValid() &&
+            dayjs(this.exam.testExamPracticeStartDate).isSameOrAfter(simulationEndDate)
+        );
     }
 
     /**

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable ExamType examType, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
-        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, @Nullable Integer testExamPracticeStartDelay, int workingTime, @Nullable String startText,
+        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, @Nullable ZonedDateTime testExamPracticeStartDate, int workingTime, @Nullable String startText,
         @Nullable String endText, @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints,
         @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
         @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName) {
@@ -33,7 +33,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
      */
     public static ExamUpdateDTO of(Exam exam) {
         return new ExamUpdateDTO(exam.getId(), exam.getTitle(), exam.getExamType(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
-                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getTestExamPracticeStartDelay(),
+                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getTestExamPracticeStartDate(),
                 exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(),
                 exam.getRandomizeExerciseOrder(), exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(),
                 exam.getCourseName(), exam.getExampleSolutionPublicationDate(), exam.getChannelName());
@@ -59,7 +59,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
         if (gracePeriod != null) {
             exam.setGracePeriod(gracePeriod);
         }
-        exam.setTestExamPracticeStartDelay(testExamPracticeStartDelay);
+        exam.setTestExamPracticeStartDate(testExamPracticeStartDate);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
@@ -98,7 +98,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @Nullable 
         if (gracePeriod != null) {
             exam.setGracePeriod(gracePeriod);
         }
-        exam.setTestExamPracticeStartDelay(testExamPracticeStartDelay);
+        exam.setTestExamPracticeStartDate(testExamPracticeStartDate);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);

@@ -50,18 +50,10 @@ export class TestExamParticipationMessageService {
     }
 
     private getPracticeStartDate(exam: Exam | undefined): dayjs.Dayjs | undefined {
-        const simulationEndDate = this.getSimulationEndDate(exam);
-        if (simulationEndDate === undefined || exam?.testExamPracticeStartDelay === undefined) {
+        if (exam?.testExamPracticeStartDate === undefined) {
             return undefined;
         }
-        return simulationEndDate.add(exam.testExamPracticeStartDelay, 'minutes');
-    }
-
-    private getSimulationEndDate(exam: Exam | undefined): dayjs.Dayjs | undefined {
-        if (exam?.startDate === undefined || exam.workingTime === undefined) {
-            return undefined;
-        }
-        return dayjs(exam.startDate).add(exam.workingTime, 'minutes');
+        return dayjs(exam.testExamPracticeStartDate);
     }
 
     private fullTranslationKey(key: string) {

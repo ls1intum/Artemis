@@ -62,25 +62,6 @@
                             }
                         }
                     </p-message>
-                    @if (exam.examType === ExamType.SIMULATION_AND_PRACTICE) {
-                        <div class="mt-3">
-                            <label class="form-check-label" for="testExamPracticeStartDelay" jhiTranslate="artemisApp.examManagement.testExam.practiceStartDelay"></label>
-                            <jhi-help-icon text="artemisApp.examManagement.testExam.practiceStartDelayTooltip" />
-                            <input
-                                id="testExamPracticeStartDelay"
-                                name="testExamPracticeStartDelay"
-                                class="form-control"
-                                type="number"
-                                min="0"
-                                required
-                                [(ngModel)]="exam.testExamPracticeStartDelay"
-                                #testExamPracticeStartDelayInput="ngModel"
-                            />
-                            @if (testExamPracticeStartDelayInput.errors?.['min'] || !isValidTestExamPracticeStartDelay) {
-                                <div class="alert alert-danger" jhiTranslate="artemisApp.examManagement.testExam.practiceStartDelayInvalid"></div>
-                            }
-                        </div>
-                    }
                 </div>
             }
             @if (!isTestExam(exam)) {
@@ -152,7 +133,7 @@
                 </p-dialog>
             }
             <div class="row mb-3 position-relative">
-                <div class="col-sm-4">
+                <div [class.col-sm-3]="exam.examType === ExamType.SIMULATION_AND_PRACTICE" [class.col-sm-4]="exam.examType !== ExamType.SIMULATION_AND_PRACTICE">
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
@@ -165,7 +146,7 @@
                         id="visibleDate"
                     />
                 </div>
-                <div class="col-sm-4">
+                <div [class.col-sm-3]="exam.examType === ExamType.SIMULATION_AND_PRACTICE" [class.col-sm-4]="exam.examType !== ExamType.SIMULATION_AND_PRACTICE">
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement' + (isTestExam(exam) ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
@@ -181,7 +162,24 @@
                         <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
                     }
                 </div>
-                <div class="col-sm-4">
+                @if (exam.examType === ExamType.SIMULATION_AND_PRACTICE) {
+                    <div class="col-sm-3">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.examManagement.testExam.practiceStartDate' | artemisTranslate }}"
+                            labelTooltip="{{ 'artemisApp.examManagement.testExam.practiceStartDateTooltip' | artemisTranslate }}"
+                            [(ngModel)]="exam.testExamPracticeStartDate"
+                            [error]="!isValidTestExamPracticeStartDate"
+                            [startAt]="exam.testExamPracticeStartDate || exam.endDate || exam.startDate"
+                            [requiredField]="true"
+                            name="testExamPracticeStartDate"
+                            id="testExamPracticeStartDate"
+                        />
+                        @if (!isValidTestExamPracticeStartDate) {
+                            <span class="invalid-feedback" jhiTranslate="artemisApp.examManagement.testExam.practiceStartDateInvalid"></span>
+                        }
+                    </div>
+                }
+                <div [class.col-sm-3]="exam.examType === ExamType.SIMULATION_AND_PRACTICE" [class.col-sm-4]="exam.examType !== ExamType.SIMULATION_AND_PRACTICE">
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.examManagement' + (isTestExam(exam) ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"

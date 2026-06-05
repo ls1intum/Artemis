@@ -280,7 +280,7 @@ public class ExamAccessService {
             throw new AccessForbiddenAlertException("The simulation test exam phase has ended.", ENTITY_NAME, "simulationTestExamPhaseEnded", true);
         }
 
-        final boolean bufferPhaseActive = now.isBefore(exam.getTestExamPracticeStartDate());
+        final boolean bufferPhaseActive = now.isBefore(exam.getEffectiveTestExamPracticeStartDate());
         if (examType == ExamType.SIMULATION_AND_PRACTICE && simulationPhaseOver && bufferPhaseActive) {
             throw new AccessForbiddenAlertException("The practice phase of the test exam has not started yet.", ENTITY_NAME, "testExamPracticePhaseNotStarted", true);
         }

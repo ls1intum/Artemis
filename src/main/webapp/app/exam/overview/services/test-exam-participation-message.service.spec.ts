@@ -50,8 +50,8 @@ describe('TestExamParticipationMessageService', () => {
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         exam.gracePeriod = 0;
-        exam.testExamPracticeStartDelay = 120;
-        const practiceStartDate = dayjs(exam.startDate).add(exam.workingTime, 'minutes').add(exam.testExamPracticeStartDelay, 'minutes');
+        const practiceStartDate = now.add(30, 'minutes');
+        exam.testExamPracticeStartDate = practiceStartDate;
 
         const message = service.getMessage(exam, 'simulationTestExamAttemptAlreadyExistsBeforePractice');
 
@@ -65,8 +65,8 @@ describe('TestExamParticipationMessageService', () => {
         exam.examType = ExamType.SIMULATION_AND_PRACTICE;
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
-        exam.testExamPracticeStartDelay = 120;
-        const practiceStartDate = dayjs(exam.startDate).add(exam.workingTime, 'minutes').add(exam.testExamPracticeStartDelay, 'minutes');
+        const practiceStartDate = now.add(30, 'minutes');
+        exam.testExamPracticeStartDate = practiceStartDate;
 
         const message = service.getMessage(exam, 'testExamPracticePhaseNotStarted');
 
@@ -82,8 +82,8 @@ describe('TestExamParticipationMessageService', () => {
         exam.startDate = now.subtract(2, 'hours');
         exam.workingTime = 30;
         exam.gracePeriod = 0;
-        exam.testExamPracticeStartDelay = 120;
-        const practiceStartDate = dayjs(exam.startDate).add(exam.workingTime, 'minutes').add(exam.testExamPracticeStartDelay, 'minutes');
+        const practiceStartDate = now.add(30, 'minutes');
+        exam.testExamPracticeStartDate = practiceStartDate;
 
         const message = service.getMessage(exam, 'unknown');
 

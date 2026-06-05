@@ -91,10 +91,10 @@ public class Exam extends DomainObject {
     private Integer gracePeriod = 180;
 
     /**
-     * The buffer in minutes between the simulation phase and the repeatable practice phase of a combined test exam.
+     * The date when the repeatable practice phase starts for a combined simulation and practice test exam.
      */
-    @Column(name = "test_exam_practice_start_delay", columnDefinition = "integer default 0")
-    private int testExamPracticeStartDelay = 0;
+    @Column(name = "test_exam_practice_start_date")
+    private ZonedDateTime testExamPracticeStartDate;
 
     /**
      * The default working time for an exam in seconds.
@@ -209,8 +209,8 @@ public class Exam extends DomainObject {
     }
 
     @JsonIgnore
-    public ZonedDateTime getTestExamPracticeStartDate() {
-        return getTestExamSimulationEndDate().plusMinutes(getTestExamPracticeStartDelay());
+    public ZonedDateTime getEffectiveTestExamPracticeStartDate() {
+        return testExamPracticeStartDate != null ? testExamPracticeStartDate : getTestExamSimulationEndDate();
     }
 
     public boolean isExamWithAttendanceCheck() {
@@ -288,12 +288,12 @@ public class Exam extends DomainObject {
         this.gracePeriod = gracePeriod;
     }
 
-    public int getTestExamPracticeStartDelay() {
-        return testExamPracticeStartDelay;
+    public ZonedDateTime getTestExamPracticeStartDate() {
+        return testExamPracticeStartDate;
     }
 
-    public void setTestExamPracticeStartDelay(Integer testExamPracticeStartDelay) {
-        this.testExamPracticeStartDelay = testExamPracticeStartDelay != null ? testExamPracticeStartDelay : 0;
+    public void setTestExamPracticeStartDate(ZonedDateTime testExamPracticeStartDate) {
+        this.testExamPracticeStartDate = testExamPracticeStartDate;
     }
 
     public int getWorkingTime() {
