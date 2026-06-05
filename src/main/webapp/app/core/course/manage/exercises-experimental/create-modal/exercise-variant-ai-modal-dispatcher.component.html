@@ -1,0 +1,29 @@
+@switch (devSettings.variantModalStyle()) {
+    @case ('cards-inline') {
+        <jhi-exercise-variant-ai-modal-cards-inline
+            [visible]="visible()"
+            (visibleChange)="visibleChange.emit($event)"
+            [sourceExercise]="sourceExercise()"
+            [courseId]="courseId()"
+            (variantAdded)="variantAdded.emit($event)"
+        />
+    }
+    @case ('cards-wizard') {
+        <jhi-exercise-variant-ai-modal-wizard
+            [visible]="visible()"
+            (visibleChange)="visibleChange.emit($event)"
+            [sourceExercise]="sourceExercise()"
+            [courseId]="courseId()"
+            (variantAdded)="variantAdded.emit($event)"
+        />
+    }
+    @default {
+        <jhi-exercise-variant-ai-modal
+            [visible]="visible()"
+            (visibleChange)="visibleChange.emit($event)"
+            [sourceExercise]="sourceExercise()"
+            [courseId]="courseId()"
+            (variantAdded)="variantAdded.emit($event)"
+        />
+    }
+}

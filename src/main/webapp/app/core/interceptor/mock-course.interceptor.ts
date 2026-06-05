@@ -13,6 +13,7 @@ import {
     INTRO_JAVA_TEXT_EXERCISES,
 } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
 import { getMockCompetencyContributions } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 
 function toJson<T>(value: T): T {
     return JSON.parse(JSON.stringify(value));
@@ -22,12 +23,72 @@ function mockResponse<T>(body: T): Observable<HttpEvent<T>> {
     return of(new HttpResponse<T>({ status: 200, body: toJson(body) }));
 }
 
-const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: () => unknown }> = [
+function extractId(url: string): number {
+    return parseInt(url.match(/\/(\d+)/)?.[1] ?? '', 10);
+}
+
+function mockStats(): ExerciseManagementStatisticsDto {
+    return {
+        averageScoreOfExercise: 0,
+        maxPointsOfExercise: 0,
+        scoreDistribution: [],
+        numberOfExerciseScores: 0,
+        numberOfParticipations: 0,
+        numberOfStudentsOrTeamsInCourse: 0,
+        numberOfPosts: 0,
+        numberOfResolvedPosts: 0,
+    };
+}
+
+const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: (url: string) => unknown }> = [
+    // Exercise lists
     { pattern: /^api\/programming\/courses\/\d+\/programming-exercises$/, data: () => INTRO_JAVA_PROGRAMMING_EXERCISES },
     { pattern: /^api\/modeling\/courses\/\d+\/modeling-exercises$/, data: () => INTRO_JAVA_MODELING_EXERCISES },
     { pattern: /^api\/text\/courses\/\d+\/text-exercises$/, data: () => INTRO_JAVA_TEXT_EXERCISES },
     { pattern: /^api\/fileupload\/courses\/\d+\/file-upload-exercises$/, data: () => INTRO_JAVA_FILE_UPLOAD_EXERCISES },
     { pattern: /^api\/quiz\/courses\/\d+\/quiz-exercises$/, data: () => INTRO_JAVA_QUIZ_EXERCISES },
+    // Individual exercise fetches — exact id match, no sub-path
+    { pattern: /^api\/programming\/programming-exercises\/\d+$/, data: (url) => INTRO_JAVA_PROGRAMMING_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
+    { pattern: /^api\/modeling\/modeling-exercises\/\d+$/, data: (url) => INTRO_JAVA_MODELING_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
+    { pattern: /^api\/text\/text-exercises\/\d+$/, data: (url) => INTRO_JAVA_TEXT_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
+    { pattern: /^api\/fileupload\/file-upload-exercises\/\d+$/, data: (url) => INTRO_JAVA_FILE_UPLOAD_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
+    { pattern: /^api\/quiz\/quiz-exercises\/\d+$/, data: (url) => INTRO_JAVA_QUIZ_EXERCISES.find((e) => e.id === extractId(url)) ?? null },
+    // Programming exercise sub-resources needed by the detail view
+    {
+        pattern: /^api\/programming\/programming-exercises\/\d+\/with-template-and-solution-participation$/,
+        data: (url) => INTRO_JAVA_PROGRAMMING_EXERCISES.find((e) => e.id === extractId(url)) ?? null,
+    },
+    {
+        // submission-policy: return null body — component handles undefined gracefully
+        pattern: /^api\/programming\/programming-exercises\/\d+\/submission-policy$/,
+        data: () => null,
+    },
+    {
+        // consistency check: return empty array (no errors)
+        pattern: /^api\/exercise\/programming-exercises\/\d+\/consistency-check$/,
+        data: () => [],
+    },
+    {
+        // template/solution repository file contents — query param is part of req.url string
+        pattern: /^api\/programming\/programming-exercises\/\d+\/template-files-content/,
+        data: () => ({}),
+    },
+    {
+        pattern: /^api\/programming\/programming-exercises\/\d+\/solution-files-content/,
+        data: () => ({}),
+    },
+    {
+        // grading test cases — return empty array
+        pattern: /^api\/programming\/programming-exercises\/\d+\/test-cases/,
+        data: () => [],
+    },
+    {
+        // participation latest-pending-submission — participation id may be numeric or "undefined"
+        pattern: /^api\/programming\/programming-exercise-participations\/[^/]+\/latest-pending-submission/,
+        data: () => null,
+    },
+    // Exercise statistics used by all detail views (exerciseId is a query param, not in the path)
+    { pattern: /^api\/core\/management\/statistics\/exercise-statistics$/, data: () => mockStats() },
     // The exercise detail view requests competency contributions per exercise. Mock exercise ids may
     // collide with real, inaccessible exercises in the dev DB, which would return 403 and surface a
     // "not authorized" alert. Return an empty list so the detail view stays quiet.
@@ -68,7 +129,14 @@ export class MockCourseInterceptor implements HttpInterceptor {
     private readonly router = inject(Router);
 
     intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-        if (!isDevMode() || req.method !== 'GET' || !VERSIONED_VIEW.test(this.router.url)) {
+        if (!isDevMode() || req.method !== 'GET') {
+            return next.handle(req);
+        }
+        // During resolver execution, router.url still reflects the previous page; use the
+        // destination URL from the in-progress navigation so the interceptor activates on
+        // direct access to versioned detail routes (not just from the list view).
+        const activeUrl = this.router.getCurrentNavigation()?.extractedUrl?.toString() ?? this.router.url;
+        if (!VERSIONED_VIEW.test(activeUrl)) {
             return next.handle(req);
         }
 
@@ -102,7 +170,7 @@ export class MockCourseInterceptor implements HttpInterceptor {
 
         const match = EXERCISE_ROUTES.find(({ pattern }) => pattern.test(req.url));
         if (match) {
-            return mockResponse(match.data());
+            return mockResponse(match.data(req.url));
         }
 
         return next.handle(req);

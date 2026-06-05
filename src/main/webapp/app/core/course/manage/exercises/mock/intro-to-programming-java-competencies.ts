@@ -16,6 +16,25 @@ const COMP_ARRAYS: MockCompetency = { competencyId: 9002, title: 'Arrays & Colle
 const COMP_OOP: MockCompetency = { competencyId: 9003, title: 'Object-Oriented Design' };
 const COMP_RECURSION: MockCompetency = { competencyId: 9004, title: 'Recursion & Self-Reference' };
 const COMP_TEAM: MockCompetency = { competencyId: 9005, title: 'Collaborative Software Development' };
+const COMP_CONTROL_FLOW: MockCompetency = { competencyId: 9006, title: 'Control Flow & Conditionals' };
+const COMP_ALGORITHM: MockCompetency = { competencyId: 9007, title: 'Algorithm Design' };
+const COMP_DATA_STRUCT: MockCompetency = { competencyId: 9008, title: 'Data Structures' };
+const COMP_COMPLEXITY: MockCompetency = { competencyId: 9009, title: 'Complexity Analysis' };
+const COMP_SW_ARCH: MockCompetency = { competencyId: 9010, title: 'Software Architecture' };
+
+/** All mock competencies available in the course — used by the group edit UI. */
+export const ALL_MOCK_COMPETENCIES: readonly MockCompetency[] = [
+    COMP_LOOPS,
+    COMP_CONTROL_FLOW,
+    COMP_ALGORITHM,
+    COMP_ARRAYS,
+    COMP_DATA_STRUCT,
+    COMP_RECURSION,
+    COMP_COMPLEXITY,
+    COMP_OOP,
+    COMP_SW_ARCH,
+    COMP_TEAM,
+];
 
 function contribution(competency: MockCompetency, weight: number, mastery?: number): CompetencyContributionCardDTO {
     const card = new CompetencyContributionCardDTO();
@@ -32,26 +51,26 @@ function contribution(competency: MockCompetency, weight: number, mastery?: numb
  * and a few standalone exercises link to competencies as well.
  */
 const CONTRIBUTIONS_BY_EXERCISE_ID: Record<number, CompetencyContributionCardDTO[]> = {
-    // Each exercise group's variants all link to the group's competency.
+    // Each exercise group's variants link to the group's primary competency plus two supporting ones.
     // Loops group (Cars / Planes / Robots).
-    1001: [contribution(COMP_LOOPS, 1, 40)],
-    1002: [contribution(COMP_LOOPS, 1, 25)],
-    1003: [contribution(COMP_LOOPS, 1, 10)],
+    1001: [contribution(COMP_LOOPS, 1, 40), contribution(COMP_CONTROL_FLOW, 0.5, 55), contribution(COMP_ALGORITHM, 0.25, 30)],
+    1002: [contribution(COMP_LOOPS, 1, 25), contribution(COMP_CONTROL_FLOW, 0.5, 40), contribution(COMP_ALGORITHM, 0.25, 20)],
+    1003: [contribution(COMP_LOOPS, 1, 10), contribution(COMP_CONTROL_FLOW, 0.5, 20), contribution(COMP_ALGORITHM, 0.25, 10)],
     // Arrays and Lists group (Cars / Planes).
-    1011: [contribution(COMP_ARRAYS, 1, 35)],
-    1012: [contribution(COMP_ARRAYS, 1, 20)],
+    1011: [contribution(COMP_ARRAYS, 1, 35), contribution(COMP_DATA_STRUCT, 0.5, 25), contribution(COMP_ALGORITHM, 0.25, 20)],
+    1012: [contribution(COMP_ARRAYS, 1, 20), contribution(COMP_DATA_STRUCT, 0.5, 15), contribution(COMP_ALGORITHM, 0.25, 10)],
     // Recursion group (Planes / Robots).
-    1021: [contribution(COMP_RECURSION, 1, 15)],
-    1022: [contribution(COMP_RECURSION, 1, 5)],
+    1021: [contribution(COMP_RECURSION, 1, 15), contribution(COMP_ALGORITHM, 1, 20), contribution(COMP_COMPLEXITY, 0.5, 10)],
+    1022: [contribution(COMP_RECURSION, 1, 5), contribution(COMP_ALGORITHM, 1, 10), contribution(COMP_COMPLEXITY, 0.5, 5)],
     // Team Project group (Basic / Advanced).
-    1101: [contribution(COMP_TEAM, 1, 10), contribution(COMP_OOP, 0.5, 25)],
-    1102: [contribution(COMP_TEAM, 1, 5), contribution(COMP_OOP, 0.5, 20)],
+    1101: [contribution(COMP_TEAM, 1, 10), contribution(COMP_OOP, 0.5, 25), contribution(COMP_SW_ARCH, 0.5, 15)],
+    1102: [contribution(COMP_TEAM, 1, 5), contribution(COMP_OOP, 0.5, 20), contribution(COMP_SW_ARCH, 0.5, 10)],
     // Standalone exercises with linked competencies.
-    104: [contribution(COMP_LOOPS, 0.5, 60)], // Loops: for, while, do-while
-    105: [contribution(COMP_ARRAYS, 1, 30)], // Arrays and ArrayLists
-    108: [contribution(COMP_OOP, 1, 20), contribution(COMP_ARRAYS, 0.25)], // Classes and Objects
-    109: [contribution(COMP_OOP, 1, 15)], // Inheritance and Polymorphism
-    110: [contribution(COMP_OOP, 0.5)], // Interfaces and Abstract Classes (no mastery yet)
+    104: [contribution(COMP_LOOPS, 0.5, 60), contribution(COMP_CONTROL_FLOW, 0.5, 70), contribution(COMP_ALGORITHM, 0.25, 45)],
+    105: [contribution(COMP_ARRAYS, 1, 30), contribution(COMP_DATA_STRUCT, 0.5, 20), contribution(COMP_ALGORITHM, 0.25, 15)],
+    108: [contribution(COMP_OOP, 1, 20), contribution(COMP_SW_ARCH, 0.5, 10), contribution(COMP_ARRAYS, 0.25, 30)],
+    109: [contribution(COMP_OOP, 1, 15), contribution(COMP_SW_ARCH, 0.5, 10), contribution(COMP_COMPLEXITY, 0.25, 5)],
+    110: [contribution(COMP_OOP, 0.5), contribution(COMP_SW_ARCH, 0.5), contribution(COMP_COMPLEXITY, 0.25)],
 };
 
 export function getMockCompetencyContributions(exerciseId: number): CompetencyContributionCardDTO[] {

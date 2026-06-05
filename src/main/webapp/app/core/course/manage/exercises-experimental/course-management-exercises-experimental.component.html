@@ -195,7 +195,8 @@
                                     bucket.group.dueDate ||
                                     bucket.group.assessmentDueDate ||
                                     bucket.group.maxPoints !== undefined ||
-                                    bucket.group.handInLimit !== undefined
+                                    bucket.group.handInLimit !== undefined ||
+                                    bucket.group.competencyLinks?.length
                                 ) {
                                     <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
                                         @if (bucket.group.releaseDate) {
@@ -230,6 +231,14 @@
                                                     pTooltip="Students may solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
                                                     tooltipPosition="top"
                                                 />
+                                            </span>
+                                        }
+                                        @if (bucket.group.competencyLinks?.length) {
+                                            <span class="d-flex align-items-center gap-1 overflow-hidden">
+                                                <span class="fw-semibold flex-shrink-0">Competencies:</span>
+                                                <span class="text-truncate" style="max-width: 320px" [title]="getGroupCompetenciesDisplay(bucket.group)">
+                                                    {{ getGroupCompetenciesDisplay(bucket.group) }}
+                                                </span>
                                             </span>
                                         }
                                     </div>
@@ -315,6 +324,39 @@
                                             />
                                         </div>
                                     </div>
+
+                                    <div class="mt-3">
+                                        <div class="text-muted small fw-semibold mb-2">Competencies</div>
+                                        <div class="group-competency-selector p-2">
+                                            @for (comp of allMockCompetencies; track comp.competencyId) {
+                                                <div class="mb-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            [id]="'comp-' + bucket.group.id + '-' + comp.competencyId"
+                                                            [ngModel]="isGroupCompetencyLinked(bucket.group, comp.competencyId)"
+                                                            (ngModelChange)="onGroupCompetencyToggle(bucket.group, comp, $event)"
+                                                            class="me-2"
+                                                        />
+                                                        <label [for]="'comp-' + bucket.group.id + '-' + comp.competencyId" class="m-0 small" style="cursor: pointer">
+                                                            {{ comp.title }}
+                                                        </label>
+                                                    </div>
+                                                    @if (isGroupCompetencyLinked(bucket.group, comp.competencyId)) {
+                                                        <select
+                                                            [ngModel]="getGroupCompetencyWeight(bucket.group, comp.competencyId)"
+                                                            (ngModelChange)="updateGroupCompetencyWeight(bucket.group, comp.competencyId, +$event)"
+                                                            class="ms-4 form-select form-select-sm d-inline-block w-auto"
+                                                        >
+                                                            <option [ngValue]="0.25">Low (0.25)</option>
+                                                            <option [ngValue]="0.5">Medium (0.5)</option>
+                                                            <option [ngValue]="1">High (1.0)</option>
+                                                        </select>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -332,6 +374,7 @@
                                 [showCheckbox]="devSettings.massActionsEnabled() && !isGroup()"
                                 [selectedIds]="selectedIds()"
                                 [groups]="groups()"
+                                [overviewRouteMiddleSegments]="OVERVIEW_ROUTE_MIDDLE_SEGMENTS"
                                 (groupChange)="onTableGroupChange($event)"
                                 (groupCreate)="onTableGroupCreate($event)"
                                 (rowsReordered)="onTableRowsReordered(bucket, $event)"
@@ -357,6 +400,7 @@
                                                 [selected]="exercise.id !== undefined && isSelected(exercise.id)"
                                                 [owningGroup]="view() !== 'group' ? owningGroup(exercise) : undefined"
                                                 [groups]="view() !== 'group' ? groups() : []"
+                                                [overviewRouteMiddleSegments]="OVERVIEW_ROUTE_MIDDLE_SEGMENTS"
                                                 (selectedChange)="toggleSelection(exercise.id!)"
                                                 (groupChange)="changeExerciseGroup(exercise, $event)"
                                                 (groupCreate)="createGroupForExercise(exercise)"
@@ -374,6 +418,7 @@
                                                 [selected]="exercise.id !== undefined && isSelected(exercise.id)"
                                                 [owningGroup]="view() !== 'group' ? owningGroup(exercise) : undefined"
                                                 [groups]="view() !== 'group' ? groups() : []"
+                                                [overviewRouteMiddleSegments]="OVERVIEW_ROUTE_MIDDLE_SEGMENTS"
                                                 (selectedChange)="toggleSelection(exercise.id!)"
                                                 (groupChange)="changeExerciseGroup(exercise, $event)"
                                                 (groupCreate)="createGroupForExercise(exercise)"

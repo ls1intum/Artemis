@@ -6,7 +6,6 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
@@ -29,7 +28,8 @@ import {
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, GroupCompetencyLink, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { ALL_MOCK_COMPETENCIES } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { ExerciseRowCompactComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-row-compact.component';
 import { ExerciseRowColumnarComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-row-columnar.component';
@@ -91,7 +91,6 @@ const DIFFICULTY_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
         FormsModule,
         SelectButtonModule,
         SelectModule,
-        CheckboxModule,
         PanelModule,
         ButtonModule,
         InputTextModule,
@@ -114,6 +113,8 @@ const DIFFICULTY_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
     ],
 })
 export class CourseManagementExercisesExperimentalComponent implements OnInit {
+    protected readonly allMockCompetencies = ALL_MOCK_COMPETENCIES;
+
     protected readonly faGripVertical = faGripVertical;
     protected readonly faGear = faGear;
     protected readonly faPlus = faPlus;
@@ -124,6 +125,7 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
     protected readonly faCheck = faCheck;
     protected readonly faCode = faCode;
     protected readonly ExerciseType = ExerciseType;
+    protected readonly OVERVIEW_ROUTE_MIDDLE_SEGMENTS = ['exercises', 'experimental'];
 
     protected readonly ALL_EXERCISE_TYPES = ALL_EXERCISE_TYPES;
     protected readonly EXERCISE_TYPE_CREATE_ROUTES = EXERCISE_TYPE_CREATE_ROUTES;
@@ -158,7 +160,16 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
     readonly editingGroupIds = signal<Set<number>>(new Set());
     private readonly groupSnapshots = new Map<
         number,
-        { title?: string; releaseDate?: dayjs.Dayjs; startDate?: dayjs.Dayjs; dueDate?: dayjs.Dayjs; assessmentDueDate?: dayjs.Dayjs; maxPoints?: number; handInLimit?: number }
+        {
+            title?: string;
+            releaseDate?: dayjs.Dayjs;
+            startDate?: dayjs.Dayjs;
+            dueDate?: dayjs.Dayjs;
+            assessmentDueDate?: dayjs.Dayjs;
+            maxPoints?: number;
+            handInLimit?: number;
+            competencyLinks?: GroupCompetencyLink[];
+        }
     >();
     private readonly newlyCreatedGroupIds = new Set<number>();
     readonly addModalVisible = signal(false);
@@ -507,6 +518,7 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
                 assessmentDueDate: group.assessmentDueDate,
                 maxPoints: group.maxPoints,
                 handInLimit: group.handInLimit,
+                competencyLinks: (group.competencyLinks ?? []).map((l) => ({ ...l })),
             });
         }
         const next = new Set(this.editingGroupIds());
@@ -526,6 +538,7 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
                 group.assessmentDueDate = snapshot.assessmentDueDate;
                 group.maxPoints = snapshot.maxPoints;
                 group.handInLimit = snapshot.handInLimit;
+                group.competencyLinks = snapshot.competencyLinks?.map((l) => ({ ...l }));
             }
             this.groupSnapshots.delete(id);
         }
@@ -561,5 +574,32 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
 
     getCreateUrlSegment(type: ExerciseType): string {
         return getExerciseUrlSegment(type);
+    }
+
+    isGroupCompetencyLinked(group: CourseExerciseGroup, competencyId: number): boolean {
+        return group.competencyLinks?.some((l) => l.competencyId === competencyId) ?? false;
+    }
+
+    onGroupCompetencyToggle(group: CourseExerciseGroup, competency: { competencyId: number; title: string }, checked: boolean): void {
+        if (checked) {
+            group.competencyLinks = [...(group.competencyLinks ?? []), { competencyId: competency.competencyId, title: competency.title, weight: 0.5 }];
+        } else {
+            group.competencyLinks = (group.competencyLinks ?? []).filter((l) => l.competencyId !== competency.competencyId);
+        }
+    }
+
+    getGroupCompetencyWeight(group: CourseExerciseGroup, competencyId: number): number {
+        return group.competencyLinks?.find((l) => l.competencyId === competencyId)?.weight ?? 0.5;
+    }
+
+    updateGroupCompetencyWeight(group: CourseExerciseGroup, competencyId: number, weight: number): void {
+        const link = group.competencyLinks?.find((l) => l.competencyId === competencyId);
+        if (link) {
+            link.weight = weight;
+        }
+    }
+
+    getGroupCompetenciesDisplay(group: CourseExerciseGroup): string {
+        return (group.competencyLinks ?? []).map((l) => l.title).join(', ');
     }
 }

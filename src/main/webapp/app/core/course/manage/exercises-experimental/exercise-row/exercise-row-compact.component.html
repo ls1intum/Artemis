@@ -11,7 +11,7 @@
 
     <div class="d-flex flex-column flex-grow-1 min-width-0">
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <a class="fw-semibold" [routerLink]="['/course-management', courseId(), urlSegment(), exercise().id]">{{ exercise().title }}</a>
+            <a class="fw-semibold" [routerLink]="titleLink()">{{ exercise().title }}</a>
             @if (exercise().difficulty) {
                 <span class="badge {{ difficultyBadgeClass() }}">{{ exercise().difficulty }}</span>
             }
@@ -126,6 +126,9 @@
                     <fa-icon [icon]="faClipboardList" /><span class="ms-1">Examples</span>
                 </a>
             }
+            <button class="btn btn-warning btn-sm" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
+                <fa-icon [icon]="faRobot" /><span class="ms-1">Create Variant with AI</span>
+            </button>
             @if (exercise().type === ExerciseType.PROGRAMMING) {
                 <a
                     [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -192,6 +195,9 @@
                         <fa-icon [icon]="faClipboardList" /><span class="ms-2">Examples</span>
                     </a>
                 }
+                <button class="btn btn-sm btn-warning text-start" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
+                    <fa-icon [icon]="faRobot" /><span class="ms-2">Create Variant with AI</span>
+                </button>
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
                     <a
                         [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -263,6 +269,9 @@
                     <fa-icon [icon]="faClipboardList" />
                 </a>
             }
+            <button class="btn btn-warning btn-sm" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
+                <fa-icon [icon]="faRobot" />
+            </button>
             @if (exercise().type === ExerciseType.PROGRAMMING) {
                 <a
                     [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -296,4 +305,10 @@
             </button>
         </div>
     }
+    <jhi-exercise-variant-ai-modal-dispatcher
+        [visible]="aiVariantModalVisible()"
+        (visibleChange)="aiVariantModalVisible.set($event)"
+        [sourceExercise]="exercise()"
+        [courseId]="courseId()"
+    />
 </div>

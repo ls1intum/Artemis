@@ -35,4 +35,15 @@ export class ExerciseManagementDevSettingsModalComponent {
         { label: 'Text + Icon', value: 'text-and-icon' },
         { label: 'Ellipsis', value: 'ellipsis' },
     ];
+
+    protected readonly variantCreationModeOptions = [
+        { label: 'Modal', value: 'modal' },
+        { label: 'Chat', value: 'chat' },
+    ];
+
+    protected readonly variantModalStyleOptions = [
+        { label: 'Classic', value: 'classic' },
+        { label: 'Cards Inline', value: 'cards-inline' },
+        { label: 'Cards Wizard', value: 'cards-wizard' },
+    ];
 }

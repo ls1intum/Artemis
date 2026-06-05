@@ -12,10 +12,21 @@ import { UMLDiagramType } from '@tumaet/apollon';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 
 const cat = (name: string, color: string) => new ExerciseCategory(name, color);
-import { CourseExerciseGroup, ExerciseRelation, ExerciseRelationEndpointKind, ExerciseRelationType } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import {
+    CourseExerciseGroup,
+    ExerciseRelation,
+    ExerciseRelationEndpointKind,
+    ExerciseRelationType,
+    GroupCompetencyLink,
+} from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 
 // Semester: Summer 2026  (2026-04-13 – 2026-07-24)
 const WEEK = (offsetWeeks: number): dayjs.Dayjs => dayjs('2026-04-13').add(offsetWeeks, 'week');
+
+export const MOCK_COURSE_ID = 42;
+
+// Minimal course reference attached to every mock exercise so detail components can resolve courseId.
+const MOCK_COURSE_REF = { id: MOCK_COURSE_ID } as Course;
 
 // A generic markdown problem statement so the student exercise detail view has something to render.
 // Kept free of [task] / test-case syntax so it renders without participations or build results.
@@ -41,6 +52,7 @@ function mockProblemStatement(title: string): string {
 function base(id: number, title: string, shortName: string, week: number, durationDays = 7): Partial<Exercise> {
     return {
         id,
+        course: MOCK_COURSE_REF,
         title,
         shortName,
         releaseDate: WEEK(week),
@@ -50,6 +62,9 @@ function base(id: number, title: string, shortName: string, week: number, durati
         mode: ExerciseMode.INDIVIDUAL,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         problemStatement: mockProblemStatement(title),
+        isAtLeastTutor: true,
+        isAtLeastEditor: true,
+        isAtLeastInstructor: true,
     };
 }
 
@@ -306,6 +321,8 @@ const GROUP_ARRAYS_ID = 2;
 const GROUP_RECURSION_ID = 3;
 const GROUP_TEAM_PROJECT_ID = 4;
 
+const link = (competencyId: number, title: string, weight: number): GroupCompetencyLink => ({ competencyId, title, weight });
+
 export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
     {
         id: GROUP_LOOPS_ID,
@@ -317,6 +334,7 @@ export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
         assessmentDueDate: WEEK(3).add(13, 'day'),
         maxPoints: 10,
         handInLimit: 1,
+        competencyLinks: [link(9001, 'Loops & Iteration', 1), link(9006, 'Control Flow & Conditionals', 0.5), link(9007, 'Algorithm Design', 0.25)],
         exercises: [LOOPS_CARS, LOOPS_PLANES, LOOPS_ROBOTS],
     },
     {
@@ -328,6 +346,7 @@ export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
         dueDate: WEEK(4).add(10, 'day'),
         assessmentDueDate: WEEK(4).add(13, 'day'),
         maxPoints: 15,
+        competencyLinks: [link(9002, 'Arrays & Collections', 1), link(9008, 'Data Structures', 0.5), link(9007, 'Algorithm Design', 0.25)],
         exercises: [ARRAYS_CARS, ARRAYS_PLANES],
     },
     {
@@ -336,6 +355,7 @@ export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
         order: 2,
         // No group-level timeline set: members keep their individual dates.
         maxPoints: 15,
+        competencyLinks: [link(9004, 'Recursion & Self-Reference', 1), link(9007, 'Algorithm Design', 1), link(9009, 'Complexity Analysis', 0.5)],
         exercises: [RECURSION_PLANES, RECURSION_ROBOTS],
     },
     {
@@ -347,6 +367,7 @@ export const INTRO_JAVA_EXERCISE_GROUPS: CourseExerciseGroup[] = [
         dueDate: WEEK(8).add(14, 'day'),
         assessmentDueDate: WEEK(8).add(17, 'day'),
         maxPoints: 30,
+        competencyLinks: [link(9005, 'Collaborative Software Development', 1), link(9003, 'Object-Oriented Design', 0.5), link(9010, 'Software Architecture', 0.5)],
         exercises: [TEAM_PROJECT_BASIC, TEAM_PROJECT_ADVANCED],
     },
 ];
