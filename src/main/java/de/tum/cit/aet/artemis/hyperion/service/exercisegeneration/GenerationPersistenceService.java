@@ -255,10 +255,14 @@ public class GenerationPersistenceService {
         // 3. Trigger the canonical CI build for the tests; its result drives test-case synchronisation and task binding asynchronously, exactly as a manual edit to the tests repo
         // does.
         if (testsCommitHash != null) {
+            // Snapshot the test-case count BEFORE triggering. An earlier exercise-setup build may have already synced a PARTIAL/stale set (e.g. a lone configure case from a build
+            // that failed at configure time); the freshly triggered tests-build re-syncs the COMPLETE set. We must wait for that complete set, not the stale snapshot, before
+            // zero-weighting — otherwise a build gate that only appears in the full sync (e.g. CompileSort) stays graded and the template scores above 0%.
+            int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
             triggerTestsBuild(exercise, testsCommitHash);
             // 3b. Once the tests-build syncs the test cases (at the default weight 1.0), align production grading with the differential oracle: zero-weight the build-gate cases.
             // The C/C++ FACT CompileSort/TestConfigure pass on the compiling template, so without this a student submitting the untouched template would score above 0%.
-            zeroWeightBuildGateTestCases(exercise.getId());
+            zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
         }
 
         // 4. Record a new exercise version, snapshotting the committed repository state (the durable source of truth) and refreshing search indexing / notifying open editors.
@@ -382,6 +386,22 @@ public class GenerationPersistenceService {
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
+    // Effective bounds for the build-gate sync wait; defaults to the constants above. A test seam (setTestCaseSyncTimingForTests) shrinks them so unit tests need not sleep.
+    private Duration testCaseSyncTimeout = TEST_CASE_SYNC_TIMEOUT;
+
+    private Duration testCaseSyncPoll = TEST_CASE_SYNC_POLL;
+
+    /**
+     * Test seam: shrink the bounded test-case-sync wait so unit tests exercise the baseline-settle logic without sleeping for seconds.
+     *
+     * @param timeout the maximum time to wait for the complete test-case set
+     * @param poll    the interval between polls
+     */
+    void setTestCaseSyncTimingForTests(Duration timeout, Duration poll) {
+        this.testCaseSyncTimeout = timeout;
+        this.testCaseSyncPoll = poll;
+    }
+
     /**
      * The tests-build (just triggered) synchronises the test cases ASYNCHRONOUSLY at the default weight {@code 1.0}. For C/C++ FACT exercises the report includes build-gate cases
      * (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them ({@link BuildGateTestNames}) but production grades EVERY discovered
@@ -392,14 +412,20 @@ public class GenerationPersistenceService {
      * reconfigured. Runs on the generation executor (the persist is {@code @Async}), so the bounded wait blocks no request thread. A no-op for every language without build-gate
      * cases (Java/Python/…) and idempotent (re-running leaves the weights at 0).
      *
-     * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
+     * @param exerciseId               the generated exercise whose build-gate test cases should be excluded from grading
+     * @param testCaseCountBeforeBuild the test-case count observed before the tests-build was triggered (the stale/partial baseline to wait past)
      */
-    private void zeroWeightBuildGateTestCases(long exerciseId) {
+    private void zeroWeightBuildGateTestCases(long exerciseId, int testCaseCountBeforeBuild) {
         try {
-            long deadline = System.nanoTime() + TEST_CASE_SYNC_TIMEOUT.toNanos();
+            long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exerciseId);
-            while (testCases.isEmpty() && System.nanoTime() < deadline) {
-                Thread.sleep(TEST_CASE_SYNC_POLL.toMillis());
+            // Wait for the freshly triggered tests-build to re-sync the COMPLETE set: the count must move off the pre-build baseline (an exercise-setup build may have left a
+            // partial
+            // set) AND then settle (unchanged across one poll), so a build gate that appears only in the full sync is not missed. Best-effort: the bounded deadline caps the wait.
+            int previousCount = -1;
+            while (System.nanoTime() < deadline && (testCases.size() == testCaseCountBeforeBuild || testCases.size() != previousCount)) {
+                previousCount = testCases.size();
+                Thread.sleep(testCaseSyncPoll.toMillis());
                 testCases = testCaseRepository.findByExerciseId(exerciseId);
             }
             List<ProgrammingExerciseTestCase> buildGates = testCases.stream()

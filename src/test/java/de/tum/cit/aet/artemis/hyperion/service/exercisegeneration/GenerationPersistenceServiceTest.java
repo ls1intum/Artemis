@@ -14,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -85,12 +86,15 @@ class GenerationPersistenceServiceTest {
         creationUpdateService = mock(ProgrammingExerciseCreationUpdateService.class);
         exerciseVersionService = mock(ExerciseVersionService.class);
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
-        // Return a single non-build-gate case so the post-trigger build-gate adjustment sees the test cases synced immediately (no wait) and zero-weights nothing in these tests.
+        // The build-gate adjustment waits for the freshly triggered tests-build to re-sync the COMPLETE set: it captures a pre-build baseline and waits for the count to move off
+        // it
+        // and settle. Return empty first (baseline) then a single non-build-gate case, so the wait settles at once and zero-weights nothing in these generic tests.
         ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
-        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(behaviourCase));
+        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(), Set.of(behaviourCase));
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
                 creationUpdateService, exerciseVersionService, testCaseRepository);
+        service.setTestCaseSyncTimingForTests(Duration.ofSeconds(2), Duration.ofMillis(5));
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
@@ -168,7 +172,8 @@ class GenerationPersistenceServiceTest {
         ProgrammingExerciseTestCase behaviour = mock(ProgrammingExerciseTestCase.class);
         when(behaviour.getTestName()).thenReturn("sort-test.push_then_pop");
         when(behaviour.getWeight()).thenReturn(1.0);
-        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
+        // Empty baseline, then the full synced set: the wait must move off the baseline and settle before zero-weighting, mirroring the real stale-partial-then-complete sync.
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(buildGate, behaviour));
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "");
         service.persist(exercise, user, outcome);
