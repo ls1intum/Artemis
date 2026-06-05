@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -161,7 +161,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: studentsNotFound, rejectedStaffStudents: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = studentsToImport;
@@ -298,7 +300,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: notImportedStudents } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: notImportedStudents, rejectedStaffStudents: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.usersToImport = importedStudents.concat(notImportedStudents);
@@ -318,7 +322,9 @@ describe('UsersImportDialogComponent', () => {
         ];
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
-        const fakeResponse = { body: studentsNotFound } as HttpResponse<ExamUserDTO[]>;
+        const fakeResponse = {
+            body: { notFoundStudents: studentsNotFound, rejectedStaffStudents: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
         component.open();

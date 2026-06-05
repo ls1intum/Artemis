@@ -212,6 +212,7 @@
             "error": {
                 "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
                 "cannotRegisterEditor": "You cannot register editors or tutors to exams.",
+                "cannotRegisterStaffBulk": "{{ number }} user(s) were not registered because they are administrators, instructors, editors, or tutors of the course.",
                 "cannotShowExampleSolution": "Example solution could not be found",
                 "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
