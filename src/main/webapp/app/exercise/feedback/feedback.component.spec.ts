@@ -1,7 +1,7 @@
-import { expect, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -27,9 +27,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 describe('FeedbackComponent', () => {
     setupTestBed({ zoneless: true });
+
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
 
@@ -180,7 +182,6 @@ describe('FeedbackComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -300,7 +301,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledExactlyOnceWith(55, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
         expect(comp.isLoading).toBe(false);
     });
 
@@ -309,7 +311,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.buildLogs).toHaveLength(0);
         expect(comp.isLoading).toBe(false);
     });
@@ -343,7 +346,8 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBe(false);
         expect(comp.isLoading).toBe(false);
     });
@@ -354,7 +358,8 @@ describe('FeedbackComponent', () => {
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
         expect(comp.loadingFailed).toBe(true);
         expect(comp.isLoading).toBe(false);
     });
@@ -399,8 +404,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should expand feedback when being printed', () => {
-        // @ts-ignore method is private
-        const expandFeedbackItemGroupsSpy = vi.spyOn(comp, 'expandFeedbackItemGroups');
+        const expandFeedbackItemGroupsSpy = vi.spyOn(comp as any, 'expandFeedbackItemGroups');
 
         const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
         const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
@@ -432,5 +436,56 @@ describe('FeedbackComponent', () => {
          * references were removed during saving old state => cannot use {@link feedbackGroup} for comparison anymore
          */
         expect((comp.feedbackItemNodes[0] as unknown as FeedbackGroup).open).toBe(false);
+    });
+
+    describe('when opened via DialogService (DynamicDialogConfig.data)', () => {
+        it('copies the dialog data into the component inputs before initializing feedback', () => {
+            // The standalone-feedback page binds inputs via the template; PrimeNG dialogs deliver them through DynamicDialogConfig.data.
+            // This verifies the dialog-data path (skipped by the other tests, which inject no DynamicDialogConfig).
+            TestBed.resetTestingModule();
+
+            const dialogExercise = { id: 7, type: ExerciseType.PROGRAMMING, maxPoints: 100, bonusPoints: 0, course: exercise.course } as ProgrammingExercise;
+            const dialogParticipation = { id: 99, type: ParticipationType.PROGRAMMING } as ProgrammingExerciseStudentParticipation;
+            const dialogResult = { id: 123, submission: { participation: dialogParticipation } } as Result;
+
+            TestBed.configureTestingModule({
+                providers: [
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                    {
+                        provide: DynamicDialogConfig,
+                        useValue: {
+                            data: {
+                                exercise: dialogExercise,
+                                result: dialogResult,
+                                participation: dialogParticipation,
+                                exerciseType: ExerciseType.PROGRAMMING,
+                                showScoreChart: true,
+                                taskName: 'Task 1',
+                                numberOfNotExecutedTests: 4,
+                            },
+                        },
+                    },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                ],
+            });
+
+            const dialogFixture = TestBed.createComponent(FeedbackComponent);
+            const dialogComp = dialogFixture.componentInstance;
+            vi.spyOn(TestBed.inject(BuildLogService), 'getBuildLogs').mockReturnValue(of([]));
+            vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+            dialogComp.ngOnInit();
+
+            expect(dialogComp.exercise).toBe(dialogExercise);
+            expect(dialogComp.result).toBe(dialogResult);
+            expect(dialogComp.participation).toBe(dialogParticipation);
+            expect(dialogComp.exerciseType).toBe(ExerciseType.PROGRAMMING);
+            expect(dialogComp.showScoreChart).toBe(true);
+            expect(dialogComp.taskName).toBe('Task 1');
+            expect(dialogComp.numberOfNotExecutedTests).toBe(4);
+        });
     });
 });

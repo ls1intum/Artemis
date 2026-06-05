@@ -1,8 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
@@ -17,6 +17,7 @@ import { LegacyBuildPlanConverterService } from 'app/programming/shared/services
 
 describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
     let comp: ProgrammingExerciseCustomBuildPlanComponent;
     let programmingExercise: ProgrammingExercise;
@@ -88,8 +89,8 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
-        comp.programmingExercise = programmingExercise;
-        comp.programmingExerciseCreationConfig = creationConfig;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', creationConfig);
     });
 
     afterEach(() => {
@@ -143,14 +144,14 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
             false,
-            programmingExercise.programmingLanguage,
-            programmingExercise.projectType,
-            programmingExercise.staticCodeAnalysisEnabled,
-            programmingExercise.buildConfig?.sequentialTestRuns,
+            programmingExercise().programmingLanguage,
+            programmingExercise().projectType,
+            programmingExercise().staticCodeAnalysisEnabled,
+            programmingExercise().buildConfig?.sequentialTestRuns,
         );
         expect(buildPlanSignal()).toEqual(templatePhases);
-        expect(comp.programmingExerciseCreationConfig.buildPlanLoaded).toBe(true);
-        expect(comp.programmingExercise.buildConfig?.timeoutSeconds).toBe(0);
+        expect(comp.programmingExerciseCreationConfig().buildPlanLoaded).toBe(true);
+        expect(comp.programmingExercise().buildConfig?.timeoutSeconds).toBe(0);
     });
 
     it('should reset custom build plan when template loading fails', () => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, inject, output, viewChild } from '@angular/core';
 import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -37,9 +37,9 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     private activeModal = inject(NgbActiveModal);
 
-    @Output() filterApplied = new EventEmitter<ExerciseFilterResults>();
+    readonly filterApplied = output<ExerciseFilterResults>();
 
-    @ViewChild('categoriesFilterSelection', { static: false }) instance: NgbTypeahead;
+    readonly instance = viewChild<NgbTypeahead>('categoriesFilterSelection');
 
     selectedCategoryOptions: ExerciseCategoryFilterOption[] = [];
     selectableCategoryOptions: ExerciseCategoryFilterOption[] = [];
@@ -87,7 +87,7 @@ export class ExerciseFilterModalComponent implements OnInit {
 
     search: OperatorFunction<string, readonly ExerciseCategoryFilterOption[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance.isPopupOpen()));
+        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.instance()?.isPopupOpen()));
         const inputFocus$ = this.focus$;
 
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(

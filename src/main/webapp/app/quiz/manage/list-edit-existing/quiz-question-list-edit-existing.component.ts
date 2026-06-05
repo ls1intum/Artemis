@@ -4,7 +4,7 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/confirm-import-invalid-questions-modal/quiz-confirm-import-invalid-questions-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -36,7 +36,7 @@ export enum State {
     imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe],
 })
 export class QuizQuestionListEditExistingComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
@@ -277,19 +277,32 @@ export class QuizQuestionListEditExistingComponent {
         const validQuizQuestions = quizQuestions.filter((quizQuestion) => !invalidQuizQuestionMap[quizQuestion.id!]);
         const invalidQuizQuestions = quizQuestions.filter((quizQuestion) => invalidQuizQuestionMap[quizQuestion.id!]);
         if (invalidQuizQuestions.length > 0) {
-            const modal = this.modalService.open(QuizConfirmImportInvalidQuestionsModalComponent, {
-                keyboard: true,
-                size: 'lg',
+            const ref = this.dialogService.open(QuizConfirmImportInvalidQuestionsModalComponent, {
+                width: '50rem',
+                breakpoints: {
+                    '850px': '95vw',
+                },
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+                draggable: false,
+                resizable: false,
+                showHeader: false,
+                data: {
+                    invalidFlaggedQuestions: invalidQuizQuestions.map((question, index) => {
+                        return {
+                            translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
+                            translateValues: { index: index + 1 },
+                        };
+                    }),
+                },
             });
-            modal.componentInstance.invalidFlaggedQuestions = invalidQuizQuestions.map((question, index) => {
-                return {
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
-                    translateValues: { index: index + 1 },
-                };
-            });
-            modal.componentInstance.shouldImport.subscribe(async () => {
-                const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
-                return this.handleConversionOfExistingQuestions(newQuizQuestions, images);
+            ref?.onClose.subscribe(async (confirmed: boolean | undefined) => {
+                if (confirmed) {
+                    const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
+                    return this.handleConversionOfExistingQuestions(newQuizQuestions, images);
+                }
             });
         } else {
             return this.handleConversionOfExistingQuestions(validQuizQuestions, images);

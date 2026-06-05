@@ -1,8 +1,8 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -41,7 +41,7 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
@@ -78,10 +78,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -138,9 +139,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     hasPendingChanges = false;
 
     // listener, will get notified upon loading of feedback
-    @Output() onFeedbackLoaded = new EventEmitter();
+    readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
+    readonly overrideNextSubmission = input<(submissionId: number) => any>();
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -154,10 +155,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     constructor() {
-        const translateService = inject(TranslateService);
-
-        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-        translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
+        this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
 
     /**
@@ -339,13 +338,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile The file that has been selected in the editor.
      */
     highlightChangedLines(selectedFile: string) {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        const codeEditorContainer = this.codeEditorContainer();
+        if (selectedFile && codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
+                const lastLine = codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], codeEditorContainer.getText());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
@@ -375,7 +375,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private highlightLines(firstLine: number, lastLine: number) {
         // We add 1 to make the lines 1-based.
-        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
+        this.codeEditorContainer()!.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**
@@ -392,8 +392,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
         if (this.feedbackSuggestions.length > 0) {
-            const modalRef = this.modalService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, { size: 'lg', backdrop: 'static', animation: true });
-            const suggestionsDiscardConfirmed: boolean = await firstValueFrom(modalRef.closed);
+            const dialogRef = this.dialogService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, {
+                showHeader: false,
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+            });
+            const suggestionsDiscardConfirmed: boolean | undefined = await firstValueFrom(dialogRef?.onClose ?? of(undefined));
             if (!suggestionsDiscardConfirmed) {
                 return false;
             }
@@ -457,8 +464,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 }
 
                 // if override set, skip navigation
-                if (this.overrideNextSubmission) {
-                    this.overrideNextSubmission(response.id!);
+                const overrideNextSubmission = this.overrideNextSubmission();
+                if (overrideNextSubmission) {
+                    overrideNextSubmission(response.id!);
                     return;
                 }
 

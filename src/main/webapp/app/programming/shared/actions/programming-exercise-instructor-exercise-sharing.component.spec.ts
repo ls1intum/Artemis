@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,12 +21,15 @@ import { Component, signal } from '@angular/core';
 class TestHostComponent {
     testValue = signal<number | undefined>(5);
 }
+
 describe('ProgrammingExercise Instructor Exercise Sharing', () => {
+    setupTestBed({ zoneless: true });
+
     let hostFixture: ComponentFixture<TestHostComponent>;
 
     let comp: ProgrammingExerciseInstructorExerciseSharingComponent;
     let httpMock: HttpTestingController;
-    let consoleError: any;
+    let consoleError: typeof console.error;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             providers: [
@@ -48,23 +53,24 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
         consoleError = console.error;
         // Mock console.error to prevent error messages "navigation not implemented" in tests
         // This is necessary because the component uses window.location.href, which is not implemented in the test environment
-        jest.spyOn(console, 'error').mockImplementation();
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
         Object.defineProperty(window, 'name', {
             configurable: true,
             enumerable: true,
+            writable: true,
             value: undefined,
         });
     });
 
     describe('Action method', () => {
-        it('export to sharing initiation (success)', fakeAsync(() => {
+        it('export to sharing initiation (success)', async () => {
             comp.exportExerciseToSharing();
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush('returnURL');
-            tick();
-        }));
+            await hostFixture.whenStable();
+        });
 
-        it('export to sharing initiation (success with defined sharing tab)', fakeAsync(() => {
+        it('export to sharing initiation (success with defined sharing tab)', async () => {
             comp.sharingTab = {
                 location: { href: '' },
                 focus: () => {},
@@ -73,24 +79,25 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
             const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             expect(req.request.body).toBe(window.location.href);
             req.flush('returnURL');
-            tick();
-        }));
+            await hostFixture.whenStable();
+        });
 
-        it('export to sharing initiation (fail Exercise not found)', fakeAsync(() => {
+        it('export to sharing initiation (fail Exercise not found)', async () => {
             const alertService: AlertService = TestBed.inject(AlertService);
-            const errorSpy = jest.spyOn(alertService, 'error');
+            const errorSpy = vi.spyOn(alertService, 'error');
 
             comp.exportExerciseToSharing();
             const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             req.flush('Exercise not found', { status: 404, statusText: 'Not Found' });
 
-            tick();
+            await hostFixture.whenStable();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Exercise not found' });
-        }));
+        });
     });
 
     afterEach(() => {
         httpMock.verify();
         console.error = consoleError;
+        vi.restoreAllMocks();
     });
 });

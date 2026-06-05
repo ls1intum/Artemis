@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, input, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,11 +21,11 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
     readonly TEAM = ExerciseMode.TEAM;
 
-    @Input() exercise: Exercise;
-    @Input() isImport: boolean;
+    readonly exercise = input.required<Exercise>();
+    readonly isImport = input(false);
 
-    @ViewChild('minTeamSize') minTeamSizeField?: NgModel;
-    @ViewChild('maxTeamSize') maxTeamsizeField?: NgModel;
+    readonly minTeamSizeField = viewChild<NgModel>('minTeamSize');
+    readonly maxTeamsizeField = viewChild<NgModel>('maxTeamSize');
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -50,16 +50,18 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit() {
-        this.config = this.exercise.teamAssignmentConfig || new TeamAssignmentConfig();
+        this.config = this.exercise().teamAssignmentConfig || new TeamAssignmentConfig();
         this.calculateFormValid();
     }
 
     ngAfterViewChecked() {
-        if (!(this.minTeamSizeField?.valueChanges as EventEmitter<number>)?.observed) {
-            this.inputFieldSubscriptions.push(this.minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        const minTeamSizeField = this.minTeamSizeField();
+        const maxTeamsizeField = this.maxTeamsizeField();
+        if (!(minTeamSizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
+            this.inputFieldSubscriptions.push(minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
-        if (!(this.maxTeamsizeField?.valueChanges as EventEmitter<number>)?.observed) {
-            this.inputFieldSubscriptions.push(this.maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        if (!(maxTeamsizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
+            this.inputFieldSubscriptions.push(maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
     }
 
@@ -70,14 +72,14 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     }
 
     calculateFormValid() {
-        this.formValid = Boolean(!this.exercise.mode || this.exercise.mode === ExerciseMode.INDIVIDUAL || (this.maxTeamsizeField?.valid && this.minTeamSizeField?.valid));
+        this.formValid = Boolean(!this.exercise().mode || this.exercise().mode === ExerciseMode.INDIVIDUAL || (this.maxTeamsizeField()?.valid && this.minTeamSizeField()?.valid));
         this.formValidChanges.next(this.formValid);
     }
 
     get changeExerciseModeDisabled(): boolean {
         // Should be disabled if exercise is present (-> edit menu), but not if menu is shown during import
         // (old exercise id is present). Should also not be present for exam exercises.
-        return (!this.isImport && Boolean(this.exercise.id)) || !!this.exercise.exerciseGroup;
+        return (!this.isImport() && Boolean(this.exercise().id)) || !!this.exercise().exerciseGroup;
     }
 
     /**
@@ -85,11 +87,12 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
      * @param {ExerciseMode} mode - Exercise mode
      */
     onExerciseModeChange(mode: ExerciseMode) {
-        this.exercise.mode = mode;
+        const exercise = this.exercise();
+        exercise.mode = mode;
         if (mode === ExerciseMode.TEAM) {
             this.applyCurrentConfig();
         } else {
-            this.exercise.teamAssignmentConfig = undefined;
+            exercise.teamAssignmentConfig = undefined;
         }
         this.calculateFormValid();
     }
@@ -113,6 +116,6 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     }
 
     private applyCurrentConfig() {
-        this.exercise.teamAssignmentConfig = cloneDeep(this.config);
+        this.exercise().teamAssignmentConfig = cloneDeep(this.config);
     }
 }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -11,6 +11,7 @@ describe('DifficultyBadge', () => {
     setupTestBed({ zoneless: true });
 
     let component: DifficultyBadgeComponent;
+    let fixture: ComponentFixture<DifficultyBadgeComponent>;
     let exercise: ProgrammingExercise;
 
     beforeEach(async () => {
@@ -20,15 +21,15 @@ describe('DifficultyBadge', () => {
         }).compileComponents();
 
         exercise = new ProgrammingExercise(undefined, undefined);
-        const fixture = TestBed.createComponent(DifficultyBadgeComponent);
+        fixture = TestBed.createComponent(DifficultyBadgeComponent);
         component = fixture.componentInstance;
 
-        component.exercise = exercise;
-        component.showNoLevel = false;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('showNoLevel', false);
     });
 
     it('should show an info badge if no difficulty level should be shown', () => {
-        component.showNoLevel = true;
+        fixture.componentRef.setInput('showNoLevel', true);
         component.ngOnChanges();
         component.ngOnInit();
 
@@ -36,7 +37,7 @@ describe('DifficultyBadge', () => {
     });
 
     it('should show no badge if the exercise has no difficulty level', () => {
-        component.showNoLevel = false;
+        fixture.componentRef.setInput('showNoLevel', false);
         component.ngOnChanges();
         component.ngOnInit();
 

@@ -1,4 +1,4 @@
-@if (exercise) {
+@if (exercise(); as exercise) {
     <div class="course-info-bar course-info-bar--participation" id="participation-header">
         <div class="row">
             <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
@@ -61,9 +61,9 @@
                 </table>
             </div>
             <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-3 mt-4 mt-md-0 d-flex flex-column justify-content-center align-items-end">
-                @if (participation && resultsPublished) {
+                @if (participation() && resultsPublished) {
                     <div class="row">
-                        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation" />
+                        <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation()" />
                     </div>
                 }
                 <div class="mt-2 d-md-flex gap-1 justify-content-end align-items-center">

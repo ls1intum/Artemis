@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -16,15 +16,15 @@ import { LegacyBuildPlanConverterService } from 'app/programming/shared/services
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
+export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     readonly isExamMode = input(false);
 
-    @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
+    readonly programmingExerciseDockerImageComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;
@@ -35,8 +35,38 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     readonly phases = computed(() => this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
     readonly dockerImage = computed(() => this.buildPhasesTemplateService.buildPlan()?.dockerImage ?? '');
 
+    // Snapshot of the previously seen input references, used to reproduce the reference-change semantics
+    // of the former ngOnChanges (which only fired when one of the two inputs changed by reference).
+    private previousInputs: { programmingExercise?: ProgrammingExercise; programmingExerciseCreationConfig?: ProgrammingExerciseCreationConfig } = {};
+
+    constructor() {
+        // Replaces the former ngOnChanges: react when either input reference changes and, if a reload is
+        // warranted, load the matching build-phases template. isImportFromFile is only derived from the
+        // creation config when that input itself changed (matching the old changes.programmingExerciseCreationConfig
+        // ?.currentValue?.isImportFromFile ?? false logic; a programmingExercise-only change yields false).
+        effect(() => {
+            const currentProgrammingExercise = this.programmingExercise();
+            const currentCreationConfig = this.programmingExerciseCreationConfig();
+
+            const programmingExerciseChanged = currentProgrammingExercise !== this.previousInputs.programmingExercise;
+            const creationConfigChanged = currentCreationConfig !== this.previousInputs.programmingExerciseCreationConfig;
+            this.previousInputs = { programmingExercise: currentProgrammingExercise, programmingExerciseCreationConfig: currentCreationConfig };
+
+            if (!programmingExerciseChanged && !creationConfigChanged) {
+                return;
+            }
+
+            untracked(() => {
+                if (this.shouldReloadTemplate()) {
+                    const isImportFromFile = creationConfigChanged ? (currentCreationConfig?.isImportFromFile ?? false) : false;
+                    this.loadBuildPhasesTemplate(isImportFromFile);
+                }
+            });
+        });
+    }
+
     ngOnInit() {
-        const buildConfig = this.programmingExercise.buildConfig;
+        const buildConfig = this.programmingExercise().buildConfig;
         const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
             const parsed = parseBuildPlanPhases(configJson);
@@ -47,7 +77,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         }
 
         const legacyBuildScript = buildConfig?.buildScript;
-        if (!legacyBuildScript?.trim() || !this.programmingExercise.programmingLanguage) {
+        if (!legacyBuildScript?.trim() || !this.programmingExercise().programmingLanguage) {
             this.resetCustomBuildPlan();
             this.buildPhasesTemplateService.resetToDefault();
             return;
@@ -64,22 +94,14 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         this.buildPhasesTemplateService.resetToDefault();
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
-            if (this.shouldReloadTemplate()) {
-                const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
-                this.loadBuildPhasesTemplate(isImportFromFile);
-            }
-        }
-    }
-
     shouldReloadTemplate(): boolean {
+        const programmingExercise = this.programmingExercise();
         return (
-            !this.programmingExercise.id &&
-            (this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
-                this.programmingExercise.projectType !== this.projectType ||
-                this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-                this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
+            !programmingExercise.id &&
+            (programmingExercise.programmingLanguage !== this.programmingLanguage ||
+                programmingExercise.projectType !== this.projectType ||
+                programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
+                programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
         );
     }
 
@@ -88,8 +110,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-        this.programmingExercise.buildConfig!.buildScript = undefined;
+        this.programmingExercise().buildConfig!.buildPlanConfiguration = undefined;
+        this.programmingExercise().buildConfig!.buildScript = undefined;
     }
 
     /**
@@ -99,29 +121,30 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @private
      */
     loadBuildPhasesTemplate(isImportFromFile: boolean = false) {
-        if (!this.programmingExercise.programmingLanguage) {
+        const programmingExercise = this.programmingExercise();
+        if (!programmingExercise.programmingLanguage) {
             return;
         }
-        this.programmingLanguage = this.programmingExercise.programmingLanguage;
-        this.projectType = this.programmingExercise.projectType;
-        this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
-        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.programmingLanguage = programmingExercise.programmingLanguage;
+        this.projectType = programmingExercise.projectType;
+        this.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
+        this.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+        if (!isImportFromFile || !programmingExercise.buildConfig?.buildPlanConfiguration) {
             this.buildPhasesTemplateService.fetchTemplate(
-                this.programmingExerciseCreationConfig.isExamMode,
+                this.programmingExerciseCreationConfig().isExamMode,
                 this.programmingLanguage,
                 this.projectType,
                 this.staticCodeAnalysisEnabled,
                 this.sequentialTestRuns,
             );
         }
-        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+        this.programmingExerciseCreationConfig().buildPlanLoaded = true;
+        if (!programmingExercise.buildConfig?.buildPlanConfiguration) {
             this.resetCustomBuildPlan();
         }
-        if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
-            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        if (!programmingExercise.buildConfig?.timeoutSeconds) {
+            programmingExercise.buildConfig!.timeoutSeconds = 0;
         }
     }
 
@@ -165,6 +188,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     }
 
     setTimeout(timeout: number) {
-        this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
+        this.programmingExercise().buildConfig!.timeoutSeconds = timeout;
     }
 }
