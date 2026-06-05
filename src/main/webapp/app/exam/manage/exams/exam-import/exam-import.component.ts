@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -15,6 +15,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -25,13 +26,22 @@ export interface ExamImportDialogData {
 @Component({
     selector: 'jhi-exam-import',
     templateUrl: './exam-import.component.html',
-    imports: [FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExamExerciseImportComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        NgbHighlight,
+        ButtonComponent,
+        NgbPagination,
+        ExamExerciseImportComponent,
+        ExamModeBadgeComponent,
+    ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
-    protected readonly isTestExam = isTestExam;
-    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     subsequentExerciseGroupSelection = signal<boolean>(false);

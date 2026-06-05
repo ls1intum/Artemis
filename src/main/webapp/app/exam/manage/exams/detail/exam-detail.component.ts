@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -26,6 +26,7 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -39,6 +40,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
+        ExamModeBadgeComponent,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
@@ -53,7 +55,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
     protected readonly isTestExam = isTestExam;
-    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     exam: Exam;
     formattedStartText?: SafeHtml;

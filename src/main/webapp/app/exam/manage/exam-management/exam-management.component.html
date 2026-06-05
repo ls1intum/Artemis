@@ -60,12 +60,7 @@
                                                 {{ exam.title }}
                                             </span>
                                         }
-                                        <div
-                                            class="badge"
-                                            [class.bg-success]="!isTestExam(exam)"
-                                            [class.bg-primary]="isTestExam(exam)"
-                                            [jhiTranslate]="examModeBadgeTranslationKey(exam)"
-                                        ></div>
+                                        <jhi-exam-mode-badge [examType]="exam.examType" />
                                     </ng-container>
                                 </td>
                                 <td class="d-md-table-cell">

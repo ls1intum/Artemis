@@ -55,12 +55,7 @@
                                 <ngb-highlight [result]="exam.course!.title" [term]="searchTerm" />
                             </td>
                             <td class="text-break col-2">
-                                <span
-                                    class="badge"
-                                    [class.bg-success]="!isTestExam(exam)"
-                                    [class.bg-primary]="isTestExam(exam)"
-                                    [jhiTranslate]="examModeBadgeTranslationKey(exam)"
-                                ></span>
+                                <jhi-exam-mode-badge [examType]="exam.examType" />
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection()) {

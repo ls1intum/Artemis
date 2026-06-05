@@ -3,7 +3,7 @@
         @if (exam) {
             <div>
                 <h2 id="exam-detail-title">
-                    <span class="badge" [class.bg-success]="!isTestExam(exam)" [class.bg-primary]="isTestExam(exam)" [jhiTranslate]="examModeBadgeTranslationKey(exam)"></span>
+                    <jhi-exam-mode-badge [examType]="exam.examType" size="large" />
                     {{ exam.title }}
                 </h2>
                 <hr />

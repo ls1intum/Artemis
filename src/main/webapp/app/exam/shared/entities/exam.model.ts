@@ -16,19 +16,6 @@ export function isTestExam(exam?: { examType?: ExamType }): boolean {
     return exam?.examType !== undefined && exam.examType !== ExamType.REAL;
 }
 
-export function examModeBadgeTranslationKey(exam?: { examType?: ExamType }): string {
-    switch (exam?.examType) {
-        case ExamType.SIMULATION:
-            return 'artemisApp.examManagement.testExam.testExamSimulation';
-        case ExamType.PRACTICE:
-            return 'artemisApp.examManagement.testExam.testExamPractice';
-        case ExamType.SIMULATION_AND_PRACTICE:
-            return 'artemisApp.examManagement.testExam.testExamSimulationAndPractice';
-        default:
-            return 'artemisApp.examManagement.testExam.realExam';
-    }
-}
-
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;

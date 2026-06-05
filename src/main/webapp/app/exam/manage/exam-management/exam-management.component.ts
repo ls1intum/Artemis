@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -26,6 +26,7 @@ import { ExamStatusComponent } from '../exam-status/exam-status.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -42,6 +43,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
+        ExamModeBadgeComponent,
     ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
@@ -57,7 +59,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'Exams';
     protected readonly isTestExam = isTestExam;
-    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     course: Course;
     exams: Exam[];

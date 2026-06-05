@@ -1,6 +1,6 @@
 import { Component, effect, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/overview/exam.utils';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
@@ -9,12 +9,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-general-information',
     styleUrls: ['./exam-general-information.component.scss'],
     templateUrl: './exam-general-information.component.html',
-    imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
+    imports: [
+        TranslateDirective,
+        StudentExamWorkingTimeComponent,
+        TestExamWorkingTimeComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisDurationFromSecondsPipe,
+        ExamModeBadgeComponent,
+    ],
 })
 export class ExamGeneralInformationComponent {
     readonly exam = input<Exam>(undefined!);
@@ -33,7 +42,6 @@ export class ExamGeneralInformationComponent {
     isExamOverMultipleDays: boolean;
     isTestExam?: boolean;
     currentDate?: dayjs.Dayjs;
-    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     constructor() {
         effect(() => {
