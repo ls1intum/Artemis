@@ -5,7 +5,7 @@ import { MathExerciseService } from '../service/math-exercise.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -25,7 +25,7 @@ import { TooltipModule } from 'primeng/tooltip';
     imports: [
         FormsModule,
         TranslateDirective,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         IncludedInOverallScorePickerComponent,
         MarkdownEditorMonacoComponent,

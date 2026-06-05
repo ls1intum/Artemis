@@ -15,7 +15,11 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                    <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
+                    <jhi-category-selector-primeng
+                        [categories]="exerciseCategories()"
+                        [existingCategories]="existingCategories()"
+                        (selectedCategories)="updateCategories($event)"
+                    />
                 </div>
             </p-card>
 

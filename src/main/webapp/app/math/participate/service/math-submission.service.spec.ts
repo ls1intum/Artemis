@@ -6,6 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
 import { MathSubmission } from 'app/math/shared/entities/math-submission.model';
+import { firstValueFrom } from 'rxjs';
 
 describe('MathSubmissionService', () => {
     setupTestBed({ zoneless: true });
@@ -40,7 +41,7 @@ describe('MathSubmissionService', () => {
         const sub = new MathSubmission();
         sub.id = 9;
 
-        const promise = service.getDataForMathEditor(7).toPromise();
+        const promise = firstValueFrom(service.getDataForMathEditor(7));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/math/participations/7/math-editor' });
         req.flush(sub);
         const res = await promise;
@@ -50,7 +51,7 @@ describe('MathSubmissionService', () => {
 
     it('creates a submission for an exercise', async () => {
         const sub = new MathSubmission();
-        const promise = service.create(sub, 3).toPromise();
+        const promise = firstValueFrom(service.create(sub, 3));
         const req = httpMock.expectOne({ method: 'POST', url: 'api/math/exercises/3/math-submissions' });
         req.flush({ ...sub, id: 42 });
         const res = await promise;
@@ -61,7 +62,7 @@ describe('MathSubmissionService', () => {
     it('updates a submission for an exercise', async () => {
         const sub = new MathSubmission();
         sub.id = 1;
-        const promise = service.update(sub, 3).toPromise();
+        const promise = firstValueFrom(service.update(sub, 3));
         const req = httpMock.expectOne({ method: 'PUT', url: 'api/math/exercises/3/math-submissions' });
         req.flush(sub);
         const res = await promise;
@@ -70,7 +71,7 @@ describe('MathSubmissionService', () => {
     });
 
     it('fetches a single submission by id', async () => {
-        const promise = service.getMathSubmission(11).toPromise();
+        const promise = firstValueFrom(service.getMathSubmission(11));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/math/math-submissions/11' });
         const sub = new MathSubmission();
         sub.id = 11;
@@ -81,7 +82,7 @@ describe('MathSubmissionService', () => {
     });
 
     it('lists submitted submissions for an exercise', async () => {
-        const promise = service.getSubmittedSubmissions(3).toPromise();
+        const promise = firstValueFrom(service.getSubmittedSubmissions(3));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/math/exercises/3/math-submissions' });
         req.flush([new MathSubmission(), new MathSubmission()]);
         const res = await promise;

@@ -7,6 +7,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MathExerciseService } from 'app/math/manage/service/math-exercise.service';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { firstValueFrom } from 'rxjs';
 
 const BASE_URL = 'api/math/math-exercises';
 
@@ -51,7 +52,7 @@ describe('MathExerciseService', () => {
         const exercise = mockExercise();
         exercise.id = undefined;
 
-        const promise = service.create(exercise).toPromise();
+        const promise = firstValueFrom(service.create(exercise));
         const req = httpMock.expectOne({ method: 'POST', url: BASE_URL });
         req.flush({ ...exercise, id: 42 });
         const response = await promise;
@@ -62,7 +63,7 @@ describe('MathExerciseService', () => {
     it('should update an exercise', async () => {
         const exercise = mockExercise();
 
-        const promise = service.update(exercise).toPromise();
+        const promise = firstValueFrom(service.update(exercise));
         const req = httpMock.expectOne({ method: 'PUT', url: BASE_URL });
         req.flush(exercise);
         const response = await promise;
@@ -73,7 +74,7 @@ describe('MathExerciseService', () => {
     it('should find an exercise by id', async () => {
         const exercise = mockExercise();
 
-        const promise = service.find(exercise.id!).toPromise();
+        const promise = firstValueFrom(service.find(exercise.id!));
         const req = httpMock.expectOne({ method: 'GET', url: `${BASE_URL}/${exercise.id}` });
         req.flush(exercise);
         const response = await promise;
@@ -82,7 +83,7 @@ describe('MathExerciseService', () => {
     });
 
     it('should delete an exercise', async () => {
-        const promise = service.delete(1).toPromise();
+        const promise = firstValueFrom(service.delete(1));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${BASE_URL}/1` });
         req.flush(null);
         await promise;
@@ -95,7 +96,7 @@ describe('MathExerciseService', () => {
         const imported = new MathExercise(undefined);
         imported.title = 'Imported Math';
 
-        const promise = service.import(source).toPromise();
+        const promise = firstValueFrom(service.import(source));
         const req = httpMock.expectOne({ method: 'POST', url: `${BASE_URL}/import?sourceExerciseId=${source.id}` });
         req.flush({ ...imported, id: 99 });
         const response = await promise;

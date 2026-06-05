@@ -4,6 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MathExercisePagingService } from 'app/math/manage/service/math-exercise-paging.service';
+import { firstValueFrom } from 'rxjs';
 
 describe('MathExercisePagingService', () => {
     setupTestBed({ zoneless: true });
@@ -26,7 +27,7 @@ describe('MathExercisePagingService', () => {
     it('is wired to the math-exercises resource URL', async () => {
         const pageable = { pageSize: 10, page: 0, sortingOrder: 'ASCENDING', sortedColumn: 'ID', searchTerm: '' } as any;
         const options = { isCourseFilter: true, isExamFilter: false } as any;
-        const promise = service.search(pageable, options).toPromise();
+        const promise = firstValueFrom(service.search(pageable, options));
         const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/math/math-exercises');
         req.flush({ resultsOnPage: [], numberOfPages: 0 });
         await promise;
