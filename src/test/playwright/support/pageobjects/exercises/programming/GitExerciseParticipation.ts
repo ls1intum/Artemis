@@ -54,7 +54,18 @@ export class GitExerciseParticipation {
         await page.getByTestId('sshKeyField').fill(sshKey!);
         const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-keys`);
         await page.getByTestId('saveSshKeyButton').click();
-        await responsePromise;
+        const response = await responsePromise;
+        if (!response.ok()) {
+            throw new Error(`Failed to register SSH key ${SSH_KEY_NAMES[sshAlgorithm]}: ${response.status()} ${await response.text()}`);
+        }
+        const publicKeysResponse = await page.request.get(`${BASE_API}/programming/ssh-settings/public-keys`);
+        if (!publicKeysResponse.ok()) {
+            throw new Error(`Failed to verify SSH key ${SSH_KEY_NAMES[sshAlgorithm]} registration: ${publicKeysResponse.status()} ${await publicKeysResponse.text()}`);
+        }
+        const publicKeys = await publicKeysResponse.json();
+        if (!Array.isArray(publicKeys) || !publicKeys.some((publicKey) => publicKey.publicKey?.trim() === sshKey.trim())) {
+            throw new Error(`SSH key ${SSH_KEY_NAMES[sshAlgorithm]} was not found after registration`);
+        }
         await page.close();
     }
 

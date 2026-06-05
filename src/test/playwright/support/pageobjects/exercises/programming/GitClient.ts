@@ -60,11 +60,13 @@ export const gitClient = new GitClient();
 export enum SshEncryptionAlgorithm {
     rsa = 'RSA',
     ed25519 = 'ED25519',
+    ed25519Exam = 'ED25519_EXAM',
 }
 
 export const SSH_KEY_NAMES = {
     [SshEncryptionAlgorithm.rsa]: 'artemis_playwright_rsa',
     [SshEncryptionAlgorithm.ed25519]: 'artemis_playwright_ed25519',
+    [SshEncryptionAlgorithm.ed25519Exam]: 'artemis_playwright_exam_ed25519',
 };
 
 export const SSH_KEYS_PATH = path.join(process.cwd(), 'ssh-keys');

@@ -13,6 +13,7 @@ import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
 import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
+import { ProgrammingExerciseOverviewPage } from '../exercises/programming/ProgrammingExerciseOverviewPage';
 
 export class ExamParticipationPage extends ExamParticipationActions {
     private readonly examNavigation: ExamNavigationBar;
@@ -76,9 +77,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
-                timeout: BUILD_RESULT_TIMEOUT * 2,
-            });
+            await ProgrammingExerciseOverviewPage.verifyResultScoreText(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID), submission.expectedResult);
         }
     }
 
@@ -145,6 +144,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         // In exam mode, page.reload() navigates away from the active exercise tab,
         // so we rely on WebSocket to push build results and use Playwright's auto-retry.
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await expect(resultScore).toContainText(expectedResult, { timeout });
+        await ProgrammingExerciseOverviewPage.verifyResultScoreText(resultScore, expectedResult, timeout);
     }
 }

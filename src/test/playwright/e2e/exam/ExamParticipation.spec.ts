@@ -316,9 +316,10 @@ test.describe('Exam participation', () => {
             });
 
             if (cloneMethod === GitCloneMethod.ssh) {
-                test.beforeEach('Setup SSH credentials', async ({ page, login }) => {
+                test.beforeEach('Setup SSH credentials', async ({ page, login, accountManagementAPIRequests }) => {
                     await login(studentTwo);
-                    await GitExerciseParticipation.setupSSHCredentials(page.context(), SshEncryptionAlgorithm.ed25519);
+                    await accountManagementAPIRequests.deleteSshPublicKey();
+                    await GitExerciseParticipation.setupSSHCredentials(page.context(), SshEncryptionAlgorithm.ed25519Exam);
                     await page.reload();
                 });
             }
@@ -354,7 +355,14 @@ test.describe('Exam participation', () => {
                         /* response might not be JSON */
                     }
                 }
-                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
+                await GitExerciseParticipation.makeSubmission(
+                    programmingExerciseOverview,
+                    studentTwo,
+                    cAllSuccessfulSubmission,
+                    'Solution',
+                    cloneMethod,
+                    SshEncryptionAlgorithm.ed25519Exam,
+                );
                 // Wait for build via API (student-accessible endpoint) before checking UI.
                 if (participationId) {
                     await waitForParticipationBuildToFinish(participationId);

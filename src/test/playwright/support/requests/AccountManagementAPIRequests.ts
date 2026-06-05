@@ -3,7 +3,7 @@ import { Page } from '@playwright/test';
 
 export class AccountManagementAPIRequests {
     private readonly page: Page;
-    private readonly PLAYWRIGHT_SSH_LABEL = 'artemis_playwright_ssh';
+    private readonly PLAYWRIGHT_SSH_LABELS = ['artemis_playwright_ssh', 'artemis_playwright_exam_ssh'];
 
     constructor(page: Page) {
         this.page = page;
@@ -26,7 +26,7 @@ export class AccountManagementAPIRequests {
             return;
         }
         for (const publicKey of publicKeys) {
-            if (publicKey.label === this.PLAYWRIGHT_SSH_LABEL) {
+            if (this.PLAYWRIGHT_SSH_LABELS.includes(publicKey.label)) {
                 await this.page.request.delete(`${BASE_API}/programming/ssh-settings/public-key/${publicKey.id}`);
             }
         }
