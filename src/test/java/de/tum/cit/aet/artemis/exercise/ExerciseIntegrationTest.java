@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -555,6 +556,16 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertThat(results).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+            }
+            else if (exercise instanceof QuizExercise) {
+                var submission = participation.getSubmissions().iterator().next();
+                // Quizzes before the due date expose a sanitized submission for the participation status, but no results or answers.
+                assertThat(participation.getSubmissions()).hasSize(1);
+                assertThat(submission).isInstanceOf(QuizSubmission.class);
+                assertThat(results).isEmpty();
+                assertThat(submission.getResults()).isEmpty();
+                assertThat(((QuizSubmission) submission).getSubmittedAnswers()).isNullOrEmpty();
+                assertThat(((QuizSubmission) submission).getScoreInPoints()).isNull();
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
