@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, effect, inject, input, output, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -67,12 +67,20 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
-    @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
-    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
-    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
+    // grid is the root layout element and is always rendered, so it is required and safe to dereference.
+    readonly grid = viewChild.required(CodeEditorGridComponent);
+    // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
+    // - actions is behind `@if (!isTutorAssessment() || commitState === CommitState.CONFLICT)`
+    // - buildOutput is behind `@if (buildable())`
+    // - fileBrowser may be absent for remote sync events that arrive before the view is initialized
+    //   (see handleRemoteFileTreeEvent), so it must not throw on early access.
+    // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
+    //   pre-view-init access from throwing.
+    readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly actions = viewChild(CodeEditorActionsComponent);
+    readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
+    readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
+    readonly instructions = viewChild(CodeEditorInstructionsComponent);
 
     editable = input<boolean>(true);
     forRepositoryView = input<boolean>(false);
@@ -298,7 +306,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor?.onFileChange(fileChange);
+        this.monacoEditor()?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -321,13 +329,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             case ExerciseEditorSyncEventType.FILE_CREATED:
                 // isRemote=true: prevents the container from auto-selecting the new file,
                 // which would hijack the local user's current editor selection.
-                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                this.fileBrowser()?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_DELETED:
-                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                this.fileBrowser()?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_RENAMED:
-                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
+                this.fileBrowser()?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
                 break;
         }
     }
@@ -354,7 +362,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.monacoEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor()?.storeAnnotations(savedFiles);
     }
 
     /**
@@ -408,15 +416,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     getText(): string {
-        return this.monacoEditor?.getText() ?? '';
+        return this.monacoEditor()?.getText() ?? '';
     }
 
     commit(): void {
-        this.actions?.commit();
+        this.actions()?.commit();
     }
 
     getNumberOfLines(): number {
-        return this.monacoEditor?.getNumberOfLines() ?? 0;
+        return this.monacoEditor()?.getNumberOfLines() ?? 0;
     }
 
     /**
@@ -425,11 +433,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param endLine The last line to highlight.
      */
     highlightLines(startLine: number, endLine: number): void {
-        this.monacoEditor?.highlightLines(startLine, endLine);
+        this.monacoEditor()?.highlightLines(startLine, endLine);
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
-        this.grid.toggleCollapse(event, collapsableElement);
+        this.grid().toggleCollapse(event, collapsableElement);
     }
 
     /**
@@ -464,7 +472,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.monacoEditor.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.monacoEditor()?.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     /**
