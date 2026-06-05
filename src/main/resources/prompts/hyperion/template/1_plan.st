@@ -56,7 +56,7 @@ First, think step-by-step to analyze what template code should be created.
 2.  **Identify scaffolding needs:** Determine what structure, method signatures, and class hierarchies students need as a starting point.
 3.  **Separate scaffolding from solution logic:** Explicitly identify which logic must remain unimplemented because it belongs to the student task.
 4.  **Plan template content:** Decide what to include (class shells, method signatures, basic structure) and what to remove (implementation logic, specific algorithms, hidden edge-case handling).
-5.  **Identify obsolete files:** List existing `/src/` files that should be deleted because they are not needed after regeneration. Also list `.gitkeep` placeholder files only when they are explicitly obsolete or selected feedback requests their removal. Do not delete sibling source files merely because a `.gitkeep` placeholder is removed.
+5.  **Identify obsolete files:** Apply the deletion rules stated in the preamble to list any `/src/` files that should be removed after regeneration.
 6.  **Ensure compilability without solving the task:** The template must compile and provide clear TODO markers or fail-fast placeholders where students should add implementation.
 7.  **Check difficulty preservation:** Verify that the template does not already handle important cases that the tests are intended to check against student code.
 

@@ -44,4 +44,6 @@ First, think step-by-step for each file.
 3.  **Write docstrings:** Each method should have a clear docstring explaining its purpose, parameters, and return value.
 4.  **Leave bodies empty:** The method bodies should be empty or contain a placeholder like "return null;" or "pass".
 
-After your analysis, provide the result as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key.
+After your analysis, provide the result as a JSON object with:
+- "files": an array of objects, each with "path" and "content" keys.
+- "deletedFiles": an array of obsolete source paths under `/src/` (and any explicitly obsolete `.gitkeep` placeholders). Use an empty array if none.

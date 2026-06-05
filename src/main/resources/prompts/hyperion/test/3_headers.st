@@ -49,4 +49,6 @@ First, think step-by-step for each test file.
 4.  **Write docstrings:** Each test method should have a clear docstring explaining what it tests.
 5.  **Leave bodies empty:** The test method bodies should be empty.
 
-After your analysis, provide the result as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key.
+After your analysis, provide the result as a JSON object with:
+- "files": an array of objects, each with "path" and "content" keys.
+- "deletedFiles": an array of obsolete test-source paths (and any explicitly obsolete `.gitkeep` placeholders). Use an empty array if none.

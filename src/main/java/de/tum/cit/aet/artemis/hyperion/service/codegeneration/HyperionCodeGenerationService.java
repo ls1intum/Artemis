@@ -636,69 +636,22 @@ public abstract class HyperionCodeGenerationService {
      * Generates class definitions and method signatures.
      * Third step in the 4-step generation pipeline.
      *
-     * @param user                    the user requesting code generation
-     * @param exercise                the programming exercise to create headers for
-     * @param courseId                the resolved course id for telemetry attribution
-     * @param solutionPlan            the high-level solution plan from step 1
-     * @param repositoryStructure     tree-format representation of current repository structure
-     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
-     * @param consistencyIssues       formatted consistency issues to inform the generation prompts
-     * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
-     * @return AI response containing class and method headers
-     * @throws NetworkingException if AI service communication fails
+     * @param user          the user requesting code generation
+     * @param solutionPlan  the high-level solution plan from step 1
+     * @param fileStructure the file structure from step 2
      */
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
-        return generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads,
-                fileStructure);
-    }
-
     protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
             String repositoryStructure, String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure)
             throws NetworkingException;
 
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
-        return generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                DEFAULT_SELECTED_FEEDBACK_THREADS);
-    }
-
     /**
-     * Generates the core implementation logic for the solution.
+     * Generates the core implementation for each file based on the previously computed headers.
      * Fourth and final step in the 4-step generation pipeline.
      *
-     * @param user                    the user requesting code generation
-     * @param exercise                the programming exercise to implement
-     * @param courseId                the resolved course id for telemetry attribution
-     * @param solutionPlan            the high-level solution plan from step 1
-     * @param repositoryStructure     tree-format representation of current repository structure
-     * @param buildEnvironmentContext rendered build-file context for dependency and toolchain alignment
-     * @param consistencyIssues       formatted consistency issues to inform the generation prompts
-     * @param selectedFeedbackThreads selected review-thread payload to inform the generation prompts
-     * @return AI response containing complete implementation with generated files
-     * @throws NetworkingException if AI service communication fails
+     * @param headers AI response from step 3 containing class and method headers
      */
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
-        return generateCoreLogic(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads, headers);
-    }
-
     protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException;
 
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
-        return generateCoreLogic(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
-    }
-
-    /**
-     * Returns the repository type that this strategy generates code for.
-     *
-     * @return the repository type (SOLUTION, TEMPLATE, or TESTS)
-     */
     protected abstract RepositoryType getRepositoryType();
 }

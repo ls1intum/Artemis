@@ -52,4 +52,6 @@ First, think step-by-step for each file.
 5.  **Include only necessary structure:** Add necessary imports, class variables, constructors, and other scaffolding to help students get started without pre-solving the exercise.
 6.  **Check for leaked hints:** Remove headers, comments, or helper methods that make the tested edge cases pass automatically.
 
-After your analysis, provide the result as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key.
+After your analysis, provide the result as a JSON object with:
+- "files": an array of objects, each with "path" and "content" keys.
+- "deletedFiles": an array of obsolete source paths under `/src/` (and any explicitly obsolete `.gitkeep` placeholders). Use an empty array if none.

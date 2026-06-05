@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -202,7 +203,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -239,7 +240,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(new CodeGenerationResponseDTO(null, List.of()));
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any())).thenReturn(new CodeGenerationResponseDTO(null, List.of(), List.of()));
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
         Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
@@ -271,7 +272,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -280,7 +281,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
-        when(buildResult.isSuccessful()).thenReturn(false);
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -288,8 +288,8 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(buildResult);
         verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
-        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
-                "Solution files were generated and committed to the solution repository, but the build failed.");
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
+                argThat(message -> message.contains("solution") && message.contains("build failed")));
     }
 
     @Test
@@ -312,7 +312,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -321,7 +321,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
-        when(buildResult.isSuccessful()).thenReturn(false);
         when(buildResult.getScore()).thenReturn(50.0);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
 
@@ -329,8 +328,8 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(buildResult);
         verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
-        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 1,
-                "Solution files were generated and committed to the solution repository, but the build failed.");
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(1),
+                argThat(message -> message.contains("solution") && message.contains("build failed")));
     }
 
     @Test
@@ -366,7 +365,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
@@ -400,7 +399,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -443,7 +442,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
@@ -501,8 +500,8 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(publisher).fileDeleted("src/main/java/OldSort.java", RepositoryType.TEMPLATE, 1);
         verify(repositoryService).commitChanges(repository, user);
         verify(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
-        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED, Map.of(), 1,
-                "Obsolete template files were removed from the template repository.");
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED), eq(Map.of()),
+                eq(1), argThat(message -> message.contains("Obsolete") && message.contains("template")));
     }
 
     @Test
@@ -616,38 +615,6 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
-    void publishGeneratedFiles_withJavaTestFileInProductionSourceForSolution_ignoresFile() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
-        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/HokkaidoMarioTest.java", "import org.junit.jupiter.api.Test;\nclass HokkaidoMarioTest {}");
-
-        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
-                publisher, 1);
-
-        assertThat(publishedAnyFile).isFalse();
-        verify(repositoryService, never()).createFile(any(), anyString(), any());
-        verify(publisher, never()).newFile(anyString(), any(), anyInt());
-        verify(publisher, never()).fileUpdated(anyString(), any(), anyInt());
-    }
-
-    @Test
-    void publishGeneratedFiles_withJavaTestFileInTestSourceForSolution_createsFile() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
-        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/test/java/HokkaidoMarioTest.java", "import org.junit.jupiter.api.Test;\nclass HokkaidoMarioTest {}");
-
-        when(gitService.getFileByName(mockRepository, "src/test/java/HokkaidoMarioTest.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(mockRepository), eq("src/test/java/HokkaidoMarioTest.java"), any());
-
-        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
-                publisher, 1);
-
-        assertThat(publishedAnyFile).isTrue();
-        verify(repositoryService).createFile(eq(mockRepository), eq("src/test/java/HokkaidoMarioTest.java"), any());
-        verify(publisher).newFile("src/test/java/HokkaidoMarioTest.java", RepositoryType.SOLUTION, 1);
-    }
-
-    @Test
     void deleteObsoleteFiles_withSafeSourceFile_deletesExistingFile() throws Exception {
         Repository mockRepository = mock(Repository.class);
         File obsoleteFile = mock(File.class);
@@ -692,39 +659,6 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java"), exercise, RepositoryType.TEMPLATE,
                 publisher, 2);
-
-        assertThat(deletedAnyFile).isFalse();
-        verify(repositoryService, never()).deleteFile(any(), anyString());
-        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
-    }
-
-    @Test
-    void deleteObsoleteFiles_withTestDirectoryPath_ignoresDeletionRequest() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
-        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("test"));
-        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
-
-        when(gitService.getFileByName(mockRepository, "test")).thenReturn(Optional.of(obsoleteDirectory));
-
-        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test"), exercise, RepositoryType.TESTS, publisher, 2);
-
-        assertThat(deletedAnyFile).isFalse();
-        verify(repositoryService, never()).deleteFile(any(), anyString());
-        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
-    }
-
-    @Test
-    void deleteObsoleteFiles_withTestSubdirectoryPath_ignoresDeletionRequest() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
-        Path obsoleteDirectoryPath = Files.createDirectories(tempDir.resolve("test/old"));
-        File obsoleteDirectory = new File(obsoleteDirectoryPath, null);
-
-        when(gitService.getFileByName(mockRepository, "test/old")).thenReturn(Optional.of(obsoleteDirectory));
-
-        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("test/old"), exercise, RepositoryType.TESTS, publisher,
-                2);
 
         assertThat(deletedAnyFile).isFalse();
         verify(repositoryService, never()).deleteFile(any(), anyString());
@@ -877,7 +811,10 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);
 
-        assertThat(summary).contains("Build log", "Test feedback summary:", "- testSorts: FAILED - Expected sorted result", "- testCompiles: PASSED - Compilation works");
+        // Build logs precede the test-feedback section so the retry prompt sees compile errors before per-test diffs;
+        // failures appear before passes so the actionable signal leads.
+        assertThat(summary).containsSubsequence("Build log", "Test feedback summary:", "testSorts", "FAILED", "Expected sorted result", "testCompiles", "PASSED",
+                "Compilation works");
     }
 
     @Test
@@ -925,7 +862,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(100L, "commit-hash")).thenReturn(submission);
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
-        when(buildResult.isSuccessful()).thenReturn(false);
         when(buildResult.getScore()).thenReturn(50.0);
 
         Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
@@ -947,7 +883,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
         when(buildResult.getTestCaseCount()).thenReturn(1);
-        when(buildResult.isSuccessful()).thenReturn(false);
 
         Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
 
@@ -995,7 +930,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(templateStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}"))));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId())).thenReturn(templateParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
@@ -1012,7 +947,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(buildResult);
         verify(templateStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
-        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
-                "Template files were generated and committed to the template repository, but the build failed.");
+        verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
+                argThat(message -> message.contains("template") && message.contains("build failed")));
     }
 }

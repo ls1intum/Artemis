@@ -1385,7 +1385,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private isCodeGenerationFileEventType(eventType: unknown): eventType is CodeGenerationFileEventType {
-        return eventType === 'FILE_UPDATED' || eventType === 'NEW_FILE';
+        return eventType === 'FILE_UPDATED' || eventType === 'NEW_FILE' || eventType === 'FILE_DELETED';
     }
 
     /**

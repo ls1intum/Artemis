@@ -194,7 +194,7 @@ class HyperionTemplateRepositoryServiceTest {
 
     @Test
     void generateClassAndMethodHeaders_callsDefineFileStructureAndUsesResult() throws Exception {
-        CodeGenerationResponseDTO fileStructure = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Template.java", "stub")));
+        CodeGenerationResponseDTO fileStructure = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Template.java", "stub")), List.of());
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template { void method(); }\"}]}";
 
         when(templates.renderObject(eq("/prompts/hyperion/template/3_headers.st"), anyMap())).thenReturn("rendered");
@@ -210,7 +210,7 @@ class HyperionTemplateRepositoryServiceTest {
 
     @Test
     void generateCoreLogic_callsHeadersAndUsesResult() throws Exception {
-        CodeGenerationResponseDTO headers = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Template.java", "class Template { void method(); }")));
+        CodeGenerationResponseDTO headers = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Template.java", "class Template { void method(); }")), List.of());
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template { void method() { /* TODO */ } }\"}]}";
 
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");

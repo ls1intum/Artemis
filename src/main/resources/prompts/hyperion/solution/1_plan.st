@@ -43,7 +43,7 @@ Note: The above represents build logs and test feedback from a previous attempt.
 First, think step-by-step to analyze the problem.
 1.  **Deconstruct the requirements:** Identify the core functionalities, constraints, and goals mentioned in the problem statement.
 2.  **Identify necessary components:** Based on the requirements, list the classes, methods, and data structures that will be needed. Think about how they will interact.
-3.  **Identify obsolete files:** List existing `/src/` files that should be deleted because they are not needed after regeneration. Also list `.gitkeep` placeholder files only when they are explicitly obsolete or selected feedback requests their removal. Do not delete sibling source files merely because a `.gitkeep` placeholder is removed.
+3.  **Identify obsolete files:** Apply the deletion rules stated in the preamble to list any `/src/` files that should be removed after regeneration.
 4.  **Outline the logic:** For each method, describe the high-level logic and algorithms to be used.
 
 After your analysis, provide your final implementation plan as a JSON object. The JSON object must contain a single key "solutionPlan" with the detailed plan as a string.

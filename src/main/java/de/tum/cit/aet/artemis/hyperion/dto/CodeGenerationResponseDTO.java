@@ -25,10 +25,6 @@ public record CodeGenerationResponseDTO(
          */
         List<String> deletedFiles) {
 
-    public CodeGenerationResponseDTO(String solutionPlan, List<GeneratedFileDTO> files) {
-        this(solutionPlan, files, List.of());
-    }
-
     public CodeGenerationResponseDTO {
         files = files != null ? files : List.of();
         deletedFiles = deletedFiles != null ? deletedFiles : List.of();

@@ -26,11 +26,6 @@ export class HyperionWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
     private subscribedJobs = new Map<string, SubscribedJob>();
 
-    /**
-     * Subscribes to a code generation job channel.
-     * @param jobId job identifier
-     * @returns observable stream of job events
-     */
     subscribeToJob(jobId: string): Observable<HyperionEvent> {
         const existing = this.subscribedJobs.get(jobId);
         if (existing) {
@@ -56,10 +51,6 @@ export class HyperionWebsocketService implements OnDestroy {
         return subject.asObservable();
     }
 
-    /**
-     * Unsubscribes from a code generation job channel.
-     * @param jobId job identifier
-     */
     unsubscribeFromJob(jobId: string): void {
         const s = this.subscribedJobs.get(jobId);
         if (!s) return;
@@ -68,11 +59,8 @@ export class HyperionWebsocketService implements OnDestroy {
         this.subscribedJobs.delete(jobId);
     }
 
-    /**
-     * Cleans up all active job subscriptions.
-     */
     ngOnDestroy(): void {
-        this.subscribedJobs.forEach((s, jobId) => {
+        this.subscribedJobs.forEach((s) => {
             s.wsSubscription.unsubscribe();
             s.subject.complete();
         });
