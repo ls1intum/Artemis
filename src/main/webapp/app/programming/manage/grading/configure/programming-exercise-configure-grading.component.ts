@@ -1,5 +1,5 @@
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -116,6 +116,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     private location = inject(Location);
     private router = inject(Router);
     private courseManagementService = inject(CourseManagementService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly EditableField = EditableField;
     readonly CategoryState = StaticCodeAnalysisCategoryState;
@@ -221,7 +222,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+                this.course = courseResponse.body!;
+                this.changeDetectorRef.markForCheck();
+            });
 
             if (this.programmingExercise == undefined || this.programmingExercise.id !== exerciseId) {
                 this.testCaseSubscription?.unsubscribe();
@@ -258,6 +262,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                         // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                         this.subscribeForExerciseTestCasesChangedUpdates();
                         this.isLoading = false;
+                        this.changeDetectorRef.markForCheck();
                     });
             } else {
                 this.isLoading = false;
@@ -269,6 +274,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             } else {
                 this.selectTab('test-cases');
             }
+            // The route params subscription runs outside Angular change detection; schedule CD so the view reflects isLoading/activeTab.
+            this.changeDetectorRef.markForCheck();
         });
     }
 
@@ -292,6 +299,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap((testCases: ProgrammingExerciseTestCase[]) => {
                     this.testCases = testCases;
+                    this.changeDetectorRef.markForCheck();
                 }),
                 tap(() => this.loadStatistics(this.programmingExercise.id!)),
             )
@@ -306,7 +314,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCaseChangedSubscription?.unsubscribe();
         this.testCaseChangedSubscription = this.programmingExerciseWebsocketService
             .getTestCaseState(this.programmingExercise.id!)
-            .pipe(tap((testCasesChanged: boolean) => (this.hasUpdatedGradingConfig = testCasesChanged)))
+            .pipe(
+                tap((testCasesChanged: boolean) => {
+                    this.hasUpdatedGradingConfig = testCasesChanged;
+                    this.changeDetectorRef.markForCheck();
+                }),
+            )
             .subscribe();
     }
 
@@ -424,6 +437,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
         saveCodeAnalysis.subscribe(() => {
             this.isSaving = false;
+            this.changeDetectorRef.markForCheck();
         });
     }
 
@@ -444,7 +458,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     return of(null);
                 }),
             )
-            .subscribe(() => (this.isSaving = false));
+            .subscribe(() => {
+                this.isSaving = false;
+                this.changeDetectorRef.markForCheck();
+            });
     }
 
     resetCategories() {
@@ -466,6 +483,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .subscribe(() => {
                 this.isSaving = false;
                 this.changedCategoryIds = [];
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -487,6 +505,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             )
             .subscribe(() => {
                 this.isSaving = false;
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -508,6 +527,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             )
             .subscribe(() => {
                 this.isSaving = false;
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -532,6 +552,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             )
             .subscribe(() => {
                 this.isSaving = false;
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -542,6 +563,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.isSaving = true;
         const deactivateSaving = () => {
             this.isSaving = false;
+            this.changeDetectorRef.markForCheck();
         };
         if (this.programmingExercise.submissionPolicy!.active) {
             this.programmingExerciseSubmissionPolicyService
@@ -702,6 +724,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 tap((categories) => {
                     this.staticCodeAnalysisCategoriesForTable = categories;
                     this.setChartAndBackupCategoryView();
+                    this.changeDetectorRef.markForCheck();
                 }),
                 catchError(() => of(null)),
             )
@@ -728,6 +751,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                     }
                 }
             }
+            this.changeDetectorRef.markForCheck();
         });
     }
 

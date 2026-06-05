@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, model, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, input, model, output, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
@@ -31,6 +31,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private complaintResponseService = inject(ComplaintResponseService);
     private router = inject(Router);
     private location = inject(Location);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly complaint = model.required<Complaint>();
     readonly isTestRun = input(false);
@@ -42,14 +43,14 @@ export class ComplaintsForTutorComponent implements OnInit {
     // that should be sent to the server along with the assessment update.
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
     complaintText?: string;
-    handled: boolean;
+    readonly handled = signal(false);
     complaintResponse: ComplaintResponse = new ComplaintResponse();
     complaintResponseUpdate: ComplaintResponseUpdateDTO;
     ComplaintType = ComplaintType;
-    isLoading = false;
-    showLockDuration = false;
-    lockedByCurrentUser = false;
-    isLockedForLoggedInUser = false;
+    readonly isLoading = signal(false);
+    readonly showLockDuration = signal(false);
+    readonly lockedByCurrentUser = signal(false);
+    readonly isLockedForLoggedInUser = signal(false);
     course?: Course;
     maxComplaintResponseTextLimit: number;
 
@@ -64,11 +65,11 @@ export class ComplaintsForTutorComponent implements OnInit {
 
         if (this.complaint()) {
             this.complaintText = this.complaint().complaintText;
-            this.handled = this.complaint().accepted !== undefined;
-            if (this.handled) {
+            this.handled.set(this.complaint().accepted !== undefined);
+            if (this.handled()) {
                 this.complaintResponse = this.complaint().complaintResponse!;
-                this.lockedByCurrentUser = false;
-                this.showLockDuration = false;
+                this.lockedByCurrentUser.set(false);
+                this.showLockDuration.set(false);
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint().complaintResponse) {
@@ -86,12 +87,12 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private createLock() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.complaintResponseService
             .createLock(this.complaint().id!)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
@@ -100,8 +101,9 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.complaintResponse.complaint = this.complaint();
                     this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                     this.complaint.set(this.complaintResponse.complaint!);
-                    this.lockedByCurrentUser = true;
-                    this.showLockDuration = true;
+                    this.lockedByCurrentUser.set(true);
+                    this.showLockDuration.set(true);
+                    this.changeDetectorRef.markForCheck();
                     this.alertService.success('artemisApp.locks.acquired');
                 },
                 error: (err: HttpErrorResponse) => {
@@ -112,17 +114,17 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private refreshLock() {
         this.complaintResponse = this.complaint().complaintResponse!;
-        this.showLockDuration = true;
+        this.showLockDuration.set(true);
         // if a lock exists, we have to check if it affects the currently logged-in user
-        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!);
-        if (!this.isLockedForLoggedInUser) {
+        this.isLockedForLoggedInUser.set(this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!));
+        if (!this.isLockedForLoggedInUser()) {
             // update the lock
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.complaintResponseService
                 .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id!)
                 .pipe(
                     finalize(() => {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }),
                 )
                 .subscribe({
@@ -131,7 +133,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                         this.complaintResponse.complaint = this.complaint();
                         this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint!);
-                        this.lockedByCurrentUser = true;
+                        this.lockedByCurrentUser.set(true);
+                        this.changeDetectorRef.markForCheck();
                         this.alertService.success('artemisApp.locks.acquired');
                     },
                     error: (err: HttpErrorResponse) => {
@@ -139,7 +142,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     },
                 });
         } else {
-            this.lockedByCurrentUser = false;
+            this.lockedByCurrentUser.set(false);
         }
     }
 
@@ -181,17 +184,17 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (acceptComplaint && this.complaint().complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.updateAssessmentAfterComplaint.emit({
                 complaintResponse: this.complaintResponse,
                 onSuccess: () => {
-                    this.isLoading = false;
-                    this.handled = true;
-                    this.showLockDuration = false;
-                    this.lockedByCurrentUser = false;
+                    this.isLoading.set(false);
+                    this.handled.set(true);
+                    this.showLockDuration.set(false);
+                    this.lockedByCurrentUser.set(false);
                 },
                 onError: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         } else {
@@ -205,17 +208,17 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private resolveComplaint() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.complaintResponseService
             .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaintResponse.complaint!.id)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (response) => {
-                    this.handled = true;
+                    this.handled.set(true);
                     if (this.complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
                         this.alertService.success('artemisApp.moreFeedbackResponse.created');
                     } else {
@@ -226,9 +229,9 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                     this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
                     this.complaint.set(this.complaintResponse.complaint!);
-                    this.isLockedForLoggedInUser = false;
-                    this.showLockDuration = false;
-                    this.lockedByCurrentUser = false;
+                    this.isLockedForLoggedInUser.set(false);
+                    this.showLockDuration.set(false);
+                    this.lockedByCurrentUser.set(false);
                 },
                 error: (err: HttpErrorResponse) => {
                     this.onError(err);

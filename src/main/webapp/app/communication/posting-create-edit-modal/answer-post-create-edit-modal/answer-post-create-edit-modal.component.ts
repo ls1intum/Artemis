@@ -1,4 +1,4 @@
-import { Component, ViewContainerRef, ViewEncapsulation, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewContainerRef, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +15,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
     isInputOpen = false;
@@ -68,9 +70,11 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.changeDetectorRef.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
+                this.changeDetectorRef.markForCheck();
             },
         });
     }
@@ -93,9 +97,11 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.isLoading = false;
                 this.isInputOpen = false;
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.changeDetectorRef.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
+                this.changeDetectorRef.markForCheck();
             },
         });
     }

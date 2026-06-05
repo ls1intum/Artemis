@@ -1,6 +1,6 @@
 import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -93,6 +93,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly ButtonType = ButtonType;
@@ -207,8 +208,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.updateModelingSubmission(modelingSubmission);
                             this.setupMode();
                         }
+                        this.changeDetectorRef.markForCheck();
                     },
-                    error: (error) => onError(this.alertService, error),
+                    error: (error) => {
+                        onError(this.alertService, error);
+                        this.changeDetectorRef.markForCheck();
+                    },
                 });
         }
 
@@ -399,11 +404,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     next: (assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.prepareAssessmentData();
+                        this.changeDetectorRef.markForCheck();
                     },
                     error: (error: HttpErrorResponse) => {
                         this.isLoading = false;
                         this.assessmentResult = undefined;
                         onError(this.alertService, error);
+                        this.changeDetectorRef.markForCheck();
                     },
                 });
             } else {
@@ -464,9 +471,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                             this.assessmentResult = assessmentResult;
                             this.prepareAssessmentData();
+                            this.changeDetectorRef.markForCheck();
                         });
                     }
                     this.alertService.info('artemisApp.modelingEditor.autoSubmit');
+                    this.changeDetectorRef.markForCheck();
                 }
             });
     }
@@ -511,6 +520,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.assessmentResult = this.modelingAssessmentService.convertResult(result);
         this.prepareAssessmentData();
         this.alertService.info('artemisApp.modelingEditor.newAssessment');
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
@@ -531,6 +541,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         this.isGeneratingFeedback = false;
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
@@ -546,6 +557,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && this.isChanged) {
                 this.saveDiagram();
             }
+            this.changeDetectorRef.markForCheck();
         }, AUTOSAVE_CHECK_INTERVAL);
     }
 
@@ -561,6 +573,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 // notify the team sync component to send this.submission to the server (and all online team members)
                 this.submissionChange.next(this.submission);
             }
+            this.changeDetectorRef.markForCheck();
         }, AUTOSAVE_TEAM_EXERCISE_INTERVAL);
 
         this.cleanup(() => clearInterval(teamSyncInterval));
@@ -699,11 +712,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private onSaveSuccess() {
         this.isSaving = false;
         this.isChanged = !this.canDeactivate();
+        this.changeDetectorRef.markForCheck();
     }
 
     private onSaveError() {
         this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
+        this.changeDetectorRef.markForCheck();
     }
 
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {

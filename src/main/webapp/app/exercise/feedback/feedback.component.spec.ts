@@ -291,7 +291,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
@@ -303,7 +303,7 @@ describe('FeedbackComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
@@ -313,8 +313,8 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.buildLogs).toHaveLength(0);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.buildLogs()).toHaveLength(0);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
@@ -324,8 +324,8 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.feedbackItemNodes).toBeUndefined();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.feedbackItemNodes()).toBeUndefined();
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
@@ -335,8 +335,8 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.buildLogs).toBeUndefined();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.buildLogs()).toBeUndefined();
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
@@ -348,8 +348,8 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.loadingFailed()).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
@@ -360,8 +360,8 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed).toBe(true);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.loadingFailed()).toBe(true);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should not show test details to students', () => {
@@ -414,7 +414,7 @@ describe('FeedbackComponent', () => {
             members: [feedbackItem1],
             open: false,
         } as unknown as FeedbackGroup;
-        comp.feedbackItemNodes = [feedbackGroup];
+        comp.feedbackItemNodes.set([feedbackGroup]);
 
         // start printing => expand feedback
         const previousValue = undefined;
@@ -435,7 +435,7 @@ describe('FeedbackComponent', () => {
         /**
          * references were removed during saving old state => cannot use {@link feedbackGroup} for comparison anymore
          */
-        expect((comp.feedbackItemNodes[0] as unknown as FeedbackGroup).open).toBe(false);
+        expect((comp.feedbackItemNodes()![0] as unknown as FeedbackGroup).open).toBe(false);
     });
 
     describe('when opened via DialogService (DynamicDialogConfig.data)', () => {

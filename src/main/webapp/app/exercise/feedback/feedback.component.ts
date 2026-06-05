@@ -1,4 +1,4 @@
-import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -66,6 +66,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     readonly dialogRef = inject(DynamicDialogRef, { optional: true });
     private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
@@ -210,15 +211,15 @@ export class FeedbackComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-    isLoading = false;
-    loadingFailed = false;
-    buildLogs: BuildLogEntryArray;
+    readonly isLoading = signal(false);
+    readonly loadingFailed = signal(false);
+    readonly buildLogs = signal<BuildLogEntryArray | undefined>(undefined);
     course?: Course;
     isOnlyCompilationTested: boolean;
 
     commitHash?: string;
 
-    chartData: ChartData = {
+    readonly chartData = signal<ChartData>({
         xScaleMax: 100,
         scheme: {
             name: 'Feedback Detail',
@@ -227,20 +228,20 @@ export class FeedbackComponent implements OnInit, OnChanges {
             domain: [GraphColors.GREEN, GraphColors.RED],
         },
         results: [],
-    };
+    });
     // Static chart settings
     labels: string[];
     legendPosition = LegendPosition.Below;
 
-    badge: Badge;
+    readonly badge = signal<Badge | undefined>(undefined);
 
     feedbackItemService: FeedbackItemService;
-    feedbackItemNodes: FeedbackNode[];
+    readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
     /**
      * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
      * from true to false
      */
-    private feedbackItemNodesBeforePrinting: FeedbackNode[];
+    private feedbackItemNodesBeforePrinting?: FeedbackNode[];
 
     constructor() {
         const translateService = this.translateService;
@@ -272,7 +273,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
             this.numberOfNotExecutedTests = data.numberOfNotExecutedTests ?? this.numberOfNotExecutedTests;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.initializeExerciseInformation();
 
@@ -295,10 +296,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isPrinting) {
             if (changes.isPrinting.currentValue) {
-                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes);
+                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes());
                 this.expandFeedbackItemGroups();
             } else {
-                this.feedbackItemNodes = this.feedbackItemNodesBeforePrinting;
+                this.feedbackItemNodes.set(this.feedbackItemNodesBeforePrinting);
             }
         }
     }
@@ -348,7 +349,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
+                        this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, this.exercise!));
                         if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
                         }
@@ -364,22 +365,22 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     }
 
                     if (this.showScoreChart) {
-                        this.updateChart(this.feedbackItemNodes);
+                        this.updateChart(this.feedbackItemNodes()!);
                     }
 
                     if (isStudentParticipation(this.participation)) {
-                        this.badge = ResultService.evaluateBadge(this.participation, this.result);
+                        this.badge.set(ResultService.evaluateBadge(this.participation, this.result));
                     }
 
                     return of(null);
                 }),
                 catchError(() => {
-                    this.loadingFailed = true;
+                    this.loadingFailed.set(true);
                     return of(null);
                 }),
             )
             .subscribe(() => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
     }
 
@@ -391,7 +392,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private fetchAndSetBuildLogs = (participationId: number, resultId?: number) => {
         return this.buildLogService.getBuildLogs(participationId, resultId).pipe(
             tap((repoResult: BuildLogEntry[]) => {
-                this.buildLogs = BuildLogEntryArray.fromBuildLogs(repoResult);
+                this.buildLogs.set(BuildLogEntryArray.fromBuildLogs(repoResult));
             }),
             catchError((error: HttpErrorResponse) => {
                 /**
@@ -409,11 +410,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private updateChart(feedbackItemNodes: FeedbackNode[]) {
         if (!this.exercise || feedbackItemNodes.length === 0) {
+            // showScoreChart is a getter/setter backed by an input fallback, so it cannot be a signal; schedule CD explicitly.
             this.showScoreChart = false;
+            this.changeDetectorRef.markForCheck();
             return;
         }
 
-        this.chartData = this.feedbackChartService.create(feedbackItemNodes, this.exercise!);
+        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, this.exercise!));
     }
 
     getCommitHash(): string {
@@ -421,7 +424,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     private expandFeedbackItemGroups() {
-        this.feedbackItemNodes.forEach((feedbackNode) => {
+        this.feedbackItemNodes()?.forEach((feedbackNode) => {
             if (isFeedbackGroup(feedbackNode)) {
                 feedbackNode.open = true;
             }

@@ -234,6 +234,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             } else if (this.postInThread?.id && posts) {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
+            this.changeDetector.markForCheck();
         });
     }
 
@@ -272,14 +273,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.setIsCollapsed(true);
+            this.changeDetector.markForCheck();
         });
 
         this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
             this.setIsCollapsed(false);
+            this.changeDetector.markForCheck();
         });
 
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.toggleSidebar();
+            this.changeDetector.markForCheck();
         });
 
         this.reloadSidebarEventSubscription = this.courseSidebarService.reloadSidebar$.subscribe(() => {
@@ -332,6 +336,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
+            this.changeDetector.markForCheck();
         });
     }
 
@@ -380,6 +385,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                             if (found) {
                                 this.postInThread = found;
                                 this.pendingThreadPostId = undefined;
+                                this.changeDetector.markForCheck();
                             }
                         }
                     });
@@ -407,6 +413,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.closeSidebarOnMobile();
                 }
             }
+            this.changeDetector.markForCheck();
         });
     }
 
@@ -458,24 +465,28 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.courseSidebarService.closeSidebar();
             }
             this.updateQueryParameters();
+            this.changeDetector.markForCheck();
         });
     }
 
     private subscribeToIsCodeOfConductAccepted() {
         this.metisConversationService.isCodeOfConductAccepted$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductAccepted: boolean) => {
             this.isCodeOfConductAccepted = isCodeOfConductAccepted;
+            this.changeDetector.markForCheck();
         });
     }
 
     private subscribeToIsCodeOfConductPresented() {
         this.metisConversationService.isCodeOfConductPresented$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductPresented: boolean) => {
             this.isCodeOfConductPresented = isCodeOfConductPresented;
+            this.changeDetector.markForCheck();
         });
     }
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser = conversations ?? [];
+            this.changeDetector.markForCheck();
         });
     }
 
@@ -570,6 +581,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser, this.messagingEnabled);
                 this.accordionConversationGroups.recents.entityData = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
+                this.changeDetector.markForCheck();
             },
         });
     }

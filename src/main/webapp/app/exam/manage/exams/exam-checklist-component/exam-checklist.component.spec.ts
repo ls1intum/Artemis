@@ -151,7 +151,7 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist).toEqual(examChecklist);
+        expect(component.examChecklist()).toEqual(examChecklist);
     });
 
     it('should set existsUnassessedQuizzes correctly', () => {
@@ -161,7 +161,7 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
+        expect(component.examChecklist()!.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
     });
 
     it('should set existsUnsubmittedExercises correctly', () => {
@@ -171,6 +171,6 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
+        expect(component.examChecklist()!.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
     });
 });

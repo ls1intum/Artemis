@@ -157,24 +157,24 @@ describe('DiscussionSectionComponent', () => {
         fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
-        expect(component.course).toEqual(metisCourse);
-        expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisLectureChannelDTO);
+        expect(component.course()).toEqual(metisCourse);
+        expect(component.createdPost()).toBeDefined();
+        expect(component.channel()).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
         // Use spread operator to avoid mutating the shared test data array
-        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
+        expect(component.posts()).toEqual([...messagesBetweenUser1User2].reverse());
     });
 
     it('should set course and messages for exercise with exercise channel on initialization', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
-        expect(component.course).toEqual(metisCourse);
-        expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisExerciseChannelDTO);
+        expect(component.course()).toEqual(metisCourse);
+        expect(component.createdPost()).toBeDefined();
+        expect(component.channel()).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
         // Use spread operator to avoid mutating the shared test data array
-        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
+        expect(component.posts()).toEqual([...messagesBetweenUser1User2].reverse());
     });
 
     it('should reset current post', () => {
@@ -182,7 +182,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.detectChanges();
         component.resetCurrentPost();
         vi.advanceTimersByTime(0);
-        expect(component.currentPost).toBeUndefined();
+        expect(component.currentPost()).toBeUndefined();
         expect(component.currentPostId).toBeUndefined();
     });
 
@@ -206,12 +206,12 @@ describe('DiscussionSectionComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         vi.advanceTimersByTime(0);
         // Create posts with unique IDs to avoid duplicate key errors with track by post.id
-        component.posts = [
+        component.posts.set([
             { ...metisExercisePosts[0], id: 101 },
             { ...metisExercisePosts[1], id: 102 },
             { ...metisExercisePosts[0], id: 103 },
             { ...metisExercisePosts[1], id: 104 },
-        ];
+        ]);
         fixture.changeDetectorRef.detectChanges();
         vi.advanceTimersByTime(0);
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
@@ -291,7 +291,7 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('loads exercise messages if communication only', () => {
-        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
         fixture.changeDetectorRef.detectChanges();
 
@@ -302,11 +302,11 @@ describe('DiscussionSectionComponent', () => {
             true,
             metisExerciseChannelDTO,
         );
-        expect(component.channel).toBe(metisExerciseChannelDTO);
+        expect(component.channel()).toBe(metisExerciseChannelDTO);
     });
 
     it('loads lecture messages if communication only', () => {
-        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.changeDetectorRef.detectChanges();
 
@@ -317,11 +317,11 @@ describe('DiscussionSectionComponent', () => {
             true,
             metisLectureChannelDTO,
         );
-        expect(component.channel).toBe(metisLectureChannelDTO);
+        expect(component.channel()).toBe(metisLectureChannelDTO);
     });
 
     it('collapses sidebar if no channel exists', () => {
-        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course);
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.changeDetectorRef.detectChanges();
         getChannelOfLectureSpy = vi.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
@@ -335,9 +335,9 @@ describe('DiscussionSectionComponent', () => {
 
         component.setChannel(1);
 
-        expect(component.channel).toBeUndefined();
-        expect(component.noChannelAvailable).toBe(true);
-        expect(component.collapsed).toBe(true);
+        expect(component.channel()).toBeUndefined();
+        expect(component.noChannelAvailable()).toBe(true);
+        expect(component.collapsed()).toBe(true);
     });
 
     it('should react to scroll up event', () => {
@@ -353,11 +353,11 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('should toggle send message', () => {
-        component.shouldSendMessage = true;
+        component.shouldSendMessage.set(true);
         component.toggleSendMessage();
-        expect(component.shouldSendMessage).toBe(false);
+        expect(component.shouldSendMessage()).toBe(false);
         component.toggleSendMessage();
-        expect(component.shouldSendMessage).toBe(true);
+        expect(component.shouldSendMessage()).toBe(true);
     });
 
     it('should change sort direction', () => {
@@ -373,12 +373,12 @@ describe('DiscussionSectionComponent', () => {
     it('fetches new messages on scroll up if more messages are available', () => {
         // Use unique post IDs to avoid duplicate key warnings from Angular's @for track
         metisServiceGetFilteredPostsSpy.mockImplementation(() => {
-            component.posts = [{ id: 1001 } as any, { id: 1002 } as any];
+            component.posts.set([{ id: 1001 } as any, { id: 1002 } as any]);
         });
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();
-        component.posts = [];
+        component.posts.set([]);
         const commandMetisToFetchPostsSpy = vi.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');

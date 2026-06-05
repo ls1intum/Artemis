@@ -162,7 +162,7 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.detectChanges();
 
         expect(createLockStub).toHaveBeenCalledTimes(1);
-        expect(complaintsForTutorComponent.isLoading).toBe(false);
+        expect(complaintsForTutorComponent.isLoading()).toBe(false);
         expect(alertServiceErrorSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -213,7 +213,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     it('should send event when accepting a complaint', () => {
         fixture.detectChanges();
-        complaintsForTutorComponent.isLockedForLoggedInUser = false;
+        complaintsForTutorComponent.isLockedForLoggedInUser.set(false);
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -240,7 +240,7 @@ describe('ComplaintsForTutorComponent', () => {
 
     it('should directly resolve when rejecting a complaint', () => {
         fixture.detectChanges();
-        complaintsForTutorComponent.isLockedForLoggedInUser = false;
+        complaintsForTutorComponent.isLockedForLoggedInUser.set(false);
 
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
@@ -388,10 +388,10 @@ describe('ComplaintsForTutorComponent', () => {
         fixture.componentRef.setInput('complaint', unhandledComplaint);
         complaintsForTutorComponent.complaintResponse = newComplaintResponse;
 
-        complaintsForTutorComponent.isLoading = false;
-        complaintsForTutorComponent.handled = false;
-        complaintsForTutorComponent.showLockDuration = true;
-        complaintsForTutorComponent.lockedByCurrentUser = true;
+        complaintsForTutorComponent.isLoading.set(false);
+        complaintsForTutorComponent.handled.set(false);
+        complaintsForTutorComponent.showLockDuration.set(true);
+        complaintsForTutorComponent.lockedByCurrentUser.set(true);
 
         complaintsForTutorComponent.updateAssessmentAfterComplaint.subscribe((assessmentAfterComplaint) =>
             // setTimeout is used to defer the callback execution
@@ -407,19 +407,19 @@ describe('ComplaintsForTutorComponent', () => {
 
         complaintsForTutorComponent.respondToComplaint(true);
 
-        expect(complaintsForTutorComponent.isLoading).toBe(true);
-        expect(complaintsForTutorComponent.handled).toBe(false);
-        expect(complaintsForTutorComponent.showLockDuration).toBe(true);
-        expect(complaintsForTutorComponent.lockedByCurrentUser).toBe(true);
+        expect(complaintsForTutorComponent.isLoading()).toBe(true);
+        expect(complaintsForTutorComponent.handled()).toBe(false);
+        expect(complaintsForTutorComponent.showLockDuration()).toBe(true);
+        expect(complaintsForTutorComponent.lockedByCurrentUser()).toBe(true);
 
         // Run all pending timers to execute the setTimeout callback
         vi.runAllTimers();
 
-        expect(complaintsForTutorComponent.isLoading).toBe(false);
+        expect(complaintsForTutorComponent.isLoading()).toBe(false);
 
-        expect(complaintsForTutorComponent.handled).toBe(isSuccess);
-        expect(complaintsForTutorComponent.showLockDuration).toBe(!isSuccess);
-        expect(complaintsForTutorComponent.lockedByCurrentUser).toBe(!isSuccess);
+        expect(complaintsForTutorComponent.handled()).toBe(isSuccess);
+        expect(complaintsForTutorComponent.showLockDuration()).toBe(!isSuccess);
+        expect(complaintsForTutorComponent.lockedByCurrentUser()).toBe(!isSuccess);
 
         vi.useRealTimers();
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -60,6 +60,7 @@ export class BonusComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly CALCULATION_PLUS = 1;
     readonly CALCULATION_MINUS = -1;
@@ -95,11 +96,11 @@ export class BonusComponent implements OnInit {
         },
     ];
 
-    sourceGradingScales: GradingScale[] = [];
+    readonly sourceGradingScales = signal<GradingScale[]>([]);
 
-    bonusToGradeStepsDTO: GradeStepsDTO;
+    readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     private courseId: number;
     private examId: number;
 
@@ -109,11 +110,11 @@ export class BonusComponent implements OnInit {
     currentBonusStrategyOption?: BonusStrategyOption;
     currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
 
-    examples: BonusExample[] = [];
+    readonly examples = signal<BonusExample[]>([]);
     dynamicExample = new BonusExample(0, 0);
 
     bonus = new Bonus();
-    hasBonusStrategyWeightMismatch = false;
+    readonly hasBonusStrategyWeightMismatch = signal(false);
 
     private state: SearchTermPageableSearch = {
         page: 1,
@@ -124,7 +125,7 @@ export class BonusComponent implements OnInit {
     };
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         const paramMap = this.route.snapshot.paramMap;
         this.courseId = Number(paramMap.get('courseId'));
@@ -144,13 +145,13 @@ export class BonusComponent implements OnInit {
             ),
             this.gradingService.findWithBonusGradeTypeForInstructor(this.state).pipe(
                 tap((gradingScalesDto) => {
-                    this.sourceGradingScales = gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? [];
+                    this.sourceGradingScales.set(gradingScalesDto.body?.resultsOnPage.map((dto) => toEntity(dto)) ?? []);
                 }),
             ),
             this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
-                        this.bonusToGradeStepsDTO = gradeSteps;
+                        this.bonusToGradeStepsDTO.set(gradeSteps);
                         this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
                         this.gradingService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
                     } else {
@@ -166,11 +167,12 @@ export class BonusComponent implements OnInit {
         ])
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe(() => {
                 this.setSourceGradingScale();
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -180,7 +182,7 @@ export class BonusComponent implements OnInit {
 
     private setSourceGradingScale() {
         if (this.bonus.sourceGradingScale) {
-            const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
+            const sourceGradingScale = this.sourceGradingScales().find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
             if (!sourceGradingScale) {
                 throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
             }
@@ -193,11 +195,11 @@ export class BonusComponent implements OnInit {
 
     generateExamples() {
         if (this.bonus.sourceGradingScale && this.bonus.bonusStrategy) {
-            this.hasBonusStrategyWeightMismatch = this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO.gradeSteps);
-            this.examples = !this.hasBonusStrategyWeightMismatch ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO) : [];
+            this.hasBonusStrategyWeightMismatch.set(this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO()!.gradeSteps));
+            this.examples.set(!this.hasBonusStrategyWeightMismatch() ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO()!) : []);
         } else {
-            this.hasBonusStrategyWeightMismatch = false;
-            this.examples = [];
+            this.hasBonusStrategyWeightMismatch.set(false);
+            this.examples.set([]);
         }
     }
 
@@ -276,7 +278,7 @@ export class BonusComponent implements OnInit {
     }
 
     save(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const saveObservable = this.bonus.id
             ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
             : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
@@ -284,28 +286,32 @@ export class BonusComponent implements OnInit {
         saveObservable
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
-            .subscribe((bonusResponse) => (this.bonus.id = bonusResponse.body?.id));
+            .subscribe((bonusResponse) => {
+                this.bonus.id = bonusResponse.body?.id;
+                this.changeDetectorRef.markForCheck();
+            });
     }
 
     delete() {
         if (!this.bonus.id) {
             return;
         }
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.bonusService
             .deleteBonus(this.courseId, this.examId, this.bonus.id)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (bonusResponse) => {
                     this.setBonus(bonusResponse.body || new Bonus());
                     this.dialogErrorSource.next('');
+                    this.changeDetectorRef.markForCheck();
                 },
                 error: (error) => this.dialogErrorSource.next(error.message),
             });
@@ -347,7 +353,7 @@ export class BonusComponent implements OnInit {
     }
 
     calculateDynamicExample() {
-        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO);
+        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO()!);
     }
 
     private refreshDynamicExample() {
@@ -373,6 +379,6 @@ export class BonusComponent implements OnInit {
     }
 
     maxPossibleGrade() {
-        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO.gradeSteps);
+        return this.gradingService.maxGrade(this.bonusToGradeStepsDTO()!.gradeSteps);
     }
 }
