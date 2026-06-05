@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -536,6 +537,44 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         int randomIndex = random.nextInt(exercises.size());
         return exercises.get(randomIndex);
     }
+
+    /**
+     * Returns the IDs of non-test exams where the given user has a (non-test-run) StudentExam,
+     * scoped to the given course IDs. Used by global search to restrict exam visibility to
+     * registered students.
+     *
+     * @param userId    the id of the user
+     * @param courseIds the course IDs to scope the query to
+     * @return set of exam IDs where the user is registered
+     */
+    @Query("""
+            SELECT DISTINCT se.exam.id
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.testRun = FALSE
+                AND se.exam.testExam = FALSE
+                AND se.exam.course.id IN :courseIds
+            """)
+    Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);
+
+    /**
+     * Returns the IDs of exercises assigned to the given user's (non-test-run) StudentExams,
+     * scoped to the given course IDs. Used by global search to restrict exam exercise
+     * visibility to exercises included in the student's individual exam.
+     *
+     * @param userId    the id of the user
+     * @param courseIds the course IDs to scope the query to
+     * @return set of exercise IDs assigned to the user's student exams
+     */
+    @Query("""
+            SELECT DISTINCT e.id
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE se.user.id = :userId
+                AND se.testRun = FALSE
+                AND se.exam.course.id IN :courseIds
+            """)
+    Set<Long> findAssignedExamExerciseIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);
 
     /**
      * Gets the longest working time of the exam with the given id

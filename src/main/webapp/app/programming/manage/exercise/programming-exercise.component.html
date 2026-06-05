@@ -1,11 +1,11 @@
-@if (programmingExercises && filteredProgrammingExercises.length > 0) {
+@if (programmingExercises() && filteredProgrammingExercises.length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     @if (courseContext.isAtLeastEditor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises)" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises())" [ngModel]="allChecked" />
                         </th>
                     }
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
