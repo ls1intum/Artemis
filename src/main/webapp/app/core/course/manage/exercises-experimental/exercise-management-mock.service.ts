@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
+import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, ExerciseRelation } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+
+interface NewGroupSettings {
+    title: string;
+    maxPoints?: number;
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+}
 import { INTRO_JAVA_ALL_EXERCISES, INTRO_JAVA_EXERCISE_GROUPS, INTRO_JAVA_EXERCISE_RELATIONS } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
 
 /**
@@ -42,13 +52,18 @@ export class ExerciseManagementMockService {
         group?.exercises?.push(variant);
     }
 
-    addVariantWithNewGroup(variant: Exercise, sourceExercise: Exercise): CourseExerciseGroup {
+    addVariantWithNewGroup(variant: Exercise, sourceExercise: Exercise, settings: NewGroupSettings): CourseExerciseGroup {
         this._exercises.push(variant);
         const maxId = this._groups.reduce((max, g) => Math.max(max, g.id ?? 0), 0);
         const newGroup: CourseExerciseGroup = {
             id: maxId + 1,
-            title: (sourceExercise.title ?? 'Exercise').split(':')[0].trim(),
+            title: settings.title,
             order: this._groups.length,
+            releaseDate: settings.releaseDate,
+            startDate: settings.startDate,
+            dueDate: settings.dueDate,
+            assessmentDueDate: settings.assessmentDueDate,
+            maxPoints: settings.maxPoints,
             exercises: [sourceExercise, variant],
         };
         this._groups.push(newGroup);

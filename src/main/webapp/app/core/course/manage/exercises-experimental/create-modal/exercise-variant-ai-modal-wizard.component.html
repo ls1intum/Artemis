@@ -179,14 +179,14 @@
                 </div>
                 <h6 class="variant-card__title">{{ variant.title }}</h6>
                 <div class="variant-card__chips">
-                    @if (variant.difficulty) {
-                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
-                    }
                     @if (variant.maxPoints) {
                         <span class="info-chip">{{ variant.maxPoints }} pts</span>
                     }
+                    @if (variant.difficulty) {
+                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
+                    }
                     @for (cat of variant.categories; track cat.category) {
-                        <span class="info-chip">{{ cat.category }}</span>
+                        <span class="badge" [style.backgroundColor]="cat.color ?? '#6c757d'">{{ cat.category }}</span>
                     }
                 </div>
                 <p class="variant-card__preview">{{ variant.problemStatement | slice: 3 : 120 }}…</p>
@@ -214,6 +214,63 @@
                         <div class="placement-option__body">
                             <span class="placement-option__title">Create new group with original</span>
                             <span class="placement-option__hint">Groups the source exercise and this variant together</span>
+                            @if (placementChoice() === 'new-group') {
+                                <div class="new-group-settings" (click)="$event.stopPropagation()">
+                                    <div class="d-flex flex-wrap gap-2 align-items-end mt-2">
+                                        <div class="flex-grow-1" style="min-width: 120px">
+                                            <div class="new-group-settings__label">Group title</div>
+                                            <input type="text" [ngModel]="newGroupTitle()" (ngModelChange)="newGroupTitle.set($event)" class="form-control form-control-sm" />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Max points</div>
+                                            <input
+                                                type="number"
+                                                [ngModel]="newGroupMaxPoints()"
+                                                (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
+                                                class="form-control form-control-sm new-group-settings__pts"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        <div>
+                                            <div class="new-group-settings__label">Release</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupReleaseDate()"
+                                                (ngModelChange)="newGroupReleaseDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Start</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupStartDate()"
+                                                (ngModelChange)="newGroupStartDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Due</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupDueDate()"
+                                                (ngModelChange)="newGroupDueDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div class="new-group-settings__label">Feedback due</div>
+                                            <input
+                                                type="datetime-local"
+                                                [ngModel]="newGroupAssessmentDueDate()"
+                                                (ngModelChange)="newGroupAssessmentDueDate.set($event)"
+                                                class="form-control form-control-sm new-group-settings__date"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     </label>
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'standalone'">

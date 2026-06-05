@@ -1,6 +1,14 @@
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
+/** A competency linked to a group. Weight follows the same LOW/MEDIUM/HIGH scale as exercise-level links. */
+export interface GroupCompetencyLink {
+    competencyId: number;
+    title: string;
+    /** LOW = 0.25, MEDIUM = 0.5, HIGH = 1.0 */
+    weight: number;
+}
+
 /**
  * Course-level grouping of exercises. Distinct from the exam-scoped `ExerciseGroup`.
  *
@@ -37,6 +45,9 @@ export class CourseExerciseGroup {
      * all variants (e.g. to obtain AI feedback), but only up to this many count towards the grade.
      */
     handInLimit?: number;
+
+    /** Competencies shared by all exercises in this group. */
+    competencyLinks?: GroupCompetencyLink[];
 
     exercises?: Exercise[];
 }

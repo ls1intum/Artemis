@@ -565,7 +565,15 @@ export class ExerciseVariantAiEditorComponent implements OnInit, OnDestroy, Afte
         if (group?.id !== undefined) {
             this.mockService.addVariantToGroup(variant, group.id);
         } else {
-            this.mockService.addVariantWithNewGroup(variant, this.sourceExercise());
+            const src = this.sourceExercise();
+            this.mockService.addVariantWithNewGroup(variant, src, {
+                title: (src.title ?? 'Exercise').split(':')[0].trim(),
+                maxPoints: src.maxPoints,
+                releaseDate: src.releaseDate,
+                startDate: src.startDate,
+                dueDate: src.dueDate,
+                assessmentDueDate: src.assessmentDueDate,
+            });
         }
         this.variantAdded.emit(variant);
         this.close();

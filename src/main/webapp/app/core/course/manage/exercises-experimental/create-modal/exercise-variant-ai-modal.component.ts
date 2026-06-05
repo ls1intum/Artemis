@@ -1,4 +1,5 @@
 import { Component, OnDestroy, computed, inject, input, output, signal } from '@angular/core';
+import dayjs from 'dayjs/esm';
 import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,6 +35,13 @@ export class ExerciseVariantAiModalComponent implements OnDestroy {
     readonly generationStep = signal(0);
     readonly generatedVariant = signal<ProgrammingExercise | null>(null);
     readonly placementChoice = signal<PlacementChoice>('existing-group');
+
+    readonly newGroupTitle = signal('');
+    readonly newGroupMaxPoints = signal<number | undefined>(undefined);
+    readonly newGroupReleaseDate = signal('');
+    readonly newGroupStartDate = signal('');
+    readonly newGroupDueDate = signal('');
+    readonly newGroupAssessmentDueDate = signal('');
 
     readonly changeDifficulty = signal(false);
     readonly targetDifficulty = signal<DifficultyLevel>(DifficultyLevel.MEDIUM);
@@ -90,6 +98,12 @@ export class ExerciseVariantAiModalComponent implements OnDestroy {
         this.generationStep.set(0);
         this.generatedVariant.set(null);
         this.placementChoice.set('existing-group');
+        this.newGroupTitle.set('');
+        this.newGroupMaxPoints.set(undefined);
+        this.newGroupReleaseDate.set('');
+        this.newGroupStartDate.set('');
+        this.newGroupDueDate.set('');
+        this.newGroupAssessmentDueDate.set('');
         this.changeDifficulty.set(false);
         this.changeDomain.set(false);
         this.domainText.set('');
@@ -98,6 +112,14 @@ export class ExerciseVariantAiModalComponent implements OnDestroy {
     }
 
     startGeneration(): void {
+        const src = this.sourceExercise();
+        this.newGroupTitle.set((src.title ?? 'Exercise').split(':')[0].trim());
+        this.newGroupMaxPoints.set(src.maxPoints);
+        this.newGroupReleaseDate.set(this.fmtDate(src.releaseDate));
+        this.newGroupStartDate.set(this.fmtDate(src.startDate));
+        this.newGroupDueDate.set(this.fmtDate(src.dueDate));
+        this.newGroupAssessmentDueDate.set(this.fmtDate(src.assessmentDueDate));
+
         const variant = generateVariant(this.sourceExercise(), {
             changeDifficulty: this.changeDifficulty(),
             targetDifficulty: this.targetDifficulty(),
@@ -138,7 +160,14 @@ export class ExerciseVariantAiModalComponent implements OnDestroy {
                 break;
             }
             case 'new-group':
-                this.mockService.addVariantWithNewGroup(variant, this.sourceExercise());
+                this.mockService.addVariantWithNewGroup(variant, this.sourceExercise(), {
+                    title: this.newGroupTitle(),
+                    maxPoints: this.newGroupMaxPoints(),
+                    releaseDate: this.newGroupReleaseDate() ? dayjs(this.newGroupReleaseDate()) : undefined,
+                    startDate: this.newGroupStartDate() ? dayjs(this.newGroupStartDate()) : undefined,
+                    dueDate: this.newGroupDueDate() ? dayjs(this.newGroupDueDate()) : undefined,
+                    assessmentDueDate: this.newGroupAssessmentDueDate() ? dayjs(this.newGroupAssessmentDueDate()) : undefined,
+                });
                 break;
             case 'standalone':
                 this.mockService.addVariantStandalone(variant);
@@ -147,6 +176,10 @@ export class ExerciseVariantAiModalComponent implements OnDestroy {
 
         this.variantAdded.emit(variant);
         this.close();
+    }
+
+    private fmtDate(d: dayjs.Dayjs | undefined): string {
+        return d?.format('YYYY-MM-DDTHH:mm') ?? '';
     }
 
     private clearTimers(): void {

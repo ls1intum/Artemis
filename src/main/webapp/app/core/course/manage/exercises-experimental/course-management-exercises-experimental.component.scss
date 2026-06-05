@@ -52,3 +52,18 @@
 .cdk-drag-animating {
     transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+.group-competency-selector {
+    columns: 240px; // auto-fills as many 240px columns as the container allows
+    column-gap: 24px;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+
+    > div {
+        break-inside: avoid; // keep each checkbox+select pair in one column
+    }
+
+    label {
+        display: contents;
+    }
+}

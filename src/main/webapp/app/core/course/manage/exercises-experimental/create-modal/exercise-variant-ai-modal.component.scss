@@ -386,6 +386,24 @@
     }
 }
 
+// ── New-group inline settings ──────────────────────────────────────────────────
+
+.new-group-settings {
+    &__label {
+        font-size: 0.7rem;
+        color: var(--bs-secondary-color);
+        margin-bottom: 0.2rem;
+    }
+
+    &__pts {
+        width: 80px;
+    }
+
+    &__date {
+        width: 160px;
+    }
+}
+
 // ── AI warning ─────────────────────────────────────────────────────────────────
 
 .ai-warning {

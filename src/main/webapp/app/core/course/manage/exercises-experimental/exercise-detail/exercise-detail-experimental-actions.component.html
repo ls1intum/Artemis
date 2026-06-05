@@ -1,4 +1,10 @@
 @if (exercise(); as exercise) {
+    <jhi-exercise-variant-ai-modal-dispatcher
+        [visible]="aiVariantModalVisible()"
+        (visibleChange)="aiVariantModalVisible.set($event)"
+        [sourceExercise]="exercise"
+        [courseId]="course()?.id"
+    />
     <div class="d-flex flex-wrap gap-2">
         <!-- Create Variant with AI — experimental-only button -->
         @if (exercise.isAtLeastEditor) {
@@ -7,13 +13,6 @@
                 <span>Create Variant with AI</span>
             </a>
         }
-
-        <jhi-exercise-variant-ai-modal-dispatcher
-            [visible]="aiVariantModalVisible()"
-            (visibleChange)="aiVariantModalVisible.set($event)"
-            [sourceExercise]="exercise"
-            [courseId]="course()?.id"
-        />
         <!-- Edit -->
         @if (exercise.isAtLeastEditor) {
             <a [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
