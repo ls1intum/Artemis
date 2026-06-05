@@ -1,0 +1,256 @@
+@if (displayMode() === 'dialog') {
+    <p-dialog
+        header="Create Variant with AI — Advanced Editor"
+        [visible]="visible()"
+        (visibleChange)="onClose($event)"
+        (onShow)="onDialogShow()"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: '90vw', maxWidth: '1400px' }"
+        [contentStyle]="{ padding: '0', overflow: 'hidden' }"
+    >
+        <div class="editor-layout">
+            <div class="chat-panel border-end">
+                <ng-container *ngTemplateOutlet="chatHeader" />
+                <ng-container *ngTemplateOutlet="chatMsgsPanel" />
+                <ng-container *ngTemplateOutlet="chatFooter" />
+            </div>
+            <div class="preview-panel d-flex flex-column">
+                <ng-container *ngTemplateOutlet="previewHeader" />
+                <ng-container *ngTemplateOutlet="previewBody" />
+                <ng-container *ngTemplateOutlet="previewFooter" />
+            </div>
+        </div>
+    </p-dialog>
+} @else {
+    <jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
+        <ng-template jhiPanel label="AI Assistant" [icon]="faRobot">
+            <div class="d-flex flex-column h-100">
+                <ng-container *ngTemplateOutlet="chatMsgsPanel" />
+                <ng-container *ngTemplateOutlet="chatFooter" />
+            </div>
+        </ng-template>
+        <ng-template jhiPanel label="Exercise Preview">
+            <div class="d-flex flex-column h-100">
+                <ng-container *ngTemplateOutlet="previewHeader" />
+                <ng-container *ngTemplateOutlet="previewBody" />
+                <ng-container *ngTemplateOutlet="previewFooter" />
+            </div>
+        </ng-template>
+    </jhi-resizable-panels>
+}
+
+<!-- ── Chat header ────────────────────────────────────────────────────────── -->
+<ng-template #chatHeader>
+    <div class="chat-header px-3 py-2 border-bottom d-flex align-items-center gap-2 bg-body-tertiary">
+        <fa-icon [icon]="faRobot" class="text-warning" />
+        <span class="fw-semibold small">AI Assistant</span>
+        <span class="ms-auto text-muted small text-truncate" style="max-width: 52%">
+            <fa-icon [icon]="getIcon(sourceExercise().type)" class="me-1" />{{ sourceExercise().title }}
+        </span>
+        @if (displayMode() === 'dialog' && courseId() !== undefined) {
+            <button type="button" class="btn btn-sm btn-link p-0 ms-1 text-muted" title="Open as full page" (click)="openAsPage()">
+                <fa-icon [icon]="faArrowUpRightFromSquare" />
+            </button>
+        }
+    </div>
+</ng-template>
+
+<!-- ── Chat messages ──────────────────────────────────────────────────────── -->
+<ng-template #chatMsgsPanel>
+    <div class="chat-messages" #chatScroll>
+        @for (msg of chatMessages(); track msg.id) {
+            <div class="chat-msg chat-msg--{{ msg.role }}">
+                <div class="chat-msg__avatar">
+                    @if (msg.role === 'ai') {
+                        <fa-icon [icon]="faRobot" />
+                    } @else {
+                        <fa-icon [icon]="faUser" />
+                    }
+                </div>
+                <div class="chat-msg__bubble">{{ msg.text }}</div>
+            </div>
+        }
+
+        @if (aiTyping()) {
+            <div class="chat-msg chat-msg--ai">
+                <div class="chat-msg__avatar"><fa-icon [icon]="faRobot" /></div>
+                <div class="chat-msg__bubble chat-msg__bubble--typing">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </div>
+        }
+
+        @if (pillsVisible() && !aiTyping()) {
+            <div class="chat-pills ps-5">
+                @for (pill of pills; track pill.action) {
+                    <button class="chat-pill" type="button" (click)="clickPill(pill)">{{ pill.label }}</button>
+                }
+            </div>
+        }
+    </div>
+</ng-template>
+
+<!-- ── Chat footer ────────────────────────────────────────────────────────── -->
+<ng-template #chatFooter>
+    <div class="chat-footer border-top bg-body px-3 py-2">
+        <div class="d-flex gap-2 mb-2">
+            <input
+                pInputText
+                [ngModel]="chatInput()"
+                (ngModelChange)="chatInput.set($event)"
+                (keydown.enter)="sendMessage()"
+                [disabled]="aiTyping()"
+                placeholder="Type a message or pick an option above…"
+                class="form-control form-control-sm flex-grow-1"
+            />
+            <button type="button" class="btn btn-warning btn-sm chat-send-btn" [disabled]="!chatInput().trim() || aiTyping()" (click)="sendMessage()">
+                <fa-icon [icon]="faPaperPlane" />
+            </button>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="token-bar flex-grow-1">
+                <div
+                    class="token-bar__fill"
+                    [style.width.%]="(tokensUsed() / maxTokens) * 100"
+                    [class.token-bar__fill--warn]="tokensUsed() / maxTokens > 0.75"
+                    [class.token-bar__fill--danger]="tokensUsed() / maxTokens > 0.9"
+                ></div>
+            </div>
+            <span class="text-muted small">{{ tokensUsed() | number }} / {{ maxTokens | number }} tokens</span>
+        </div>
+    </div>
+</ng-template>
+
+<!-- ── Preview header ─────────────────────────────────────────────────────── -->
+<ng-template #previewHeader>
+    <div class="px-3 py-2 border-bottom bg-body-tertiary d-flex align-items-center justify-content-between flex-shrink-0">
+        <span class="fw-semibold small">Exercise Preview</span>
+        @if (pendingDiffCount() > 0) {
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-outline-secondary btn-sm py-0" (click)="declineAll()">Decline all</button>
+                <button type="button" class="btn btn-outline-success btn-sm py-0" (click)="acceptAll()">Accept all ({{ pendingDiffCount() }})</button>
+            </div>
+        }
+    </div>
+</ng-template>
+
+<!-- ── Preview body ───────────────────────────────────────────────────────── -->
+<ng-template #previewBody>
+    <div class="preview-body flex-grow-1 overflow-auto p-3">
+        <!-- ── Title ── -->
+        <div class="card mb-3" [class.border-warning]="diffFor('title')?.status === 'pending'" [class.border-success]="diffFor('title')?.status === 'accepted'">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                <span class="small fw-semibold text-uppercase text-muted">Title</span>
+                @if (diffFor('title')?.status === 'pending') {
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-outline-success btn-sm py-0 px-2" (click)="acceptDiff('title')">
+                            <fa-icon [icon]="faCheck" class="me-1" />Accept
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" (click)="declineDiff('title')">
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </div>
+                } @else if (diffFor('title')?.status === 'accepted') {
+                    <span class="badge bg-success-subtle text-success small">AI applied</span>
+                }
+            </div>
+            <div class="card-body py-2">
+                @if (diffFor('title')?.status === 'pending') {
+                    <div class="diff-inline mb-0">
+                        <div class="diff-inline-removed">{{ diffFor('title')!.oldValue }}</div>
+                        <div class="diff-inline-added">{{ diffFor('title')!.newValue }}</div>
+                    </div>
+                } @else {
+                    <input class="form-control form-control-sm" [ngModel]="editableFields().title" (ngModelChange)="updateField('title', $event)" />
+                }
+            </div>
+        </div>
+
+        <!-- ── Difficulty ── -->
+        <div class="card mb-3" [class.border-warning]="diffFor('difficulty')?.status === 'pending'" [class.border-success]="diffFor('difficulty')?.status === 'accepted'">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                <span class="small fw-semibold text-uppercase text-muted">Difficulty</span>
+                @if (diffFor('difficulty')?.status === 'pending') {
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-outline-success btn-sm py-0 px-2" (click)="acceptDiff('difficulty')">
+                            <fa-icon [icon]="faCheck" class="me-1" />Accept
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" (click)="declineDiff('difficulty')">
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </div>
+                } @else if (diffFor('difficulty')?.status === 'accepted') {
+                    <span class="badge bg-success-subtle text-success small">AI applied</span>
+                }
+            </div>
+            <div class="card-body py-2">
+                @if (diffFor('difficulty')?.status === 'pending') {
+                    <div class="diff-inline mb-0">
+                        <div class="diff-inline-removed">{{ diffFor('difficulty')!.oldValue }}</div>
+                        <div class="diff-inline-added">{{ diffFor('difficulty')!.newValue }}</div>
+                    </div>
+                } @else {
+                    <select class="form-select form-select-sm" [ngModel]="editableFields().difficulty" (ngModelChange)="updateField('difficulty', $event)">
+                        @for (opt of difficultyOptions; track opt.value) {
+                            <option [value]="opt.value">{{ opt.label }}</option>
+                        }
+                    </select>
+                }
+            </div>
+        </div>
+
+        <!-- ── Problem Statement ── -->
+        <div
+            class="card mb-3"
+            [class.border-warning]="diffFor('problemStatement')?.status === 'pending'"
+            [class.border-success]="diffFor('problemStatement')?.status === 'accepted'"
+        >
+            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                <span class="small fw-semibold text-uppercase text-muted">Problem Statement</span>
+                @if (diffFor('problemStatement')?.status === 'pending') {
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-outline-success btn-sm py-0 px-2" (click)="acceptDiff('problemStatement')">
+                            <fa-icon [icon]="faCheck" class="me-1" />Accept
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" (click)="declineDiff('problemStatement')">
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    </div>
+                } @else if (diffFor('problemStatement')?.status === 'accepted') {
+                    <span class="badge bg-success-subtle text-success small">AI applied</span>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (diffFor('problemStatement')?.status === 'pending') {
+                    <div class="diff-lines">
+                        @for (line of diffFor('problemStatement')!.diffLines; track $index) {
+                            <div class="diff-line diff-line--{{ line.type }}">
+                                <span class="diff-line__gutter">{{ line.type === 'added' ? '+' : line.type === 'removed' ? '−' : ' ' }}</span>
+                                <span class="diff-line__content">{{ line.content }}</span>
+                            </div>
+                        }
+                    </div>
+                } @else {
+                    <textarea
+                        class="form-control border-0 rounded-0 rounded-bottom"
+                        rows="10"
+                        style="resize: vertical; font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.82rem"
+                        [ngModel]="editableFields().problemStatement"
+                        (ngModelChange)="updateField('problemStatement', $event)"
+                    ></textarea>
+                }
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<!-- ── Preview footer ─────────────────────────────────────────────────────── -->
+<ng-template #previewFooter>
+    <div class="px-3 py-2 border-top bg-body flex-shrink-0 d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
+        <button type="button" class="btn btn-success btn-sm" [disabled]="!hasChanges()" (click)="applyAndCreate()"><fa-icon [icon]="faCheck" class="me-1" />Create Variant</button>
+    </div>
+</ng-template>

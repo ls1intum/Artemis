@@ -1,0 +1,285 @@
+// ── Layout ─────────────────────────────────────────────────────────────────────
+
+:host {
+    display: contents;
+}
+
+.editor-layout {
+    display: flex;
+    height: 78vh;
+    max-height: 820px;
+    overflow: hidden;
+}
+
+// ── Chat panel ────────────────────────────────────────────────────────────────
+
+.chat-panel {
+    width: 38%;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    scroll-behavior: smooth;
+}
+
+// ── Individual message ────────────────────────────────────────────────────────
+
+.chat-msg {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    max-width: 88%;
+
+    &--user {
+        flex-direction: row-reverse;
+        align-self: flex-end;
+
+        .chat-msg__bubble {
+            background: var(--bs-warning);
+            color: var(--bs-dark);
+            border-radius: 1rem 1rem 0.25rem 1rem;
+        }
+
+        .chat-msg__avatar {
+            background: var(--bs-warning);
+            color: var(--bs-dark);
+        }
+    }
+
+    &--ai {
+        align-self: flex-start;
+
+        .chat-msg__bubble {
+            background: var(--bs-tertiary-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 1rem 1rem 1rem 0.25rem;
+        }
+    }
+
+    &__avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--bs-secondary-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+        color: var(--bs-secondary-color);
+    }
+
+    &__bubble {
+        padding: 0.55rem 0.85rem;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        word-break: break-word;
+
+        &--typing {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.7rem 1rem;
+        }
+    }
+}
+
+// ── Typing dots ───────────────────────────────────────────────────────────────
+
+.typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--bs-secondary-color);
+    animation: typing-bounce 1.2s infinite ease-in-out;
+
+    &:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    &:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+}
+
+@keyframes typing-bounce {
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: translateY(-5px);
+        opacity: 1;
+    }
+}
+
+// ── Pills ─────────────────────────────────────────────────────────────────────
+
+.chat-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.25rem 0;
+}
+
+.chat-pill {
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--bs-warning);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--bs-warning);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: var(--bs-warning);
+        color: var(--bs-dark);
+    }
+}
+
+// ── Chat send button ──────────────────────────────────────────────────────────
+
+.chat-send-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+// ── Token bar ─────────────────────────────────────────────────────────────────
+
+.token-bar {
+    height: 4px;
+    background: var(--bs-secondary-bg);
+    border-radius: 999px;
+    overflow: hidden;
+
+    &__fill {
+        height: 100%;
+        background: var(--bs-success);
+        border-radius: 999px;
+        transition:
+            width 0.4s ease,
+            background 0.3s ease;
+
+        &--warn {
+            background: var(--bs-warning);
+        }
+        &--danger {
+            background: var(--bs-danger);
+        }
+    }
+}
+
+// ── Preview panel ─────────────────────────────────────────────────────────────
+
+.preview-panel {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.preview-body {
+    overflow-y: auto;
+}
+
+// ── Inline diff (for simple fields: title, difficulty) ────────────────────────
+
+.diff-inline {
+    font-size: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.diff-inline-removed {
+    background: rgba(220, 53, 69, 0.08);
+    border-left: 3px solid var(--bs-danger);
+    padding: 0.25rem 0.5rem;
+    color: var(--bs-secondary-color);
+    text-decoration: line-through;
+    border-radius: 0.2rem;
+}
+
+.diff-inline-added {
+    background: rgba(25, 135, 84, 0.08);
+    border-left: 3px solid var(--bs-success);
+    padding: 0.25rem 0.5rem;
+    color: var(--bs-body-color);
+    border-radius: 0.2rem;
+}
+
+// ── Multi-line diff (for problem statement) ───────────────────────────────────
+
+.diff-lines {
+    font-family: ui-monospace, 'Cascadia Code', 'Menlo', monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.diff-line {
+    display: flex;
+    align-items: baseline;
+
+    &--added {
+        background: rgba(40, 167, 69, 0.1);
+        .diff-line__gutter {
+            color: #28a745;
+            background: rgba(40, 167, 69, 0.15);
+        }
+    }
+
+    &--removed {
+        background: rgba(220, 53, 69, 0.07);
+        .diff-line__gutter {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.12);
+        }
+        .diff-line__content {
+            color: var(--bs-secondary-color);
+            text-decoration: line-through;
+        }
+    }
+
+    &--unchanged {
+        .diff-line__gutter {
+            color: var(--bs-border-color);
+            background: var(--bs-body-bg);
+        }
+        .diff-line__content {
+            color: var(--bs-secondary-color);
+        }
+    }
+
+    &__gutter {
+        width: 1.8rem;
+        flex-shrink: 0;
+        text-align: center;
+        font-weight: 700;
+        padding: 1px 0;
+        user-select: none;
+    }
+
+    &__content {
+        flex: 1;
+        padding: 1px 0.5rem 1px 0.25rem;
+        word-break: break-word;
+        white-space: pre-wrap;
+    }
+}

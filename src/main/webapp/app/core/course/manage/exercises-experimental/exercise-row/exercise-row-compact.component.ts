@@ -1,7 +1,7 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -17,6 +17,7 @@ import {
     faPlayCircle,
     faPlus,
     faRedo,
+    faRobot,
     faStopCircle,
     faTable,
     faTrash,
@@ -31,6 +32,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
 import {
     DifficultyLevel,
     Exercise,
@@ -72,9 +74,12 @@ import { ExerciseManagementDevSettingsService } from 'app/core/course/manage/exe
         ArtemisDatePipe,
         DeleteButtonDirective,
         ExerciseCategoriesComponent,
+        ExerciseVariantAiModalDispatcherComponent,
     ],
 })
 export class ExerciseRowCompactComponent {
+    readonly aiVariantModalVisible = signal(false);
+
     readonly exercise = input.required<Exercise>();
     /** The group the exercise belongs to, if any — its dates override the exercise's own dates. */
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
@@ -85,6 +90,8 @@ export class ExerciseRowCompactComponent {
     readonly selected = input<boolean>(false);
     readonly owningGroup = input<CourseExerciseGroup | undefined>(undefined);
     readonly groups = input<CourseExerciseGroup[]>([]);
+    /** Route segments inserted between courseId and urlSegment in the exercise title link. Used by versioned views to keep the mock interceptor active. */
+    readonly overviewRouteMiddleSegments = input<string[]>([]);
 
     readonly selectedChange = output<void>();
     readonly groupChange = output<CourseExerciseGroup | undefined>();
@@ -118,6 +125,7 @@ export class ExerciseRowCompactComponent {
     protected readonly faClipboardList = faClipboardList;
     protected readonly faLightbulb = faLightbulb;
     protected readonly faRedo = faRedo;
+    protected readonly faRobot = faRobot;
     protected readonly faUsers = faUsers;
     protected readonly faPlus = faPlus;
 
@@ -133,11 +141,13 @@ export class ExerciseRowCompactComponent {
     private readonly eventManager = inject(EventManager);
     private readonly profileService = inject(ProfileService);
     readonly devSettings = inject(ExerciseManagementDevSettingsService);
+    private readonly router = inject(Router);
 
     readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
     readonly icon = computed(() => getIcon(this.exercise().type));
     readonly urlSegment = computed(() => getExerciseUrlSegment(this.exercise().type));
+    readonly titleLink = computed(() => ['/course-management', this.courseId(), ...this.overviewRouteMiddleSegments(), this.urlSegment(), this.exercise().id]);
     readonly effectiveReleaseDate = computed(() => effectiveDate(this.exercise(), this.group(), 'releaseDate'));
     readonly effectiveDueDate = computed(() => effectiveDate(this.exercise(), this.group(), 'dueDate'));
     readonly dueDateOverridden = computed(() => !!this.group()?.dueDate);
@@ -155,6 +165,17 @@ export class ExerciseRowCompactComponent {
                 return 'bg-secondary';
         }
     });
+
+    openCreateVariant(): void {
+        if (this.devSettings.variantCreationMode() === 'chat') {
+            const exId = this.exercise().id;
+            if (exId !== undefined) {
+                this.router.navigate(['/course-management', this.courseId(), 'exercises', 'experimental', 'create-variant', exId]);
+            }
+        } else {
+            this.aiVariantModalVisible.set(true);
+        }
+    }
 
     onGroupSelect(groupId: number | undefined): void {
         this.groupChange.emit(this.groups().find((g) => g.id === groupId));

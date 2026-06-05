@@ -9,6 +9,7 @@ import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -216,6 +217,94 @@ export const courseManagementRoutes: Routes = [
                             authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.course.exercises',
                         },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    // Experimental exercise detail — copies of the original detail components with the AI creation
+                    // button added. Original routes below remain completely unchanged.
+                    {
+                        path: 'exercises/experimental/programming-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/exercise-detail/programming-exercise-detail-experimental.component').then(
+                                (m) => m.ProgrammingExerciseDetailExperimentalComponent,
+                            ),
+                        resolve: { programmingExercise: ProgrammingExerciseResolve },
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.programmingExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/experimental/text-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/exercise-detail/text-exercise-detail-experimental.component').then(
+                                (m) => m.TextExerciseDetailExperimentalComponent,
+                            ),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.textExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/experimental/modeling-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/exercise-detail/modeling-exercise-detail-experimental.component').then(
+                                (m) => m.ModelingExerciseDetailExperimentalComponent,
+                            ),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.modelingExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/experimental/quiz-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/exercise-detail/quiz-exercise-detail-experimental.component').then(
+                                (m) => m.QuizExerciseDetailExperimentalComponent,
+                            ),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.quizExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/experimental/file-upload-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/exercise-detail/file-upload-exercise-detail-experimental.component').then(
+                                (m) => m.FileUploadExerciseDetailExperimentalComponent,
+                            ),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.fileUploadExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/experimental/create-variant/:exerciseId',
+                        loadComponent: () =>
+                            import('app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-page.component').then((m) => m.ExerciseVariantAiPageComponent),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'Create AI Variant' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    // Original versioned exercise detail — real detail pages, no changes, backed by mock interceptor.
+                    {
+                        path: 'exercises/original/programming-exercises/:exerciseId',
+                        loadComponent: () => import('app/programming/manage/detail/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
+                        resolve: { programmingExercise: ProgrammingExerciseResolve },
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.programmingExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/original/text-exercises/:exerciseId',
+                        loadComponent: () => import('app/text/manage/detail/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.textExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/original/modeling-exercises/:exerciseId',
+                        loadComponent: () => import('app/modeling/manage/detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.modelingExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/original/quiz-exercises/:exerciseId',
+                        loadComponent: () => import('app/quiz/manage/detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.quizExercise.home.title' },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'exercises/original/file-upload-exercises/:exerciseId',
+                        loadComponent: () =>
+                            import('app/fileupload/manage/exercise-details/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
+                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.fileUploadExercise.home.title' },
                         canActivate: [UserRouteAccessService],
                     },
                     {

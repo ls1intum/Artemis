@@ -17,6 +17,11 @@ import { CourseExerciseGroup, ExerciseRelation, ExerciseRelationEndpointKind, Ex
 // Semester: Summer 2026  (2026-04-13 – 2026-07-24)
 const WEEK = (offsetWeeks: number): dayjs.Dayjs => dayjs('2026-04-13').add(offsetWeeks, 'week');
 
+export const MOCK_COURSE_ID = 42;
+
+// Minimal course reference attached to every mock exercise so detail components can resolve courseId.
+const MOCK_COURSE_REF = { id: MOCK_COURSE_ID } as Course;
+
 // A generic markdown problem statement so the student exercise detail view has something to render.
 // Kept free of [task] / test-case syntax so it renders without participations or build results.
 function mockProblemStatement(title: string): string {
@@ -41,6 +46,7 @@ function mockProblemStatement(title: string): string {
 function base(id: number, title: string, shortName: string, week: number, durationDays = 7): Partial<Exercise> {
     return {
         id,
+        course: MOCK_COURSE_REF,
         title,
         shortName,
         releaseDate: WEEK(week),
@@ -50,6 +56,9 @@ function base(id: number, title: string, shortName: string, week: number, durati
         mode: ExerciseMode.INDIVIDUAL,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         problemStatement: mockProblemStatement(title),
+        isAtLeastTutor: true,
+        isAtLeastEditor: true,
+        isAtLeastInstructor: true,
     };
 }
 

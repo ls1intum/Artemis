@@ -124,6 +124,7 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
     protected readonly faCheck = faCheck;
     protected readonly faCode = faCode;
     protected readonly ExerciseType = ExerciseType;
+    protected readonly OVERVIEW_ROUTE_MIDDLE_SEGMENTS = ['exercises', 'experimental'];
 
     protected readonly ALL_EXERCISE_TYPES = ALL_EXERCISE_TYPES;
     protected readonly EXERCISE_TYPE_CREATE_ROUTES = EXERCISE_TYPE_CREATE_ROUTES;

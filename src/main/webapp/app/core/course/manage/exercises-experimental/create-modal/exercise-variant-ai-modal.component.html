@@ -1,0 +1,202 @@
+<p-dialog
+    header="Create a new variant with AI"
+    [visible]="visible()"
+    (visibleChange)="onClose($event)"
+    [modal]="true"
+    [style]="{ width: '640px', maxWidth: '95vw' }"
+    [draggable]="false"
+    [closable]="phase() !== 'generating'"
+>
+    <!-- ── Configure phase ─────────────────────────────────────────────────────── -->
+    @if (phase() === 'configure') {
+        <div class="source-badge mb-4">
+            <fa-icon [icon]="getIcon(sourceExercise().type)" class="source-badge__icon" />
+            <span class="source-badge__title">{{ sourceExercise().title }}</span>
+            @if (sourceExercise().difficulty) {
+                <span class="badge {{ difficultyBadgeClass(sourceExercise().difficulty) }}">{{ sourceExercise().difficulty }}</span>
+            }
+        </div>
+
+        <p class="text-muted small mb-3">Select which aspects the AI should change. At least one is required.</p>
+
+        <div class="options-list mb-4">
+            <!-- Difficulty -->
+            <div class="option-row" [class.option-row--active]="changeDifficulty()">
+                <div class="option-header">
+                    <p-checkbox [binary]="true" [ngModel]="changeDifficulty()" (ngModelChange)="changeDifficulty.set($event)" inputId="opt-difficulty" />
+                    <label for="opt-difficulty" class="option-label">
+                        <span class="option-title">Difficulty</span>
+                        @if (sourceExercise().difficulty) {
+                            <span class="option-hint">currently {{ sourceExercise().difficulty!.toLowerCase() }}</span>
+                        }
+                    </label>
+                </div>
+                @if (changeDifficulty()) {
+                    <div class="option-detail">
+                        <span class="option-detail-label">Target:</span>
+                        @for (d of availableDifficulties(); track d.value) {
+                            <div class="radio-item">
+                                <p-radiobutton
+                                    [inputId]="'diff-' + d.value"
+                                    name="difficulty"
+                                    [value]="d.value"
+                                    [ngModel]="targetDifficulty()"
+                                    (ngModelChange)="targetDifficulty.set($event)"
+                                />
+                                <label [for]="'diff-' + d.value">{{ d.label }}</label>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Application domain -->
+            <div class="option-row" [class.option-row--active]="changeDomain()">
+                <div class="option-header">
+                    <p-checkbox [binary]="true" [ngModel]="changeDomain()" (ngModelChange)="changeDomain.set($event)" inputId="opt-domain" />
+                    <label for="opt-domain" class="option-label">
+                        <span class="option-title">Application domain</span>
+                        <span class="option-hint">change the real-world theme</span>
+                    </label>
+                </div>
+                @if (changeDomain()) {
+                    <div class="option-detail option-detail--input">
+                        <input pInputText [ngModel]="domainText()" (ngModelChange)="domainText.set($event)" placeholder="e.g. space exploration, cooking, banking…" class="w-100" />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="instructions" class="form-label small fw-semibold mb-1">Additional instructions <span class="text-muted fw-normal">(optional)</span></label>
+            <textarea
+                pTextarea
+                id="instructions"
+                rows="3"
+                [ngModel]="additionalInstructions()"
+                (ngModelChange)="additionalInstructions.set($event)"
+                placeholder="e.g. Make the problem about sorting instead of searching. Keep the same point value."
+                class="w-100"
+                style="resize: vertical"
+            ></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!canGenerate()" (click)="startGeneration()">
+                <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
+                Generate Variant
+            </button>
+        </div>
+    }
+
+    <!-- ── Generating phase ────────────────────────────────────────────────────── -->
+    @if (phase() === 'generating') {
+        <div class="generating-panel">
+            <div class="generating-icon-wrapper">
+                <fa-icon [icon]="faRobot" class="generating-icon" />
+                <div class="generating-ring"></div>
+            </div>
+
+            <h6 class="fw-semibold mb-1">Generating your variant…</h6>
+            <p class="text-muted small mb-4">Verifying all repositories build and tests pass</p>
+
+            <ol class="generation-steps">
+                @for (step of generationSteps; track step.label; let i = $index) {
+                    <li
+                        class="generation-step"
+                        [class.generation-step--done]="i < generationStep()"
+                        [class.generation-step--active]="i === generationStep()"
+                        [class.generation-step--pending]="i > generationStep()"
+                        [class.generation-step--loop]="step.loop"
+                    >
+                        <span class="generation-step__icon">
+                            @if (i < generationStep()) {
+                                <fa-icon [icon]="faCheck" />
+                            } @else if (i === generationStep()) {
+                                <span class="spinner-dot"></span>
+                            } @else {
+                                <span class="pending-dot"></span>
+                            }
+                        </span>
+                        {{ step.label }}
+                    </li>
+                }
+            </ol>
+        </div>
+    }
+
+    <!-- ── Result phase ────────────────────────────────────────────────────────── -->
+    @if (phase() === 'result') {
+        @let variant = generatedVariant();
+        @if (variant) {
+            <div class="variant-card mb-4">
+                <div class="variant-card__header">
+                    <fa-icon [icon]="getIcon(variant.type)" class="variant-card__type-icon" />
+                    <span class="variant-card__type-label">Programming Exercise</span>
+                </div>
+                <h6 class="variant-card__title">{{ variant.title }}</h6>
+                <div class="variant-card__chips">
+                    @if (variant.difficulty) {
+                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
+                    }
+                    @if (variant.maxPoints) {
+                        <span class="info-chip">{{ variant.maxPoints }} pts</span>
+                    }
+                    @for (cat of variant.categories; track cat.category) {
+                        <span class="info-chip">{{ cat.category }}</span>
+                    }
+                </div>
+                <p class="variant-card__preview">{{ variant.problemStatement | slice: 3 : 120 }}…</p>
+            </div>
+
+            <div class="placement-section">
+                <p class="small fw-semibold mb-2">Where should this variant be placed?</p>
+
+                <div class="placement-options">
+                    @if (sourceGroup(); as group) {
+                        <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'existing-group'">
+                            <p-radiobutton
+                                inputId="place-existing"
+                                name="placement"
+                                value="existing-group"
+                                [ngModel]="placementChoice()"
+                                (ngModelChange)="placementChoice.set($event)"
+                            />
+                            <div class="placement-option__body">
+                                <span class="placement-option__title">Add to group "{{ group.title }}"</span>
+                                <span class="placement-option__hint">Alongside {{ group.exercises?.length ?? 0 }} existing variant(s)</span>
+                            </div>
+                        </label>
+                    }
+                    <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'new-group'">
+                        <p-radiobutton inputId="place-new-group" name="placement" value="new-group" [ngModel]="placementChoice()" (ngModelChange)="placementChoice.set($event)" />
+                        <div class="placement-option__body">
+                            <span class="placement-option__title">Create new group with original</span>
+                            <span class="placement-option__hint">Groups the source exercise and this variant together</span>
+                        </div>
+                    </label>
+                    <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'standalone'">
+                        <p-radiobutton inputId="place-standalone" name="placement" value="standalone" [ngModel]="placementChoice()" (ngModelChange)="placementChoice.set($event)" />
+                        <div class="placement-option__body">
+                            <span class="placement-option__title">Add as standalone exercise</span>
+                            <span class="placement-option__hint">No group — exercise appears on its own in the list</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="ai-warning mt-3">
+                <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
+                <span>AI-generated content may contain errors. Review the problem statement, test cases, and solution carefully before publishing.</span>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Discard</p-button>
+                <button type="button" class="btn btn-sm btn-ai-generate" (click)="confirmVariant()">
+                    <fa-icon [icon]="faPenToSquare" class="me-1" />
+                    Open in Editor
+                </button>
+            </div>
+        }
+    }
+</p-dialog>

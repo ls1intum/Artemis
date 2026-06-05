@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -17,6 +17,7 @@ import {
     faPlayCircle,
     faPlus,
     faRedo,
+    faRobot,
     faSort,
     faStopCircle,
     faTable,
@@ -35,6 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
 import {
     DifficultyLevel,
     Exercise,
@@ -89,9 +91,11 @@ export interface TableGroupChange {
         ArtemisDatePipe,
         DeleteButtonDirective,
         ExerciseCategoriesComponent,
+        ExerciseVariantAiModalDispatcherComponent,
     ],
 })
 export class ExerciseTableComponent {
+    readonly aiVariantModalExercise = signal<Exercise | null>(null);
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
     readonly courseId = input.required<number>();
@@ -101,6 +105,8 @@ export class ExerciseTableComponent {
     readonly showCheckbox = input<boolean>(false);
     readonly selectedIds = input<Set<number>>(new Set());
     readonly groups = input<CourseExerciseGroup[]>([]);
+    /** Route segments inserted between courseId and urlSegment in the exercise title link. Used by versioned views to keep the mock interceptor active. */
+    readonly overviewRouteMiddleSegments = input<string[]>([]);
 
     readonly groupChange = output<TableGroupChange>();
     readonly groupCreate = output<Exercise>();
@@ -134,6 +140,7 @@ export class ExerciseTableComponent {
     protected readonly faClipboardList = faClipboardList;
     protected readonly faLightbulb = faLightbulb;
     protected readonly faRedo = faRedo;
+    protected readonly faRobot = faRobot;
     protected readonly faUsers = faUsers;
     protected readonly faPlus = faPlus;
 
@@ -141,6 +148,7 @@ export class ExerciseTableComponent {
     readonly sortAsc = signal(true);
 
     protected readonly devSettings = inject(ExerciseManagementDevSettingsService);
+    private readonly router = inject(Router);
 
     private readonly dialogErrorSources = new Map<number, Subject<string>>();
 
@@ -229,6 +237,10 @@ export class ExerciseTableComponent {
 
     urlSegment(exercise: Exercise): string {
         return getExerciseUrlSegment(exercise.type);
+    }
+
+    titleLink(exercise: Exercise): (string | number)[] {
+        return ['/course-management', this.courseId(), ...this.overviewRouteMiddleSegments(), this.urlSegment(exercise), exercise.id!];
     }
 
     icon(exercise: Exercise) {
@@ -371,6 +383,17 @@ export class ExerciseTableComponent {
                     'programmingExerciseListModification',
                 );
                 break;
+        }
+    }
+
+    openCreateVariant(exercise: Exercise): void {
+        if (this.devSettings.variantCreationMode() === 'chat') {
+            const exId = exercise.id;
+            if (exId !== undefined) {
+                this.router.navigate(['/course-management', this.courseId(), 'exercises', 'experimental', 'create-variant', exId]);
+            }
+        } else {
+            this.aiVariantModalExercise.set(exercise);
         }
     }
 }
