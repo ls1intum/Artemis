@@ -311,6 +311,7 @@
                 "quizEditor": "Quiz",
                 "mathEditor": "Mathematik-Editor",
                 "iris": "Iris",
+                "collapsePanel": "Panel einklappen",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende",
