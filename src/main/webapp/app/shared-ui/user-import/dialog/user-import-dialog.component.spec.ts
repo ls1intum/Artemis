@@ -485,4 +485,46 @@ describe('UsersImportDialogComponent', () => {
         expect(component.isImporting).toBe(false);
         expect(component.hasImported).toBe(false);
     });
+
+    it('should show staff rejection alert when bulk import rejects staff', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
+        ];
+        const rejectedStaff: ExamUserDTO[] = [
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
+        ];
+        const fakeResponse = {
+            body: { notFoundStudents: [], rejectedStaffStudents: rejectedStaff },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        component.examUsersToImport = studentsToImport;
+        component.importUsers();
+
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterStaffBulk', { number: 2 });
+        expect(component.notFoundUsers).toHaveLength(0);
+    });
+
+    it('should not show staff rejection alert when no staff is rejected', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [{ registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' }];
+        const fakeResponse = {
+            body: { notFoundStudents: [], rejectedStaffStudents: [] },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+        const alertService = TestBed.inject(AlertService);
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        component.examUsersToImport = studentsToImport;
+        component.importUsers();
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
 });
