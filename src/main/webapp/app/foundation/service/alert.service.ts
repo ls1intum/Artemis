@@ -1,4 +1,4 @@
-import { Injectable, NgZone, SecurityContext, inject } from '@angular/core';
+import { Injectable, NgZone, SecurityContext, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -61,7 +61,9 @@ export class AlertService {
     private ngZone = inject(NgZone);
     private translateService = inject(TranslateService);
 
-    private alerts: AlertInternal[] = [];
+    // Signal-backed so the alert overlay re-renders under zoneless change detection when alerts are
+    // added or auto-dismissed (e.g. from the setTimeout below or async HTTP error handlers).
+    readonly alerts = signal<AlertInternal[]>([]);
 
     errorListener: Subscription;
     httpErrorListener: Subscription;
@@ -139,11 +141,11 @@ export class AlertService {
     }
 
     closeAll(): void {
-        [...this.alerts].forEach((alert) => alert.close());
+        [...this.alerts()].forEach((alert) => alert.close());
     }
 
     get(): Alert[] {
-        return this.alerts;
+        return this.alerts();
     }
 
     /**
@@ -197,9 +199,8 @@ export class AlertService {
         alertInternal.dismissible = alertInternal.dismissible ?? DEFAULT_DISMISSIBLE;
         alertInternal.close = () => {
             alertInternal.isOpen = false;
-            const alertIndex = this.alerts.indexOf(alertInternal);
-            if (alertIndex >= 0) {
-                this.alerts.splice(alertIndex, 1);
+            if (this.alerts().includes(alertInternal)) {
+                this.alerts.update((alerts) => alerts.filter((existingAlert) => existingAlert !== alertInternal));
                 if (alertInternal.onClose) {
                     alertInternal.onClose(alertInternal);
                 }
@@ -219,14 +220,14 @@ export class AlertService {
             // Due to duplicate alerts spawned by the global http error interceptor and some components,
             // we prevent more than one alert with the same content to be spawned within 50 milliseconds.
             // If such an alert already exists, we return the old one instead.
-            const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts.find(
+            const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts().find(
                 (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt!, 'ms')) <= 50,
             );
             if (olderAlertWithIdenticalContent) {
                 return olderAlertWithIdenticalContent;
             }
 
-            this.alerts.unshift(alertInternal);
+            this.alerts.update((alerts) => [alertInternal, ...alerts]);
 
             if (alertInternal.timeout > 0) {
                 // Workaround protractor waiting for setTimeout.
