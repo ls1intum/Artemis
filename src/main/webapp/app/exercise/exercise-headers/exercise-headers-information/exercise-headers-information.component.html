@@ -63,5 +63,7 @@
                 </jhi-information-box>
             }
         }
+        <!-- Dev-only: shows hand-in status when the exercise belongs to a mock exercise group; otherwise renders nothing. -->
+        <jhi-mock-group-hand-in-box [exerciseId]="exercise.id" />
     </div>
 }

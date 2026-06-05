@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faComments, faLayerGroup, faPaperPlane, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Checkbox } from 'primeng/checkbox';
@@ -10,9 +10,6 @@ import { Tag } from 'primeng/tag';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
-import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
-import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
@@ -38,12 +35,10 @@ type TagSeverity = 'success' | 'warn' | 'danger' | 'secondary';
         FormsModule,
         RouterLink,
         NgTemplateOutlet,
+        SlicePipe,
         FaIconComponent,
         Checkbox,
         Tag,
-        DifficultyLevelComponent,
-        ExerciseCategoriesComponent,
-        SubmissionResultStatusComponent,
         ResizablePanelsComponent,
         PanelDirective,
         DiscussionSectionComponent,
@@ -81,6 +76,25 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly useTiles = computed(() => this.devSettings.groupClickAction() === 'tiles');
     // The 'exercise page' click action mimics the exercise detail layout (header + resizable split with communication).
     protected readonly useExercisePage = computed(() => this.devSettings.groupClickAction() === 'exercise-page');
+    // Whether the selectable tiles are arranged as a wrapping flex grid, several per row (dev setting).
+    protected readonly useFlexTile = computed(() => this.devSettings.multiselectTileLayout() === 'flex');
+    // How many lines of problem-statement preview the multiselect tiles/rows show (0 = hidden; dev setting).
+    protected readonly tilePreviewLines = computed(() => {
+        switch (this.devSettings.multiselectTileStyle()) {
+            case 'three-lines':
+                return 3;
+            case 'two-lines':
+                return 2;
+            case 'one-line':
+                return 1;
+            default:
+                return 0;
+        }
+    });
+    // End index for the problem-statement excerpt, scaled with the line count so a 3-line preview actually
+    // has enough text to fill three lines (a fixed cap made 2- and 3-line look identical). The CSS line
+    // clamp still does the final trimming; this only guarantees enough characters are available.
+    protected readonly previewSliceEnd = computed(() => 3 + this.tilePreviewLines() * 200);
 
     // How many of the group's exercises count towards the score (read-only); caps the selection.
     protected readonly countTowardsScore = computed(() => handInLimitFor(this.group()));

@@ -24,6 +24,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockGroupHandInBoxComponent } from 'app/core/course/overview/course-exercises-experimental/mock-group-hand-in-box.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
@@ -39,6 +40,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
         CommonModule,
         ResultHistoryDropdownComponent,
         NgbTooltip,
+        MockGroupHandInBoxComponent,
     ],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]

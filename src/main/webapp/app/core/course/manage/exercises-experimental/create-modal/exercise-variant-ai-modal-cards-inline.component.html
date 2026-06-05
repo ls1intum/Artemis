@@ -3,6 +3,7 @@
     [visible]="visible()"
     (visibleChange)="onClose($event)"
     [modal]="true"
+    appendTo="body"
     [style]="{ width: '660px', maxWidth: '95vw' }"
     [draggable]="false"
     [closable]="phase() !== 'generating'"

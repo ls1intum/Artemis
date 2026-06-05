@@ -70,10 +70,10 @@
                                 limited number of them to count towards your maximum score.
                             </div>
                             <div class="d-flex align-items-baseline justify-content-between mb-2">
-                                <h3 class="h5 mb-0">Exercises to be assessed</h3>
+                                <h3 class="h5 mb-0">Exercises to hand in and count towards the score</h3>
                                 <span class="text-secondary small">{{ selectedExercises().length }} / {{ countTowardsScore() }} selected</span>
                             </div>
-                            <div class="d-flex flex-column gap-2">
+                            <div class="d-flex gap-2" [class.flex-column]="!useFlexTile()" [class.tiles-container--flex]="useFlexTile()">
                                 @for (exercise of exercises(); track exercise.id) {
                                     <ng-container [ngTemplateOutlet]="selectableTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
                                 }
@@ -124,12 +124,12 @@
                     </div>
 
                     <div class="d-flex align-items-baseline justify-content-between mb-2">
-                        <h3 class="h5 mb-0">Exercises in this group</h3>
+                        <h3 class="h5 mb-0">Exercises to hand in and count towards the score</h3>
                         <span class="text-secondary small">{{ selectedExercises().length }} / {{ countTowardsScore() }} selected for assessment</span>
                     </div>
 
                     @if (useTiles()) {
-                        <div class="d-flex flex-column gap-2">
+                        <div class="d-flex gap-2" [class.flex-column]="!useFlexTile()" [class.tiles-container--flex]="useFlexTile()">
                             @for (exercise of exercises(); track exercise.id) {
                                 <ng-container [ngTemplateOutlet]="selectableTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
                             }
@@ -160,6 +160,11 @@
                                                 <span>· due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
                                             }
                                         </div>
+                                        @if (tilePreviewLines() && exercise.problemStatement) {
+                                            <p class="ps-quote" [class.ps-quote--1-line]="tilePreviewLines() === 1" [class.ps-quote--3-lines]="tilePreviewLines() === 3">
+                                                {{ exercise.problemStatement | slice: 3 : previewSliceEnd() }}
+                                            </p>
+                                        }
                                     </div>
                                     <a class="btn btn-sm btn-outline-primary" [routerLink]="exerciseLink(exercise)">Open</a>
                                 </div>
@@ -180,14 +185,14 @@
     }
 }
 
-<!-- Larger selectable exercise tile, shared by the "tiles" and "exercise page" layouts. -->
+<!-- Compact selectable exercise tile, shared by the "tiles" and "exercise page" layouts. -->
 <ng-template #selectableTile let-exercise>
     <div
-        class="tile-select exercise-tile position-relative border rounded-3"
-        [class.exercise-tile--easy]="exercise.difficulty === DifficultyLevel.EASY"
-        [class.exercise-tile--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
-        [class.exercise-tile--hard]="exercise.difficulty === DifficultyLevel.HARD"
-        [class.exercise-tile--selected]="isSelected(exercise)"
+        class="tile-select multiselect-tile position-relative border rounded-3"
+        [class.multiselect-tile--easy]="exercise.difficulty === DifficultyLevel.EASY"
+        [class.multiselect-tile--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
+        [class.multiselect-tile--hard]="exercise.difficulty === DifficultyLevel.HARD"
+        [class.multiselect-tile--selected]="isSelected(exercise)"
     >
         <p-checkbox
             class="tile-select__checkbox"
@@ -196,26 +201,24 @@
             (ngModelChange)="toggle(exercise, $event)"
             [disabled]="!isSelected(exercise) && atSelectionLimit()"
         />
-        <a class="exercise-tile__link" [routerLink]="exerciseLink(exercise)">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-semibold text-truncate flex-grow-1 min-width-0">
-                    <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
-                    {{ exercise.title }}
-                </span>
-                <jhi-submission-result-status class="flex-shrink-0" [exercise]="exercise" />
+        <a class="multiselect-tile__link" [routerLink]="exerciseLink(exercise)">
+            <div class="fw-semibold text-truncate small">
+                <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
+                {{ exercise.title }}
             </div>
-            <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-                @if (exercise.difficulty) {
-                    <jhi-difficulty-level [difficultyLevel]="exercise.difficulty" />
-                }
+            <div class="d-flex align-items-center gap-2 small text-secondary mt-1">
                 @if (exercise.maxPoints) {
-                    <span class="text-secondary small">{{ exercise.maxPoints }} Points</span>
+                    <span>{{ exercise.maxPoints }} Points</span>
                 }
                 @if (exercise.dueDate) {
-                    <span class="text-secondary small">Due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
+                    <span>Due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
                 }
-                <jhi-exercise-categories [exercise]="exercise" [isSmall]="true" />
             </div>
+            @if (tilePreviewLines() && exercise.problemStatement) {
+                <p class="ps-quote" [class.ps-quote--1-line]="tilePreviewLines() === 1" [class.ps-quote--3-lines]="tilePreviewLines() === 3">
+                    {{ exercise.problemStatement | slice: 3 : previewSliceEnd() }}
+                </p>
+            }
         </a>
     </div>
 </ng-template>

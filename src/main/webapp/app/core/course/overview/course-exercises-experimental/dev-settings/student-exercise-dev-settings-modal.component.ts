@@ -31,4 +31,16 @@ export class StudentExerciseDevSettingsModalComponent {
         { label: 'Tiles page', value: 'tiles' },
         { label: 'Exercise page', value: 'exercise-page' },
     ];
+
+    protected readonly tileStyleOptions = [
+        { label: 'Hide', value: 'plain' },
+        { label: '1 line', value: 'one-line' },
+        { label: '2 lines', value: 'two-lines' },
+        { label: '3 lines', value: 'three-lines' },
+    ];
+
+    protected readonly tileLayoutOptions = [
+        { label: 'Stacked', value: 'stacked' },
+        { label: 'Flexbox', value: 'flex' },
+    ];
 }

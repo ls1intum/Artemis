@@ -1,4 +1,4 @@
-<p-dialog header="Student Exercises Dev Settings" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" [style]="{ width: '420px' }">
+<p-dialog header="Student Exercises Dev Settings" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" appendTo="body" [style]="{ width: '420px' }">
     <div class="d-flex flex-column gap-3">
         <div>
             <label class="fw-semibold d-block mb-2">View Version</label>
@@ -28,6 +28,28 @@
                         [options]="groupClickOptions"
                         [ngModel]="devSettings.groupClickAction()"
                         (ngModelChange)="devSettings.setGroupClickAction($event)"
+                        optionValue="value"
+                        [allowEmpty]="false"
+                    />
+                </div>
+            }
+            @if (devSettings.groupSidebarStyle() !== 'select') {
+                <div>
+                    <label class="fw-semibold d-block mb-2">Problem statement preview</label>
+                    <p-selectbutton
+                        [options]="tileStyleOptions"
+                        [ngModel]="devSettings.multiselectTileStyle()"
+                        (ngModelChange)="devSettings.setMultiselectTileStyle($event)"
+                        optionValue="value"
+                        [allowEmpty]="false"
+                    />
+                </div>
+                <div>
+                    <label class="fw-semibold d-block mb-2">Tile layout</label>
+                    <p-selectbutton
+                        [options]="tileLayoutOptions"
+                        [ngModel]="devSettings.multiselectTileLayout()"
+                        (ngModelChange)="devSettings.setMultiselectTileLayout($event)"
                         optionValue="value"
                         [allowEmpty]="false"
                     />
