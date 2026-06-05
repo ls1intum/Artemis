@@ -4,7 +4,7 @@
         class="btn btn-secondary float-end me-2"
         (click)="requestAIFeedback()"
         [disabled]="
-            isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())
+            isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt() || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())
         "
     >
         @if (isGenerating()) {

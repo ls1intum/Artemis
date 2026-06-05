@@ -3,9 +3,9 @@
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
     @if (isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise.course ? 'Course' : 'Exam' }}Label"></label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore" [allowNotIncluded]="true" />
+                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise().includedInOverallScore" [allowNotIncluded]="true" />
             </div>
         </div>
     }
@@ -22,7 +22,7 @@
                         max="9999"
                         name="points"
                         id="field_points"
-                        [(ngModel)]="programmingExercise.maxPoints"
+                        [(ngModel)]="programmingExercise().maxPoints"
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
@@ -33,23 +33,23 @@
         }
         @if (isEditFieldDisplayedRecord().bonusPoints) {
             <div class="col">
-                <div class="form-group" [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                <div class="form-group" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
                     <input
                         type="number"
-                        [required]="programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        [required]="programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
                         class="form-control"
                         min="0"
                         max="9999"
                         name="bonusPoints"
                         id="field_bonusPoints"
-                        [(ngModel)]="programmingExercise.bonusPoints"
+                        [(ngModel)]="programmingExercise().bonusPoints"
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
                         <div
                             class="alert alert-danger"
-                            [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                             jhiTranslate="artemisApp.exercise.bonusPointsError"
                         ></div>
                     }
@@ -57,7 +57,7 @@
             </div>
         }
     </div>
-    @if (programmingExercise.staticCodeAnalysisEnabled) {
+    @if (programmingExercise().staticCodeAnalysisEnabled) {
         <div class="mt-2 mb-4">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
                 >Max Static Code Analysis Penalty</label
@@ -74,11 +74,11 @@
                 </div>
                 <input
                     type="number"
-                    [pattern]="programmingExerciseCreationConfig.maxPenaltyPattern"
+                    [pattern]="programmingExerciseCreationConfig().maxPenaltyPattern"
                     class="form-control"
                     name="maxPenalty"
                     id="field_maxPenalty"
-                    [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                    [(ngModel)]="programmingExercise().maxStaticCodeAnalysisPenalty"
                     #maxPenalty="ngModel"
                 />
             </div>
@@ -94,11 +94,11 @@
     @if (isEditFieldDisplayedRecord().submissionPolicy) {
         <div class="form-group">
             <jhi-submission-policy-update
-                [editable]="!programmingExerciseCreationConfig.isEdit"
-                [programmingExercise]="programmingExercise"
+                [editable]="!programmingExerciseCreationConfig().isEdit"
+                [programmingExercise]="programmingExercise()"
                 (submissionPolicyTypeChange)="calculateFormStatus()"
             />
-            @if (programmingExerciseCreationConfig.isEdit) {
+            @if (programmingExerciseCreationConfig().isEdit) {
                 <ngb-alert [dismissible]="false" [type]="'info'">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                     <a [href]="editPolicyUrl">
@@ -110,41 +110,42 @@
     }
     @if (isEditFieldDisplayedRecord().timeline) {
         <div class="form-group">
+            @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
-                !!programmingExercise.exampleSolutionPublicationDate || !!programmingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
+                !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
             <jhi-programming-exercise-update-timeline
                 id="timeline"
-                [isExamMode]="programmingExerciseCreationConfig.isExamMode"
-                [complaintsInCourseEnabled]="programmingExercise.course?.complaintsEnabled ?? false"
+                [isExamMode]="programmingExerciseCreationConfig().isExamMode"
+                [complaintsInCourseEnabled]="programmingExerciseValue.course?.complaintsEnabled ?? false"
                 [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
                 [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
-                [exercise]="programmingExercise"
-                [(releaseDate)]="programmingExercise.releaseDate"
-                [(startDate)]="programmingExercise.startDate"
-                [(dueDate)]="programmingExercise.dueDate"
-                [(buildAndTestStudentSubmissionsAfterDueDate)]="programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
-                [(assessmentDueDate)]="programmingExercise.assessmentDueDate"
-                [(exampleSolutionPublicationDate)]="programmingExercise.exampleSolutionPublicationDate"
-                [(assessmentType)]="programmingExercise.assessmentType"
-                [(allowFeedbackRequests)]="programmingExercise.allowFeedbackRequests"
-                [(setTestCaseVisibilityToAfterDueDate)]="importOptions.setTestCaseVisibilityToAfterDueDate"
-                [(allowComplaintsForAutomaticAssessments)]="programmingExercise.allowComplaintsForAutomaticAssessments"
-                [(releaseTestsWithExampleSolution)]="programmingExercise.releaseTestsWithExampleSolution"
-                [(feedbackSuggestionModule)]="programmingExercise.feedbackSuggestionModule"
-                [(showTestNamesToStudents)]="programmingExercise.showTestNamesToStudents"
+                [exercise]="programmingExerciseValue"
+                [(releaseDate)]="programmingExerciseValue.releaseDate"
+                [(startDate)]="programmingExerciseValue.startDate"
+                [(dueDate)]="programmingExerciseValue.dueDate"
+                [(buildAndTestStudentSubmissionsAfterDueDate)]="programmingExerciseValue.buildAndTestStudentSubmissionsAfterDueDate"
+                [(assessmentDueDate)]="programmingExerciseValue.assessmentDueDate"
+                [(exampleSolutionPublicationDate)]="programmingExerciseValue.exampleSolutionPublicationDate"
+                [(assessmentType)]="programmingExerciseValue.assessmentType"
+                [(allowFeedbackRequests)]="programmingExerciseValue.allowFeedbackRequests"
+                [(setTestCaseVisibilityToAfterDueDate)]="importOptions().setTestCaseVisibilityToAfterDueDate"
+                [(allowComplaintsForAutomaticAssessments)]="programmingExerciseValue.allowComplaintsForAutomaticAssessments"
+                [(releaseTestsWithExampleSolution)]="programmingExerciseValue.releaseTestsWithExampleSolution"
+                [(feedbackSuggestionModule)]="programmingExerciseValue.feedbackSuggestionModule"
+                [(showTestNamesToStudents)]="programmingExerciseValue.showTestNamesToStudents"
             />
         </div>
     }
-    @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+    @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise" />
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" />
         </div>
     }
     @if (isEditFieldDisplayedRecord().presentationScore) {
-        <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
+        <jhi-presentation-score-checkbox [exercise]="programmingExercise()" />
     }
-    @if (programmingExerciseCreationConfig.showSummary) {
+    @if (programmingExerciseCreationConfig().showSummary) {
         <h6>{{ getGradingSummary() }}</h6>
     }
 </section>
