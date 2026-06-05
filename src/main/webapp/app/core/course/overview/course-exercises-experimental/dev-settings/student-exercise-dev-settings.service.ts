@@ -1,8 +1,5 @@
 import { Injectable, effect, signal } from '@angular/core';
 
-/** Which version of the experimental student exercise overview to render. New versions are added here. */
-export type StudentExerciseViewVersion = 'grouped' | 'flat';
-
 /** How an exercise group is presented in the sidebar. */
 export type GroupSidebarStyle = 'clickable' | 'connected' | 'select';
 
@@ -19,7 +16,6 @@ export type MultiselectTileStyle = 'plain' | 'one-line' | 'two-lines' | 'three-l
  */
 export type MultiselectTileLayout = 'stacked' | 'flex';
 
-const KEY_VERSION = 'studentExercises.devSettings.viewVersion';
 const KEY_SIDEBAR_STYLE = 'studentExercises.devSettings.groupSidebarStyle';
 const KEY_CLICK_ACTION = 'studentExercises.devSettings.groupClickAction';
 const KEY_TILE_STYLE = 'studentExercises.devSettings.multiselectTileStyle';
@@ -53,7 +49,6 @@ function readMultiselectTileLayout(): MultiselectTileLayout {
  */
 @Injectable({ providedIn: 'root' })
 export class StudentExerciseDevSettingsService {
-    readonly viewVersion = signal<StudentExerciseViewVersion>((localStorage.getItem(KEY_VERSION) as StudentExerciseViewVersion) ?? 'grouped');
     readonly groupSidebarStyle = signal<GroupSidebarStyle>(readGroupSidebarStyle());
     readonly groupClickAction = signal<GroupClickAction>(readGroupClickAction());
     readonly multiselectTileStyle = signal<MultiselectTileStyle>(readMultiselectTileStyle());
@@ -65,15 +60,10 @@ export class StudentExerciseDevSettingsService {
     readonly settingsVisible = signal(false);
 
     constructor() {
-        effect(() => localStorage.setItem(KEY_VERSION, this.viewVersion()));
         effect(() => localStorage.setItem(KEY_SIDEBAR_STYLE, this.groupSidebarStyle()));
         effect(() => localStorage.setItem(KEY_CLICK_ACTION, this.groupClickAction()));
         effect(() => localStorage.setItem(KEY_TILE_STYLE, this.multiselectTileStyle()));
         effect(() => localStorage.setItem(KEY_TILE_LAYOUT, this.multiselectTileLayout()));
-    }
-
-    setViewVersion(version: StudentExerciseViewVersion): void {
-        this.viewVersion.set(version);
     }
 
     setGroupSidebarStyle(style: GroupSidebarStyle): void {

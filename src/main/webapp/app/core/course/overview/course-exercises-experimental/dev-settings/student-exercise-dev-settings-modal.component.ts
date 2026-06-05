@@ -15,11 +15,6 @@ export class StudentExerciseDevSettingsModalComponent {
 
     protected readonly devSettings = inject(StudentExerciseDevSettingsService);
 
-    protected readonly versionOptions = [
-        { label: 'Grouped', value: 'grouped' },
-        { label: 'Flat list', value: 'flat' },
-    ];
-
     protected readonly groupSidebarOptions = [
         { label: 'Clickable', value: 'clickable' },
         { label: 'Connected', value: 'connected' },

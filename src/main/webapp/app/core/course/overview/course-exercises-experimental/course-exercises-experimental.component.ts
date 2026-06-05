@@ -11,7 +11,7 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { StudentExerciseDevSettingsService, StudentExerciseViewVersion } from './dev-settings/student-exercise-dev-settings.service';
+import { StudentExerciseDevSettingsService } from './dev-settings/student-exercise-dev-settings.service';
 import { StudentExerciseDevSettingsModalComponent } from './dev-settings/student-exercise-dev-settings-modal.component';
 import { GroupHandInSelectionService } from './group-hand-in-selection.service';
 
@@ -67,7 +67,7 @@ export class CourseExercisesExperimentalComponent {
     readonly exerciseSelected = computed(() => this._exerciseSelected());
 
     readonly courseId = signal(0);
-    readonly sidebarData = computed(() => this.buildSidebarData(this.devSettings.viewVersion()));
+    readonly sidebarData = computed(() => this.buildSidebarData());
 
     // The overview only wires its collapse toggle to known child components, so this view is never collapsed.
     protected readonly isCollapsed = false;
@@ -98,22 +98,10 @@ export class CourseExercisesExperimentalComponent {
         this._exerciseSelected.set(!!this.route.firstChild);
     }
 
-    private buildSidebarData(version: StudentExerciseViewVersion): SidebarData {
+    private buildSidebarData(): SidebarData {
         const exercises = this.mockService.getExercises();
 
-        // Flat: the unmodified original behaviour — every exercise listed individually.
-        if (version === 'flat') {
-            const sorted = this.courseOverviewService.sortExercises(exercises);
-            return {
-                groupByCategory: true,
-                sidebarType: 'exercise',
-                storageId: 'exercise',
-                groupedData: this.courseOverviewService.groupExercisesByDueDate(sorted),
-                ungroupedData: this.courseOverviewService.mapExercisesToSidebarCardElements(sorted),
-            };
-        }
-
-        // Grouped: exercises in the same course-level group are nested under a single group header card.
+        // Exercises in the same course-level group are nested under a single group header card.
         const grouped = this.buildGroupedData(exercises);
         return {
             groupByCategory: true,
