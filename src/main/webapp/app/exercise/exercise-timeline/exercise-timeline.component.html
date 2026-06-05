@@ -29,6 +29,7 @@
                         [inputId]="'datepicker-' + index"
                         [ngModel]="internalItem.internalDate"
                         (onInput)="handleManualInput(internalItem, $event)"
+                        (onBlur)="handleBlur(internalItem, $event)"
                         (onSelect)="updateDate(internalItem, $event)"
                         (onClear)="updateDate(internalItem, null)"
                         #dateModel="ngModel"

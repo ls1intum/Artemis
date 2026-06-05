@@ -64,18 +64,18 @@ export class ExerciseTimelineComponent {
 
     handleManualInput(item: TimelineItem, event: Event): void {
         const value = (event.target as HTMLInputElement).value;
-        if (value.trim() === '') {
-            this.updateDate(item, null);
-            return;
-        }
-
-        if (!this.fullDateTimePattern.test(value)) {
-            return;
-        }
-
-        const parsedDate = dayjs(value, this.dateTimeFormat, true);
-        if (parsedDate.isValid()) {
+        const parsedDate = this.parseManualInput(value);
+        if (parsedDate !== undefined) {
             this.setDateIfChanged(item, parsedDate);
+        }
+    }
+
+    handleBlur(item: TimelineItem, event: Event): void {
+        const inputElement = event.target as HTMLInputElement;
+        const currentInputIsInvalidDate = this.parseManualInput(inputElement.value) === undefined;
+        if (currentInputIsInvalidDate) {
+            const previousDate = item.date();
+            inputElement.value = previousDate ? previousDate.format(this.dateTimeFormat) : '';
         }
     }
 
@@ -83,6 +83,12 @@ export class ExerciseTimelineComponent {
         const currentDate = item.date();
         if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);
+    }
+
+    private parseManualInput(value: string): Dayjs | undefined {
+        if (!this.fullDateTimePattern.test(value)) return undefined;
+        const parsedDate = dayjs(value, this.dateTimeFormat, true);
+        return parsedDate.isValid() ? parsedDate : undefined;
     }
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {

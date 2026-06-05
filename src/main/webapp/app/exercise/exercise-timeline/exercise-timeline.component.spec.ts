@@ -151,13 +151,56 @@ describe('ExerciseTimeline', () => {
         expect(component.internalTimelineItems()[0].internalDate).toEqual(item.date()?.toDate());
     });
 
-    it('should clear timeline item date for empty manual input', () => {
+    it('should not clear timeline item date for empty manual input before blur', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
         fixture.componentRef.setInput('timelineItems', [item]);
 
         component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
 
+        expect(item.date()?.isSame(dayjs('2026-01-01T11:11:00'))).toBe(true);
+        expect(component.internalTimelineItems()[0].internalDate).toEqual(item.date()?.toDate());
+    });
+
+    it('should restore current date value on blur for incomplete manual input', () => {
+        const initialDate = dayjs('2026-06-06T16:23:00');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('06.06.2026 16:23');
+        expect(item.date()).toBe(initialDate);
+    });
+
+    it('should restore current date value on blur for complete invalid manual input', () => {
+        const initialDate = dayjs('2026-06-06T16:23:00');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const input = { value: '00.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('06.06.2026 16:23');
+        expect(item.date()).toBe(initialDate);
+    });
+
+    it('should clear input on blur for invalid manual input without a current date value', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
+        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('');
         expect(item.date()).toBeUndefined();
-        expect(component.internalTimelineItems()[0].internalDate).toBeUndefined();
+    });
+
+    it('should keep valid manual input unchanged on blur', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-06-06T16:23:00')) };
+        const input = { value: '07.06.2026 17:24' } as HTMLInputElement;
+
+        component.handleManualInput(item, { target: input } as unknown as Event);
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('07.06.2026 17:24');
+        expect(item.date()?.isSame(dayjs('2026-06-07T17:24:00'))).toBe(true);
     });
 });
