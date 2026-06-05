@@ -1,8 +1,12 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 
 describe('CachedRepositoryFilesServiceService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CachedRepositoryFilesService;
 
     beforeEach(() => {
@@ -11,7 +15,7 @@ describe('CachedRepositoryFilesServiceService', () => {
     });
 
     it('should emit event if cachedRepositoryFilesChanged is invoked', () => {
-        const emitSpy = jest.spyOn(service.cachedRepositoryFilesChanged, 'emit');
+        const emitSpy = vi.spyOn(service.cachedRepositoryFilesChanged, 'emit');
         const data = new Map<string, Map<string, string>>();
         data.set('test', new Map<string, string>());
         service.emitCachedRepositoryFiles(data);

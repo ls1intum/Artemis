@@ -1,30 +1,20 @@
 import { Observable, Subject } from 'rxjs';
 import { NavigationEnd, RouterEvent, RouterState, UrlTree, Router } from '@angular/router';
-
-// Declare vi as global for Vitest environments
-declare const vi: (typeof import('vitest'))['vi'] | undefined;
+import { type Mock, vi } from 'vitest';
 
 /**
- * Creates a mock function compatible with both Jest and Vitest.
- * Automatically detects which test framework is available and uses
- * the appropriate mock function implementation.
+ * Creates a Vitest mock function returning the given value.
  *
  * @param returnValue - The value the mock should return
- * @returns A mock function that works with jest.fn() or vi.fn()
+ * @returns A Vitest mock function
  */
-function createMockFn<T>(returnValue?: T): jest.Mock<any, any> {
-    // Check if we're in a Vitest environment
-    if (typeof vi !== 'undefined' && vi !== null) {
-        return vi.fn().mockReturnValue(returnValue) as unknown as jest.Mock<any, any>;
-    }
-    // Fall back to Jest
-    return jest.fn().mockReturnValue(returnValue);
+function createMockFn<T>(returnValue?: T): Mock {
+    return vi.fn().mockReturnValue(returnValue);
 }
 
 /**
  * Mock router for unit testing Angular components that use Router.
- * Compatible with both Jest and Vitest test frameworks.
- * When using the spies, bear in mind jest.resetAllMocks does not affect them,
+ * When using the spies, bear in mind vi.resetAllMocks does not affect them,
  * they need to be reset manually using mockRestore() or mockReset().
  */
 export class MockRouter {
