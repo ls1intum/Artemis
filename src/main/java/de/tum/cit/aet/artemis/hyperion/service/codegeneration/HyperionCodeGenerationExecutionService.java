@@ -546,7 +546,14 @@ public class HyperionCodeGenerationExecutionService {
                 continue;
             }
             GeneratedFileDTO normalizedFile = safeFile.get();
-            boolean existed = gitService.getFileByName(repository, normalizedFile.path()).isPresent();
+            Optional<File> existingFile = gitService.getFileByName(repository, normalizedFile.path());
+            if (existingFile.isPresent() && !existingFile.get().isFile()) {
+                // Never overwrite a directory: updateSingleFile deletes the existing path first, and RepositoryService.deleteFile removes directories recursively,
+                // so a generated path like "src/main/java" would wipe the whole source tree.
+                log.warn("Ignoring generated path '{}' for exercise {} because it points at an existing directory", normalizedFile.path(), exercise.getId());
+                continue;
+            }
+            boolean existed = existingFile.isPresent();
             updateSingleFile(repository, normalizedFile, exercise);
             publishedAnyFile = true;
             if (existed) {

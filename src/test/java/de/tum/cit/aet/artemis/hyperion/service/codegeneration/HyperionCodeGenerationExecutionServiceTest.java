@@ -649,6 +649,26 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
+    void publishGeneratedFiles_withGeneratedPathPointingAtDirectory_skipsWithoutDeleting() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Path existingDirectory = Files.createDirectories(tempDir.resolve("src/main/java"));
+        File directory = new File(existingDirectory, null);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("src/main/java", "public class Whoops {}");
+
+        when(gitService.getFileByName(mockRepository, "src/main/java")).thenReturn(Optional.of(directory));
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isFalse();
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
+        verify(publisher, never()).fileUpdated(anyString(), any(), anyInt());
+        verify(publisher, never()).newFile(anyString(), any(), anyInt());
+    }
+
+    @Test
     void deleteObsoleteFiles_withSourceDirectoryPath_ignoresDeletionRequest() throws Exception {
         Repository mockRepository = mock(Repository.class);
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
