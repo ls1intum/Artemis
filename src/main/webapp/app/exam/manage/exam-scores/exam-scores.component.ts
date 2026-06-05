@@ -178,7 +178,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 .findGradingScaleForExam(params['courseId'], params['examId'])
                 .pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
-            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+                this.course = courseResponse.body!;
+                this.changeDetector.markForCheck();
+            });
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
                 next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {

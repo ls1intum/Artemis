@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, effect, inject, input, output } from '@angular/core';
+import { Component, HostListener, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -47,8 +47,8 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     height = 500;
 
     showYAxisLabel = true;
-    yAxisLabel: string;
-    xAxisLabel: string;
+    readonly yAxisLabel = signal<string>('');
+    readonly xAxisLabel = signal<string>('');
 
     helpIconTooltip: string;
 
@@ -305,14 +305,15 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * Auxiliary method in order to keep the chart translation sensitive
      */
     private setupAxisLabels(): void {
-        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+        this.yAxisLabel.set(this.translateService.instant('artemisApp.examScores.yAxes'));
+        let xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
         if (this.gradingScaleExists && !this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
+            xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
         } else if (this.gradingScaleExists && this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
+            xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
         }
+        this.xAxisLabel.set(xAxisLabel);
     }
 
     /**

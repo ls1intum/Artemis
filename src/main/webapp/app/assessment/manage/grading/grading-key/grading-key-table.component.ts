@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, model } from '@angular/core';
+import { Component, OnInit, inject, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -36,8 +36,8 @@ export class GradingKeyTableComponent implements OnInit {
     studentGradeOrBonusPointsOrGradeBonus = model<string>();
     forBonus = model<boolean>();
 
-    plagiarismGrade: string;
-    noParticipationGrade: string;
+    readonly plagiarismGrade = signal<string | undefined>(undefined);
+    readonly noParticipationGrade = signal<string | undefined>(undefined);
 
     isExam = false;
 
@@ -45,8 +45,8 @@ export class GradingKeyTableComponent implements OnInit {
     examId?: number;
 
     title?: string;
-    gradeSteps: GradeStep[] = [];
-    isBonus = false;
+    readonly gradeSteps = signal<GradeStep[]>([]);
+    readonly isBonus = signal(false);
 
     hasPointsSet = false;
 
@@ -61,10 +61,10 @@ export class GradingKeyTableComponent implements OnInit {
         this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
             if (gradeSteps) {
                 this.title = gradeSteps.title;
-                this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
-                this.gradeSteps = this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
-                this.plagiarismGrade = gradeSteps.plagiarismGrade;
-                this.noParticipationGrade = gradeSteps.noParticipationGrade;
+                this.isBonus.set(gradeSteps.gradeType === GradeType.BONUS);
+                this.gradeSteps.set(this.gradingService.sortGradeSteps(gradeSteps.gradeSteps));
+                this.plagiarismGrade.set(gradeSteps.plagiarismGrade);
+                this.noParticipationGrade.set(gradeSteps.noParticipationGrade);
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
                         let maxPoints = 0;
@@ -72,16 +72,16 @@ export class GradingKeyTableComponent implements OnInit {
                         if (totalScoresForCourse) {
                             maxPoints = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
                         }
-                        this.gradingService.setGradePoints(this.gradeSteps, maxPoints);
+                        this.gradingService.setGradePoints(this.gradeSteps(), maxPoints);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                        this.gradingService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
+                        this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints!);
                     }
                 }
             }
         });
 
-        this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps);
+        this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps());
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {

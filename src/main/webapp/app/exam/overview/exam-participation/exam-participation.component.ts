@@ -518,6 +518,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         // update local studentExam for later sync with server
         this.updateLocalStudentExam();
+        // The end view is gated by the time-based isOver() getter. The exam timer fires this handler
+        // ~1s before the end and then stops ticking, so under zoneless change detection nothing else
+        // would re-evaluate isOver() once the time has actually elapsed. Schedule change detection now
+        // and again right after the remaining second so the hand-in/end cover reliably appears.
+        this.changeDetectorRef.markForCheck();
+        setTimeout(() => this.changeDetectorRef.markForCheck(), 1500);
     }
 
     /**

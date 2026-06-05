@@ -142,10 +142,10 @@ describe('GradingKeyTableComponent', () => {
 
             expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
             expect(component.title).toBe('Test Exam');
-            expect(component.gradeSteps).toHaveLength(2);
-            expect(component.isBonus).toBe(false);
-            expect(component.plagiarismGrade).toBe('5.0');
-            expect(component.noParticipationGrade).toBe('5.0');
+            expect(component.gradeSteps()).toHaveLength(2);
+            expect(component.isBonus()).toBe(false);
+            expect(component.plagiarismGrade()).toBe('5.0');
+            expect(component.noParticipationGrade()).toBe('5.0');
         });
 
         it('should set grade points for exam', () => {
@@ -331,7 +331,7 @@ describe('GradingKeyTableComponent', () => {
 
             expect(bonusService.findBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
             expect(component.forBonus()).toBe(true);
-            expect(component.isBonus).toBe(true);
+            expect(component.isBonus()).toBe(true);
         });
     });
 
@@ -396,7 +396,7 @@ describe('GradingKeyTableComponent', () => {
         it('should handle undefined grade steps gracefully', () => {
             fixture.detectChanges();
 
-            expect(component.gradeSteps).toHaveLength(0);
+            expect(component.gradeSteps()).toHaveLength(0);
             expect(component.title).toBeUndefined();
         });
     });
