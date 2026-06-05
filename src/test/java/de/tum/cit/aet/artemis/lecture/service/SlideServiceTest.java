@@ -46,7 +46,8 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Create a test exercise
         var lecture = lectureUtilService.createCourseWithLecture(true);
         testCourse = lecture.getCourse();
-        testExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), ZonedDateTime.now().plusDays(8), testCourse);
+        ZonedDateTime releaseDate = nowWithoutNanos();
+        testExercise = TextExerciseFactory.generateTextExercise(releaseDate, releaseDate.plusDays(7), releaseDate.plusDays(8), testCourse);
 
         AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         List<Slide> testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
@@ -75,11 +76,12 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testHandleDueDateChange_withNullOriginalDueDate() {
         // Create an exercise with null due date
-        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), null, ZonedDateTime.now().plusDays(8), testCourse);
+        ZonedDateTime releaseDate = nowWithoutNanos();
+        Exercise originalExercise = TextExerciseFactory.generateTextExercise(releaseDate, null, releaseDate.plusDays(8), testCourse);
         originalExercise = exerciseRepository.save(originalExercise);
 
         // Create updated version with a due date
-        ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime newDueDate = releaseDate.plusDays(5);
         Exercise updatedExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), newDueDate, originalExercise.getAssessmentDueDate(), testCourse);
         updatedExercise.setId(originalExercise.getId());
         updatedExercise.setTitle(originalExercise.getTitle());
@@ -102,8 +104,9 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testHandleDueDateChange_withUnchangedDueDate() {
         // Create original exercise
-        ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
-        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), dueDate, ZonedDateTime.now().plusDays(8), testCourse);
+        ZonedDateTime releaseDate = nowWithoutNanos();
+        ZonedDateTime dueDate = releaseDate.plusDays(7);
+        Exercise originalExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, releaseDate.plusDays(8), testCourse);
         originalExercise = exerciseRepository.save(originalExercise);
 
         // Create updated exercise with same due date
@@ -125,5 +128,9 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Verify the slide hasn't changed
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    private static ZonedDateTime nowWithoutNanos() {
+        return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 }
