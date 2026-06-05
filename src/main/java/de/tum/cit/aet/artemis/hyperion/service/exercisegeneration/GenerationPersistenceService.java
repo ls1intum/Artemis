@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +27,11 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -67,10 +70,12 @@ public class GenerationPersistenceService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ProgrammingExerciseTestCaseRepository testCaseRepository;
+
     public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseCreationUpdateService creationUpdateService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -79,6 +84,7 @@ public class GenerationPersistenceService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.creationUpdateService = creationUpdateService;
         this.exerciseVersionService = exerciseVersionService;
+        this.testCaseRepository = testCaseRepository;
     }
 
     /**
@@ -250,6 +256,9 @@ public class GenerationPersistenceService {
         // does.
         if (testsCommitHash != null) {
             triggerTestsBuild(exercise, testsCommitHash);
+            // 3b. Once the tests-build syncs the test cases (at the default weight 1.0), align production grading with the differential oracle: zero-weight the build-gate cases.
+            // The C/C++ FACT CompileSort/TestConfigure pass on the compiling template, so without this a student submitting the untouched template would score above 0%.
+            zeroWeightBuildGateTestCases(exercise.getId());
         }
 
         // 4. Record a new exercise version, snapshotting the committed repository state (the durable source of truth) and refreshing search indexing / notifying open editors.
@@ -366,6 +375,48 @@ public class GenerationPersistenceService {
         }
         catch (RuntimeException e) {
             log.warn("Unexpected error triggering the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
+        }
+    }
+
+    private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
+
+    private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
+
+    /**
+     * The tests-build (just triggered) synchronises the test cases ASYNCHRONOUSLY at the default weight {@code 1.0}. For C/C++ FACT exercises the report includes build-gate cases
+     * (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them ({@link BuildGateTestNames}) but production grades EVERY discovered
+     * case,
+     * so without this a student submitting the untouched template would score above 0%. Wait (bounded) for the cases to appear, then zero-weight exactly the build gates so
+     * production grading matches the oracle. Best-effort: a timeout or any error never fails the already-accepted exercise — it only leaves the rare C/C++ template scoring >0%
+     * until
+     * reconfigured. Runs on the generation executor (the persist is {@code @Async}), so the bounded wait blocks no request thread. A no-op for every language without build-gate
+     * cases (Java/Python/…) and idempotent (re-running leaves the weights at 0).
+     *
+     * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
+     */
+    private void zeroWeightBuildGateTestCases(long exerciseId) {
+        try {
+            long deadline = System.nanoTime() + TEST_CASE_SYNC_TIMEOUT.toNanos();
+            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exerciseId);
+            while (testCases.isEmpty() && System.nanoTime() < deadline) {
+                Thread.sleep(TEST_CASE_SYNC_POLL.toMillis());
+                testCases = testCaseRepository.findByExerciseId(exerciseId);
+            }
+            List<ProgrammingExerciseTestCase> buildGates = testCases.stream()
+                    .filter(testCase -> BuildGateTestNames.isBuildGate(testCase.getTestName()) && testCase.getWeight() != null && testCase.getWeight() != 0.0).toList();
+            if (buildGates.isEmpty()) {
+                return;
+            }
+            buildGates.forEach(testCase -> testCase.setWeight(0.0));
+            testCaseRepository.saveAll(buildGates);
+            log.info("Zero-weighted {} build-gate test case(s) for generated exercise {} so the template grades at 0% (parity with the differential oracle): {}", buildGates.size(),
+                    exerciseId, buildGates.stream().map(ProgrammingExerciseTestCase::getTestName).toList());
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not adjust build-gate test-case grading for generated exercise {} (a C/C++ template may grade >0% until reconfigured): {}", exerciseId, e.getMessage());
         }
     }
 }

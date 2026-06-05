@@ -706,39 +706,11 @@ public class AuthoritativeVerificationService {
     }
 
     /**
-     * The non-behavioural build/compile/configure gate test-case names that legitimately PASS on both the solution and the template (the C++ Catch2/CMake {@code TestConfigure} /
-     * {@code Compile<Target>}, the C {@code Compile}/{@code TestCompile}, a generic {@code Configure}/{@code Build}). They assert only "does it compile/configure", which the
-     * same-signature placeholder template satisfies by design, so the production-parity gate exempts them while every behaviour test must still fail on the template.
+     * Whether a name is a build/compile/configure gate exempt from the production-parity gate. Single source of truth shared with the persistence step (which zero-weights these in
+     * production grading so the divergence cannot arise): {@link BuildGateTestNames}.
      */
-    private static final Set<String> BUILD_GATE_EXACT_NAMES = Set.of("testconfigure", "configure", "compile", "testcompile", "build", "testbuild", "cmake");
-
-    /** Prefixes of a per-target build gate ({@code CompileSort}, {@code ConfigureDebug}, {@code BuildTests}). Case-insensitive. */
-    private static final List<String> BUILD_GATE_PREFIXES = List.of("compile", "configure", "build");
-
-    /** Whether a name is a build/compile/configure gate exempt from the production-parity gate (see {@link #BUILD_GATE_EXACT_NAMES}). */
     private static boolean isBuildGateTest(String normalizedName) {
-        // Also check the last dot-segment: the real C++ harness reports build gates with the framework suite prefix (GBS-Tester-1.36.TestConfigure), so the gate word is the final
-        // segment, not the start of the whole name.
-        if (matchesBuildGateToken(normalizedName)) {
-            return true;
-        }
-        int lastDot = normalizedName.lastIndexOf('.');
-        return lastDot >= 0 && lastDot < normalizedName.length() - 1 && matchesBuildGateToken(normalizedName.substring(lastDot + 1));
-    }
-
-    /** Whether a token is exactly a build-gate word, or a {@code GateWord<UpperCaseTarget>} form (e.g. {@code CompileSort}). */
-    private static boolean matchesBuildGateToken(String token) {
-        String lower = token.toLowerCase(Locale.ROOT);
-        if (BUILD_GATE_EXACT_NAMES.contains(lower)) {
-            return true;
-        }
-        for (String prefix : BUILD_GATE_PREFIXES) {
-            // Require an uppercase target after the gate word so a behaviour test like "compiles_an_empty_program" is never a false positive.
-            if (lower.startsWith(prefix) && token.length() > prefix.length() && Character.isUpperCase(token.charAt(prefix.length()))) {
-                return true;
-            }
-        }
-        return false;
+        return BuildGateTestNames.isBuildGate(normalizedName);
     }
 
     /**

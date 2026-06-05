@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -14,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,12 +31,14 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
  * Tests the persistence orchestration: the canonical tests build is triggered with the tests commit only after the solution was committed (so the build sees the final solution),
@@ -56,6 +61,8 @@ class GenerationPersistenceServiceTest {
 
     private ExerciseVersionService exerciseVersionService;
 
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
+
     private GenerationPersistenceService service;
 
     private ProgrammingExercise exercise;
@@ -77,8 +84,13 @@ class GenerationPersistenceServiceTest {
         programmingSubmissionService = mock(ProgrammingSubmissionService.class);
         creationUpdateService = mock(ProgrammingExerciseCreationUpdateService.class);
         exerciseVersionService = mock(ExerciseVersionService.class);
+        testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
+        // Return a single non-build-gate case so the post-trigger build-gate adjustment sees the test cases synced immediately (no wait) and zero-weights nothing in these tests.
+        ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
+        when(behaviourCase.getTestName()).thenReturn("behaviourTest");
+        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(behaviourCase));
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                creationUpdateService, exerciseVersionService);
+                creationUpdateService, exerciseVersionService, testCaseRepository);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
@@ -142,6 +154,29 @@ class GenerationPersistenceServiceTest {
 
         // A successful persist records a new exercise version.
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
+    }
+
+    @Test
+    void persist_zeroWeightsBuildGateTestCases_soTheCompilingTemplateGradesAtZero() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // The tests-build synced a C/C++ FACT report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
+        ProgrammingExerciseTestCase buildGate = mock(ProgrammingExerciseTestCase.class);
+        when(buildGate.getTestName()).thenReturn("GBS-Tester-1.36.CompileSort");
+        when(buildGate.getWeight()).thenReturn(1.0);
+        ProgrammingExerciseTestCase behaviour = mock(ProgrammingExerciseTestCase.class);
+        when(behaviour.getTestName()).thenReturn("sort-test.push_then_pop");
+        when(behaviour.getWeight()).thenReturn(1.0);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "");
+        service.persist(exercise, user, outcome);
+
+        // Exactly the build gate is zero-weighted (so the untouched compiling template scores 0%); the behaviour test is left graded; the change is persisted.
+        verify(buildGate).setWeight(0.0);
+        verify(behaviour, never()).setWeight(anyDouble());
+        verify(testCaseRepository).saveAll(any());
     }
 
     @Test
