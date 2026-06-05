@@ -12,32 +12,31 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorActionGradingInstructionsIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
                 { provide: ThemeService, useClass: MockThemeService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const setupActions = () => {
