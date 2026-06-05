@@ -257,18 +257,21 @@ describe('CourseScoresComponent', () => {
         exerciseMaxPointsPerType.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 10);
         exerciseMaxPointsPerType.set(ExerciseType.PROGRAMMING, new Map());
         exerciseMaxPointsPerType.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, 10);
+        exerciseMaxPointsPerType.set(ExerciseType.MATH, new Map());
 
         pointsOfStudent1.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, Number.NaN);
         pointsOfStudent1.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
         pointsOfStudent1.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 10);
         pointsOfStudent1.set(ExerciseType.PROGRAMMING, new Map());
         pointsOfStudent1.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, 20);
+        pointsOfStudent1.set(ExerciseType.MATH, new Map());
 
         pointsOfStudent2.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, Number.NaN);
         pointsOfStudent2.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
         pointsOfStudent2.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 5);
         pointsOfStudent2.set(ExerciseType.PROGRAMMING, new Map());
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
+        pointsOfStudent2.set(ExerciseType.MATH, new Map());
 
         await TestBed.configureTestingModule({
             imports: [CourseScoresComponent],

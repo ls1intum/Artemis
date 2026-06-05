@@ -97,6 +97,7 @@ describe('Course Management Service', () => {
         courseForDashboard.quizScores = courseScores;
         courseForDashboard.textScores = courseScores;
         courseForDashboard.fileUploadScores = courseScores;
+        courseForDashboard.mathScores = courseScores;
         participationResult = new ParticipationResultDTO();
         participationResult.participationId = 432;
         courseForDashboard.participationResults = [participationResult];
@@ -110,6 +111,7 @@ describe('Course Management Service', () => {
         scoresPerExerciseType.set(ExerciseType.QUIZ, courseScores);
         scoresPerExerciseType.set(ExerciseType.TEXT, courseScores);
         scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseScores);
+        scoresPerExerciseType.set(ExerciseType.MATH, courseScores);
 
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
