@@ -21,8 +21,11 @@ import { ButtonDirective } from 'primeng/button';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -48,20 +51,25 @@ interface RelatedThreadLocation {
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
-    providers: [ConfirmationService],
+    providers: [ConfirmationService, DialogService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
     readonly showFeedbackAction = input<boolean>(false);
+    /** Whether the "Adapt with Artemis Intelligence" action may be offered (host-gated to at-least-editor review contexts). */
+    readonly showAdaptAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<InlineCodeChange>();
+    /** Emits the assembled feedback prompt when the instructor confirms adapting the exercise to address this thread. */
+    readonly adaptExercise = output<{ feedback: string }>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faEllipsisVertical = faEllipsisVertical;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
@@ -84,6 +92,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
     private readonly confirmationService = inject(ConfirmationService);
+    private readonly dialogService = inject(DialogService);
+    private adaptDialogRef?: DynamicDialogRef | null;
     readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
     readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
@@ -108,6 +118,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         return content;
     });
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
+    /** Whether to offer "Adapt with Artemis Intelligence" on this thread: a consistency/verification finding, host-permitted, and not outdated. */
+    readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().outdated);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
@@ -264,6 +276,65 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Opens the Artemis Intelligence adapt dialog for this consistency/verification thread. On confirm, assembles the feedback prompt from the
+     * thread's finding (plus any optional instructions the instructor added) and emits it so the host can trigger the adaptation run.
+     */
+    openAdaptDialog(): void {
+        if (!this.canAdaptExercise()) {
+            return;
+        }
+        const issueContent = this.firstConsistencyIssueContent();
+        if (!issueContent) {
+            return;
+        }
+        this.adaptDialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            width: '40vw',
+            data: { findingText: this.assembleFindingText(issueContent) },
+        });
+        this.adaptDialogRef?.onClose.pipe(takeUntil(this.destroyed$)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+            if (!result) {
+                return;
+            }
+            this.adaptExercise.emit({ feedback: this.assembleAdaptFeedback(issueContent, result.instructions) });
+        });
+    }
+
+    /**
+     * Builds the read-only, human-readable description of the finding shown in the dialog and embedded in the feedback prompt.
+     *
+     * @param issueContent The consistency/verification finding for the thread's first comment.
+     * @returns A single human-readable line describing category, severity, and the finding text.
+     */
+    private assembleFindingText(issueContent: ConsistencyIssueCommentContent): string {
+        const category = this.translateService.instant('artemisApp.hyperion.consistencyCheck.category.' + issueContent.category);
+        const severity = this.translateService.instant('artemisApp.review.consistencySeverity.' + issueContent.severity);
+        const location = this.getThreadLocationLabel(this.thread());
+        const header = location ? `${category} (${severity}) — ${location}` : `${category} (${severity})`;
+        return `${header}\n${issueContent.text}`.trim();
+    }
+
+    /**
+     * Assembles the full feedback prompt sent to Artemis Intelligence: the finding to address followed by any optional instructor instructions.
+     *
+     * @param issueContent The consistency/verification finding for the thread.
+     * @param instructions Optional free-text instructions the instructor added.
+     * @returns The assembled, human-readable feedback prompt.
+     */
+    private assembleAdaptFeedback(issueContent: ConsistencyIssueCommentContent, instructions?: string): string {
+        const findingSection = `${this.translateService.instant('artemisApp.review.adaptExercise.feedbackLabel')}\n${this.assembleFindingText(issueContent)}`;
+        const trimmedInstructions = instructions?.trim();
+        if (!trimmedInstructions) {
+            return findingSection.trim();
+        }
+        const instructionsSection = `${this.translateService.instant('artemisApp.review.adaptExercise.instructionsLabel')}\n${trimmedInstructions}`;
+        return `${findingSection}\n\n${instructionsSection}`.trim();
+    }
+
+    /**
      * Resolves all threads in the current thread group.
      */
     resolveGroup(): void {
@@ -328,6 +399,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         document.removeEventListener('scroll', this.hideOpenMenus, true);
+        this.adaptDialogRef?.close();
         this.destroyed$.next();
         this.destroyed$.complete();
     }

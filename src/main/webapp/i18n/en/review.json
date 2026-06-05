@@ -58,6 +58,19 @@
                 "MEDIUM": "Medium",
                 "HIGH": "High"
             },
+            "adaptExercise": {
+                "action": "Adapt with Artemis Intelligence",
+                "title": "Adapt exercise with Artemis Intelligence",
+                "summary": "Artemis Intelligence will adapt this exercise to address this feedback.",
+                "feedbackLabel": "Feedback to address",
+                "instructionsLabel": "Additional instructions (optional)",
+                "instructionsPlaceholder": "Add any extra guidance for Artemis Intelligence (optional)...",
+                "confirm": "Adapt exercise",
+                "cancel": "Cancel",
+                "started": "Artemis Intelligence is adapting the exercise. You can track progress on the exercise detail page.",
+                "alreadyRunning": "An Artemis Intelligence run is already in progress for this exercise.",
+                "startError": "Could not start the Artemis Intelligence adaptation. Please try again."
+            },
             "submitBeforeComment": "Submit the exercise before starting a thread."
         }
     }

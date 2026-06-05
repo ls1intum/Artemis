@@ -45,6 +45,7 @@ import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -162,6 +163,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private hyperionExerciseAdaptationService = inject(HyperionExerciseAdaptationService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -479,6 +481,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             }
         }
         this.navigateToLocation(location);
+    }
+
+    /**
+     * Triggers an Artemis Intelligence adaptation run for the current exercise using the feedback assembled in the review thread widget.
+     *
+     * The run is keyed by exercise id on the server; progress surfaces on the compact run card on the exercise detail page, which reattaches to
+     * the live run via its status endpoint. This is why we do not host the run card here: it avoids duplicating run logic and the instructor sees
+     * progress when they return to the detail page (an info alert points them there).
+     *
+     * @param payload The assembled feedback prompt to address.
+     */
+    onAdaptExercise(payload: { feedback: string }): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        this.hyperionExerciseAdaptationService.adaptExercise(exerciseId, payload.feedback);
     }
 
     /**

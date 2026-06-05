@@ -31,6 +31,7 @@
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
+            (onAdaptExercise)="onAdaptExercise($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -427,6 +428,7 @@
                         (onProblemStatementSaved)="onProblemStatementSaved()"
                         (onInlineRefinement)="onInlineRefinement($event)"
                         (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
+                        (onAdaptExercise)="onAdaptExercise($event)"
                     />
                 } @else {
                     <!-- Loading state while waiting for templateParticipation -->

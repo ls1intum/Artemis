@@ -281,6 +281,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<{ threadId: number }>();
+    /** Emits the assembled feedback prompt when the instructor adapts the exercise from a problem-statement consistency/verification thread. */
+    readonly onAdaptExercise = output<{ feedback: string }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
@@ -1092,8 +1094,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
+                onAdaptExercise: (payload) => this.onAdaptExercise.emit(payload),
                 showLocationWarning: () => this.showLocationWarning(),
                 showFeedbackAction: () => false,
+                showAdaptAction: () => this.enableExerciseReviewComments(),
             });
         }
         return this.reviewCommentManager;

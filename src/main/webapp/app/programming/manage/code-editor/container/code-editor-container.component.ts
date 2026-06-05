@@ -111,6 +111,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    /** Relays the assembled feedback prompt when the instructor adapts the exercise from a code-repository review thread. */
+    onAdaptExercise = output<{ feedback: string }>();
     onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */

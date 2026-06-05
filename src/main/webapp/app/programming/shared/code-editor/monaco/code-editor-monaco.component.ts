@@ -113,6 +113,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    /** Emits the assembled feedback prompt when the instructor adapts the exercise from a consistency/verification review thread. */
+    readonly onAdaptExercise = output<{ feedback: string }>();
     readonly onSavedFiles = output<{ [fileName: string]: string | undefined }>();
     readonly onInlineFixCommitted = output<void>();
     readonly onEditorLoaded = output<void>();
@@ -793,11 +795,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
+                onAdaptExercise: (payload) => this.onAdaptExercise.emit(payload),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
                 showFeedbackAction: (thread) =>
                     thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                     thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                     thread.targetType === CommentThreadLocationType.TEST_REPO,
+                showAdaptAction: () => this.enableExerciseReviewComments(),
             });
         }
         return this.reviewCommentManager;

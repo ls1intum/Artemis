@@ -221,6 +221,20 @@
                         }
                     </button>
                 }
+                @if (canAdaptExercise()) {
+                    <button
+                        pButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        class="monaco-review-comment-adapt-button"
+                        [title]="'artemisApp.review.adaptExercise.action' | artemisTranslate"
+                        (click)="openAdaptDialog()"
+                    >
+                        <fa-icon [icon]="facArtemisIntelligence" class="me-1" />
+                        {{ 'artemisApp.review.adaptExercise.action' | artemisTranslate }}
+                    </button>
+                }
                 <div class="monaco-review-comment-resolve-controls">
                     <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
                         @if (thread().resolved) {

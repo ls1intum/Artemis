@@ -25,6 +25,7 @@
             (markdownChange)="updateProblemStatement($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
             (onApplyInlineFix)="onApplyInlineFix($event)"
+            (onAdaptExercise)="onAdaptExercise.emit($event)"
             (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering

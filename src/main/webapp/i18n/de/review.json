@@ -58,6 +58,19 @@
                 "MEDIUM": "Mittlerer",
                 "HIGH": "Hoher"
             },
+            "adaptExercise": {
+                "action": "Mit Artemis Intelligence anpassen",
+                "title": "Aufgabe mit Artemis Intelligence anpassen",
+                "summary": "Artemis Intelligence passt diese Aufgabe an, um dieses Feedback zu berücksichtigen.",
+                "feedbackLabel": "Zu berücksichtigendes Feedback",
+                "instructionsLabel": "Zusätzliche Anweisungen (optional)",
+                "instructionsPlaceholder": "Füge optional weitere Hinweise für Artemis Intelligence hinzu ...",
+                "confirm": "Aufgabe anpassen",
+                "cancel": "Abbrechen",
+                "started": "Artemis Intelligence passt die Aufgabe an. Den Fortschritt kannst du auf der Detailseite der Aufgabe verfolgen.",
+                "alreadyRunning": "Für diese Aufgabe läuft bereits ein Artemis-Intelligence-Vorgang.",
+                "startError": "Die Anpassung durch Artemis Intelligence konnte nicht gestartet werden. Bitte versuche es erneut."
+            },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }
     }
