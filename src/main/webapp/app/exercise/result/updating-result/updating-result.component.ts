@@ -72,6 +72,15 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
      * @param changes The hashtable of occurred changes represented as SimpleChanges object.
+     *
+     * NOTE (signal migration): intentionally NOT migrated to computed()/effect() yet — blocked by:
+     *   1. It is gated on {@code hasParticipationChanged(changes)}, which reads {@code changes.participation.previousValue.id}
+     *      and only re-subscribes when the participation *id* actually changes (ignoring same-id object replacements). Signal
+     *      inputs expose no previousValue, so an effect() would re-open the result/submission WebSocket subscriptions on every
+     *      same-id change unless we manually shadow the previous id.
+     *   2. The body depends on {@code isLocalCIEnabled}, set in ngOnInit; an effect() runs after ngOnInit/CD, shifting the
+     *      timing of subscribeForNewResults()/subscribeForNewSubmissions().
+     * Tracked for future removal once a signal-friendly approach exists; do not silence the lint rule.
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {

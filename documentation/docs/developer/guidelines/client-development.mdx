@@ -109,8 +109,8 @@ So `ngOnChanges` is functional and not a correctness bug — but the Angular doc
 | Recompute a value derived from inputs/state | `computed()` — lazy, memoised, cannot go stale |
 | Derived value that can also be set locally | `linkedSignal()` |
 | Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the *last* API to reach for |
-| Need `SimpleChanges.previousValue` or `isFirstChange()` | keep `ngOnChanges` (signals don't expose these directly) |
-| Logic that must run **before** child components initialise | keep `ngOnChanges` (it runs before `ngOnInit`; an `effect()` runs afterwards) |
+| Need `SimpleChanges.previousValue` or `isFirstChange()` | keep `ngOnChanges` for now — signals don't expose these directly; document why with a comment (still a future-removal target) |
+| Logic that must run **before** child components initialise | keep `ngOnChanges` for now — it runs before `ngOnInit`, an `effect()` runs afterwards; document why with a comment (still a future-removal target) |
 
 ```ts
 // Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
@@ -131,12 +131,9 @@ export class ExampleComponent {
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes. It is enabled for modules that are fully migrated to signals **and** already free of `ngOnChanges` (see `signalReactivityModules` in `eslint.config.mjs`); that list grows as the remaining migrated modules are cleaned up. The rule is intentionally a warning, not an error — for the legitimate cases above, keep `ngOnChanges` and silence the rule on the line with a short justification:
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across **all** client modules — the entire client is migrated to signals, so the rule is applied globally (the same scope as `localRules/enforce-signal-apis`). It is intentionally a warning, not an error.
 
-```ts
-// eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue
-ngOnChanges(changes: SimpleChanges) { /* ... */ }
-```
+The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `computed()` (derived state) or `effect()` (genuine side effects). For the rare cases that still genuinely need `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not yet possible. Do **not** silence the rule with `eslint-disable`: the warning is intentionally left in place so the remaining cases stay visible until a signal-based replacement is found.
 
 `ngOnInit` and `ngOnDestroy` are **not** affected by signals — they fire regardless of the input mechanism and remain valid. For teardown, prefer `DestroyRef` + `takeUntilDestroyed()` or an `effect()` (which cleans itself up) over manual `ngOnDestroy` bookkeeping where practical; the `localRules/enforce-cleanup-on-destroy` rule already guards subscription cleanup.
 
