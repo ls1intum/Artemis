@@ -46,10 +46,10 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
     public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling create2.');
+            throw new Error('Required parameter courseId was null or undefined when calling create.');
         }
         if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling create2.');
+            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling create.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -87,75 +87,6 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
         }
 
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<TutorialGroupConfiguration>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: tutorialGroupConfiguration,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * @endpoint post /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations
-     * @param courseId 
-     * @param tutorialGroupConfiguration 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupConfiguration>;
-    public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupConfiguration>>;
-    public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
-    public create(courseId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling create3.');
-        }
-        if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling create3.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<TutorialGroupConfiguration>('post', `${basePath}${localVarPath}`,
             {
@@ -227,134 +158,6 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     }
 
     /**
-     * @endpoint get /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations
-     * @param courseId 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public getOneOfCourse(courseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupConfiguration>;
-    public getOneOfCourse(courseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupConfiguration>>;
-    public getOneOfCourse(courseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
-    public getOneOfCourse(courseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling getOneOfCourse1.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<TutorialGroupConfiguration>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * @endpoint put /api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}
-     * @param courseId 
-     * @param tutorialGroupsConfigurationId 
-     * @param tutorialGroupConfiguration 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TutorialGroupConfiguration>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TutorialGroupConfiguration>>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
-    public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling update2.');
-        }
-        if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
-            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update2.');
-        }
-        if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling update2.');
-        }
-
-        let localVarHeaders = this.defaultHeaders;
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        // to determine the Content-Type header
-        const consumes: string[] = [
-            'application/json'
-        ];
-        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
-        if (httpContentTypeSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
-        }
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configurations/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<TutorialGroupConfiguration>('put', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: tutorialGroupConfiguration,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
      * @endpoint put /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}
      * @param courseId 
      * @param tutorialGroupsConfigurationId 
@@ -368,13 +171,13 @@ export class TutorialGroupsConfigurationApiService extends BaseService {
     public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TutorialGroupConfiguration>>;
     public update(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupConfiguration: TutorialGroupConfiguration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling update3.');
+            throw new Error('Required parameter courseId was null or undefined when calling update.');
         }
         if (tutorialGroupsConfigurationId === null || tutorialGroupsConfigurationId === undefined) {
-            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update3.');
+            throw new Error('Required parameter tutorialGroupsConfigurationId was null or undefined when calling update.');
         }
         if (tutorialGroupConfiguration === null || tutorialGroupConfiguration === undefined) {
-            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling update3.');
+            throw new Error('Required parameter tutorialGroupConfiguration was null or undefined when calling update.');
         }
 
         let localVarHeaders = this.defaultHeaders;

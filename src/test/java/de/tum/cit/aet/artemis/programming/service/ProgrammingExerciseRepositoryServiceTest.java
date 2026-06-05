@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +22,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -40,17 +37,11 @@ class ProgrammingExerciseRepositoryServiceTest {
     @Mock
     private GitService gitService;
 
-    @Mock
-    private UserTestRepository userRepository;
-
-    @Mock
-    private ResourceLoaderService resourceLoaderService;
-
-    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private ProgrammingExerciseRepositorySourceCleaner repositorySourceCleaner;
 
     @BeforeEach
     void setUp() {
-        programmingExerciseRepositoryService = new ProgrammingExerciseRepositoryService(gitService, userRepository, resourceLoaderService, Optional.empty());
+        repositorySourceCleaner = new ProgrammingExerciseRepositorySourceCleaner(gitService);
     }
 
     @Test
@@ -62,7 +53,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.TEMPLATE, user);
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.TEMPLATE, user);
 
         try (var files = Files.list(repoPath.resolve("src"))) {
             assertThat(files.map(path -> path.getFileName().toString()).sorted().toList()).containsExactly(".gitkeep");
@@ -80,7 +71,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
         Repository repository = mockRepository(repoPath);
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.SOLUTION, new User());
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.JAVA, repository, RepositoryType.SOLUTION, new User());
 
         verifyNoInteractions(gitService);
     }
@@ -98,7 +89,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.GO, repository, RepositoryType.SOLUTION, user);
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.GO, repository, RepositoryType.SOLUTION, user);
 
         assertThat(repoPath.resolve("go.mod")).exists();
         assertThat(repoPath.resolve(".gitignore")).exists();
@@ -118,7 +109,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.SWIFT, repository, RepositoryType.SOLUTION, user);
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.SWIFT, repository, RepositoryType.SOLUTION, user);
 
         assertThat(repoPath.resolve("Package.swift")).exists();
         assertThat(repoPath.resolve("Sources/AppLib/Sorter.swift")).doesNotExist();
@@ -138,7 +129,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.OCAML, repository, RepositoryType.SOLUTION, user);
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.OCAML, repository, RepositoryType.SOLUTION, user);
 
         assertThat(repoPath.resolve("src/dune")).as("the in-directory build manifest is kept").exists();
         assertThat(repoPath.resolve("src/assignment.ml")).doesNotExist();
@@ -155,7 +146,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
         Repository repository = mockRepository(repoPath);
 
-        programmingExerciseRepositoryService.clearRepositorySources(ProgrammingLanguage.C, repository, RepositoryType.SOLUTION, new User());
+        repositorySourceCleaner.clearRepositorySources(ProgrammingLanguage.C, repository, RepositoryType.SOLUTION, new User());
 
         assertThat(repoPath.resolve("exercise.c")).doesNotExist();
         assertThat(repoPath.resolve(".gitkeep")).exists();

@@ -97,7 +97,8 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         assertThat(solutionFiles).as("%s %s solution working tree is non-empty", language, projectType).isNotEmpty();
         assertThat(testFiles).as("%s %s tests working tree is non-empty", language, projectType).isNotEmpty();
 
-        // The emptyRepositories=true contract (ProgrammingExerciseRepositoryService#clearRepositoriesForAiGeneration): the language's source files are cleared from template and
+        // The emptyRepositories=true contract (ProgrammingExerciseRepositorySourceCleaner#clearRepositoriesForAiGeneration): the language's source files are cleared from template
+        // and
         // solution by extension (build manifests and the keep-list preserved), while the tests repository is kept intact. We replicate production's exact source filter and assert
         // no
         // clearable source survives in template or solution; the tests tree, copied verbatim and never cleared, stays non-empty (asserted above) — the asymmetry that the clearing
@@ -115,7 +116,7 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         }
     }
 
-    // The keep-list ProgrammingExerciseRepositoryService preserves even though its name carries a source extension (Package.swift / build.sbt).
+    // The keep-list ProgrammingExerciseRepositorySourceCleaner preserves even though its name carries a source extension (Package.swift / build.sbt).
     private static final java.util.Set<String> AI_GENERATION_KEEP_FILES = java.util.Set.of("Package.swift", "build.sbt");
 
     private static boolean isClearableSource(Path path, java.util.Set<String> sourceExtensions) {
@@ -127,7 +128,7 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         return sourceExtensions.stream().anyMatch(lower::endsWith);
     }
 
-    /** Mirrors {@code ProgrammingExerciseRepositoryService#sourceExtensionsFor}: the lower-cased extensions that identify the language's clearable source files. */
+    /** Mirrors {@code ProgrammingExerciseRepositorySourceCleaner#sourceExtensionsFor}: the lower-cased extensions that identify the language's clearable source files. */
     private static java.util.Set<String> sourceExtensionsFor(ProgrammingLanguage language) {
         return switch (language) {
             case JAVA -> java.util.Set.of(".java");

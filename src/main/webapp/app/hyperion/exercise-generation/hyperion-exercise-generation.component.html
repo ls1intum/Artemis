@@ -155,13 +155,13 @@
                             | artemisTranslate
                     "
                 />
-                <p-tag severity="info" [value]="v.testCount + ' ' + ('artemisApp.programmingExercise.generateExercise.gateTests' | artemisTranslate)" />
+                <p-tag severity="info" [value]="(v.testCount ?? 0) + ' ' + ('artemisApp.programmingExercise.generateExercise.gateTests' | artemisTranslate)" />
             </div>
-            @if (!v.accepted && v.reasons.length > 0) {
+            @if (!v.accepted && (v.reasons?.length ?? 0) > 0) {
                 <div class="generation-verdict-reasons mt-2">
                     <small class="fw-semibold d-block" jhiTranslate="artemisApp.programmingExercise.generateExercise.reasonsHeading"></small>
                     <ul class="mb-0">
-                        @for (reason of v.reasons; track $index) {
+                        @for (reason of v.reasons ?? []; track $index) {
                             <li>{{ reason }}</li>
                         }
                     </ul>

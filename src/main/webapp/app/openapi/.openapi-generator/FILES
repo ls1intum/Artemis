@@ -69,9 +69,6 @@ model/tutorialGroupSchedule.ts
 model/tutorialGroupSession.ts
 model/tutorialGroupStudent.ts
 model/tutorialGroupStudentImportData.ts
-model/tutorialGroupSummary.ts
-model/tutorialGroupSummarySchedule.ts
-model/tutorialGroupSummarySession.ts
 param.ts
 provide-api.ts
 query.params.ts
