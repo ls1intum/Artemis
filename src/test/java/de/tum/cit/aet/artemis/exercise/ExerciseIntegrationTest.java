@@ -556,6 +556,15 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
+            else if (exercise instanceof QuizExercise) {
+                // Open quizzes expose a sanitized submitted submission so the dashboard can show the submission status
+                // before the quiz has ended.
+                assertThat(participation.getSubmissions()).hasSize(1);
+                Submission submission = participation.getSubmissions().iterator().next();
+                assertThat(submission.isSubmitted()).isTrue();
+                assertThat(submission.getResults()).isEmpty();
+                assertThat(results).isEmpty();
+            }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
                 assertThat(participation.getSubmissions()).isEmpty();
