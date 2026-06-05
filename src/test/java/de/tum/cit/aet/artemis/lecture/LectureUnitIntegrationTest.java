@@ -201,10 +201,12 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     void updateLectureUnitOrder_asInstructor_shouldUpdateLectureUnitOrder() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         Collections.swap(newlyOrderedList, 0, 1);
-        List<LectureUnit> returnedList = request.putWithResponseBodyList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, LectureUnit.class,
-                HttpStatus.OK);
-        assertThat(returnedList.getFirst().getId()).isEqualTo(newlyOrderedList.getFirst());
-        assertThat(returnedList.get(1).getId()).isEqualTo(newlyOrderedList.get(1));
+        // The endpoint returns the reordered units as polymorphic LectureUnitDTOs (a 200 proves they serialize);
+        // verify the persisted order directly, which is the actual contract the client relies on.
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.OK);
+        List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits();
+        assertThat(reorderedUnits.get(0).getId()).isEqualTo(newlyOrderedList.get(0));
+        assertThat(reorderedUnits.get(1).getId()).isEqualTo(newlyOrderedList.get(1));
     }
 
     @Test
