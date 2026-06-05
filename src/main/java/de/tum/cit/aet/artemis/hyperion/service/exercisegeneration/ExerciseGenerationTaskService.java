@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -79,7 +80,7 @@ public class ExerciseGenerationTaskService {
                 case ERROR -> emitter.milestone(
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
                 default -> {
-                    ExerciseGenerationEventDTO.Verdict verdict = toVerdict(outcome.verification());
+                    ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                     if (outcome.isAccepted()) {
                         emitter.progress("Verification passed. Saving the exercise.");
                         try {
@@ -129,8 +130,8 @@ public class ExerciseGenerationTaskService {
      * @param verdict    the structured verdict mirrored to the client
      * @param emitter    the progress emitter for the live transcript
      */
-    private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome,
-            ExerciseGenerationEventDTO.Verdict verdict, GenerationProgressEmitter emitter) {
+    private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
+            GenerationProgressEmitter emitter) {
         String reason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
         try {
             emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
@@ -161,11 +162,11 @@ public class ExerciseGenerationTaskService {
         }
     }
 
-    private static ExerciseGenerationEventDTO.Verdict toVerdict(VerificationResult verification) {
+    private static ExerciseGenerationVerdictDTO toVerdict(VerificationResult verification) {
         if (verification == null) {
             return null;
         }
-        return new ExerciseGenerationEventDTO.Verdict(verification.accepted(), verification.solutionPassed(), verification.templateFailed(), verification.testCount(),
+        return new ExerciseGenerationVerdictDTO(verification.accepted(), verification.solutionPassed(), verification.templateFailed(), verification.testCount(),
                 verification.reasons());
     }
 }

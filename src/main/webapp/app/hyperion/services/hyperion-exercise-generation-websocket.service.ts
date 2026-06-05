@@ -6,22 +6,10 @@ import { ExerciseGenerationEvent as GeneratedExerciseGenerationEvent } from 'app
 // Reuse the generated enums so the unions cannot drift from the server (the drift that broke the build).
 export type ExerciseGenerationEventType = GeneratedExerciseGenerationEvent.TypeEnum;
 export type ExerciseGenerationCompletionStatus = GeneratedExerciseGenerationEvent.CompletionStatusEnum;
+export type { ExerciseGenerationVerdict } from 'app/openapi/model/exerciseGenerationVerdict';
 
-/** Verification verdict on a terminal event, for scannable result chips instead of parsing prose. Mirrors {@code ExerciseGenerationEventDTO.Verdict} (not yet in the OpenAPI model). */
-export interface ExerciseGenerationVerdict {
-    accepted: boolean;
-    solutionPassed: boolean;
-    templateFailed: boolean;
-    testCount: number;
-    reasons: string[];
-}
-
-/** A progress event streamed while an agentic exercise generation/adaptation runs. Extends the generated model with the not-yet-generated {@code verdict}. */
-export interface ExerciseGenerationEvent extends GeneratedExerciseGenerationEvent {
-    type?: ExerciseGenerationEventType;
-    completionStatus?: ExerciseGenerationCompletionStatus;
-    verdict?: ExerciseGenerationVerdict;
-}
+/** A progress event streamed while an agentic exercise generation/adaptation runs (the generated OpenAPI model, including the structured verdict). */
+export type ExerciseGenerationEvent = GeneratedExerciseGenerationEvent;
 
 type SubscribedJob = { wsSubscription: Subscription; subject: Subject<ExerciseGenerationEvent> };
 

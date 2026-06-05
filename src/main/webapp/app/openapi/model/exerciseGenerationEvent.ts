@@ -7,12 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { ExerciseGenerationVerdict } from './exerciseGenerationVerdict';
 
 
 export interface ExerciseGenerationEvent { 
     type?: ExerciseGenerationEvent.TypeEnum;
     message?: string;
     completionStatus?: ExerciseGenerationEvent.CompletionStatusEnum;
+    verdict?: ExerciseGenerationVerdict;
     timestamp?: string;
 }
 export namespace ExerciseGenerationEvent {

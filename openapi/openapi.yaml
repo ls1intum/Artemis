@@ -1451,6 +1451,7 @@ components:
         completionStatus:
           type: string
           enum: [SUCCESS, NEEDS_REVIEW, PARTIAL]
+        verdict: {$ref: '#/components/schemas/ExerciseGenerationVerdict'}
         timestamp: {type: string, format: date-time}
     Student:
       type: object
@@ -1751,6 +1752,16 @@ components:
         start: {type: string, format: date-time}
         end: {type: string, format: date-time}
         reason: {type: string}
+    ExerciseGenerationVerdict:
+      type: object
+      properties:
+        accepted: {type: boolean}
+        solutionPassed: {type: boolean}
+        templateFailed: {type: boolean}
+        testCount: {type: integer, format: int32}
+        reasons:
+          type: array
+          items: {type: string}
     CalendarEvent:
       type: object
       properties:

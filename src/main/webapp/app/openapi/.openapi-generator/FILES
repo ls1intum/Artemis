@@ -33,6 +33,7 @@ model/exerciseGenerationEvent.ts
 model/exerciseGenerationJobStart.ts
 model/exerciseGenerationRequest.ts
 model/exerciseGenerationStatus.ts
+model/exerciseGenerationVerdict.ts
 model/globalSearchResult.ts
 model/inferredCompetency.ts
 model/problemStatementGenerationRequest.ts
