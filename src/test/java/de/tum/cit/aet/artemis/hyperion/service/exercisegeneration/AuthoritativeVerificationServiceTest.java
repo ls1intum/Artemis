@@ -190,6 +190,11 @@ class AuthoritativeVerificationServiceTest {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
     }
 
+    /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
+    private static AgentVerifyReport selfCheck(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
+        return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
+    }
+
     /** Runs the 9-arg verify with the authoritative auto-seeded structural test names, so the W1 structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
@@ -903,6 +908,111 @@ class AuthoritativeVerificationServiceTest {
                     Set.of("testClass[Sorter]"));
             assertThat(result.accepted()).as("a seeded structural test that passes on the template is a free point and must be rejected").isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("testClass[Sorter]"));
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // In-loop self-check (the agent's `verify` tool). It shares the SAME differential + actionable gates as the
+    // post-loop verify(...) — proven by running both against the same scripted sandbox — and renders structured,
+    // agent-readable feedback: which tests pass/fail on the solution and template, the EXACT parser-form names to bind
+    // [task]s to (fixes the C++/Catch2 bare-name trap), the tests that wrongly pass on the template (fixes the Go
+    // zero-value-stub trap), the unresolved [task] bindings, and the would-be verdict.
+    // ----------------------------------------------------------------------------------------------------------------
+
+    @Nested
+    class InLoopSelfCheck {
+
+        @Test
+        void reportsAcceptedWhenSolutionPassesAndTemplateFailsSameTests() {
+            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), PROBLEM_STATEMENT_WITH_TASK);
+            assertThat(report.wouldBeAccepted()).isTrue();
+            assertThat(report.solutionPassed()).isTrue();
+            assertThat(report.solutionTests()).isEqualTo(2);
+            assertThat(report.templateCompiled()).isTrue();
+            assertThat(report.templateWronglyPassing()).isEmpty();
+            assertThat(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("Template: correctly fails all 2.").contains("VERDICT: would be ACCEPTED");
+        }
+
+        @Test
+        void returnsTheExactParserFormTestNamesToBind() {
+            // The C++/Catch2 fix: with multiple top-level suites production composes the suite-prefixed <suite>.<case> names, and the agent must bind those VERBATIM rather than
+            // the
+            // bare case names it would otherwise grep. The self-check surfaces exactly the parser-form names, so the agent never has to derive the prefix itself.
+            List<String> all = List.of("sort-test.stack_empty_initially", "size-test.size_tracks_elements");
+            AgentVerifyReport report = selfCheck(multiSuiteSolution(all), multiSuiteTemplate(all, all),
+                    "# Stack\n[task][Empty](sort-test.stack_empty_initially)\n[task][Size](size-test.size_tracks_elements)\n");
+            assertThat(report.exactTestNames()).containsExactlyInAnyOrderElementsOf(all);
+            assertThat(report.wouldBeAccepted()).isTrue();
+            assertThat(report.toObservation()).contains("bind each [task] to one of these VERBATIM").contains("sort-test.stack_empty_initially");
+        }
+
+        @Test
+        void reportsTemplateTestsThatWronglyPass() {
+            // The Go/no-exception fix: a `return ""`/`false`/`0` stub passes a test that expects exactly that. The self-check must NAME the wrongly-passing test so the agent fixes
+            // the stub in-loop, rather than only learning post-loop that "template-bound tests pass".
+            List<String> all = List.of("returns_empty_for_empty_input", "reverses_non_empty");
+            List<String> failedOnTemplate = List.of("reverses_non_empty");
+            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, failedOnTemplate),
+                    "# Reverse\n[task][Empty](returns_empty_for_empty_input)\n[task][Non-empty](reverses_non_empty)\n");
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.templateWronglyPassing()).containsExactly("returns_empty_for_empty_input");
+            assertThat(report.toObservation()).contains("Template WRONGLY PASSES").contains("returns_empty_for_empty_input").contains("VERDICT: NOT YET");
+        }
+
+        @Test
+        void reportsSolutionFailuresByName() {
+            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            AgentVerifyReport report = selfCheck(resultWithFails(2, 1, all, List.of("sortsArrayWithDuplicates")), resultWithFails(2, 1, all, all), PROBLEM_STATEMENT_WITH_TASK);
+            assertThat(report.solutionPassed()).isFalse();
+            assertThat(report.solutionFailedNames()).contains("sortsArrayWithDuplicates");
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.toObservation()).contains("Solution FAILS").contains("sortsArrayWithDuplicates").contains("must pass every test");
+        }
+
+        @Test
+        void flagsTaskBindingsThatReferenceNoRealTest() {
+            // The agent bound a display name; the self-check must list it as a binding problem so the agent copies a real name from `exactTestNames` instead.
+            List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
+            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, all), ps);
+            assertThat(report.unresolvedTaskBindings()).contains("aDisplayNameNotAMethodName");
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.toObservation()).contains("[task] binding problems").contains("aDisplayNameNotAMethodName");
+        }
+
+        @Test
+        void reportsTemplateThatDidNotCompile() {
+            AgentVerifyReport report = selfCheck(result(5, 0, 0, 0), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+            assertThat(report.templateCompiled()).isFalse();
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.toObservation()).contains("Template: did NOT compile");
+        }
+
+        @Test
+        void doesNotClaimTheTemplateCorrectlyFailsWhenItPassesEveryTest() {
+            // A template that compiles but passes EVERY test leaves no failed names, so the wrongly-passing list is empty (it fails open). The observation must NOT then read
+            // "correctly fails all N" — it must flag that the template does not fail enough tests, so the agent fixes the stubs instead of misreading an empty list as success.
+            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
+            assertThat(report.templateCompiled()).isTrue();
+            assertThat(report.templateFailed()).isFalse();
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.toObservation()).doesNotContain("correctly fails all").contains("Template does NOT fail enough tests");
+        }
+
+        @Test
+        void selfCheckAndPostLoopVerifyAgreeOnTheVerdict() {
+            // The contract: the in-loop self-check's wouldBeAccepted matches the post-loop verify's accepted on the same workspace (the integrity gates, which the self-check
+            // skips,
+            // fail OPEN with no files), so the agent sees exactly what the acceptance gate will conclude.
+            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            BuildReportSpec solution = resultWithFails(2, 0, names, List.of());
+            BuildReportSpec template = resultWithFails(2, 1, names, names);
+            assertThat(selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, template).accepted()).isTrue();
+
+            BuildReportSpec passingTemplate = resultWithFails(2, 0, names, List.of());
+            assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).accepted()).isFalse();
         }
     }
 }

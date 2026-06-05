@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Unit tests for the agent tools, focused on the security-relevant path allowlist and the all-or-nothing edit semantics. A fake sandbox records the commands it is asked to run
@@ -296,5 +301,33 @@ class SandboxAgentToolsTest {
         // Ordinary commands never match.
         assertThat(SandboxAgentTools.isMangledArrayCommand("ls -R solution template tests")).isFalse();
         assertThat(SandboxAgentTools.isMangledArrayCommand("grep -n 'a,b' tests/Foo.java")).isFalse();
+    }
+
+    @Test
+    void verify_whenWiredToTheVerifier_returnsItsStructuredObservation() {
+        // The verify tool delegates to the SAME AuthoritativeVerificationService the post-loop acceptance gate uses, and returns its agent-readable observation verbatim.
+        RecordingSandbox sandbox = new RecordingSandbox();
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        AuthoritativeVerificationService verifier = mock(AuthoritativeVerificationService.class);
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a", "t_b"), List.of(), List.of(), true, List.of());
+        when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise))).thenReturn(report);
+
+        String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
+        assertThat(out).isEqualTo(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("VERDICT: would be ACCEPTED");
+    }
+
+    @Test
+    void verify_whenVerifierUnavailable_returnsAnActionableFallback() {
+        // The test-only two-arg constructor leaves the verifier absent; the tool must say so and point at the bash fallback rather than NPE.
+        String out = new SandboxAgentTools(new RecordingSandbox(), "s").verify();
+        assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
+    }
+
+    @Test
+    void agentVerifyReport_observation_truncatesLongNameLists() {
+        // A huge suite must not flood the agent's context: the observation truncates a long name list with a remaining-count.
+        List<String> names = java.util.stream.IntStream.range(0, 60).mapToObj(i -> "t" + i).toList();
+        AgentVerifyReport report = new AgentVerifyReport(60, true, List.of(), 60, true, true, List.of(), names, List.of(), List.of(), true, List.of());
+        assertThat(report.toObservation()).contains("(+20 more)");
     }
 }

@@ -138,17 +138,18 @@ class AgentSystemPromptServiceTest {
         // its
         // model of the file state. The prompt must name the exact tool set and explicitly rule out apply_patch in both its tool-call and bash-command forms.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, and submit").contains("NO apply_patch tool").contains("Never call apply_patch")
-                .contains("do NOT re-read a file whose contents you have already seen");
+        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit").contains("NO apply_patch tool")
+                .contains("Never call apply_patch").contains("do NOT re-read a file whose contents you have already seen");
     }
 
     @Test
-    void build_pointsTaskBindingsAtTheAuthoritativeCollectedReports() {
-        // The per-language [task] naming rules are guides; the authoritative source is the test runner's own result report, now collected under /opt/hyperion/reports/, which the
-        // agent must grep and copy verbatim. This is what lets the agent self-correct when a framework's reported name differs from the profile's described rule (e.g. Dart
-        // group+test space-joining).
+    void build_makesVerifyThePrimarySelfCheckAndTheAuthoritativeSourceOfTestNames() {
+        // The per-language [task] naming rules are guides; the authoritative source is now the `verify` tool, which lists the EXACT parser-form test names the agent must copy
+        // verbatim into [task]s and reports the differential VERDICT the acceptance gate will conclude. This is what lets the agent self-correct when a framework's reported name
+        // differs from the profile's described rule (e.g. Dart group+test space-joining) and never guess a name.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.DART, ""));
-        assertThat(prompt).contains("/opt/hyperion/reports/solution/").contains("<testcase name=");
+        assertThat(prompt).contains("the AUTHORITATIVE source is the `verify` tool").contains("Copy each name VERBATIM from `verify`").contains("VERDICT says ACCEPTED")
+                .contains("PRIMARY self-check");
     }
 
     @Test

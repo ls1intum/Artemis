@@ -123,6 +123,69 @@ public class AuthoritativeVerificationService {
         return result.isSuccess() ? result.stdout() : "";
     }
 
+    /** Upper bound on the dead-file probe output kept inline, so a huge or runaway workspace listing can never blow the agent's context. */
+    private static final int MAX_POSSIBLY_DEAD_FILES = 20;
+
+    /**
+     * A best-effort, LANGUAGE-AGNOSTIC dead-file probe surfaced to the agent's self-check (advisory only — never a gate): a source file present in exactly ONE of {@code solution/}
+     * and {@code template/}. Since the two repos must differ only in their (unimplemented) method bodies, a source file in one but not the other is a likely abandoned orphan from
+     * a
+     * replaced approach (the from-scratch prompt warns about exactly this). It deliberately ignores build manifests and hidden files (legitimately repo-specific) and never throws
+     * —
+     * any probe error yields an empty list, so the self-check degrades to "no dead-file hint" rather than failing. It is purely informational; the differential verdict ignores it.
+     *
+     * @param sandbox   the sandbox session
+     * @param sessionId the session handle
+     * @return the repo-qualified paths present in exactly one of the two assignment repos, capped; empty when the probe is unavailable or finds nothing
+     */
+    private static List<String> possiblyDeadWorkspaceFiles(InteractiveSandbox sandbox, String sessionId) {
+        try {
+            Set<String> solution = listSourceFiles(sandbox, sessionId, GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+            Set<String> template = listSourceFiles(sandbox, sessionId, GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
+            if (solution.isEmpty() && template.isEmpty()) {
+                return List.of();
+            }
+            List<String> dead = new ArrayList<>();
+            solution.stream().filter(path -> !template.contains(path)).sorted().forEach(path -> dead.add("solution/" + path));
+            template.stream().filter(path -> !solution.contains(path)).sorted().forEach(path -> dead.add("template/" + path));
+            return dead.size() <= MAX_POSSIBLY_DEAD_FILES ? List.copyOf(dead) : List.copyOf(dead.subList(0, MAX_POSSIBLY_DEAD_FILES));
+        }
+        catch (RuntimeException e) {
+            log.debug("Dead-file probe failed; omitting the hint from the self-check: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /** The build-manifest filenames that are legitimately repo-specific (a template may carry a manifest the solution does not), so the dead-file probe must not flag them. */
+    private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("go.mod", "go.sum", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
+            "cargo.toml", "cargo.lock", "makefile", "package.json", "package-lock.json", "tsconfig.json", "build.sbt", "pubspec.yaml", "pubspec.lock");
+
+    /**
+     * Lists the assignment repo's SOURCE files (repo-relative) for the dead-file probe: regular files under the repo, excluding hidden files/dirs and the known build manifests
+     * (which are legitimately repo-specific). Returns an empty set on any non-success, so the probe fails open.
+     */
+    private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
+        String repoRoot = GenerationWorkspaceService.WORKSPACE + "/" + repoDirectory;
+        // -type f lists regular files only (skips dirs/symlinks); the sed strips the repo prefix to repo-relative paths; grep -v drops dotfiles/dotdirs.
+        SandboxExecResult result = sandbox.exec(sessionId, READ_TIMEOUT, "sh", "-c",
+                "cd '" + repoRoot + "' 2>/dev/null && find . -type f | sed 's|^\\./||' | grep -v '/\\.' | grep -v '^\\.' || true");
+        if (!result.isSuccess()) {
+            return Set.of();
+        }
+        Set<String> files = new java.util.LinkedHashSet<>();
+        for (String line : result.stdout().split("\n")) {
+            String path = line.strip();
+            if (path.isEmpty()) {
+                continue;
+            }
+            String name = path.substring(path.lastIndexOf('/') + 1);
+            if (!BUILD_MANIFEST_NAMES.contains(name.toLowerCase(Locale.ROOT))) {
+                files.add(path);
+            }
+        }
+        return files;
+    }
+
     // Package-private convenience overloads used only by the unit test (no integrity/structural inputs); production calls the full verify(...) below.
     VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         return verify(sandbox, sessionId, exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of());
@@ -161,6 +224,79 @@ public class AuthoritativeVerificationService {
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
             Set<String> seededStructuralTestNames) {
+        // The sandbox-dependent differential (two pristine builds + the actionable gates) is computed by the SAME method the in-loop self-check uses, so the agent's `verify` tool
+        // and this acceptance decision can never diverge. This call layers the sandbox-FREE integrity gates and the final verdict on top of that shared analysis.
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTestNames);
+        BuildSummary solution = analysis.solution();
+        BuildSummary template = analysis.template();
+        List<String> reasons = new ArrayList<>(analysis.actionableReasons());
+
+        // Sandbox-free integrity gates the build cannot see: a tampered graded-verbatim harness, or a solution leaked into the student-facing template. Both fail OPEN on genuinely
+        // empty inputs. These run ONLY post-loop (the self-check skips them): they need the seed snapshot and read-back files the agent loop does not have mid-session.
+        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles);
+        boolean harnessIntact = harnessTamperingReasons.isEmpty();
+        reasons.addAll(harnessTamperingReasons);
+        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
+        boolean noSolutionLeak = solutionLeakReasons.isEmpty();
+        reasons.addAll(solutionLeakReasons);
+
+        boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
+
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && extractionSound;
+        if (!accepted) {
+            log.info("Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, extractionSound={}", solution,
+                    template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, extractionSound);
+        }
+        return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
+    }
+
+    /**
+     * The IN-LOOP self-check the agent's {@code verify} tool calls: runs the SAME two pristine builds + production parse + the actionable acceptance gates as the post-loop
+     * {@link #verify}, and returns a rich, agent-readable {@link AgentVerifyReport} (which tests pass/fail on the solution and template, the exact parser-form names to bind
+     * {@code [task]}s to, the wrongly-passing template tests, and the unresolved bindings) — so the agent sees exactly what the acceptance verdict will conclude every time it
+     * asks.
+     * <p>
+     * It deliberately SKIPS the sandbox-free integrity gates (harness immutability, solution leak): those need the seed snapshot and post-generation read-back the agent loop does
+     * not have, and they stay post-loop-only. The {@code wouldBeAccepted} flag therefore reflects the differential + actionable gates only; the post-loop {@link #verify} remains
+     * the
+     * sole acceptance truth. Each call re-runs the two builds (no stale cache), so the report always reflects the current workspace.
+     *
+     * @param sandbox   the sandbox session the differential builds run in
+     * @param sessionId the sandbox session handle
+     * @param exercise  the exercise whose per-language {@code verify.sh} is rendered and run (its SCA configuration governs the SCA gate)
+     * @return the structured in-loop report
+     */
+    public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        // The agent could not bind to structural tests seeded AFTER it submits, so the self-check passes no authoritative seeded set; the name-shape exemption still applies.
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, Set.of());
+        BuildSummary solution = analysis.solution();
+        BuildSummary template = analysis.template();
+
+        boolean solutionPassed = analysis.solutionPassed();
+        boolean templateCompiled = !template.timedOut() && template.tests() > 0;
+        // The template tests the solution passes but the template does NOT fail — the Go/no-exception zero-value-stub trap. Reuse the production-parity gate's exact computation so
+        // the names the agent sees are precisely the ones that would block acceptance, minus the legitimately-exempt build gates.
+        List<String> templateWronglyPassing = templateCompiled ? gradableTestsThatPassOnTemplate(solution, template) : List.of();
+
+        return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), template.tests(), templateCompiled, analysis.templateFailed(),
+                templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(), analysis.possiblyDeadFiles(), analysis.actionableGatesPass(),
+                analysis.actionableReasons());
+    }
+
+    /**
+     * Runs the shared, sandbox-DEPENDENT half of verification ONCE: re-seeds and runs the two pristine builds, parses them with the production parsers, reads the problem
+     * statement,
+     * and applies every actionable gate (solution passes, template fails, emitter soundness, task-binding presence/resolution, the two no-test-passes-template gates, and SCA
+     * parity). Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the acceptance verdict are computed by identical
+     * code.
+     *
+     * @param sandbox                   the sandbox session
+     * @param sessionId                 the session handle
+     * @param exercise                  the exercise (its {@code verify.sh} and SCA configuration)
+     * @param seededStructuralTestNames the authoritative seeded structural test names exempt from binding resolution (empty for the self-check)
+     * @return the parsed build summaries plus the actionable gate outcome (reasons, pass flag, and the derived agent-facing lists)
+     */
+    private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames) {
         List<String> reasons = new ArrayList<>();
 
         // Re-seed and invoke a PRISTINE verify.sh the agent could never have written, so any edit to its own /workspace/verify.sh is irrelevant to the verdict.
@@ -185,33 +321,36 @@ public class AuthoritativeVerificationService {
                     + "appear as a checklist for students.");
         }
 
-        boolean taskBindingsResolve = checkTaskBindingsResolve(problemStatement, solution, testCount, seededStructuralTestNames, problemStatementHasTasks, reasons);
+        // The unresolved bindings are surfaced to the agent verbatim (the C++/Catch2 bare-name trap), so compute the list once and let the gate decide from it.
+        List<String> unresolvedTaskBindings = unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
+        boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
         boolean noTaskTestPassesTemplate = checkNoTaskBoundTestPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean noGradableTestPassesTemplate = checkNoGradableTestPassesTemplate(solution, template, reasons);
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
-        // Sandbox-free integrity gates the build cannot see: a tampered graded-verbatim harness, or a solution leaked into the student-facing template. Both fail OPEN on genuinely
-        // empty inputs.
-        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles);
-        boolean harnessIntact = harnessTamperingReasons.isEmpty();
-        reasons.addAll(harnessTamperingReasons);
-        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
-        boolean noSolutionLeak = solutionLeakReasons.isEmpty();
-        reasons.addAll(solutionLeakReasons);
+        boolean actionableGatesPass = solutionPassed && templateFailed && testCount > 0 && emitterSoundness.solutionNamesComplete() && emitterSoundness.templateFailNamesSound()
+                && problemStatementHasTasks && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean;
 
-        boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
+        List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
+        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
+    }
 
-        boolean accepted = solutionPassed && templateFailed && testCount > 0 && emitterSoundness.solutionNamesComplete() && emitterSoundness.templateFailNamesSound()
-                && problemStatementHasTasks && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean && harnessIntact
-                && noSolutionLeak && extractionSound;
-        if (!accepted) {
-            log.info(
-                    "Authoritative verification failed: solution[{}], template[{}], namesComplete={}, failNamesSound={}, tasks={}, bindingsResolve={}, noTaskTestPassesTemplate={}, "
-                            + "noGradableTestPassesTemplate={}, solutionScaClean={}, harnessIntact={}, noSolutionLeak={}, extractionSound={}",
-                    solution, template, emitterSoundness.solutionNamesComplete(), emitterSoundness.templateFailNamesSound(), problemStatementHasTasks, taskBindingsResolve,
-                    noTaskTestPassesTemplate, noGradableTestPassesTemplate, solutionScaClean, harnessIntact, noSolutionLeak, extractionSound);
-        }
-        return new VerificationResult(accepted, solutionPassed, templateFailed, testCount, reasons);
+    /**
+     * The shared, sandbox-dependent half of verification: the two parsed build summaries plus the actionable gate outcome. Consumed by both the post-loop {@link #verify} (which
+     * adds
+     * the integrity gates and verdict) and the in-loop {@link #selfCheck} (which renders the agent observation).
+     *
+     * @param solution               the parsed solution build summary
+     * @param template               the parsed template build summary
+     * @param solutionPassed         whether the solution gate held
+     * @param templateFailed         whether the template gate held
+     * @param actionableGatesPass    whether EVERY sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
+     * @param actionableReasons      the human-readable reasons any sandbox-dependent gate failed (empty when all hold); the SAME wording {@link #verify} surfaces
+     * @param unresolvedTaskBindings the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
+     * @param possiblyDeadFiles      best-effort workspace files no build phase appears to read (advisory; empty when unavailable)
+     */
+    private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean actionableGatesPass,
+            List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles) {
     }
 
     /**
@@ -352,20 +491,16 @@ public class AuthoritativeVerificationService {
 
     /**
      * The binding-resolution gate: a {@code [task]}'s names must be the real runner test names, not a {@code @DisplayName} or prose title; a binding that resolves to nothing
-     * silently shows no progress in Artemis, which the differential build cannot detect. Checked against the names {@code verify.sh} extracted; fails open when no trustworthy set
-     * was emitted.
+     * silently shows no progress in Artemis, which the differential build cannot detect. Decides from the precomputed unresolved list (so the agent self-check can surface the same
+     * names verbatim) and fails open when no trustworthy set was emitted.
      *
-     * @param problemStatement          the produced problem statement
-     * @param solution                  the solution build summary (its test names are the resolution target)
-     * @param testCount                 the solution test count (a shorter name list than this fails the gate open)
-     * @param seededStructuralTestNames the authoritative seeded structural test names (exempt from resolution)
-     * @param problemStatementHasTasks  whether the problem statement contains any {@code [task]} binding at all
-     * @param reasons                   the running list of rejection reasons (appended to on failure)
+     * @param unresolvedTaskBindings   the precomputed {@code [task]} bindings that resolve to no real test (the C++/Catch2 bare-name trap)
+     * @param solution                 the solution build summary (its test names are the resolution target, included in the message)
+     * @param problemStatementHasTasks whether the problem statement contains any {@code [task]} binding at all
+     * @param reasons                  the running list of rejection reasons (appended to on failure)
      * @return whether every {@code [task]} binding resolves to a real (or seeded-structural) test name
      */
-    private static boolean checkTaskBindingsResolve(String problemStatement, BuildSummary solution, int testCount, Set<String> seededStructuralTestNames,
-            boolean problemStatementHasTasks, List<String> reasons) {
-        List<String> unresolvedTaskBindings = unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
+    private static boolean checkTaskBindingsResolve(List<String> unresolvedTaskBindings, BuildSummary solution, boolean problemStatementHasTasks, List<String> reasons) {
         boolean taskBindingsResolve = unresolvedTaskBindings.isEmpty();
         if (problemStatementHasTasks && !taskBindingsResolve) {
             reasons.add("These [task] bindings reference names that match no actual test: " + unresolvedTaskBindings + ". A [task]'s parenthesised names must be the exact test "

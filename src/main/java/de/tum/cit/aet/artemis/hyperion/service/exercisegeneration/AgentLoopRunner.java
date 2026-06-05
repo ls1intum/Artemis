@@ -216,11 +216,10 @@ public class AgentLoopRunner {
                 // Answer EVERY requested tool call with an error, rather than appending a bare user nudge: an assistant message carrying tool calls must be followed by tool
                 // results that cover each call id, or the chat-completions tool-pairing contract is violated. Feeding the error back per call also tells the model exactly which
                 // call failed.
-                List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn
-                        .getToolCalls().stream().map(
-                                toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                                        "ERROR: this tool call could not be executed: " + e.getMessage()
-                                                + ". Only use the available tools (read_file, write_file, edit_file, bash, submit) with valid JSON arguments, then continue."))
+                List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
+                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
+                                "ERROR: this tool call could not be executed: " + e.getMessage()
+                                        + ". Only use the available tools (read_file, write_file, edit_file, bash, verify, submit) with valid JSON arguments, then continue."))
                         .toList();
                 if (errorResponses.isEmpty()) {
                     conversation.add(new UserMessage("The previous step could not be executed: " + e.getMessage() + ". Continue using only the available tools."));

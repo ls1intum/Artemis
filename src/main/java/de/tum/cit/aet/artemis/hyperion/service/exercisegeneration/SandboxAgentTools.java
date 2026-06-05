@@ -6,17 +6,23 @@ import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * The read/write/edit/bash tools the exercise-generation agent calls, bound to one sandbox session.
+ * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session.
  * <p>
  * The agent has a full shell because correctness is never judged from what these tools report — that is the out-of-band verifier's job — so the shell's power cannot be used to
  * fake a passing exercise. Created per session (it holds the session id), so it is intentionally not a Spring bean.
+ * <p>
+ * The {@code verify} tool is the PRIMARY self-check: it runs the SAME differential the post-loop acceptance verifier runs (two pristine builds parsed with the production parsers)
+ * and returns structured, actionable feedback — which tests pass/fail on the solution and template, the EXACT names to bind {@code [task]}s to, and the current verdict — so the
+ * agent is never blind to what the acceptance gate will conclude. It is feedback only; the post-loop verifier remains the sole acceptance truth.
  */
 public class SandboxAgentTools {
 
@@ -60,15 +66,42 @@ public class SandboxAgentTools {
 
     private final String sessionId;
 
+    /** The authoritative verifier, reused by the {@code verify} tool to run the SAME differential the post-loop acceptance gate runs; {@code null} disables the tool in tests. */
+    @Nullable
+    private final AuthoritativeVerificationService verifier;
+
+    /** The exercise whose per-language {@code verify.sh} and SCA configuration the {@code verify} tool's differential uses; {@code null} disables the tool in tests. */
+    @Nullable
+    private final ProgrammingExercise exercise;
+
     /**
      * Monotonic per-command counter for spill-file names. A plain field (no synchronization) is safe: each session has its own {@code SandboxAgentTools} and the agent loop calls
      * the tools serially within a session; different sessions run in different containers, so identical sequence numbers never collide.
      */
     private int bashSequence = 0;
 
-    public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
+    /**
+     * @param sandbox   the sandbox session the tools operate on
+     * @param sessionId the session handle
+     * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check
+     * @param exercise  the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
+     */
+    public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, AuthoritativeVerificationService verifier, ProgrammingExercise exercise) {
         this.sandbox = sandbox;
         this.sessionId = sessionId;
+        this.verifier = verifier;
+        this.exercise = exercise;
+    }
+
+    /**
+     * Convenience constructor for the bash/file-tool tests that never exercise the {@code verify} tool: the verifier and exercise are absent, so {@code verify} returns its
+     * "unavailable" fallback. Production always uses the four-argument constructor so the agent's {@code verify} self-check is wired.
+     *
+     * @param sandbox   the sandbox session the tools operate on
+     * @param sessionId the session handle
+     */
+    SandboxAgentTools(InteractiveSandbox sandbox, String sessionId) {
+        this(sandbox, sessionId, null, null);
     }
 
     /**
@@ -224,12 +257,26 @@ public class SandboxAgentTools {
     }
 
     /**
+     * Runs the authoritative differential self-check and returns structured, actionable feedback.
+     *
+     * @return the agent-readable observation (solution/template test outcomes, exact test names to bind, current verdict), or an error message if the verifier is unavailable
+     */
+    @Tool(name = "verify", description = "Run the authoritative self-check: builds the solution and the template, parses the test reports with the SAME production parser the final grader uses, and returns which tests pass/fail on each, the EXACT test names to bind your [task]s to (copy them verbatim — never guess), any template tests that wrongly pass, and a VERDICT. This is your primary self-check — call it after changes and iterate until the VERDICT says ACCEPTED before you submit. Each call re-runs both builds (no cache); it takes the same time as one 'sh verify.sh solution' plus one 'sh verify.sh template'.")
+    public String verify() {
+        if (verifier == null || exercise == null) {
+            return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
+        }
+        AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise);
+        return report.toObservation();
+    }
+
+    /**
      * Signals that the exercise is complete. The agent loop ends the session when this is called, and the authoritative verifier then decides acceptance independently.
      *
      * @param summary an optional one-line summary of what was created or changed
      * @return a confirmation that the work was submitted for verification
      */
-    @Tool(name = "submit", description = "Submit the finished exercise for authoritative verification and end the session. Only call this after 'sh verify.sh solution' exits 0 with failures=0 and errors=0, and 'sh verify.sh template' exits non-zero with at least one failure/error at the SAME tests count. Stop immediately after calling it.")
+    @Tool(name = "submit", description = "Submit the finished exercise for authoritative verification and end the session. Only call this after the 'verify' tool's VERDICT says ACCEPTED. Stop immediately after calling it.")
     public String submit(@ToolParam(required = false, description = "one-line summary of what you created or changed") String summary) {
         return "Submitted for verification" + (summary == null || summary.isBlank() ? "." : ": " + summary);
     }

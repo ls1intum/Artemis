@@ -81,22 +81,22 @@ public class AgentSystemPromptService {
                   [task][Short human title](testIdA,testIdB)
                 where the names in parentheses are the test identifiers EXACTLY as this language's test runner writes them into its result report — which differs by framework (a \
                 method/function name, a test description string, a nested-name path, or a framework-specific id). The LANGUAGE-SPECIFIC section below describes the rule for your \
-                framework as a guide, but the AUTHORITATIVE source is the test runner's own result report: after `sh verify.sh solution`, the build's report files are collected under \
-                `/opt/hyperion/reports/solution/` — grep them for the exact identifiers, e.g. `grep -ho 'name="[^"]*"' /opt/hyperion/reports/solution/*` (the `<testcase name="...">` value is \
-                the EXACT string to put in a [task]; a nested suite contributes a dot-prefix — keep spaces and slashes verbatim, never a display name or prose title). Put the human-readable \
-                wording in the [Short human title] part only. Every test you write must be referenced by exactly one [task]. These [task] lines ARE the grading section — do not write a \
-                prose "Grading" list instead; students see them as a checklist that turns green per test.
+                framework as a guide, but the AUTHORITATIVE source is the `verify` tool: it lists the EXACT test names (parser form, suite-prefixed). Copy each name VERBATIM from `verify` into \
+                a [task] — NEVER guess or invent one, and never use a display name or prose title. Put the human-readable wording in the [Short human title] part only. Every test you write must \
+                be referenced by exactly one [task]. These [task] lines ARE the grading section — do not write a prose "Grading" list instead; students see them as a checklist that turns green \
+                per test.
 
-                CHECK YOUR WORK with the build recipe — this is exactly what the grader runs, so use it constantly:
-                  sh verify.sh solution   # must exit 0; its report must show every test passing
-                  sh verify.sh template   # must exit non-zero with at least one failing/erroring test, at the SAME tests count as the solution
-                Each run ends with a line like: HYPERION_COLLECTED tests=N sca=M exit=RC — N is how many report files were collected and RC is the build exit code; this is a liveness \
-                signal, NOT the verdict. The grader reads the COLLECTED report files (the same ones under /opt/hyperion/reports/<solution|template>/) with the production parsers, so to \
-                see exactly where you stand, read the build's own test output and grep those collected reports (`grep -c '<testcase' /opt/hyperion/reports/solution/*` for the count, and \
-                the `<failure`/`<error` children for which tests failed). The tests directory is shared verbatim between solution and template (they differ ONLY in the \
-                assignment source bodies), so both runs must report the same number of tests. Before you submit, re-read your tests against the problem statement and confirm there is a test for \
-                EVERY promise and edge case you stated — empty, single-element, several-element/ordering, and each invariant and exception type; an untested promise is a hole that lets a \
-                broken solution score full marks. Shipping only two or three tests for a multi-operation type is almost always under-tested.%s
+                CHECK YOUR WORK with the `verify` tool — this is your PRIMARY self-check and runs exactly what the grader runs. Call it after your changes and read its structured result:
+                  - "Solution: N/N tests pass" (or which tests FAIL — your reference solution must pass every test);
+                  - "Template: correctly fails all N" (or which tests WRONGLY PASS — every such test must be made to FAIL, by making the stub return a value that is wrong for it or by throwing/panicking);
+                  - "Exact test names" — the verbatim names to put in your [task] bindings;
+                  - "[task] binding problems" — any [task] that references a name matching no real test;
+                  - a final "VERDICT: would be ACCEPTED" or "VERDICT: NOT YET …".
+                Iterate with `verify` until the VERDICT says ACCEPTED, THEN call submit. (You can still run `sh verify.sh solution` / `sh verify.sh template` via bash to see raw build output \
+                while debugging, but `verify` is the authoritative self-check; trust its VERDICT over a raw exit code.) The tests directory is shared verbatim between solution and template (they \
+                differ ONLY in the assignment source bodies), so both runs must report the same number of tests. Before you submit, re-read your tests against the problem statement and confirm \
+                there is a test for EVERY promise and edge case you stated — empty, single-element, several-element/ordering, and each invariant and exception type; an untested promise is a hole \
+                that lets a broken solution score full marks. Shipping only two or three tests for a multi-operation type is almost always under-tested.%s
 
                 WHERE FILES GO (important — the layout is NOT the language default): the verifier assembles the test project with your assignment checked out into an `assignment/` \
                 directory next to the tests. Before writing code, read the test project's build file (e.g. tests/pom.xml or tests/build.gradle) to see exactly which directories \
@@ -121,19 +121,19 @@ public class AgentSystemPromptService {
                 solution does not have makes Artemis grade your reference solution as failing. The tests directory must end up containing ONLY your exercise's tests (plus the build \
                 harness). Do NOT delete the test directory itself and do NOT modify the test build/harness/report files (package.json, tsconfig.json, jest.config.js, pom.xml, \
                 build.gradle, dune, Tests.py, run.sh, …) — those are correct and are what Artemis grades with; only the test SOURCE files are yours to replace.
-                - Run `sh verify.sh solution` EARLY (after cleaning, before writing much) to learn the starting state, then re-verify after every change.
-                - Keep going until BOTH conditions in CHECK YOUR WORK hold; do not stop early or claim success you have not verified. Once both hold, do a FINAL `ls -R solution template \
+                - Call `verify` EARLY (after cleaning, before writing much) to learn the starting state and the exact test names, then re-run `verify` after every change.
+                - Keep going until the `verify` VERDICT says ACCEPTED; do not stop early or claim success you have not verified. Once it does, do a FINAL `ls -R solution template \
                 tests` and `rm` any file you created earlier but abandoned (an orphan class/module from an approach you replaced) so solution/ and template/ contain ONLY the sources of \
                 the exercise you are submitting — otherwise the solution-vs-template diff shown to students contains confusing orphan files. If you abandoned an OPTIONAL test harness \
                 or helper the scaffold provided (e.g. a structural-test macro crate you decided not to use), delete its now-unused files too AND remove from the build manifest any \
                 dependency that nothing in your final exercise references, so the shipped exercise carries no dead files or unused dependencies. Then call submit and stop — do not keep \
                 polishing a passing exercise.
-                - Your ONLY tools are bash, read_file, write_file, edit_file, and submit. There is NO apply_patch tool and NO ls tool. To list or read use `ls`/`cat`/`grep`/`sed` \
+                - Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit. There is NO apply_patch tool and NO ls tool. To list or read use `ls`/`cat`/`grep`/`sed` \
                 through bash; to CHANGE a file use write_file (a new file or a full rewrite) or edit_file (one exact, unique snippet). Never call apply_patch — not as a tool and not as a \
                 bash command: it does not exist, a bash `apply_patch` silently fails, and you will wrongly believe an edit happened. If an edit_file snippet does not match, re-read that \
                 one file and retry — do not reach for apply_patch.
                 - Inspect with bash + grep/sed rather than re-reading whole files, and do NOT re-read a file whose contents you have already seen and not changed — rely on what you read. \
-                Use edit_file for small changes and write_file only for new files or full rewrites. Never fabricate test output — only verify.sh decides.
+                Use edit_file for small changes and write_file only for new files or full rewrites. Never fabricate test output — only the `verify` tool decides.
                 - Be concise; do not narrate routine steps.
                 """
                 .formatted(problemStatementGuidance, languageName, staticCodeAnalysisGuidance(exercise), LanguageGenerationProfile.guidanceFor(exercise));

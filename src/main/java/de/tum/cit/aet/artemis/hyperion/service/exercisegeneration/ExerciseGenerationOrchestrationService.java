@@ -136,7 +136,9 @@ public class ExerciseGenerationOrchestrationService {
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
             String systemPrompt = systemPromptFactory.build(exercise);
-            SandboxAgentTools tools = new SandboxAgentTools(sandbox, sessionId);
+            // Thread the verifier + exercise into the tools so the agent's `verify` tool can run the SAME differential the post-loop acceptance gate runs and see exactly what the
+            // verdict will conclude in-loop (which tests pass/fail, the exact names to bind [task]s to) — the post-loop verify(...) below stays the sole acceptance truth.
+            SandboxAgentTools tools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
 
             // Hand the agent the seeded workspace layout on turn 0 as a free observation (a recursive listing plus the head of each build manifest), so it does not spend turns
             // discovering it with `ls -R`. This is purely contextual — it is framed as an observation, not an instruction — and best-effort: an empty probe leaves the prompt
