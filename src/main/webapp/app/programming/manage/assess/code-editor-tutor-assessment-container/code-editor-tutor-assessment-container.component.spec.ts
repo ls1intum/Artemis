@@ -892,49 +892,48 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
         comp['automaticFeedback'] = [{ type: FeedbackType.AUTOMATIC, credits: 1 }];
-        expect(comp.hasAutomaticFeedback).toBeTrue();
+        expect(comp.hasAutomaticFeedback).toBe(true);
     });
 
     it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
         comp['automaticFeedback'] = [];
-        expect(comp.hasAutomaticFeedback).toBeFalse();
+        expect(comp.hasAutomaticFeedback).toBe(false);
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
         comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise;
-        expect(comp.isFeedbackSuggestionsEnabled).toBeTrue();
+        expect(comp.isFeedbackSuggestionsEnabled).toBe(true);
     });
 
     it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
         comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise;
-        expect(comp.isFeedbackSuggestionsEnabled).toBeFalse();
+        expect(comp.isFeedbackSuggestionsEnabled).toBe(false);
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {
         const subject = new Subject<Feedback[]>();
-        jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
         comp['submission'] = { id: 42 } as ProgrammingSubmission;
 
         const loadPromise = comp['loadFeedbackSuggestions']();
-        expect(comp.loadingFeedbackSuggestions).toBeTrue();
+        expect(comp.loadingFeedbackSuggestions).toBe(true);
 
         subject.next([]);
         subject.complete();
         await loadPromise;
 
-        expect(comp.loadingFeedbackSuggestions).toBeFalse();
+        expect(comp.loadingFeedbackSuggestions).toBe(false);
     });
 
-    it('should render the feedback suggestions banner when submission is set', fakeAsync(() => {
-        jest.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
-        jest.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
+    it('should render the feedback suggestions banner when submission is set', async () => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
 
         fixture.detectChanges();
-        tick(100);
-        flush();
+        await flushMicrotasks();
         fixture.changeDetectorRef.detectChanges();
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
-    }));
+    });
 });
