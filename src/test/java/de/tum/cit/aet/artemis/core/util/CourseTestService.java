@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
@@ -183,6 +184,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.ComplaintResponseRequestDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -3028,9 +3030,12 @@ public class CourseTestService {
         Feedback feedback5 = new Feedback();
         feedback5.setCredits(2.0);
         feedback5.setReference(TextExerciseFactory.generateTextBlock(0, 5, "test5").getId());
-        var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5);
+        var feedbackListForComplaint = Arrays.asList(feedback1, feedback2, feedback3, feedback4, feedback5).stream().map(FeedbackDTO::of).toList();
 
-        var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint, complaintResponse, null, new HashSet<>());
+        var assessmentUpdate = new TextAssessmentUpdateDTO(feedbackListForComplaint,
+                new ComplaintResponseRequestDTO(complaintResponse.getId(), complaintResponse.getResponseText(),
+                        new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaintResponse.getComplaint().getId(), complaintResponse.getComplaint().isAccepted())),
+                null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
                 + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
@@ -3042,9 +3047,12 @@ public class CourseTestService {
         ComplaintResponse feedbackResponse = complaintUtilService.createInitialEmptyResponse(userPrefix + "tutor2", feedbackRequest);
         feedbackResponse.getComplaint().setAccepted(true);
         feedbackResponse.setResponseText("accepted");
-        var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4);
+        var feedbackListForMoreFeedback = Arrays.asList(feedback1, feedback2, feedback3, feedback4).stream().map(FeedbackDTO::of).toList();
 
-        final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback, feedbackResponse, null, new HashSet<>());
+        final var feedbackUpdate = new TextAssessmentUpdateDTO(feedbackListForMoreFeedback,
+                new ComplaintResponseRequestDTO(feedbackResponse.getId(), feedbackResponse.getResponseText(),
+                        new ComplaintResponseRequestDTO.ComplaintRequestDTO(feedbackResponse.getComplaint().getId(), feedbackResponse.getComplaint().isAccepted())),
+                null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 

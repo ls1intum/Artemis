@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -60,6 +59,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseListItemDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
@@ -139,19 +141,17 @@ public class TextExerciseResource {
      */
     @GetMapping("courses/{courseId}/text-exercises")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TextExerciseListItemDTO>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
-        for (Exercise exercise : exercises) {
-            // not required in the returned json body
-            exercise.setStudentParticipations(null);
-            exercise.setCourse(null);
+        for (TextExercise exercise : exercises) {
             Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
         }
-        return ResponseEntity.ok().body(exercises);
+        List<TextExerciseListItemDTO> dtos = exercises.stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok().body(dtos);
     }
 
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
@@ -173,7 +173,7 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<TextExerciseResponseDTO> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
@@ -198,7 +198,7 @@ public class TextExerciseResource {
         textExercise.setExampleSubmissions(exampleSubmissions);
 
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
-        return ResponseEntity.ok().body(textExercise);
+        return ResponseEntity.ok().body(TextExerciseResponseDTO.of(textExercise));
     }
 
     /**
@@ -235,7 +235,7 @@ public class TextExerciseResource {
     // TODO: fix the URL scheme
     @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
+    public ResponseEntity<TextParticipationDTO> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
@@ -307,7 +307,8 @@ public class TextExerciseResource {
             participation.addSubmission(textSubmission);
         }
 
-        if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user);
+        if (!includeStudent) {
             participation.filterSensitiveInformation();
         }
 
@@ -316,7 +317,9 @@ public class TextExerciseResource {
             textExercise.getExam().setCourse(null);
         }
 
-        return ResponseEntity.ok(participation);
+        // wire the (already filtered) exercise graph onto the participation DTO
+        TextParticipationDTO dto = TextParticipationDTO.of(participation, includeStudent).withExercise(TextExerciseResponseDTO.of(textExercise));
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -330,10 +333,12 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
+    public ResponseEntity<SearchResultPageDTO<TextExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+        SearchResultPageDTO<TextExercise> page = textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
+        List<TextExerciseListItemDTO> content = page.getResultsOnPage().stream().map(TextExerciseListItemDTO::of).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(content, page.getNumberOfPages()));
     }
 
     /**

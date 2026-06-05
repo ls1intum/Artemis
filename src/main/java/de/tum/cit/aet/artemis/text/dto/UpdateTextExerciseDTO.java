@@ -40,7 +40,10 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
             throw new BadRequestAlertException("No text exercise was provided.", "textExercise", "textExercise.isNull");
         }
 
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        // Only a directly-attached course yields a courseId (isCourseExercise() checks the direct course field), so an exam
+        // exercise yields courseId == null, mirroring the client which sends only the exerciseGroupId for exam exercises and
+        // keeps the course/exerciseGroup exclusivity intact.
+        Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterionDTO> gradingCriterionDTOs;

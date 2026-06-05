@@ -63,7 +63,8 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
         textExercise.setChannelName("channel");
 
         // Act: Create the exercise
-        TextExercise createdExercise = request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise createdExercise = request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(createdExercise).isNotNull();
@@ -116,8 +117,8 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
 
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(textExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
 
-        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
-                HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(),
+                de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(newTextExercise).isNotNull();
