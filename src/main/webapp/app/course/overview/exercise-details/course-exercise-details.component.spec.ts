@@ -16,6 +16,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -380,6 +381,37 @@ describe('CourseExerciseDetailsComponent', () => {
         results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([result2, result1]);
+    });
+
+    describe('live quiz status seeding', () => {
+        it.each([
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }] }, LiveQuizParticipationStatus.NOT_STARTED],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }] }, LiveQuizParticipationStatus.PARTICIPATING],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], quizEnded: true }, LiveQuizParticipationStatus.MISSED],
+            [{ type: ExerciseType.PROGRAMMING }, undefined],
+        ])('should seed the live quiz status from the loaded exercise', (exerciseData, expected) => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+
+            comp.handleNewExercise({ exercise: exerciseData as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBe(expected);
+        });
+
+        it('should seed SUBMITTED when the graded participation has a submitted submission', () => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue({ submissions: [{ submitted: true }] } as StudentParticipation);
+
+            comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizBatches: [{ started: true }] } as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.SUBMITTED);
+        });
+
+        it('should not override an ended quiz where the student submitted (results are shown instead)', () => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue({ submissions: [{ submitted: true }] } as StudentParticipation);
+
+            comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizEnded: true } as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBeUndefined();
+        });
     });
 
     it('should handle new programming exercise', () => {
