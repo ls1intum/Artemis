@@ -612,14 +612,28 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
         // the orphaned-structural-oracle classification so the cause is named, not inferred.
         assertThat(result.getScore()).as("[%s/%s] REAL grading score (sandbox oracle accepted); divergence here is the high-value signal.%s feedback:%n%s", label, legSuffix,
                 divergenceNote, feedbackDiagnostics).isEqualTo(expectedScore);
-        // The passed-test-case count is checked against the grading result's OWN active test-case count: the solution must pass EVERY active case, the template NONE. This is
-        // robust
-        // to the pre-grade synced count not yet having expanded coarse (file-level) cases into method-level ones, while still proving the full differential on the real pipeline.
+        // The full differential, checked against the result's OWN active test cases (robust to coarse file-level cases not yet expanded to method-level at pre-grade sync time):
         int activeTestCaseCount = result.getTestCaseCount();
-        int expectedPassedTestCaseCount = allTestsPass ? activeTestCaseCount : 0;
-        assertThat(result.getPassedTestCaseCount())
-                .as("[%s/%s] passed-test-case count (of %d active);%s feedback:%n%s", label, legSuffix, activeTestCaseCount, divergenceNote, feedbackDiagnostics)
-                .isEqualTo(expectedPassedTestCaseCount);
+        if (allTestsPass) {
+            // The solution must pass EVERY active case (the zero-weighted build gates included) — a 100% score on the real pipeline.
+            assertThat(result.getPassedTestCaseCount())
+                    .as("[%s/%s] solution passes all %d active cases;%s feedback:%n%s", label, legSuffix, activeTestCaseCount, divergenceNote, feedbackDiagnostics)
+                    .isEqualTo(activeTestCaseCount);
+        }
+        else {
+            // The template must pass NO GRADABLE case (score 0, asserted above). It MAY still pass the zero-weighted build/compile/configure gates — those run and pass by design
+            // (the template compiles) but contribute nothing to the score. So assert exactly that: every case the template passes is a build gate.
+            List<String> passedGradableCases = passedTestCaseNames(result.getId()).stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).toList();
+            assertThat(passedGradableCases)
+                    .as("[%s/%s] template passes only zero-weighted build gates, no gradable case;%s feedback:%n%s", label, legSuffix, divergenceNote, feedbackDiagnostics)
+                    .isEmpty();
+        }
+    }
+
+    /** The test-case names the given result marks as passed (positive feedback with a bound test case) — used to prove the template passes only zero-weighted build gates. */
+    private List<String> passedTestCaseNames(long resultId) {
+        return resultRepository.findResultWithFeedbacksAndTestCasesById(resultId).map(Result::getFeedbacks).orElse(Set.of()).stream()
+                .filter(feedback -> Boolean.TRUE.equals(feedback.isPositive()) && feedback.getTestCase() != null).map(feedback -> feedback.getTestCase().getTestName()).toList();
     }
 
     // ---- Fixture scaffolding ---------------------------------------------------------------------------------------------------------------------------------------------------
