@@ -1,13 +1,13 @@
 <div class="mx-2 d-flex flex-column justify-content-between h-100">
-    @if (titleLink()) {
-        <a [routerLink]="titleLink()">
-            <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
+    @if (titleLink) {
+        <a [routerLink]="titleLink">
+            <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
         </a>
     }
-    @if (!titleLink()) {
-        <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
+    @if (!titleLink) {
+        <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
     }
-    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink() ? 'clickable' : ''" (click)="openCorrespondingPage()">
+    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             @if (receivedStats) {
                 <h2 class="text-center">{{ currentPercentage() }}%</h2>

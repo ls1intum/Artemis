@@ -1,4 +1,4 @@
-import { Component, OnChanges, computed, inject, input } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -20,7 +20,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     styleUrls: ['./doughnut-chart.component.scss'],
     imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
 })
-export class DoughnutChartComponent implements OnChanges {
+export class DoughnutChartComponent implements OnChanges, OnInit {
     protected readonly faSpinner = faSpinner;
 
     private readonly router = inject(Router);
@@ -34,36 +34,9 @@ export class DoughnutChartComponent implements OnChanges {
     readonly currentMax = input<number>();
 
     receivedStats = false;
+    doughnutChartTitle: string;
     stats: number[];
-
-    /**
-     * Depending on the information we want to display in the doughnut chart, we need different titles and links
-     */
-    readonly doughnutChartTitle = computed(() => {
-        switch (this.contentType()) {
-            case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                return 'averageScore';
-            case DoughnutChartType.PARTICIPATIONS:
-                return 'participationRate';
-            case DoughnutChartType.QUESTIONS:
-                return 'resolved_posts';
-            default:
-                return '';
-        }
-    });
-
-    readonly titleLink = computed<string[] | undefined>(() => {
-        switch (this.contentType()) {
-            case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                return [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
-            case DoughnutChartType.PARTICIPATIONS:
-                return [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
-            case DoughnutChartType.QUESTIONS:
-                return [`/courses/${this.course().id}/exercises/${this.exerciseId()}`];
-            default:
-                return undefined;
-        }
-    });
+    titleLink: string[] | undefined;
 
     ngxDoughnutData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
@@ -93,13 +66,35 @@ export class DoughnutChartComponent implements OnChanges {
     }
 
     /**
+     * Depending on the information we want to display in the doughnut chart, we need different titles and links
+     */
+    ngOnInit(): void {
+        switch (this.contentType()) {
+            case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
+                this.doughnutChartTitle = 'averageScore';
+                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
+                break;
+            case DoughnutChartType.PARTICIPATIONS:
+                this.doughnutChartTitle = 'participationRate';
+                this.titleLink = [`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`];
+                break;
+            case DoughnutChartType.QUESTIONS:
+                this.doughnutChartTitle = 'resolved_posts';
+                this.titleLink = [`/courses/${this.course().id}/exercises/${this.exerciseId()}`];
+                break;
+            default:
+                this.doughnutChartTitle = '';
+                this.titleLink = undefined;
+        }
+    }
+
+    /**
      * handles clicks onto the graph, which then redirects the user to the corresponding page,
      * e.g. participations to the participations page
      */
     openCorrespondingPage() {
-        const titleLink = this.titleLink();
-        if (this.course().id && this.exerciseId() && titleLink) {
-            this.router.navigate(titleLink);
+        if (this.course().id && this.exerciseId() && this.titleLink) {
+            this.router.navigate(this.titleLink);
         }
     }
 

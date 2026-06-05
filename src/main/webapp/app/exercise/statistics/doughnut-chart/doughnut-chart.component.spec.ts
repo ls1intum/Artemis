@@ -69,28 +69,35 @@ describe('DoughnutChartComponent', () => {
         it('should set title for average exercise score', () => {
             fixture.componentRef.setInput('contentType', DoughnutChartType.AVERAGE_EXERCISE_SCORE);
 
-            expect(component.doughnutChartTitle()).toBe('averageScore');
-            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/scores']);
+            component.ngOnInit();
+
+            expect(component.doughnutChartTitle).toBe('averageScore');
+            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/scores']);
         });
 
         it('should set title for participations', () => {
             fixture.componentRef.setInput('contentType', DoughnutChartType.PARTICIPATIONS);
 
-            expect(component.doughnutChartTitle()).toBe('participationRate');
-            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/participations']);
+            component.ngOnInit();
+
+            expect(component.doughnutChartTitle).toBe('participationRate');
+            expect(component.titleLink).toEqual(['/course-management/1/text-exercises/2/participations']);
         });
 
         it('should set title for question chart', () => {
             fixture.componentRef.setInput('contentType', DoughnutChartType.QUESTIONS);
 
-            expect(component.doughnutChartTitle()).toBe('resolved_posts');
-            expect(component.titleLink()).toEqual(['/courses/1/exercises/2']);
+            component.ngOnInit();
+
+            expect(component.doughnutChartTitle).toBe('resolved_posts');
+            expect(component.titleLink).toEqual(['/courses/1/exercises/2']);
         });
     });
 
     it('should open corresponding page', () => {
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
         fixture.componentRef.setInput('contentType', DoughnutChartType.AVERAGE_EXERCISE_SCORE);
+        component.ngOnInit();
 
         component.openCorrespondingPage();
 
