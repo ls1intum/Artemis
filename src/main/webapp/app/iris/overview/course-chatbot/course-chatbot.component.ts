@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, untracked, viewChild } from '@angular/core';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
 @Component({
@@ -22,7 +22,7 @@ export class CourseChatbotComponent {
                 // Use untracked to avoid re-running this effect when chatService state changes
                 untracked(() => {
                     this.chatService.setCourseId(courseId);
-                    this.chatService.resumeOrCreateCourseChat(courseId);
+                    this.chatService.openChat(ChatServiceMode.COURSE, courseId);
                 });
             }
         });

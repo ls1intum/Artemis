@@ -38,7 +38,7 @@ export class LectureChatbotComponent {
         effect(() => {
             const lectureId = this.lectureId();
             if (lectureId !== undefined) {
-                untracked(() => this.chatService.openChatForContext(ChatServiceMode.LECTURE, lectureId));
+                untracked(() => this.chatService.openChat(ChatServiceMode.LECTURE, lectureId));
             }
         });
     }

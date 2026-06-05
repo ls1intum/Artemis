@@ -1306,11 +1306,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        const pageContext = this.chatService.pageContext();
+        // startFreshChat() re-applies the lecture/exercise page context itself once the new session
+        // loads, so we no longer stage it here — see the JSDoc on IrisChatService.startFreshChat.
         this.chatService.startFreshChat();
-        if (pageContext) {
-            this.chatService.stagePendingContext(pageContext.mode, pageContext.entityId, pageContext.entityName);
-        }
     }
 
     openAboutIrisModal(): void {

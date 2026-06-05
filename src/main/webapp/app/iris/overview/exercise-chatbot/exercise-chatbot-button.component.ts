@@ -114,7 +114,7 @@ export class IrisExerciseChatbotButtonComponent {
             if (rawId) {
                 const id = parseInt(rawId, 10);
                 if (!Number.isNaN(id)) {
-                    untracked(() => this.chatService.openChatForContext(mode, id));
+                    untracked(() => this.chatService.openChat(mode, id));
                 }
             }
         });

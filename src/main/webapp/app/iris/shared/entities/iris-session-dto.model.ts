@@ -1,4 +1,4 @@
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 
 export class IrisSessionDTO {
     id: number;

@@ -48,7 +48,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             untracked(() => {
                 if (this.initialized && this.irisEnabled) {
                     if (post?.id) {
-                        this.chatService.resumeOrCreateTutorSuggestionChat(post.id);
+                        this.chatService.openTutorSuggestionChat(post.id);
                         this.messagesSubscription?.unsubscribe();
                         this.subscribeToIrisActivation();
                     }
@@ -116,7 +116,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                     this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
                         this.irisEnabled = !!response?.settings?.enabled;
                         if (this.irisEnabled) {
-                            this.chatService.resumeOrCreateTutorSuggestionChat(post.id!);
+                            this.chatService.openTutorSuggestionChat(post.id!);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
