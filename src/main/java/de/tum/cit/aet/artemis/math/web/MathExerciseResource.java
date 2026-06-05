@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -186,16 +187,17 @@ public class MathExerciseResource {
     }
 
     /**
-     * POST /math-exercises/import/:sourceExerciseId : import a math exercise from an existing one
+     * POST /math-exercises/import : import a math exercise from an existing one
      *
-     * @param sourceExerciseId    the id of the math exercise to import
+     * @param sourceExerciseId    the id of the math exercise to import (provided as a query parameter)
      * @param importedExerciseDTO the math exercise to import
      * @return the ResponseEntity with status 201 (Created) and with body the new math exercise, or with status 400 (Bad Request) if the math exercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("math-exercises/import/{sourceExerciseId}")
+    @PostMapping("math-exercises/import")
     @EnforceAtLeastEditor
-    public ResponseEntity<MathExerciseDTO> importExercise(@PathVariable Long sourceExerciseId, @RequestBody MathExerciseDTO importedExerciseDTO) throws URISyntaxException {
+    public ResponseEntity<MathExerciseDTO> importExercise(@RequestParam("sourceExerciseId") Long sourceExerciseId, @RequestBody MathExerciseDTO importedExerciseDTO)
+            throws URISyntaxException {
         log.debug("REST request to import MathExercise from {} : {}", sourceExerciseId, importedExerciseDTO);
         if (importedExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new math exercise cannot already have an ID", ENTITY_NAME, "idexists");

@@ -58,7 +58,7 @@ export class MathExerciseService implements ExerciseServicable<MathExercise> {
     import(adaptedSourceMathExercise: MathExercise): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseFromClient(adaptedSourceMathExercise);
         return this.http
-            .post<MathExercise>(`${this.resourceUrl}/import/${adaptedSourceMathExercise.id}`, copy, { observe: 'response' })
+            .post<MathExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceMathExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

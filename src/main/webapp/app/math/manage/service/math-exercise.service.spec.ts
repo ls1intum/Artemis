@@ -96,7 +96,7 @@ describe('MathExerciseService', () => {
         imported.title = 'Imported Math';
 
         const promise = service.import(source).toPromise();
-        const req = httpMock.expectOne({ method: 'POST', url: `${BASE_URL}/import/${source.id}` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${BASE_URL}/import?sourceExerciseId=${source.id}` });
         req.flush({ ...imported, id: 99 });
         const response = await promise;
 

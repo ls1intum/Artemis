@@ -131,7 +131,8 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MathExerciseDTO importTarget = MathExerciseFactory.generateMathExerciseDTO(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), course);
 
-        MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import/" + exercise.getId(), importTarget, MathExerciseDTO.class, HttpStatus.CREATED);
+        MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import?sourceExerciseId=" + exercise.getId(), importTarget, MathExerciseDTO.class,
+                HttpStatus.CREATED);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotEqualTo(exercise.getId());
