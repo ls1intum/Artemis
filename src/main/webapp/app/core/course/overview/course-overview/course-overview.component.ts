@@ -7,7 +7,20 @@ import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faDoorOpen,
+    faEye,
+    faGear,
+    faListAlt,
+    faSync,
+    faTable,
+    faTimes,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
@@ -39,6 +52,7 @@ import { CourseNotificationPresetPickerComponent } from 'app/communication/cours
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
+import { StudentExerciseDevSettingsService } from 'app/core/course/overview/course-exercises-experimental/dev-settings/student-exercise-dev-settings.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -73,6 +87,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private calendarService = inject(CalendarService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+    protected readonly studentExerciseDevSettings = inject(StudentExerciseDevSettingsService);
 
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
@@ -112,6 +127,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
+    faGear = faGear;
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {

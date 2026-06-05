@@ -197,6 +197,19 @@ export interface SidebarCardElement {
      */
     groupSelectable?: boolean;
 
+    /**
+     * Adds a clickable affordance (pointer + hover) to a 'label' group: 'heading' highlights only the
+     * title row, 'group' highlights the whole group container. Only meaningful with {@link groupedItems}.
+     */
+    groupClickable?: 'heading' | 'group';
+
+    /**
+     * When true, the group renders as one connected stack of tiles (header tile + flush exercise tiles)
+     * with only the outer corners rounded, no padding and no indent. Pair with {@link groupHeaderStyle}
+     * 'card'. Only meaningful with {@link groupedItems}.
+     */
+    groupConnected?: boolean;
+
     /** Whether this (nested) exercise is currently selected within its group. */
     selected?: boolean;
 }

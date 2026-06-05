@@ -125,6 +125,21 @@ export const courseRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
                 children: [
                     {
+                        // Mock exercise-group detail page. Declared before :exerciseId so 'group' is not parsed as an id.
+                        path: 'group/:groupId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/core/course/overview/course-exercises-experimental/group-detail/course-exercise-group-detail.component').then(
+                                (m) => m.CourseExerciseGroupDetailComponent,
+                            ),
+                    },
+                    {
                         // Mock exercise detail (problem statement etc.) shown in the right panel on click.
                         path: ':exerciseId',
                         data: {

@@ -1,0 +1,65 @@
+// Definite host height so the inner element's percentage min-height resolves and the white fills vertically.
+:host {
+    display: block;
+    height: 100%;
+}
+
+.exercise-group-detail {
+    // Fill the whole detail pane with the white module surface, like the exercise view.
+    min-height: 100%;
+}
+
+// Exercise-page variant: fills the pane like the exercise detail view (header + resizable split).
+.exercise-page {
+    height: 100%;
+}
+
+// In the left panel the selection scrolls while the related competencies stay pinned to the bottom.
+.group-panel-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.group-panel-competencies {
+    flex-shrink: 0;
+
+    // Drop the contribution component's own bottom margin so only a slight padding (the panel's) remains.
+    ::ng-deep jhi-competency-contribution > div {
+        margin-bottom: 0 !important;
+    }
+}
+
+// Header information boxes match the exercise header's box classes; just give them a min width.
+.info-box {
+    min-width: 7rem;
+}
+
+.exercise-option {
+    background-color: var(--module-bg);
+    transition:
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
+
+    &--selected {
+        border-color: var(--bs-primary) !important;
+        background-color: var(--bs-primary-bg-subtle);
+    }
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+// The tile is wrapped in a link that opens the exercise; the inner card is display-only so its own
+// (wrong-context) routerLink never fires and clicks fall through to the wrapping link.
+.tile-link {
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.tile-static {
+    pointer-events: none;
+}

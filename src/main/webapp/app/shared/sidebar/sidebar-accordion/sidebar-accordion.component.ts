@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Params } from '@angular/router';
+import { Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
@@ -26,6 +26,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
+    private router = inject(Router);
     private ngUnsubscribe = new Subject<void>();
 
     @Output() onUpdateSidebar = new EventEmitter<void>();
@@ -132,5 +133,16 @@ export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
         group.groupedItems?.forEach((item) => (item.selected = false));
         variant.selected = checked;
+    }
+
+    /**
+     * Navigates to a clickable group's target (if any) — but not when the click landed on one of its
+     * exercise cards, which navigate to their own detail.
+     */
+    onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
+        if (!group.routerLink || (event.target as HTMLElement).closest('.sidebar-group-variant')) {
+            return;
+        }
+        this.router.navigateByUrl(group.routerLink);
     }
 }

@@ -35,6 +35,17 @@ hr {
     border-radius: 0.5rem;
     padding: 0.5rem;
     background-color: var(--module-bg);
+
+    // Whole group looks clickable: darken just the container on hover. The nested exercise cards keep
+    // their own direct-hover effect, so they only darken when hovered individually.
+    &--clickable {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+
+        &:hover {
+            background-color: var(--link-item-bg);
+        }
+    }
 }
 
 .sidebar-group-content {
@@ -44,6 +55,17 @@ hr {
 // Plain (non-card) group heading, used when groupHeaderStyle is 'label'.
 .sidebar-group-label {
     padding: 0.15rem 0.25rem;
+    border-radius: 0.25rem;
+
+    // Only the heading looks clickable.
+    &--clickable {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+
+        &:hover {
+            background-color: var(--link-item-bg);
+        }
+    }
 }
 
 // Title row sized in em (like the tile text) so it lands just slightly larger than the exercise
@@ -85,4 +107,32 @@ hr {
 // Square off the exercise cards nested inside a group so they read as one connected list.
 :host ::ng-deep .sidebar-group-content .rounded-3 {
     border-radius: 0 !important;
+}
+
+// Connected variant: the group header tile and its exercise tiles form one connected stack with only
+// the outer corners rounded. The container border + radius (with the overflow clip) draws the outline;
+// the tiles drop their own border and are separated by thin dividers, sitting flush with no indent.
+.sidebar-group--connected {
+    padding: 0;
+    overflow: hidden;
+
+    // No gap above the exercises; a divider line stands in for the header tile's missing bottom border.
+    .sidebar-group-content {
+        margin-top: 0;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    // Divider between stacked exercise tiles (the last one keeps the container's rounded bottom corners).
+    .sidebar-group-variant:not(:last-child) {
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    // Square every tile (header + exercises) and drop their own outline so the stack reads as one block.
+    ::ng-deep .rounded-3 {
+        border-radius: 0 !important;
+    }
+
+    ::ng-deep .item-border {
+        border: 0 !important;
+    }
 }

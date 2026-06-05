@@ -1,0 +1,185 @@
+@if (group(); as group) {
+    @if (useExercisePage()) {
+        <div class="exercise-page d-flex flex-column h-100 overflow-hidden">
+            <div class="d-flex flex-column p-2 rounded-3 module-bg mb-2">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0">
+                        <fa-icon [icon]="faLayerGroup" />
+                        {{ group.title }}
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        @if (hasUnsubmittedChanges()) {
+                            <span class="text-warning small fw-semibold text-nowrap">
+                                <fa-icon [icon]="faTriangleExclamation" />
+                                Unsubmitted changes
+                            </span>
+                        } @else if (hasSubmitted()) {
+                            <span class="text-success small fw-semibold text-nowrap">
+                                <fa-icon [icon]="faCheck" />
+                                Selection submitted
+                            </span>
+                        }
+                        <button type="button" class="btn btn-primary btn-sm" (click)="submitSelection()" [disabled]="!hasUnsubmittedChanges()">Submit selection</button>
+                    </div>
+                </div>
+
+                <hr class="my-2" />
+
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
+                        <div class="text-body-tertiary">Submission date</div>
+                        <div class="text-body">{{ group.dueDate ? (group.dueDate | artemisDate: 'short-date') : '—' }}</div>
+                    </div>
+                    <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
+                        <div class="text-body-tertiary">Max points</div>
+                        <div class="text-body">{{ group.maxPoints ?? '—' }}</div>
+                    </div>
+                    <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
+                        <div class="text-body-tertiary">Hand-in limit</div>
+                        <div class="text-body">{{ countTowardsScore() }} of {{ exercises().length }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <jhi-resizable-panels class="flex-fill overflow-hidden">
+                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.exerciseGroup'" [icon]="faLayerGroup">
+                    <div class="d-flex flex-column h-100">
+                        <div class="group-panel-scroll">
+                            <div class="alert alert-info mb-4" role="alert">
+                                An exercise group bundles several variants of the same task. You can work on <strong>all</strong> exercises in the group, but you may only select a
+                                limited number of them to count towards your maximum score.
+                            </div>
+                            <div class="d-flex align-items-baseline justify-content-between mb-2">
+                                <h3 class="h5 mb-0">Exercises to be assessed</h3>
+                                <span class="text-secondary small">{{ selectedExercises().length }} / {{ countTowardsScore() }} selected</span>
+                            </div>
+                            <div class="d-flex flex-column gap-2">
+                                @for (exercise of exercises(); track exercise.id) {
+                                    <div class="d-flex align-items-center gap-2">
+                                        <p-checkbox
+                                            [binary]="true"
+                                            [ngModel]="isSelected(exercise)"
+                                            (ngModelChange)="toggle(exercise, $event)"
+                                            [disabled]="!isSelected(exercise) && atSelectionLimit()"
+                                        />
+                                        <a class="flex-grow-1 tile-link" [routerLink]="exerciseLink(exercise)">
+                                            <div class="tile-static">
+                                                <jhi-medium-sidebar-card [sidebarItem]="cardFor(exercise)!" sidebarType="exercise" />
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (firstExercise()?.id; as competencyExerciseId) {
+                            <div class="group-panel-competencies">
+                                <jhi-competency-contribution [courseId]="courseId" [learningObjectId]="competencyExerciseId" [isExercise]="true" />
+                            </div>
+                        }
+                    </div>
+                </ng-template>
+                <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComments">
+                    @if (discussionExercise(); as discussionExercise) {
+                        <jhi-discussion-section [exercise]="discussionExercise" [embedded]="true" />
+                    }
+                </ng-template>
+            </jhi-resizable-panels>
+        </div>
+    } @else {
+        <div class="exercise-group-detail module-bg d-flex flex-column h-100 overflow-hidden">
+            <div class="group-panel-scroll p-2">
+                <div class="exercise-group-detail__content">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <fa-icon [icon]="faLayerGroup" class="text-primary" />
+                        <h2 class="mb-0">{{ group.title }}</h2>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        An exercise group bundles several variants of the same task. You can work on <strong>all</strong> exercises in the group, but you may only select a limited
+                        number of them to count towards your maximum score. Pick the exercises you want assessed below — the rest stay available for practice.
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-4">
+                            <div class="text-secondary text-uppercase small fw-semibold mb-1">Submission date</div>
+                            <div class="fs-6">{{ group.dueDate ? (group.dueDate | artemisDate) : '—' }}</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="text-secondary text-uppercase small fw-semibold mb-1">Max points</div>
+                            <div class="fs-6">{{ group.maxPoints ?? '—' }}</div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="text-secondary text-uppercase small fw-semibold mb-1">Counts towards score</div>
+                            <div class="fs-6">{{ countTowardsScore() }} of {{ exercises().length }}</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-baseline justify-content-between mb-2">
+                        <h3 class="h5 mb-0">Exercises in this group</h3>
+                        <span class="text-secondary small">{{ selectedExercises().length }} / {{ countTowardsScore() }} selected for assessment</span>
+                    </div>
+
+                    @if (useTiles()) {
+                        <div class="d-flex flex-column gap-2">
+                            @for (exercise of exercises(); track exercise.id) {
+                                <div class="d-flex align-items-center gap-2">
+                                    <p-checkbox
+                                        [binary]="true"
+                                        [ngModel]="isSelected(exercise)"
+                                        (ngModelChange)="toggle(exercise, $event)"
+                                        [disabled]="!isSelected(exercise) && atSelectionLimit()"
+                                    />
+                                    <a class="flex-grow-1 tile-link" [routerLink]="exerciseLink(exercise)">
+                                        <div class="tile-static">
+                                            <jhi-medium-sidebar-card [sidebarItem]="cardFor(exercise)!" sidebarType="exercise" />
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    } @else {
+                        <div class="d-flex flex-column gap-2">
+                            @for (exercise of exercises(); track exercise.id) {
+                                <div class="exercise-option d-flex align-items-center gap-3 border rounded-3 p-3" [class.exercise-option--selected]="isSelected(exercise)">
+                                    <p-checkbox
+                                        [binary]="true"
+                                        [ngModel]="isSelected(exercise)"
+                                        (ngModelChange)="toggle(exercise, $event)"
+                                        [disabled]="!isSelected(exercise) && atSelectionLimit()"
+                                    />
+                                    <div class="flex-grow-1 min-width-0">
+                                        <div class="fw-semibold text-truncate">
+                                            <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
+                                            {{ exercise.title }}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mt-1 small text-secondary">
+                                            @if (exercise.difficulty) {
+                                                <p-tag [severity]="difficultySeverity(exercise.difficulty)" [value]="difficultyLabel(exercise.difficulty)" />
+                                            }
+                                            @if (exercise.maxPoints) {
+                                                <span>{{ exercise.maxPoints }} points</span>
+                                            }
+                                            @if (exercise.dueDate) {
+                                                <span>· due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <a class="btn btn-sm btn-outline-primary" [routerLink]="exerciseLink(exercise)">Open</a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (firstExercise()?.id; as competencyExerciseId) {
+                <div class="group-panel-competencies px-2 pb-2">
+                    <div class="exercise-group-detail__content">
+                        <jhi-competency-contribution [courseId]="courseId" [learningObjectId]="competencyExerciseId" [isExercise]="true" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}

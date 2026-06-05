@@ -1,8 +1,9 @@
 import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpEvent, HttpHandler, HttpHeaders, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { getMockGroupChannel, getMockGroupPosts } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-communication';
 import {
     INTRO_JAVA_ALL_EXERCISES,
     INTRO_JAVA_FILE_UPLOAD_EXERCISES,
@@ -11,6 +12,7 @@ import {
     INTRO_JAVA_QUIZ_EXERCISES,
     INTRO_JAVA_TEXT_EXERCISES,
 } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
+import { getMockCompetencyContributions } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 
 function toJson<T>(value: T): T {
     return JSON.parse(JSON.stringify(value));
@@ -26,11 +28,17 @@ const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: () => unknown }> = [
     { pattern: /^api\/text\/courses\/\d+\/text-exercises$/, data: () => INTRO_JAVA_TEXT_EXERCISES },
     { pattern: /^api\/fileupload\/courses\/\d+\/file-upload-exercises$/, data: () => INTRO_JAVA_FILE_UPLOAD_EXERCISES },
     { pattern: /^api\/quiz\/courses\/\d+\/quiz-exercises$/, data: () => INTRO_JAVA_QUIZ_EXERCISES },
-    // The exercise detail view requests competency contributions per exercise. Mock exercise ids may
-    // collide with real, inaccessible exercises in the dev DB, which would return 403 and surface a
-    // "not authorized" alert. Return an empty list so the detail view stays quiet.
-    { pattern: /^api\/atlas\/exercises\/\d+\/contributions$/, data: () => [] },
 ];
+
+// The exercise detail view requests competency contributions per exercise (shown below the problem
+// statement). Returns the mock competencies linked to that exercise, or an empty list otherwise — the
+// latter also avoids a 403 "not authorized" alert when a mock id collides with a real exercise.
+const COMPETENCY_CONTRIBUTIONS = /^api\/atlas\/exercises\/(\d+)\/contributions$/;
+
+// The group's Communication panel uses the real discussion component, which loads a channel for the
+// exercise and then its messages. Both are mocked so the panel shows a populated discussion thread.
+const GROUP_CHANNEL = /^\/?api\/communication\/courses\/\d+\/exercises\/\d+\/channel$/;
+const GROUP_MESSAGES = /^\/?api\/communication\/courses\/\d+\/messages$/;
 
 // The /original and /experimental exercise views (both the instructor management view and the
 // student overview) are backed by mock data. The default /exercises route hits the real backend.
@@ -62,6 +70,20 @@ export class MockCourseInterceptor implements HttpInterceptor {
 
         if (FOR_DASHBOARD.test(req.url)) {
             return next.handle(req).pipe(map((event) => this.injectMockExercises(event)));
+        }
+
+        const competencyMatch = COMPETENCY_CONTRIBUTIONS.exec(req.url);
+        if (competencyMatch) {
+            return mockResponse(getMockCompetencyContributions(Number(competencyMatch[1])));
+        }
+
+        if (GROUP_CHANNEL.test(req.url)) {
+            return mockResponse(getMockGroupChannel());
+        }
+
+        if (GROUP_MESSAGES.test(req.url)) {
+            const posts = getMockGroupPosts();
+            return of(new HttpResponse({ status: 200, body: toJson(posts), headers: new HttpHeaders({ 'X-Total-Count': String(posts.length) }) }));
         }
 
         const detailsMatch = EXERCISE_DETAILS.exec(req.url);

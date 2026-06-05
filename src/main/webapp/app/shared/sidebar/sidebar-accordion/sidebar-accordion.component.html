@@ -45,9 +45,14 @@
                                     <div [ngClass]="{ 'mb-2': !last }">
                                         <!-- Optional nested group: the header card and its exercises sit inside one container -->
                                         @if (sidebarItem.groupedItems?.length) {
-                                            <div class="sidebar-group">
+                                            <div
+                                                class="sidebar-group"
+                                                [class.sidebar-group--clickable]="sidebarItem.groupClickable === 'group'"
+                                                [class.sidebar-group--connected]="sidebarItem.groupConnected"
+                                                (click)="onGroupClicked($event, sidebarItem)"
+                                            >
                                                 @if (sidebarItem.groupHeaderStyle === 'label') {
-                                                    <div class="sidebar-group-label">
+                                                    <div class="sidebar-group-label" [class.sidebar-group-label--clickable]="sidebarItem.groupClickable === 'heading'">
                                                         <div class="sidebar-group-title d-flex align-items-center gap-2">
                                                             @if (sidebarItem.icon) {
                                                                 <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />

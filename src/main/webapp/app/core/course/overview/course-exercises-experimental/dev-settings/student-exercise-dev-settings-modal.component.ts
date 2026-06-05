@@ -20,10 +20,15 @@ export class StudentExerciseDevSettingsModalComponent {
         { label: 'Flat list', value: 'flat' },
     ];
 
-    protected readonly groupHeaderOptions = [
-        { label: 'Tile', value: 'card' },
-        { label: 'Heading', value: 'label' },
-        { label: 'Heading + hint', value: 'label-hint' },
-        { label: 'Heading + select', value: 'label-select' },
+    protected readonly groupSidebarOptions = [
+        { label: 'Clickable', value: 'clickable' },
+        { label: 'Connected', value: 'connected' },
+        { label: 'Select', value: 'select' },
+    ];
+
+    protected readonly groupClickOptions = [
+        { label: 'Rows page', value: 'rows' },
+        { label: 'Tiles page', value: 'tiles' },
+        { label: 'Exercise page', value: 'exercise-page' },
     ];
 }

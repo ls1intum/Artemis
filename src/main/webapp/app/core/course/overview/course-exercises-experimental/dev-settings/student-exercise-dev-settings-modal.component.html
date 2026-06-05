@@ -12,15 +12,27 @@
         </div>
         @if (devSettings.viewVersion() === 'grouped') {
             <div>
-                <label class="fw-semibold d-block mb-2">Group Title</label>
+                <label class="fw-semibold d-block mb-2">Group in sidebar</label>
                 <p-selectbutton
-                    [options]="groupHeaderOptions"
-                    [ngModel]="devSettings.groupHeaderStyle()"
-                    (ngModelChange)="devSettings.setGroupHeaderStyle($event)"
+                    [options]="groupSidebarOptions"
+                    [ngModel]="devSettings.groupSidebarStyle()"
+                    (ngModelChange)="devSettings.setGroupSidebarStyle($event)"
                     optionValue="value"
                     [allowEmpty]="false"
                 />
             </div>
+            @if (devSettings.groupSidebarStyle() !== 'select') {
+                <div>
+                    <label class="fw-semibold d-block mb-2">On group click</label>
+                    <p-selectbutton
+                        [options]="groupClickOptions"
+                        [ngModel]="devSettings.groupClickAction()"
+                        (ngModelChange)="devSettings.setGroupClickAction($event)"
+                        optionValue="value"
+                        [allowEmpty]="false"
+                    />
+                </div>
+            }
         }
     </div>
 </p-dialog>

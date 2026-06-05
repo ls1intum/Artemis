@@ -3,9 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGear, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
-import { ButtonModule } from 'primeng/button';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -53,7 +51,7 @@ function emptyAccordionGroups(): AccordionGroups {
     selector: 'jhi-course-exercises-experimental',
     templateUrl: './course-exercises-experimental.component.html',
     styleUrls: ['../course-overview/course-overview.scss', './course-exercises-experimental.component.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective, FaIconComponent, ButtonModule, StudentExerciseDevSettingsModalComponent],
+    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective, StudentExerciseDevSettingsModalComponent],
 })
 export class CourseExercisesExperimentalComponent {
     private readonly route = inject(ActivatedRoute);
@@ -67,17 +65,19 @@ export class CourseExercisesExperimentalComponent {
     readonly exerciseSelected = computed(() => this._exerciseSelected());
 
     readonly courseId = signal(0);
-    readonly settingsVisible = signal(false);
     readonly sidebarData = computed(() => this.buildSidebarData(this.devSettings.viewVersion()));
 
     // The overview only wires its collapse toggle to known child components, so this view is never collapsed.
     protected readonly isCollapsed = false;
-    protected readonly faGear = faGear;
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor() {
         this.courseId.set(Number(this.route.parent?.snapshot.params.courseId));
+
+        // Tell the course overview to show the dev-settings gear (in place of notifications) while this view is active.
+        this.devSettings.active.set(true);
+        this.destroyRef.onDestroy(() => this.devSettings.active.set(false));
 
         this.updateSelection();
         this.router.events
@@ -164,19 +164,29 @@ export class CourseExercisesExperimentalComponent {
     /** A group rendered as a sidebar card (same design) with the group icon, group due date and its variant cards nested. */
     private groupCard(group: CourseExerciseGroup, members: Exercise[]): SidebarCardElement {
         const dueDate = group.dueDate ?? members[0]?.dueDate;
-        const headerSetting = this.devSettings.groupHeaderStyle();
-        const showHint = headerSetting === 'label-hint' || headerSetting === 'label-select';
+        const sidebarStyle = this.devSettings.groupSidebarStyle();
+        // 'connected' renders one connected tile stack with the group as a card header; 'clickable' uses a
+        // plain heading. Both navigate to the group page. 'select' instead uses per-variant checkboxes.
+        const connected = sidebarStyle === 'connected';
+        const selectable = sidebarStyle === 'select';
+        const clickable = !selectable;
         return {
             title: group.title ?? '',
-            // Opens the first variant on click; the nested variant cards let the student pick a specific one.
-            id: members[0]?.id ?? group.id ?? '',
+            // For the connected card header, route to the group page (id = group id, sub-route 'group').
+            // Otherwise the id only tracks/selects the label header; the first variant id is fine there.
+            id: (connected ? group.id : members[0]?.id) ?? group.id ?? '',
+            targetComponentSubRoute: connected ? 'group' : undefined,
             icon: faLayerGroup,
             subtitleLeft: dueDate?.format('MMM DD, YYYY'),
             startDate: dueDate,
             size: 'M',
-            groupHeaderStyle: headerSetting === 'card' ? 'card' : 'label',
-            groupPickHint: showHint ? `Pick 1 of ${members.length}` : undefined,
-            groupSelectable: headerSetting === 'label-select',
+            groupHeaderStyle: connected ? 'card' : 'label',
+            groupConnected: connected,
+            groupClickable: clickable ? 'group' : undefined,
+            // Clicking the group opens its mock detail page (the variant is chosen by the click-action setting).
+            routerLink: clickable ? `/courses/${this.courseId()}/exercises/experimental/group/${group.id}` : undefined,
+            groupPickHint: selectable ? `Pick 1 of ${members.length}` : undefined,
+            groupSelectable: selectable,
             groupedItems: members.map((member) => this.courseOverviewService.mapExerciseToSidebarCardElement(member)),
         };
     }
