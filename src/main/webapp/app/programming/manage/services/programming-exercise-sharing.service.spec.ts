@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -13,6 +15,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Sharing Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingExerciseSharingService;
     let httpMock: HttpTestingController;
 
@@ -47,17 +51,16 @@ describe('ProgrammingExercise Sharing Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should get an shared exercise', fakeAsync(() => {
+        it('should get an shared exercise', () => {
             const returnedFromService = {
                 ...defaultShoppingBasket,
             };
             service.getSharedExercises(defailtSharingInfo).subscribe((res: ShoppingBasket) => expect(res).toEqual(defaultShoppingBasket));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should get exercise details', fakeAsync(() => {
+        it('should get exercise details', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 
             service
@@ -74,10 +77,9 @@ describe('ProgrammingExercise Sharing Service', () => {
                 .subscribe((res: ProgrammingExercise) => expect(res).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);
-            tick();
-        }));
+        });
 
-        it('should setup for import', fakeAsync(() => {
+        it('should setup for import', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 
             service
@@ -85,18 +87,16 @@ describe('ProgrammingExercise Sharing Service', () => {
                 .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);
-            tick();
-        }));
+        });
 
-        it('should setup for import with null body response', fakeAsync(() => {
+        it('should setup for import with null body response', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 
             service.setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo).subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toBeNull());
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(null);
-            tick();
-        }));
-        it('should setup for import without template participation', fakeAsync(() => {
+        });
+        it('should setup for import without template participation', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
             programmingExercise.templateParticipation = undefined;
             programmingExercise.solutionParticipation = undefined;
@@ -106,10 +106,9 @@ describe('ProgrammingExercise Sharing Service', () => {
                 .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);
-            tick();
-        }));
+        });
 
-        it('should setup for export programming exercise to sharing', fakeAsync(() => {
+        it('should setup for export programming exercise to sharing', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
             programmingExercise.templateParticipation = undefined;
             programmingExercise.solutionParticipation = undefined;
@@ -117,8 +116,7 @@ describe('ProgrammingExercise Sharing Service', () => {
             service.exportProgrammingExerciseToSharing(5, 'http://localhost:9000').subscribe((res: HttpResponse<string>) => expect(res.body).toBe('some target URL'));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush('some target URL');
-            tick();
-        }));
+        });
     });
 
     afterEach(() => {

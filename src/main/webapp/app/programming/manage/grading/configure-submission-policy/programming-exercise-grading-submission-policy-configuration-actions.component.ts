@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -14,32 +14,34 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     selector: 'jhi-programming-exercise-grading-submission-policy-configuration-actions',
     template: `
         <div align="right">
-            @if (exercise.isAtLeastInstructor) {
+            @if (exercise().isAtLeastInstructor) {
                 <jhi-button
                     [btnType]="ButtonType.PRIMARY"
                     [title]="'artemisApp.programmingExercise.submissionPolicy.updateButton.title'"
                     [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
                     (onClick)="onUpdate.emit()"
                     [icon]="faSave"
-                    [disabled]="isSaving || !exercise.submissionPolicy || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid"
+                    [disabled]="
+                        isSaving() || !exercise().submissionPolicy || (exercise().submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore()) || formInvalid()
+                    "
                 />
             }
-            @if (exercise.isAtLeastInstructor && hadPolicyBefore && exercise.submissionPolicy!.active) {
+            @if (exercise().isAtLeastInstructor && hadPolicyBefore() && exercise().submissionPolicy!.active) {
                 <jhi-button
                     [btnType]="ButtonType.ERROR"
                     [title]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.title'"
                     [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.tooltip'"
                     (onClick)="onToggle.emit()"
-                    [disabled]="isSaving"
+                    [disabled]="isSaving()"
                 />
             }
-            @if (exercise.isAtLeastInstructor && hadPolicyBefore && !exercise.submissionPolicy!.active) {
+            @if (exercise().isAtLeastInstructor && hadPolicyBefore() && !exercise().submissionPolicy!.active) {
                 <jhi-button
                     [btnType]="ButtonType.SUCCESS"
                     [title]="'artemisApp.programmingExercise.submissionPolicy.activateButton.title'"
                     [tooltip]="'artemisApp.programmingExercise.submissionPolicy.activateButton.tooltip'"
                     (onClick)="onToggle.emit()"
-                    [disabled]="isSaving"
+                    [disabled]="isSaving()"
                 />
             }
         </div>
@@ -50,13 +52,13 @@ export class ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsCompo
     readonly ButtonType = ButtonType;
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() isSaving: boolean;
-    @Input() formInvalid: boolean;
-    @Input() hadPolicyBefore: boolean;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly isSaving = input.required<boolean>();
+    readonly formInvalid = input.required<boolean>();
+    readonly hadPolicyBefore = input.required<boolean>();
 
-    @Output() onUpdate = new EventEmitter();
-    @Output() onToggle = new EventEmitter();
+    readonly onUpdate = output();
+    readonly onToggle = output();
 
     // Icons
     faSave = faSave;

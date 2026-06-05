@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -14,6 +16,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
     let comp: ProgrammingExerciseCustomBuildPlanComponent;
     let programmingExercise: ProgrammingExercise;
@@ -26,7 +30,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     };
 
     const buildPhasesTemplateServiceMock = {
-        getTemplate: jest.fn(),
+        getTemplate: vi.fn(),
     };
 
     beforeEach(async () => {
@@ -57,13 +61,13 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
-        comp.programmingExercise = programmingExercise;
-        comp.programmingExerciseCreationConfig = creationConfig;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', creationConfig);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
-        jest.restoreAllMocks();
+        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should not reload template when config did not change', () => {
@@ -72,7 +76,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
 
-        expect(comp.shouldReloadTemplate()).toBeFalse();
+        expect(comp.shouldReloadTemplate()).toBe(false);
     });
 
     it('should reload template when config changed', () => {
@@ -81,7 +85,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         comp.sequentialTestRuns = true;
         comp.staticCodeAnalysisEnabled = true;
 
-        expect(comp.shouldReloadTemplate()).toBeTrue();
+        expect(comp.shouldReloadTemplate()).toBe(true);
     });
 
     it('should reset custom build plan', () => {
@@ -109,8 +113,8 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalled();
         expect(comp.buildPlanPhases).toEqual(templatePhases);
-        expect(comp.programmingExerciseCreationConfig.buildPlanLoaded).toBeTrue();
-        expect(comp.programmingExercise.buildConfig?.timeoutSeconds).toBe(0);
+        expect(comp.programmingExerciseCreationConfig().buildPlanLoaded).toBe(true);
+        expect(comp.programmingExercise().buildConfig?.timeoutSeconds).toBe(0);
     });
 
     it('should reset custom build plan when template loading fails', () => {
@@ -181,7 +185,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
         // Mock the legacy converter
         const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
-        jest.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
+        vi.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
         comp.ngOnInit();
         expect(comp.buildPlanPhases).toEqual(legacyPhases);
     });
@@ -191,7 +195,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         programmingExercise.buildConfig!.buildScript = './gradlew test';
         programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
         const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
-        jest.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(undefined);
+        vi.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(undefined);
         comp.ngOnInit();
         expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
         expect(programmingExercise.buildConfig?.buildScript).toBeUndefined();
