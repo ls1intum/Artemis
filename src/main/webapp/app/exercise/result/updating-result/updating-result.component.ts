@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
@@ -34,6 +34,9 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private submissionService = inject(ProgrammingSubmissionService);
     private profileService = inject(ProfileService);
+    // Under zoneless change detection the result/build state below is mutated from websocket and
+    // submission subscriptions, which must explicitly schedule change detection to refresh the badge.
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly exercise = input<Exercise>(undefined!);
     readonly participation = input<StudentParticipation>(undefined!);
@@ -139,6 +142,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                     if (result) {
                         this.showResult.emit();
                     }
+                    this.changeDetectorRef.markForCheck();
                 }),
             )
             .subscribe();
@@ -209,6 +213,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             // everything ok, remove the warning
             this.missingResultInfo = MissingResultInformation.NONE;
         }
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
@@ -224,6 +229,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                 if (releaseDate && !this.isBuilding) {
                     this.estimatedCompletionDate = releaseDate;
                     this.buildStartDate = submissionDate;
+                    this.changeDetectorRef.markForCheck();
                 }
             });
         } else if (

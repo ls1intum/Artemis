@@ -61,7 +61,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
-    hasUserAcceptedLLMUsage: boolean;
+    readonly hasUserAcceptedLLMUsage = signal(false);
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
@@ -119,7 +119,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage = this.isAcceptedLLMSelection(selection);
+        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -147,7 +147,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
             const hasAccepted = this.isAcceptedLLMSelection(decision);
 
-            this.hasUserAcceptedLLMUsage = hasAccepted;
+            this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
             // Proceed with feedback request only when an AI option was accepted
@@ -161,7 +161,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isFeedbackLimitReached()) {
             return;
         }
-        if (!this.hasUserAcceptedLLMUsage) {
+        if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();
             return;
         }
