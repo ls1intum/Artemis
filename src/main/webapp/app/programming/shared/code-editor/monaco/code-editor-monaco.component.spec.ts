@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -527,12 +527,12 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     describe('image previews', () => {
-        let createObjectURLMock: jest.Mock;
-        let revokeObjectURLMock: jest.Mock;
+        let createObjectURLMock: Mock;
+        let revokeObjectURLMock: Mock;
 
         beforeEach(() => {
-            createObjectURLMock = jest.fn().mockReturnValue('blob:mock-url');
-            revokeObjectURLMock = jest.fn();
+            createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url');
+            revokeObjectURLMock = vi.fn();
             (URL as any).createObjectURL = createObjectURLMock;
             (URL as any).revokeObjectURL = revokeObjectURLMock;
         });
@@ -540,8 +540,8 @@ describe('CodeEditorMonacoComponent', () => {
         it('should fetch image files as a blob and create a preview URL instead of using the editor', async () => {
             const fileName = 'assets/logo.png';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
-            const getFileAsBlobSpy = jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
-            const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
+            const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            const changeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
             fixture.componentRef.setInput('selectedFile', fileName);
 
             await comp.selectFileInEditor(fileName);
@@ -549,8 +549,8 @@ describe('CodeEditorMonacoComponent', () => {
             expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName);
             expect(createObjectURLMock).toHaveBeenCalledOnce();
             expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
-            expect(comp.imagePreviewError()).toBeFalse();
-            expect(comp.binaryFileSelected()).toBeFalse();
+            expect(comp.imagePreviewError()).toBe(false);
+            expect(comp.binaryFileSelected()).toBe(false);
             expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName);
             expect(changeModelSpy).not.toHaveBeenCalled();
         });
@@ -559,7 +559,7 @@ describe('CodeEditorMonacoComponent', () => {
             const fileName = 'assets/logo.png';
             const otherFileName = 'src/Main.java';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
-            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
             fixture.componentRef.setInput('selectedFile', fileName);
 
             const pendingSelection = comp.selectFileInEditor(fileName);
@@ -572,17 +572,17 @@ describe('CodeEditorMonacoComponent', () => {
 
         it('should set image preview error and emit when image loading fails', async () => {
             const fileName = 'assets/broken.png';
-            const errorCallbackStub = jest.fn();
+            const errorCallbackStub = vi.fn();
             comp.onError.subscribe(errorCallbackStub);
             const failingSubject = new Subject<Blob>();
-            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
             fixture.componentRef.setInput('selectedFile', fileName);
 
             const pending = comp.selectFileInEditor(fileName);
             failingSubject.error(new Error('boom'));
             await pending;
 
-            expect(comp.imagePreviewError()).toBeTrue();
+            expect(comp.imagePreviewError()).toBe(true);
             expect(comp.imagePreviewUrl()).toBeUndefined();
             expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith('loadingFailed');
         });
@@ -590,10 +590,10 @@ describe('CodeEditorMonacoComponent', () => {
         it('should ignore an in-flight image load failure when the user switches files', async () => {
             const fileName = 'assets/broken.png';
             const otherFileName = 'src/Main.java';
-            const errorCallbackStub = jest.fn();
+            const errorCallbackStub = vi.fn();
             comp.onError.subscribe(errorCallbackStub);
             const failingSubject = new Subject<Blob>();
-            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
             fixture.componentRef.setInput('selectedFile', fileName);
 
             const pending = comp.selectFileInEditor(fileName);
@@ -601,7 +601,7 @@ describe('CodeEditorMonacoComponent', () => {
             failingSubject.error(new Error('boom'));
             await pending;
 
-            expect(comp.imagePreviewError()).toBeFalse();
+            expect(comp.imagePreviewError()).toBe(false);
             expect(errorCallbackStub).not.toHaveBeenCalled();
         });
 
@@ -610,7 +610,7 @@ describe('CodeEditorMonacoComponent', () => {
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
             const firstSubject = new Subject<Blob>();
             const secondSubject = new Subject<Blob>();
-            const getFileAsBlobSpy = jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
+            const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
             createObjectURLMock.mockReturnValueOnce('blob:first-url').mockReturnValueOnce('blob:second-url');
             fixture.componentRef.setInput('selectedFile', fileName);
 
@@ -633,10 +633,10 @@ describe('CodeEditorMonacoComponent', () => {
             const imageFileName = 'assets/logo.png';
             const otherFileName = 'src/Main.java';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
-            jest.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
-            jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
-            jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
-            jest.spyOn(comp.editor(), 'setScrollTop').mockImplementation();
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
+            vi.spyOn(comp.editor(), 'setPosition').mockImplementation(() => {});
+            vi.spyOn(comp.editor(), 'setScrollTop').mockImplementation(() => {});
             loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'class Main {}' }));
             fixture.componentRef.setInput('selectedFile', imageFileName);
 

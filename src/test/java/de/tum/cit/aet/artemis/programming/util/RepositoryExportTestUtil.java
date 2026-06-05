@@ -510,7 +510,7 @@ public final class RepositoryExportTestUtil {
      */
     public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
         String projectKey = exercise.getProjectKey().toUpperCase();
-        String slug = (exercise.getShortName() + "-" + username).toLowerCase();
+        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase();
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
         if (Files.exists(bareRepoPath)) {
             FileUtils.deleteDirectory(bareRepoPath.toFile());
