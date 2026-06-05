@@ -62,8 +62,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
+    /** Whether whole-exercise generation ("Generate entire exercise") is eligible (create mode + Hyperion + supported language); gated by the parent's {@code showGenerateWithAi}. */
+    showGenerateWithAi = input<boolean>(false);
+    /** Whether a whole-exercise generation save is currently in flight, to disable the action and show a spinner. */
+    isGeneratingWithAi = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
+    /** Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the detail page to auto-start the agentic run (wired to the parent's {@code saveWithAi()}). */
+    generateWithAi = output<void>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);

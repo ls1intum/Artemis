@@ -24,23 +24,60 @@
                 <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <button pButton type="button" severity="primary" outlined [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
+        <small class="text-color-secondary d-block mb-2">
+            @if (showGenerateWithAi()) {
+                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.tieredHint"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.draftHint"></span>
+            }
+        </small>
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <button
+                pButton
+                type="button"
+                id="generate-problem-statement"
+                severity="primary"
+                outlined
+                size="small"
+                [disabled]="!userPrompt()?.trim() || isAiApplying() || isGeneratingWithAi()"
+                (click)="handleProblemStatementAction()"
+            >
                 @if (isAiApplying()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
+                    <fa-icon pButtonIcon [icon]="faSpinner" animation="spin" />
                 } @else {
-                    <fa-icon [icon]="facArtemisIntelligence" />
+                    <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
                 }
                 @if (shouldShowGenerateButton()) {
-                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
                 } @else {
-                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                 }
             </button>
-            <button pButton type="button" id="cancel-generation" severity="secondary" outlined (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
-                <fa-icon [icon]="faBan" class="me-1" />
+            <button pButton type="button" id="cancel-generation" severity="secondary" outlined size="small" (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
+                <fa-icon pButtonIcon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
+            @if (showGenerateWithAi()) {
+                <span class="tier-separator vr mx-1" aria-hidden="true"></span>
+                <button
+                    pButton
+                    type="button"
+                    id="generate-entire-exercise"
+                    severity="primary"
+                    size="small"
+                    [loading]="isGeneratingWithAi()"
+                    [disabled]="isGeneratingWithAi() || isAiApplying()"
+                    [pTooltip]="'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip' | artemisTranslate"
+                    tooltipPosition="top"
+                    (click)="generateWithAi.emit()"
+                >
+                    @if (!isGeneratingWithAi()) {
+                        <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
+                    }
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
+                </button>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.generateExercise.entireExerciseHelp" />
+            }
         </div>
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {

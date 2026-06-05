@@ -628,4 +628,33 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(applyChecklistSpy).toHaveBeenCalledOnce();
         expect(applyChecklistSpy).toHaveBeenCalledWith('Proposed content', comp.editableInstructions());
     });
+
+    describe('Generate entire exercise (tiered whole-exercise action)', () => {
+        it('shows the higher-tier action only when whole-exercise generation is eligible', () => {
+            // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+
+            fixture.componentRef.setInput('showGenerateWithAi', false);
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).toBeNull();
+
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).not.toBeNull();
+        });
+
+        it('emits generateWithAi when the action is clicked (wired to the parent saveWithAi flow)', () => {
+            // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.detectChanges();
+
+            const emitted: void[] = [];
+            comp.generateWithAi.subscribe(() => emitted.push(undefined));
+
+            (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!.click();
+
+            expect(emitted).toHaveLength(1);
+        });
+    });
 });

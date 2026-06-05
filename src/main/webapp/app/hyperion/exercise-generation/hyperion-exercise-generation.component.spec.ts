@@ -65,10 +65,10 @@ describe('HyperionExerciseGenerationComponent', () => {
         const completed: boolean[] = [];
         component.generationCompleted.subscribe((v) => completed.push(v));
 
-        component.prompt.set('make an exercise');
         component.generate();
 
-        expect(generationService.generateExercise).toHaveBeenCalledWith(42, 'make an exercise');
+        // There is no free-text brief on the detail page: a run always reuses the prior context (no prompt argument).
+        expect(generationService.generateExercise).toHaveBeenCalledWith(42, undefined);
         expect(component.running()).toBe(true);
         expect(websocketService.subscribeToJob).toHaveBeenCalledWith('job-1');
 
@@ -280,10 +280,17 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(component.showLog()).toBe(true);
     });
 
-    it('fills the prompt from a one-click example', () => {
-        component.useExample(component.examples[0]);
-        // The MockTranslateService echoes the key, so the prompt is the resolved example key (non-empty).
-        expect(component.prompt()).toContain('example1Prompt');
+    it('self-hides when idle and renders the branded card once a run is active or recent', () => {
+        // No run started: the card is not a permanent fixture, so nothing renders.
+        expect(component.hasActiveOrRecentRun()).toBe(false);
+        expect((fixture.nativeElement as HTMLElement).querySelector('.hyperion-exercise-generation')).toBeNull();
+
+        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-card' }));
+        component.generate();
+        fixture.detectChanges();
+
+        expect(component.hasActiveOrRecentRun()).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).querySelector('.hyperion-exercise-generation')).not.toBeNull();
     });
 
     it('ticks the elapsed timer once per second while running, stops on terminal, and reseeds on a new run', () => {

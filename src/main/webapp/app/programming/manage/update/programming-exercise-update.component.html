@@ -49,8 +49,11 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [showGenerateWithAi]="showGenerateWithAi()"
+                [isGeneratingWithAi]="isGeneratingWithAi()"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
+                (generateWithAi)="saveWithAi()"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-grading
@@ -70,14 +73,12 @@
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
-                [showGenerateWithAi]="showGenerateWithAi()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
                 (save)="save()"
-                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

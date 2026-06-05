@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, afterRenderEffect, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { TextareaModule } from 'primeng/textarea';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { CardModule } from 'primeng/card';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subscription, forkJoin } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -23,22 +24,23 @@ import {
     HyperionExerciseGenerationWebsocketService,
 } from 'app/hyperion/services/hyperion-exercise-generation-websocket.service';
 
-/** A short, realistic example brief offered as a one-click starting point for the instructions field. */
-interface GenerationExample {
-    labelKey: string;
-    promptKey: string;
-}
-
 /** The order repositories are shown in the "files changed" summary. */
 const REPO_ORDER: GenerationRepo[] = ['solution', 'template', 'tests', 'other'];
 
-/** Instructor-facing control for agentic whole-exercise generation and adaptation: starts a run, streams live progress, allows cancellation, and reports the outcome. */
+/**
+ * Artemis Intelligence status/result surface for an agentic whole-exercise generation run.
+ *
+ * This is a pure live-run surface: a run is started elsewhere (the create page's "Generate entire exercise"
+ * action, which auto-starts here on load, or — in a follow-up change — an adapt request from the review thread).
+ * There is no free-text brief here; the brief is only entered on the create page. The component streams live
+ * progress, allows cancellation, surfaces the verified outcome, and self-hides when there is no active or recent run.
+ */
 @Component({
     selector: 'jhi-hyperion-exercise-generation',
     templateUrl: './hyperion-exercise-generation.component.html',
     styleUrl: './hyperion-exercise-generation.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ButtonModule, TagModule, TextareaModule, ProgressBarModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [ButtonModule, TagModule, ProgressBarModule, CardModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private generationService = inject(HyperionExerciseGenerationService);
@@ -46,8 +48,10 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
+
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faBan = faBan;
 
     /** The exercise to generate or adapt. */
     readonly exerciseId = input.required<number>();
@@ -58,7 +62,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     /** Emitted with {@code true} once an exercise has been generated and saved, so the parent can refresh. */
     readonly generationCompleted = output<boolean>();
 
-    readonly prompt = signal<string>('');
     readonly running = signal<boolean>(false);
     readonly cancelling = signal<boolean>(false);
     readonly jobId = signal<string | undefined>(undefined);
@@ -79,6 +82,11 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     readonly canRetry = computed(() => !this.running() && !!this.finalEvent());
     /** The structured verification verdict on the terminal event, if any, for the scannable result chips. */
     readonly verdict = computed<ExerciseGenerationVerdict | undefined>(() => this.finalEvent()?.verdict);
+    /**
+     * Whether there is an active or recent run worth showing. When idle (no run in flight and no terminal outcome
+     * to report), the card self-hides so it is not a permanent fixture on the detail page.
+     */
+    readonly hasActiveOrRecentRun = computed(() => this.running() || !!this.finalEvent());
 
     /** The structured, human-friendly view of the run derived from the raw transcript (current phase, attempt, files changed). */
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
@@ -99,13 +107,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         const total = this.elapsedSeconds();
         return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
     });
-
-    /** Realistic, one-click example briefs to fill the instructions field. */
-    readonly examples: GenerationExample[] = [
-        { labelKey: 'example1Label', promptKey: 'example1Prompt' },
-        { labelKey: 'example2Label', promptKey: 'example2Prompt' },
-        { labelKey: 'example3Label', promptKey: 'example3Prompt' },
-    ];
 
     private readonly transcriptContainer = viewChild<{ nativeElement: HTMLElement }>('transcript');
     private readonly reviewButton = viewChild<{ nativeElement: HTMLElement }>('reviewButton');
@@ -188,9 +189,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.reset();
         this.running.set(true);
         this.startTimer();
-        const trimmed = this.prompt().trim();
+        // No free-text brief on the detail page: a retry reuses the prior run's context (the persisted draft / problem statement). The brief is only ever entered on the create page or via adapt.
         this.generationService
-            .generateExercise(this.exerciseId(), trimmed.length > 0 ? trimmed : undefined)
+            .generateExercise(this.exerciseId(), undefined)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (start) => {
@@ -293,11 +294,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     private isTerminal(event: ExerciseGenerationEvent): boolean {
         return event.type === 'DONE' || event.type === 'ERROR' || event.type === 'CANCELLED';
-    }
-
-    /** Fills the instructions field with the translated text of a one-click example. */
-    useExample(example: GenerationExample): void {
-        this.prompt.set(this.translateService.instant(`artemisApp.programmingExercise.generateExercise.${example.promptKey}`));
     }
 
     private reset(): void {
