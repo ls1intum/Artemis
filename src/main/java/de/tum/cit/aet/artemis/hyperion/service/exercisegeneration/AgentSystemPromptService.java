@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
+import java.util.Set;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -191,5 +193,23 @@ public class AgentSystemPromptService {
                     + "it, keeping its intent and every stated requirement; refine its wording and add the [task] bindings for the tests you write.";
         }
         return "Generate a complete, correct programming exercise: a reference solution that passes all tests, a template that compiles but fails the tests, and meaningful tests.";
+    }
+
+    /**
+     * The single source of truth (defined on {@link LanguageGenerationProfile#supportedLanguages()}) for the languages Hyperion offers for one-click whole-exercise generation —
+     * the oracle-verifiable ones. Exposed so the resource can both guard a run and serve the set to the client, which must never mirror it by hand.
+     *
+     * @return the immutable set of generation-supported languages
+     */
+    public Set<ProgrammingLanguage> supportedGenerationLanguages() {
+        return LanguageGenerationProfile.supportedLanguages();
+    }
+
+    /**
+     * @param language the exercise's programming language (may be {@code null})
+     * @return whether Hyperion whole-exercise generation supports it (i.e. the differential oracle can verify the result)
+     */
+    public boolean isGenerationSupported(@Nullable ProgrammingLanguage language) {
+        return LanguageGenerationProfile.isSupported(language);
     }
 }

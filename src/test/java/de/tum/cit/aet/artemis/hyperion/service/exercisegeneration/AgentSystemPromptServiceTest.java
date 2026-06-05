@@ -265,4 +265,31 @@ class AgentSystemPromptServiceTest {
         assertThat(LanguageGenerationProfile.guidanceFor(plainMaven)).contains("@Public").contains("@StrictTimeout");
         assertThat(profile(ProgrammingLanguage.JAVA)).contains("@Public").contains("@StrictTimeout");
     }
+
+    // ---- The single server source of truth for the one-click whole-exercise generation offer ------------------------------------------------------------------------------------
+
+    /** The best-effort / no-profile languages intentionally excluded from the one-click offer (verifier cannot self-check them). */
+    private static final java.util.Set<ProgrammingLanguage> EXCLUDED_FROM_OFFER = java.util.EnumSet.of(ProgrammingLanguage.C, ProgrammingLanguage.OCAML, ProgrammingLanguage.BASH,
+            ProgrammingLanguage.ASSEMBLER, ProgrammingLanguage.MATLAB, ProgrammingLanguage.VHDL, ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL,
+            ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
+
+    @Test
+    void supportedGenerationLanguages_pinsTheOracleVerifiableSet() {
+        // Pin the exact set so a drift on the server (the single source of truth the client now consumes) is caught.
+        assertThat(systemPromptService.supportedGenerationLanguages()).containsExactlyInAnyOrder(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON,
+                ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS,
+                ProgrammingLanguage.C_SHARP, ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ProgrammingLanguage.class)
+    void isGenerationSupported_acceptsTheOfferSetAndRejectsTheBestEffortAndUntemplatedArms(ProgrammingLanguage language) {
+        boolean expectedSupported = !EXCLUDED_FROM_OFFER.contains(language);
+        assertThat(systemPromptService.isGenerationSupported(language)).as("generation supported for %s", language).isEqualTo(expectedSupported);
+    }
+
+    @Test
+    void isGenerationSupported_rejectsNullLanguage() {
+        assertThat(systemPromptService.isGenerationSupported(null)).isFalse();
+    }
 }

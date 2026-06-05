@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ExerciseGenerationJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -72,12 +76,34 @@ public class HyperionExerciseGenerationResource {
     public ResponseEntity<ExerciseGenerationJobStartDTO> generateExercise(@PathVariable long exerciseId, @Valid @RequestBody ExerciseGenerationRequestDTO request) {
         log.debug("REST request to run agentic exercise generation for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
+        ProgrammingLanguage language = exercise.getProgrammingLanguage();
+        if (!agentSystemPromptService.isGenerationSupported(language)) {
+            // Fail clearly instead of running and producing a result the differential oracle cannot verify (best-effort/no-profile languages).
+            throw new BadRequestAlertException("Artemis Intelligence cannot generate a whole exercise for programming language '" + language
+                    + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         String prompt = agentSystemPromptService.resolvePrompt(request, exercise);
         String jobId = jobService.startJob(user, exercise, prompt);
         log.info("Started agentic exercise generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new ExerciseGenerationJobStartDTO(jobId));
+    }
+
+    /**
+     * GET programming-exercises/generation/supported-languages : the languages Artemis Intelligence offers for one-click whole-exercise generation (the oracle-verifiable set).
+     * <p>
+     * Not exercise-scoped, so guarded by the global least-privilege role that can create exercises ({@link EnforceAtLeastEditor}). The client consumes this instead of mirroring
+     * the
+     * set by hand.
+     *
+     * @return the supported programming languages
+     */
+    @GetMapping("programming-exercises/generation/supported-languages")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<ProgrammingLanguage>> getSupportedGenerationLanguages() {
+        log.debug("REST request to get the Hyperion generation-supported programming languages");
+        return ResponseEntity.ok(agentSystemPromptService.supportedGenerationLanguages().stream().sorted().toList());
     }
 
     /**

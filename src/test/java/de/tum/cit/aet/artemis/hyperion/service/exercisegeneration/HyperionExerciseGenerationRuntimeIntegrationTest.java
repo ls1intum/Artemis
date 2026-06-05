@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -25,7 +26,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
  * HTTP/security-layer integration test for Hyperion agentic whole-exercise generation: drives the real request path — {@code HyperionExerciseGenerationResource} (with its
  * {@code @EnforceAtLeastEditorInExercise} aspect) → {@code ExerciseGenerationJobService} → the status and cancel endpoints — over MockMvc against the full Spring context with
  * Testcontainers Postgres. Covers only the runtime behaviour that needs the context and the DB-backed authorization aspect yet is reachable without the Docker/GPU agent: the
- * role/course authorization boundaries, the per-course cancel scope, the 204/404 status edges, and rejection of an unknown exercise id — all without a {@code @MockitoSpyBean}, so
+ * role/course authorization boundaries, the per-course cancel scope, the 204/404 status edges, rejection of an unknown exercise id, the run guard that rejects a language the
+ * differential oracle cannot verify, and the global-authorized supported-languages endpoint that serves the server's single source of truth to the client — all without a
+ * {@code @MockitoSpyBean}, so
  * it
  * forks no Spring context. The terminal-state and single-flight service logic is proven in {@link ExerciseGenerationTaskServiceTest} and {@link ExerciseGenerationJobServiceTest}.
  */
@@ -45,6 +48,8 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
     private long exerciseId;
 
     private long otherCourseExerciseId;
+
+    private long unsupportedLanguageExerciseId;
 
     private String basePath() {
         return "/api/hyperion/programming-exercises/" + exerciseId + "/generate-exercise";
@@ -80,7 +85,10 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
         editor2.getGroups().add(course.getEditorGroupName());
         userTestRepository.save(editor2);
 
-        exerciseId = persistExerciseWithBuildConfig(course, "Hyperion Runtime Exercise");
+        exerciseId = persistExerciseWithBuildConfig(course, "Hyperion Runtime Exercise", ProgrammingLanguage.JAVA);
+        // Same owning course, but a language Hyperion does NOT offer for whole-exercise generation (only a best-effort, non-oracle-verifiable profile) — the run guard must reject
+        // it.
+        unsupportedLanguageExerciseId = persistExerciseWithBuildConfig(course, "Hyperion OCaml Exercise", ProgrammingLanguage.OCAML);
 
         // A second course the test users are NOT members of, to prove course-scoped authorization (an editor of course A cannot generate for an exercise in course B).
         Course otherCourse = new Course();
@@ -90,13 +98,14 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
         otherCourse.setEditorGroupName(TEST_PREFIX + "othereditor");
         otherCourse.setInstructorGroupName(TEST_PREFIX + "otherinstructor");
         otherCourse = courseRepository.save(otherCourse);
-        otherCourseExerciseId = persistExerciseWithBuildConfig(otherCourse, "Other Exercise");
+        otherCourseExerciseId = persistExerciseWithBuildConfig(otherCourse, "Other Exercise", ProgrammingLanguage.JAVA);
     }
 
-    private long persistExerciseWithBuildConfig(Course course, String title) {
+    private long persistExerciseWithBuildConfig(Course course, String title, ProgrammingLanguage language) {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle(title);
         exercise.setCourse(course);
+        exercise.setProgrammingLanguage(language);
         // The resource rejects an exercise without a build config (BadRequestAlertException); persist one first, then attach it so the cascade does not hit a transient instance.
         ProgrammingExerciseBuildConfig buildConfig = buildConfigRepository.save(new ProgrammingExerciseBuildConfig());
         exercise.setBuildConfig(buildConfig);
@@ -157,5 +166,37 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
     void cancel_crossCourseJob_isForbiddenByCourseScope() throws Exception {
         // The exercise lives in the other course editor1 is not a member of; @EnforceAtLeastEditorInExercise rejects before requestCancellation is ever reached.
         request.delete("/api/hyperion/programming-exercises/" + otherCourseExerciseId + "/generate-exercise/jobs/" + java.util.UUID.randomUUID(), HttpStatus.FORBIDDEN);
+    }
+
+    // ---- Run guard: an authorized editor cannot start a run for a language the differential oracle cannot verify
+    // ------------------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void start_unsupportedLanguage_isRejectedWithBadRequest() throws Exception {
+        // OCaml is authorized (same course) but not in the generation-supported set; the run guard must reject it with 400 rather than starting a confusing, unverifiable run.
+        request.postWithResponseBody("/api/hyperion/programming-exercises/" + unsupportedLanguageExerciseId + "/generate-exercise", new ExerciseGenerationRequestDTO("x"),
+                ExerciseGenerationJobStartDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // ---- Supported-languages endpoint: serves the server's single source of truth to the client --------------------------------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void supportedLanguages_returnsTheOracleVerifiableSet() throws Exception {
+        List<ProgrammingLanguage> languages = request.getList("/api/hyperion/programming-exercises/generation/supported-languages", HttpStatus.OK, ProgrammingLanguage.class);
+        assertThat(languages).containsExactlyInAnyOrder(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON, ProgrammingLanguage.JAVASCRIPT,
+                ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS, ProgrammingLanguage.C_SHARP,
+                ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
+        // The best-effort / no-profile languages are intentionally excluded from the one-click offer.
+        assertThat(languages).doesNotContain(ProgrammingLanguage.C, ProgrammingLanguage.OCAML, ProgrammingLanguage.BASH, ProgrammingLanguage.ASSEMBLER, ProgrammingLanguage.MATLAB,
+                ProgrammingLanguage.VHDL, ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL, ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void supportedLanguages_forbiddenForTutor() throws Exception {
+        // The global @EnforceAtLeastEditor floor: a tutor (below editor) cannot read the set.
+        request.getList("/api/hyperion/programming-exercises/generation/supported-languages", HttpStatus.FORBIDDEN, ProgrammingLanguage.class);
     }
 }

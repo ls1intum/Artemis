@@ -29,7 +29,8 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -503,7 +504,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('generate with AI visibility', () => {
-        it('should show for every Hyperion-supported language when hyperion is enabled (S1)', () => {
+        // The generation-supported set is now server-driven; the action shows only AFTER it has loaded (fails closed before). Tests prime the signal explicitly.
+        const SERVER_SUPPORTED = [ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON];
+
+        it('should show for every server-supported language once the set has loaded (S1)', () => {
+            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
+
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -515,7 +521,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(comp.showGenerateWithAi()).toBe(true);
 
-            // Kotlin (and the other profiled languages) are now supported, not just Java.
+            // Kotlin (and the other server-supported languages) are supported, not just Java.
             const kotlinExercise = new ProgrammingExercise(course, undefined);
             kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
             comp.programmingExercise = kotlinExercise;
@@ -527,7 +533,24 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.showGenerateWithAi()).toBe(true);
         });
 
-        it('should hide for an unsupported language (S1)', () => {
+        it('should hide before the supported set has loaded (fail-closed) (S5)', () => {
+            // Signal still at its empty default (the server set has not arrived / the call errored).
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.supportedGenerationLanguages()).toEqual([]);
+            expect(comp.showGenerateWithAi()).toBe(false);
+        });
+
+        it('should hide for a language not in the server set (S1)', () => {
+            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
+
             const entity = new ProgrammingExercise(course, undefined);
             // OCaml has only a best-effort server profile and is intentionally not offered in the create action.
             entity.programmingLanguage = ProgrammingLanguage.OCAML;
@@ -542,6 +565,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
 
         it('should still show when id is null', () => {
+            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
+
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
             entity.id = null as unknown as number;
@@ -553,6 +578,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should load the supported set from the server on init when hyperion is enabled (S1)', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+
+            comp.ngOnInit();
+
+            expect(getSupported).toHaveBeenCalledOnce();
+            expect(comp.supportedGenerationLanguages()).toEqual(SERVER_SUPPORTED);
+        });
+
+        it('should keep the set empty (fail-closed) when the server call errors (S5)', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(throwError(() => new Error('boom')));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+
+            comp.ngOnInit();
+
+            expect(comp.supportedGenerationLanguages()).toEqual([]);
+            expect(comp.showGenerateWithAi()).toBe(false);
         });
     });
 

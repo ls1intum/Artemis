@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
+import java.util.Set;
+
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -18,6 +20,34 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 final class LanguageGenerationProfile {
 
     private LanguageGenerationProfile() {
+    }
+
+    /**
+     * The canonical, single source of truth for the programming languages Artemis Intelligence (Hyperion) offers for one-click <em>whole-exercise</em> generation and adaptation.
+     * <p>
+     * The acceptance criterion is narrower than "has a {@link #guidanceFor(ProgrammingExercise) profile}": a language is included here only when its test runner produces parseable
+     * test reports (JUnit-XML / SCA) so the differential oracle can self-verify the generated exercise (solution passes, template compiles-but-fails). The best-effort guidance
+     * arms
+     * for niche, simulator/license-bound targets — {@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER}, {@code MATLAB}, {@code VHDL} — are intentionally excluded from the
+     * one-click offer because the verifier cannot reliably self-check them; likewise the languages with no template at all ({@code EMPTY}, {@code SQL}, {@code POWERSHELL},
+     * {@code ADA}, {@code PHP}). The client consumes this set verbatim via the generation resource, so it must never be mirrored by hand on the client.
+     *
+     * @return the immutable set of oracle-verifiable, generation-supported languages
+     */
+    static Set<ProgrammingLanguage> supportedLanguages() {
+        return SUPPORTED_LANGUAGES;
+    }
+
+    private static final Set<ProgrammingLanguage> SUPPORTED_LANGUAGES = Set.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON,
+            ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS,
+            ProgrammingLanguage.C_SHARP, ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
+
+    /**
+     * @param language the language to test (may be {@code null} before one is chosen)
+     * @return whether Artemis Intelligence whole-exercise generation supports the given language
+     */
+    static boolean isSupported(ProgrammingLanguage language) {
+        return language != null && SUPPORTED_LANGUAGES.contains(language);
     }
 
     /**

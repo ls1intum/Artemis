@@ -40,7 +40,7 @@ import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
-import { isHyperionGenerationSupportedLanguage } from 'app/hyperion/exercise-generation/hyperion-supported-languages';
+import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -105,6 +105,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    private readonly hyperionExerciseGenerationService = inject(HyperionExerciseGenerationService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -201,6 +202,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private _programmingExercise!: ProgrammingExercise;
     programmingExerciseIdForAi = signal<number | undefined>(undefined);
     programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
+    // The server is the single source of truth for which languages Artemis Intelligence can generate a whole exercise for. Fetched once on init; empty until it loads, so the
+    // "Generate entire exercise" action fails closed (stays hidden) before the set arrives or if the call errors.
+    supportedGenerationLanguages = signal<ProgrammingLanguage[]>([]);
 
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise;
@@ -312,10 +316,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
             !this.isImportFromSharingForAi() &&
-            // The server can generate a whole exercise for every language with a LanguageGenerationProfile, not just Java.
-            isHyperionGenerationSupportedLanguage(this.programmingExerciseLanguageForAi())
+            // Server-driven: only languages whose generated exercise the differential oracle can verify (fails closed while the set has not loaded).
+            this.isGenerationSupportedLanguage(this.programmingExerciseLanguageForAi())
         );
     });
+
+    private isGenerationSupportedLanguage(language: ProgrammingLanguage | undefined): boolean {
+        return language !== undefined && this.supportedGenerationLanguages().includes(language);
+    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -632,6 +640,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        if (this.hyperionEnabled) {
+            // Load the server's generation-supported language set once; on error the set stays empty so the create action fails closed (stays hidden).
+            this.hyperionExerciseGenerationService.getSupportedLanguages().subscribe({
+                next: (languages) => this.supportedGenerationLanguages.set(languages),
+                error: () => this.supportedGenerationLanguages.set([]),
+            });
+        }
         this.defineSupportedProgrammingLanguages();
     }
 

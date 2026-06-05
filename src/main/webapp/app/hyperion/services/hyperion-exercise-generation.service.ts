@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ExerciseGenerationEvent } from 'app/hyperion/services/hyperion-exercise-generation-websocket.service';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 export interface ExerciseGenerationJobStart {
     jobId: string;
@@ -29,6 +30,17 @@ export class HyperionExerciseGenerationService {
 
     private resourceUrl(exerciseId: number): string {
         return `api/hyperion/programming-exercises/${exerciseId}/generate-exercise`;
+    }
+
+    /**
+     * The programming languages for which Artemis Intelligence can generate or adapt a whole exercise (the server's oracle-verifiable set, the single source of truth defined on
+     * {@code LanguageGenerationProfile}). The client consumes this instead of mirroring it by hand. Hand-written rather than via the generated client to map onto the
+     * {@link ProgrammingLanguage} enum.
+     */
+    getSupportedLanguages(): Observable<ProgrammingLanguage[]> {
+        return this.http
+            .get<string[]>('api/hyperion/programming-exercises/generation/supported-languages')
+            .pipe(map((languages) => languages.map((language) => language as ProgrammingLanguage)));
     }
 
     /**

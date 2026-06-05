@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('HyperionExerciseGenerationService', () => {
     setupTestBed({ zoneless: true });
@@ -54,5 +55,13 @@ describe('HyperionExerciseGenerationService', () => {
         http.delete.mockReturnValue(of(undefined));
         service.cancel(9, 'job-3').subscribe();
         expect(http.delete).toHaveBeenCalledWith('api/hyperion/programming-exercises/9/generate-exercise/jobs/job-3');
+    });
+
+    it('gets the server-driven supported generation languages and maps them onto the enum', () => {
+        http.get.mockReturnValue(of(['JAVA', 'PYTHON', 'KOTLIN']));
+        let result: unknown;
+        service.getSupportedLanguages().subscribe((r) => (result = r));
+        expect(http.get).toHaveBeenCalledWith('api/hyperion/programming-exercises/generation/supported-languages');
+        expect(result).toEqual([ProgrammingLanguage.JAVA, ProgrammingLanguage.PYTHON, ProgrammingLanguage.KOTLIN]);
     });
 });
