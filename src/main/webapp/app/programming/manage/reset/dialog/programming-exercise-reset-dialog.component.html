@@ -1,9 +1,5 @@
 @if (!isLoading) {
     <form name="resetForm" role="form" (ngSubmit)="resetProgrammingExercise()" #resetForm="ngForm">
-        <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="entity.resetProgrammingExercise.title"></h4>
-            <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
-        </div>
         <div class="modal-body">
             <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
                 Please select the operations you want to perform on <strong>{{ programmingExercise.title }}</strong
@@ -55,7 +51,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
+            <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="resetInProgress">
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             <div [style.cursor]="resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
