@@ -1675,7 +1675,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             AND se.exam.id = :examId
             AND e.id = :exerciseId
             AND p.testRun = FALSE
+            AND(p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
+            OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
             """)
-    Long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
+    long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
 
 }

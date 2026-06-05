@@ -1145,7 +1145,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam2.setNumberOfExercisesInExam(1);
         examRepository.save(exam2);
 
-        examUtilService.addStudentExamWithUser(exam2, student1);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam2, student1);
+        studentExam.addExercise(textExercise);
+        studentExamRepository.save(studentExam);
+
         StudentParticipation failedPreparation = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, textExercise, student1);
         studentParticipationRepository.save(failedPreparation);
 
