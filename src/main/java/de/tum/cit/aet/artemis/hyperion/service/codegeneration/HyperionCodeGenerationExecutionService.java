@@ -279,6 +279,14 @@ public class HyperionCodeGenerationExecutionService {
                 return Optional.empty();
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
+            // Reject hidden paths (`src/.env`, `test/.gitignore`, `src/.config/foo.java`, …); `.gitkeep` is the only carveout because empty-dir placeholders are part of the
+            // cleanup flow.
+            String[] segments = normalized.split("/");
+            for (int i = 0; i < segments.length; i++) {
+                if (segments[i].startsWith(".") && !(i == segments.length - 1 && segments[i].equals(".gitkeep"))) {
+                    return Optional.empty();
+                }
+            }
             return isDeletablePathForRepositoryType(normalized, repositoryType) ? Optional.of(normalized) : Optional.empty();
         }
         catch (InvalidPathException e) {

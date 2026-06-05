@@ -701,9 +701,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         Repository mockRepository = mock(Repository.class);
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
-        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository,
-                List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", "../.gitkeep", "src/../.gitkeep", ""), exercise,
-                RepositoryType.TEMPLATE, publisher, 1);
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(
+                service, "deleteObsoleteFiles", mockRepository, List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", "../.gitkeep",
+                        "src/../.gitkeep", "", "src/.env", "src/.gitignore", "src/.github/workflows/ci.yml", "src/main/java/.secret"),
+                exercise, RepositoryType.TEMPLATE, publisher, 1);
 
         assertThat(deletedAnyFile).isFalse();
         verify(gitService, never()).getFileByName(eq(mockRepository), anyString());
