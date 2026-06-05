@@ -313,7 +313,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
-            const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
             let exerciseTypePath: string;
             if (exercise?.type === ExerciseType.TEXT) {
                 exerciseTypePath = 'text-exercises';
