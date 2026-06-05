@@ -40,11 +40,11 @@ describe('UnifiedFeedbackComponent', () => {
     it('should infer needs_revision type by default when points = 0', () => {
         expect(component.inferredType()).toBe('needs_revision');
         expect(component.inferredTitle()).toBe('artemisApp.feedback.type.feedback');
-        expect(component.inferredAlertClass()).toBe('alert-secondary');
+        expect(component.inferredAlertClass()).toBe('alert-primary');
     });
 
     it('should return correct alert class for default needs_revision type', () => {
-        expect(component.inferredAlertClass()).toBe('alert-secondary');
+        expect(component.inferredAlertClass()).toBe('alert-primary');
     });
 
     it('should infer correct type when points > 0', () => {
@@ -195,13 +195,13 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-reference-text')).toBeNull();
     });
 
-    it('should expose alert-secondary for needs_revision', () => {
+    it('should expose alert-primary for needs_revision', () => {
         fixture.componentRef.setInput('type', 'needs_revision');
         fixture.detectChanges();
         expect(component.inferredType()).toBe('needs_revision');
-        expect(component.inferredAlertClass()).toBe('alert-secondary');
+        expect(component.inferredAlertClass()).toBe('alert-primary');
         const root = fixture.nativeElement.querySelector('.unified-feedback');
-        expect(root.classList.contains('alert-secondary')).toBeTruthy();
+        expect(root.classList.contains('alert-primary')).toBeTruthy();
     });
 
     it('should expose alert-secondary for not_attempted', () => {

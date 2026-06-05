@@ -246,6 +246,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         }
 
+        const currentIds = new Set(assessments.map((a) => a.modelElementId));
+        for (const id of this.elementFeedback.keys()) {
+            if (!currentIds.has(id)) {
+                this.elementFeedback.delete(id);
+                this.shownInApollon.delete(id);
+            }
+        }
+
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
     }
 
