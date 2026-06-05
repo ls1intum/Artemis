@@ -239,8 +239,8 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[modelingExercise.id!]).toBe(3.33);
         expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
 
-        expect(component.overallAchievedPoints).toBe(35.33);
-        expect(component.maxPoints).toBe(40);
+        expect(component.overallAchievedPoints()).toBe(35.33);
+        expect(component.maxPoints()).toBe(40);
         expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
@@ -253,8 +253,8 @@ describe('ExamResultOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.overallAchievedPoints).toBe(0);
-        expect(component.maxPoints).toBe(0);
+        expect(component.overallAchievedPoints()).toBe(0);
+        expect(component.maxPoints()).toBe(0);
         expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });
@@ -346,7 +346,7 @@ describe('ExamResultOverviewComponent', () => {
             component.ngOnInit();
 
             expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
-            expect(component.overallAchievedPercentageRoundedByCourseSettings).toBe(76.67);
+            expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(76.67);
         });
     });
 });

@@ -47,9 +47,9 @@
                 @if (
                     i >=
                         exerciseIndex() -
-                            itemsVisiblePerSide -
-                            (exerciseIndex() + 1 + itemsVisiblePerSide > exercises().length ? exerciseIndex() + 1 + itemsVisiblePerSide - exercises().length : 0) &&
-                    i <= exerciseIndex() + itemsVisiblePerSide - (exerciseIndex() - itemsVisiblePerSide <= 0 ? exerciseIndex() - itemsVisiblePerSide : 0)
+                            itemsVisiblePerSide() -
+                            (exerciseIndex() + 1 + itemsVisiblePerSide() > exercises().length ? exerciseIndex() + 1 + itemsVisiblePerSide() - exercises().length : 0) &&
+                    i <= exerciseIndex() + itemsVisiblePerSide() - (exerciseIndex() - itemsVisiblePerSide() <= 0 ? exerciseIndex() - itemsVisiblePerSide() : 0)
                 ) {
                     <div class="navigation-item">
                         <button

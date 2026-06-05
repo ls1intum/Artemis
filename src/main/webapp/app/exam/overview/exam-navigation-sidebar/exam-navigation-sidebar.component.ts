@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/course/sidebar/service/sidebar-event.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
@@ -41,6 +41,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private repositoryService = inject(CodeEditorRepositoryService);
     private conflictService = inject(CodeEditorConflictStateService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly sidebarData = input<SidebarData>(undefined!);
     readonly exercises = input<Exercise[]>([]);
@@ -78,6 +79,9 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(exerciseIdToNavigateTo);
+                // changeExerciseById mutates template-bound state (icon, numberOfSavedExercises) from an async callback,
+                // which does not schedule change detection under zoneless CD; trigger it explicitly.
+                this.changeDetectorRef.markForCheck();
             });
         }
 
@@ -104,6 +108,9 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
+                            // submission.isSynced feeds the template-bound sync status/icon; the write happens in an async
+                            // callback, so schedule change detection explicitly under zoneless CD.
+                            this.changeDetectorRef.markForCheck();
                         }
                     });
             });

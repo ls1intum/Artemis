@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -105,6 +105,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -207,6 +208,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }).subscribe(({ parentParams, currentParams }) => {
             const courseId = currentParams['courseId'] || parentParams['courseId'];
             this.courseId = parseInt(courseId, 10);
+            this.changeDetectorRef.markForCheck();
         });
         this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
@@ -227,8 +229,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.exam = studentExam.exam!;
                         this.testExam = this.exam.testExam!;
                         this.loadingExam = false;
+                        this.changeDetectorRef.markForCheck();
                     },
-                    error: () => (this.loadingExam = false),
+                    error: () => {
+                        this.loadingExam = false;
+                        this.changeDetectorRef.markForCheck();
+                    },
                 });
             } else if (this.testExam && this.studentExamId) {
                 this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
@@ -249,11 +255,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                 });
             }
+            this.changeDetectorRef.markForCheck();
         });
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
+            this.changeDetectorRef.markForCheck();
         });
     }
 
@@ -277,8 +285,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.studentExam = studentExamWithExercises;
                 this.showExamSummary = true;
                 this.loadingExam = false;
+                this.changeDetectorRef.markForCheck();
             },
-            error: () => (this.loadingExam = false),
+            error: () => {
+                this.loadingExam = false;
+                this.changeDetectorRef.markForCheck();
+            },
         });
         if (!this.testExam) {
             this.examParticipationService.resetExamLayout();
@@ -446,7 +458,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         if (this.examSummaryButtonSecondsLeft === 0) {
                             clearInterval(this.examSummaryButtonTimer);
                         }
+                        this.changeDetectorRef.markForCheck();
                     }, 1000);
+                    this.changeDetectorRef.markForCheck();
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
@@ -458,6 +472,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                                 next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
+                                    this.changeDetectorRef.markForCheck();
                                 },
                                 error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
@@ -465,12 +480,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     // Allow the user to try to reload the exam from the server
                                     this.submitInProgress = false;
                                     this.handInPossible = true;
+                                    this.changeDetectorRef.markForCheck();
                                 },
                             });
                         } else {
                             this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
                                 next: (existingExam: StudentExam) => {
                                     this.studentExam = existingExam;
+                                    this.changeDetectorRef.markForCheck();
                                 },
                                 error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
@@ -478,6 +495,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                     // Allow the user to try to reload the exam from the server
                                     this.submitInProgress = false;
                                     this.handInPossible = true;
+                                    this.changeDetectorRef.markForCheck();
                                 },
                             });
                         }
@@ -486,6 +504,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.submitInProgress = false;
                         this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
                     }
+                    this.changeDetectorRef.markForCheck();
                 },
             });
     }
@@ -514,6 +533,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     this.attendanceChecked = res.body;
                 }
                 this.handleHandInEarly();
+                this.changeDetectorRef.markForCheck();
             });
         }
     }
@@ -651,12 +671,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = localExam;
                         this.loadingExam = false;
                         this.examStarted(this.studentExam);
+                        this.changeDetectorRef.markForCheck();
                     }
                 });
             } else {
                 this.loadingExam = false;
             }
         }
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
@@ -669,12 +691,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
                 this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
+                this.changeDetectorRef.markForCheck();
             });
         } else {
             this.isAtLeastTutor = course.isAtLeastTutor;
             this.isAtLeastInstructor = course.isAtLeastInstructor;
         }
         this.loadingExam = false;
+        this.changeDetectorRef.markForCheck();
     }
 
     /**
@@ -701,6 +725,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
                 this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
                 this.liveEventsService.acknowledgeEvent(event, false);
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -713,6 +738,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .subscribe((event: ProblemStatementUpdateEvent) => {
                 this.updateProblemStatement(event);
                 this.liveEventsService.acknowledgeEvent(event, false);
+                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -762,6 +788,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
                     this.activateActiveComponent();
+                    this.changeDetectorRef.markForCheck();
                 }
             });
         } else {
@@ -935,6 +962,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
         submission.isSynced = true;
         submission.submitted = true;
+        this.changeDetectorRef.markForCheck();
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
@@ -1001,6 +1029,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
                     }
                 }
+                this.changeDetectorRef.markForCheck();
             });
     }
 

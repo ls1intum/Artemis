@@ -55,8 +55,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     exercise = input.required<FileUploadExercise>();
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
-    submittedFileName: string;
-    submittedFileExtension: string;
+    readonly submittedFileName = signal<string | undefined>(undefined);
+    readonly submittedFileExtension = signal<string | undefined>(undefined);
     participation: StudentParticipation;
     result: Result;
     submissionFile?: File;
@@ -146,9 +146,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
             const filePath = this.studentSubmission()!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
+            const submittedFileName = filePath.last()!;
+            this.submittedFileName.set(submittedFileName);
+            const fileName = submittedFileName.split('.');
+            this.submittedFileExtension.set(fileName.last()!);
         }
     }
 

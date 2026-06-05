@@ -120,6 +120,9 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
             // the content of the submission version can be undefined if an empty submission was saved
             this.answer = '';
         }
+        // setSubmissionVersion is invoked from an async subscribe callback in the parent timeline component;
+        // under zoneless change detection the ngModel-bound answer write would otherwise not refresh the view.
+        this.changeDetectorReference.markForCheck();
     }
 
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {

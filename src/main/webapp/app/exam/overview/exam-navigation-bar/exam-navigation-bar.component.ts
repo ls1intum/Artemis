@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
@@ -54,7 +54,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
     readonly onExamHandInEarly = output<void>();
 
     static itemsVisiblePerSideDefault = 4;
-    itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
+    readonly itemsVisiblePerSide = signal(ExamNavigationBarComponent.itemsVisiblePerSideDefault);
 
     criticalTime = dayjs.duration(5, 'minutes');
 
@@ -76,13 +76,13 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
         this.layoutService.subscribeToLayoutChanges().subscribe(() => {
             // You will have all matched breakpoints in observerResponse
             if (this.layoutService.isBreakpointActive(CustomBreakpointNames.extraLarge)) {
-                this.itemsVisiblePerSide = ExamNavigationBarComponent.itemsVisiblePerSideDefault;
+                this.itemsVisiblePerSide.set(ExamNavigationBarComponent.itemsVisiblePerSideDefault);
             } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.large)) {
-                this.itemsVisiblePerSide = 3;
+                this.itemsVisiblePerSide.set(3);
             } else if (this.layoutService.isBreakpointActive(CustomBreakpointNames.medium)) {
-                this.itemsVisiblePerSide = 1;
+                this.itemsVisiblePerSide.set(1);
             } else {
-                this.itemsVisiblePerSide = 0;
+                this.itemsVisiblePerSide.set(0);
             }
         });
 

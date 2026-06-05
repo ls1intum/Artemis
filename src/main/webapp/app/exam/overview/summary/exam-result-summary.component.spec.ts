@@ -252,17 +252,17 @@ describe('ExamResultSummaryComponent', () => {
 
         expect(exportToPDFButton).not.toBeNull();
 
-        component.exerciseInfos[1].isCollapsed = true;
-        component.exerciseInfos[2].isCollapsed = true;
-        component.exerciseInfos[3].isCollapsed = true;
-        component.exerciseInfos[4].isCollapsed = true;
+        component.exerciseInfos()[1].isCollapsed = true;
+        component.exerciseInfos()[2].isCollapsed = true;
+        component.exerciseInfos()[3].isCollapsed = true;
+        component.exerciseInfos()[4].isCollapsed = true;
 
         exportToPDFButton.nativeElement.click();
 
-        expect(component.exerciseInfos[1].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[2].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[3].isCollapsed).toBe(false);
-        expect(component.exerciseInfos[4].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[1].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[2].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[3].isCollapsed).toBe(false);
+        expect(component.exerciseInfos()[4].isCollapsed).toBe(false);
 
         await fixture.whenStable();
         expect(printStub).toHaveBeenCalledOnce();
@@ -278,7 +278,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
-        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+        expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
     it.each([
@@ -338,14 +338,14 @@ describe('ExamResultSummaryComponent', () => {
         plagiarismServiceSpy.mockClear();
 
         // After init, studentExamGradeInfoDTO should be set with the original studentExam
-        component.studentExamGradeInfoDTO = {} as StudentExamWithGradeDTO;
+        component.studentExamGradeInfoDTO.set({} as StudentExamWithGradeDTO);
 
         // Switch to a different studentExam — the effect propagates the new value to studentExamGradeInfoDTO and reloads plagiarism cases with the new courseId
         const studentExam3 = { id: 3, exam: studentExam.exam, user, exercises } as StudentExam;
         fixture.componentRef.setInput('studentExam', studentExam3);
         fixture.detectChanges();
         await Promise.resolve();
-        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExamGradeInfoDTO()!.studentExam).toEqual(studentExam3);
         expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
@@ -482,11 +482,11 @@ describe('ExamResultSummaryComponent', () => {
                 },
             } as StudentResult;
 
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam, studentResult });
         });
 
         it('should return undefined if exercise result is undefined', () => {
-            component.studentExamGradeInfoDTO.studentResult.exerciseGroupIdToExerciseResult = {};
+            component.studentExamGradeInfoDTO()!.studentResult.exerciseGroupIdToExerciseResult = {};
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
             expect(scoreAsPercentage).toBeUndefined();
@@ -504,7 +504,7 @@ describe('ExamResultSummaryComponent', () => {
             textExerciseResult.achievedScore = undefined;
             textExerciseResult.maxScore = 10;
             textExerciseResult.achievedPoints = 6.066666;
-            component.studentExamGradeInfoDTO.studentExam!.exam!.course!.accuracyOfScores = 3;
+            component.studentExamGradeInfoDTO()!.studentExam!.exam!.course!.accuracyOfScores = 3;
 
             const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
 
@@ -556,7 +556,7 @@ describe('ExamResultSummaryComponent', () => {
             const scrollIntoViewSpy = vi.fn();
 
             fixture.componentRef.setInput('studentExam', studentExam);
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+            component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentExam });
 
             // Call detectChanges first to render the DOM before mocking getElementById
             fixture.detectChanges();
@@ -575,9 +575,9 @@ describe('ExamResultSummaryComponent', () => {
 
     describe('toggleShowSampleSolution', () => {
         it('should be called on button click', () => {
-            component.exerciseInfos = {
+            component.exerciseInfos.set({
                 1: { isCollapsed: false, displayExampleSolution: true } as ResultSummaryExerciseInfo,
-            };
+            });
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
             const toggleShowSampleSolutionSpy = vi.spyOn(component, 'toggleShowSampleSolution');
 

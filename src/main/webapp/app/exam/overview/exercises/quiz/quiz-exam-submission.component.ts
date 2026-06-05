@@ -229,6 +229,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 }
             }, this);
         }
+        // This may be called from an async callback (e.g. websocket update or the exam timeline submission-version subscription).
+        // Under zoneless change detection, reassigning the template-bound maps above does not schedule change detection on its own.
+        this.changeDetectorReference.markForCheck();
     }
 
     /**
