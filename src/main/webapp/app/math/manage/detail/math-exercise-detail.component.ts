@@ -9,13 +9,13 @@ import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { MathSubmission } from 'app/math/shared/entities/math-submission.model';
 import { MathExerciseService } from '../service/math-exercise.service';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -23,10 +23,10 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DecimalPipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';

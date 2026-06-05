@@ -4,20 +4,20 @@ import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { MathExerciseService } from '../service/math-exercise.service';
 import { RouterLink } from '@angular/router';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { SortService } from 'app/foundation/service/sort.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faBook, faListAlt, faPlus, faSort, faTable, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
@@ -73,7 +73,7 @@ export class MathExerciseComponent extends ExerciseComponent {
             next: (res: HttpResponse<MathExercise[]>) => {
                 const exercises = res.body ?? [];
                 exercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                 });
                 this.internalMathExercises.set(exercises);

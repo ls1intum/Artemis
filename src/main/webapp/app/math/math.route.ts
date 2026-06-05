@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { MathExerciseResolver } from 'app/math/manage/service/math-exercise-resolver.service';
 
 export const mathExerciseRoute: Routes = [

@@ -12,7 +12,7 @@ import { MathExerciseService } from 'app/math/manage/service/math-exercise.servi
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 
 describe('MathExerciseComponent', () => {

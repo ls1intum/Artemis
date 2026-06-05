@@ -10,9 +10,9 @@ import { of } from 'rxjs';
 import { MathExerciseDetailComponent } from 'app/math/manage/detail/math-exercise-detail.component';
 import { MathExerciseService } from 'app/math/manage/service/math-exercise.service';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 
 describe('MathExerciseDetailComponent', () => {

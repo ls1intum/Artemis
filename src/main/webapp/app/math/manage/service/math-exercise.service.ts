@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 
 export type EntityResponseType = HttpResponse<MathExercise>;

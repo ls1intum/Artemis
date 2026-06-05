@@ -2,9 +2,9 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { MathSubmission } from 'app/math/shared/entities/math-submission.model';
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { MathSubmissionService } from 'app/math/participate/service/math-submission.service';
@@ -13,7 +13,7 @@ import { CardModule } from 'primeng/card';
 import { TextareaModule } from 'primeng/textarea';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Minimal scaffold editor for math exercises: it loads the participation's latest submission and lets the
