@@ -13,19 +13,13 @@ export type ExerciseGenerationEvent = GeneratedExerciseGenerationEvent;
 
 type SubscribedJob = { wsSubscription: Subscription; subject: Subject<ExerciseGenerationEvent> };
 
-/**
- * Subscribes to the websocket channel for an agentic exercise-generation job and exposes its progress as an observable stream.
- */
+/** Subscribes to the websocket channel for an agentic exercise-generation job and exposes its progress as an observable stream. */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
     private subscribedJobs = new Map<string, SubscribedJob>();
 
-    /**
-     * Subscribes to an exercise-generation job channel.
-     * @param jobId the job identifier
-     * @returns an observable stream of job events
-     */
+    /** Subscribes to a job channel, returning a shared stream of its events (idempotent per {@code jobId}). */
     subscribeToJob(jobId: string): Observable<ExerciseGenerationEvent> {
         const existing = this.subscribedJobs.get(jobId);
         if (existing) {
@@ -48,10 +42,7 @@ export class HyperionExerciseGenerationWebsocketService implements OnDestroy {
         return subject.asObservable();
     }
 
-    /**
-     * Unsubscribes from an exercise-generation job channel.
-     * @param jobId the job identifier
-     */
+    /** Unsubscribes from a job channel and tears down its stream. */
     unsubscribeFromJob(jobId: string): void {
         const s = this.subscribedJobs.get(jobId);
         if (!s) {

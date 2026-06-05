@@ -93,7 +93,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly dialogService = inject(DialogService);
-    private adaptDialogRef?: DynamicDialogRef | null;
+    private adaptDialogRef?: DynamicDialogRef;
     readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
     readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
@@ -287,14 +287,15 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!issueContent) {
             return;
         }
-        this.adaptDialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
-            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            width: '40vw',
-            data: { findingText: this.assembleFindingText(issueContent) },
-        });
+        this.adaptDialogRef =
+            this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+                header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                width: '40vw',
+                data: { findingText: this.assembleFindingText(issueContent) },
+            }) ?? undefined;
         this.adaptDialogRef?.onClose.pipe(takeUntil(this.destroyed$)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
             if (!result) {
                 return;
@@ -303,12 +304,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Builds the read-only, human-readable description of the finding shown in the dialog and embedded in the feedback prompt.
-     *
-     * @param issueContent The consistency/verification finding for the thread's first comment.
-     * @returns A single human-readable line describing category, severity, and the finding text.
-     */
+    /** Builds the human-readable description of the finding (category, severity, location, text) shown in the dialog and embedded in the feedback prompt. */
     private assembleFindingText(issueContent: ConsistencyIssueCommentContent): string {
         const category = this.translateService.instant('artemisApp.hyperion.consistencyCheck.category.' + issueContent.category);
         const severity = this.translateService.instant('artemisApp.review.consistencySeverity.' + issueContent.severity);
@@ -317,13 +313,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         return `${header}\n${issueContent.text}`.trim();
     }
 
-    /**
-     * Assembles the full feedback prompt sent to Artemis Intelligence: the finding to address followed by any optional instructor instructions.
-     *
-     * @param issueContent The consistency/verification finding for the thread.
-     * @param instructions Optional free-text instructions the instructor added.
-     * @returns The assembled, human-readable feedback prompt.
-     */
+    /** Assembles the feedback prompt sent to Artemis Intelligence: the finding to address followed by any optional instructor instructions. */
     private assembleAdaptFeedback(issueContent: ConsistencyIssueCommentContent, instructions?: string): string {
         const findingSection = `${this.translateService.instant('artemisApp.review.adaptExercise.feedbackLabel')}\n${this.assembleFindingText(issueContent)}`;
         const trimmedInstructions = instructions?.trim();

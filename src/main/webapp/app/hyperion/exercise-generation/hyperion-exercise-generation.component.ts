@@ -28,12 +28,9 @@ import {
 const REPO_ORDER: GenerationRepo[] = ['solution', 'template', 'tests', 'other'];
 
 /**
- * Artemis Intelligence status/result surface for an agentic whole-exercise generation run.
- *
- * This is a pure live-run surface: a run is started elsewhere (the create page's "Generate entire exercise"
- * action, which auto-starts here on load, or — in a follow-up change — an adapt request from the review thread).
- * There is no free-text brief here; the brief is only entered on the create page. The component streams live
- * progress, allows cancellation, surfaces the verified outcome, and self-hides when there is no active or recent run.
+ * Artemis Intelligence status/result surface for an agentic whole-exercise generation run. A run is started elsewhere
+ * (the create page's auto-start, or an adapt request); this card streams live progress, allows cancellation, surfaces
+ * the verified outcome, and self-hides when there is no active or recent run.
  */
 @Component({
     selector: 'jhi-hyperion-exercise-generation',
@@ -53,10 +50,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faBan = faBan;
 
-    /** The exercise to generate or adapt. */
     readonly exerciseId = input.required<number>();
 
-    /** When {@code true}, automatically starts a generation run once on load (used by the create flow's "Generate with AI"). */
+    /** When {@code true}, automatically starts a generation run once on load (used by the create flow's auto-start). */
     readonly autoStart = input<boolean>(false);
 
     /** Emitted with {@code true} once an exercise has been generated and saved, so the parent can refresh. */
@@ -67,9 +63,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     readonly jobId = signal<string | undefined>(undefined);
     readonly progressEvents = signal<ExerciseGenerationEvent[]>([]);
     readonly finalEvent = signal<ExerciseGenerationEvent | undefined>(undefined);
-    /** Whether the raw agent log (the verbatim transcript) is expanded; the structured progress view is shown by default. */
     readonly showLog = signal<boolean>(false);
-    /** Seconds elapsed since the current run started streaming, for the live "elapsed" caption. */
     readonly elapsedSeconds = signal<number>(0);
 
     readonly diffLoading = signal<boolean>(false);
@@ -78,31 +72,21 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     readonly succeeded = computed(() => this.finalEvent()?.type === 'DONE' && this.finalEvent()?.completionStatus === 'SUCCESS');
     /** A near-miss that was recovered: a best-effort draft was saved with review comments to resolve (distinct from a clean, verified success). */
     readonly needsReview = computed(() => this.finalEvent()?.type === 'DONE' && this.finalEvent()?.completionStatus === 'NEEDS_REVIEW');
-    /** Once a run has finished (whatever the outcome), the Generate button doubles as "try again". */
     readonly canRetry = computed(() => !this.running() && !!this.finalEvent());
-    /** The structured verification verdict on the terminal event, if any, for the scannable result chips. */
     readonly verdict = computed<ExerciseGenerationVerdict | undefined>(() => this.finalEvent()?.verdict);
-    /**
-     * Whether there is an active or recent run worth showing. When idle (no run in flight and no terminal outcome
-     * to report), the card self-hides so it is not a permanent fixture on the detail page.
-     */
     readonly hasActiveOrRecentRun = computed(() => this.running() || !!this.finalEvent());
 
-    /** The structured, human-friendly view of the run derived from the raw transcript (current phase, attempt, files changed). */
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
     readonly phaseKey = computed(() => this.progress().phase);
     readonly currentStep = computed(() => this.progress().currentStep);
     readonly attempt = computed(() => this.progress().attempt);
     readonly attemptTotal = computed(() => this.progress().attemptTotal);
-    /** Whether to show the "Attempt N of M" chip (only once more than one attempt is in play). */
     readonly showAttempt = computed(() => (this.progress().attemptTotal ?? 0) > 1);
-    /** The files the agent created or edited, grouped by repository in a stable order, for the "files changed" summary. */
     readonly filesByRepo = computed<{ repo: GenerationRepo; files: GenerationFileChange[] }[]>(() => {
         const files = this.progress().files;
         return REPO_ORDER.map((repo) => ({ repo, files: files.filter((file) => file.repo === repo) })).filter((group) => group.files.length > 0);
     });
     readonly fileChangeCount = computed(() => this.progress().files.length);
-    /** Elapsed time formatted as m:ss for display. */
     readonly elapsedDisplay = computed(() => {
         const total = this.elapsedSeconds();
         return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
@@ -113,12 +97,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private readonly actionButtons = viewChild<{ nativeElement: HTMLElement }>('actionButtons');
 
     private jobSubscription?: Subscription;
-    private dialogRef?: DynamicDialogRef | null;
-    /** Guards the one-shot auto-start so it can never refire (e.g. on a later status reprobe). */
+    private dialogRef?: DynamicDialogRef;
     private autoStartHandled = false;
-    /** Ticks the elapsed-time counter once per second while a run is in flight. */
     private elapsedTimer?: ReturnType<typeof setInterval>;
-    /** Guards the one-shot focus move on a terminal outcome so it fires exactly once per run, never stealing focus on later renders. */
     private terminalFocusHandled = false;
 
     constructor() {
@@ -145,20 +126,15 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** On load, reattach to a run still in progress for this exercise, or show the last outcome, by replaying the server-retained transcript. */
     ngOnInit(): void {
         this.reattach();
     }
 
     /**
      * Probes {@code /status} and (re)binds this card to the latest run for the exercise, replaying the server-retained transcript.
-     *
-     * This is the single seam the host uses to make the card pick up a run it did not itself start (an adaptation triggered from a
-     * review thread or the free-adapt menu). It is idempotent and safe to call while a run is already streaming: it tears down any
-     * existing live subscription first, then re-subscribes to whatever run the server now reports as latest, so a freshly started
-     * adaptation immediately takes over this surface (live progress, verdict, diff) and fires {@link generationCompleted} on a
-     * terminal SUCCESS/NEEDS_REVIEW. Callers must invoke this only AFTER the start request has been acknowledged server-side, so the
-     * job is already registered and the status probe sees it.
+     * This is how the card reconnects after navigation and how it picks up a run it did not itself start (an adaptation triggered from
+     * a review thread or the free-adapt menu). Idempotent and safe to call mid-stream; callers must invoke it only AFTER the start
+     * request has been acknowledged server-side, so the status probe sees the job.
      */
     reattach(): void {
         // Drop any prior live subscription/timer so a re-probe never leaves a stale stream attached to an old job.
@@ -210,7 +186,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.reset();
         this.running.set(true);
         this.startTimer();
-        // No free-text brief on the detail page: a retry reuses the prior run's context (the persisted draft / problem statement). The brief is only ever entered on the create page or via adapt.
+        // No brief here: a retry reuses the prior run's context (the persisted draft / problem statement).
         this.generationService
             .generateExercise(this.exerciseId(), undefined)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -262,14 +238,15 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                 next: async ({ templateFiles, solutionFiles }) => {
                     try {
                         const repositoryDiffInformation = await processRepositoryDiff(templateFiles ?? new Map(), solutionFiles ?? new Map());
-                        this.dialogRef = this.dialogService.open(GitDiffReportModalComponent, {
-                            modal: true,
-                            closable: false,
-                            dismissableMask: false,
-                            width: '90vw',
-                            styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
-                            data: { repositoryDiffInformation, diffForTemplateAndSolution: true },
-                        });
+                        this.dialogRef =
+                            this.dialogService.open(GitDiffReportModalComponent, {
+                                modal: true,
+                                closable: false,
+                                dismissableMask: false,
+                                width: '90vw',
+                                styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
+                                data: { repositoryDiffInformation, diffForTemplateAndSolution: true },
+                            }) ?? undefined;
                     } catch {
                         this.alertService.error('artemisApp.programmingExercise.generateExercise.diffError');
                     } finally {

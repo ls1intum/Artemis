@@ -173,7 +173,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private hyperionExerciseAdaptationService = inject(HyperionExerciseAdaptationService);
     private dialogService = inject(DialogService);
     private destroyRef = inject(DestroyRef);
-    private adaptDialogRef?: DynamicDialogRef | null;
+    private adaptDialogRef?: DynamicDialogRef;
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -539,15 +539,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!exerciseId || !this.exercise?.isAtLeastEditor || !this.hyperionEnabled) {
             return;
         }
-        this.adaptDialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
-            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            width: '40vw',
-            // No findingText: the dialog renders its finding-free variant with required instructions.
-            data: {},
-        });
+        this.adaptDialogRef =
+            this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+                header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                width: '40vw',
+                // No findingText: the dialog renders its finding-free variant with required instructions.
+                data: {},
+            }) ?? undefined;
         this.adaptDialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
             const instructions = result?.instructions?.trim();
             if (!instructions) {

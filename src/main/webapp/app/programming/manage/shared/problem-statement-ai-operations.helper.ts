@@ -65,11 +65,7 @@ export class ProblemStatementAiOperationsHelper {
     /** Tracks the current problem statement content for shouldShowGenerateButton. */
     readonly currentProblemStatement = signal('');
 
-    /**
-     * Whether the Hyperion module feature is active. Single Hyperion source of truth: resolved from
-     * profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) — the SAME check the create page and the detail card use, so all Hyperion UI
-     * gates (create button, editor AI menu, embedded run card) agree on whether Hyperion is on.
-     */
+    /** Whether the Hyperion module feature is active (from profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION)). */
     readonly hyperionEnabled: boolean;
 
     /** Whether to show the "Generate" button (true) or the "Refine" button (false). */

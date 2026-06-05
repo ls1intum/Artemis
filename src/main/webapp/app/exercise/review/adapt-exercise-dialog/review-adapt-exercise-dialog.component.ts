@@ -8,37 +8,19 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-/**
- * Data passed into the adapt-exercise dialog.
- *
- * The dialog serves two adapt modes from a single component:
- * <ul>
- *   <li><b>Review-thread mode</b> ({@code findingText} present): a concrete consistency/verification finding is shown read-only and the
- *       free-text instructions are optional (the finding alone is enough to act on).</li>
- *   <li><b>Free mode</b> ({@code findingText} absent): there is no finding, so the finding section is hidden and the instructions become the
- *       sole input and are therefore required.</li>
- * </ul>
- */
+/** Data passed into the adapt-exercise dialog (see {@code isFreeMode}/{@code confirmDisabled} for the two-mode behavior). */
 export interface ReviewAdaptExerciseDialogData {
     /** The review thread's finding text that Artemis Intelligence will address (shown read-only). Absent in the finding-free "free adapt" mode. */
     findingText?: string;
 }
 
-/**
- * The result the dialog hands back when the instructor confirms, or {@code undefined} when cancelled.
- */
+/** The result the dialog hands back when the instructor confirms, or {@code undefined} when cancelled. */
 export interface ReviewAdaptExerciseDialogResult {
     /** Free-text instructions the instructor added. Optional in review-thread mode, required (non-empty) in free mode. */
     instructions?: string;
 }
 
-/**
- * Artemis Intelligence dialog that confirms adapting an exercise, with a free-text instructions field.
- *
- * The dialog is intentionally dumb: it only collects the (optional or required) instructions and closes with the result. In review-thread mode the
- * widget assembles the final feedback prompt and emits it; in free mode the host triggers the run with the bare instructions. The dialog never talks
- * to HTTP.
- */
+/** Artemis Intelligence dialog that collects optional/required instructions and closes with the result; the host assembles and starts the run. */
 @Component({
     selector: 'jhi-review-adapt-exercise-dialog',
     templateUrl: './review-adapt-exercise-dialog.component.html',

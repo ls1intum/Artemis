@@ -194,14 +194,11 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
-    void supportedLanguages_returnsTheOracleVerifiableSet() throws Exception {
+    void supportedLanguages_endpointReturnsTheServerSetForAnEditor() throws Exception {
+        // This (Testcontainers) test owns the wiring/serialization/auth: an editor gets 200 and the JSON deserializes to the enum. The exact set is pinned by the cheaper
+        // AgentSystemPromptServiceTest unit test, so we don't duplicate the full set-drift assertion here.
         List<ProgrammingLanguage> languages = request.getList("/api/hyperion/programming-exercises/generation/supported-languages", HttpStatus.OK, ProgrammingLanguage.class);
-        assertThat(languages).containsExactlyInAnyOrder(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON, ProgrammingLanguage.JAVASCRIPT,
-                ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS, ProgrammingLanguage.C_SHARP,
-                ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
-        // The best-effort / no-profile languages are intentionally excluded from the one-click offer.
-        assertThat(languages).doesNotContain(ProgrammingLanguage.C, ProgrammingLanguage.OCAML, ProgrammingLanguage.BASH, ProgrammingLanguage.ASSEMBLER, ProgrammingLanguage.MATLAB,
-                ProgrammingLanguage.VHDL, ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL, ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
+        assertThat(languages).isNotEmpty().contains(ProgrammingLanguage.JAVA).doesNotContain(ProgrammingLanguage.OCAML);
     }
 
     @Test

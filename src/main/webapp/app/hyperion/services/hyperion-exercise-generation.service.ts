@@ -18,11 +18,8 @@ export interface ExerciseGenerationStatus {
 }
 
 /**
- * REST client for the agentic whole-exercise generation endpoints (matches {@code HyperionExerciseGenerationResource}).
- *
- * Kept hand-written rather than delegating to the generated {@code HyperionExerciseGenerationApiService}: the generated models type every field optional
- * (the component relies on {@code jobId}/{@code running}/{@code events} being present), the generated cancel returns {@code Observable<any>}, and the
- * status call must normalise the 204 empty body to {@code undefined}. Fold this into the generated client once those gaps are addressed.
+ * REST client for the agentic whole-exercise generation endpoints (matches {@code HyperionExerciseGenerationResource}). Hand-written
+ * because the generated client types every field optional and does not normalise the {@code /status} 204 empty body to {@code undefined}.
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {
@@ -32,11 +29,7 @@ export class HyperionExerciseGenerationService {
         return `api/hyperion/programming-exercises/${exerciseId}/generate-exercise`;
     }
 
-    /**
-     * The programming languages for which Artemis Intelligence can generate or adapt a whole exercise (the server's oracle-verifiable set, the single source of truth defined on
-     * {@code LanguageGenerationProfile}). The client consumes this instead of mirroring it by hand. Hand-written rather than via the generated client to map onto the
-     * {@link ProgrammingLanguage} enum.
-     */
+    /** The programming languages Artemis Intelligence can generate or adapt a whole exercise for (the server's oracle-verifiable set). */
     getSupportedLanguages(): Observable<ProgrammingLanguage[]> {
         return this.http
             .get<string[]>('api/hyperion/programming-exercises/generation/supported-languages')

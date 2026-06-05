@@ -1,28 +1,21 @@
 import { ExerciseGenerationEvent } from 'app/hyperion/services/hyperion-exercise-generation-websocket.service';
 
-/** The coarse stage a generation run is in, derived from its progress lines, for a scannable status header. */
 export type GenerationPhase = 'preparing' | 'authoring' | 'verifying' | 'saving' | 'done';
 
-/** The repository a generated/edited file belongs to (its top-level path segment), so changes can be grouped. */
 export type GenerationRepo = 'solution' | 'template' | 'tests' | 'other';
 
-/** A single file the agent created or edited during the run. */
 export interface GenerationFileChange {
     path: string;
     repo: GenerationRepo;
     action: 'create' | 'edit';
 }
 
-/** A structured, best-effort view of a run derived from its raw progress lines for a human-friendly UI; the raw transcript remains the authoritative record. */
+/** A structured, best-effort view of a run derived from its raw progress lines; the raw transcript remains the authoritative record. */
 export interface GenerationProgress {
     phase: GenerationPhase;
-    /** The most recent meaningful progress line, used as a live "current step" caption. */
     currentStep?: string;
-    /** The verification attempt currently in progress (1-based), when known. */
     attempt?: number;
-    /** The maximum number of verification attempts, when known. */
     attemptTotal?: number;
-    /** The files created or edited so far, in first-seen order, deduplicated by path. */
     files: GenerationFileChange[];
 }
 

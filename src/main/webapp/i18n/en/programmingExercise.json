@@ -925,8 +925,6 @@
                 "reanalyze": "Re-analyze"
             },
             "generateExercise": {
-                "title": "Generate exercise with AI",
-                "description": "Use an AI agent to generate or revise a complete exercise (problem statement, solution, template, and tests). The result is only saved if it is verified: the solution passes all tests and the template fails them.",
                 "brand": "Artemis Intelligence",
                 "cardTitle": "Exercise generation",
                 "generateEntire": "Generate entire exercise",

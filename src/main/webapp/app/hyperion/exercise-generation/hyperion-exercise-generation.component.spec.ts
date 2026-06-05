@@ -120,11 +120,18 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(banner).not.toContain('resultPartial');
     });
 
-    it('shows an error alert when starting fails', () => {
+    it('surfaces the single-flight message on a 409 start conflict', () => {
         generationService.generateExercise.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'already running' } })));
         component.generate();
         expect(component.running()).toBe(false);
-        expect(alertService.error).toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.generateExercise.alreadyRunning');
+    });
+
+    it('surfaces the generic start error on a non-409 failure', () => {
+        generationService.generateExercise.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        component.generate();
+        expect(component.running()).toBe(false);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.generateExercise.startError');
     });
 
     it('cancels the running job and shows a cancelling state', () => {

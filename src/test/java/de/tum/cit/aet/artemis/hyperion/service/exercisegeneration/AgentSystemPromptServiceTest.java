@@ -268,11 +268,6 @@ class AgentSystemPromptServiceTest {
 
     // ---- The single server source of truth for the one-click whole-exercise generation offer ------------------------------------------------------------------------------------
 
-    /** The best-effort / no-profile languages intentionally excluded from the one-click offer (verifier cannot self-check them). */
-    private static final java.util.Set<ProgrammingLanguage> EXCLUDED_FROM_OFFER = java.util.EnumSet.of(ProgrammingLanguage.C, ProgrammingLanguage.OCAML, ProgrammingLanguage.BASH,
-            ProgrammingLanguage.ASSEMBLER, ProgrammingLanguage.MATLAB, ProgrammingLanguage.VHDL, ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL,
-            ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
-
     @Test
     void supportedGenerationLanguages_pinsTheOracleVerifiableSet() {
         // Pin the exact set so a drift on the server (the single source of truth the client now consumes) is caught.
@@ -281,11 +276,12 @@ class AgentSystemPromptServiceTest {
                 ProgrammingLanguage.C_SHARP, ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
     }
 
-    @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
-    void isGenerationSupported_acceptsTheOfferSetAndRejectsTheBestEffortAndUntemplatedArms(ProgrammingLanguage language) {
-        boolean expectedSupported = !EXCLUDED_FROM_OFFER.contains(language);
-        assertThat(systemPromptService.isGenerationSupported(language)).as("generation supported for %s", language).isEqualTo(expectedSupported);
+    @Test
+    void isGenerationSupported_acceptsOfferSet_rejectsBestEffortAndUntemplated() {
+        // 3 representative arms (the exact offer set is already pinned above); full-enum iteration over Set.contains adds no signal.
+        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).as("offered").isTrue();
+        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.OCAML)).as("best-effort excluded").isFalse();
+        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.SQL)).as("untemplated excluded").isFalse();
     }
 
     @Test

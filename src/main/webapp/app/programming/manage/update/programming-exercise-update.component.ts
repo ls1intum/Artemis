@@ -62,9 +62,9 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -202,8 +202,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private _programmingExercise!: ProgrammingExercise;
     programmingExerciseIdForAi = signal<number | undefined>(undefined);
     programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
-    // The server is the single source of truth for which languages Artemis Intelligence can generate a whole exercise for. Fetched once on init; empty until it loads, so the
-    // "Generate entire exercise" action fails closed (stays hidden) before the set arrives or if the call errors.
+    // Fetched once on init; empty until it loads, so the "Generate entire exercise" action fails closed (stays hidden) before the set arrives or if the call errors.
     supportedGenerationLanguages = signal<ProgrammingLanguage[]>([]);
 
     get programmingExercise(): ProgrammingExercise {

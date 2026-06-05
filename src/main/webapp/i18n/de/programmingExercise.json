@@ -925,8 +925,6 @@
                 "reanalyze": "Erneut analysieren"
             },
             "generateExercise": {
-                "title": "Aufgabe mit KI generieren",
-                "description": "Verwende einen KI-Agenten, um eine vollständige Aufgabe (Aufgabenstellung, Musterlösung, Vorlage und Tests) zu generieren oder zu überarbeiten. Das Ergebnis wird nur gespeichert, wenn es verifiziert ist: Die Musterlösung besteht alle Tests und die Vorlage besteht sie nicht.",
                 "brand": "Artemis Intelligence",
                 "cardTitle": "Aufgabengenerierung",
                 "generateEntire": "Gesamte Aufgabe generieren",

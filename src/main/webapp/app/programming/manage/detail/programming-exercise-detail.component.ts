@@ -28,6 +28,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
+import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -131,7 +132,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-    // Single Hyperion source of truth, shared with the create page and the editor AI menu/card: all gate on isModuleFeatureActive(MODULE_FEATURE_HYPERION).
     protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly dayjs = dayjs;
@@ -226,7 +226,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     constructor() {
         // Capture the navigation state now: it is only available during the current navigation and is lost once Angular finishes routing.
         const navigationState = this.router.currentNavigation()?.extras.state;
-        if (navigationState?.['autoStartExerciseGeneration'] === true) {
+        if (navigationState?.[AUTO_START_EXERCISE_GENERATION_STATE] === true) {
             this.autoStartGeneration.set(true);
         }
     }
