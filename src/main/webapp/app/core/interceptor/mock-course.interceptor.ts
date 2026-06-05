@@ -28,6 +28,10 @@ const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: () => unknown }> = [
     { pattern: /^api\/text\/courses\/\d+\/text-exercises$/, data: () => INTRO_JAVA_TEXT_EXERCISES },
     { pattern: /^api\/fileupload\/courses\/\d+\/file-upload-exercises$/, data: () => INTRO_JAVA_FILE_UPLOAD_EXERCISES },
     { pattern: /^api\/quiz\/courses\/\d+\/quiz-exercises$/, data: () => INTRO_JAVA_QUIZ_EXERCISES },
+    // The exercise detail view requests competency contributions per exercise. Mock exercise ids may
+    // collide with real, inaccessible exercises in the dev DB, which would return 403 and surface a
+    // "not authorized" alert. Return an empty list so the detail view stays quiet.
+    { pattern: /^api\/atlas\/exercises\/\d+\/contributions$/, data: () => [] },
 ];
 
 // The exercise detail view requests competency contributions per exercise (shown below the problem
