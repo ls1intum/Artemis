@@ -61,7 +61,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * Index indicating that the content is exercise overview
      */
     readonly EXERCISE_OVERVIEW_INDEX = -1;
-    subscriptionToLiveExamExerciseUpdates: Subscription;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
     icon: IconProp = facSaveSuccess;
@@ -119,6 +119,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     ngOnDestroy() {
+        this.subscriptionToLiveExamExerciseUpdates?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 

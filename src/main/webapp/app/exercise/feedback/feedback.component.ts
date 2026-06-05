@@ -364,7 +364,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
-                    if (this.showScoreChart) {
+                    if (this.showScoreChart && this.feedbackItemNodes() !== undefined) {
                         this.updateChart(this.feedbackItemNodes()!);
                     }
 

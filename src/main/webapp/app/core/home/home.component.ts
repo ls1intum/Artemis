@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -45,10 +45,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
-    // Under zoneless change detection, view state mutated from async callbacks (promises,
-    // subscriptions) must explicitly schedule change detection. Notably `loading` gates the
-    // whole login form via [hidden] and is flipped inside an `identity()` promise callback.
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -57,8 +53,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
-    authenticationError = false;
-    account: User;
+    readonly authenticationError = signal(false);
+    readonly account = signal<User | undefined>(undefined);
     password: string;
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
@@ -67,20 +63,20 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     username: string;
     credentials: Credentials;
     isRegistrationEnabled = false;
-    isPasswordLoginDisabled = false;
+    readonly isPasswordLoginDisabled = signal(false);
     isPasskeyEnabled = false;
-    loading = true;
+    readonly loading = signal(true);
     mainElementFocused = false;
 
     usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
-    usernamePlaceholderTranslated = 'Login or email'; // default, might be overridden
+    readonly usernamePlaceholderTranslated = signal('Login or email'); // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
     usernameRegexPattern = /^[a-zA-Z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
     isFormValid = false;
-    isSubmittingLogin = false;
+    readonly isSubmittingLogin = signal(false);
 
     profileInfo: ProfileInfo;
 
@@ -94,10 +90,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // logout: the component is briefly created while still authenticated, fires a
             // challenge request, gets destroyed, and a new instance overwrites the cookie.
             if (!user) {
-                this.loading = false;
+                this.loading.set(false);
                 this.prefillPasskeysIfPossible();
             }
-            this.changeDetectorRef.markForCheck();
         });
         this.registerAuthenticationSuccess();
 
@@ -194,18 +189,16 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
             this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
-        this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+        this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
-            this.changeDetectorRef.markForCheck();
+            this.usernamePlaceholderTranslated.set(this.translateService.instant(this.usernamePlaceholder));
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
-            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
-            this.changeDetectorRef.markForCheck();
+            this.isPasswordLoginDisabled.set(!!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride);
         });
     }
 
@@ -216,19 +209,18 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
 
             this.accountService.identity().then((user) => {
                 this.currentUserCallback(user!);
-                this.changeDetectorRef.markForCheck();
             });
         });
     }
 
     ngAfterViewChecked() {
         // Only focus the username input once, not on every update
-        if (this.mainElementFocused || this.loading) {
+        if (this.mainElementFocused || this.loading()) {
             return;
         }
 
         // Focus on the main element as soon as it is visible
-        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled ? '#saml2Button' : '#username', true);
+        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled() ? '#saml2Button' : '#username', true);
         if (mainElement) {
             mainElement.focus();
             this.mainElementFocused = true;
@@ -241,7 +233,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     login() {
-        this.isSubmittingLogin = true;
+        this.isSubmittingLogin.set(true);
         this.loginService
             .login({
                 username: this.username,
@@ -252,11 +244,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                 this.handleLoginSuccess();
             })
             .catch(() => {
-                this.authenticationError = true;
+                this.authenticationError.set(true);
             })
             .finally(() => {
-                this.isSubmittingLogin = false;
-                this.changeDetectorRef.markForCheck();
+                this.isSubmittingLogin.set(false);
             });
     }
 
@@ -264,7 +255,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
      * Handle a successful user login.
      */
     private handleLoginSuccess() {
-        this.authenticationError = false;
+        this.authenticationError.set(false);
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
@@ -277,7 +268,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
 
     currentUserCallback(account: User) {
-        this.account = account;
+        this.account.set(account);
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to the stored previousState and clear the previousState

@@ -49,7 +49,7 @@ export class ConsistencyCheckComponent implements OnInit {
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
                 next: (inconsistencies) => {
                     const updatedInconsistencies = this.inconsistencies().concat(inconsistencies);
-                    updatedInconsistencies.map((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    updatedInconsistencies.forEach((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
                     this.inconsistencies.set(updatedInconsistencies);
                     if (--exercisesRemaining === 0) {
                         this.isLoading.set(false);

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewContainerRef, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewContainerRef, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,7 +19,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
 
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
-    isInputOpen = false;
+    readonly isInputOpen = signal(false);
 
     /**
      * renders the ng-template to edit or create an answerPost
@@ -27,7 +27,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     open(): void {
         this.close();
         this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
-        this.isInputOpen = true;
+        this.isInputOpen.set(true);
     }
 
     /**
@@ -36,7 +36,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     close(): void {
         this.createEditAnswerPostContainerRef()?.clear();
         this.resetFormGroup();
-        this.isInputOpen = false;
+        this.isInputOpen.set(false);
     }
 
     /**
@@ -95,8 +95,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;
-                this.isInputOpen = false;
+                this.isInputOpen.set(false);
                 this.createEditAnswerPostContainerRef()?.clear();
+                // markForCheck is still required to flush the non-signal, template-bound isLoading field (inherited from PostingCreateEditDirective)
                 this.changeDetectorRef.markForCheck();
             },
             error: () => {

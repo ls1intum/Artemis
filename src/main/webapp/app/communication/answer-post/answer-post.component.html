@@ -28,7 +28,7 @@
             />
         </div>
     }
-    @if (!createAnswerPostModal.isInputOpen) {
+    @if (!createAnswerPostModal.isInputOpen()) {
         <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown">
                 <jhi-posting-content

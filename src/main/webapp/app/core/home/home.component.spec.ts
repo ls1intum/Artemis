@@ -108,14 +108,14 @@ describe('HomeComponent', () => {
         await component.login();
         await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBe(false);
+        expect(component.isSubmittingLogin()).toBe(false);
         expect(loginSpy).toHaveBeenCalledWith({
             username: 'testUser',
             password: 'password123',
             rememberMe: true,
         });
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
-        expect(component.authenticationError).toBe(false);
+        expect(component.authenticationError()).toBe(false);
     });
 
     it('should handle failed login', async () => {
@@ -127,8 +127,8 @@ describe('HomeComponent', () => {
         await component.login();
         await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBe(false);
-        expect(component.authenticationError).toBe(true);
+        expect(component.isSubmittingLogin()).toBe(false);
+        expect(component.authenticationError()).toBe(true);
     });
 
     it('should set and reset isSubmittingLogin flag', async () => {
@@ -139,11 +139,11 @@ describe('HomeComponent', () => {
         component.password = 'password123';
 
         const loginPromise = component.login();
-        expect(component.isSubmittingLogin).toBe(true);
+        expect(component.isSubmittingLogin()).toBe(true);
 
         await loginPromise;
         await fixture.whenStable();
-        expect(component.isSubmittingLogin).toBe(false);
+        expect(component.isSubmittingLogin()).toBe(false);
         expect(loginSpy).toHaveBeenCalled();
     });
 

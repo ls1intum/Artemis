@@ -78,10 +78,11 @@ export class GradingKeyTableComponent implements OnInit {
                         this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints!);
                     }
                 }
+                this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps());
+            } else {
+                this.hasPointsSet = false;
             }
         });
-
-        this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps());
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {

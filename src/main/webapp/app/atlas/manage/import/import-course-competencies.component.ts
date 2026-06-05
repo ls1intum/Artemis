@@ -142,7 +142,10 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
                 this.searchedCourseCompetencies.set(res);
                 this.isLoading.set(false);
             },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
         });
     }
 

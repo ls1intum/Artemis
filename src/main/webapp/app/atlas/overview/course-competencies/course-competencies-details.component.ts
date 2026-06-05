@@ -123,7 +123,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
                 this.isLoading.set(false);
             },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            error: (errorResponse: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, errorResponse);
+            },
         });
     }
 
@@ -188,6 +191,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
                 this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
                     next: (resp) => {
+                        this.competencyProgress.set(resp.body!);
                         this.competency.update((competency) => {
                             if (competency) {
                                 competency.userProgress = [resp.body!];

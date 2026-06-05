@@ -1,4 +1,4 @@
-<div [hidden]="loading || account" class="module-bg container-fluid">
+<div [hidden]="loading() || account()" class="module-bg container-fluid">
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
             <h1 jhiTranslate="home.title"></h1>
@@ -6,7 +6,7 @@
         </div>
     </div>
     <div class="row row-divided my-4 justify-content-center">
-        @if (!isPasswordLoginDisabled) {
+        @if (!isPasswordLoginDisabled()) {
             <div class="login-col col-12 col-xl-5 h-100">
                 <!-- Traditional Authentication -->
                 @if (!accountName) {
@@ -20,7 +20,7 @@
                     <div class="mb-5">
                         <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
                             <div class="form-group">
-                                @if (authenticationError) {
+                                @if (authenticationError()) {
                                     <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
                                         <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
                                     </div>
@@ -37,7 +37,7 @@
                                     class="form-control"
                                     id="username"
                                     name="username"
-                                    [placeholder]="usernamePlaceholderTranslated"
+                                    [placeholder]="usernamePlaceholderTranslated()"
                                     [minlength]="USERNAME_MIN_LENGTH"
                                     [maxLength]="USERNAME_MAX_LENGTH"
                                     (ngModelChange)="checkFormValidity()"
@@ -93,13 +93,13 @@
                             </div>
                             <div class="btn-toolbar">
                                 <button
-                                    [disabled]="isSubmittingLogin || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
+                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
                                     class="btn btn-primary w-100"
                                     id="login-button"
                                     type="submit"
                                     tabindex="3"
                                 >
-                                    @if (isSubmittingLogin) {
+                                    @if (isSubmittingLogin()) {
                                         <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                                     }
                                     <span jhiTranslate="login.form.button"></span>
@@ -135,7 +135,7 @@
                 </div>
             </div>
         }
-        @if (!isPasswordLoginDisabled && !!profileInfo?.saml2) {
+        @if (!isPasswordLoginDisabled() && !!profileInfo?.saml2) {
             <div class="col-12 col-xl-2 py-5 h-100">
                 <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
                 <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
