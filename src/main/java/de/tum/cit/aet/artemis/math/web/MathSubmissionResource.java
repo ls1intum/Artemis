@@ -122,8 +122,13 @@ public class MathSubmissionResource {
         // Reload with categories to avoid LazyInitializationException when DTO is serialized/logged
         mathExercise = mathExerciseRepository.findByIdWithCategories(mathExercise.getId()).orElseThrow();
         participation.setExercise(mathExercise);
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(mathExercise))) {
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation);
+        if (!(isOwner || authCheckService.isAtLeastTeachingAssistantForExercise(mathExercise))) {
             throw new AccessForbiddenException("participation", participationId);
+        }
+        if (isOwner) {
+            // A StudentParticipation persists after un-enrollment, so ownership alone is not sufficient: require current STUDENT membership.
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, mathExercise, null);
         }
 
         Optional<MathSubmission> latestSubmission = participation.findLatestSubmission().filter(s -> s instanceof MathSubmission).map(s -> (MathSubmission) s);
@@ -148,8 +153,13 @@ public class MathSubmissionResource {
         if (!(submission.getParticipation() instanceof StudentParticipation participation) || !(participation.getExercise() instanceof MathExercise mathExercise)) {
             throw new AccessForbiddenException("mathSubmission", submissionId);
         }
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(mathExercise))) {
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation);
+        if (!(isOwner || authCheckService.isAtLeastTeachingAssistantForExercise(mathExercise))) {
             throw new AccessForbiddenException("mathSubmission", submissionId);
+        }
+        if (isOwner) {
+            // A StudentParticipation persists after un-enrollment, so ownership alone is not sufficient: require current STUDENT membership.
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, mathExercise, null);
         }
         return ResponseEntity.ok(MathSubmissionDTO.of(submission));
     }

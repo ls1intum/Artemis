@@ -247,6 +247,8 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
             return ExerciseType.FILE_UPLOAD;
         case 'QuizExercise':
             return ExerciseType.QUIZ;
+        case 'MathExercise':
+            return ExerciseType.MATH;
     }
     return undefined;
 }
