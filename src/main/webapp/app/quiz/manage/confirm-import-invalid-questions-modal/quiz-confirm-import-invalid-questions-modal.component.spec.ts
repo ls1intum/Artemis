@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockProvider } from 'ng-mocks';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from './quiz-confirm-import-invalid-questions-modal.component';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -13,22 +12,34 @@ describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
 
     let component: QuizConfirmImportInvalidQuestionsModalComponent;
     let fixture: ComponentFixture<QuizConfirmImportInvalidQuestionsModalComponent>;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+
+    const invalidQuestions: ValidationReason[] = [
+        { translateKey: 'invalidQuestion1', translateValues: {} },
+        { translateKey: 'invalidQuestion2', translateValues: { someValue: 'test' } },
+    ];
+    const dialogRefMock = { close: vi.fn() } as unknown as DynamicDialogRef;
+    const dialogConfigMock = { data: { invalidFlaggedQuestions: invalidQuestions } } as DynamicDialogConfig;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: DynamicDialogRef, useValue: dialogRefMock },
+                { provide: DynamicDialogConfig, useValue: dialogConfigMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .overrideTemplate(QuizConfirmImportInvalidQuestionsModalComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(QuizConfirmImportInvalidQuestionsModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
+        dialogRef = TestBed.inject(DynamicDialogRef);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should create', () => {
@@ -41,48 +52,28 @@ describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
         expect(component.faExclamationTriangle).toBeDefined();
     });
 
-    it('should have activeModal injected', () => {
-        expect(component.activeModal).toBeDefined();
-    });
-
-    it('should close modal and emit shouldImport on importQuestions', () => {
-        const closeSpy = vi.spyOn(activeModal, 'close');
-        const emitSpy = vi.spyOn(component.shouldImport, 'emit');
-
-        component.importQuestions();
-
-        expect(closeSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should dismiss modal with cancel on closeModal', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
-
-        component.closeModal();
-
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
-    });
-
-    it('should store invalid flagged questions', () => {
-        const invalidQuestions: ValidationReason[] = [
-            { translateKey: 'invalidQuestion1', translateValues: {} },
-            { translateKey: 'invalidQuestion2', translateValues: { someValue: 'test' } },
-        ];
-
-        component.invalidFlaggedQuestions = invalidQuestions;
+    it('should read the invalid flagged questions from the dialog config on init', () => {
+        fixture.detectChanges();
 
         expect(component.invalidFlaggedQuestions).toEqual(invalidQuestions);
         expect(component.invalidFlaggedQuestions.length).toBe(2);
     });
 
-    it('should allow subscribing to shouldImport event', () => {
-        let eventEmitted = false;
-        component.shouldImport.subscribe(() => {
-            eventEmitted = true;
-        });
+    it('should close the dialog with confirmation on importQuestions', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         component.importQuestions();
 
-        expect(eventEmitted).toBe(true);
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should close the dialog without a result on closeModal', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
+
+        component.closeModal();
+
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith();
     });
 });

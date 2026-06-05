@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Objects;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.internal.JGitText;
@@ -72,20 +70,21 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
+        final boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {
-            Path localPath = gitService.getDefaultLocalCheckOutPathOfRepo(targetRepoUri);
-            // clean up in case of an error
-            try {
-                // or delete the folder if it exists
-                FileUtils.deleteDirectory(localPath.toFile());
-            }
-            catch (IOException ioException) {
-                // ignore
-                log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
+            // Clean up only repositories created during this copy attempt. If a repository already existed before, it must not be removed.
+            if (!targetRepositoryExistedBeforeCopy) {
+                try {
+                    deleteRepository(targetRepoUri);
+                }
+                catch (RuntimeException cleanupException) {
+                    // ignore
+                    log.error("Could not delete directory of the failed copied repository: {}", targetRepoUri, cleanupException);
+                }
             }
             if (ex instanceof LargeObjectException) {
                 throw new VersionControlException(
@@ -95,6 +94,14 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
     }
+
+    /**
+     * Checks if a repository already exists before a copy operation starts.
+     *
+     * @param repositoryUri the repository URI to check
+     * @return true if the repository exists, false otherwise
+     */
+    protected abstract boolean repositoryExists(LocalVCRepositoryUri repositoryUri);
 
     /**
      * checks for a specific exception that we would like to ignore

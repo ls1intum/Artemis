@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNamePrimengComponent } from 'app/shared-ui/form/title-channel-name-primeng/title-channel-name-primeng.component';
@@ -10,37 +10,38 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
     templateUrl: './exercise-title-channel-name-primeng.component.html',
     imports: [TitleChannelNamePrimengComponent],
 })
-export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
-    course = input<Course>();
-    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
-    courseId = input<number>();
+export class ExerciseTitleChannelNamePrimengComponent {
+    readonly course = input<Course>();
+    readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    readonly courseId = input<number>();
 
-    @Input() exercise: Exercise;
-    @Input() titlePattern: string;
-    @Input() minTitleLength: number;
-    @Input() isExamMode: boolean;
-    @Input() isImport: boolean;
-    @Input() hideTitleLabel: boolean;
-    @Input() hideChannelNameLabel: boolean;
-    @Input() titleHelpIconText: string;
-    @Input() channelNameHelpIconText: string;
+    readonly exercise = input<Exercise>({} as Exercise);
+    readonly titlePattern = input<string>();
+    readonly minTitleLength = input<number>();
+    readonly isExamMode = input<boolean>(false);
+    readonly isImport = input<boolean>(false);
+    readonly hideTitleLabel = input<boolean>(false);
+    readonly hideChannelNameLabel = input<boolean>(false);
+    readonly titleHelpIconText = input<string>();
+    readonly channelNameHelpIconText = input<string>('');
 
     readonly titleChannelNameComponent = viewChild.required(TitleChannelNamePrimengComponent);
 
-    onTitleChange = output<string>();
-    onChannelNameChange = output<string>();
+    readonly onTitleChange = output<string>();
+    readonly onChannelNameChange = output<string>();
 
-    alreadyUsedExerciseNames = signal<Set<string>>(new Set());
+    readonly alreadyUsedExerciseNames = signal<Set<string>>(new Set());
 
-    hideChannelNameInput = false;
+    readonly hideChannelNameInput = computed(() => !this.requiresChannelName(this.exercise(), this.course(), this.isExamMode(), this.isImport()));
 
     constructor() {
         const exerciseService = inject(ExerciseService);
         effect(
             function fetchExistingExerciseNamesOnInit() {
                 const courseId = this.courseId() ?? this.course()?.id;
-                if (courseId && this.exercise.type) {
-                    exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                const exercise = this.exercise();
+                if (courseId && exercise.type) {
+                    exerciseService.getExistingExerciseDetailsInCourse(courseId, exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
                         this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
                     });
                 }
@@ -48,19 +49,13 @@ export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
         );
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
-            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course(), this.isExamMode, this.isImport);
-        }
-    }
-
     updateTitle(newTitle: string | undefined) {
-        this.exercise.title = newTitle;
+        this.exercise().title = newTitle;
         this.onTitleChange.emit(newTitle ?? '');
     }
 
     updateChannelName(newName: string | undefined) {
-        this.exercise.channelName = newName;
+        this.exercise().channelName = newName;
         this.onChannelNameChange.emit(newName ?? '');
     }
 

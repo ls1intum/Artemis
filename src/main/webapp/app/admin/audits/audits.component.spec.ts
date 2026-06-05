@@ -6,6 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PaginatorState } from 'primeng/paginator';
 import { of } from 'rxjs';
 import { DatePipe } from '@angular/common';
 
@@ -142,6 +143,29 @@ describe('AuditsComponent', () => {
             expect(service.query).toHaveBeenCalledOnce();
             expect(comp.audits()).toContainEqual(audit);
             expect(comp.totalItems()).toBe(1);
+        });
+    });
+
+    describe('pagination (PrimeNG paginator)', () => {
+        it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
+            comp.ngOnInit(); // sets a valid date range so canLoad() is true
+            const router = TestBed.inject(Router);
+            (router.navigate as unknown as ReturnType<typeof vi.fn>).mockClear();
+
+            comp.onPageChange({ page: 2 } as PaginatorState);
+
+            expect(comp.page()).toBe(3);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
+        });
+
+        it('ignores paginator events while the date range is incomplete (former disabled state)', () => {
+            comp.ngOnInit();
+            comp.fromDate.set('');
+            const before = comp.page();
+
+            comp.onPageChange({ page: 4 } as PaginatorState);
+
+            expect(comp.page()).toBe(before);
         });
     });
 

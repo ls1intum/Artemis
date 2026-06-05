@@ -22,8 +22,9 @@ import {
     faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
@@ -71,7 +72,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
@@ -111,7 +112,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -126,7 +127,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly autoStartGeneration = signal(false);
 
     protected readonly orchestrationDialogVisible = signal(false);
-    protected readonly orchestrationDialogSummary = signal('');
+    protected readonly orchestrationDialogMessage = signal('');
+    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
@@ -212,6 +214,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    private consistencyCheckDialogRef?: DynamicDialogRef;
+
     exerciseDetailSections: DetailOverviewSection[];
 
     private diffRunId = 0;
@@ -280,6 +284,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.consistencyCheckDialogRef?.close();
     }
 
     /**
@@ -820,8 +825,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+        this.consistencyCheckDialogRef =
+            this.dialogService.open(ConsistencyCheckComponent, {
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+                data: { exercisesToCheck: Array.of(exercise) },
+            }) ?? undefined;
     }
 
     async triggerAtlasOrchestrator() {
@@ -834,9 +845,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
-            const summary = result.summary?.trim() || '';
-            this.orchestrationDialogSummary.set(summary);
+            // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
+            const summary = result.summary.trim();
+            this.orchestrationDialogMessage.set(summary);
+            this.orchestrationDialogActions.set(result.appliedActions);
             this.orchestrationDialogVisible.set(true);
+            if (result.status === CompetencyOrchestrationStatus.Partial) {
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: summary || 'artemisApp.atlasOrchestrator.partial',
+                    disableTranslation: summary.length > 0,
+                });
+            }
         } catch (err) {
             const httpErr = err as HttpErrorResponse;
             const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;

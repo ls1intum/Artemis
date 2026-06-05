@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -29,19 +29,22 @@ type TestCaseColors = {
     templateUrl: './test-case-distribution-chart.component.html',
     imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
 })
-export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
+export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    @Input() testCases: ProgrammingExerciseTestCase[];
-    @Input() testCaseStatsMap?: TestCaseStatsMap;
-    @Input() totalParticipations?: number;
-    @Input() exercise: ProgrammingExercise;
+    readonly testCases = input<ProgrammingExerciseTestCase[]>([]);
+    readonly testCaseStatsMap = input<TestCaseStatsMap>();
+    readonly totalParticipations = input<number>();
+    readonly exercise = input.required<ProgrammingExercise>();
 
-    @Output() testCaseColorsChange = new EventEmitter<any>();
-    @Output() testCaseRowFilter = new EventEmitter<number>();
+    readonly testCaseColorsChange = output<any>();
+    readonly testCaseRowFilter = output<number>();
 
     readonly testCaseBarTitle = TestCaseBarTitle;
+
+    // visible test cases (filtered out the ones that are never visible), exposed for templates and tests
+    readonly processedTestCases = computed<ProgrammingExerciseTestCase[]>(() => (this.testCases() ?? []).filter((testCase) => testCase.visibility !== Visibility.Never));
 
     totalWeight: number;
 
@@ -60,34 +63,36 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
-    }
 
-    ngOnInit(): void {
         this.updateTranslation();
+
+        effect(() => {
+            this.computeChartData();
+        });
     }
 
-    ngOnChanges() {
-        if (this.testCases == undefined) {
-            this.testCases = [];
-        }
-        this.testCases = this.testCases.filter((testCase) => testCase.visibility !== Visibility.Never);
+    private computeChartData(): void {
+        const testCases = this.processedTestCases();
+        const testCaseStatsMap = this.testCaseStatsMap();
+        const totalParticipations = this.totalParticipations();
+        const exercise = this.exercise();
 
         // sum of all weights
-        this.totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        this.totalWeight = testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         // max points for the exercise
-        const maxPoints = this.exercise.maxPoints!;
+        const maxPoints = exercise.maxPoints!;
         // exercise max score with bonus in percent
-        const maxScoreInPercent = getTotalMaxPoints(this.exercise) / maxPoints;
+        const maxScoreInPercent = getTotalMaxPoints(exercise) / maxPoints;
 
         // total of achievable points for this exercise
-        const totalPoints = maxPoints * (this.totalParticipations || 0);
+        const totalPoints = maxPoints * (totalParticipations || 0);
 
-        const testCaseScores = this.testCases.map((testCase) => {
+        const testCaseScores = testCases.map((testCase) => {
             // calculated score for this test case
             const testCaseScore = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
 
             const score = Math.min(testCaseScore, maxScoreInPercent);
-            const stats = this.testCaseStatsMap ? this.testCaseStatsMap[testCase.testName!] : undefined;
+            const stats = testCaseStatsMap ? testCaseStatsMap[testCase.testName!] : undefined;
 
             return {
                 id: testCase.id,
@@ -119,7 +124,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 const element = testCaseScores[i];
 
                 const label = element.label;
-                const color = getColor(i / this.testCases.length, 50);
+                const color = getColor(i / testCases.length, 50);
 
                 weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0), id: element.id });
                 weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0), id: element.id });
@@ -162,7 +167,8 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
      * Delegates the user to the statistics page of the programming exercise
      */
     onSelectPoints(): void {
-        this.navigationUtilService.routeInNewTab(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'exercise-statistics']);
+        const exercise = this.exercise();
+        this.navigationUtilService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'exercise-statistics']);
     }
 
     /**

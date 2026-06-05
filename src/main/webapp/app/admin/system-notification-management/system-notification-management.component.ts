@@ -19,7 +19,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
@@ -50,7 +50,7 @@ enum NotificationState {
         SortByDirective,
         DeleteButtonDirective,
         ItemCountComponent,
-        NgbPagination,
+        PaginatorModule,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
@@ -238,6 +238,11 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
             this.page.set(page);
             this.transition();
         }
+    }
+
+    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and loading it. */
+    onPageChange(event: PaginatorState): void {
+        this.loadPage((event.page ?? 0) + 1);
     }
 
     /**

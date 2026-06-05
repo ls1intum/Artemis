@@ -5,7 +5,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -33,7 +34,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -153,7 +154,7 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = async (testRoute?: ActivatedRoute) => {
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
@@ -1860,14 +1861,14 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('validateItemLimit', () => {
-            let modalService: NgbModal;
+            let dialogService: DialogService;
             let saveSpy: any;
-            let modalOpenSpy: any;
+            let dialogOpenSpy: any;
 
             beforeEach(() => {
-                modalService = TestBed.inject(NgbModal);
+                dialogService = TestBed.inject(DialogService);
                 saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
-                modalOpenSpy = vi.spyOn(modalService, 'open');
+                dialogOpenSpy = vi.spyOn(dialogService, 'open');
                 comp.quizExercise = quizExercise;
             });
 
@@ -1877,44 +1878,45 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 comp.validateItemLimit();
 
-                expect(modalOpenSpy).not.toHaveBeenCalled();
+                expect(dialogOpenSpy).not.toHaveBeenCalled();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open modal and save if confirmed when limit is exceeded', async () => {
+            it('should open dialog and save if confirmed when limit is exceeded', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
-                const mockModalRef = {
-                    componentInstance: { initialize: vi.fn() } as any,
-                    result: Promise.resolve(),
-                };
-                modalOpenSpy.mockReturnValue(mockModalRef as any);
+                const onClose = new Subject<boolean | undefined>();
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+
                 comp.validateItemLimit();
 
-                await new Promise(process.nextTick);
+                expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
+                    GenericConfirmationDialogComponent,
+                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                    expect.objectContaining({
+                        width: '40rem',
+                        breakpoints: { '768px': '95vw' },
+                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                    }),
+                );
 
-                expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
-
-                expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
-                expect(mockModalRef.componentInstance.canBeUndone).toBeTruthy();
-
+                // confirm
+                onClose.next(true);
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open modal and NOT save if cancelled', async () => {
+            it('should open dialog and NOT save if cancelled', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
 
-                const mockModalRef = {
-                    componentInstance: { initialize: vi.fn() },
-                    result: Promise.reject(),
-                };
-                modalOpenSpy.mockReturnValue(mockModalRef as any);
+                const onClose = new Subject<boolean | undefined>();
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
-                await new Promise(process.nextTick);
+                expect(dialogOpenSpy).toHaveBeenCalled();
 
-                expect(modalOpenSpy).toHaveBeenCalled();
+                // dismiss
+                onClose.next(undefined);
                 expect(saveSpy).not.toHaveBeenCalled();
             });
         });

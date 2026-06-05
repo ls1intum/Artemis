@@ -146,7 +146,7 @@ describe('ConversationService', () => {
         service
             .getResponsibleUsersForCodeOfConduct(1)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toBeEmpty());
+            .subscribe((res) => expect(res.body).toHaveLength(0));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([]);
     });

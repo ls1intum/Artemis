@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
@@ -51,7 +51,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     readonly participationId = input<number>();
@@ -126,7 +126,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     }
 
     commit(): void {
-        this.codeEditorContainer?.commit();
+        this.codeEditorContainer()?.commit();
     }
 
     /**

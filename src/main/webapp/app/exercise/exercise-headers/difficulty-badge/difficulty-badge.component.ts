@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,8 +12,8 @@ import { NgClass } from '@angular/common';
 export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);
 
-    @Input() exercise: Exercise;
-    @Input() showNoLevel: boolean;
+    readonly exercise = input.required<Exercise>();
+    readonly showNoLevel = input<boolean>(false);
     public translatedDifficulty: string;
     public badgeClass: string;
     private translateSubscription: Subscription;
@@ -41,7 +41,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private setBadgeAttributes() {
-        switch (this.exercise.difficulty) {
+        switch (this.exercise().difficulty) {
             case DifficultyLevel.EASY:
                 this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.easy');
                 this.badgeClass = 'bg-success';
@@ -55,7 +55,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
                 this.badgeClass = 'bg-danger';
                 break;
             default:
-                if (this.showNoLevel) {
+                if (this.showNoLevel()) {
                     this.badgeClass = 'bg-info';
                     this.translatedDifficulty = this.translateService.instant('artemisApp.exercise.noLevel');
                 }

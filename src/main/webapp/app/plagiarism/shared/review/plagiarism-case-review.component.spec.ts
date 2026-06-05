@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from './plagiarism-case-review.component';
@@ -9,6 +11,8 @@ import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-s
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('PlagiarismCaseReviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PlagiarismCaseReviewComponent;
     let fixture: ComponentFixture<PlagiarismCaseReviewComponent>;
 
@@ -32,7 +36,7 @@ describe('PlagiarismCaseReviewComponent', () => {
     });
 
     it('should initialize with default values', () => {
-        expect(component.forStudent()).toBeTrue();
+        expect(component.forStudent()).toBe(true);
         expect(component.splitControlSubject).toBeInstanceOf(Subject);
     });
 
@@ -43,12 +47,12 @@ describe('PlagiarismCaseReviewComponent', () => {
 
     it('should set forStudent input to false', () => {
         fixture.componentRef.setInput('forStudent', false);
-        expect(component.forStudent()).toBeFalse();
+        expect(component.forStudent()).toBe(false);
     });
 
     it('should have splitControlSubject as Subject', () => {
         expect(component.splitControlSubject).toBeInstanceOf(Subject);
-        expect(component.splitControlSubject.closed).toBeFalse();
+        expect(component.splitControlSubject.closed).toBe(false);
     });
 
     it('should emit values through splitControlSubject', () => {
