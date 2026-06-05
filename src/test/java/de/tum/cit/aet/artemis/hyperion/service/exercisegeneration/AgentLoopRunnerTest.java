@@ -36,6 +36,8 @@ class AgentLoopRunnerTest {
 
         private final Map<String, String> files = new HashMap<>();
 
+        private final List<String> execCommands = new ArrayList<>();
+
         @Override
         public String createSession(SandboxSessionSpec spec) {
             return "fake-session";
@@ -43,6 +45,7 @@ class AgentLoopRunnerTest {
 
         @Override
         public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+            execCommands.add(String.join(" ", command));
             // Emulate the two operations the tools use: `cat <path>` and `sh -c "... base64 -d > <path>"`.
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String path = command[1];
@@ -113,6 +116,30 @@ class AgentLoopRunnerTest {
         assertThat(result.finalMessage()).isEqualTo("DONE");
         // The transcript shows the normalized name, confirming dispatch went to the real tool (not the leaked one).
         assertThat(steps).contains("Turn 1: bash {\"command\":\"ls\"}");
+    }
+
+    @Test
+    void agentLoop_submitAlongsideAnotherToolCall_executesTheBatchThenEnds() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // A real model can request `submit` in the SAME turn as another tool call. The loop must execute the WHOLE batch (the bash call reaches the sandbox) and THEN end — submit
+        // is
+        // detected by anyMatch over the turn's calls, not by being the sole call.
+        var bash = new AssistantMessage.ToolCall("call-bash", "function", "bash", "{\"command\":\"ls\"}");
+        var submit = new AssistantMessage.ToolCall("call-submit", "function", "submit", "{}");
+        var message = AssistantMessage.builder().content("").toolCalls(List.of(bash, submit)).build();
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(message))));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        FakeSandbox sandbox = new FakeSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "fake-session");
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+
+        // The loop ends after exactly one turn via submit — were submit only honoured as the SOLE call, the loop would never terminate here and run to maxTurns instead.
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(1);
+        // And the co-requested bash call really executed (reached the sandbox) before the loop ended — proving the batch runs, not just that submit short-circuits.
+        assertThat(sandbox.execCommands).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
     }
 
     @Test

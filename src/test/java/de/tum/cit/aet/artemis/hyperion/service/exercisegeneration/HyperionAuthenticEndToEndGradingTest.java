@@ -705,9 +705,19 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
         return programmingSubmissionRepository.saveAndFlush(submission);
     }
 
+    /**
+     * Whether the bare repository holds actually-committed content (not merely that the empty repo was initialised). A bare repo dir always exists after creation, so requiring at
+     * least one real git object — a loose object directory or a packfile beyond the empty {@code objects/{info,pack}} baseline — is what proves the generated solution was
+     * committed.
+     */
     private boolean repositoryContainsSourceFile(LocalVCRepositoryUri uri) {
-        File bareDir = uri.getLocalRepositoryPath(localVCBasePath).toFile();
-        return bareDir.exists();
+        File objects = uri.getLocalRepositoryPath(localVCBasePath).resolve("objects").toFile();
+        if (!objects.isDirectory()) {
+            return false;
+        }
+        File[] looseObjectDirs = objects.listFiles((dir, name) -> !"info".equals(name) && !"pack".equals(name));
+        File[] packs = new File(objects, "pack").listFiles((dir, name) -> name.endsWith(".pack"));
+        return (looseObjectDirs != null && looseObjectDirs.length > 0) || (packs != null && packs.length > 0);
     }
 
     // ---- Awaits ----------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -467,6 +467,23 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("match no actual test"));
     }
 
+    @Test
+    void buildSummary_fromReports_recordsACompleteSoundPerTestView_thatTheFailOpenGatesRelyOn() {
+        // The per-test differential gates fail OPEN when the solution recorded fewer names than tests, or a failing template recorded no failing-test names — so the
+        // emitter-soundness
+        // gate and the whole "fail-open is safe" argument rest on fromReports producing a COMPLETE, SOUND per-test view from the real reports. Pin that invariant directly: every
+        // counted test is named, and every failed test is named AND a member of the full set. A regression (counting tests from a <testsuite tests=N> attribute, or de-duplicating
+        // the
+        // name list) would silently re-open the hole the emitter-soundness gate is meant to close.
+        var summary = AuthoritativeVerificationService.BuildSummary
+                .fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
+                        ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
+        assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
+        assertThat(summary.testNames()).containsExactlyInAnyOrder("passes_a", "fails_b", "passes_c");
+        assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
+        assertThat(summary.testNames()).as("every failing-test name is also in the full set").containsAll(summary.testFailedNames());
+    }
+
     // ----------------------------------------------------------------------------------------------------------------
     // Strict per-test soundness gate (Defect 2): every [task]-bound test the SOLUTION passes must FAIL on the template.
     // A graded test the template accidentally satisfies (e.g. fibonacci(0)==0 for a `return 0` stub, or pop()->undefined
@@ -779,6 +796,23 @@ class AuthoritativeVerificationServiceTest {
             // No SCA reports collected: the solution build produced no findings.
             VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of()), failingTemplate());
             assertThat(result.accepted()).as("a clean solution is still accepted when SCA is graded").isTrue();
+            assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
+        }
+
+        @Test
+        void shouldAcceptWhenScaEnabledButCategoryRepositoryIsAbsent_failingOpenOnABuildAgentOnlyNode() {
+            // On a build-agent-only node the SCA category repository is not injected (Optional.empty()). The SCA parity gate must FAIL OPEN — accept — rather than crash or
+            // spuriously reject, even when the solution ships a graded-looking finding: without the categories the verifier cannot know what production grades, so it defers (the
+            // integrated node, which HAS the repository, is where SCA parity is enforced). This is the real configuration the present-repo tests above never exercise.
+            ProgrammingExercise exercise = new ProgrammingExercise();
+            exercise.setId(909L);
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            exercise.setStaticCodeAnalysisEnabled(true);
+            exercise.setMaxStaticCodeAnalysisPenalty(50);
+            // newVerifier() builds with Optional.empty() SCA repository — the build-agent-only configuration.
+            VerificationResult result = newVerifier()
+                    .verify(new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
+            assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 

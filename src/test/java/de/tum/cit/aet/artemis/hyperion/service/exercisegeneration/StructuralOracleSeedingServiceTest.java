@@ -104,7 +104,7 @@ class StructuralOracleSeedingServiceTest {
     }
 
     @Test
-    void seedsNothing_whenStructuresAreIdentical() {
+    void seedsNothing_butRemovesStaleStructuralFiles_whenStructuresAreIdentical() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         String identical = "package sorting;\npublic class BubbleSort {\n    public int[] sort(int[] a){ return a; }\n}";
         java.util.Set<String> seededNames = seederWith(sandbox, Map.of("src/sorting/BubbleSort.java", identical), Map.of("src/sorting/BubbleSort.java", identical),
@@ -112,6 +112,12 @@ class StructuralOracleSeedingServiceTest {
 
         verify(sandbox, never()).copyIn(any(), any(), any());
         assertThat(seededNames).isEmpty();
+        // A previous attempt may have seeded a structure oracle + classes that this (now behaviour-only) attempt no longer requires; they MUST be removed so a stale
+        // ClassTest/test.json
+        // cannot compile against classes the new solution dropped — a silent acceptance regression. Assert the single rm -f over the oracle + structural classes is issued.
+        ArgumentCaptor<String> cleanupCommand = ArgumentCaptor.forClass(String.class);
+        verify(sandbox).exec(eq("s"), any(), eq("sh"), eq("-c"), cleanupCommand.capture());
+        assertThat(cleanupCommand.getValue()).startsWith("rm -f").contains("/workspace/tests/test/sorting/").contains("test.json").contains("ClassTest.java");
     }
 
     @Test

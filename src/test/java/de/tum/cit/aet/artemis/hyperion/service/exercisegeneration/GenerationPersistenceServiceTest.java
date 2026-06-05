@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +20,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
@@ -161,27 +161,48 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_zeroWeightsBuildGateTestCases_soTheCompilingTemplateGradesAtZero() throws Exception {
+    @SuppressWarnings("unchecked")
+    void persist_zeroWeightsBuildGateTestCases_setsTheRealWeightToZeroAndPersistsOnlyThoseCases() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // The tests-build synced a C/C++ FACT report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
-        ProgrammingExerciseTestCase buildGate = mock(ProgrammingExerciseTestCase.class);
-        when(buildGate.getTestName()).thenReturn("GBS-Tester-1.36.CompileSort");
-        when(buildGate.getWeight()).thenReturn(1.0);
-        ProgrammingExerciseTestCase behaviour = mock(ProgrammingExerciseTestCase.class);
-        when(behaviour.getTestName()).thenReturn("sort-test.push_then_pop");
-        when(behaviour.getWeight()).thenReturn(1.0);
+        // REAL entities (not mocks) so the assertion proves the persisted WEIGHT actually became 0 — not merely that setWeight was invoked. The tests-build synced a C/C++ FACT
+        // report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
+        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
         // Empty baseline, then the full synced set: the wait must move off the baseline and settle before zero-weighting, mirroring the real stale-partial-then-complete sync.
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(buildGate, behaviour));
 
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "");
-        service.persist(exercise, user, outcome);
+        service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        // Exactly the build gate is zero-weighted (so the untouched compiling template scores 0%); the behaviour test is left graded; the change is persisted.
-        verify(buildGate).setWeight(0.0);
-        verify(behaviour, never()).setWeight(anyDouble());
-        verify(testCaseRepository).saveAll(any());
+        // The build gate now grades for zero points (so the untouched compiling template scores 0%); the behaviour test is left graded.
+        assertThat(buildGate.getWeight()).as("build gate zero-weighted").isEqualTo(0.0);
+        assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
+        // Exactly the build gate is written back — the unchanged behaviour case is not needlessly re-saved.
+        ArgumentCaptor<Iterable<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.forClass(Iterable.class);
+        verify(testCaseRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).containsExactly(buildGate);
+    }
+
+    @Test
+    void persist_waitsForTheCompleteSyncBeforeZeroWeighting_soNoGateFromTheFullSetIsMissed() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        ProgrammingExerciseTestCase configure = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.TestConfigure").weight(1.0);
+        ProgrammingExerciseTestCase compileSort = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
+        // The real failure mode (the live 9.1%-template bug): an exercise-setup build leaves a STALE PARTIAL set ({configure}); the freshly triggered tests-build then syncs the
+        // COMPLETE set a few polls later. Acting on the partial set would MISS CompileSort. Baseline {} -> partial {configure} -> complete {configure, compileSort, behaviour}.
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(configure), Set.of(configure, compileSort, behaviour));
+
+        service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
+
+        // BOTH gates from the COMPLETE set are zero-weighted — not just the one visible in the partial sync. A regression to "act on the first non-empty set" leaves compileSort at
+        // 1.0.
+        assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
+        assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
+        assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
     }
 
     @Test

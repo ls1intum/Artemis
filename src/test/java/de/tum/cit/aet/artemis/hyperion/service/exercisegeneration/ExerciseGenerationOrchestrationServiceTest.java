@@ -362,6 +362,31 @@ class ExerciseGenerationOrchestrationServiceTest {
         assertThat(firstPrompt).as("the instructor brief still follows the seeded layout").endsWith("Build a bubble sort exercise.");
     }
 
+    /**
+     * The seeded layout is prepended ONLY to the first attempt. A retry's prompt is rebuilt from the verifier's rejection report and must NOT re-inject the now-stale turn-0 layout
+     * snapshot (which would waste context and mislead the agent about a workspace it has since edited).
+     * <p>
+     * Mutation: hoisting {@code prependWorkspaceLayout(...)} into the per-attempt loop body (re-prepending the layout on every retry) makes the {@code doesNotContain} on the retry
+     * prompt fail.
+     */
+    @Test
+    void seededLayout_isOnTheFirstPromptOnly_andNotReplayedOnRetry() {
+        when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenReturn(rejected("template unexpectedly passed all tests"), accepted());
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            // settled
+        }
+
+        verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        List<String> prompts = promptCaptor.getAllValues();
+        assertThat(prompts.get(0)).as("attempt 1 carries the seeded layout").startsWith("=== INITIAL WORKSPACE");
+        assertThat(prompts.get(1)).as("the retry is rebuilt from the rejection report and does NOT replay the stale turn-0 layout").doesNotContain("INITIAL WORKSPACE")
+                .contains("template unexpectedly passed all tests");
+    }
+
     /** When the probe yields nothing (empty workspace / probe failure), the first prompt is exactly the instructor brief — no empty observation block. */
     @Test
     void noProbeOutput_leavesTheFirstPromptUnchanged() {
