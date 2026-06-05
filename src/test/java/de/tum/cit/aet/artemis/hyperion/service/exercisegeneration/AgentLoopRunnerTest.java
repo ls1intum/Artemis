@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -12,9 +14,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -140,6 +144,25 @@ class AgentLoopRunnerTest {
         assertThat(result.turns()).isEqualTo(1);
         // And the co-requested bash call really executed (reached the sandbox) before the loop ended — proving the batch runs, not just that submit short-circuits.
         assertThat(sandbox.execCommands).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
+    }
+
+    @Test
+    void agentLoop_appendsTheBudgetPressureNudge_intoThePromptOfTheFinalAllowedTurn() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // The model keeps calling a tool and never submits. With maxTurns=2, the loop must inject the budget-pressure nudge AFTER rebuilding the conversation from turn 1's tool
+        // result, so it actually reaches the model on turn 2. The source explicitly warns the nudge would be DISCARDED if appended before that rebuild — this pins the ordering.
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+
+        runner.run("system", "do it", tools, 2, () -> false, null, null);
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, times(2)).call(promptCaptor.capture());
+        String finalTurnPrompt = promptCaptor.getAllValues().get(1).getInstructions().stream().map(message -> message.getText()).collect(Collectors.joining("\n"));
+        assertThat(finalTurnPrompt).as("the budget-pressure nudge reached the model on the final allowed turn (not discarded by the history rebuild)")
+                .contains("close to the step limit");
     }
 
     @Test

@@ -154,10 +154,11 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_encodesAPlusQualityRules() {
-        // The A+ enrichments: test every promised contract (not just behaviour), make the statement instructive (signatures + per-task descriptions), and clean up abandoned
-        // harness files and now-unused dependencies before submitting.
+        // Pin the two enrichments that map to a real verifier gate: test EVERY promised contract (the untested-promise axis), and clean up now-unused dependencies before
+        // submitting
+        // (the dead-dependency axis). The prose-quality phrasings around them are not contracts and are intentionally not pinned, so a reword does not break this test.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("EVERY promise you make").contains("fluent self-return").contains("fenced code block showing the").contains("unused dependencies");
+        assertThat(prompt).contains("EVERY promise you make").contains("unused dependencies");
     }
 
     @Test
