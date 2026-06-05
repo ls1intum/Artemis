@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -22,20 +22,11 @@ import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-req
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
+import { IrisChatContextService } from 'app/iris/overview/services/iris-chat-context.service';
 
-export enum ChatServiceMode {
-    TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
-    PROGRAMMING_EXERCISE = 'PROGRAMMING_EXERCISE_CHAT',
-    COURSE = 'COURSE_CHAT',
-    LECTURE = 'LECTURE_CHAT',
-    TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
-}
-
-export interface SessionContext {
-    mode: ChatServiceMode;
-    entityId: number;
-    entityName?: string;
-}
+export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
+export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -48,6 +39,7 @@ export class IrisChatService implements OnDestroy {
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
+    private readonly contextService = inject(IrisChatContextService);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -59,17 +51,9 @@ export class IrisChatService implements OnDestroy {
 
     private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
     private currentSessionId$ = this.currentSessionIdSubject.asObservable();
-    /** What the active session is about. Set when a session loads or is created. */
-    private readonly _committedContext = signal<SessionContext | undefined>(undefined);
-    readonly committedContext = this._committedContext.asReadonly();
 
-    /** User's unsent override of {@link _committedContext}. Cleared on send (commits) or on revert. */
-    private readonly _pendingContext = signal<SessionContext | undefined>(undefined);
-    readonly displayContext = computed(() => this._pendingContext() ?? this._committedContext());
-
-    /** Entity scope of the current page. Seeds {@link _pendingContext} when "New chat" starts a fresh session. */
-    private readonly _pageContext = signal<SessionContext | undefined>(undefined);
-    readonly pageContext = this._pageContext.asReadonly();
+    readonly committedContext = this.contextService.committed;
+    readonly displayContext = this.contextService.display;
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -180,9 +164,7 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription = undefined;
         // Reset every subject unconditionally.
         this.sessionId = undefined;
-        this._committedContext.set(undefined);
-        this._pendingContext.set(undefined);
-        this._pageContext.set(undefined);
+        this.contextService.reset();
         this.messages.next([]);
         this.stages.next([]);
         this.suggestions.next([]);
@@ -252,7 +234,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        const sessionContext = this._committedContext();
+        const sessionContext = this.contextService.page();
         const requiresAcceptance = sessionContext ? this.modeRequiresLLMAcceptance.get(sessionContext.mode) : true;
         if (
             requiresAcceptance === false ||
@@ -272,7 +254,7 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      *
      * If the user has selected a different context via the dropdown since the last send
-     * ({@link _pendingContext}), it is included in the request body so the server applies the
+     * ({@link IrisChatContextService.pending}), it is included in the request body so the server applies the
      * context switch atomically (CTXSWAP marker first, then the user message) in one round trip.
      *
      * @param message to be created
@@ -286,16 +268,16 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const contextToCommit = this._pendingContext();
-        const pendingContextDTO = contextToCommit ? { mode: contextToCommit.mode, entityId: contextToCommit.entityId } : undefined;
+        const pendingContext = this.contextService.pending();
+        const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO);
 
         const generation = this.stateGeneration;
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 if (this.stateGeneration !== generation) return;
-                if (contextToCommit) {
-                    this._committedContext.set(contextToCommit);
+                if (pendingContext) {
+                    this.contextService.commitPending();
                     // Reflect the committed context in the sidebar entry immediately — without this,
                     // the related-entity icon/tooltip would stay stale until the next loadChatSessions().
                     const sessionId = this.sessionId;
@@ -303,12 +285,11 @@ export class IrisChatService implements OnDestroy {
                         .getValue()
                         .map((session) =>
                             session.id === sessionId
-                                ? { ...session, mode: contextToCommit.mode, entityId: contextToCommit.entityId, entityName: contextToCommit.entityName ?? session.entityName }
+                                ? { ...session, mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName }
                                 : session,
                         );
                     this.chatSessions.next(updatedSessions);
                 }
-                this._pendingContext.set(undefined);
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
             }),
@@ -493,12 +474,11 @@ export class IrisChatService implements OnDestroy {
 
         const currentSessions = this.chatSessions.getValue();
 
-        const entityId = newIrisSession.entityId ?? this._committedContext()?.entityId;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
             mode: newIrisSession.mode,
-            entityId: entityId,
+            entityId: newIrisSession.entityId,
             entityName: '',
             title: newIrisSession.title,
         };
@@ -512,22 +492,12 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    /**
-     * Updates the currently active chat context used by UI components.
-     */
-    private updateCurrentSessionContext(session: IrisSession | IrisSessionDTO): void {
-        const chatMode = session.mode;
-        const entityId = session.entityId ?? this._committedContext()?.entityId;
-        if (chatMode !== undefined && entityId !== undefined) {
-            this._committedContext.set({ mode: chatMode, entityId });
-        }
-    }
-
     private handleNewSession() {
         return {
             next: (newIrisSession: IrisSession) => {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
-                this.updateCurrentSessionContext(newIrisSession);
+                const serverCtx: SessionContext | undefined = newIrisSession.mode ? { mode: newIrisSession.mode, entityId: newIrisSession.entityId } : undefined;
+                this.contextService.adoptServerContext(serverCtx);
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
@@ -627,9 +597,6 @@ export class IrisChatService implements OnDestroy {
             this.newIrisMessage.next(undefined);
             this.initialLoadCompleteSubject.next(false);
         }
-        // Always clear the pending context, even when no session existed yet: a pending context
-        // may have been staged by the lecture/exercise auto-preselect before the session loaded.
-        this._pendingContext.set(undefined);
         this.error.next(undefined);
     }
 
@@ -637,12 +604,30 @@ export class IrisChatService implements OnDestroy {
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
     private getCurrentSessionOrCreate(): Observable<IrisSession> {
-        const sessionContext = this._committedContext();
-        if (!sessionContext) {
-            throw new Error('Session context not set');
+        const pageContext = this.contextService.page();
+        if (!pageContext) {
+            throw new Error('Page context not set');
         }
 
-        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(sessionContext.mode, sessionContext.entityId).pipe(
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(pageContext.mode, pageContext.entityId).pipe(
+            map((response: HttpResponse<IrisSession>) => {
+                if (response.body) {
+                    return response.body;
+                } else {
+                    throw new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+                }
+            }),
+            catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_LOAD_FAILED))),
+        );
+    }
+
+    private getCourseSessionOrCreate(): Observable<IrisSession> {
+        const courseId = this.getCourseId();
+        if (!courseId) {
+            throw new Error('Course ID not set');
+        }
+
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(ChatServiceMode.COURSE, courseId).pipe(
             map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
@@ -672,7 +657,6 @@ export class IrisChatService implements OnDestroy {
                 extra: {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
-                    sessionContext: this._committedContext(),
                 },
                 tags: {
                     category: 'Iris',
@@ -683,82 +667,27 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * Creates a new session
-     */
-    private createNewSession(): Observable<IrisSession> {
-        const sessionContext = this._committedContext();
-        if (!sessionContext) {
-            throw new Error('Session context not set');
-        }
-        return this.irisChatHttpService.createSession(sessionContext.mode, sessionContext.entityId).pipe(
-            map((response: HttpResponse<IrisSession>) => {
-                if (response.body) {
-                    return response.body;
-                } else {
-                    throw new Error(IrisErrorMessageKey.SESSION_CREATION_FAILED);
-                }
-            }),
-            catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_CREATION_FAILED))),
-        );
-    }
-    /**
-     * Commits `(mode, entityId)` and opens its session, clearing any pending context.
-     * Skips the session reload if the context is already committed.
-     */
-    private resumeOrCreateChat(mode: ChatServiceMode, entityId: number): void {
-        const current = this._committedContext();
-        const isDifferent = current?.mode !== mode || current?.entityId !== entityId;
-        this._committedContext.set({ mode, entityId });
-        this._pendingContext.set(undefined);
-        if (isDifferent) {
-            this.closeAndStart();
-        }
-    }
-
-    /**
-     * Course-dashboard mount. No-op if the dashboard is re-mounted for the same course.
-     */
-    public resumeOrCreateCourseChat(courseId: number): void {
-        this._pageContext.set({ mode: ChatServiceMode.COURSE, entityId: courseId });
-        this.resumeOrCreateChat(ChatServiceMode.COURSE, courseId);
-    }
-
-    /**
      * Tutor-suggestion entry point (e.g. from a communication thread). The TUTOR_SUGGESTION mode
      * bypasses LLM-consent gating in {@link start} via {@link modeRequiresLLMAcceptance}.
      */
-    public resumeOrCreateTutorSuggestionChat(postId: number): void {
-        this.resumeOrCreateChat(ChatServiceMode.TUTOR_SUGGESTION, postId);
+    public openTutorSuggestionChat(postId: number): void {
+        const ctx = { mode: ChatServiceMode.TUTOR_SUGGESTION, entityId: postId };
+        if (sameSessionContext(ctx, this.contextService.page())) return;
+        this.contextService.setPageContext(ctx);
+        this.closeAndStart();
     }
 
     /**
-     * Lecture/exercise page mount: resumes a history session tagged with `(mode, entityId)`
-     * if one exists, otherwise opens a fresh COURSE chat with the context staged via
-     * {@link stagePendingContext}. Always re-fetches sessions so URL-direct entry behaves
-     * identically to in-app navigation. The optional `entityName` is stored on the
-     * {@link _pageContext} so the "New chat" affordance can later stage a labelled chip.
+     * Page entry point for course / lecture / exercise mounts. Stages the page context and (re)opens its
+     * session via {@link start}; no-op when the page context is unchanged. The server resolves the session:
+     * an existing lecture/exercise chat with history is resumed, otherwise it falls back to the course session
+     * and the page context is staged as pending (see {@link IrisChatContextService.adoptServerContext}).
      */
-    public openChatForContext(mode: ChatServiceMode, entityId: number, entityName?: string): void {
-        this._pageContext.set({ mode, entityId, entityName });
-        const courseId = this.getCourseId();
-        if (courseId === undefined) return;
-
-        // Cancel any in-flight session-loading effort so racing navigations don't double-fire.
-        this.sessionLoadingSubscription?.unsubscribe();
-        const generation = this.stateGeneration;
-
-        this.sessionLoadingSubscription = this.irisChatHttpService.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
-            if (this.stateGeneration !== generation) return;
-            // switchToSession itself does not re-query getChatSessions, so the sidebar must be pre-populated here.
-            this.chatSessions.next(sessions);
-            const matching = sessions.find((s) => s.mode === mode && s.entityId === entityId);
-            if (matching) {
-                this.switchToSession(matching);
-                return;
-            }
-            this.startFreshChat();
-            this.stagePendingContext(mode, entityId, entityName);
-        });
+    public openChat(mode: ChatServiceMode, entityId: number): void {
+        const ctx = { mode, entityId };
+        if (sameSessionContext(ctx, this.contextService.page())) return;
+        this.contextService.setPageContext(ctx);
+        this.closeAndStart();
     }
 
     /**
@@ -767,28 +696,25 @@ export class IrisChatService implements OnDestroy {
      * Safe to call before {@link sessionId} is set (e.g. during lecture/exercise auto-preselect).
      */
     public stagePendingContext(mode: ChatServiceMode, entityId: number, entityName?: string): void {
-        const committed = this._committedContext();
-        if (committed?.mode === mode && committed?.entityId === entityId) {
-            this._pendingContext.set(undefined);
-        } else {
-            this._pendingContext.set({ mode, entityId, entityName });
-        }
+        this.contextService.stagePending({ mode, entityId, entityName });
     }
 
     /**
      * Closes the active session and opens a fresh COURSE session for the current course.
-     * No-op if the current session is already an empty COURSE session.
+     * No-op if the current session is already empty (there is nothing to start fresh from).
+     * <p>
+     * On lecture / exercise pages the page context is re-applied asynchronously by {@link handleNewSession}
+     * once the new session loads (see {@link IrisChatContextService.adoptServerContext}), so the caller does
+     * not need to stage it. The chip does not blink in the meantime because {@link close} leaves the context
+     * signals untouched.
      */
     public startFreshChat(): void {
-        const committed = this._committedContext();
         const courseId = this.getCourseId();
-        const isFreshCourseSession =
-            this.sessionId !== undefined && committed?.mode === ChatServiceMode.COURSE && committed.entityId === courseId && this.messages.getValue().length === 0;
+        const isFreshCourseSession = this.messages.getValue().length === 0;
         if (!isFreshCourseSession && courseId) {
             this.close();
-            this._committedContext.set({ mode: ChatServiceMode.COURSE, entityId: courseId });
             this.sessionLoadingSubscription?.unsubscribe();
-            this.sessionLoadingSubscription = this.createNewSession().subscribe({
+            this.sessionLoadingSubscription = this.getCourseSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
             });
@@ -803,9 +729,6 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
-        const chatMode = session.mode;
-        const entityId = session.entityId;
-        this._committedContext.set(chatMode && entityId ? { mode: chatMode, entityId } : undefined);
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
@@ -817,7 +740,7 @@ export class IrisChatService implements OnDestroy {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
                     sessionId: this.sessionId,
-                    sessionContext: this._committedContext(),
+                    sessionContext: this.contextService.committed(),
                 },
                 tags: {
                     category: 'Iris',
@@ -828,9 +751,7 @@ export class IrisChatService implements OnDestroy {
 
     private closeAndStart() {
         this.close();
-        if (this._committedContext()) {
-            this.start();
-        }
+        this.start();
     }
 
     public currentSessionId(): Observable<number | undefined> {
