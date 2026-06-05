@@ -520,8 +520,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     // -------------------------------------------------------------------------
 
     private IrisChatSession findOrCreateExerciseSession(Exercise exercise, User user, IrisChatMode mode) {
+        // Resume an existing exercise chat if the user already has one with history; otherwise fall back to
+        // the shared course session. The exercise context is layered on client-side (staged as pending,
+        // committed on the next message) rather than forking a dedicated session up front.
         return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(exercise.getId(), mode, user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> createExerciseSessionInternal(exercise, user, mode));
+                .orElseGet(() -> findOrCreateCourseSession(exercise.getCourseViaExerciseGroupOrCourseMember(), user));
     }
 
     private IrisChatSession findOrCreateCourseSession(Course course, User user) {
@@ -529,8 +532,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(course.getId(), IrisChatMode.COURSE_CHAT, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
-            // Course sessions are reused if created today; otherwise a new one is created
-            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+            // Reuse today's course session only while it is still empty; once it has messages (or is from
+            // an earlier day) a new one is created, so each fresh entry starts on a clean course chat.
+            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))
+                    && session.getMessages().isEmpty()) {
                 checkHasAccessTo(user, session);
                 return session;
             }
@@ -539,8 +544,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     private IrisChatSession findOrCreateLectureSession(Lecture lecture, User user) {
+        // Resume an existing lecture chat if one with history exists; otherwise fall back to the shared
+        // course session, with the lecture context layered on client-side (as for exercises).
         return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(lecture.getId(), IrisChatMode.LECTURE_CHAT, user.getId(), Pageable.ofSize(1)).stream()
-                .findFirst().orElseGet(() -> createLectureSessionInternal(lecture, user));
+                .findFirst().orElseGet(() -> findOrCreateCourseSession(lecture.getCourse(), user));
     }
 
     private IrisChatSession createExerciseSessionInternal(Exercise exercise, User user, IrisChatMode mode) {
