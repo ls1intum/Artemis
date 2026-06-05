@@ -473,7 +473,7 @@ describe('ProgrammingExercise Service', () => {
         expect(convertedExercise.solutionParticipation).toBeDefined();
     });
 
-    it('should preview automatic after due date with a date response', fakeAsync(() => {
+    it('should preview automatic after due date with a date response', () => {
         const isoDate = '2026-06-01T12:15:00Z';
         const request = {
             programmingExerciseId: 42,
@@ -489,10 +489,9 @@ describe('ProgrammingExercise Service', () => {
         const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
         const req = httpMock.expectOne({ method: 'POST', url });
         req.flush(isoDate);
-        tick();
-    }));
+    });
 
-    it('should preview automatic after due date with null response', fakeAsync(() => {
+    it('should preview automatic after due date with null response', () => {
         const request = {
             programmingExerciseId: 42,
             dueDate: '2026-06-01T12:00:00Z',
@@ -505,8 +504,7 @@ describe('ProgrammingExercise Service', () => {
         const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
         const req = httpMock.expectOne({ method: 'POST', url });
         req.flush(null);
-        tick();
-    }));
+    });
 
     afterEach(() => {
         httpMock.verify();
