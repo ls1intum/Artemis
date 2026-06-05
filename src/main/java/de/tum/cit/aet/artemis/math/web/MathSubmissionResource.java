@@ -80,7 +80,20 @@ public class MathSubmissionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, mathExercise, user);
         StudentParticipation participation = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, user.getLogin()).orElseThrow();
 
-        MathSubmission submission = dto.toEntity();
+        MathSubmission submission;
+        if (dto.id() != null) {
+            // Updating an existing submission: load it and verify it belongs to this participation, so a client-supplied id
+            // cannot be used to overwrite another student's submission.
+            submission = mathSubmissionRepository.findByIdWithResultsAndParticipation(dto.id()).orElseThrow();
+            if (submission.getParticipation() == null || !participation.getId().equals(submission.getParticipation().getId())) {
+                throw new AccessForbiddenException("mathSubmission", dto.id());
+            }
+            submission.setSubmitted(Boolean.TRUE.equals(dto.submitted()));
+            submission.setContent(dto.content());
+        }
+        else {
+            submission = dto.toEntity();
+        }
         submission.setParticipation(participation);
         submission = mathSubmissionRepository.save(submission);
         submission = mathSubmissionRepository.findByIdWithResults(submission.getId()).orElseThrow();

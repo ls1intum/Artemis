@@ -268,6 +268,8 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
             return 'file-upload-exercises';
         case ExerciseType.QUIZ:
             return 'quiz-exercises';
+        case ExerciseType.MATH:
+            return 'math-exercises';
         default:
             throw Error('Unexpected exercise type: ' + exerciseType);
     }

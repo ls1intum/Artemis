@@ -69,7 +69,6 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
     detailOverviewSections: DetailOverviewSection[];
 
-    private subscription: Subscription;
     private eventSubscriber: Subscription;
 
     ngOnInit() {
@@ -134,9 +133,6 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-        }
         this.eventManager.destroy(this.eventSubscriber);
     }
 

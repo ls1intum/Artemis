@@ -49,6 +49,7 @@ export const isProgrammingOrQuiz = (participation: Participation) => {
 };
 /**
  * Checks if given participation is related to a modeling, text or file-upload exercise.
+ * Math exercises are intentionally grouped here as well, since they share the same manual-assessment handling.
  *
  * @param participation
  */

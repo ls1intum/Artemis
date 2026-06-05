@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MathSubmission extends Submission {
 
-    @Column(table = "math_submission_details", name = "content", columnDefinition = "longtext")
+    @Column(table = "math_submission_details", name = "content")
     private String content;
 
     public String getContent() {
