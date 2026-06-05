@@ -80,8 +80,9 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
      *      same-id change unless we manually shadow the previous id.
      *   2. The body depends on {@code isLocalCIEnabled}, set in ngOnInit; an effect() runs after ngOnInit/CD, shifting the
      *      timing of subscribeForNewResults()/subscribeForNewSubmissions().
-     * Tracked for future removal once a signal-friendly approach exists; do not silence the lint rule.
+     * Tracked for future removal once a signal-friendly approach exists.
      */
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue via hasParticipationChanged() and stable subscription timing.
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
             this.result = getLatestResultOfStudentParticipation(this.participation(), this.showUngradedResults(), true);

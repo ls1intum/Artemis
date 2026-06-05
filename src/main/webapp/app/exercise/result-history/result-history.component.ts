@@ -44,7 +44,9 @@ export class ResultHistoryComponent {
                 .filter((result) => result.rated)
                 .last();
             if (!displayedResults.first()?.rated && lastRatedResult) {
-                displayedResults = [lastRatedResult, ...displayedResults.slice(1)];
+                displayedResults = displayedResults.includes(lastRatedResult)
+                    ? [lastRatedResult, ...displayedResults.filter((result) => result !== lastRatedResult)]
+                    : [lastRatedResult, ...displayedResults.slice(1)];
                 movedLastRatedResult = true;
             }
         }

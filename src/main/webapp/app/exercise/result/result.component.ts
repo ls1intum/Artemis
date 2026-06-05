@@ -207,8 +207,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      *      ngOnInit normalisation; a single effect() over those signals cannot tell which one fired and would over-run.
      *   3. ngOnInit()/evaluate() write back to the same model() signals they read (result/participation), which an effect()
      *      reading them would turn into a feedback loop.
-     * Tracked for future removal once a signal-friendly approach exists; do not silence the lint rule.
+     * Tracked for future removal once a signal-friendly approach exists.
      */
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue and which-input-changed dispatch.
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
             // If the participation or result changes, we need to re-initialize the component.

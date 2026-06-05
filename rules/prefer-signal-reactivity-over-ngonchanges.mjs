@@ -19,8 +19,8 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * So `ngOnChanges` is **not** dead code and **not** a correctness bug — but the Angular docs
  * still recommend `computed`/`effect` over it for signal-based components, and a signal-first code
  * base is more consistent and less error-prone (no manually-maintained derived fields that can go
- * stale). This rule is therefore a **warning**, not an error, and is scoped (in `eslint.config.mjs`)
- * to modules that are already fully migrated to signals and currently free of `ngOnChanges`.
+ * stale). This rule is therefore a **warning**, not an error. The config keeps the baseline clean by
+ * excluding the known migration-backlog files until those hooks are migrated or explicitly justified.
  *
  * ## What to use instead
  *

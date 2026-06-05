@@ -111,7 +111,8 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     //      inputs" granularity needs manual per-input previous-value tracking.
     //   2. doAutoCrop()/crop() emit the `startCropImage`/`imageCropped` outputs synchronously during the change cycle;
     //      an effect() runs after change detection (and after ngOnInit), shifting that emission timing for parents.
-    // Tracked for future removal once a signal-friendly approach exists; do not silence the lint rule.
+    // Tracked for future removal once a signal-friendly approach exists.
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges input-change granularity and synchronous crop output timing.
     ngOnChanges(changes: SimpleChanges): void {
         // Keep the internal mutable cropper in sync with the input.
         if (changes.cropperInput) {
