@@ -24,7 +24,7 @@ class LectureEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
     // dashboard exercise into CourseExerciseRowComponent. It cannot be reduced without the deferred exercise-dashboard DTO.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 2;
+        return 1;
     }
 
     @Override
