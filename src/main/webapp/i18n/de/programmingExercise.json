@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "programmingExercise": {
-            "generateWithAi": "Mit KI generieren",
             "home": {
                 "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
@@ -932,6 +931,7 @@
                 "cardTitle": "Aufgabengenerierung",
                 "generateEntire": "Gesamte Aufgabe generieren",
                 "entireExerciseTooltip": "Speichert die Aufgabe mit leeren Repositories und verlässt den Einrichtungsassistenten, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst.",
+                "formInvalidTooltip": "Fülle zuerst die erforderlichen Aufgabenfelder aus.",
                 "entireExerciseHelp": "Speichert die Aufgabe mit leeren Repositories, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst. Dabei wird der Einrichtungsassistent verlassen und die Aufgabe geöffnet, wo du den Lauf verfolgen kannst.",
                 "generate": "Aufgabe generieren",
                 "retry": "Erneut versuchen",

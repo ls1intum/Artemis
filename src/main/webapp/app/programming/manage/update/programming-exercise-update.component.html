@@ -51,6 +51,7 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 [showGenerateWithAi]="showGenerateWithAi()"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
+                [formInvalid]="!!getInvalidReasons().length"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
                 (generateWithAi)="saveWithAi()"

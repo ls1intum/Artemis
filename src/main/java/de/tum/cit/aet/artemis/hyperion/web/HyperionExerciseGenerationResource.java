@@ -87,7 +87,8 @@ public class HyperionExerciseGenerationResource {
         String prompt = agentSystemPromptService.resolvePrompt(request, exercise);
         String jobId = jobService.startJob(user, exercise, prompt);
         log.info("Started agentic exercise generation job [{}] for exercise [{}]", jobId, exerciseId);
-        return ResponseEntity.ok(new ExerciseGenerationJobStartDTO(jobId));
+        // 202 Accepted: the run is a multi-minute async job; the body carries the jobId the client uses to reattach and stream progress over the websocket topic.
+        return ResponseEntity.accepted().body(new ExerciseGenerationJobStartDTO(jobId));
     }
 
     /**

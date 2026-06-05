@@ -166,6 +166,39 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(websocketService.subscribeToJob).toHaveBeenCalledWith('job-resume');
     });
 
+    it('picks up an adapt-started run when reattach() is called on an idle card', () => {
+        // The card mounts idle (no run on first /status probe), so the host triggered an adaptation: reattach() must now re-probe and stream the new run.
+        generationService.getStatus.mockReturnValue(of(undefined));
+        create();
+        expect(component.running()).toBe(false);
+
+        generationService.getStatus.mockReturnValue(of({ jobId: 'job-adapt', running: true, events: [{ type: 'PROGRESS', message: 'adapting' }] }));
+        component.reattach();
+
+        expect(component.jobId()).toBe('job-adapt');
+        expect(component.running()).toBe(true);
+        expect(websocketService.subscribeToJob).toHaveBeenCalledWith('job-adapt');
+
+        jobStream.next({ type: 'DONE', completionStatus: 'NEEDS_REVIEW', message: 'draft saved' });
+        expect(component.running()).toBe(false);
+        expect(component.needsReview()).toBe(true);
+    });
+
+    it('reattach() after a terminal run tears down the old stream and clears the prior outcome for a fresh run', () => {
+        // First a finished run is shown, then an adapt run starts: reattach must drop the old subscription and surface the new live run.
+        generationService.getStatus.mockReturnValue(of({ jobId: 'job-old', running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS', message: 'saved' }] }));
+        create();
+        expect(component.finalEvent()).toBeDefined();
+
+        generationService.getStatus.mockReturnValue(of({ jobId: 'job-new', running: true, events: [] }));
+        component.reattach();
+
+        expect(component.finalEvent()).toBeUndefined();
+        expect(component.running()).toBe(true);
+        expect(component.jobId()).toBe('job-new');
+        expect(websocketService.unsubscribeFromJob).toHaveBeenCalledWith('job-old');
+    });
+
     it('exposes the structured verdict from the terminal event', () => {
         generationService.generateExercise.mockReturnValue(of({ jobId: 'job-v' }));
         component.generate();

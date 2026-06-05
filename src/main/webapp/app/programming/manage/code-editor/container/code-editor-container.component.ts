@@ -100,6 +100,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
+    /** Whether the Hyperion feature is active; relayed to gate the "Adapt with Artemis Intelligence" thread action in lockstep with the run card. */
+    hyperionEnabled = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     onCommitStateChange = output<CommitState>();

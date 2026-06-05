@@ -388,6 +388,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
+        beforeEach(() => {
+            // The happy-path tests below exercise a valid form; the new invalid-form guard is covered by its own test.
+            vi.spyOn(comp, 'getInvalidReasons').mockReturnValue([]);
+        });
+
+        it('bails on an invalid form, surfaces the invalid reasons and does not start generation', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.course = course;
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const reasons = [{ translateKey: 'artemisApp.exercise.form.title.undefined', translateValues: {} }];
+            (comp.getInvalidReasons as unknown as ReturnType<typeof vi.fn>).mockReturnValue(reasons);
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(comp.isGeneratingWithAi()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.exercise.form.title.undefined' }));
+        });
+
         it('should call automatic setup with empty repositories and navigate to the detail page with auto-start state', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();

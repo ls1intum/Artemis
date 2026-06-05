@@ -672,5 +672,22 @@ describe('ProgrammingExerciseProblemComponent', () => {
             fixture.detectChanges();
             expect(button.disabled).toBe(false);
         });
+
+        it('disables and explains the entire-exercise action when the form is invalid', () => {
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            comp.userPrompt.set('Implement a bank account.');
+
+            // A valid form with a brief: the action is enabled and carries the normal tooltip.
+            fixture.componentRef.setInput('formInvalid', false);
+            fixture.detectChanges();
+            const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!;
+            expect(button.disabled).toBe(false);
+
+            // An invalid form must disable the persisting action (not a silent server 400).
+            fixture.componentRef.setInput('formInvalid', true);
+            fixture.detectChanges();
+            expect(button.disabled).toBe(true);
+        });
     });
 });

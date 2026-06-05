@@ -55,6 +55,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
+import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
 import { ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
 /**
@@ -162,7 +163,8 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ExerciseEditorSyncService, useValue: { connect: vi.fn(), disconnect: vi.fn(), subscribeToUpdates: vi.fn(() => of()) } },
         // The component self-provides DialogService (free "Adapt exercise" dialog); the empty-template override drops it, so stub it here.
         { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined), close: vi.fn() })) } },
-        { provide: HyperionExerciseAdaptationService, useValue: { adaptExercise: vi.fn() } },
+        // Default returns a started-run stream so the container's reattach chain can run; tests override the return value as needed.
+        { provide: HyperionExerciseAdaptationService, useValue: { adaptExercise: vi.fn(() => of({ jobId: 'job-adapt' })) } },
         ...additionalProviders,
     ];
 }
@@ -440,6 +442,47 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('starts an adaptation run from a review thread (S3)', () => {
             comp.onAdaptExercise({ feedback: 'Feedback to address\nSignature mismatch' });
             expect(adaptationService.adaptExercise).toHaveBeenCalledWith(42, 'Feedback to address\nSignature mismatch');
+        });
+
+        it('reattaches the run card after a successful thread adapt so live progress shows in-context (S1/S3)', () => {
+            const reattach = vi.fn();
+            vi.spyOn(comp, 'generationCard').mockReturnValue({ reattach } as unknown as HyperionExerciseGenerationComponent);
+
+            comp.onAdaptExercise({ feedback: 'fix the signature' });
+
+            // The reattach runs only after the (synchronous, mocked) start emission, so the job is registered before re-probing /status.
+            expect(reattach).toHaveBeenCalledTimes(1);
+        });
+
+        it('subscribes to the cold adapt stream exactly once so only one run is started (S1)', () => {
+            const post$ = of({ jobId: 'job-adapt' });
+            const subscribeSpy = vi.spyOn(post$, 'subscribe');
+            adaptationService.adaptExercise.mockReturnValue(post$);
+
+            comp.onAdaptExercise({ feedback: 'fix it' });
+
+            expect(subscribeSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not reattach when the adapt start has nothing to start (empty feedback yields undefined stream) (S1)', () => {
+            const reattach = vi.fn();
+            vi.spyOn(comp, 'generationCard').mockReturnValue({ reattach } as unknown as HyperionExerciseGenerationComponent);
+            adaptationService.adaptExercise.mockReturnValue(undefined);
+
+            comp.onAdaptExercise({ feedback: '   ' });
+
+            expect(reattach).not.toHaveBeenCalled();
+        });
+
+        it('reattaches the run card after a successful free-adapt dialog start (S1/S4)', () => {
+            dialogService.open.mockReturnValue({ onClose: of({ instructions: 'make it harder' } as ReviewAdaptExerciseDialogResult), close: vi.fn() });
+            const reattach = vi.fn();
+            vi.spyOn(comp, 'generationCard').mockReturnValue({ reattach } as unknown as HyperionExerciseGenerationComponent);
+
+            comp.openFreeAdaptDialog();
+
+            expect(adaptationService.adaptExercise).toHaveBeenCalledWith(42, 'make it harder');
+            expect(reattach).toHaveBeenCalledTimes(1);
         });
 
         it('does not start a run when no exercise id is present (S3)', () => {

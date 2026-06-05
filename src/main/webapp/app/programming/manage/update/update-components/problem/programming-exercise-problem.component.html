@@ -66,8 +66,13 @@
                     severity="primary"
                     size="small"
                     [loading]="isGeneratingWithAi()"
-                    [disabled]="!userPrompt()?.trim() || isGeneratingWithAi() || isAiApplying()"
-                    [pTooltip]="'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip' | artemisTranslate"
+                    [disabled]="!userPrompt()?.trim() || isGeneratingWithAi() || isAiApplying() || formInvalid()"
+                    [pTooltip]="
+                        (formInvalid()
+                            ? 'artemisApp.programmingExercise.generateExercise.formInvalidTooltip'
+                            : 'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip'
+                        ) | artemisTranslate
+                    "
                     tooltipPosition="top"
                     (click)="generateWithAi.emit()"
                 >

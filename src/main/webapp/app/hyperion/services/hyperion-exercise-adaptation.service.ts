@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
+import { ExerciseGenerationJobStart, HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 
 /**
  * Triggers an agentic exercise adaptation run from the review system.
@@ -19,19 +20,27 @@ export class HyperionExerciseAdaptationService {
     /**
      * Starts an adaptation run for the exercise using the assembled feedback as the prompt.
      *
+     * The returned {@link Observable} is COLD and unsubscribed: the host is the single subscriber, so exactly one POST is sent. The
+     * brief info/error alerts are wired in here via {@code tap} so every caller gets consistent feedback without duplicating the toast
+     * logic, while the {@code next} emission (the job is registered server-side) is the host's cue to call the run card's
+     * {@code reattach()} and pick up live progress. Returns {@code undefined} when the feedback is empty (nothing to start).
+     *
      * @param exerciseId The exercise to adapt.
      * @param feedback The human-readable feedback to address (thread finding plus optional instructions).
+     * @returns The HTTP start stream (subscribe exactly once), or {@code undefined} when the feedback is empty.
      */
-    adaptExercise(exerciseId: number, feedback: string): void {
+    adaptExercise(exerciseId: number, feedback: string): Observable<ExerciseGenerationJobStart> | undefined {
         const trimmedFeedback = feedback.trim();
         if (!trimmedFeedback) {
-            return;
+            return undefined;
         }
-        this.generationService.generateExercise(exerciseId, trimmedFeedback).subscribe({
-            next: () => this.alertService.info('artemisApp.review.adaptExercise.started'),
-            // A 409 means a run is already in progress for this exercise; everything else is a generic start failure.
-            error: (error: { status?: number }) =>
-                this.alertService.error(error?.status === 409 ? 'artemisApp.review.adaptExercise.alreadyRunning' : 'artemisApp.review.adaptExercise.startError'),
-        });
+        return this.generationService.generateExercise(exerciseId, trimmedFeedback).pipe(
+            tap({
+                next: () => this.alertService.info('artemisApp.review.adaptExercise.started'),
+                // A 409 means a run is already in progress for this exercise; everything else is a generic start failure.
+                error: (error: { status?: number }) =>
+                    this.alertService.error(error?.status === 409 ? 'artemisApp.review.adaptExercise.alreadyRunning' : 'artemisApp.review.adaptExercise.startError'),
+            }),
+        );
     }
 }

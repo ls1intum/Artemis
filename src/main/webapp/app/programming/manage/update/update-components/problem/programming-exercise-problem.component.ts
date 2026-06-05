@@ -66,6 +66,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     showGenerateWithAi = input<boolean>(false);
     /** Whether a whole-exercise generation save is currently in flight, to disable the action and show a spinner. */
     isGeneratingWithAi = input<boolean>(false);
+    /**
+     * Whether the parent form currently has validation errors. When {@code true}, the higher-tier "Generate entire exercise" action is disabled
+     * with an explanatory tooltip (it persists the exercise, so it must not be invoked on an invalid form), mirroring the normal Save gating.
+     */
+    formInvalid = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
     /** Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the detail page to auto-start the agentic run (wired to the parent's {@code saveWithAi()}). */

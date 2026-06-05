@@ -245,6 +245,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
+    /**
+     * Whether the Hyperion exercise-generation feature is active. The "Adapt with Artemis Intelligence" thread action POSTs an adaptation run whose
+     * progress is only shown by the embedded Hyperion run card; without Hyperion there is no such card, so the action must be gated on this flag in
+     * lockstep with the run card. Fails closed (default {@code false}).
+     */
+    readonly hyperionEnabled = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
     readonly isButtonLoading = input<boolean>(false);
@@ -1097,7 +1103,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onAdaptExercise: (payload) => this.onAdaptExercise.emit(payload),
                 showLocationWarning: () => this.showLocationWarning(),
                 showFeedbackAction: () => false,
-                showAdaptAction: () => this.enableExerciseReviewComments(),
+                // Gate the adapt action on Hyperion too: it starts a run that only the Hyperion run card surfaces, so it must match the card's gating.
+                showAdaptAction: () => this.enableExerciseReviewComments() && this.hyperionEnabled(),
             });
         }
         return this.reviewCommentManager;

@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "programmingExercise": {
-            "generateWithAi": "Generate with AI",
             "home": {
                 "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
@@ -932,6 +931,7 @@
                 "cardTitle": "Exercise generation",
                 "generateEntire": "Generate entire exercise",
                 "entireExerciseTooltip": "Saves the exercise with empty repositories and leaves the setup wizard, then generates the solution, a failing template, tests, and the problem statement — and verifies them before you keep it.",
+                "formInvalidTooltip": "Complete the required exercise fields first.",
                 "entireExerciseHelp": "Saves the exercise with empty repositories, then generates the solution, a failing template, tests, and the problem statement — and verifies them before you keep it. This leaves the setup wizard and opens the exercise where you can watch the run.",
                 "generate": "Generate exercise",
                 "retry": "Try again",

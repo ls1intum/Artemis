@@ -30,27 +30,29 @@ describe('HyperionExerciseAdaptationService', () => {
         vi.restoreAllMocks();
     });
 
-    it('should start a run with the trimmed feedback and inform the instructor', () => {
-        service.adaptExercise(42, '  address the signature mismatch  ');
+    it('should start a run with the trimmed feedback and inform the instructor (single subscription by the host)', () => {
+        // The returned stream is cold: the host subscribes exactly once, which sends the POST and triggers the info alert via tap.
+        service.adaptExercise(42, '  address the signature mismatch  ')!.subscribe();
 
         expect(generationService.generateExercise).toHaveBeenCalledWith(42, 'address the signature mismatch');
         expect(alertService.info).toHaveBeenCalledWith('artemisApp.review.adaptExercise.started');
     });
 
-    it('should not start a run for empty feedback', () => {
-        service.adaptExercise(42, '   ');
+    it('should return undefined and start nothing for empty feedback', () => {
+        const result = service.adaptExercise(42, '   ');
+        expect(result).toBeUndefined();
         expect(generationService.generateExercise).not.toHaveBeenCalled();
     });
 
     it('should surface an already-running alert on 409', () => {
         generationService.generateExercise.mockReturnValue(throwError(() => ({ status: 409 })));
-        service.adaptExercise(42, 'feedback');
+        service.adaptExercise(42, 'feedback')!.subscribe({ error: () => {} });
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.review.adaptExercise.alreadyRunning');
     });
 
     it('should surface a generic error alert on other failures', () => {
         generationService.generateExercise.mockReturnValue(throwError(() => ({ status: 500 })));
-        service.adaptExercise(42, 'feedback');
+        service.adaptExercise(42, 'feedback')!.subscribe({ error: () => {} });
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.review.adaptExercise.startError');
     });
 });

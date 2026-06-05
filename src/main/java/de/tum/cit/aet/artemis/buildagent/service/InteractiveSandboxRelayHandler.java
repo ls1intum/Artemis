@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,8 +79,23 @@ public class InteractiveSandboxRelayHandler {
 
     private Semaphore sessionPermits;
 
-    /** Correlation ids currently being handled or already handled, so a redelivered broadcast is not performed twice. */
-    private final Set<String> handledCorrelationIds = ConcurrentHashMap.newKeySet();
+    /**
+     * Bound on {@link #handledCorrelationIds}: an upper limit on the number of recently-seen correlation ids retained for de-duplication. Each relayed operation mints one fresh,
+     * single-use correlation id, so this covers far more in-flight + recently-completed ops than any realistic redelivery window, while keeping the set from growing without bound
+     * on
+     * a long-lived agent.
+     */
+    private static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
+
+    /**
+     * Correlation ids currently being handled or already handled, so a redelivered broadcast is not performed twice. Bounded to {@link #MAX_REMEMBERED_CORRELATION_IDS} entries
+     * with
+     * insertion-order (FIFO) eviction (see {@link #markHandled}) so it cannot grow without bound on a long-lived agent. Correlation ids are single-use (the client mints a fresh
+     * UUID
+     * per call and never retries one), so evicting the oldest entries can never resurrect a live de-duplication key. Guarded by its own monitor; the listener hands off to a worker
+     * pool, so {@link #handle} can run concurrently.
+     */
+    private final LinkedHashMap<String, Boolean> handledCorrelationIds = new LinkedHashMap<>();
 
     /** Container ids of sessions this agent owns and for which a session permit is held, so DESTROY releases a permit at most once. */
     private final Set<String> ownedSessions = ConcurrentHashMap.newKeySet();
@@ -136,7 +153,8 @@ public class InteractiveSandboxRelayHandler {
      */
     private void handle(SandboxOpRequest request) {
         // Idempotency: the first delivery for a correlation id wins; any redelivery is dropped without re-running the operation or re-publishing a response.
-        if (!handledCorrelationIds.add(request.correlationId())) {
+        // Invariant: correlation ids are single-use; a failed op is never retried under the same id, so marking handled before doing the work is safe.
+        if (!markHandled(request.correlationId())) {
             log.debug("Dropping duplicate sandbox request {} ({})", request.correlationId(), request.op());
             return;
         }
@@ -153,6 +171,29 @@ public class InteractiveSandboxRelayHandler {
         catch (Exception e) {
             log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}': {}", request.op(), request.correlationId(), buildAgentShortName, e.getMessage());
             responsesTopic.publish(SandboxOpResponse.failure(request.correlationId(), e.getMessage()));
+        }
+    }
+
+    /**
+     * Records a correlation id as handled, returning {@code true} only on its first appearance. The backing map is bounded to {@link #MAX_REMEMBERED_CORRELATION_IDS} entries with
+     * insertion-order (FIFO) eviction so it cannot grow without bound; because correlation ids are single-use, evicting the oldest entries never resurrects a live de-duplication
+     * key.
+     *
+     * @param correlationId the correlation id of the request being handled
+     * @return {@code true} if this is the first delivery for the id (caller should proceed), {@code false} if it was already handled (caller should drop it)
+     */
+    private boolean markHandled(String correlationId) {
+        synchronized (handledCorrelationIds) {
+            if (handledCorrelationIds.putIfAbsent(correlationId, Boolean.TRUE) != null) {
+                return false;
+            }
+            // Evict the oldest entries once the cap is exceeded; a LinkedHashMap iterates in insertion order, so this is FIFO.
+            Iterator<String> iterator = handledCorrelationIds.keySet().iterator();
+            while (handledCorrelationIds.size() > MAX_REMEMBERED_CORRELATION_IDS && iterator.hasNext()) {
+                iterator.next();
+                iterator.remove();
+            }
+            return true;
         }
     }
 

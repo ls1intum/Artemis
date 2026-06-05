@@ -143,6 +143,17 @@ class HyperionExerciseGenerationRuntimeIntegrationTest extends AbstractSpringInt
                 HttpStatus.FORBIDDEN);
     }
 
+    // ---- Input validation: the free-text prompt flowing into the LLM is bounded -----------------------------------------------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void start_overlongPrompt_isRejectedWithBadRequest() throws Exception {
+        // The prompt is @Size(max = 8000); an authorized editor of the owning course is still rejected by bean validation (400) before any job is started, capping the unbounded
+        // text that would otherwise flow into the LLM (cost/abuse vector).
+        String overlongPrompt = "x".repeat(8001);
+        request.postWithResponseBody(basePath(), new ExerciseGenerationRequestDTO(overlongPrompt), ExerciseGenerationJobStartDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
     // ---- Status: 204 when nothing has run for the caller --------------------------------------------------------------------------------------------------------------------
 
     @Test

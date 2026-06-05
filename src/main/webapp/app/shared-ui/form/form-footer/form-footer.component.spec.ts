@@ -93,4 +93,12 @@ describe('FormFooterComponent', () => {
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.disabled).toBeTruthy();
     });
+
+    it('should no longer expose the relocated generate-with-AI action', () => {
+        // The "Generate with AI" action was relocated into the problem component; the footer must not render it or expose its API.
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('#generate-with-ai'))).toBeNull();
+        expect((comp as unknown as Record<string, unknown>).showGenerateWithAi).toBeUndefined();
+        expect((comp as unknown as Record<string, unknown>).generateWithAi).toBeUndefined();
+    });
 });

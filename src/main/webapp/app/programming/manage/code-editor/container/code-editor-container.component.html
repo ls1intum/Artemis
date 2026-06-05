@@ -81,6 +81,7 @@
             [buildAnnotations]="annotations"
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
+            [hyperionEnabled]="hyperionEnabled()"
             (onFileContentChange)="onFileContentChange($event)"
             (onSavedFiles)="onSavedFiles($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"

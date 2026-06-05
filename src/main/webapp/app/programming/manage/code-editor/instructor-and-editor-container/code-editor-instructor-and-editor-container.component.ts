@@ -119,6 +119,8 @@ interface ConsistencyIssueNavigationIssue {
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
+    /** The embedded Artemis Intelligence run card; reattached after an adapt start so its progress shows on the same surface that triggered it. */
+    readonly generationCard = viewChild(HyperionExerciseGenerationComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -505,7 +507,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!exerciseId) {
             return;
         }
-        this.hyperionExerciseAdaptationService.adaptExercise(exerciseId, payload.feedback);
+        this.startAdaptation(exerciseId, payload.feedback);
+    }
+
+    /**
+     * Starts an adaptation run and, once the server has acknowledged the start, tells the embedded run card to reattach so the same surface
+     * that triggered the run shows its live progress and terminal verdict. The card's {@code generationCompleted} output (wired in the template)
+     * then drives the existing thread reload. Both adapt entry points (thread widget and free-adapt menu) funnel through here so the reattach
+     * behaviour is identical. Subscribed exactly once (the service stream is cold) so only one run is started.
+     */
+    private startAdaptation(exerciseId: number, feedback: string): void {
+        this.hyperionExerciseAdaptationService
+            .adaptExercise(exerciseId, feedback)
+            ?.pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                // The job is registered server-side by the time next fires, so the card's /status reprobe will see and stream it.
+                next: () => this.generationCard()?.reattach(),
+                // Errors are already surfaced as alerts by the service; nothing to reattach to.
+                error: () => {},
+            });
     }
 
     /**
@@ -533,7 +553,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             if (!instructions) {
                 return;
             }
-            this.hyperionExerciseAdaptationService.adaptExercise(exerciseId, instructions);
+            this.startAdaptation(exerciseId, instructions);
         });
     }
 

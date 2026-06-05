@@ -884,6 +884,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSaving || this.isGeneratingWithAi()) {
             return;
         }
+        // Belt-and-suspenders: the entire-exercise button is disabled on an invalid form, but a stale view or a programmatic call must not
+        // persist an invalid exercise (the server would 400). Bail with the same invalid-reasons alert the form footer's contract relies on.
+        const invalidReasons = this.getInvalidReasons();
+        if (invalidReasons.length) {
+            for (const reason of invalidReasons) {
+                this.alertService.addAlert({ type: AlertType.DANGER, message: reason.translateKey, translationParams: reason.translateValues });
+            }
+            window.scrollTo(0, 0);
+            return;
+        }
         if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
             this.saveExercise();
             return;

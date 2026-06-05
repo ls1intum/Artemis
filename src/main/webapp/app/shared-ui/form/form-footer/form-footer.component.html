@@ -44,23 +44,6 @@
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
-        @if (showGenerateWithAi()) {
-            <button
-                pButton
-                type="button"
-                id="generate-with-ai"
-                class="footer-action-button d-flex align-items-center"
-                [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
-                [loading]="isGeneratingWithAi()"
-                size="small"
-                (click)="generateWithAi.emit()"
-            >
-                @if (!isGeneratingWithAi()) {
-                    <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
-                }
-                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.programmingExercise.generateWithAi"></span>
-            </button>
-        }
         <button
             pButton
             type="button"

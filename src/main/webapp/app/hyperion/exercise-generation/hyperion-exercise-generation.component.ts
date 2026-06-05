@@ -147,6 +147,23 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     /** On load, reattach to a run still in progress for this exercise, or show the last outcome, by replaying the server-retained transcript. */
     ngOnInit(): void {
+        this.reattach();
+    }
+
+    /**
+     * Probes {@code /status} and (re)binds this card to the latest run for the exercise, replaying the server-retained transcript.
+     *
+     * This is the single seam the host uses to make the card pick up a run it did not itself start (an adaptation triggered from a
+     * review thread or the free-adapt menu). It is idempotent and safe to call while a run is already streaming: it tears down any
+     * existing live subscription first, then re-subscribes to whatever run the server now reports as latest, so a freshly started
+     * adaptation immediately takes over this surface (live progress, verdict, diff) and fires {@link generationCompleted} on a
+     * terminal SUCCESS/NEEDS_REVIEW. Callers must invoke this only AFTER the start request has been acknowledged server-side, so the
+     * job is already registered and the status probe sees it.
+     */
+    reattach(): void {
+        // Drop any prior live subscription/timer so a re-probe never leaves a stale stream attached to an old job.
+        this.teardownSubscription();
+        this.stopTimer();
         this.generationService
             .getStatus(this.exerciseId())
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -157,10 +174,14 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                         this.progressEvents.set(status.events);
                         const terminal = status.events.findLast((event) => this.isTerminal(event));
                         if (status.running) {
+                            // A new run resets any earlier terminal outcome and its one-shot focus guard so this card shows live progress again.
+                            this.finalEvent.set(undefined);
+                            this.terminalFocusHandled = false;
                             this.running.set(true);
                             this.startTimer();
                             this.subscribeToJob(status.jobId);
                         } else if (terminal) {
+                            this.running.set(false);
                             this.finalEvent.set(terminal);
                         }
                     }

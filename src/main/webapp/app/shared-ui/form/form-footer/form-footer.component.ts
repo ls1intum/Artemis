@@ -1,7 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
@@ -32,12 +31,10 @@ export class FormFooterComponent {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationCircle = faExclamationCircle;
-    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     isSaving = input(false);
     isDisabled = input(false);
     invalidReasons = input<ValidationReason[]>([]);
-    showGenerateWithAi = input(false);
     isGeneratingWithAi = input(false);
     notificationText = input<string | undefined>();
     switchEditMode = input<(() => void) | undefined>();
@@ -48,7 +45,6 @@ export class FormFooterComponent {
 
     notificationTextChange = output<string>();
     save = output<void>();
-    generateWithAi = output<void>();
     onCancel = output<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
