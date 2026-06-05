@@ -36,7 +36,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                     const competencyCourseProgressObservable = this.competencyService.getCourseProgress(competencyId, this.courseId);
                     return forkJoin([competencyObservable, competencyCourseProgressObservable]);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: ([competencyResult, courseProgressResult]) => {
@@ -71,13 +71,13 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
         this.competency.masteryThreshold = masteryThreshold;
         this.competency.optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.competencyService
             .update(this.competency, this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     // currently at /course-management/{courseId}/competency-management/{competencyId}/edit, going back to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),

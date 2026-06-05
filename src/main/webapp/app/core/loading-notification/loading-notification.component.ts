@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
@@ -13,6 +13,9 @@ import { LoadingNotificationService } from 'app/core/loading-notification/loadin
 })
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
     private loadingNotificationService = inject(LoadingNotificationService);
+    // Under zoneless change detection the (debounced) subscription callback below must explicitly
+    // schedule change detection, otherwise the spinner would never toggle.
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     isLoading = false;
     loadingSubscription: Subscription;
@@ -23,6 +26,7 @@ export class LoadingNotificationComponent implements OnInit, OnDestroy {
          * */
         this.loadingSubscription = this.loadingNotificationService.loadingStatus.pipe(debounceTime(1000)).subscribe((value) => {
             this.isLoading = value;
+            this.changeDetectorRef.markForCheck();
         });
     }
 

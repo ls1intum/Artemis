@@ -4,7 +4,7 @@ import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entitie
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,12 +26,12 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     allowRelationImport = false;
 
     courseId: number;
-    isLoading = false;
+    readonly isLoading = signal(false);
     isSubmitted = false;
     importRelations = true;
     showAdvancedSearch = false;
-    disabledIds: number[] = [];
-    searchedCourseCompetencies: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
+    readonly disabledIds = signal<number[]>([]);
+    readonly searchedCourseCompetencies = signal<SearchResult<CourseCompetency>>({ resultsOnPage: [], numberOfPages: 0 });
     selectedCourseCompetencies: SearchResult<CourseCompetency> = { resultsOnPage: [], numberOfPages: 0 };
 
     //filter and search objects for the course competency search.
@@ -86,16 +86,18 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
         courseCompetencySubscription.subscribe({
             next: (courseCompetenciesResponse) => {
                 const courseCompetencies = courseCompetenciesResponse.body ?? [];
-                this.disabledIds = courseCompetencies
-                    .flatMap((courseCompetency) => {
-                        switch (courseCompetency.type) {
-                            case CourseCompetencyType.COMPETENCY:
-                                return [courseCompetency.id];
-                            case CourseCompetencyType.PREREQUISITE:
-                                return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
-                        }
-                    })
-                    .filter((id): id is number => !!id);
+                this.disabledIds.set(
+                    courseCompetencies
+                        .flatMap((courseCompetency) => {
+                            switch (courseCompetency.type) {
+                                case CourseCompetencyType.COMPETENCY:
+                                    return [courseCompetency.id];
+                                case CourseCompetencyType.PREREQUISITE:
+                                    return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
+                            }
+                        })
+                        .filter((id): id is number => !!id),
+                );
                 this.performSearch();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -134,11 +136,11 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      *
      */
     performSearch() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.courseCompetencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
             next: (res) => {
-                this.searchedCourseCompetencies = res;
-                this.isLoading = false;
+                this.searchedCourseCompetencies.set(res);
+                this.isLoading.set(false);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -164,7 +166,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      */
     selectCompetency(competency: CourseCompetency) {
         if (competency.id) {
-            this.disabledIds.push(competency.id);
+            this.disabledIds.update((ids) => [...ids, competency.id!]);
         }
         this.selectedCourseCompetencies.resultsOnPage.push(competency);
         this.sortSelected(this.selectedCourseCompetenciesSearch);
@@ -177,7 +179,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      */
     removeCompetency(competency: CourseCompetency) {
         if (competency.id) {
-            this.disabledIds = this.disabledIds.filter((id) => id !== competency.id);
+            this.disabledIds.update((ids) => ids.filter((id) => id !== competency.id));
         }
         this.selectedCourseCompetencies.resultsOnPage = this.selectedCourseCompetencies.resultsOnPage.filter((c) => c.id !== competency.id);
     }
@@ -200,7 +202,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate() {
-        return this.isSubmitted || (!this.isLoading && this.selectedCourseCompetencies.resultsOnPage.length === 0);
+        return this.isSubmitted || (!this.isLoading() && this.selectedCourseCompetencies.resultsOnPage.length === 0);
     }
 
     get canDeactivateWarning(): string {

@@ -10,7 +10,7 @@
             <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" [disabled]="!isCourseFilter" (change)="onExamFilterChange()" />
             <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams"></label>
         </div>
-        @if (loading) {
+        @if (loading()) {
             <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
@@ -46,7 +46,7 @@
             </tr>
         </thead>
         <tbody>
-            @for (exercise of content.resultsOnPage; track trackId($index, exercise)) {
+            @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
                 <tr [class]="'flex-row exercise-' + exercise.id">
                     <td class="col-1">
                         <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
@@ -82,7 +82,7 @@
             [rotate]="true"
             [ellipses]="true"
             [boundaryLinks]="true"
-            [collectionSize]="total"
+            [collectionSize]="total()"
             [(page)]="state.page"
             [pageSize]="state.pageSize"
             (pageChange)="onPageChange($event)"

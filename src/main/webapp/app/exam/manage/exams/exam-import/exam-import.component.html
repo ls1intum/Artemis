@@ -16,7 +16,7 @@
             <div class="form-group form-inline">
                 <span jhiTranslate="artemisApp.examManagement.import.search"></span>:
                 <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-                @if (loading) {
+                @if (loading()) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
@@ -43,7 +43,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (exam of content.resultsOnPage; track trackId($index, exam)) {
+                    @for (exam of content().resultsOnPage; track trackId($index, exam)) {
                         <tr class="flex-row">
                             <td class="col-1">
                                 <span [class.ngb-highlight]="'' + exam.id === searchTerm"> {{ exam.id }}</span>
@@ -80,7 +80,7 @@
                     [rotate]="true"
                     [ellipses]="true"
                     [boundaryLinks]="true"
-                    [collectionSize]="total"
+                    [collectionSize]="total()"
                     [(page)]="state.page"
                     [pageSize]="state.pageSize"
                     (pageChange)="onPageChange($event)"

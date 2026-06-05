@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -45,6 +45,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
+    // Under zoneless change detection, view state mutated from async callbacks (promises,
+    // subscriptions) must explicitly schedule change detection. Notably `loading` gates the
+    // whole login form via [hidden] and is flipped inside an `identity()` promise callback.
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -93,6 +97,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                 this.loading = false;
                 this.prefillPasskeysIfPossible();
             }
+            this.changeDetectorRef.markForCheck();
         });
         this.registerAuthenticationSuccess();
 
@@ -192,6 +197,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+            this.changeDetectorRef.markForCheck();
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
@@ -199,6 +205,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
+            this.changeDetectorRef.markForCheck();
         });
     }
 
@@ -209,6 +216,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
 
             this.accountService.identity().then((user) => {
                 this.currentUserCallback(user!);
+                this.changeDetectorRef.markForCheck();
             });
         });
     }
@@ -246,7 +254,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             .catch(() => {
                 this.authenticationError = true;
             })
-            .finally(() => (this.isSubmittingLogin = false));
+            .finally(() => {
+                this.isSubmittingLogin = false;
+                this.changeDetectorRef.markForCheck();
+            });
     }
 
     /**

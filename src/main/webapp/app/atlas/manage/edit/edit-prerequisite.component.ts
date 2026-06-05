@@ -25,7 +25,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     ngOnInit(): void {
         super.ngOnInit();
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
@@ -37,7 +37,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
                     const prerequisiteCourseProgressObservable = this.prerequisiteService.getCourseProgress(prerequisiteId, this.courseId);
                     return forkJoin([prerequisiteObservable, prerequisiteCourseProgressObservable]);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: ([prerequisiteResult, courseProgressResult]) => {
@@ -72,13 +72,13 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
         this.prerequisite.masteryThreshold = masteryThreshold;
         this.prerequisite.optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.prerequisiteService
             .update(this.prerequisite, this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     // currently at /course-management/{courseId}/prerequisite-management/{competencyId}/edit, going to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../../../competency-management/'], { relativeTo: this.activatedRoute });
                 }),
