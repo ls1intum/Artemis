@@ -542,6 +542,9 @@
             "testExam": {
                 "realExam": "Exam",
                 "testExam": "Test Exam",
+                "testExamSimulation": "Test Exam - Simulation",
+                "testExamPractice": "Test Exam - Practice",
+                "testExamSimulationAndPractice": "Test Exam - Simulation and Practice",
                 "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "modeLabel": "Test exam type",

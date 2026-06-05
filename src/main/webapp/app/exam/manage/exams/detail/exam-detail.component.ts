@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -53,6 +53,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
     protected readonly isTestExam = isTestExam;
+    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     exam: Exam;
     formattedStartText?: SafeHtml;

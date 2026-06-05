@@ -35,11 +35,12 @@
                                 <a [routerLink]="['/course-management', exam.course?.id, 'exams', exam.id]">{{ exam.title }}</a>
                             </td>
                             <td>
-                                @if (isTestExam(exam)) {
-                                    <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                                } @else {
-                                    <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                                }
+                                <span
+                                    class="badge"
+                                    [class.bg-success]="!isTestExam(exam)"
+                                    [class.bg-primary]="isTestExam(exam)"
+                                    [jhiTranslate]="examModeBadgeTranslationKey(exam)"
+                                ></span>
                             </td>
                             @if (exam.course; as course) {
                                 <td>

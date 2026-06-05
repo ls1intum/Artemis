@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, examModeBadgeTranslationKey, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -57,6 +57,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'Exams';
     protected readonly isTestExam = isTestExam;
+    protected readonly examModeBadgeTranslationKey = examModeBadgeTranslationKey;
 
     course: Course;
     exams: Exam[];

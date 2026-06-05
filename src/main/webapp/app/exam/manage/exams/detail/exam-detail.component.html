@@ -3,12 +3,7 @@
         @if (exam) {
             <div>
                 <h2 id="exam-detail-title">
-                    @if (!isTestExam(exam)) {
-                        <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                    }
-                    @if (isTestExam(exam)) {
-                        <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                    }
+                    <span class="badge" [class.bg-success]="!isTestExam(exam)" [class.bg-primary]="isTestExam(exam)" [jhiTranslate]="examModeBadgeTranslationKey(exam)"></span>
                     {{ exam.title }}
                 </h2>
                 <hr />

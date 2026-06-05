@@ -60,12 +60,12 @@
                                                 {{ exam.title }}
                                             </span>
                                         }
-                                        @if (!isTestExam(exam)) {
-                                            <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
-                                        }
-                                        @if (isTestExam(exam)) {
-                                            <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
-                                        }
+                                        <div
+                                            class="badge"
+                                            [class.bg-success]="!isTestExam(exam)"
+                                            [class.bg-primary]="isTestExam(exam)"
+                                            [jhiTranslate]="examModeBadgeTranslationKey(exam)"
+                                        ></div>
                                     </ng-container>
                                 </td>
                                 <td class="d-md-table-cell">
