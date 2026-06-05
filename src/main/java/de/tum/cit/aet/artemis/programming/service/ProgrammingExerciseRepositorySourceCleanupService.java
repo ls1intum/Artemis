@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class ProgrammingExerciseRepositorySourceCleaner {
+public class ProgrammingExerciseRepositorySourceCleanupService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositorySourceCleaner.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositorySourceCleanupService.class);
 
     /**
      * Build-manifest / config filenames that must be kept even when their extension matches a language source extension (e.g. {@code Package.swift} is a Swift manifest, not a
@@ -42,7 +42,7 @@ public class ProgrammingExerciseRepositorySourceCleaner {
 
     private final GitService gitService;
 
-    public ProgrammingExerciseRepositorySourceCleaner(GitService gitService) {
+    public ProgrammingExerciseRepositorySourceCleanupService(GitService gitService) {
         this.gitService = gitService;
     }
 

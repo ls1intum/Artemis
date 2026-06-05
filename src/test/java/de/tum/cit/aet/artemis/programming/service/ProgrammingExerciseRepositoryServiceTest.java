@@ -37,11 +37,11 @@ class ProgrammingExerciseRepositoryServiceTest {
     @Mock
     private GitService gitService;
 
-    private ProgrammingExerciseRepositorySourceCleaner repositorySourceCleaner;
+    private ProgrammingExerciseRepositorySourceCleanupService repositorySourceCleaner;
 
     @BeforeEach
     void setUp() {
-        repositorySourceCleaner = new ProgrammingExerciseRepositorySourceCleaner(gitService);
+        repositorySourceCleaner = new ProgrammingExerciseRepositorySourceCleanupService(gitService);
     }
 
     @Test

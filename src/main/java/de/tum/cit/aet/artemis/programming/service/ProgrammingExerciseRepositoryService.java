@@ -73,10 +73,10 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final ProgrammingExerciseRepositorySourceCleaner repositorySourceCleaner;
+    private final ProgrammingExerciseRepositorySourceCleanupService repositorySourceCleaner;
 
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService, ProgrammingExerciseRepositorySourceCleaner repositorySourceCleaner) {
+            Optional<VersionControlService> versionControlService, ProgrammingExerciseRepositorySourceCleanupService repositorySourceCleaner) {
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
