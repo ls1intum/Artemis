@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -200,7 +200,7 @@ interface ConsistencyIssueNavigationIssue {
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
-    @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
+    readonly codeGenerationRunningModal = viewChild.required<TemplateRef<unknown>>('codeGenerationRunningModal');
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
 
@@ -381,7 +381,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Clears draft widgets and reloads review comment threads after a commit.
      */
     onCommit(): void {
-        this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
+        this.codeEditorContainer()?.monacoEditor()?.clearReviewCommentDrafts();
         this.exerciseReviewCommentService.reloadThreads();
     }
 
@@ -507,7 +507,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Opens the modal that informs the user another code generation run is already active.
      */
     private openCodeGenerationRunningModal(): void {
-        this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
+        this.modalService.open(this.codeGenerationRunningModal(), { backdrop: 'static', keyboard: false, size: 'md' });
     }
 
     /**
@@ -831,7 +831,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (event.type === 'DONE') {
             const completionState = this.getCodeGenerationExecutionState(event);
             this.flushCodeGenerationRepositoryPull(repositoryType);
-            this.codeEditorContainer?.actions?.executeRefresh();
+            this.codeEditorContainer()?.actions()?.executeRefresh();
             this.updateCodeGenerationStatus(repositoryType, (status) => ({
                 ...status,
                 state: completionState,
@@ -1808,7 +1808,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {
         if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
+            const codeEditorContainer = this.codeEditorContainer()!;
+            codeEditorContainer.selectedFile = codeEditorContainer.problemStatementIdentifier;
             if (location.lineNumber !== undefined) {
                 this.editableInstructions()?.jumpToLine(location.lineNumber);
             }
@@ -1823,21 +1824,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.fileToJumpOn = location.filePath;
 
         try {
+            const codeEditorContainer = this.codeEditorContainer()!;
             switch (location.targetType) {
                 case CommentThreadLocationType.TEMPLATE_REPO:
-                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
+                    if (codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
                         this.selectTemplateParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.SOLUTION_REPO:
-                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
+                    if (codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
                         this.selectSolutionParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.TEST_REPO:
-                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
+                    if (codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
                         this.selectTestRepository();
                         return;
                     }
@@ -1846,7 +1848,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     const auxiliaryRepositoryId = location.auxiliaryRepositoryId;
                     if (
                         auxiliaryRepositoryId !== undefined &&
-                        (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
+                        (codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
                     ) {
                         this.selectAuxiliaryRepository(auxiliaryRepositoryId);
                         return;
@@ -1875,15 +1877,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onEditorLoaded() {
         if (this.fileToJumpOn) {
+            const codeEditorContainer = this.codeEditorContainer()!;
             // File already loaded, no file-load event will fire.
             // Jump directly without re-running file-sync load/rebind.
-            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+            if (codeEditorContainer.selectedFile === this.fileToJumpOn) {
                 this.performDeferredLineJump(this.fileToJumpOn);
                 return;
             }
 
             // Will load file and signal to fileLoad when finished loading
-            this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+            codeEditorContainer.selectedFile = this.fileToJumpOn;
         }
     }
 
@@ -1906,7 +1909,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private performDeferredLineJump(fileName: string): void {
         if (this.fileToJumpOn === fileName) {
             if (this.lineJumpOnFileLoad !== undefined) {
-                this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+                this.codeEditorContainer()!.jumpToLine(this.lineJumpOnFileLoad);
             }
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;

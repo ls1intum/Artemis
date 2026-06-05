@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -35,13 +35,20 @@ export class ProgrammingExerciseModeComponent implements OnInit {
     protected readonly ProjectType = ProjectType;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    @Input({ required: true }) programmingExercise: ProgrammingExercise;
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    readonly isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild(TeamConfigFormGroupComponent) teamConfigComponent: TeamConfigFormGroupComponent;
+    // Migrated from @ViewChild. The parent (ProgrammingExerciseUpdateComponent) reads this as a plain
+    // property (`...?.teamConfigComponent?.formValidChanges`), so the public contract must stay a
+    // property that returns the queried component instance. A private signal backs a public getter.
+    private readonly teamConfigComponentSignal = viewChild(TeamConfigFormGroupComponent);
 
-    @Output() triggerValidation = new EventEmitter<void>();
+    get teamConfigComponent(): TeamConfigFormGroupComponent | undefined {
+        return this.teamConfigComponentSignal();
+    }
+
+    readonly triggerValidation = output<void>();
 
     theiaEnabled = false;
 

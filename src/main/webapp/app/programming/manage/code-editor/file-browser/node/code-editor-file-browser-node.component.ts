@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, effect, input, output } from '@angular/core';
+import { Component, ElementRef, effect, input, output, viewChild } from '@angular/core';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
@@ -8,7 +8,7 @@ import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models
 export abstract class CodeEditorFileBrowserNodeComponent {
     FileType = FileType;
 
-    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
+    renamingInput = viewChild<ElementRef>('renamingInput');
 
     item = input.required<TreeViewItem<string>>();
     hasError = input<boolean>(false);
@@ -26,8 +26,9 @@ export abstract class CodeEditorFileBrowserNodeComponent {
             if (this.isBeingRenamed()) {
                 // Timeout is needed to wait for view to render.
                 setTimeout(() => {
-                    if (this.renamingInput) {
-                        this.renamingInput.nativeElement.focus();
+                    const renamingInput = this.renamingInput();
+                    if (renamingInput) {
+                        renamingInput.nativeElement.focus();
                     }
                 }, 0);
             }
