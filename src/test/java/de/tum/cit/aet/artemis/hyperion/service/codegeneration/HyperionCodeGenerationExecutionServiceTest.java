@@ -289,7 +289,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         assertThat(result).isEqualTo(buildResult);
         verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
-                argThat(message -> message.contains("solution") && message.contains("build failed")));
+                argThat(message -> message.contains("solution repository") && message.contains("build failed")));
     }
 
     @Test
@@ -329,7 +329,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         assertThat(result).isEqualTo(buildResult);
         verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(1),
-                argThat(message -> message.contains("solution") && message.contains("build failed")));
+                argThat(message -> message.contains("solution repository") && message.contains("build failed")));
     }
 
     @Test
@@ -501,7 +501,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(repositoryService).commitChanges(repository, user);
         verify(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
         verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED), eq(Map.of()),
-                eq(1), argThat(message -> message.contains("Obsolete") && message.contains("template")));
+                eq(1), argThat(message -> message.contains("Obsolete template files") && message.contains("removed")));
     }
 
     @Test
@@ -948,6 +948,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         assertThat(result).isEqualTo(buildResult);
         verify(templateStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED), eq(Map.of()), eq(2),
-                argThat(message -> message.contains("template") && message.contains("build failed")));
+                argThat(message -> message.contains("template repository") && message.contains("build failed")));
     }
 }
