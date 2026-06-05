@@ -6,21 +6,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +27,17 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
+import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 /**
@@ -40,10 +45,22 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  * once
  * against the template and applying the differential oracle: the solution must compile and pass all tests; the template must compile, run the same tests, and fail them; at least
  * one
- * test must exist. The verdict is read from the machine-readable {@code HYPERION_RESULT} line {@code verify.sh} aggregates from the JUnit XML (not the build log), making it
- * build-tool-agnostic and able to distinguish <em>compiled-but-failed</em> (a valid template), <em>did-not-compile</em>, and <em>fewer-tests-ran</em> (a tampered set) on a
- * non-zero
- * exit.
+ * test must exist.
+ * <p>
+ * <strong>The verdict is parsed with PRODUCTION code, not in the shell.</strong> The pristine {@code verify.sh} runs the real per-language build phases and COLLECTS the
+ * build-fresh
+ * report files into a fixed, verifier-owned directory ({@link SandboxBuildCommandService#REPORTS_DIR}). This service then {@code copyOut}s that directory (a constant path the
+ * verifier knows a priori, never derived from agent output), validates the tar with the hardened {@link CollectedReports} reader (regular files only, no symlink/hardlink, no path
+ * escape, bounded size), and parses the surviving files with the SAME production parsers the real LocalCI pipeline uses: {@link TestResultXmlParser} for JUnit (which skips
+ * {@code <skipped>} testcases exactly as production grading does, so skipped-test parity is guaranteed) and {@link ReportParser} for SCA (whose findings carry the real derived
+ * category, including SARIF/GCC). This gives parity-by-construction, a real XML parser, and production SCA category derivation; the differential and integrity gates are unchanged
+ * —
+ * only the SOURCE of the {@link BuildSummary} they consume changed.
+ * <p>
+ * <strong>Non-forgeability without a nonce.</strong> Authenticity rests on the verifier running a re-seeded pristine script the agent cannot reach AND reading the reports from a
+ * constant verifier-owned directory the agent cannot write — not on a per-run marker token. So the old anti-forgery nonce is gone: there are no stdout markers for the agent's test
+ * code to forge in the first place. The residual "the agent's test writes a fake passing report at build time" is not widened by this change and is already neutralized by the
+ * differential (a forged always-pass report also makes the TEMPLATE pass, tripping {@code checkTemplateFails}).
  */
 @Lazy
 @Service
@@ -55,6 +72,9 @@ public class AuthoritativeVerificationService {
     private static final Duration VERIFY_TIMEOUT = Duration.ofMinutes(10);
 
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
+
+    /** Production grading truncates feedback messages to this length; the verifier sets the same bound so its parse matches production exactly (it never reads the messages). */
+    private static final int MAX_FEEDBACK_LENGTH = 20_000;
 
     /**
      * Matches a problem-statement task binding and captures its parenthesised, comma-separated test names: {@code [task][Some title](testA,testB)}. The capture is greedy (up to
@@ -74,8 +94,6 @@ public class AuthoritativeVerificationService {
 
     private static final int PRISTINE_SCRIPT_MODE = 0755;
 
-    private static final SecureRandom NONCE_RANDOM = new SecureRandom();
-
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
     /**
@@ -86,36 +104,18 @@ public class AuthoritativeVerificationService {
      */
     private final Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository;
 
-    /** Supplies the per-run anti-forgery nonce; production uses a fresh unguessable token, tests a fixed value matching their scripted markers. */
-    private final Supplier<String> nonceSupplier;
-
     // @Autowired disambiguates this from the package-private test constructor; with two constructors and no annotation Spring fails to instantiate the bean.
     @Autowired
     public AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
             Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
-        this(sandboxBuildCommandService, AuthoritativeVerificationService::randomNonce, staticCodeAnalysisCategoryRepository);
-    }
-
-    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService, Supplier<String> nonceSupplier) {
-        this(sandboxBuildCommandService, nonceSupplier, Optional.empty());
-    }
-
-    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService, Supplier<String> nonceSupplier,
-            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
-        this.nonceSupplier = nonceSupplier;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        // The production grading parser is configured statically; set the feedback bound once so the verifier's parse matches production.
+        TestResultXmlParser.setMaxFeedbackLength(MAX_FEEDBACK_LENGTH);
     }
 
-    /** A fresh 128-bit hex nonce, unguessable so the agent's pre-written test code cannot embed it to forge a marker. */
-    private static String randomNonce() {
-        byte[] bytes = new byte[16];
-        NONCE_RANDOM.nextBytes(bytes);
-        StringBuilder hex = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes) {
-            hex.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
-        }
-        return "HN" + hex;
+    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {
+        this(sandboxBuildCommandService, Optional.empty());
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
@@ -165,11 +165,11 @@ public class AuthoritativeVerificationService {
 
         // Re-seed and invoke a PRISTINE verify.sh the agent could never have written, so any edit to its own /workspace/verify.sh is irrelevant to the verdict.
         seedPristineVerifyScript(sandbox, sessionId, exercise);
-        // Anti-forgery: the pristine script stamps this fresh per-run nonce onto every HYPERION_* marker, and the parser honors only nonce-bearing lines, so a marker the agent's
-        // test code printed to stdout cannot forge a verdict.
-        String nonce = nonceSupplier.get();
-        BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(nonce), nonce);
-        BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(nonce), nonce);
+        // The pristine script collects the build-fresh reports into a fixed verifier-owned dir; we copy that dir out and parse it with the production parsers (no marker scraping).
+        BuildSummary solution = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineSolutionBuildCommand(),
+                GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
+        BuildSummary template = runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.pristineTemplateBuildCommand(),
+                GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
 
         int testCount = solution.tests();
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
@@ -214,10 +214,37 @@ public class AuthoritativeVerificationService {
         return new VerificationResult(accepted, solutionPassed, templateFailed, testCount, reasons);
     }
 
-    /** Runs one PRISTINE (verifier-controlled) build for the given assignment command and parses its nonce-stamped {@code HYPERION_*} markers into a {@link BuildSummary}. */
-    private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String nonce) {
+    /**
+     * Runs one PRISTINE (verifier-controlled) build for the given assignment, then copies the build-fresh reports the script collected into the verifier-owned reports dir out of
+     * the container and parses them with the production parsers into a {@link BuildSummary}. The reports path is a CONSTANT the verifier knows a priori (never derived from agent
+     * output), and the tar is validated by {@link CollectedReports} before any byte is parsed.
+     *
+     * @param sandbox        the sandbox session
+     * @param sessionId      the session handle
+     * @param buildCommand   the pristine verify.sh invocation for this assignment
+     * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdir name and the copyOut prefix
+     * @return the parsed build summary
+     */
+    private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
         SandboxExecResult run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
-        return BuildSummary.parse(run, nonce);
+        if (run.timedOut()) {
+            return BuildSummary.timedOut(run.exitCode());
+        }
+        Map<String, byte[]> reports;
+        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, SandboxBuildCommandService.reportsDirectoryFor(assignmentName))) {
+            // Docker prefixes copied-out entries with the source directory name (the reports subdir, e.g. "solution"); strip it to get the flat collected names.
+            reports = tar == null ? Map.of() : CollectedReports.read(tar, assignmentName);
+        }
+        catch (CollectedReports.RejectedReportException e) {
+            // A linked/escaping/oversize report entry is a hard integrity failure: refuse to trust the build rather than parsing partial input. Treat as a non-compiling build.
+            log.warn("Rejected the verifier reports archive for the {} build: {}", assignmentName, e.getMessage());
+            return BuildSummary.unparseable(run.exitCode());
+        }
+        catch (IOException e) {
+            log.warn("Could not read the verifier reports archive for the {} build: {}", assignmentName, e.getMessage());
+            return BuildSummary.unparseable(run.exitCode());
+        }
+        return BuildSummary.fromReports(reports, run.exitCode());
     }
 
     /**
@@ -608,8 +635,9 @@ public class AuthoritativeVerificationService {
     }
 
     /**
-     * The solution-build SCA findings production WOULD penalise (a graded, positively-penalised category), empty when SCA cannot dock the solution. Reads the persisted categories
-     * the same way production grading does ({@code findByExerciseId}), so the decision matches {@code calculateTotalPenalty}; fails open when the repository is absent.
+     * The solution-build SCA findings production WOULD penalise (a graded, positively-penalised category), rendered as {@code <TOOL>|<category>} for the rejection message; empty
+     * when SCA cannot dock the solution. Reads the persisted categories the same way production grading does ({@code findByExerciseId}), so the decision matches
+     * {@code calculateTotalPenalty}; fails open when the repository is absent.
      */
     private List<String> penalisingScaFindings(ProgrammingExercise exercise, BuildSummary solution) {
         // Short-circuit before the DB read on the common non-SCA path.
@@ -618,7 +646,7 @@ public class AuthoritativeVerificationService {
             return List.of();
         }
         var categories = staticCodeAnalysisCategoryRepository.get().findByExerciseId(exercise.getId());
-        return ScaPenaltyParity.penalisingFindings(exercise, categories, solution.scaFindings());
+        return ScaPenaltyParity.penalisingFindings(exercise, categories, solution.scaFindings()).stream().map(f -> f.tool() + "|" + f.category()).toList();
     }
 
     /** Normalises a test name for matching: trims whitespace and drops a trailing {@code ()}, so {@code testFoo} and {@code testFoo()} compare equal (as Artemis treats them). */
@@ -631,56 +659,94 @@ public class AuthoritativeVerificationService {
     }
 
     /**
-     * The aggregated test outcome of one {@code verify.sh} run, read from its nonce-stamped {@code HYPERION_*} marker lines.
+     * The aggregated test outcome of one {@code verify.sh} run, built by parsing the collected report files with the SAME production parsers the real LocalCI pipeline uses
+     * ({@link TestResultXmlParser} for JUnit, {@link ReportParser} for SCA), so the oracle's view is parity-by-construction with grading.
      *
-     * @param tests           tests that ran (zero when the build did not reach the runner, e.g. a compile error)
-     * @param testNames       distinct test-case names extracted from the JUnit XML (validate [task] bindings); empty if none emitted
-     * @param testFailedNames distinct names of cases that FAILED/ERRORED ({@code HYPERION_TESTFAIL}); used by the strict per-test gate; empty if none emitted
-     * @param scaFindings     SCA findings ({@code HYPERION_SCA}) as {@code <TOOL>|<rawCategory>}; populated only when SCA is enabled; empty if none emitted
+     * @param tests           tests that ran (zero when the build did not reach the runner, e.g. a compile error); excludes {@code <skipped>} cases, exactly as production grades
+     * @param testNames       distinct test-case names from the JUnit XML, composed exactly as production does (validate [task] bindings); empty if none collected
+     * @param testFailedNames distinct names of cases that FAILED/ERRORED; used by the strict per-test gate; empty if none collected
+     * @param scaFindings     SCA findings (tool + real derived category from {@link ReportParser}); populated only when the SCA reports were collected; empty otherwise
      */
-    record BuildSummary(int tests, int failures, int errors, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames, List<String> scaFindings) {
+    record BuildSummary(int tests, int failures, int errors, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
+            List<ScaPenaltyParity.ScaFinding> scaFindings) {
 
-        static BuildSummary parse(SandboxExecResult result, String nonce) {
-            if (result.timedOut()) {
-                return new BuildSummary(0, 0, 0, result.exitCode(), true, List.of(), List.of(), List.of());
-            }
-            // Each marker is anchored to the per-run nonce, so a HYPERION_* line the agent's test code printed to stdout (which cannot carry the freshly-generated token) is
-            // ignored.
-            String quotedNonce = Pattern.quote(nonce);
-            Pattern marker = Pattern.compile(
-                    SandboxBuildCommandService.RESULT_MARKER + "\\s+" + quotedNonce + "\\s+tests=(\\d+)\\s+failures=(\\d+)\\s+errors=(\\d+)\\s+skipped=(\\d+)\\s+exit=(-?\\d+)");
-            Pattern testName = Pattern.compile(SandboxBuildCommandService.TESTNAME_MARKER + "\\s+" + quotedNonce + " (.+)");
-            Pattern testFail = Pattern.compile(SandboxBuildCommandService.TESTFAIL_MARKER + "\\s+" + quotedNonce + " (.+)");
-            Pattern scaFinding = Pattern.compile(SandboxBuildCommandService.SCA_MARKER + "\\s+" + quotedNonce + " (.+)");
-            Matcher matcher = marker.matcher(result.combinedOutput());
-            // The summary is printed once at the very end; the last line wins if it somehow ran more than once.
-            int tests = 0;
-            int failures = 0;
-            int errors = 0;
-            int exitCode = result.exitCode();
-            boolean found = false;
-            while (matcher.find()) {
-                found = true;
-                tests = Integer.parseInt(matcher.group(1));
-                failures = Integer.parseInt(matcher.group(2));
-                errors = Integer.parseInt(matcher.group(3));
-                exitCode = Integer.parseInt(matcher.group(5));
-            }
-            if (!found) {
-                // No nonce-stamped summary: killed, mis-seeded, or every result line was an unsigned forgery. Treat as a failed build with no tests so the oracle rejects.
-                return new BuildSummary(0, 0, 0, result.exitCode() == 0 ? 1 : result.exitCode(), false, List.of(), List.of(), List.of());
-            }
-            return new BuildSummary(tests, failures, errors, exitCode, false, parseNames(result.combinedOutput(), testName), parseNames(result.combinedOutput(), testFail),
-                    parseNames(result.combinedOutput(), scaFinding));
+        /** The build was killed for exceeding its timeout; no reports could be collected, so the oracle treats it as a failed build with no tests. */
+        static BuildSummary timedOut(int exitCode) {
+            return new BuildSummary(0, 0, 0, exitCode, true, List.of(), List.of(), List.of());
         }
 
-        private static List<String> parseNames(String output, Pattern marker) {
-            Set<String> names = new LinkedHashSet<>();
-            Matcher matcher = marker.matcher(output);
-            while (matcher.find()) {
-                names.add(matcher.group(1).trim());
+        /**
+         * The reports archive could not be read or was rejected (a linked/escaping/oversize entry): treat as a non-compiling build (no tests) so the oracle rejects, fail-closed.
+         */
+        static BuildSummary unparseable(int exitCode) {
+            return new BuildSummary(0, 0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of());
+        }
+
+        /**
+         * Builds the summary from the collected report files (flat name -> bytes): every file whose canonical token is the JUnit token is parsed by {@link TestResultXmlParser}
+         * (failed + successful test jobs), every file whose name is a recognised SCA report is parsed by {@link ReportParser} (real derived categories). A report that fails to
+         * parse is skipped (fail-open per file), so a single malformed report cannot crash the verdict; the differential and integrity gates handle the resulting summary.
+         */
+        static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
+            List<LocalCITestJobDTO> failed = new ArrayList<>();
+            List<LocalCITestJobDTO> successful = new ArrayList<>();
+            List<ScaPenaltyParity.ScaFinding> scaFindings = new ArrayList<>();
+            for (Map.Entry<String, byte[]> report : reports.entrySet()) {
+                String canonical = canonicalToken(report.getKey());
+                String content = CollectedReports.asString(report.getValue());
+                if (SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN.equals(canonical)) {
+                    try {
+                        TestResultXmlParser.processTestResultFile(content, failed, successful);
+                    }
+                    catch (IOException | RuntimeException e) {
+                        log.warn("Skipping an unparseable JUnit report ({}): {}", report.getKey(), e.getMessage());
+                    }
+                }
+                else {
+                    parseScaReport(content, canonical, scaFindings);
+                }
             }
-            return List.copyOf(names);
+            List<String> testNames = new ArrayList<>();
+            List<String> failedNames = new ArrayList<>();
+            failed.forEach(job -> {
+                testNames.add(job.name());
+                failedNames.add(job.name());
+            });
+            successful.forEach(job -> testNames.add(job.name()));
+            int tests = failed.size() + successful.size();
+            return new BuildSummary(tests, failed.size(), 0, exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(scaFindings));
+        }
+
+        /**
+         * Parses one collected SCA report with the production {@link ReportParser}, routed by its canonical report file name so {@code ParserPolicy} selects the right parser, and
+         * appends each issue's {@code (tool, real derived category)} to {@code scaFindings}. An unsupported tool ({@link UnsupportedToolException}) or a malformed report is
+         * skipped
+         * (fail-open), so a non-SCA file that happened to be collected, or a tool the parser cannot handle, cannot break the verdict.
+         */
+        private static void parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
+            try {
+                StaticCodeAnalysisReportDTO report = ReportParser.getReport(content, canonicalFileName);
+                if (report == null || report.issues() == null || report.tool() == null) {
+                    return;
+                }
+                String tool = report.tool().name();
+                for (StaticCodeAnalysisIssue issue : report.issues()) {
+                    scaFindings.add(new ScaPenaltyParity.ScaFinding(tool, issue.category()));
+                }
+            }
+            catch (UnsupportedToolException e) {
+                // Fail-open: a tool the production parser does not support yields no SCA signal rather than a crash.
+                log.debug("No SCA parser for collected report {}: {}", canonicalFileName, e.getMessage());
+            }
+            catch (RuntimeException e) {
+                log.warn("Skipping an unparseable SCA report ({}): {}", canonicalFileName, e.getMessage());
+            }
+        }
+
+        /** The canonical routing token a collected file name carries (the segment after the {@code <seq>__} prefix): the JUnit token or an SCA tool's canonical report name. */
+        private static String canonicalToken(String collectedName) {
+            int sep = collectedName.indexOf(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR);
+            return sep < 0 ? collectedName : collectedName.substring(sep + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR.length());
         }
     }
 }

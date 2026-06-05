@@ -3,12 +3,17 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.condition.OS.LINUX;
 import static org.junit.jupiter.api.condition.OS.MAC;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -18,27 +23,33 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
+import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 /**
- * Adversarial parity probe: does the sandbox {@code verify.sh} oracle ACCEPT imply the persisted exercise grades correctly in PRODUCTION?
+ * Parity probe: does the sandbox verdict track PRODUCTION grading semantics on byte-identical reports?
  * <p>
- * This test does NOT spin up Docker or the GPU. It drives the EXACT shell snippets the shipped {@code verify.sh} contains (sliced out of the live script text, run under a real
- * POSIX
- * {@code sh}) and compares their verdict to the PRODUCTION grading semantics ({@link TestResultXmlParser} — the parser the real LocalCI pipeline uses) on byte-identical JUnit XML.
- * Where the two disagree on the SAME report, the sandbox oracle can accept an exercise that the real pipeline grades wrong. Each divergence is reproduced, not asserted from
- * theory.
- * <p>
- * The single high-value divergence reproduced here is SKIPPED tests: production drops a {@code <testcase><skipped/></testcase>} entirely (it is neither successful nor failed, so
- * the
- * synced test case is graded as "not executed" = 0 credit), while {@code verify.sh} counts the skipped {@code <testcase>} element toward the solution test count and emits a name
- * for
- * it but no failure — so the differential oracle treats the solution as a full pass.
+ * After the refactor this is parity <em>by construction</em>: the verifier collects the report files the live {@code verify.sh} writes and parses them with the SAME production
+ * code
+ * the real LocalCI pipeline uses ({@link TestResultXmlParser} for JUnit, {@link ReportParser} for SCA). There is no separate shell parser to drift. This test pins that by driving
+ * the LIVE collect step under a real POSIX {@code sh} and feeding the collected reports into the production parsers, for the two historically-divergent shapes:
+ * <ul>
+ * <li><b>SKIPPED tests</b> — production drops a {@code <testcase><skipped/></testcase>} (graded as not-executed). Because the verifier now uses {@code TestResultXmlParser} on the
+ * collected report, the skip is dropped identically; a test skipped on the solution but failing on the template makes the solution run fewer tests than the template, which the
+ * oracle's count gate rejects.</li>
+ * <li><b>SCA findings</b> — the SCA reports carry no {@code <testcase>}, so they are invisible to the JUnit differential, but the verifier collects them and
+ * {@link ScaPenaltyParity}
+ * flags exactly the findings production's {@code calculateTotalPenalty} would penalise, using the REAL derived category from {@link ReportParser}.</li>
+ * </ul>
  */
 class SandboxProductionParityDivergenceTest {
 
-    // A solution-build report where ONE test is reported <skipped/> (e.g. JUnit @Disabled / an assumption that did not hold, pytest skip, Go t.Skip via go-junit-report). The other
-    // two pass. Production: the skipped case is dropped (neither successful nor failed); verify.sh: it is counted as a testcase and its name emitted, with no failure.
     private static final String SOLUTION_WITH_SKIP = """
             <?xml version="1.0" encoding="UTF-8"?>
             <testsuite name="StackTest" tests="3" failures="0" errors="0" skipped="1">
@@ -48,74 +59,41 @@ class SandboxProductionParityDivergenceTest {
             </testsuite>
             """;
 
-    // The SAME suite on the template: the two real tests fail, and the same test is still skipped. The template "fails the tests"; the skipped one is again dropped by production
-    // and
-    // emitted-without-failure by verify.sh.
-    private static final String TEMPLATE_WITH_SKIP = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuite name="StackTest" tests="3" failures="2" errors="0" skipped="1">
-              <testcase name="push_then_pop" classname="StackTest"><failure message="x"/></testcase>
-              <testcase name="size_tracks_elements" classname="StackTest"><failure message="x"/></testcase>
-              <testcase name="peek_does_not_remove" classname="StackTest"><skipped/></testcase>
-            </testsuite>
-            """;
-
-    /**
-     * PRODUCTION side: the parser the real LocalCI pipeline uses drops the skipped testcase from BOTH the successful and the failed lists. So the persisted exercise's synced test
-     * case {@code peek_does_not_remove} receives no feedback on the solution build, and production grades it as not-executed (0 credit) — the solution cannot reach 100%.
-     */
-    @Test
-    void production_TestResultXmlParser_dropsSkippedTestcaseEntirely() throws Exception {
-        List<LocalCITestJobDTO> failed = new ArrayList<>();
-        List<LocalCITestJobDTO> successful = new ArrayList<>();
-        TestResultXmlParser.processTestResultFile(SOLUTION_WITH_SKIP, failed, successful);
-
-        List<String> successfulNames = successful.stream().map(LocalCITestJobDTO::name).toList();
-        List<String> failedNames = failed.stream().map(LocalCITestJobDTO::name).toList();
-
-        // The two real tests are successful; the skipped one is in NEITHER list — production simply does not see it as a passing test.
-        assertThat(successfulNames).containsExactlyInAnyOrder("push_then_pop", "size_tracks_elements");
-        assertThat(failedNames).isEmpty();
-        assertThat(successfulNames).as("production never counts the skipped test as a pass").doesNotContain("peek_does_not_remove");
-        assertThat(failedNames).doesNotContain("peek_does_not_remove");
+    private static SandboxBuildCommandService factory() {
+        BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
+        when(phases.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of(new BuildPhaseDTO("test", "echo run", null, false, List.of())));
+        return new SandboxBuildCommandService(Optional.of(phases), Optional.of(new BuildScriptProviderService()));
     }
 
     /**
-     * SANDBOX side (the D1 divergence is now FIXED): the shipped {@code verify.sh} excludes a {@code <testcase>} carrying a {@code <skipped/>} child from BOTH the executed test
-     * count and the emitted HYPERION_TESTNAME set, mirroring {@code TestResultXmlParser.isSkipped() → continue}. The oracle now sees solution tests=2 (the two real tests), and the
-     * skipped name is in neither the solution-passing set nor the failed set — exactly like production.
+     * Production drops the skipped testcase from BOTH lists — and so does the verifier, because it parses the collected report with the very same {@link TestResultXmlParser}. We
+     * collect the report through the LIVE script and parse the collected bytes, proving the skip is excluded by construction (no shell re-implementation to diverge).
      */
     @EnabledOnOs({ LINUX, MAC })
     @Test
-    void sandbox_verifyScript_excludesSkippedTestcase_matchingProduction(@TempDir Path tempDir) throws Exception {
-        var solution = aggregate(tempDir, "sol", SOLUTION_WITH_SKIP);
-        var solutionEmit = emit(tempDir, "sol-emit", SOLUTION_WITH_SKIP);
-        var template = aggregate(tempDir, "tpl", TEMPLATE_WITH_SKIP);
+    void collectedSkippedReport_isParsedByProductionParser_excludingTheSkip(@TempDir Path tempDir) throws Exception {
+        Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), new ProgrammingExercise(), tempDir, "skip",
+                Map.of("test-results/results.xml", SOLUTION_WITH_SKIP));
+        assertThat(collected).hasSize(1);
 
-        // verify.sh now excludes the skipped testcase from the executed count: tests=2 (the two real tests), with skipped=1 recorded separately.
-        assertThat(solution.tests()).as("verify.sh excludes the skipped <testcase> from the solution test count").isEqualTo(2);
-        assertThat(solution.failures()).isZero();
-        assertThat(solution.errors()).isZero();
-        assertThat(solution.skipped()).isEqualTo(1);
+        List<LocalCITestJobDTO> failed = new ArrayList<>();
+        List<LocalCITestJobDTO> successful = new ArrayList<>();
+        TestResultXmlParser.processTestResultFile(collected.values().iterator().next(), failed, successful);
 
-        // The skipped test's name is emitted in NEITHER the solution name set nor the failed set (production records it as neither successful nor failed).
-        assertThat(solutionEmit.names()).as("the skipped test is not emitted as a solution test name").doesNotContain("peek_does_not_remove");
-        assertThat(solutionEmit.names()).containsExactlyInAnyOrder("push_then_pop", "size_tracks_elements");
-        assertThat(solutionEmit.failed()).doesNotContain("peek_does_not_remove");
-
-        // Both runs exclude the same skip, so the counts still agree (no spurious "different number of tests" rejection for a symmetric skip).
-        assertThat(template.tests()).isEqualTo(solution.tests());
+        List<String> successfulNames = successful.stream().map(LocalCITestJobDTO::name).toList();
+        assertThat(successfulNames).as("the two real tests pass; the skipped one is excluded exactly as production grades").containsExactlyInAnyOrder("push_then_pop",
+                "size_tracks_elements");
+        assertThat(failed).isEmpty();
+        assertThat(successfulNames).doesNotContain("peek_does_not_remove");
     }
 
-    // A real-shaped SpotBugs report (one bug instance) and a Checkstyle report (one error), as the SCA static phase (`mvn spotbugs:spotbugs checkstyle:checkstyle …`,
-    // java/plain_maven_static.yaml) writes them. They carry NO <testcase> element, so the sandbox's JUnit-XML aggregation cannot see them — while production parses them into SCA
-    // feedback and (when SCA is enabled with a penalty) subtracts a penalty from the solution score (ProgrammingExerciseGradingService.calculateTotalPenalty).
     private static final String SPOTBUGS_REPORT = """
             <?xml version="1.0" encoding="UTF-8"?>
             <BugCollection version="4.7.3">
+              <Project><SrcDir>src</SrcDir></Project>
               <BugInstance type="DM_DEFAULT_ENCODING" priority="2" category="STYLE">
                 <Class classname="de.test.Stack"/>
-                <SourceLine classname="de.test.Stack" start="12" end="12"/>
+                <SourceLine classname="de.test.Stack" sourcepath="de/test/Stack.java" start="12" end="12"/>
               </BugInstance>
             </BugCollection>
             """;
@@ -130,168 +108,117 @@ class SandboxProductionParityDivergenceTest {
             """;
 
     /**
-     * SCA divergence: a reference SOLUTION with static-analysis violations. The sandbox aggregation cannot see the SpotBugs/Checkstyle reports (no {@code <testcase>}), so the SCA
-     * phase exits 0 and contributes nothing to the verdict — verify.sh accepts the solution as a full pass. Production parses these reports and, when
-     * {@code staticCodeAnalysisEnabled}
-     * with a penalty, deducts from the score so the solution grades below 100%. The authentic E2E test disables SCA, so it never reproduces this. Here we prove the sandbox side is
-     * blind: a build dir containing ONLY the SCA reports (no JUnit XML) aggregates to zero tests, exactly as a passing solution's SCA phase would add zero to the count.
+     * The SCA reports carry no {@code <testcase>}, so the JUnit differential is blind to them — but the verifier collects them and parses them with the production
+     * {@link ReportParser}, which derives the SAME categories production grades. {@link ScaPenaltyParity} then flags exactly what production's {@code calculateTotalPenalty} would
+     * penalise: the Checkstyle javadoc finding is penalised iff the "Documentation" category is GRADED with a positive penalty (default INACTIVE => nothing flagged, matching
+     * production).
      */
     @EnabledOnOs({ LINUX, MAC })
     @Test
-    void sandbox_ignoresStaticCodeAnalysisReports_whileProductionWouldPenalizeThem(@TempDir Path tempDir) throws Exception {
-        Path buildDir = Files.createDirectories(tempDir.resolve("sca"));
-        Path marker = VerifyScriptTestHarness.staleBuildStartMarker(buildDir);
-        // The SCA phase writes its reports under target/ (Maven) — not into any of the JUnit report-glob locations and with no <testcase> content.
-        Path target = Files.createDirectories(buildDir.resolve("target"));
-        VerifyScriptTestHarness.writeString(target.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT);
-        VerifyScriptTestHarness.writeString(target.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT);
+    void collectedScaReports_areParsedByProductionParser_andFlaggedOnlyWhenProductionWouldPenalise(@TempDir Path tempDir) throws Exception {
+        Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), scaJavaExercise(), tempDir, "sca",
+                Map.of("test-results/results.xml", "<testsuite name=\"T\" tests=\"0\"/>", "spotbugsXml.xml", SPOTBUGS_REPORT, "checkstyle-result.xml", CHECKSTYLE_REPORT));
 
-        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\n" + aggregationSnippet()
-                + "\necho \"tests=$tests failures=$failures errors=$errors skipped=$skipped\"\n";
-        Path scriptFile = tempDir.resolve("sca-aggregate.sh");
-        VerifyScriptTestHarness.writeString(scriptFile, script);
-        String output = VerifyScriptTestHarness.runSh(scriptFile);
-        // The sandbox sees zero tests/failures from the SCA reports: they are invisible to its verdict. (A real solution would also have its JUnit reports; the point is the SCA
-        // violation contributes NOTHING, so it cannot pull the sandbox verdict below a full pass — but production's SCA penalty pulls the real score below 100%.)
-        assertThat(output).as("verify.sh aggregation ignores SpotBugs/Checkstyle reports (no <testcase>)").contains("tests=0").contains("failures=0").contains("errors=0");
-    }
+        // The two SCA reports were collected under their canonical names; parse them with production's ReportParser to get the real derived categories.
+        List<ScaPenaltyParity.ScaFinding> findings = parseCollectedSca(collected);
+        assertThat(findings).anyMatch(f -> "SPOTBUGS".equals(f.tool()));
+        assertThat(findings).anyMatch(f -> "CHECKSTYLE".equals(f.tool()) && "javadoc".equals(f.category()));
 
-    /**
-     * The D2 divergence is now CLOSED for the SCA-penalising case. The aggregation still ignores SCA reports (they carry no {@code <testcase>}), but the script ADDITIONALLY emits
-     * a
-     * {@code HYPERION_SCA <TOOL>|<rawCategory>} line per finding, and {@link ScaPenaltyParity} (the pure replica of production's {@code calculateTotalPenalty} gating) flags
-     * exactly
-     * the findings production would penalise. Here the byte-identical SpotBugs/Checkstyle fixtures from the divergence repro, with a GRADED + positively-penalised category, ARE
-     * flagged — so the oracle would REJECT a reference solution production would dock below 100%, instead of accepting it.
-     */
-    @EnabledOnOs({ LINUX, MAC })
-    @Test
-    void parity_scaFindings_areFlaggedWhenProductionWouldPenalise(@TempDir Path tempDir) throws Exception {
-        List<String> findings = runScaSection(tempDir, "sca-closed");
-
-        // The script now surfaces the SpotBugs and Checkstyle findings with the SAME raw category production's parsers assign (DM_DEFAULT_ENCODING => I category in our fixture;
-        // the
-        // Checkstyle JavadocType rule => javadoc category).
-        assertThat(findings).anyMatch(f -> f.startsWith("SPOTBUGS|"));
-        assertThat(findings).contains("CHECKSTYLE|javadoc");
-
-        // Production grades the "Documentation" category (which the checkstyle 'javadoc' mapping feeds) — if an instructor marks it GRADED with a positive penalty, the solution's
-        // javadoc finding is penalised. ScaPenaltyParity flags it, so the oracle rejects (divergence closed). The default category is INACTIVE, so by default nothing is flagged.
+        // Documentation graded with a positive penalty => the javadoc finding is penalised => the oracle would reject.
         ProgrammingExercise gradedDoc = scaExercise(50, "Documentation", CategoryState.GRADED, 1.0);
-        List<String> penalising = ScaPenaltyParity.penalisingFindings(gradedDoc, gradedDoc.getStaticCodeAnalysisCategories(), findings);
-        assertThat(penalising).as("the javadoc finding is penalised when Documentation is graded -> oracle rejects").contains("CHECKSTYLE|javadoc");
+        assertThat(ScaPenaltyParity.penalisingFindings(gradedDoc, gradedDoc.getStaticCodeAnalysisCategories(), findings))
+                .as("the javadoc finding is penalised when Documentation is graded -> oracle rejects").anyMatch(f -> "CHECKSTYLE".equals(f.tool()));
 
-        // Default config (all FEEDBACK/INACTIVE): NOTHING is penalising, so the oracle's accept is unchanged — exactly matching production, which deducts no penalty without a
-        // graded category.
+        // Default config (INACTIVE): nothing penalising => accept unchanged, matching production's no-penalty default.
         ProgrammingExercise defaultConfig = scaExercise(50, "Documentation", CategoryState.INACTIVE, 1.0);
         assertThat(ScaPenaltyParity.penalisingFindings(defaultConfig, defaultConfig.getStaticCodeAnalysisCategories(), findings))
                 .as("no graded category => no penalty => no rejection (parity with production's default)").isEmpty();
     }
 
-    /** A SCA-enabled Java exercise with one persisted category, used to drive ScaPenaltyParity exactly as the oracle does. */
-    private static ProgrammingExercise scaExercise(int maxPenalty, String categoryName, CategoryState state, double penalty) {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(99L);
-        exercise.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
-        exercise.setStaticCodeAnalysisEnabled(true);
-        exercise.setMaxStaticCodeAnalysisPenalty(maxPenalty);
-        var category = new de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory();
-        category.setName(categoryName);
-        category.setState(state);
-        category.setPenalty(penalty);
-        category.setMaxPenalty(penalty * 10);
-        category.setProgrammingExercise(exercise);
-        exercise.setStaticCodeAnalysisCategories(new java.util.HashSet<>(java.util.Set.of(category)));
-        return exercise;
-    }
-
-    /** Runs the live SCA emission block (sliced from the generated SCA-enabled script) against the SpotBugs/Checkstyle fixtures and returns the emitted findings. */
-    private List<String> runScaSection(Path tempDir, String name) throws Exception {
-        Path buildDir = Files.createDirectories(tempDir.resolve(name));
-        Path marker = VerifyScriptTestHarness.staleBuildStartMarker(buildDir);
-        VerifyScriptTestHarness.writeString(buildDir.resolve("spotbugsXml.xml"), SPOTBUGS_REPORT);
-        VerifyScriptTestHarness.writeString(buildDir.resolve("checkstyle-result.xml"), CHECKSTYLE_REPORT);
-
-        BuildPhasesTemplateService phases = org.mockito.Mockito.mock(BuildPhasesTemplateService.class);
-        org.mockito.Mockito.when(phases.getDefaultBuildPlanPhasesFor(org.mockito.ArgumentMatchers.any()))
-                .thenReturn(List.of(new de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO("build", "echo build", null, false, List.of())));
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
-        exercise.setStaticCodeAnalysisEnabled(true);
-        String fullScript = new SandboxBuildCommandService(Optional.of(phases), Optional.of(new de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService()))
-                .verifyScriptContent(exercise);
-        int start = fullScript.indexOf("emit_sca_for() {");
-        int end = fullScript.indexOf("echo \"" + "HYPERION_RESULT", start);
-        assertThat(start).isGreaterThanOrEqualTo(0);
-        assertThat(end).isGreaterThan(start);
-        String scaSection = fullScript.substring(start, end);
-
-        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nMARK_SUFFIX=''\n" + scaSection + "\n";
-        Path scriptFile = tempDir.resolve(name + "-sca.sh");
-        VerifyScriptTestHarness.writeString(scriptFile, script);
-        String output = VerifyScriptTestHarness.runSh(scriptFile);
-        List<String> findings = new ArrayList<>();
-        for (String line : output.split("\n")) {
-            if (line.startsWith("HYPERION_SCA ")) {
-                findings.add(line.substring("HYPERION_SCA ".length()).trim());
+    /** Parses each collected SCA report (keyed by {@code <seq>__<canonical>}) with production's {@link ReportParser}, returning the tool + real derived category per issue. */
+    private static List<ScaPenaltyParity.ScaFinding> parseCollectedSca(Map<String, String> collected) {
+        List<ScaPenaltyParity.ScaFinding> findings = new ArrayList<>();
+        for (Map.Entry<String, String> entry : collected.entrySet()) {
+            int sep = entry.getKey().indexOf(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR);
+            String canonical = sep < 0 ? entry.getKey() : entry.getKey().substring(sep + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR.length());
+            if (canonical.equals(SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN)) {
+                continue;
+            }
+            StaticCodeAnalysisReportDTO report = ReportParser.getReport(entry.getValue(), canonical);
+            for (StaticCodeAnalysisIssue issue : report.issues()) {
+                findings.add(new ScaPenaltyParity.ScaFinding(report.tool().name(), issue.category()));
             }
         }
         return findings;
     }
 
-    // A TEMPLATE build where the test that was SKIPPED on the solution instead FAILS on the template (the student's missing implementation makes the assumption/precondition no
-    // longer
-    // skip, or the test is simply not skipped here). This is the decisive ACCEPT-path scenario: because peek_does_not_remove is now in the template's FAILED set, the oracle's
-    // production-parity gate ("every solution-passing test must fail on the template") does NOT flag it, and the suite is accepted — yet on the SOLUTION it was skipped, so
-    // production
-    // grades it as not-executed and the solution scores below 100%.
-    private static final String TEMPLATE_SKIPPED_TEST_FAILS = """
+    private static final String GCC_REPORT = """
             <?xml version="1.0" encoding="UTF-8"?>
-            <testsuite name="StackTest" tests="3" failures="3" errors="0" skipped="0">
-              <testcase name="push_then_pop" classname="StackTest"><failure message="x"/></testcase>
-              <testcase name="size_tracks_elements" classname="StackTest"><failure message="x"/></testcase>
-              <testcase name="peek_does_not_remove" classname="StackTest"><failure message="x"/></testcase>
-            </testsuite>
+            <root>main.c:10:5: warning: unused variable 'x' [-Wunused-variable]
+            </root>
             """;
 
     /**
-     * The decisive proof that the divergence is now CLOSED. The dangerous case is a test SKIPPED on the solution but FAILING on the template: production grades the
-     * skipped-on-solution
-     * test as not-executed (0 credit), so the persisted solution would land below 100%. With the fix, the live {@code verify.sh} excludes the skipped case from the SOLUTION test
-     * count and names, while on the template that same test is a real failing testcase — so the solution runs FEWER tests (2) than the template (3), and the oracle's "template
-     * runs a
-     * different number of tests" gate ({@code AuthoritativeVerificationService}, the {@code template.tests() != solution.tests()} check) rejects the exercise instead of accepting
-     * it.
+     * Proves the production category derivation is now used for GCC (and, by the same {@code ReportParser} path, SARIF): the {@code -Wunused-variable} warning derives the concrete
+     * category {@code BadPractice} (mapping to the "Bad Practice" default category), NOT the old {@code *} sentinel. So {@link ScaPenaltyParity} penalises it iff "Bad Practice" is
+     * graded — and a finding in a DIFFERENT graded category ("Security") is NOT penalised, where the old conservative {@code <tool>|*} would have over-rejected it.
      */
-    @EnabledOnOs({ LINUX, MAC })
     @Test
-    void divergence_isClosed_oracleRejectsWhenSkippedSolutionTestFailsOnTemplate(@TempDir Path tempDir) throws Exception {
-        // Build the solution/template counts and name sets exactly as the live verify.sh emits them.
-        var solution = aggregate(tempDir, "acc-sol", SOLUTION_WITH_SKIP);
-        var solutionEmit = emit(tempDir, "acc-sol-emit", SOLUTION_WITH_SKIP);
-        var template = aggregate(tempDir, "acc-tpl", TEMPLATE_SKIPPED_TEST_FAILS);
+    void gccCategoryIsDerivedByProduction_soANonMatchingGradedCategoryDoesNotPenalise() {
+        StaticCodeAnalysisReportDTO report = ReportParser.getReport(GCC_REPORT, "gcc.xml");
+        assertThat(report.issues()).as("a concrete GCC finding is parsed").hasSize(1);
+        String derivedCategory = report.issues().getFirst().category();
+        assertThat(derivedCategory).as("the real derived category is used, not the old * sentinel").isEqualTo("BadPractice").isNotEqualTo("*");
+        List<ScaPenaltyParity.ScaFinding> findings = List.of(new ScaPenaltyParity.ScaFinding(report.tool().name(), derivedCategory));
 
-        // The skipped-on-solution test is no longer counted or named as a solution test (production parity).
-        assertThat(solutionEmit.names()).as("the skipped-on-solution test is excluded from the solution name set").doesNotContain("peek_does_not_remove");
-        assertThat(solution.tests()).as("solution runs only the 2 executed tests").isEqualTo(2);
+        // "Bad Practice" graded (the default category the BadPractice GCC finding maps to) => penalised.
+        ProgrammingExercise badPracticeGraded = scaCExercise("Bad Practice", CategoryState.GRADED, 1.0);
+        assertThat(ScaPenaltyParity.penalisingFindings(badPracticeGraded, badPracticeGraded.getStaticCodeAnalysisCategories(), findings))
+                .as("a GCC finding in a graded matching category is penalised").hasSize(1);
 
-        // On the template that test FAILS (it is a real testcase there), so the template runs 3 tests. The counts now differ, which is exactly the oracle's reject condition
-        // (template.tests() != solution.tests()), closing the sandbox-accept-but-production-solution-below-100% path.
-        assertThat(template.tests()).as("the template runs the previously-skipped test as a real failing test").isEqualTo(3);
-        assertThat(solution.tests()).as("solution and template now report a DIFFERENT number of tests -> the oracle rejects").isNotEqualTo(template.tests());
+        // "Security" graded but the finding's derived category is "BadPractice" => NOT penalised (the old <tool>|* sentinel would have flagged it conservatively).
+        ProgrammingExercise securityGraded = scaCExercise("Security", CategoryState.GRADED, 1.0);
+        assertThat(ScaPenaltyParity.penalisingFindings(securityGraded, securityGraded.getStaticCodeAnalysisCategories(), findings))
+                .as("a GCC finding whose derived category is not the graded one must NOT penalise (real derivation, not <tool>|*)").isEmpty();
     }
 
-    // ---- Live verify.sh snippet drivers: the aggregation/emit drivers are shared with SandboxBuildCommandServiceTest via VerifyScriptTestHarness. ----
-
-    private VerifyScriptTestHarness.Aggregate aggregate(Path tempDir, String name, String reportXml) throws Exception {
-        return VerifyScriptTestHarness.aggregate(tempDir, name, reportXml);
+    /** A SCA-enabled C exercise with one persisted GCC category whose name is a default GCC category ("Bad Practice"/"Security"), graded with the given state/penalty. */
+    private static ProgrammingExercise scaCExercise(String categoryName, CategoryState state, double penalty) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(101L);
+        exercise.setProgrammingLanguage(ProgrammingLanguage.C);
+        exercise.setStaticCodeAnalysisEnabled(true);
+        exercise.setMaxStaticCodeAnalysisPenalty(50);
+        var category = new StaticCodeAnalysisCategory();
+        category.setName(categoryName);
+        category.setState(state);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(penalty * 10);
+        category.setProgrammingExercise(exercise);
+        exercise.setStaticCodeAnalysisCategories(new HashSet<>(Set.of(category)));
+        return exercise;
     }
 
-    private String aggregationSnippet() {
-        return VerifyScriptTestHarness.aggregationSnippet();
+    private static ProgrammingExercise scaJavaExercise() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setStaticCodeAnalysisEnabled(true);
+        return exercise;
     }
 
-    private VerifyScriptTestHarness.Emitted emit(Path tempDir, String name, String reportXml) throws Exception {
-        return VerifyScriptTestHarness.emit(tempDir, name, reportXml, "");
+    private static ProgrammingExercise scaExercise(int maxPenalty, String categoryName, CategoryState state, double penalty) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(99L);
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setStaticCodeAnalysisEnabled(true);
+        exercise.setMaxStaticCodeAnalysisPenalty(maxPenalty);
+        var category = new StaticCodeAnalysisCategory();
+        category.setName(categoryName);
+        category.setState(state);
+        category.setPenalty(penalty);
+        category.setMaxPenalty(penalty * 10);
+        category.setProgrammingExercise(exercise);
+        exercise.setStaticCodeAnalysisCategories(new HashSet<>(Set.of(category)));
+        return exercise;
     }
 }

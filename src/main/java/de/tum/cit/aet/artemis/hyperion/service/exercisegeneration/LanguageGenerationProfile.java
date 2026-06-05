@@ -229,7 +229,7 @@ final class LanguageGenerationProfile {
             - CRITICAL for the differential: the template must COMPILE against EVERY test package and run the SAME number of tests as the solution. Every function, type, and method your \
             tests reference must ALSO exist in the template (with a wrong stub body, an empty interface{}, or an empty struct{}); if a test package references a symbol the template \
             lacks, that package fails to compile, runs FEWER tests than the solution, and the exercise is rejected for a test-count mismatch. Run `sh verify.sh template` and confirm its \
-            tests=N equals the solution's before submitting."""
+            collected report runs the same number of tests as the solution's before submitting."""
             .formatted(TASK_NAME_RULE);
 
     private static final String RUST = """
@@ -260,7 +260,7 @@ final class LanguageGenerationProfile {
             sorting_algorithms/selection_sort) and the [task] must use that exact path, not the bare section name. %s
             - CRITICAL for the differential: the template's header (include/*.hpp) must declare the COMPLETE interface — EVERY class, method, and signature the tests call — IDENTICAL \
             to the solution's header; only the .cpp method BODIES differ, stubbed with `throw std::logic_error("not implemented");`. If the template header omits a member a test uses, \
-            that TEST_CASE fails to COMPILE and the template runs FEWER tests than the solution (rejected). Run `sh verify.sh template` and confirm its tests=N equals the solution's. \
+            that TEST_CASE fails to COMPILE and the template runs FEWER tests than the solution (rejected). Run `sh verify.sh template` and confirm it runs the same number of tests as the solution. \
             The headers are the shared CONTRACT, so before submitting run `diff -r solution/include template/include` — it MUST print NOTHING: the headers must be byte-identical \
             (comments included), since the problem statement presents them as the same contract. Cover each operation across happy, empty, single-element, and a larger/stress input, \
             and keep flat `TEST_CASE`s (no SECTION) so each binds by its own name."""
@@ -309,7 +309,7 @@ final class LanguageGenerationProfile {
             For this Dart exercise:
             - Library sources go under solution/lib/*.dart and template/lib/*.dart with snake_case filenames (e.g. lib/bubble_sort.dart); the pubspec.yaml `name:` is the package name. \
             The tests are under tests/test/*_test.dart with a test pubspec that has a path dependency on `../assignment`; tests import as `import 'package:<package>/bubble_sort.dart';`.
-            - Tests use package:test under tests/test/*_test.dart. CRUCIAL [task] NAMING — do NOT hand-derive it, COPY the exact strings from the `HYPERION_TESTNAME` lines verify.sh prints. \
+            - Tests use package:test under tests/test/*_test.dart. CRUCIAL [task] NAMING — do NOT hand-derive it, COPY the exact `<testcase name="...">` strings from the collected report (grep /opt/hyperion/reports/solution/* after running verify.sh). \
             The rule: the package:test full name is every enclosing `group('…')` name then the `test('…')` description joined by SINGLE SPACES (e.g. `group('reverseString'){ test('reverse_non_empty') }` \
             -> `reverseString reverse_non_empty`). Artemis PREPENDS the dot-joined test-FILE suite name (path minus `_test.dart`, separators -> dots, e.g. `test.palindrome`) ONLY when the run has \
             TWO OR MORE test files; with a SINGLE test file (the common case — one top-level suite) that file prefix is DROPPED and the reported name is the BARE `reverseString reverse_non_empty`. The \

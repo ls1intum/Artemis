@@ -143,12 +143,12 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void build_pointsTaskBindingsAtTheAuthoritativeTestnameLines() {
-        // The per-language [task] naming rules are guides; the authoritative source is verify.sh's HYPERION_TESTNAME lines, which the agent must read and copy verbatim. This is
-        // what
-        // lets the agent self-correct when a framework's reported name differs from the profile's described rule (e.g. Dart group+test space-joining).
+    void build_pointsTaskBindingsAtTheAuthoritativeCollectedReports() {
+        // The per-language [task] naming rules are guides; the authoritative source is the test runner's own result report, now collected under /opt/hyperion/reports/, which the
+        // agent must grep and copy verbatim. This is what lets the agent self-correct when a framework's reported name differs from the profile's described rule (e.g. Dart
+        // group+test space-joining).
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.DART, ""));
-        assertThat(prompt).contains("HYPERION_TESTNAME").contains("exact identifier to bind each [task] to");
+        assertThat(prompt).contains("/opt/hyperion/reports/solution/").contains("<testcase name=");
     }
 
     @Test

@@ -16,12 +16,11 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCatego
  * reference solution that production would grade below 100% because of an SCA penalty.
  * <p>
  * <strong>Why this exists.</strong> When an exercise has static code analysis enabled, both the sandbox {@code verify.sh} and production run the same {@code *_static.yaml} phases,
- * so the SCA tools (SpotBugs/Checkstyle/PMD, ruff/clippy/eslint/…) execute in BOTH. But their reports carry no JUnit {@code <testcase>}, so the sandbox's JUnit-XML aggregation
- * ignores them and the differential oracle saw the solution as a 100% pass — while production folds an SCA penalty into the score
- * ({@code ProgrammingExerciseGradingService.calculateTotalPenalty}). A reference solution with graded SCA violations was therefore ACCEPTED by the oracle yet grades below 100% for
- * a
- * student. {@code verify.sh} now emits a {@code HYPERION_SCA <TOOL>|<rawCategory>} line per solution-build SCA finding; this class decides which of those production would actually
- * penalise.
+ * so the SCA tools (SpotBugs/Checkstyle/PMD, ruff/clippy/eslint/…) execute in BOTH. But their reports carry no JUnit {@code <testcase>}, so the differential oracle (which decides
+ * only from JUnit results) is blind to them while production folds an SCA penalty into the score ({@code ProgrammingExerciseGradingService.calculateTotalPenalty}). A reference
+ * solution with graded SCA violations was therefore ACCEPTED by the oracle yet grades below 100% for a student. The verifier now collects the SCA report files and parses them with
+ * the production {@code ReportParser} (so each finding carries the REAL derived category, including SARIF/GCC via the production categorizers), then asks this class which of those
+ * findings production would actually penalise.
  * <p>
  * <strong>Faithful to {@code calculateTotalPenalty}.</strong> Production deducts an SCA penalty iff ALL hold:
  * <ol>
@@ -37,8 +36,18 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCatego
  */
 final class ScaPenaltyParity {
 
-    /** Sentinel raw-category for findings whose real category {@code verify.sh} could not derive in POSIX (SARIF/GCC/…); treated as "any category of the producing tool". */
-    static final String UNKNOWN_CATEGORY = SandboxBuildCommandService.SCA_UNKNOWN_CATEGORY;
+    /**
+     * One static-code-analysis finding the verifier extracted from a collected SCA report: the producing tool name (matching a {@link StaticCodeAnalysisTool} enum constant) and
+     * the
+     * REAL derived issue category from the production {@code ReportParser} (including SARIF/GCC categorizers). Used in place of the older {@code <TOOL>|<rawCategory>} string form
+     * so
+     * there is no string-splitting and no sentinel "undetermined" category — the production parser always yields a concrete category.
+     *
+     * @param tool     the producing tool name (e.g. {@code SPOTBUGS}, {@code RUFF})
+     * @param category the real derived issue category (e.g. {@code STYLE}, {@code javadoc})
+     */
+    record ScaFinding(String tool, String category) {
+    }
 
     private ScaPenaltyParity() {
     }
@@ -46,10 +55,10 @@ final class ScaPenaltyParity {
     /**
      * @param exercise            the exercise whose SCA configuration governs grading (must be the persisted exercise, so its language and id resolve the default mappings)
      * @param persistedCategories the exercise's persisted SCA categories (read the same way production does, {@code findByExerciseId}); their state/penalty decide grading
-     * @param solutionFindings    the {@code <TOOL>|<rawCategory>} findings {@code verify.sh} emitted for the SOLUTION build (the {@code HYPERION_SCA} payloads)
+     * @param solutionFindings    the SCA findings the verifier extracted from the SOLUTION build's collected reports (tool + real derived category)
      * @return the distinct findings that production WOULD penalise (a graded, positively-penalised category); empty when production would deduct nothing
      */
-    static List<String> penalisingFindings(ProgrammingExercise exercise, Set<StaticCodeAnalysisCategory> persistedCategories, List<String> solutionFindings) {
+    static List<ScaFinding> penalisingFindings(ProgrammingExercise exercise, Set<StaticCodeAnalysisCategory> persistedCategories, List<ScaFinding> solutionFindings) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
             return List.of();
         }
@@ -63,18 +72,13 @@ final class ScaPenaltyParity {
             return List.of();
         }
 
-        List<String> penalising = new ArrayList<>();
-        for (String finding : solutionFindings) {
-            int sep = finding.indexOf('|');
-            if (sep < 0) {
+        List<ScaFinding> penalising = new ArrayList<>();
+        for (ScaFinding finding : solutionFindings) {
+            if (finding == null || finding.tool() == null || finding.tool().isEmpty()) {
                 continue;
             }
-            String tool = finding.substring(0, sep).trim();
-            String rawCategory = finding.substring(sep + 1).trim();
-            if (tool.isEmpty()) {
-                continue;
-            }
-            if (isPenalising(tool, rawCategory, persistedCategories, defaults) && !penalising.contains(finding)) {
+            String category = finding.category() == null ? "" : finding.category().trim();
+            if (isPenalising(finding.tool().trim(), category, persistedCategories, defaults) && !penalising.contains(finding)) {
                 penalising.add(finding);
             }
         }
@@ -82,35 +86,26 @@ final class ScaPenaltyParity {
     }
 
     /**
-     * Whether a single {@code (tool, rawCategory)} finding maps to a persisted category that is {@code GRADED} with a positive penalty — i.e. production would deduct points for
-     * it.
+     * Whether a single {@code (tool, category)} finding maps to a persisted category that is {@code GRADED} with a positive penalty — i.e. production would deduct points for it.
      * Mirrors {@code findCategoryForIssue} (a persisted category matches a default category by name, and that default's {@code categoryMappings} contains
      * {@code (tool, category)}),
      * plus the {@code GRADED} + {@code penalty > 0} gate of {@code calculateStaticCodeAnalysisPenalty}.
-     * <p>
-     * For {@link #UNKNOWN_CATEGORY} findings (the tools whose category is not derived in POSIX), the finding is penalising iff the producing TOOL has ANY persisted graded,
-     * positively-penalised category — the documented conservative fallback (a sound over-rejection rather than an unsound accept).
      */
-    private static boolean isPenalising(String tool, String rawCategory, Set<StaticCodeAnalysisCategory> persistedCategories, List<StaticCodeAnalysisDefaultCategory> defaults) {
-        boolean unknownCategory = UNKNOWN_CATEGORY.equals(rawCategory);
-        for (StaticCodeAnalysisCategory category : persistedCategories) {
-            if (category.getState() != CategoryState.GRADED) {
+    private static boolean isPenalising(String tool, String category, Set<StaticCodeAnalysisCategory> persistedCategories, List<StaticCodeAnalysisDefaultCategory> defaults) {
+        for (StaticCodeAnalysisCategory persisted : persistedCategories) {
+            if (persisted.getState() != CategoryState.GRADED) {
                 continue;
             }
             // A GRADED category with no positive penalty deducts nothing (categoryFeedback.size() * penalty == 0), so it cannot pull the solution below 100%.
-            if (category.getPenalty() == null || category.getPenalty() <= 0) {
+            if (persisted.getPenalty() == null || persisted.getPenalty() <= 0) {
                 continue;
             }
-            StaticCodeAnalysisDefaultCategory defaultMatch = defaults.stream().filter(d -> d.name().equals(category.getName())).findFirst().orElse(null);
+            StaticCodeAnalysisDefaultCategory defaultMatch = defaults.stream().filter(d -> d.name().equals(persisted.getName())).findFirst().orElse(null);
             if (defaultMatch == null) {
                 continue;
             }
             for (StaticCodeAnalysisDefaultCategory.CategoryMapping mapping : defaultMatch.categoryMappings()) {
-                if (!mapping.tool().name().equalsIgnoreCase(tool)) {
-                    continue;
-                }
-                // Category match (production semantics), or the conservative tool-wide match for an undetermined category.
-                if (unknownCategory || mapping.category().equalsIgnoreCase(rawCategory)) {
+                if (mapping.tool().name().equalsIgnoreCase(tool) && mapping.category().equalsIgnoreCase(category)) {
                     return true;
                 }
             }

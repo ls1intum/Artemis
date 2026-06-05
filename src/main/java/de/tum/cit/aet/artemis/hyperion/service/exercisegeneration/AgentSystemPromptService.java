@@ -79,17 +79,20 @@ public class AgentSystemPromptService {
                   [task][Short human title](testIdA,testIdB)
                 where the names in parentheses are the test identifiers EXACTLY as this language's test runner writes them into its result report — which differs by framework (a \
                 method/function name, a test description string, a nested-name path, or a framework-specific id). The LANGUAGE-SPECIFIC section below describes the rule for your \
-                framework as a guide, but the AUTHORITATIVE source is the verifier itself: every `sh verify.sh solution` run prints one `HYPERION_TESTNAME <name>` line per test, and \
-                <name> is the EXACT string to put in a [task] — so after your tests run, read those lines and copy the names verbatim (never a display name or a prose title; if a name \
-                contains spaces or slashes, keep them). Put the human-readable wording in the [Short human title] part only. Every test you write must be referenced by exactly one \
-                [task]. These [task] lines ARE the grading section — do not write a prose "Grading" list instead; students see them as a checklist that turns green per test.
+                framework as a guide, but the AUTHORITATIVE source is the test runner's own result report: after `sh verify.sh solution`, the build's report files are collected under \
+                `/opt/hyperion/reports/solution/` — grep them for the exact identifiers, e.g. `grep -ho 'name="[^"]*"' /opt/hyperion/reports/solution/*` (the `<testcase name="...">` value is \
+                the EXACT string to put in a [task]; a nested suite contributes a dot-prefix — keep spaces and slashes verbatim, never a display name or prose title). Put the human-readable \
+                wording in the [Short human title] part only. Every test you write must be referenced by exactly one [task]. These [task] lines ARE the grading section — do not write a \
+                prose "Grading" list instead; students see them as a checklist that turns green per test.
 
                 CHECK YOUR WORK with the build recipe — this is exactly what the grader runs, so use it constantly:
-                  sh verify.sh solution   # must end with exit=0 and tests>0, failures=0, errors=0
-                  sh verify.sh template   # must end with a non-zero exit and at least one failure/error, with the SAME tests count as the solution
-                Each run prints a line like: HYPERION_RESULT tests=N failures=F errors=E skipped=S exit=RC — read it to see exactly where you stand — plus one `HYPERION_TESTNAME <name>` \
-                line per test, whose <name> is the exact identifier to bind each [task] to. The tests directory is shared verbatim between solution and template (they differ ONLY in the \
-                assignment source bodies), so both runs must report the same tests=N. Before you submit, re-read your tests against the problem statement and confirm there is a test for \
+                  sh verify.sh solution   # must exit 0; its report must show every test passing
+                  sh verify.sh template   # must exit non-zero with at least one failing/erroring test, at the SAME tests count as the solution
+                Each run ends with a line like: HYPERION_COLLECTED tests=N sca=M exit=RC — N is how many report files were collected and RC is the build exit code; this is a liveness \
+                signal, NOT the verdict. The grader reads the COLLECTED report files (the same ones under /opt/hyperion/reports/<solution|template>/) with the production parsers, so to \
+                see exactly where you stand, read the build's own test output and grep those collected reports (`grep -c '<testcase' /opt/hyperion/reports/solution/*` for the count, and \
+                the `<failure`/`<error` children for which tests failed). The tests directory is shared verbatim between solution and template (they differ ONLY in the \
+                assignment source bodies), so both runs must report the same number of tests. Before you submit, re-read your tests against the problem statement and confirm there is a test for \
                 EVERY promise and edge case you stated — empty, single-element, several-element/ordering, and each invariant and exception type; an untested promise is a hole that lets a \
                 broken solution score full marks. Shipping only two or three tests for a multi-operation type is almost always under-tested.%s
 

@@ -8,33 +8,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Shared test harness for driving the EXACT shell snippets the shipped {@code verify.sh} contains: it renders the live script via {@link SandboxBuildCommandService}, slices a
- * named
- * region out of it (so the shell under test is byte-identical to what ships), and runs that region under a real POSIX {@code sh}. Used by both
- * {@link SandboxBuildCommandServiceTest}
- * and {@link SandboxProductionParityDivergenceTest} so the aggregation/emit drivers live in one place rather than being copy-pasted across the two suites.
+ * Shared test harness for driving the EXACT collect step the shipped {@code verify.sh} contains: it renders the live script via {@link SandboxBuildCommandService}, slices the
+ * report-collection region out of it (so the shell under test is byte-identical to what ships), and runs that region under a real POSIX {@code sh} against a fixture build tree. It
+ * then returns the files the script COLLECTED into the verifier-owned reports dir (keyed by their flat {@code <seq>__<canonical>} name), which the verifier would copy out and
+ * parse
+ * with the production parsers — so a test can feed the collected JUnit report straight into {@code TestResultXmlParser} and prove parity-by-construction.
  */
 final class VerifyScriptTestHarness {
 
     private VerifyScriptTestHarness() {
-    }
-
-    /** The four aggregated counters {@code verify.sh} computes from the JUnit XML. */
-    record Aggregate(int tests, int failures, int errors, int skipped) {
-    }
-
-    /** The {@code HYPERION_TESTNAME} and {@code HYPERION_TESTFAIL} names the {@code emit_test_lines} block printed for a fixture. */
-    record Emitted(List<String> names, List<String> failed) {
     }
 
     /** Writes a UTF-8 text fixture via Apache {@link FileUtils} (the arch-mandated replacement for {@code Files.write*}), creating any missing parent directories. */
@@ -47,17 +40,16 @@ final class VerifyScriptTestHarness {
         return new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
     }
 
+    /** The full text of the live generated {@code verify.sh} for the given exercise (used to exercise the SCA collection for an SCA-enabled exercise). */
+    static String verifyScript(SandboxBuildCommandService service, ProgrammingExercise exercise) {
+        return service.verifyScriptContent(exercise);
+    }
+
     /**
      * Slices the half-open region {@code [start, endInclusive)} out of the live {@code verify.sh}, where the region runs from the FIRST occurrence of {@code startMarker} through
-     * the
-     * end of the first occurrence of {@code endMarker} at or after it. Asserts both markers are present so a drifting snippet boundary fails loudly.
-     *
-     * @param startMarker the literal text the snippet starts at
-     * @param endMarker   the literal text the snippet ends at (included in full)
-     * @return the sliced shell snippet
+     * the end of the first occurrence of {@code endMarker} at or after it. Asserts both markers are present so a drifting snippet boundary fails loudly.
      */
-    static String slice(String startMarker, String endMarker) {
-        String script = verifyScript();
+    static String slice(String script, String startMarker, String endMarker) {
         int start = script.indexOf(startMarker);
         assertThat(start).as("snippet start marker '%s' present in verify.sh", startMarker).isNotNegative();
         int end = script.indexOf(endMarker, start);
@@ -76,64 +68,7 @@ final class VerifyScriptTestHarness {
         return output;
     }
 
-    /**
-     * Writes the fixture XML into a fresh report directory (with an OLD build-start marker so the report is strictly newer and counted) and runs the live aggregation snippet
-     * against
-     * it under {@code sh}, returning the four counters the script would print.
-     *
-     * @param tempDir   the per-test temporary directory
-     * @param name      a unique name for this run's build subtree
-     * @param reportXml the JUnit XML fixture to aggregate
-     * @return the aggregated counters
-     */
-    static Aggregate aggregate(Path tempDir, String name, String reportXml) throws IOException, InterruptedException {
-        Path buildDir = Files.createDirectories(tempDir.resolve(name));
-        Path marker = staleBuildStartMarker(buildDir);
-        Path reportDir = Files.createDirectories(buildDir.resolve("test-results"));
-        writeString(reportDir.resolve("results.xml"), reportXml);
-
-        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\n" + aggregationSnippet()
-                + "\necho \"tests=$tests failures=$failures errors=$errors skipped=$skipped\"\n";
-        Path scriptFile = tempDir.resolve(name + "-aggregate.sh");
-        writeString(scriptFile, script);
-
-        return parseAggregate(runSh(scriptFile));
-    }
-
-    /**
-     * Writes the fixture XML into a fresh report directory and runs the live {@code emit_test_lines} block against it under {@code sh}, returning the emitted test-name and
-     * failing-test-name lines (with the given {@code MARK_SUFFIX}, modelling the per-run nonce).
-     *
-     * @param tempDir    the per-test temporary directory
-     * @param name       a unique name for this run's report subtree
-     * @param reportXml  the JUnit XML fixture to emit names for
-     * @param markSuffix the {@code MARK_SUFFIX} value the verifier would pass (empty for no nonce)
-     * @return the emitted names and failing names
-     */
-    static Emitted emit(Path tempDir, String name, String reportXml, String markSuffix) throws IOException, InterruptedException {
-        Path reportDir = Files.createDirectories(tempDir.resolve(name).resolve("test-results"));
-        Path report = reportDir.resolve("results.xml");
-        writeString(report, reportXml);
-
-        String script = "MARK_SUFFIX='" + markSuffix + "'\nxml='" + report + "'\n" + emitSnippet() + "\n";
-        Path scriptFile = tempDir.resolve(name + "-emit.sh");
-        writeString(scriptFile, script);
-
-        String output = runSh(scriptFile);
-        List<String> names = new ArrayList<>();
-        List<String> failed = new ArrayList<>();
-        for (String line : output.split("\n")) {
-            if (line.startsWith("HYPERION_TESTNAME ")) {
-                names.add(line.substring("HYPERION_TESTNAME ".length()));
-            }
-            else if (line.startsWith("HYPERION_TESTFAIL ")) {
-                failed.add(line.substring("HYPERION_TESTFAIL ".length()));
-            }
-        }
-        return new Emitted(names, failed);
-    }
-
-    /** Creates the {@code .hyperion-build-start} marker with an mtime an hour in the past, so any report written afterwards is strictly newer and is counted. */
+    /** Creates the {@code .hyperion-build-start} marker with an mtime an hour in the past, so any report written afterwards is strictly newer and is collected. */
     static Path staleBuildStartMarker(Path buildDir) throws IOException {
         Path marker = buildDir.resolve(".hyperion-build-start");
         writeString(marker, "");
@@ -142,38 +77,46 @@ final class VerifyScriptTestHarness {
     }
 
     /**
-     * Slices the report-aggregation block (the skipped-aware {@code tests} computation through the last {@code errors=$(sum_attr errors)} counter) out of the live
-     * {@code verify.sh}.
+     * Runs the live JUnit-and-SCA collect step (sliced from the generated script) against a fixture build tree and returns the files it collected into the reports dir, keyed by
+     * their flat collected name. The collected JUnit report can then be fed straight into the production {@code TestResultXmlParser}, so the test proves the verifier parses
+     * exactly
+     * what the script collected.
+     *
+     * @param service    the build-command service whose live script provides the collect step (use an SCA-enabled exercise to also exercise SCA collection)
+     * @param exercise   the exercise whose script is rendered
+     * @param tempDir    the per-test temporary directory
+     * @param name       a unique name for this run's build subtree
+     * @param buildFiles files to write into the build tree BEFORE collection (relative path -> content), e.g. {@code test-results/results.xml}
+     * @return the collected files keyed by their flat {@code <seq>__<canonical>} name
      */
-    static String aggregationSnippet() {
-        return slice("xml=$(find", "errors=$(sum_attr errors)");
-    }
+    static Map<String, String> collect(SandboxBuildCommandService service, ProgrammingExercise exercise, Path tempDir, String name, Map<String, String> buildFiles)
+            throws IOException, InterruptedException {
+        Path buildDir = Files.createDirectories(tempDir.resolve(name).resolve("build"));
+        Path reportsParent = Files.createDirectories(tempDir.resolve(name).resolve("reports-root"));
+        Path marker = staleBuildStartMarker(buildDir);
+        for (Map.Entry<String, String> file : buildFiles.entrySet()) {
+            Path target = buildDir.resolve(file.getKey());
+            Files.createDirectories(target.getParent());
+            writeString(target, file.getValue());
+        }
 
-    /** Slices the {@code emit_test_lines()} function definition plus its standalone invocation out of the live {@code verify.sh}. */
-    static String emitSnippet() {
-        return slice("emit_test_lines() {", "\nemit_test_lines\n");
-    }
+        String fullScript = verifyScript(service, exercise);
+        String collectSnippet = slice(fullScript, "rm -rf \"$REPORTS_DIR\"", "echo \"" + SandboxBuildCommandService.COLLECTED_MARKER);
+        // Bind the variables the collect snippet reads; point REPORTS_DIR at a per-run dir so we can read back what was collected.
+        Path reportsDir = reportsParent.resolve("solution");
+        String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nREPORTS_DIR='" + reportsDir + "'\nrc=0\nseq=0\n" + collectSnippet + "\n";
+        Path scriptFile = tempDir.resolve(name + "-collect.sh");
+        writeString(scriptFile, script);
+        runSh(scriptFile);
 
-    /** Parses a {@code tests=N failures=N errors=N skipped=N} line (in any token order) into an {@link Aggregate}. */
-    static Aggregate parseAggregate(String output) {
-        int tests = 0;
-        int failures = 0;
-        int errors = 0;
-        int skipped = 0;
-        for (String token : output.trim().split("\\s+")) {
-            String[] keyValue = token.split("=", 2);
-            if (keyValue.length != 2) {
-                continue;
-            }
-            switch (keyValue[0]) {
-                case "tests" -> tests = Integer.parseInt(keyValue[1]);
-                case "failures" -> failures = Integer.parseInt(keyValue[1]);
-                case "errors" -> errors = Integer.parseInt(keyValue[1]);
-                case "skipped" -> skipped = Integer.parseInt(keyValue[1]);
-                default -> {
+        Map<String, String> collected = new LinkedHashMap<>();
+        if (Files.isDirectory(reportsDir)) {
+            try (Stream<Path> files = Files.list(reportsDir)) {
+                for (Path file : (Iterable<Path>) files.sorted()::iterator) {
+                    collected.put(file.getFileName().toString(), Files.readString(file, StandardCharsets.UTF_8));
                 }
             }
         }
-        return new Aggregate(tests, failures, errors, skipped);
+        return collected;
     }
 }

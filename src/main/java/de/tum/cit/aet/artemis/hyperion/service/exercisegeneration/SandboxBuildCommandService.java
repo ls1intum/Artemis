@@ -29,9 +29,17 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
  * <p>
  * The script faithfully reproduces the real Artemis CI layout ({@code templates/localci/<lang>/build_and_run_tests.sh}): it assembles a fresh, hermetic build tree, copies the
  * tests into it, copies the chosen assignment ({@code solution/} or {@code template/}) into an {@code assignment/} directory next to the tests (so the test project's
- * {@code sourceDirectory} resolves against the assignment exactly as in CI), runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}), and then
- * emits a machine-readable {@code HYPERION_RESULT} line aggregated from the JUnit XML reports. Parsing the XML rather than scraping the build log makes the verdict
- * build-tool-agnostic and immune to log-format changes, and lets the oracle distinguish "compiled but tests failed" from "did not compile" (no reports at all).
+ * {@code sourceDirectory} resolves against the assignment exactly as in CI), and runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
+ * <p>
+ * <strong>The verdict is no longer parsed inside the shell.</strong> Earlier versions re-implemented JUnit/SCA parsing in POSIX {@code awk} (a byte-lexer scrub, a
+ * {@code <testcase>}
+ * counter, an SCA category extractor) and printed nonce-stamped {@code HYPERION_*} marker lines the verifier scraped from stdout. That re-implementation could only ever
+ * approximate
+ * the production parsers and reopened a forgery surface (markup-looking text in a test's captured output). Instead, the script now COLLECTS the build-fresh report files into a
+ * fixed,
+ * verifier-owned directory ({@link #REPORTS_DIR}) and the trusted Java verifier copies that directory out of the container and parses it with the SAME production code the real
+ * LocalCI pipeline uses ({@code TestResultXmlParser}, {@code ReportParser}). This gives parity-by-construction, a real XML parser, and production SARIF/GCC category derivation for
+ * free. The script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line; the verdict is read entirely from the collected files in Java.
  */
 @Lazy
 @Service
@@ -43,40 +51,33 @@ public class SandboxBuildCommandService {
     static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
     /**
-     * Verifier-owned directory OUTSIDE {@code /workspace} where the authoritative verifier re-seeds a pristine {@code verify.sh} before each run. The agent tools only resolve
-     * paths
-     * under {@code /workspace}, so a path here is unreachable through them — the grader runs a script the agent never touched, which is what makes the verdict non-forgeable.
+     * Verifier-owned directory OUTSIDE {@code /workspace} where the authoritative verifier re-seeds a pristine {@code verify.sh} before each run AND where that script collects the
+     * report files. The agent tools only resolve paths under {@code /workspace}, so a path here is unreachable through them — the grader runs a script the agent never touched and
+     * reads reports from a directory the agent cannot write, which is what makes the verdict non-forgeable.
      */
     static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} the authoritative verifier runs (never the agent's {@code /workspace} copy). */
     static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
-    /** The prefix of the machine-readable summary line {@code verify.sh} prints; the verifier parses the line that starts with this token. */
-    static final String RESULT_MARKER = "HYPERION_RESULT";
+    /**
+     * Verifier-owned, agent-unreachable directory the pristine script collects build-fresh report files INTO and the verifier {@code copyOut}s FROM. A constant path the verifier
+     * knows a priori — NEVER derived from agent output — so the bytes the verifier parses cannot be redirected by anything the agent writes under {@code /workspace}.
+     */
+    static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
-    /** The prefix of the per-test-name lines {@code verify.sh} prints (one per JUnit testcase), so the verifier can confirm every [task] binding resolves to a real test name. */
-    static final String TESTNAME_MARKER = "HYPERION_TESTNAME";
+    /** The prefix of the single non-authoritative liveness line {@code verify.sh} prints (collected report counts); the verdict is read from the collected files, not this line. */
+    static final String COLLECTED_MARKER = "HYPERION_COLLECTED";
 
     /**
-     * The prefix of the per-test lines {@code verify.sh} prints for every {@code <testcase>} that carries a {@code <failure>}/{@code <error>} child (one per failing/erroring
-     * testcase). The verifier uses the TEMPLATE run's set to require that every {@code [task]}-bound test the solution passes actually FAILS on the template — so a template that
-     * accidentally satisfies a graded test (e.g. {@code fibonacci(0)==0} for a {@code return 0} stub) is rejected rather than shipped as a free-points exercise.
+     * Filename component the collect step appends to every collected JUnit report ({@code <seq>__junit.xml}); the verifier routes a collected file whose canonical token equals
+     * this
+     * through {@code TestResultXmlParser}. SCA reports keep their canonical per-tool name ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) as the token instead.
      */
-    static final String TESTFAIL_MARKER = "HYPERION_TESTFAIL";
+    static final String COLLECTED_JUNIT_TOKEN = "junit.xml";
 
-    /**
-     * The prefix of the per-static-code-analysis-finding lines {@code verify.sh} prints (one per parsed SCA issue) when the exercise has static code analysis ENABLED. Each line
-     * carries the producing tool and the issue's raw category as {@code <TOOL>|<rawCategory>} (or {@code <TOOL>|*} for the SARIF/GCC/etc. tools whose category requires the
-     * heavyweight production categorizer, which is not reimplemented in POSIX). The {@link AuthoritativeVerificationService} maps each {@code (tool, rawCategory)} through the real
-     * production category configuration ({@code StaticCodeAnalysisConfigurer} + the exercise's persisted categories) to decide whether the finding falls in a {@code GRADED}
-     * category with a positive penalty — i.e. whether production's {@code calculateTotalPenalty} would dock the solution for it. The marker is emitted only when SCA is enabled, so
-     * the verdict for a non-SCA exercise is byte-for-byte unchanged.
-     */
-    static final String SCA_MARKER = "HYPERION_SCA";
-
-    /** Sentinel raw-category for SCA findings whose real category is not cheaply derivable in POSIX (SARIF/GCC/etc.); the oracle treats it as "any category of this tool". */
-    static final String SCA_UNKNOWN_CATEGORY = "*";
+    /** The separator between the uniquifying sequence and the canonical token in a collected file name ({@code 0001__junit.xml}, {@code 0007__spotbugsXml.xml}). */
+    static final String COLLECTED_NAME_SEPARATOR = "__";
 
     /**
      * JUnit-XML report locations that cover the languages Artemis ships, independent of any phase-declared paths (surefire/failsafe for Maven, Gradle's test-results, and the
@@ -97,24 +98,31 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * @param nonce the per-run anti-forgery nonce the pristine script stamps onto every {@code HYPERION_*} marker; the verifier honors only nonce-bearing lines
      * @return the command that runs the PRISTINE (verifier-controlled, outside {@code /workspace}) verification with the solution as the assignment
      */
-    public String pristineSolutionBuildCommand(String nonce) {
-        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION), nonce);
+    public String pristineSolutionBuildCommand() {
+        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
     }
 
     /**
-     * @param nonce the per-run anti-forgery nonce (see {@link #pristineSolutionBuildCommand})
      * @return the command that runs the PRISTINE verification with the template as the assignment
      */
-    public String pristineTemplateBuildCommand(String nonce) {
-        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), nonce);
+    public String pristineTemplateBuildCommand() {
+        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
     }
 
-    private static String pristineVerifyInvocation(String assignmentDirectory, String nonce) {
-        // The nonce is the script's second argument; quoted defensively even though it is hex.
-        return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory + " '" + nonce + "'";
+    /**
+     * The verifier-owned directory the pristine script collected the reports for an assignment into, which the verifier copies out and parses.
+     *
+     * @param assignment the assignment directory name ({@code solution} or {@code template})
+     * @return the absolute container path of that assignment's collected-reports directory
+     */
+    public static String reportsDirectoryFor(String assignment) {
+        return REPORTS_DIR + "/" + assignment;
+    }
+
+    private static String pristineVerifyInvocation(String assignmentDirectory) {
+        return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory;
     }
 
     /**
@@ -126,27 +134,24 @@ public class SandboxBuildCommandService {
     public String verifyScriptContent(ProgrammingExercise exercise) {
         BuildRecipe recipe = resolveBuildRecipe(exercise);
         String findExpression = buildFindExpression(recipe.reportGlobs());
+        String scaFindExpression = buildScaFindExpression(recipe.scaReportFiles());
         // Materialize the tests at the language's real test checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        // The script is intentionally plain POSIX sh so it runs in any of the ~20 language images (some have no bash). It must not abort before printing HYPERION_RESULT, so each
+        // The script is intentionally plain POSIX sh so it runs in any of the ~20 language images (some have no bash). It must not abort before collecting the reports, so each
         // phase runs in its own subshell (re-rooted at the build dir, like real CI) and a non-zero exit is recorded rather than aborting the script.
         return """
                 #!/bin/sh
                 # Generated by Artemis Hyperion. Assembles the CI build layout and runs the exercise's real build phases for one assignment (solution or template),
-                # then prints a machine-readable result line. Used by both the generation agent (to self-check) and the authoritative verifier (to decide acceptance).
+                # then COLLECTS the build-fresh test/SCA report files into a fixed, verifier-owned directory. Used by both the generation agent (to self-check) and the
+                # authoritative verifier (which copies the collected reports out and parses them with the production parsers — the verdict is NOT decided in this script).
                 ASSIGNMENT="$1"
                 if [ "$ASSIGNMENT" != "solution" ] && [ "$ASSIGNMENT" != "template" ]; then
-                    echo "usage: verify.sh <solution|template> [nonce]" >&2
+                    echo "usage: verify.sh <solution|template>" >&2
                     exit 64
                 fi
-                # Anti-forgery nonce (second argument). The authoritative verifier passes a fresh, unguessable token per run and stamps it onto every HYPERION_* marker below, then
-                # accepts ONLY marker lines bearing this exact token. A HYPERION_TESTFAIL/HYPERION_RESULT line the agent's test code prints to stdout (interleaved with the phase
-                # output the verifier scrapes) cannot carry this token, so it is ignored. The agent's own /workspace self-check passes no nonce (the markers are then unprefixed),
-                # which is fine — that copy's verdict is never trusted. A trailing space keeps the marker shape "MARKER<sp>tests=" identical when no nonce is supplied.
-                NONCE="$2"
-                if [ -n "$NONCE" ]; then MARK_SUFFIX=" $NONCE"; else MARK_SUFFIX=""; fi
                 WORKSPACE="%s"
+                REPORTS_DIR="%s/$ASSIGNMENT"
                 BUILD_DIR=$(mktemp -d /tmp/hyperion-verify.XXXXXX) || exit 70
                 trap 'rm -rf "$BUILD_DIR"' EXIT
                 # Materialize the CI checkout layout: the tests at the language's test checkout path, the chosen assignment in assignment/ (-a preserves exec bits and binaries).
@@ -165,12 +170,12 @@ public class SandboxBuildCommandService {
                         -e 's#${testWorkingDirectory}#.#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
                 # Anti-forgery: delete every pre-existing report XML before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
-                # this run are aggregated.
+                # this run are collected.
                 find "$BUILD_DIR" -type f \\( %s \\) -delete 2>/dev/null || true
-                # Reference marker; the aggregation counts only reports NEWER than it, so a planted report that escaped the delete still cannot be summed.
+                # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
-                # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template and is the verdict.
+                # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template.
                 rc=0
                 run_phase() {
                     ( cd "$BUILD_DIR" || exit 70; set -e; eval "$1" )
@@ -178,130 +183,29 @@ public class SandboxBuildCommandService {
                     if [ "$phase_rc" -ne 0 ] && [ "$rc" -eq 0 ]; then rc=$phase_rc; fi
                 }
                 %s
-                # Aggregate the JUnit XML the runner wrote this run (newer than the build-start marker). Absent reports => 0 (e.g. a compile error means the runner never wrote any).
-                xml=$(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null)
-                # Anti-forgery (report-text): the grep/awk below is not a real XML parser, so a passing test could forge a FAILED-looking verdict by printing markup-looking text into
-                # its own <system-out>/<failure>/CDATA/comment (which production's TestResultXmlParser records as text, never structure). Scrub each report first: delete comments, CDATA
-                # sections, and the bodies of <system-out>/<system-err>/<failure>/<error> while KEEPING their start/end tags, so the scrubbed counts/names match what TestResultXmlParser
-                # records. Consumers read the scrubbed copies via the reassigned $xml; empty $xml (compile error) skips the scrub.
-                if [ -n "$xml" ]; then
-                    SCRUB_DIR=$(mktemp -d /tmp/hyperion-scrub.XXXXXX) || exit 70
-                    scrubbed_xml=""
-                    scrub_n=0
-                    for report in $xml; do
-                        scrub_n=$((scrub_n + 1))
-                        scrubbed_report="$SCRUB_DIR/report-$scrub_n.xml"
-                        # Lexer: walk byte-by-byte; suppress holds the local name of the element whose body is being dropped ("" = not suppressing).
-                        awk '
-                        { buf = buf $0 "\\n" }
-                        END {
-                            n = length(buf); out = ""; i = 1; suppress = ""
-                            while (i <= n) {
-                                if (substr(buf, i, 4) == "<!--") { e = index(substr(buf, i + 4), "-->"); if (e == 0) { i = n + 1; continue } i = i + 4 + e + 2; continue }
-                                if (substr(buf, i, 9) == "<![CDATA[") { e = index(substr(buf, i + 9), "]]>"); if (e == 0) { i = n + 1; continue } i = i + 9 + e + 2; continue }
-                                c = substr(buf, i, 1)
-                                if (suppress != "") {
-                                    if (c == "<" && substr(buf, i + 1, 1) == "/") {
-                                        if (match(substr(buf, i + 2), /^[A-Za-z_:][-A-Za-z0-9_:.]*/)) {
-                                            tname = substr(buf, i + 2, RLENGTH); sub(/^[^:]*:/, "", tname)
-                                            if (tname == suppress) {
-                                                e = index(substr(buf, i), ">"); if (e == 0) { i = n + 1; continue }
-                                                out = out substr(buf, i, e); i = i + e; suppress = ""; continue
-                                            }
-                                        }
-                                    }
-                                    i = i + 1; continue
-                                }
-                                if (c == "<") {
-                                    if (match(substr(buf, i + 1), /^[A-Za-z_:][-A-Za-z0-9_:.]*/)) {
-                                        base = substr(buf, i + 1, RLENGTH); sub(/^[^:]*:/, "", base)
-                                        if (base == "system-out" || base == "system-err" || base == "failure" || base == "error") {
-                                            e = index(substr(buf, i), ">"); if (e == 0) { i = n + 1; continue }
-                                            starttag = substr(buf, i, e); out = out starttag; i = i + e
-                                            if (substr(starttag, length(starttag) - 1, 1) != "/") { suppress = base }
-                                            continue
-                                        }
-                                    }
-                                }
-                                out = out c; i = i + 1
-                            }
-                            printf "%%s", out
-                        }' "$report" > "$scrubbed_report" 2>/dev/null || cp "$report" "$scrubbed_report" 2>/dev/null
-                        scrubbed_xml="$scrubbed_xml $scrubbed_report"
-                    done
-                    xml="$scrubbed_xml"
-                fi
-                sum_attr() {
-                    if [ -z "$xml" ]; then echo 0; return; fi
-                    grep -ho "$1=\\"[0-9]*\\"" $xml 2>/dev/null | tr -dc '0-9\\n' | awk '{ s += $1 } END { print s + 0 }'
+                # Collect the build-fresh report files into the verifier-owned REPORTS_DIR. The verifier copies THIS directory out of the container and parses each file with the
+                # production parsers, so the verdict rests on real parsing, not shell text-scraping. We copy ONLY regular files (find -type f already excludes symlinks/dirs/devices)
+                # and re-seed the directory empty each run so a previous run's reports cannot leak in. Each file is renamed to <seq>__<canonical> so the verifier can route it:
+                # JUnit reports get the fixed canonical token "%s"; SCA reports keep their per-tool canonical name so ParserPolicy picks the right parser.
+                rm -rf "$REPORTS_DIR" 2>/dev/null || true
+                mkdir -p "$REPORTS_DIR" || exit 70
+                collected_tests=0
+                collected_sca=0
+                collect_one() {
+                    # $1 = source file, $2 = canonical token. cp -P never follows a symlink; combined with the -type f find that produced $1, only a regular file is copied.
+                    seq=$1; src=$2; canonical=$3
+                    cp -P "$src" "$REPORTS_DIR/$(printf '%%04d' "$seq")%s$canonical" 2>/dev/null || true
                 }
-                # Count <testcase> ELEMENTS, not the testsuite tests="N" attribute: they agree for every framework except Catch2 (C++), whose tests="N" is the assertion count and so
-                # differs between a passing solution and a fewer-assertion failing template, falsely tripping the "different number of tests" gate.
-                count_testcases() {
-                    if [ -z "$xml" ]; then echo 0; return; fi
-                    grep -ho '<testcase[^>]*>' $xml 2>/dev/null | wc -l | tr -dc '0-9'
-                }
-                # A <testcase> with a <skipped> child is graded by production as NOT EXECUTED (neither successful nor failed); the oracle must mirror that, excluding it from the
-                # executed count and the emitted names, else a test skipped on the solution but failing on the template is wrongly counted as a solution pass.
-                count_skipped_cases() {
-                    if [ -z "$xml" ]; then echo 0; return; fi
-                    grep -Eho '<skipped([[:space:]/>]|$)' $xml 2>/dev/null | wc -l | tr -dc '0-9'
-                }
-                all_testcases=$(count_testcases)
-                skipped=$(count_skipped_cases)
-                tests=$((all_testcases - skipped))
-                failures=$(sum_attr failures)
-                errors=$(sum_attr errors)
-                # Emit the EXACT name Artemis records each <testcase> under (what [task] bindings match against) plus a fail line per failing testcase, composing the name the SAME way
-                # TestResultXmlParser does: the dot-joined enclosing <testsuite> names PREPENDED to the <testcase name>, EXCEPT a SINGULAR top-level testsuite contributes no prefix (so
-                # a single Dart/Rust file-suite yields the bare name, while a nested or multi-suite report keeps its prefix). Each report is passed to awk twice: pass 1 counts top-level
-                # suites for the singular-suite exception, pass 2 emits.
-                emit_test_lines() {
-                    [ -z "$xml" ] && return
-                    for report in $xml; do
-                        awk -v MARK="%s$MARK_SUFFIX" -v FAILMARK="%s$MARK_SUFFIX" '
-                        BEGIN { RS = "<"; sdepth = 0; topcount = 0 }
-                        function attrName(s,   v) {
-                            if (match(s, /[ \\t\\r\\n]name="[^"]*"/)) { v = substr(s, RSTART + 7, RLENGTH - 8); return v }
-                            return ""
-                        }
-                        function selfClosing(s) { return (s ~ /\\/>[ \\t\\r\\n]*$/) }
-                        {
-                            tag = $0; pass1 = (NR == FNR)
-                            if (tag ~ /^testsuite[ \\t\\r\\n>\\/]/ || tag ~ /^testsuite$/) {
-                                if (pass1) { if (sdepth == 0) topcount++ } else { sname[sdepth] = attrName(tag) }
-                                if (!selfClosing(tag)) sdepth++
-                                next
-                            }
-                            if (tag ~ /^\\/testsuite[ \\t\\r\\n>]/ || tag ~ /^\\/testsuite$/) { if (sdepth > 0) sdepth--; next }
-                            if (pass1) next
-                            if (tag ~ /^testcase[ \\t\\r\\n>\\/]/ || tag ~ /^testcase$/) {
-                                name = attrName(tag); prefix = ""; start = (topcount == 1) ? 1 : 0
-                                for (i = start; i < sdepth; i++) { if (sname[i] != "") prefix = prefix sname[i] "." }
-                                composed = prefix name
-                                # Defer emitting the name until the verdict is known: a self-closing <testcase/> has no children so it passed; otherwise wait for a <skipped>, a
-                                # <failure>/<error>, or </testcase>. A SKIPPED case emits NOTHING (production records it as neither successful nor failed), so it never looks like a
-                                # passing solution test.
-                                if (selfClosing(tag)) { print MARK " " composed; curName = "" } else { curName = composed }
-                                next
-                            }
-                            if (tag ~ /^skipped[ \\t\\r\\n>\\/]/ || tag ~ /^skipped$/) { curName = ""; next }
-                            if (tag ~ /^failure[ \\t\\r\\n>\\/]/ || tag ~ /^failure$/ || tag ~ /^error[ \\t\\r\\n>\\/]/ || tag ~ /^error$/) {
-                                if (curName != "") { print MARK " " curName; print FAILMARK " " curName; curName = "" }
-                                next
-                            }
-                            if (tag ~ /^\\/testcase[ \\t\\r\\n>]/ || tag ~ /^\\/testcase$/) { if (curName != "") { print MARK " " curName; curName = "" } next }
-                        }
-                        ' "$report" "$report" 2>/dev/null
-                    done
-                }
-                emit_test_lines
+                seq=0
+                for report in $(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null); do
+                    seq=$((seq + 1)); collect_one "$seq" "$report" "%s"; collected_tests=$((collected_tests + 1))
+                done
                 %s
-                echo "%s$MARK_SUFFIX tests=$tests failures=$failures errors=$errors skipped=$skipped exit=$rc"
+                echo "%s tests=$collected_tests sca=$collected_sca exit=$rc"
                 exit $rc
                 """
-                .formatted(GenerationWorkspaceService.WORKSPACE, testDestination, findExpression, phaseSection, findExpression, TESTNAME_MARKER, TESTFAIL_MARKER,
-                        buildScaSection(recipe.scaReportFiles()), RESULT_MARKER);
+                .formatted(GenerationWorkspaceService.WORKSPACE, REPORTS_DIR, testDestination, findExpression, phaseSection, COLLECTED_JUNIT_TOKEN, COLLECTED_NAME_SEPARATOR,
+                        findExpression, COLLECTED_JUNIT_TOKEN, buildScaCollectSection(scaFindExpression), COLLECTED_MARKER);
     }
 
     /**
@@ -313,96 +217,21 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Builds the POSIX-{@code sh} static-code-analysis emission block, or the empty string when SCA is disabled for the exercise ({@code scaReportFiles} empty) — in which case the
-     * generated {@code verify.sh} is byte-for-byte identical to the non-SCA script, so a non-SCA exercise's verdict cannot change.
-     * <p>
-     * When SCA is enabled, the block locates each tool's report file in the assembled build tree (restricted to reports written THIS run, {@code -newer "$BUILD_START_MARKER"}, so
-     * a
-     * planted stale report cannot fabricate an SCA finding) and emits one {@code HYPERION_SCA <nonce> <TOOL>|<rawCategory>} line per parsed issue:
-     * <ul>
-     * <li><b>SpotBugs</b> ({@code spotbugsXml.xml}) — {@code <BugInstance ... category="X" ...>} ⇒ {@code SPOTBUGS|X} (the category attribute, exactly what {@code SpotbugsParser}
-     * reads).</li>
-     * <li><b>Checkstyle</b> ({@code checkstyle-result.xml}) — {@code <error ... source="...checks.<cat>.XCheck">} ⇒ {@code CHECKSTYLE|<cat>} (the package segment after
-     * {@code .checks.}; {@code miscellaneous} when the rule sits directly under {@code checks}), mirroring {@code CheckstyleParser.extractCategory}.</li>
-     * <li><b>PMD</b> ({@code pmd.xml}) — {@code <violation ... ruleset="X" ...>} ⇒ {@code PMD|X}; <b>PMD-CPD</b> ({@code cpd.xml}) — {@code <duplication>} ⇒
-     * {@code PMD_CPD|Copy/Paste Detection}.</li>
-     * <li><b>All other tools</b> (SARIF — ruff/clippy/eslint/clang-tidy/dart/rubocop/lintr — and GCC) — these derive the issue category through the heavyweight production rule
-     * categorizer (hundreds of rule⇒category entries) that is deliberately NOT reimplemented in POSIX; so the block emits {@code <TOOL>|*} once per finding, and the oracle treats
-     * {@code *} as "any category of this tool" (a finding counts iff the tool has a GRADED, positively-penalised category in the exercise config). This is the documented,
-     * conservative residual: for these tools the oracle may reject a solution whose lone finding lies in a non-graded category of the same tool — a sound over-rejection that
-     * simply
-     * demands a lint-clean reference solution when SCA is graded, never an unsound accept.</li>
-     * </ul>
-     * Categories carrying {@code |} would corrupt the {@code <TOOL>|<category>} shape; no real SpotBugs/Checkstyle/PMD category contains a pipe, but the oracle splits on the FIRST
-     * {@code |} so a category is preserved verbatim regardless.
+     * The collect block for static-code-analysis reports, or the empty string when SCA is disabled ({@code scaFindExpression} empty) — in which case the generated
+     * {@code verify.sh}
+     * collects only JUnit reports and a non-SCA exercise's behaviour is unchanged. When SCA is enabled, the block collects each build-fresh SCA report file (restricted to the
+     * canonical per-tool names and to reports written THIS run via {@code -newer "$BUILD_START_MARKER"}, so a planted stale report cannot be collected) into the same reports dir,
+     * keeping its canonical name as the routing token so the verifier's {@code ReportParser} (production code, including the SARIF/GCC categorizers) picks the right parser.
      */
-    private static String buildScaSection(List<String> scaReportFiles) {
-        if (scaReportFiles.isEmpty()) {
+    private static String buildScaCollectSection(String scaFindExpression) {
+        if (scaFindExpression.isEmpty()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        // A helper that finds reports written THIS run matching one file name and runs the given awk program over each, stamping the nonce-bearing SCA marker via the awk -v MARK.
-        sb.append("emit_sca_for() {\n");
-        sb.append("    sca_name=\"$1\"; sca_prog=\"$2\"\n");
-        sb.append("    sca_files=$(find \"$BUILD_DIR\" -type f -name \"$sca_name\" -newer \"$BUILD_START_MARKER\" 2>/dev/null)\n");
-        sb.append("    [ -z \"$sca_files\" ] && return\n");
-        sb.append("    for sca_report in $sca_files; do\n");
-        sb.append("        awk -v MARK=\"").append(SCA_MARKER).append("$MARK_SUFFIX\" \"$sca_prog\" \"$sca_report\" 2>/dev/null || true\n");
-        sb.append("    done\n");
-        sb.append("}\n");
-        for (String fileName : scaReportFiles) {
-            StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolByFilePattern(fileName).orElse(StaticCodeAnalysisTool.OTHER);
-            String awkProg = scaAwkProgram(tool);
-            // The awk program is passed as a double-quoted sh argument; it contains no $ (so no sh expansion) and no embedded double quotes (we use single-quoted awk string
-            // literals throughout), so it is safe. The file name is a fixed, known token (no shell metacharacters).
-            sb.append("emit_sca_for '").append(fileName).append("' '").append(awkProg).append("'\n");
-        }
-        return sb.toString();
-    }
-
-    /**
-     * The awk program (record-per-{@code <} tag, like {@code emit_test_lines}) that, for one SCA tool's report, prints {@code MARK <TOOL>|<rawCategory>} per issue. SpotBugs,
-     * Checkstyle, PMD and PMD-CPD extract the real raw category; every other tool emits {@code <TOOL>|*} per finding (see {@link #buildScaSection}). The returned program is
-     * embedded
-     * inside a single-quoted sh string in {@link #buildScaSection}, so it must contain NO single quote — all string literals here use awk regex/`substr` rather than quoted
-     * strings,
-     * except where a double-quoted awk literal is used (awk literals are double-quoted, which is fine inside the sh single-quoted wrapper).
-     */
-    private static String scaAwkProgram(StaticCodeAnalysisTool tool) {
-        return switch (tool) {
-            // SpotBugs: one marker per <BugInstance ...> using its category="..." attribute.
-            case SPOTBUGS -> "BEGIN { RS = \"<\" } /^BugInstance[ \\t\\r\\n>\\/]/ { c = \"\"; "
-                    + "if (match($0, /[ \\t\\r\\n]category=\"[^\"]*\"/)) { c = substr($0, RSTART + 11, RLENGTH - 12) } if (c == \"\") { c = \"*\" } print MARK \" SPOTBUGS|\" c }";
-            // Checkstyle: one marker per <error ...>, category = the second-to-last segment of source=\"...\" (miscellaneous when that segment is literally \"checks\", i.e. the
-            // rule
-            // sits directly under the checks package), and \"Unknown\" when the source has fewer than two segments — byte-for-byte CheckstyleParser.extractCategory.
-            case CHECKSTYLE -> "BEGIN { RS = \"<\" } /^error[ \\t\\r\\n>\\/]/ { src = \"\"; "
-                    + "if (match($0, /[ \\t\\r\\n]source=\"[^\"]*\"/)) { src = substr($0, RSTART + 9, RLENGTH - 10) } " + "n = split(src, parts, \".\"); cat = \"Unknown\"; "
-                    + "if (n >= 2) { cat = parts[n - 1]; if (cat == \"checks\") { cat = \"miscellaneous\" } } " + "print MARK \" CHECKSTYLE|\" cat }";
-            // PMD: one marker per <violation ...> using its ruleset="..." attribute.
-            case PMD -> "BEGIN { RS = \"<\" } /^violation[ \\t\\r\\n>\\/]/ { c = \"\"; "
-                    + "if (match($0, /[ \\t\\r\\n]ruleset=\"[^\"]*\"/)) { c = substr($0, RSTART + 10, RLENGTH - 11) } if (c == \"\") { c = \"*\" } print MARK \" PMD|\" c }";
-            // PMD-CPD: one marker per <duplication ...> (the single Copy/Paste Detection category).
-            case PMD_CPD -> "BEGIN { RS = \"<\" } /^duplication[ \\t\\r\\n>\\/]/ { print MARK \" PMD_CPD|Copy/Paste Detection\" }";
-            // All other tools (SARIF + GCC): category requires the production categorizer, not reimplemented in POSIX. Emit <TOOL>|* once per finding (presence is what the oracle
-            // needs). SARIF: one per "ruleId" result entry; GCC: one per file:line:col: warning/error line wrapped in the report. We approximate "a finding" per tool below.
-            default -> scaGenericAwkProgram(tool);
-        };
-    }
-
-    /**
-     * The generic {@code <TOOL>|*} emitter for tools without a cheap POSIX category extraction. SARIF reports (ruff/clippy/eslint/clang-tidy/dart/rubocop/lintr) carry one
-     * {@code "ruleId"} per result; GCC's XML wraps {@code file:line:col: warning|error: ...} lines. We emit one {@code <TOOL>|*} per such finding so the oracle sees the tool
-     * produced findings; an over-count is harmless (the oracle only checks presence).
-     */
-    private static String scaGenericAwkProgram(StaticCodeAnalysisTool tool) {
-        String toolTag = tool.name();
-        if (tool == StaticCodeAnalysisTool.GCC) {
-            // GCC report: text lines (file:line:col: warning|error: msg) wrapped in <root>...</root>. Match each warning/error line.
-            return "/[0-9]+:[0-9]+:[ \\t]*(warning|error):/ { print MARK \" " + toolTag + "|*\" }";
-        }
-        // SARIF JSON: one finding per \"ruleId\" occurrence (each result references a rule). Count ruleId occurrences across the file.
-        return "{ s = $0; while (match(s, /\"ruleId\"[ \\t]*:/)) { print MARK \" " + toolTag + "|*\"; s = substr(s, RSTART + RLENGTH) } }";
+        // basename gives the canonical per-tool report name (spotbugsXml.xml, ruff.sarif, …) which the verifier routes through ParserPolicy.
+        return """
+                for report in $(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null); do
+                    seq=$((seq + 1)); collect_one "$seq" "$report" "$(basename "$report")"; collected_sca=$((collected_sca + 1))
+                done""".formatted(scaFindExpression);
     }
 
     /**
@@ -424,11 +253,24 @@ public class SandboxBuildCommandService {
     }
 
     /**
+     * Builds the {@code find} predicate matching each SCA tool's canonical report file by name ({@code -name 'spotbugsXml.xml' -o -name 'ruff.sarif' …}); empty when SCA is off.
+     */
+    private static String buildScaFindExpression(List<String> scaReportFiles) {
+        Set<String> tokens = new LinkedHashSet<>();
+        for (String fileName : scaReportFiles) {
+            if (fileName != null && !fileName.isBlank()) {
+                tokens.add("-name '" + fileName + "'");
+            }
+        }
+        return String.join(" -o ", tokens);
+    }
+
+    /**
      * The build phases (each already placeholder-substituted), the JUnit report locations, the test checkout directory ({@code ""} = build root), and — when static code analysis
      * is
-     * ENABLED for the exercise — the SCA tool report file names ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) the SCA emission scans. The SCA list is EMPTY when SCA is
+     * ENABLED for the exercise — the SCA tool report file names ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) the SCA collection scans. The SCA list is EMPTY when SCA is
      * disabled,
-     * so the generated script emits no SCA section and a non-SCA exercise's verdict is byte-for-byte unchanged.
+     * so the generated script collects no SCA reports and a non-SCA exercise's behaviour is unchanged.
      */
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String testDir, List<String> scaReportFiles) {
     }
@@ -463,11 +305,10 @@ public class SandboxBuildCommandService {
         phases.stream().filter(p -> p.resultPaths() != null).flatMap(p -> p.resultPaths().stream()).map(path -> substitute(path, assignmentDir, testDir))
                 .filter(s -> s != null && !s.isBlank()).forEach(reportGlobs::add);
 
-        // SCA report files scanned by the SCA emission, ONLY when SCA is enabled (else empty -> no SCA section -> non-SCA verdict unchanged). These are the canonical per-tool
-        // report
-        // file names production reads (StaticCodeAnalysisTool.getFileName); the static build phase writes them (e.g. java/plain_maven_static.yaml emits target/spotbugsXml.xml), so
-        // they already appear in the build tree this run. We scan them independently of resultPaths so the SCA signal does not depend on the SCA report being declared a JUnit
-        // glob.
+        // SCA report files collected by the SCA collection, ONLY when SCA is enabled (else empty -> no SCA collection -> non-SCA behaviour unchanged). These are the canonical
+        // per-tool report file names production reads (StaticCodeAnalysisTool.getFileName); the static build phase writes them (e.g. java/plain_maven_static.yaml emits
+        // target/spotbugsXml.xml), so they already appear in the build tree this run. We scan them independently of resultPaths so the SCA signal does not depend on the SCA report
+        // being declared a JUnit glob.
         List<String> scaReportFiles = scaReportFileNames(exercise);
 
         List<String> phaseScripts = phases.stream().map(BuildPhaseDTO::script).filter(s -> s != null && !s.isBlank()).map(s -> substitute(s, assignmentDir, testDir)).toList();
@@ -485,8 +326,8 @@ public class SandboxBuildCommandService {
 
     /**
      * The canonical SCA report file names for the exercise's language ({@code spotbugsXml.xml}, {@code checkstyle-result.xml}, {@code ruff.sarif}, …) — but ONLY when static code
-     * analysis is enabled. Returns an empty list when SCA is disabled (or the language has no SCA tools), so {@link #buildScaSection} emits nothing and the script for a non-SCA
-     * exercise is identical to before this feature.
+     * analysis is enabled. Returns an empty list when SCA is disabled (or the language has no SCA tools), so {@link #buildScaCollectSection} emits nothing and the script for a
+     * non-SCA exercise collects only JUnit reports.
      */
     private static List<String> scaReportFileNames(ProgrammingExercise exercise) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) || exercise.getProgrammingLanguage() == null) {
