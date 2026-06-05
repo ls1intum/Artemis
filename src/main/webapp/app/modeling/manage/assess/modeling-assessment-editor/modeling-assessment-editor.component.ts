@@ -276,15 +276,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
+        const submissionAtStart = this.submission;
+        const resultAtStart = this.result;
         this.loadingFeedbackSuggestions = true;
         try {
-            this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise!, this.submission!);
+            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise!, submissionAtStart!);
+            if (this.submission !== submissionAtStart || this.result !== resultAtStart) {
+                return;
+            }
+            this.feedbackSuggestions = suggestions;
             if (this.result) {
                 this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
             }
             this.handleFeedback(this.result?.feedbacks);
         } finally {
-            this.loadingFeedbackSuggestions = false;
+            if (this.submission === submissionAtStart) {
+                this.loadingFeedbackSuggestions = false;
+            }
         }
     }
 
