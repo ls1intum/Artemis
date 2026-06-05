@@ -153,7 +153,14 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else if (!courseGroup && exam) {
             this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport).subscribe({
-                next: (res) => this.onSaveSuccess(res.body || []),
+                next: (res) => {
+                    const result = res.body;
+                    const rejectedStaff = result?.rejectedStaffStudents ?? [];
+                    if (rejectedStaff.length > 0) {
+                        this.alertService.error('artemisApp.exam.error.cannotRegisterStaffBulk', { number: rejectedStaff.length });
+                    }
+                    this.onSaveSuccess(result?.notFoundStudents ?? []);
+                },
                 error: () => this.onSaveError(),
             });
         } else if (this.adminUserMode()) {
