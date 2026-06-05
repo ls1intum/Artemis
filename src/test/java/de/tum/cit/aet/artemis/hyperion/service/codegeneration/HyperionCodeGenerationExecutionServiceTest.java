@@ -775,7 +775,11 @@ class HyperionCodeGenerationExecutionServiceTest {
         List<BuildLogEntry> logEntries = List.of(logEntry1, logEntry2);
 
         when(mockResult.getSubmission()).thenReturn(mockSubmission);
-        when(mockSubmission.getBuildLogEntries()).thenReturn(logEntries);
+        when(mockSubmission.getId()).thenReturn(42L);
+        // extractBuildLogs re-loads the submission with an eager build-log graph (the result itself is fetched without build logs).
+        ProgrammingSubmission eagerSubmission = mock(ProgrammingSubmission.class);
+        when(eagerSubmission.getBuildLogEntries()).thenReturn(logEntries);
+        when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(42L)).thenReturn(Optional.of(eagerSubmission));
         when(logEntry1.getLog()).thenReturn("Error in line 1");
         when(logEntry2.getLog()).thenReturn("Error in line 2");
 

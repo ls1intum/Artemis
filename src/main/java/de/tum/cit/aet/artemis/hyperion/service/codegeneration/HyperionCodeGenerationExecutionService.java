@@ -333,16 +333,22 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private String extractBuildLogs(Result result) {
-        if (result != null && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
-            try {
-                return programmingSubmission.getBuildLogEntries().stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
-            }
-            catch (LazyInitializationException e) {
-                log.warn("Could not load build log entries for submission {}: {}. Using fallback message.", programmingSubmission.getId(), e.getMessage());
-                return "Build logs could not be retrieved due to session constraints. Build failed with errors.";
+        if (result == null || !(result.getSubmission() instanceof ProgrammingSubmission programmingSubmission)) {
+            return "Build failed to produce a result.";
+        }
+        // The result is fetched without build logs, so the lazy association is detached here. Re-load the submission with an eager
+        // build-log graph; otherwise a compile failure (the most common retry trigger) is hidden behind a useless fallback message.
+        try {
+            List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
+                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
+            if (!buildLogEntries.isEmpty()) {
+                return buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
             }
         }
-        return "Build failed to produce a result.";
+        catch (RuntimeException e) {
+            log.warn("Could not load build log entries for submission {}: {}. Using fallback message.", programmingSubmission.getId(), e.getMessage());
+        }
+        return "Build logs could not be retrieved. Build failed with errors.";
     }
 
     private String extractBuildFeedback(Result result) {
