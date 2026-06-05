@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -481,30 +480,6 @@ public final class RepositoryExportTestUtil {
             throw new IllegalStateException("Repository has no commits yet");
         }
         return commits.next().getId();
-    }
-
-    /**
-     * Creates and returns a working copy repository handle for the template repo of the given exercise.
-     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
-     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
-     */
-    public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
-            throws GitAPIException, IOException, URISyntaxException {
-        String projectKey = exercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
-    }
-
-    /**
-     * Creates and returns a working copy repository handle for the solution repo of the given exercise.
-     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
-     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
-     */
-    public static LocalRepository createSolutionWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
-            throws GitAPIException, IOException, URISyntaxException {
-        String projectKey = exercise.getProjectKey();
-        String solutionSlug = projectKey.toLowerCase() + "-solution";
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug));
     }
 
     // ===========================================================================

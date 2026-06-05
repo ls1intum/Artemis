@@ -2215,12 +2215,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
-        // Wire base repos via LocalVC
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        // Wire base repos and push through the SAME working copy the wiring created. Creating a second working copy for
+        // the same slug intermittently left the endpoint's checkout reading the pre-push base state (flaky).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
-        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
 
         var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content?omitBinaries=true", HttpStatus.OK,
                 String.class, String.class);
@@ -2228,24 +2228,22 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetTemplateRepositoryFilesWithContent() throws Exception {
-        // Wire base repos via LocalVC
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
-        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
 
         var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
     }
 
     void testGetSolutionRepositoryFilesWithContent() throws Exception {
-        // Wire base repos via LocalVC
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        var solutionRepo = RepositoryExportTestUtil.createSolutionWorkingCopy(localVCLocalCITestService, programmingExercise);
-        RepositoryExportTestUtil.writeFilesAndPush(solutionRepo, Map.of("Solution.java", "solved", "Helper.java", "help"), "seed solution files");
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.solutionRepository(), Map.of("Solution.java", "solved", "Helper.java", "help"), "seed solution files");
 
         var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/solution-files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).containsEntry("Solution.java", "solved").containsEntry("Helper.java", "help");
