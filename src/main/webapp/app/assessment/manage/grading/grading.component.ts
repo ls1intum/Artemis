@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
@@ -79,6 +79,10 @@ export enum GradingViewMode {
 export class GradingComponent implements OnInit {
     private readonly gradingService = inject(GradingService);
     private readonly route = inject(ActivatedRoute);
+    // Under zoneless change detection, the grading scale / exam / course are loaded and the
+    // isLoading flag is toggled inside async subscriptions, which must schedule change detection
+    // so the editor (and the Save button's [disabled] state) updates.
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly translateService = inject(TranslateService);
     private readonly courseService = inject(CourseManagementService);
     private readonly examService = inject(ExamManagementService);
@@ -199,6 +203,7 @@ export class GradingComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
+                    this.changeDetectorRef.markForCheck();
                 }),
             )
             .subscribe((gradingSystemResponse) => {
@@ -210,6 +215,7 @@ export class GradingComponent implements OnInit {
                         this.exam = examResponse.body!;
                         this.maxPoints = this.exam?.examMaxPoints;
                         this.onChangeMaxPoints(this.exam?.examMaxPoints);
+                        this.changeDetectorRef.markForCheck();
                     });
                 } else {
                     this.courseService.find(this.courseId!).subscribe((courseResponse) => {
@@ -217,6 +223,7 @@ export class GradingComponent implements OnInit {
                         this.gradingScale.course = this.course;
                         this.maxPoints = this.course?.maxPoints;
                         this.onChangeMaxPoints(this.course?.maxPoints);
+                        this.changeDetectorRef.markForCheck();
                     });
                 }
             });
@@ -281,6 +288,7 @@ export class GradingComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
+                    this.changeDetectorRef.markForCheck();
                 }),
                 catchError(() => of(new HttpResponse<GradingScaleDTO>({ status: 400 }))),
             )
@@ -324,10 +332,12 @@ export class GradingComponent implements OnInit {
                 this.gradingScale.course = this.course;
                 this.dialogErrorSource.next('');
                 this.isLoading = false;
+                this.changeDetectorRef.markForCheck();
             },
             error: () => {
                 // Keep the current state unchanged on error so the UI remains consistent with the server
                 this.isLoading = false;
+                this.changeDetectorRef.markForCheck();
             },
         });
     }
