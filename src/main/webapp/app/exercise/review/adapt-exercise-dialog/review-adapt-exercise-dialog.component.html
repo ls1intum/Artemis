@@ -1,11 +1,17 @@
 <div class="review-adapt-exercise-dialog">
     <p class="review-adapt-exercise-dialog__summary">
         <fa-icon [icon]="facArtemisIntelligence" class="review-adapt-exercise-dialog__brand-icon" />
-        <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
+        @if (isFreeMode) {
+            <span jhiTranslate="artemisApp.review.adaptExercise.freeSummary"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
+        }
     </p>
 
-    <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.feedbackLabel"></label>
-    <div class="review-adapt-exercise-dialog__finding" readonly>{{ findingText }}</div>
+    @if (!isFreeMode) {
+        <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.feedbackLabel"></label>
+        <div class="review-adapt-exercise-dialog__finding" readonly>{{ findingText }}</div>
+    }
 
     <label class="review-adapt-exercise-dialog__label" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
     <textarea
@@ -13,7 +19,7 @@
         id="adaptExerciseInstructions"
         class="review-adapt-exercise-dialog__instructions"
         rows="3"
-        [placeholder]="'artemisApp.review.adaptExercise.instructionsPlaceholder' | artemisTranslate"
+        [placeholder]="(isFreeMode ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate"
         [ngModel]="instructions()"
         (ngModelChange)="instructions.set($event)"
     ></textarea>
@@ -22,7 +28,7 @@
         <button pButton type="button" severity="secondary" (click)="cancel()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
         </button>
-        <button pButton type="button" (click)="confirm()">
+        <button pButton type="button" [disabled]="confirmDisabled()" (click)="confirm()">
             <fa-icon [icon]="facArtemisIntelligence" class="me-1" />
             {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
         </button>

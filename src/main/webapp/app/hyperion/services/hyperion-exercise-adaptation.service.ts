@@ -5,11 +5,11 @@ import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperio
 /**
  * Triggers an agentic exercise adaptation run from the review system.
  *
- * Adaptation reuses the same endpoint as whole-exercise generation: the {@code prompt} carries the feedback to address (here, a review thread's
- * finding plus optional instructor instructions) instead of a create brief. This service is the single seam the review editors call so the comment
- * widget itself stays dumb and never talks to HTTP. Progress is not shown here: the run is keyed by exercise id on the server and the compact run
- * card on the exercise detail page reattaches to it via the {@code /status} endpoint, so the instructor sees live progress there. We surface an
- * info alert pointing them at it and never duplicate the run-card logic.
+ * Adaptation reuses the same endpoint as whole-exercise generation: the {@code prompt} carries the feedback to address (a review thread's finding
+ * plus optional instructor instructions, or free-text adapt instructions) instead of a create brief. This service is the single seam the review
+ * editors and the instructor editor call so the callers stay dumb and never talk to HTTP. Progress is not shown here: the run is keyed by exercise id
+ * on the server and the embedded run card reattaches to it via the {@code /status} endpoint, so the instructor sees live progress in-context. We
+ * surface a brief info alert that the run started and never duplicate the run-card logic.
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseAdaptationService {

@@ -53,6 +53,9 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { DialogService } from 'primeng/dynamicdialog';
+import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
+import { ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
 /**
  * Typed view onto the component's protected/private members so the spec can read and stub them
@@ -157,6 +160,9 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: vi.fn() } },
         { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: vi.fn(), isLoading: () => false } },
         { provide: ExerciseEditorSyncService, useValue: { connect: vi.fn(), disconnect: vi.fn(), subscribeToUpdates: vi.fn(() => of()) } },
+        // The component self-provides DialogService (free "Adapt exercise" dialog); the empty-template override drops it, so stub it here.
+        { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined), close: vi.fn() })) } },
+        { provide: HyperionExerciseAdaptationService, useValue: { adaptExercise: vi.fn() } },
         ...additionalProviders,
     ];
 }
@@ -418,6 +424,50 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Artemis Intelligence adaptation', () => {
+        let dialogService: { open: ReturnType<typeof vi.fn> };
+        let adaptationService: { adaptExercise: ReturnType<typeof vi.fn> };
+
+        beforeEach(() => {
+            dialogService = TestBed.inject(DialogService) as unknown as { open: ReturnType<typeof vi.fn> };
+            adaptationService = TestBed.inject(HyperionExerciseAdaptationService) as unknown as { adaptExercise: ReturnType<typeof vi.fn> };
+            comp.exercise = createMockExercise({ isAtLeastEditor: true });
+        });
+
+        it('starts an adaptation run from a review thread (S3)', () => {
+            comp.onAdaptExercise({ feedback: 'Feedback to address\nSignature mismatch' });
+            expect(adaptationService.adaptExercise).toHaveBeenCalledWith(42, 'Feedback to address\nSignature mismatch');
+        });
+
+        it('does not start a run when no exercise id is present (S3)', () => {
+            comp.exercise = createMockExercise({ id: undefined as unknown as number, isAtLeastEditor: true });
+            comp.onAdaptExercise({ feedback: 'something' });
+            expect(adaptationService.adaptExercise).not.toHaveBeenCalled();
+        });
+
+        it('opens the finding-free adapt dialog and starts a run with the typed instructions (S4)', () => {
+            dialogService.open.mockReturnValue({ onClose: of({ instructions: 'make it harder' } as ReviewAdaptExerciseDialogResult), close: vi.fn() });
+
+            comp.openFreeAdaptDialog();
+
+            // No findingText is passed: the dialog renders its finding-free required-instructions variant.
+            expect(dialogService.open).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ data: {} }));
+            expect(adaptationService.adaptExercise).toHaveBeenCalledWith(42, 'make it harder');
+        });
+
+        it('does not start a run when the free dialog is cancelled (S4)', () => {
+            dialogService.open.mockReturnValue({ onClose: of(undefined), close: vi.fn() });
+            comp.openFreeAdaptDialog();
+            expect(adaptationService.adaptExercise).not.toHaveBeenCalled();
+        });
+
+        it('does not open the free dialog without editor rights (S6)', () => {
+            comp.exercise = createMockExercise({ isAtLeastEditor: false });
+            comp.openFreeAdaptDialog();
+            expect(dialogService.open).not.toHaveBeenCalled();
         });
     });
 

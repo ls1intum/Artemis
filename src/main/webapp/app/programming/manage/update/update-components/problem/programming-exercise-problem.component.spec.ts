@@ -647,6 +647,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
             // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
             (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
             fixture.componentRef.setInput('showGenerateWithAi', true);
+            // A brief is required (consistent with the problem-statement action): the button is disabled until one is entered.
+            comp.userPrompt.set('A bounded integer stack with push, pop, peek and a fixed capacity.');
             fixture.detectChanges();
 
             const emitted: void[] = [];
@@ -655,6 +657,20 @@ describe('ProgrammingExerciseProblemComponent', () => {
             (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!.click();
 
             expect(emitted).toHaveLength(1);
+        });
+
+        it('disables the entire-exercise action until a brief is entered', () => {
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            comp.userPrompt.set('');
+            fixture.detectChanges();
+
+            const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!;
+            expect(button.disabled).toBe(true);
+
+            comp.userPrompt.set('Implement a bank account.');
+            fixture.detectChanges();
+            expect(button.disabled).toBe(false);
         });
     });
 });

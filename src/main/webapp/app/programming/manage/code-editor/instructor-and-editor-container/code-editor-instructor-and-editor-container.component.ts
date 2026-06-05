@@ -46,6 +46,10 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
+import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -82,10 +86,11 @@ interface ConsistencyIssueNavigationIssue {
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
-    // Keep review comment state scoped to each editor container instance.
-    providers: [ExerciseReviewCommentService],
+    // Keep review comment state scoped to each editor container instance. DialogService backs the free "Adapt exercise" dialog.
+    providers: [ExerciseReviewCommentService, DialogService],
     imports: [
         FaIconComponent,
+        HyperionExerciseGenerationComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         CodeEditorContainerComponent,
@@ -164,6 +169,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
     private hyperionExerciseAdaptationService = inject(HyperionExerciseAdaptationService);
+    private dialogService = inject(DialogService);
+    private destroyRef = inject(DestroyRef);
+    private adaptDialogRef?: DynamicDialogRef | null;
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -253,6 +261,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Cleans up AI resources on component teardown.
      */
     override ngOnDestroy() {
+        this.adaptDialogRef?.close();
         this.aiOps.destroy();
         super.ngOnDestroy();
     }
@@ -486,9 +495,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Triggers an Artemis Intelligence adaptation run for the current exercise using the feedback assembled in the review thread widget.
      *
-     * The run is keyed by exercise id on the server; progress surfaces on the compact run card on the exercise detail page, which reattaches to
-     * the live run via its status endpoint. This is why we do not host the run card here: it avoids duplicating run logic and the instructor sees
-     * progress when they return to the detail page (an info alert points them there).
+     * The run is keyed by exercise id on the server and surfaces live in the embedded Artemis Intelligence run card in this editor (which reattaches
+     * to the live run via its status endpoint), so the instructor sees progress in the same place they triggered it.
      *
      * @param payload The assembled feedback prompt to address.
      */
@@ -498,6 +506,35 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.hyperionExerciseAdaptationService.adaptExercise(exerciseId, payload.feedback);
+    }
+
+    /**
+     * Opens the finding-free "Adapt exercise" dialog from the Artemis Intelligence menu.
+     *
+     * This reuses the same dialog as the review-thread adapt path, but without a finding: the instructions are required. On confirm, it starts an
+     * adaptation run keyed by exercise id; the embedded run card picks up live progress.
+     */
+    openFreeAdaptDialog(): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId || !this.exercise?.isAtLeastEditor || !this.hyperionEnabled) {
+            return;
+        }
+        this.adaptDialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            width: '40vw',
+            // No findingText: the dialog renders its finding-free variant with required instructions.
+            data: {},
+        });
+        this.adaptDialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+            const instructions = result?.instructions?.trim();
+            if (!instructions) {
+                return;
+            }
+            this.hyperionExerciseAdaptationService.adaptExercise(exerciseId, instructions);
+        });
     }
 
     /**

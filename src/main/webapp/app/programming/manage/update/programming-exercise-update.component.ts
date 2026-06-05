@@ -40,6 +40,7 @@ import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { isHyperionGenerationSupportedLanguage } from 'app/hyperion/exercise-generation/hyperion-supported-languages';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -247,6 +248,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
     public plagiarismEnabled = false;
+    // Single Hyperion source of truth: set once from profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) (see initialize()), mirrored into
+    // the hyperionEnabledForAi signal that gates the create "Generate entire exercise" action. The editor menu/card (ProblemStatementAiOperationsHelper)
+    // and the detail card (hyperionModuleActive) resolve from the SAME profile check, so the create button and the run card can never disagree.
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
 
@@ -308,7 +312,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
             !this.isImportFromSharingForAi() &&
-            this.programmingExerciseLanguageForAi() === ProgrammingLanguage.JAVA
+            // The server can generate a whole exercise for every language with a LanguageGenerationProfile, not just Java.
+            isHyperionGenerationSupportedLanguage(this.programmingExerciseLanguageForAi())
         );
     });
 

@@ -228,6 +228,14 @@
                                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                             </button>
                                         }
+
+                                        <!-- Finding-free "Adapt exercise" path: opens the same adapt dialog without a finding (instructions required). -->
+                                        @if (exercise.id) {
+                                            <button class="ai-menu-item" (click)="openFreeAdaptDialog(); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                                <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                                <span jhiTranslate="artemisApp.review.adaptExercise.menuAction"></span>
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </p-popover>
@@ -356,6 +364,10 @@
             </div>
             <!-- Editable instructions with diff support -->
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                <!-- Artemis Intelligence run card: self-hides when idle, reattaches to a live generation/adaptation run via /status so progress shows in-context. -->
+                @if (hyperionEnabled && exercise.isAtLeastEditor && exercise.id) {
+                    <jhi-hyperion-exercise-generation [exerciseId]="exercise.id" (generationCompleted)="onProblemStatementSaved()" class="d-block mb-1" />
+                }
                 @if (showDiff()) {
                     <!-- Diff review banner -->
                     <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">

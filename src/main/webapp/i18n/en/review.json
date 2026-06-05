@@ -60,14 +60,17 @@
             },
             "adaptExercise": {
                 "action": "Adapt with Artemis Intelligence",
+                "menuAction": "Adapt exercise",
                 "title": "Adapt exercise with Artemis Intelligence",
                 "summary": "Artemis Intelligence will adapt this exercise to address this feedback.",
+                "freeSummary": "Tell Artemis Intelligence how to adapt this exercise.",
                 "feedbackLabel": "Feedback to address",
                 "instructionsLabel": "Additional instructions (optional)",
                 "instructionsPlaceholder": "Add any extra guidance for Artemis Intelligence (optional)...",
+                "freeInstructionsPlaceholder": "Describe what Artemis Intelligence should change about this exercise...",
                 "confirm": "Adapt exercise",
                 "cancel": "Cancel",
-                "started": "Artemis Intelligence is adapting the exercise. You can track progress on the exercise detail page.",
+                "started": "Adaptation started.",
                 "alreadyRunning": "An Artemis Intelligence run is already in progress for this exercise.",
                 "startError": "Could not start the Artemis Intelligence adaptation. Please try again."
             },

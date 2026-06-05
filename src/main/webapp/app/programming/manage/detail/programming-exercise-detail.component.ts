@@ -131,6 +131,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    // Single Hyperion source of truth, shared with the create page and the editor AI menu/card: all gate on isModuleFeatureActive(MODULE_FEATURE_HYPERION).
     protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly dayjs = dayjs;

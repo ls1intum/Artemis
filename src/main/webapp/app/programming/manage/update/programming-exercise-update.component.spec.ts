@@ -503,7 +503,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('generate with AI visibility', () => {
-        it('should only show for java when hyperion is enabled', () => {
+        it('should show for every Hyperion-supported language when hyperion is enabled (S1)', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -515,9 +515,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(comp.showGenerateWithAi()).toBe(true);
 
+            // Kotlin (and the other profiled languages) are now supported, not just Java.
             const kotlinExercise = new ProgrammingExercise(course, undefined);
             kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
             comp.programmingExercise = kotlinExercise;
+            expect(comp.showGenerateWithAi()).toBe(true);
+
+            const pythonExercise = new ProgrammingExercise(course, undefined);
+            pythonExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            comp.programmingExercise = pythonExercise;
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should hide for an unsupported language (S1)', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            // OCaml has only a best-effort server profile and is intentionally not offered in the create action.
+            entity.programmingLanguage = ProgrammingLanguage.OCAML;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(false);
         });
