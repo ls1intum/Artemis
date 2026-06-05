@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -12,6 +13,7 @@ import { MathExerciseService } from 'app/math/manage/service/math-exercise.servi
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 
@@ -29,7 +31,7 @@ describe('MathExerciseComponent', () => {
                 MockProvider(MathExerciseService, { delete: () => of(undefined) as any }),
                 MockProvider(CourseExerciseService),
                 MockProvider(AccountService, {
-                    userIdentity: () => undefined,
+                    userIdentity: signal<User | undefined>(undefined),
                     getAuthenticationState: () => of(undefined) as any,
                     setAccessRightsForExercise: vi.fn(),
                 }),

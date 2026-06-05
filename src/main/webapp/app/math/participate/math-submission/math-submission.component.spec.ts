@@ -7,7 +7,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MathSubmissionComponent } from 'app/math/participate/math-submission/math-submission.component';
@@ -156,7 +156,7 @@ describe('MathSubmissionComponent', () => {
         expect(updateSpy).not.toHaveBeenCalled();
 
         // Confirming runs the persist callback.
-        confirmSpy.mock.calls[0][0].accept!();
+        (confirmSpy.mock.calls[0][0] as Confirmation).accept!();
         expect(updateSpy).toHaveBeenCalled();
         expect(updateSpy.mock.calls[0][0].submitted).toBe(true);
     });
