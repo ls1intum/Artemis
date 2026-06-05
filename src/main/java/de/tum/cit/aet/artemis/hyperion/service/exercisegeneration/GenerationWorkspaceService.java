@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -45,6 +47,15 @@ public class GenerationWorkspaceService {
     private static final String PROBLEM_STATEMENT_FILE = "problem-statement.md";
 
     private static final RepositoryType[] SEEDED_REPOSITORIES = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
+
+    /** The repository directories the layout probe lists and scans for build manifests; matches {@link #directoryFor(RepositoryType)} for the seeded repositories. */
+    private static final String[] REPOSITORY_DIRECTORIES = { "solution", "template", "tests" };
+
+    /** How long the one-shot layout probe may run; it is only {@code ls} + {@code head} over the seeded tree, so this is generous. */
+    private static final Duration LAYOUT_PROBE_TIMEOUT = Duration.ofSeconds(30);
+
+    /** Upper bound on the size of the seeded-layout observation handed to the agent on turn 0, so a deeply nested tree cannot blow up the prompt. */
+    private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
 
     private final GitService gitService;
 
@@ -100,6 +111,55 @@ public class GenerationWorkspaceService {
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
         log.info("Seeded generation workspace for exercise {} ({} repositories)", exercise.getId(), repositoryTrees.size());
         return testsSeedSnapshot;
+    }
+
+    /**
+     * Probes the freshly-seeded workspace ONCE and renders a compact, human-readable snapshot of its layout — a recursive listing of the {@code solution}, {@code template}, and
+     * {@code tests} directories plus the first lines of whatever build manifests actually exist at their roots (pom.xml, build.gradle, Cargo.toml, package.json, go.mod, *.cabal,
+     * dune-project, Makefile, …). This is handed to the agent on turn 0 as a free observation so it does not spend turns discovering the layout itself.
+     * <p>
+     * It is fully language- and project-type-agnostic: it never assumes a particular toolchain, it only lists the seeded tree and heads any manifest it finds. The whole thing is a
+     * single {@code ls}/{@code find}/{@code head} shell invocation, bounded in size both in-shell and again in Java, and it degrades to an empty string on any error or timeout
+     * (the
+     * agent then simply falls back to listing the workspace itself, exactly as before). An empty repository contributes nothing, which is fine.
+     *
+     * @param sandbox   the sandbox session
+     * @param sessionId the session handle
+     * @return the rendered layout snapshot, or an empty string if it could not be produced
+     */
+    public String probeWorkspaceLayout(InteractiveSandbox sandbox, String sessionId) {
+        // One shell pass: (1) `ls -R` the seeded repository dirs (silencing "No such file" for an absent repo), then (2) discover and `head` the build manifests that actually
+        // exist
+        // at or near each repo root. The manifest set is a broad, language-agnostic union; `find` only emits the ones present, so this never assumes a toolchain. Output is capped
+        // in-shell with `head -c` as a first guard; Java truncates again defensively.
+        String script = "cd " + WORKSPACE + " 2>/dev/null || exit 0\n" + "echo '--- ls -R " + String.join(" ", REPOSITORY_DIRECTORIES) + " ---'\n" + "ls -R "
+                + String.join(" ", REPOSITORY_DIRECTORIES) + " 2>/dev/null\n" + "for f in $(find " + String.join(" ", REPOSITORY_DIRECTORIES)
+                + " -maxdepth 2 -type f \\( -name pom.xml -o -name 'build.gradle' -o -name 'build.gradle.kts' "
+                + "-o -name 'settings.gradle' -o -name 'settings.gradle.kts' -o -name Cargo.toml -o -name package.json -o -name go.mod -o -name Makefile -o -name CMakeLists.txt "
+                + "-o -name dune-project -o -name dune -o -name '*.cabal' -o -name stack.yaml -o -name pyproject.toml -o -name setup.py -o -name requirements.txt -o -name Gemfile "
+                + "-o -name '*.csproj' -o -name build.sbt -o -name Package.swift -o -name pubspec.yaml -o -name DESCRIPTION -o -name composer.json -o -name '*.bats' \\) "
+                + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n";
+        try {
+            SandboxExecResult result = sandbox.exec(sessionId, LAYOUT_PROBE_TIMEOUT, "sh", "-c", script);
+            if (result.timedOut()) {
+                return "";
+            }
+            String layout = result.combinedOutput();
+            return layout == null ? "" : truncateLayout(layout.strip());
+        }
+        catch (RuntimeException e) {
+            // Best-effort only: if the probe fails the agent still has its own tools to list the workspace, so swallow and return nothing.
+            log.warn("Could not probe the seeded workspace layout: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    /** Caps the layout snapshot at {@link #LAYOUT_PROBE_MAX_CHARS}, appending a short notice when it was truncated so the agent knows to list deeper itself if needed. */
+    private static String truncateLayout(String layout) {
+        if (layout.length() <= LAYOUT_PROBE_MAX_CHARS) {
+            return layout;
+        }
+        return layout.substring(0, LAYOUT_PROBE_MAX_CHARS) + "\n… [workspace layout truncated; list deeper directories yourself with `ls -R` if you need more]";
     }
 
     /**

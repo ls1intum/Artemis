@@ -334,4 +334,58 @@ class ExerciseGenerationOrchestrationServiceTest {
         assertThat(ExerciseGenerationOrchestrationService.extractTaskBoundTestNames("")).isEmpty();
         assertThat(ExerciseGenerationOrchestrationService.extractTaskBoundTestNames("[task][A]( t1 , t2 )\n[task][B](t2,t3)")).containsExactly("t1", "t2", "t3");
     }
+
+    // --- Turn-0 workspace layout seeding (Fix #2) ----------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * The seeded workspace layout (from {@link GenerationWorkspaceService#probeWorkspaceLayout}) is prepended to the FIRST attempt's prompt as a delimited observation, so the
+     * agent
+     * starts knowing the layout instead of paying turns to list it. The instructor brief still follows verbatim.
+     * <p>
+     * Mutation: dropping the {@code prependWorkspaceLayout(...)} wrapping makes the delimiter/layout assertions on the first prompt fail.
+     */
+    @Test
+    void seededWorkspaceLayout_isPrependedToTheFirstPrompt() {
+        when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenReturn(accepted());
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            // settled
+        }
+
+        verify(agentLoopRunner).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        String firstPrompt = promptCaptor.getValue();
+        assertThat(firstPrompt).startsWith("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===");
+        assertThat(firstPrompt).contains("ls -R solution template tests").contains("=== END INITIAL WORKSPACE ===");
+        assertThat(firstPrompt).as("the instructor brief still follows the seeded layout").endsWith("Build a bubble sort exercise.");
+    }
+
+    /** When the probe yields nothing (empty workspace / probe failure), the first prompt is exactly the instructor brief — no empty observation block. */
+    @Test
+    void noProbeOutput_leavesTheFirstPromptUnchanged() {
+        when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenReturn(accepted());
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            // settled
+        }
+
+        verify(agentLoopRunner).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(promptCaptor.getValue()).isEqualTo("Build a bubble sort exercise.").doesNotContain("INITIAL WORKSPACE");
+    }
+
+    /** Unit-level check of the prepend helper: a layout block is delimited and the brief preserved; an empty/blank layout returns the brief unchanged. */
+    @Test
+    void prependWorkspaceLayout_delimitsLayoutAndPreservesBrief() {
+        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout("", "BRIEF")).isEqualTo("BRIEF");
+        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout("   ", "BRIEF")).isEqualTo("BRIEF");
+        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout(null, "BRIEF")).isEqualTo("BRIEF");
+
+        String prepended = ExerciseGenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
+        assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
+    }
 }

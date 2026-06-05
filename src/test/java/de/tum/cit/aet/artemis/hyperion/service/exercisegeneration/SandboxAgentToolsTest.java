@@ -147,7 +147,7 @@ class SandboxAgentToolsTest {
     @Test
     void bash_buildsSpillWrapper_subshellUlimitRedirectTail() {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=5 lines=1\nhello"));
-        new SandboxAgentTools(sandbox, "s").bash("echo hello", null);
+        new SandboxAgentTools(sandbox, "s").bash("echo hello");
         // The command runs in a subshell (so its `exit` cannot abort the wrapper), under a file-size ulimit, with stdin from /dev/null and combined output redirected to the log;
         // only the bounded tail is streamed back.
         assertThat(sandbox.lastScript).contains("( ulimit -f 65536 2>/dev/null; cd /workspace && echo hello )").contains("</dev/null > \"$LOG\" 2>&1").contains("rc=$?")
@@ -155,45 +155,66 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void bash_acceptsCmdAlias_whenModelSendsCmdInsteadOfCommand() {
-        // The model intermittently puts the command under the key `cmd`; the tool must run it instead of an empty command (which would make the agent flail retrying).
-        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=2 lines=1\nok"));
-        new SandboxAgentTools(sandbox, "s").bash(null, "ls -R");
-        assertThat(sandbox.lastScript).contains("cd /workspace && ls -R");
-    }
-
-    @Test
-    void bash_withNeitherCommandNorCmd_returnsHelpfulErrorWithoutTouchingTheSandbox() {
+    void bash_withNoCommand_returnsHelpfulErrorWithoutTouchingTheSandbox() {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "unused"));
-        String out = new SandboxAgentTools(sandbox, "s").bash(null, null);
+        String out = new SandboxAgentTools(sandbox, "s").bash(null);
         assertThat(out).contains("No command provided").contains("\"command\"");
         assertThat(sandbox.lastScript).isNull();
     }
 
     @Test
+    void bash_mangledJsonArrayCommand_isRejectedLoudlyWithoutTouchingTheSandbox() {
+        // Spring AI coerces {"command":["bash","-lc","ls -R"]} to the literal "[bash, -lc, ls -R]". That is not a runnable command; the tool must reject it with a NON-ZERO exit
+        // and
+        // a single corrective instruction, and never reach the sandbox (otherwise the agent blindly retries the array form).
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
+        String out = new SandboxAgentTools(sandbox, "s").bash("[bash, -lc, ls -R]");
+        assertThat(out).startsWith("exit=2\n").contains("must be a single shell string").contains("JSON array");
+        assertThat(sandbox.lastScript).isNull();
+    }
+
+    @Test
+    void bash_posixTestCommand_isNotMistakenForAMangledArray() {
+        // A genuine POSIX test has a SPACE after the bracket ("[ -f x ]"), so it must run normally and only the no-space array render is rejected.
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
+        String out = new SandboxAgentTools(sandbox, "s").bash("[ -f solution/pom.xml ] && echo yes");
+        assertThat(out).startsWith("exit=0");
+        assertThat(sandbox.lastScript).contains("[ -f solution/pom.xml ] && echo yes");
+    }
+
+    @Test
+    void bash_failingCommand_surfacesTheRealNonZeroExitAndStderr() {
+        // OBSERVATION INTEGRITY: a genuinely failing command must report its REAL non-zero exit and its output, never a blank success-looking observation (the old array bug looked
+        // like success). The authoritative exit code comes from the wrapper's meta line, not the container exec's own code.
+        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=127 bytes=21 lines=1\nsh: nope: not found")), "s").bash("nope");
+        assertThat(out).isEqualTo("exit=127\nsh: nope: not found");
+        assertThat(out).doesNotContain("exit=0");
+    }
+
+    @Test
     void bash_authoritativeExitCodeComesFromMetaNotWrapper() {
         // The container exec exit code reflects the wrapper (0); the real command exit code (7) must be taken from the meta line.
-        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=7 bytes=2 lines=1\nno")), "s").bash("false", null);
+        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=7 bytes=2 lines=1\nno")), "s").bash("false");
         assertThat(out).isEqualTo("exit=7\nno");
     }
 
     @Test
     void bash_smallOutput_hasNoTruncationMarker() {
-        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=11 lines=1\nhello world")), "s").bash("echo hello world", null);
+        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=11 lines=1\nhello world")), "s").bash("echo hello world");
         assertThat(out).isEqualTo("exit=0\nhello world").doesNotContain("Full output");
     }
 
     @Test
     void bash_largeOutput_appendsSpillMarkerWithReadInstructions() {
         String body = "x".repeat(10_000);
-        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(1, "__HYP_META__ rc=1 bytes=50000 lines=900\n" + body)), "s").bash("sh verify.sh solution", null);
+        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(1, "__HYP_META__ rc=1 bytes=50000 lines=900\n" + body)), "s").bash("sh verify.sh solution");
         assertThat(out).startsWith("exit=1\n").contains("Showing the last 10000 of 50000 bytes (900 lines total)")
                 .contains("Full output saved in the sandbox at /tmp/hyperion/bash-0.log").contains("tail -n 200 /tmp/hyperion/bash-0.log");
     }
 
     @Test
     void bash_timeout_pointsAtPartialSpillFile() {
-        String out = new SandboxAgentTools(new ScriptedSandbox(new SandboxExecResult(-1, "", "", true)), "s").bash("sleep 999", null);
+        String out = new SandboxAgentTools(new ScriptedSandbox(new SandboxExecResult(-1, "", "", true)), "s").bash("sleep 999");
         assertThat(out).contains("exit=timeout").contains("Partial output was written in the sandbox to /tmp/hyperion/bash-0.log");
     }
 
@@ -201,15 +222,15 @@ class SandboxAgentToolsTest {
     void bash_spillSequenceIncrementsPerCall() {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        tools.bash("a", null);
+        tools.bash("a");
         assertThat(sandbox.lastScript).contains("/tmp/hyperion/bash-0.log");
-        tools.bash("b", null);
+        tools.bash("b");
         assertThat(sandbox.lastScript).contains("/tmp/hyperion/bash-1.log");
     }
 
     @Test
     void bash_metaAbsent_fallsBackToRawOutput() {
-        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(3, "unexpected wrapper failure")), "s").bash("x", null);
+        String out = new SandboxAgentTools(new ScriptedSandbox(bashStdout(3, "unexpected wrapper failure")), "s").bash("x");
         assertThat(out).isEqualTo("exit=3\nunexpected wrapper failure");
     }
 
@@ -218,7 +239,7 @@ class SandboxAgentToolsTest {
         // A bare `apply_patch` invocation: the tool does not exist, so a real shell would leave the workspace UNCHANGED while the agent believes the edit landed. The tool must
         // short-circuit with a loud, non-zero result and never reach the sandbox.
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
-        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch", null);
+        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch");
         assertThat(out).isEqualTo("exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         assertThat(sandbox.lastScript).isNull();
     }
@@ -227,15 +248,15 @@ class SandboxAgentToolsTest {
     void bash_applyPatchHeredoc_shortCircuits() {
         // The most common form the model emits: an apply_patch heredoc. The first word is still apply_patch, so it is caught and the sandbox is never touched.
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
-        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch <<'PATCH'\n*** Begin Patch\n*** End Patch\nPATCH", null);
+        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch <<'PATCH'\n*** Begin Patch\n*** End Patch\nPATCH");
         assertThat(out).startsWith("exit=2\napply_patch is NOT available");
         assertThat(sandbox.lastScript).isNull();
     }
 
     @Test
-    void bash_applyPatchViaCmdAlias_shortCircuits() {
+    void bash_applyPatchWithRedirect_shortCircuits() {
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
-        String out = new SandboxAgentTools(sandbox, "s").bash(null, "apply_patch < my.patch");
+        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch < my.patch");
         assertThat(out).startsWith("exit=2\napply_patch is NOT available");
         assertThat(sandbox.lastScript).isNull();
     }
@@ -244,7 +265,7 @@ class SandboxAgentToolsTest {
     void bash_commandMentioningApplyPatch_isNotMistakenForAnInvocation() {
         // A genuine command that merely MENTIONS apply_patch (e.g. grepping for it) must run normally — only the FIRST shell word being apply_patch is short-circuited.
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
-        String out = new SandboxAgentTools(sandbox, "s").bash("grep -r apply_patch tests", null);
+        String out = new SandboxAgentTools(sandbox, "s").bash("grep -r apply_patch tests");
         assertThat(out).startsWith("exit=0");
         assertThat(sandbox.lastScript).contains("grep -r apply_patch tests");
     }
@@ -259,5 +280,21 @@ class SandboxAgentToolsTest {
         assertThat(SandboxAgentTools.isApplyPatchInvocation("grep apply_patch x")).isFalse();
         assertThat(SandboxAgentTools.isApplyPatchInvocation("echo apply_patch")).isFalse();
         assertThat(SandboxAgentTools.isApplyPatchInvocation("sh verify.sh solution")).isFalse();
+    }
+
+    @Test
+    void isMangledArrayCommand_matchesOnlyTheRenderedArgvArray() {
+        // The List.toString() render of a JSON argv array: opening bracket, no space, a comma inside, closing bracket.
+        assertThat(SandboxAgentTools.isMangledArrayCommand("[bash, -lc, ls -R]")).isTrue();
+        assertThat(SandboxAgentTools.isMangledArrayCommand("  [sh, -c, sh verify.sh solution]  ")).isTrue();
+        assertThat(SandboxAgentTools.isMangledArrayCommand("[ls -R, grep foo]")).isTrue();
+        // A genuine POSIX test has a space right after the bracket, so it is NOT a mangled array.
+        assertThat(SandboxAgentTools.isMangledArrayCommand("[ -f solution/pom.xml ]")).isFalse();
+        assertThat(SandboxAgentTools.isMangledArrayCommand("[ -d tests ] && echo y")).isFalse();
+        // A single-element render has no comma, so it does not match (and is harmless as a shell glob).
+        assertThat(SandboxAgentTools.isMangledArrayCommand("[ls]")).isFalse();
+        // Ordinary commands never match.
+        assertThat(SandboxAgentTools.isMangledArrayCommand("ls -R solution template tests")).isFalse();
+        assertThat(SandboxAgentTools.isMangledArrayCommand("grep -n 'a,b' tests/Foo.java")).isFalse();
     }
 }

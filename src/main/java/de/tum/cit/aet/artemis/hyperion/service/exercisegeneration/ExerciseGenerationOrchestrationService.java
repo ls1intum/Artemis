@@ -138,10 +138,15 @@ public class ExerciseGenerationOrchestrationService {
             String systemPrompt = systemPromptFactory.build(exercise);
             SandboxAgentTools tools = new SandboxAgentTools(sandbox, sessionId);
 
+            // Hand the agent the seeded workspace layout on turn 0 as a free observation (a recursive listing plus the head of each build manifest), so it does not spend turns
+            // discovering it with `ls -R`. This is purely contextual — it is framed as an observation, not an instruction — and best-effort: an empty probe leaves the prompt
+            // exactly as before. It is prepended ONLY to the first attempt's prompt; the verifier-feedback retries already operate on a populated workspace the agent has explored.
+            String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), userPrompt);
+
             // Run the agent, verify, and — if the authoritative verifier rejects — feed its reasons back so the agent can fix the workspace and try again, up to a small bound.
             // The verifier enforces acceptance rules the agent's own verify.sh build cannot show it (e.g. the template must fail a meaningful fraction of tests, and the problem
             // statement must bind tasks), so this loop is what turns a "builds but not quite right" first attempt into an accepted exercise without instructor intervention.
-            String currentPrompt = userPrompt;
+            String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
             // Recomputed each attempt; the final attempt's report is attached to the outcome and surfaced as advisory review comments. NEVER consulted by the accept/reject
@@ -285,6 +290,22 @@ public class ExerciseGenerationOrchestrationService {
             }
         }
         return List.copyOf(names);
+    }
+
+    /**
+     * Prepends the seeded-workspace layout snapshot to the user prompt as a clearly-delimited observation block, so the agent starts knowing the layout instead of paying turns to
+     * gather it. When the probe produced nothing (empty workspace, probe error/timeout) the prompt is returned unchanged. The block is purely contextual — it states what is there,
+     * not what to do.
+     *
+     * @param layout     the rendered layout snapshot (may be empty)
+     * @param userPrompt the instruction for this run
+     * @return the user prompt with the layout block prepended, or the unchanged prompt when there is no layout to show
+     */
+    static String prependWorkspaceLayout(String layout, String userPrompt) {
+        if (layout == null || layout.isBlank()) {
+            return userPrompt;
+        }
+        return "=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\n" + layout.strip() + "\n=== END INITIAL WORKSPACE ===\n\n" + userPrompt;
     }
 
     private static AgentLoopResult cancelledResult(AgentLoopResult lastResult) {

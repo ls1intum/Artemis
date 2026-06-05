@@ -43,10 +43,18 @@ public class SandboxAgentTools {
     private static final int SPILL_ULIMIT_BLOCKS = 65_536;
 
     /**
-     * First line the bash wrapper prints, carrying the real exit code and total size; parsed and stripped by {@link #bash(String, String)} (the container exec's own exit code
+     * First line the bash wrapper prints, carrying the real exit code and total size; parsed and stripped by {@link #bash(String)} (the container exec's own exit code
      * reflects the wrapper, not the command).
      */
     private static final Pattern BASH_META = Pattern.compile("^__HYP_META__ rc=(-?\\d+) bytes=(\\d+) lines=(\\d+)$");
+
+    /**
+     * Matches the {@code List.toString()} rendering of a JSON argv array that Spring AI produces when the model sends {@code {"command":["bash","-lc","ls -R"]}} — an opening
+     * {@code [} immediately followed by a non-space token and containing a comma, closing with {@code ]}. A real POSIX {@code [ -f x ]} test has a SPACE right after the bracket,
+     * so
+     * it does not match; a single-element list {@code [foo]} has no comma, so it does not match either (and would run harmlessly as a shell glob anyway).
+     */
+    private static final Pattern MANGLED_ARRAY = Pattern.compile("^\\[\\S.*,.*]$", Pattern.DOTALL);
 
     private final InteractiveSandbox sandbox;
 
@@ -139,26 +147,28 @@ public class SandboxAgentTools {
     /**
      * Runs a shell command in the workspace root.
      *
-     * @param command the shell command to run
-     * @param cmd     alias for {@code command}; the model occasionally sends the command under this key, so either is accepted
+     * @param command the shell command to run, as a single string
      * @return the exit status followed by the combined stdout/stderr
      */
-    @Tool(name = "bash", description = "Run a shell command from the workspace root and return its exit code plus combined stdout/stderr. Use it to run 'sh verify.sh solution' / 'sh verify.sh template', inspect the project, and debug. Long output is truncated to the LAST 10000 characters (build failures and the verify.sh HYPERION_COLLECTED line are at the end); the COMPLETE output is saved in the sandbox to /tmp/hyperion/bash-<n>.log, so read earlier parts with sed/grep/head/tail on that file. After a verify.sh run the test reports are collected under /opt/hyperion/reports/<solution|template>/ — grep them for exact test names and pass/fail. Prefer grep/sed here over re-reading whole files.")
+    @Tool(name = "bash", description = "Run a shell command in the workspace, e.g. {\"command\":\"ls -R\"}. Send the command as a single string (NOT a JSON array). Returns its exit code plus combined stdout/stderr. Use it to run 'sh verify.sh solution' / 'sh verify.sh template', inspect the project, and debug. Long output is truncated to the LAST 10000 characters (build failures and the verify.sh HYPERION_COLLECTED line are at the end); the COMPLETE output is saved in the sandbox to /tmp/hyperion/bash-<n>.log, so read earlier parts with sed/grep/head/tail on that file. After a verify.sh run the test reports are collected under /opt/hyperion/reports/<solution|template>/ — grep them for exact test names and pass/fail. Prefer grep/sed here over re-reading whole files.")
     public String bash(
-            @ToolParam(required = false, description = "the shell command to run, e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'") String command,
-            @ToolParam(required = false, description = "alias for 'command' — provide the shell command in EITHER 'command' or 'cmd'") String cmd) {
-        // The model intermittently sends the command under the key `cmd` instead of `command`; accept either so a wrong key is not a wasted turn (it otherwise runs an empty
-        // command
-        // and the agent flails retrying). Coalesce to the non-blank one.
-        String effectiveCommand = (command != null && !command.isBlank()) ? command : cmd;
-        if (effectiveCommand == null || effectiveCommand.isBlank()) {
-            return "exit=64\nNo command provided. Put the shell command in the \"command\" field, e.g. {\"command\": \"ls -R\"}.";
+            @ToolParam(description = "the shell command to run, as ONE string (not a JSON array), e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'") String command) {
+        if (command == null || command.isBlank()) {
+            return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
+        }
+        // The model often sends an argv array, e.g. {"command":["bash","-lc","ls -R"]}. Spring AI's MethodToolCallback coerces a JSON array to a String via List.toString(),
+        // yielding the literal "[bash, -lc, ls -R]". Running that through the shell does NOT do what the model intended (the first word "[bash," is not a command), yet the failure
+        // is easy for the model to misread, so it blindly retries the array form. Detect that exact shape up front and reject it LOUDLY with a non-zero exit and a single
+        // corrective
+        // instruction, so the agent re-sends a plain string instead of thrashing. A genuine POSIX test starts with "[ " (a space after the bracket), so it never matches.
+        if (isMangledArrayCommand(command)) {
+            return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
         }
         // The model repeatedly reaches for a Codex-style `apply_patch` — both as a non-existent tool and as a bash command (`apply_patch <<'PATCH' … PATCH`). A bash `apply_patch`
         // is not installed, so the shell would exit 127 with "not found" but leave the workspace UNCHANGED while the model believes the edit landed, and it thrashes for many
         // turns.
         // Short-circuit it here with a LOUD, non-zero result and never touch the sandbox, so the agent observes a clear failure and switches to write_file / edit_file.
-        if (isApplyPatchInvocation(effectiveCommand)) {
+        if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
         }
         int sequence = bashSequence++;
@@ -169,8 +179,8 @@ public class SandboxAgentTools {
         // the timeout. Only a small meta line plus the output tail are streamed back; the full output stays in the spill file for the agent to inspect.
         // `wc` output is piped through `tr -d` because some implementations right-pad the count with spaces; stripping them keeps the meta line in the exact shape the parser
         // expects, so the authoritative exit code is never lost to a formatting quirk (which would otherwise make every command look like it exited 0).
-        String script = "LOG=" + logPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && "
-                + effectiveCommand + " ) </dev/null > \"$LOG\" 2>&1\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
+        String script = "LOG=" + logPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && " + command
+                + " ) </dev/null > \"$LOG\" 2>&1\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
                 + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";
         SandboxExecResult result = sandbox.exec(sessionId, BASH_TIMEOUT, "sh", "-c", script);
         if (result.timedOut()) {
@@ -248,6 +258,18 @@ public class SandboxAgentTools {
         int lastSlash = firstWord.lastIndexOf('/');
         String program = lastSlash >= 0 ? firstWord.substring(lastSlash + 1) : firstWord;
         return "apply_patch".equals(program);
+    }
+
+    /**
+     * Detects whether a bash command is the mangled {@code List.toString()} form of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}) that Spring AI coerces when the model sends
+     * {@code {"command":["bash","-lc","ls -R"]}}. This is NOT a runnable shell command, so the tool rejects it loudly instead of running garbage. A genuine POSIX {@code [ -f x ]}
+     * test does not match because it has a space immediately after the {@code [}.
+     *
+     * @param command the effective shell command
+     * @return {@code true} if the command is the rendered form of a JSON array rather than a real shell string
+     */
+    static boolean isMangledArrayCommand(String command) {
+        return MANGLED_ARRAY.matcher(command.strip()).matches();
     }
 
     private static String invalidPathError(String path) {
