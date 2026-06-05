@@ -144,10 +144,10 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
             false,
-            programmingExercise().programmingLanguage,
-            programmingExercise().projectType,
-            programmingExercise().staticCodeAnalysisEnabled,
-            programmingExercise().buildConfig?.sequentialTestRuns,
+            programmingExercise.programmingLanguage,
+            programmingExercise.projectType,
+            programmingExercise.staticCodeAnalysisEnabled,
+            programmingExercise.buildConfig?.sequentialTestRuns,
         );
         expect(buildPlanSignal()).toEqual(templatePhases);
         expect(comp.programmingExerciseCreationConfig().buildPlanLoaded).toBe(true);

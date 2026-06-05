@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -766,7 +766,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.ngOnInit();
             fixture.changeDetectorRef.detectChanges();
-            tick();
             expect(comp.isImportFromFile).toBe(false);
             expect(comp.isImportFromExistingExercise).toBe(true);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
