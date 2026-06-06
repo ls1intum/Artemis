@@ -45,7 +45,7 @@ export class MathExerciseComponent extends ExerciseComponent {
 
     mathExercises = input<MathExercise[]>([]);
     internalMathExercises = signal<MathExercise[]>([]);
-    filteredMathExercises: MathExercise[] = [];
+    filteredMathExercises: (MathExercise & { id: number })[] = [];
 
     // Icons
     faSort = faSort;
@@ -85,7 +85,9 @@ export class MathExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredMathExercises = this.internalMathExercises().filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredMathExercises = this.internalMathExercises().filter(
+            (exercise): exercise is MathExercise & { id: number } => exercise.id !== undefined && this.filter.matchesExercise(exercise),
+        );
         this.emitFilteredExerciseCount(this.filteredMathExercises.length);
     }
 

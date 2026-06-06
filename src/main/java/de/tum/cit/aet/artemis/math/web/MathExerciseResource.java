@@ -206,7 +206,7 @@ public class MathExerciseResource {
         if (importedExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new math exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        MathExercise sourceExercise = mathExerciseRepository.findByIdWithCategoriesAndCourse(sourceExerciseId).orElseThrow();
+        MathExercise sourceExercise = mathExerciseRepository.findByIdWithCourseAndExampleSubmissions(sourceExerciseId).orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, sourceExercise, null);
         MathExercise target = new MathExercise();
         importedExerciseDTO.applyToEntity(target);

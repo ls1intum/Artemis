@@ -86,13 +86,16 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
         this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.mathExercise.exampleSolution);
         this.detailOverviewSections = this.getExerciseDetailSections();
 
-        this.statisticsService.getExerciseStatistics(this.mathExercise.id!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-            this.doughnutStats = statistics;
-        });
+        const exerciseId = this.mathExercise.id;
+        if (exerciseId !== undefined) {
+            this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+                this.doughnutStats = statistics;
+            });
 
-        this.mathSubmissionService.getSubmittedSubmissions(this.mathExercise.id!).subscribe((submissions) => {
-            this.submissions = submissions;
-        });
+            this.mathSubmissionService.getSubmittedSubmissions(exerciseId).subscribe((submissions) => {
+                this.submissions = submissions;
+            });
+        }
     }
 
     load(exerciseId: number) {
@@ -137,6 +140,11 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInMathExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('mathExerciseListModification', () => this.load(this.mathExercise.id!));
+        this.eventSubscriber = this.eventManager.subscribe('mathExerciseListModification', () => {
+            const exerciseId = this.mathExercise?.id;
+            if (exerciseId !== undefined) {
+                this.load(exerciseId);
+            }
+        });
     }
 }

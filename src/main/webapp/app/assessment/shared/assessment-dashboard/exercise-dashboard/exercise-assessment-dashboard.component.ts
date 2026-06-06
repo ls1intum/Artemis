@@ -334,10 +334,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         const fileUploadExercise = this.exercise as FileUploadExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution);
                         break;
-                    case ExerciseType.MATH:
+                    case ExerciseType.MATH: {
                         const mathExercise = this.exercise as MathExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(mathExercise.exampleSolution);
                         break;
+                    }
                     case ExerciseType.PROGRAMMING:
                         this.programmingExercise = this.exercise as ProgrammingExercise;
                         break;
