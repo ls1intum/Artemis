@@ -427,6 +427,8 @@ public class AttachmentVideoUnitResource {
         attachment.setName(attachmentDTO.name());
         attachment.setReleaseDate(attachmentDTO.releaseDate());
         attachment.setAttachmentType(attachmentDTO.attachmentType());
+        // Preserve the client-provided link (used by URL-based attachments without a file upload); on file uploads the service overrides it
+        attachment.setLink(attachmentDTO.link());
         return attachment;
     }
 
