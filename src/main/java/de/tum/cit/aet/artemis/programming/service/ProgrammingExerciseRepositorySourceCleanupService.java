@@ -68,11 +68,10 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      */
     private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
             // Decoupled-harness languages whose clean scaffold is LIVE-VALIDATED (agent grades 100%/0%). The agent also gets the worked sample as a read-only reference under
-            // reference/ in the sandbox. Kotlin and R stay EXCLUDED: even with the reference seeded, the agent did not reliably author their less-common harnesses (Kotlin
-            // thrashed,
-            // R produced a buggy solution) — their worked sample (kept in tests/) remains the better starting point. Java's Ares structure oracle is regenerated from the
-            // classpath.
-            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES),
+            // reference/ in the sandbox, surfaced in the turn-0 layout probe — Kotlin, the arcane JVM+Ares case, only succeeded once the reference was DISCOVERABLE (the agent read
+            // reference/.../SortingExampleBehaviorTest.java to learn the Ares conventions, then authored from the clean scaffold). Java's Ares structure oracle is also
+            // classpath-regenerated. R stays EXCLUDED pending its own re-validation on the discoverable reference.
+            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES), Map.entry(ProgrammingLanguage.KOTLIN, JVM_ARES_SAMPLE_FILES),
             Map.entry(ProgrammingLanguage.PYTHON, Set.of("behavior_test.py", "structural_test.py", "structural_helpers.py")),
             Map.entry(ProgrammingLanguage.JAVASCRIPT, Set.of("behavior.test.js", "structural.test.js")),
             Map.entry(ProgrammingLanguage.TYPESCRIPT, Set.of("behavior.test.ts", "structural.test.ts")),
