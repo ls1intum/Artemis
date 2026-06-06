@@ -29,7 +29,42 @@ class GenerationWorkspaceServiceTest {
 
     private static GenerationWorkspaceService newService() {
         return new GenerationWorkspaceService(mock(de.tum.cit.aet.artemis.localvc.service.GitService.class),
-                mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class));
+                mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class),
+                mock(de.tum.cit.aet.artemis.core.service.ResourceLoaderService.class));
+    }
+
+    private static org.springframework.core.io.Resource fakeResource(String uri, byte[] content) throws Exception {
+        var resource = mock(org.springframework.core.io.Resource.class);
+        when(resource.getURI()).thenReturn(java.net.URI.create(uri));
+        when(resource.getInputStream()).thenReturn(new java.io.ByteArrayInputStream(content));
+        return resource;
+    }
+
+    @Test
+    void readReferenceSample_keysFilesUnderReferenceByLanguageRelativePath_andSkipsBinary() throws Exception {
+        var loader = mock(de.tum.cit.aet.artemis.core.service.ResourceLoaderService.class);
+        // Build the Resource mocks BEFORE stubbing the loader (nesting mock-stubbing inside another when(...) trips Mockito). The test/ area: a text sample (kept, keyed by its
+        // path
+        // under the language root) plus a binary asset (skipped so it is not packed as corrupt UTF-8), filesystem URI form. The solution/ area: a jar URI (proves the marker works
+        // across filesystem and jar).
+        org.springframework.core.io.Resource sampleTest = fakeResource("file:/x/src/main/resources/templates/java/test/testFiles/behavior/SortingExampleBehaviorTest.java",
+                "class T {}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        org.springframework.core.io.Resource binaryAsset = fakeResource("file:/x/templates/java/test/wrapper.jar", new byte[] { 1, 0, 2 });
+        org.springframework.core.io.Resource sampleSolution = fakeResource("jar:file:/a.war!/WEB-INF/classes/templates/java/solution/src/Foo.java",
+                "class Foo {}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        when(loader.getFileResources(java.nio.file.Path.of("templates", "java", "test"))).thenReturn(new org.springframework.core.io.Resource[] { sampleTest, binaryAsset });
+        when(loader.getFileResources(java.nio.file.Path.of("templates", "java", "solution"))).thenReturn(new org.springframework.core.io.Resource[] { sampleSolution });
+
+        var service = new GenerationWorkspaceService(mock(de.tum.cit.aet.artemis.localvc.service.GitService.class),
+                mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class), loader);
+        var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
+        exercise.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
+
+        Map<String, String> reference = service.readReferenceSample(exercise);
+
+        assertThat(reference).containsEntry("reference/test/testFiles/behavior/SortingExampleBehaviorTest.java", "class T {}").containsEntry("reference/solution/src/Foo.java",
+                "class Foo {}");
+        assertThat(reference).as("binary assets are skipped, not packed as corrupt UTF-8").doesNotContainKey("reference/test/wrapper.jar");
     }
 
     @Test

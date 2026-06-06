@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -57,17 +60,28 @@ public class GenerationWorkspaceService {
     /** Upper bound on the size of the seeded-layout observation handed to the agent on turn 0, so a deeply nested tree cannot blow up the prompt. */
     private static final int LAYOUT_PROBE_MAX_CHARS = 6_000;
 
+    /** The sandbox directory holding the read-only worked-sample reference (a complete example exercise for this language's test conventions); never extracted or persisted. */
+    static final String REFERENCE_DIR = "reference";
+
+    /** Per-file and total caps on the seeded reference payload, so a large template cannot bloat the workspace tar. */
+    private static final int MAX_REFERENCE_FILE_BYTES = 64_000;
+
+    private static final int MAX_REFERENCE_TOTAL_BYTES = 512_000;
+
     private final GitService gitService;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
+    private final ResourceLoaderService resourceLoaderService;
+
     public GenerationWorkspaceService(GitService gitService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            SandboxBuildCommandService sandboxBuildCommandService) {
+            SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService) {
         this.gitService = gitService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.sandboxBuildCommandService = sandboxBuildCommandService;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
@@ -108,9 +122,94 @@ public class GenerationWorkspaceService {
                 }
             }
         }
+        // Seed a read-only worked-sample reference so the agent always has a complete, working example of THIS language's test-framework conventions to author against — even
+        // though
+        // the working repositories are stripped clean. It lives under reference/ (not a repository directory), so the layout probe ignores it and it is never extracted or
+        // persisted.
+        Map<String, String> referenceSample = readReferenceSample(exercise);
+        textFiles.putAll(referenceSample);
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
-        log.info("Seeded generation workspace for exercise {} ({} repositories)", exercise.getId(), repositoryTrees.size());
+        log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
         return testsSeedSnapshot;
+    }
+
+    /**
+     * Reads the language's worked-sample TEXT files (its test harness + example tests, and the example solution) from the classpath templates, keyed {@code reference/<path>}, so
+     * the
+     * agent always has a complete working example of this language's test-framework conventions to study — even when the working repositories were stripped clean. Best-effort:
+     * binary
+     * files, oversized files, and any read error are skipped, and the total payload is bounded.
+     *
+     * @param exercise the exercise whose language (and, as a fallback, project type) selects the template tree
+     * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if none could be read
+     */
+    Map<String, String> readReferenceSample(ProgrammingExercise exercise) {
+        if (exercise.getProgrammingLanguage() == null) {
+            return Map.of();
+        }
+        String languageDir = exercise.getProgrammingLanguage().name().toLowerCase(Locale.ROOT);
+        Map<String, String> reference = new LinkedHashMap<>();
+        int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES };
+        // The example tests (the test-framework wiring the agent must reproduce) and the example solution (so the tests read coherently). The build manifests within test/ are part
+        // of
+        // the harness reference too.
+        for (String area : List.of("test", "solution")) {
+            addReferenceArea(reference, languageDir, area, remainingBytes);
+        }
+        // Languages whose templates live only under a project-type subdirectory (e.g. C: templates/c/{gcc,fact}) have no language-level test/solution; fall back to the project
+        // type.
+        if (reference.isEmpty() && exercise.getProjectType() != null) {
+            String projectTypeRelativeBase = languageDir + "/" + exercise.getProjectType().name().toLowerCase(Locale.ROOT);
+            for (String area : List.of("test", "solution")) {
+                addReferenceArea(reference, projectTypeRelativeBase, area, remainingBytes);
+            }
+        }
+        return reference;
+    }
+
+    /**
+     * Adds the readable text files under {@code templates/<languageRelativeBase>/<area>} to {@code reference}, keyed {@code reference/<area>/<rest>} (the path relative to the
+     * language
+     * template root), respecting the remaining byte budget. Robust across filesystem and jar resources via the {@code /templates/<languageRelativeBase>/} URI marker.
+     */
+    private void addReferenceArea(Map<String, String> reference, String languageRelativeBase, String area, int[] remainingBytes) {
+        String marker = "/templates/" + languageRelativeBase + "/";
+        Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates").resolve(languageRelativeBase).resolve(area));
+        for (Resource resource : resources) {
+            if (remainingBytes[0] <= 0) {
+                return;
+            }
+            try {
+                String uri = resource.getURI().toString().replace('\\', '/');
+                int markerIndex = uri.indexOf(marker);
+                if (markerIndex < 0) {
+                    continue;
+                }
+                String relativePath = uri.substring(markerIndex + marker.length());
+                if (relativePath.isEmpty() || relativePath.endsWith("/")) {
+                    continue;
+                }
+                byte[] content = resource.getInputStream().readAllBytes();
+                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || isBinary(content)) {
+                    continue;
+                }
+                reference.put(REFERENCE_DIR + "/" + relativePath, new String(content, StandardCharsets.UTF_8));
+                remainingBytes[0] -= content.length;
+            }
+            catch (IOException | RuntimeException e) {
+                log.debug("Skipping reference sample resource {}: {}", resource, e.getMessage());
+            }
+        }
+    }
+
+    /** Whether the bytes look binary (contain a NUL), so a non-text template asset (e.g. a wrapper jar) is not packed as a corrupt UTF-8 reference file. */
+    private static boolean isBinary(byte[] content) {
+        for (byte b : content) {
+            if (b == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

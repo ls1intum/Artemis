@@ -47,6 +47,9 @@ public class AgentSystemPromptService {
                 - template/  : the student's starting point (must compile, but must FAIL the tests — the student has not done the work yet)
                 - tests/     : the instructor tests that grade the exercise
                 - verify.sh  : the build recipe — run it to check your work (see below)
+                - reference/ : (if present) a COMPLETE worked example exercise in this language — study it to learn this language's exact test-framework conventions and harness wiring \
+                (how a test file is structured, the assertion/annotation style, how it plugs into the build and emits its report). It is READ-ONLY background: do NOT edit it, do NOT \
+                copy its topic, and do NOT add it to the exercise — author the exercise the brief asks for, in your own design, using reference/ only as a conventions guide.
 
                 Programming language: %s
 
