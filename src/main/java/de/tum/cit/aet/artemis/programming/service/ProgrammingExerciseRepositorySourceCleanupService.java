@@ -67,16 +67,18 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      * separately.
      */
     private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
-            // Decoupled-harness languages: the build DISCOVERS tests, so deleting the sample is build-safe. The agent still gets the worked sample as a read-only reference under
-            // reference/ in the sandbox (GenerationWorkspaceService.readReferenceSample), so even the less-common toolchains (Kotlin, R) have the harness conventions to author
-            // against without thrashing. Java's Ares structure-oracle classes + test.json are additionally regenerated from the classpath by StructuralOracleSeedingService.
-            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES), Map.entry(ProgrammingLanguage.KOTLIN, JVM_ARES_SAMPLE_FILES),
+            // Decoupled-harness languages whose clean scaffold is LIVE-VALIDATED (agent grades 100%/0%). The agent also gets the worked sample as a read-only reference under
+            // reference/ in the sandbox. Kotlin and R stay EXCLUDED: even with the reference seeded, the agent did not reliably author their less-common harnesses (Kotlin
+            // thrashed,
+            // R produced a buggy solution) — their worked sample (kept in tests/) remains the better starting point. Java's Ares structure oracle is regenerated from the
+            // classpath.
+            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES),
             Map.entry(ProgrammingLanguage.PYTHON, Set.of("behavior_test.py", "structural_test.py", "structural_helpers.py")),
             Map.entry(ProgrammingLanguage.JAVASCRIPT, Set.of("behavior.test.js", "structural.test.js")),
             Map.entry(ProgrammingLanguage.TYPESCRIPT, Set.of("behavior.test.ts", "structural.test.ts")),
             Map.entry(ProgrammingLanguage.C_SHARP, Set.of("BehaviorTest.cs", "StructuralTest.cs")),
             Map.entry(ProgrammingLanguage.DART, Set.of("behavior_test.dart", "structural_test.dart")),
-            Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")), Map.entry(ProgrammingLanguage.R, Set.of("test-convert.R")),
+            Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")),
             Map.entry(ProgrammingLanguage.RUBY, Set.of("test_behavior.rb", "test_structural.rb")));
 
     private final GitService gitService;

@@ -237,7 +237,11 @@ public class GenerationWorkspaceService {
                 + "-o -name 'settings.gradle' -o -name 'settings.gradle.kts' -o -name Cargo.toml -o -name package.json -o -name go.mod -o -name Makefile -o -name CMakeLists.txt "
                 + "-o -name dune-project -o -name dune -o -name '*.cabal' -o -name stack.yaml -o -name pyproject.toml -o -name setup.py -o -name requirements.txt -o -name Gemfile "
                 + "-o -name '*.csproj' -o -name build.sbt -o -name Package.swift -o -name pubspec.yaml -o -name DESCRIPTION -o -name composer.json -o -name '*.bats' \\) "
-                + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n";
+                + "2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
+                // Surface the read-only worked-sample reference so the agent discovers it (it is NOT a repository dir, so it is otherwise invisible to this listing). Bounded.
+                + "if [ -d " + REFERENCE_DIR + " ]; then echo; echo '--- ls -R " + REFERENCE_DIR
+                + " (read-only worked example: study it for this language test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR
+                + " 2>/dev/null | head -c 1500; fi\n";
         try {
             SandboxExecResult result = sandbox.exec(sessionId, LAYOUT_PROBE_TIMEOUT, "sh", "-c", script);
             if (result.timedOut()) {
