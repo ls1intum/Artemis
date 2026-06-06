@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -41,7 +41,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         ArtemisTimeAgoPipe,
     ],
 })
-export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
+export class HeaderExercisePageWithDetailsComponent implements OnInit {
     private sortService = inject(SortService);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -71,8 +71,32 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public nextRelevantDateStatusBadge?: string;
     public dueDateStatusBadge?: string;
     public canComplainLaterOn: boolean;
-    public achievedPoints?: number;
-    public numberOfSubmissions: number;
+
+    readonly achievedPoints = computed<number | undefined>(() => {
+        const studentParticipation = this.studentParticipation();
+        const exercise = this.exercise();
+        const course = this.effectiveCourse();
+
+        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
+        if (results?.length) {
+            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
+            this.sortService.sortByProperty(results, 'id', false);
+
+            const latestRatedResult = results.filter((result) => result.rated).first();
+            if (latestRatedResult) {
+                return roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
+            }
+        }
+        return undefined;
+    });
+
+    readonly numberOfSubmissions = computed<number | undefined>(() => {
+        const submissionPolicy = this.submissionPolicy();
+        if (submissionPolicy?.active) {
+            return countSubmissions(this.studentParticipation());
+        }
+        return undefined;
+    });
 
     icon: IconProp;
 
@@ -117,27 +141,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
         if (this.dueDate) {
             this.dueDateStatusBadge = dayjs().isBefore(this.dueDate) ? 'bg-success' : 'bg-danger';
-        }
-    }
-
-    ngOnChanges() {
-        const submissionPolicy = this.submissionPolicy();
-        const studentParticipation = this.studentParticipation();
-        const exercise = this.exercise();
-        const course = this.effectiveCourse();
-
-        if (submissionPolicy?.active) {
-            this.countSubmissions();
-        }
-        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
-        if (results?.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(results, 'id', false);
-
-            const latestRatedResult = results.filter((result) => result.rated).first();
-            if (latestRatedResult) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
-            }
         }
     }
 
@@ -199,9 +202,5 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
                 return;
             }
         }
-    }
-
-    private countSubmissions() {
-        this.numberOfSubmissions = countSubmissions(this.studentParticipation());
     }
 }

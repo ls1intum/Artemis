@@ -222,21 +222,31 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exercises', '1']);
             });
 
-            it('should navigate to course-management for exam exercise when user is at least tutor', () => {
+            it('should navigate to exercise management for exam exercise when user is at least editor', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
                     badge: 'Programming',
-                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastTutor: true },
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
+            });
+
+            it('should navigate to assessment dashboard for exam exercise when user is tutor', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    badge: 'Programming',
+                    metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);
             });
 
             it('should navigate to exam page for exam exercise when user is a student', () => {
                 component['navigateToResult']({
                     type: 'exercise',
                     id: '42',
-                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3 },
+                    metadata: { courseId: 10, examId: 5 },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', 5]);
             });
@@ -251,9 +261,27 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
             });
 
-            it('should navigate to exam', () => {
+            it('should navigate to student exam view when user is a student', () => {
                 component['navigateToResult']({ type: 'exam', id: '4', metadata: { courseId: 10 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'exams', '4']);
+            });
+
+            it('should navigate to exam management when user is at least editor', () => {
+                component['navigateToResult']({
+                    type: 'exam',
+                    id: '4',
+                    metadata: { courseId: 10, isAtLeastEditor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4']);
+            });
+
+            it('should navigate to exam assessment dashboard when user is tutor', () => {
+                component['navigateToResult']({
+                    type: 'exam',
+                    id: '4',
+                    metadata: { courseId: 10, isAtLeastTutor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', '4', 'assessment-dashboard']);
             });
 
             it('should navigate to faq', () => {
@@ -286,6 +314,36 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 fixture.componentRef.setInput('results', []);
                 fixture.detectChanges();
                 expect(fixture.nativeElement.textContent).toContain('global.search.noResultsFound');
+            });
+
+            it('should show too-short hint when query is 1-2 characters and no results', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'ab');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toContain('global.search.tooShortQueryHint');
+                expect(fixture.nativeElement.textContent).not.toContain('global.search.noResultsFound');
+            });
+
+            it('should show short query hint when query is 3-5 characters and no results', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'abc');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toContain('global.search.noResultsFound');
+                expect(fixture.nativeElement.textContent).toContain('global.search.shortQueryHint');
+
+                fixture.componentRef.setInput('searchQuery', 'abcde');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toContain('global.search.shortQueryHint');
+            });
+
+            it('should not show short query hint when query is 6+ characters', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.componentRef.setInput('searchQuery', 'abcdef');
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).not.toContain('global.search.shortQueryHint');
             });
 
             it('should render error state', () => {

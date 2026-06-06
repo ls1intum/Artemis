@@ -19,8 +19,8 @@
                         <span [style.margin-right]="exercise().maxPoints ? '30px' : null">
                             <span class="me-2">
                                 {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                                @if (achievedPoints !== undefined) {
-                                    {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                                @if (achievedPoints() !== undefined) {
+                                    {{ achievedPoints() + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
                                 }
                                 {{ exercise().maxPoints }}
                                 @if (exercise().bonusPoints) {
@@ -48,7 +48,7 @@
                     <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
                     <div>
                         {{
-                            numberOfSubmissions +
+                            numberOfSubmissions() +
                                 '/' +
                                 submissionPolicy()!.submissionLimit +
                                 (submissionPolicy()!.exceedingPenalty
