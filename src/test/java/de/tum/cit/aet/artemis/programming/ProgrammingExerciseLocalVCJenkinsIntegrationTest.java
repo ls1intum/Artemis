@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTL
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
+import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.TEAM_SHORT_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 // TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -429,9 +431,18 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_testNotCreatedError() throws Exception {
         AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
         try {
+            // delete the repo before expecting for it to be deleted after a failure
+            // because now when it exists before the copy and the copy fails, it won't be deleted
+            var exercise = programmingExerciseTestService.exercise;
+            var targetRepositorySlug = exercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + TEAM_SHORT_NAME;
+            Path preCreatedTargetRepositoryPath = localVCBasePath.resolve(exercise.getProjectKey()).resolve(targetRepositorySlug + ".git");
+            targetRepositoryPath.set(preCreatedTargetRepositoryPath);
+            RepositoryExportTestUtil.safeDeleteDirectory(preCreatedTargetRepositoryPath);
+
             doAnswer(invocation -> {
                 LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
                 Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
+                RepositoryExportTestUtil.safeDeleteDirectory(localTargetRepositoryPath);
                 Files.createDirectories(localTargetRepositoryPath);
                 targetRepositoryPath.set(localTargetRepositoryPath);
                 throw new IOException("Checkout got interrupted!");
@@ -443,7 +454,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         }
         finally {
             if (targetRepositoryPath.get() != null) {
-                Files.deleteIfExists(targetRepositoryPath.get());
+                RepositoryExportTestUtil.safeDeleteDirectory(targetRepositoryPath.get());
             }
         }
     }
