@@ -192,6 +192,14 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        // Some languages' test harnesses reference a sibling solution/ checkout (Haskell's cabal `library solution`, OCaml's solution module): without the solution repository
+        // checked out next to the assignment, even the solution build cannot resolve its sources (`Cabal: can't find source for .../build/solution`). Such a language defines a
+        // SOLUTION checkout path; for it the solution checkout is not optional, so force it on so the created exercise is buildable by construction (a no-op for languages that
+        // already have it on, and never reached for languages without a solution checkout path).
+        if (requiresSolutionCheckout(programmingExercise.getProgrammingLanguage())) {
+            programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
+        }
+
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
@@ -241,6 +249,27 @@ public class ProgrammingExerciseCreationUpdateService {
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+    }
+
+    /**
+     * Whether the given language checks the solution repository out as a sibling directory during the build (its harness references {@code ${solutionWorkingDirectory}}). This is the
+     * single source of truth {@link RepositoryCheckoutService.RepositoryCheckoutPath#SOLUTION} encodes: it returns a path for such languages (Haskell, OCaml) and throws for all
+     * others. For those languages the solution checkout is mandatory, so the build config must enable it.
+     *
+     * @param language the exercise's programming language (may be {@code null})
+     * @return {@code true} if the solution repository must be checked out for this language to build
+     */
+    private static boolean requiresSolutionCheckout(ProgrammingLanguage language) {
+        if (language == null) {
+            return false;
+        }
+        try {
+            RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(language);
+            return true;
+        }
+        catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
