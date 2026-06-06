@@ -123,8 +123,8 @@ class AgentSystemPromptServiceTest {
         ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
         exercise.setStaticCodeAnalysisEnabled(true);
         String prompt = systemPromptService.build(exercise);
-        // The SCA-enabled branch token is the contract; the surrounding prose ("CLEAN", "lint-clean") is not pinned so a reword does not break this test.
-        assertThat(prompt).contains("STATIC CODE ANALYSIS IS ENABLED");
+        // Pin the branch token plus the one non-obvious instruction nothing else covers: the template need not be lint-clean (only the solution must).
+        assertThat(prompt).contains("STATIC CODE ANALYSIS IS ENABLED").contains("template need not be lint-clean");
     }
 
     @Test
@@ -151,8 +151,8 @@ class AgentSystemPromptServiceTest {
         // verbatim into [task]s and reports the differential VERDICT the acceptance gate will conclude. This is what lets the agent self-correct when a framework's reported name
         // differs from the profile's described rule (e.g. Dart group+test space-joining) and never guess a name.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.DART, ""));
-        // Loosened to one stable token proving the verify-as-authoritative-source branch fired; the surrounding prose is not a contract.
-        assertThat(prompt).contains("VERBATIM");
+        // Pin the two contract phrases (no other test covers them): verify is the PRIMARY self-check, and its names are copied VERBATIM. Surrounding prose is not pinned.
+        assertThat(prompt).contains("PRIMARY self-check").contains("VERBATIM");
     }
 
     @Test
@@ -186,10 +186,9 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_mandatesStudentFacingTemplateAndCoverageSelfCheck() {
-        // Audit found grader-note template comments (JS getter-throws hack) and under-coverage (Swift 3 tests, untested promises).
-        // Loosened to one stable token proving the student-facing-template instruction is present; the exact phrasing is not a contract.
+        // Pin one token per axis the audit found (no other test covers them): the student-facing template ("scratchpad") and the coverage self-check ("re-read your tests…").
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("scratchpad");
+        assertThat(prompt).contains("scratchpad").contains("re-read your tests against the problem statement");
     }
 
     @Test

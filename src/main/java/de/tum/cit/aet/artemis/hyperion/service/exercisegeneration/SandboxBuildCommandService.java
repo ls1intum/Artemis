@@ -195,7 +195,7 @@ public class SandboxBuildCommandService {
                 collected_tests=0
                 collected_sca=0
                 collect_one() {
-                    # $1 = source file, $2 = canonical token. cp -P never follows a symlink; combined with the -type f find that produced $1, only a regular file is copied.
+                    # $1 = sequence, $2 = source file, $3 = canonical token. cp -P never follows a symlink; combined with the -type f find that produced $2, only a regular file is copied.
                     seq=$1; src=$2; canonical=$3
                     cp -P "$src" "$REPORTS_DIR/$(printf '%04d' "$seq")@@NAME_SEP@@$canonical" 2>/dev/null || true
                 }
