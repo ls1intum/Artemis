@@ -25,9 +25,16 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -46,6 +53,30 @@ class ProgrammingExerciseRepositoryServiceTest {
     @BeforeEach
     void setUp() {
         repositorySourceCleaner = new ProgrammingExerciseRepositorySourceCleanupService(gitService);
+    }
+
+    @Test
+    void replacePlaceholders_substitutesCheckoutPlaceholdersInShellScripts_whichFileUtilSkipsAsBinary() throws Exception {
+        // A test harness whose build is driven by a committed shell script (Haskell's run.sh) ships ${...} checkout placeholders. FileUtil classifies .sh as binary and skips it, so
+        // without the dedicated shell-script pass these expand to empty strings under real CI (`find / -type l`, `rm -rf `). replacePlaceholders must substitute them to the real
+        // CI checkout directory names.
+        Path repoPath = tempDir.resolve("tests-repo");
+        Files.createDirectories(repoPath);
+        FileUtils.writeStringToFile(repoPath.resolve("run.sh").toFile(),
+                "find ${studentParentWorkingDirectoryName}/src -type f\nrm -rf ${solutionWorkingDirectory}\ncd ${testWorkingDirectory}\n", StandardCharsets.UTF_8);
+        Repository repository = mockRepository(repoPath);
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        exercise.setTitle("Shell Placeholder Exercise");
+        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+
+        ProgrammingExerciseRepositoryService service = new ProgrammingExerciseRepositoryService(gitService, mock(UserRepository.class), mock(ResourceLoaderService.class),
+                Optional.<VersionControlService>empty(), repositorySourceCleaner);
+        service.replacePlaceholders(exercise, repository);
+
+        String runSh = Files.readString(repoPath.resolve("run.sh"));
+        assertThat(runSh).doesNotContain("${").contains("find assignment/src").contains("rm -rf solution").contains("cd tests");
     }
 
     @Test
