@@ -60,6 +60,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private modelChangeSubscription?: number;
     private assessmentSelectionSubscription?: number;
+    private isUpdatingFromServer = false;
 
     constructor() {
         super();
@@ -246,11 +247,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         }
 
-        const currentIds = new Set(assessments.map((a) => a.modelElementId));
-        for (const id of this.elementFeedback.keys()) {
-            if (!currentIds.has(id)) {
-                this.elementFeedback.delete(id);
-                this.shownInApollon.delete(id);
+        if (!this.isUpdatingFromServer) {
+            const currentIds = new Set(assessments.map((a) => a.modelElementId));
+            for (const id of this.elementFeedback.keys()) {
+                if (!currentIds.has(id)) {
+                    this.elementFeedback.delete(id);
+                    this.shownInApollon.delete(id);
+                }
             }
         }
 
@@ -355,6 +358,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (!feedbacks || !umlModel) {
             return;
         }
+        this.isUpdatingFromServer = true;
 
         feedbacks.forEach((feedback) => {
             const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
@@ -390,6 +394,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const currentModel = this.apollonEditor.model;
             this.apollonEditor.model = { ...currentModel };
         }
+        this.isUpdatingFromServer = false;
     }
 
     private calculateLabel(feedback: any) {
