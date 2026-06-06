@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -766,47 +767,10 @@ public class ProgrammingExerciseRepositoryService {
         if ((programmingLanguage == ProgrammingLanguage.JAVA && projectType != null && projectType.isGradle()) || programmingLanguage == ProgrammingLanguage.RUST) {
             replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH, studentWorkingDirectory + "/src");
         }
-        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
-        // Shell scripts are classified as binary by FileUtil (so the markdown/upload binary filter never tries to read/rewrite them) and are therefore SKIPPED by the recursive
-        // replacement above. But a language's test harness can drive its build through a shell script committed in the tests repository (e.g. Haskell's run.sh) whose
-        // checkout-directory
-        // placeholders MUST be substituted — otherwise under real CI they expand to empty strings (`find ${studentParentWorkingDirectoryName}/` -> `find /`, `rm -rf
-        // ${solutionWorkingDirectory}`
-        // -> `rm -rf `) and the build fails so no test case is produced. Apply the (exercise-specific) replacements to the repository's shell scripts directly, bypassing the
-        // binary guard.
-        replaceVariablesInShellScripts(repository.getLocalPath().toAbsolutePath(), replacements);
-    }
-
-    /**
-     * Applies the given placeholder replacements to every {@code *.sh} file under {@code root}, bypassing the binary-file guard that makes
-     * {@link FileUtil#replaceVariablesInFileRecursive} skip shell scripts. Only the exercise's own {@code ${...}} placeholders are in the map, so substituting them inside a script
-     * is safe; a script that contains none is left byte-identical. Best-effort per file: a read/write error is logged and skipped rather than aborting exercise setup.
-     *
-     * @param root         the repository working-copy root to scan
-     * @param replacements the placeholder-to-value map (the same one applied to the non-binary files)
-     */
-    private static void replaceVariablesInShellScripts(Path root, Map<String, String> replacements) {
-        try (var paths = Files.walk(root)) {
-            paths.filter(Files::isRegularFile).filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".sh"))
-                    .filter(path -> !path.toString().replace('\\', '/').contains("/.git/")).forEach(path -> {
-                        try {
-                            String content = Files.readString(path);
-                            String replaced = content;
-                            for (Map.Entry<String, String> replacement : replacements.entrySet()) {
-                                replaced = replaced.replace(replacement.getKey(), replacement.getValue());
-                            }
-                            if (!replaced.equals(content)) {
-                                Files.writeString(path, replaced);
-                            }
-                        }
-                        catch (IOException | RuntimeException e) {
-                            log.warn("Could not substitute placeholders in shell script {}: {}", path, e.getMessage());
-                        }
-                    });
-        }
-        catch (IOException | RuntimeException e) {
-            log.warn("Could not scan for shell scripts under {} to substitute placeholders: {}", root, e.getMessage());
-        }
+        // forceTextExtensions includes ".sh": FileUtil otherwise classifies shell scripts as binary and skips them, but a test harness can drive its build through a committed
+        // shell script (Haskell's run.sh) whose checkout placeholders MUST be substituted — left raw they expand to empty strings under CI (`find /`, `rm -rf `) and the build
+        // fails.
+        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"), Set.of(".sh"));
     }
 
     /**

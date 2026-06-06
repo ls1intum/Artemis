@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -24,8 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -57,7 +56,8 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void replacePlaceholders_substitutesCheckoutPlaceholdersInShellScripts_whichFileUtilSkipsAsBinary() throws Exception {
-        // A test harness whose build is driven by a committed shell script (Haskell's run.sh) ships ${...} checkout placeholders. FileUtil classifies .sh as binary and skips it, so
+        // A test harness whose build is driven by a committed shell script (Haskell's run.sh) ships ${...} checkout placeholders. FileUtil classifies .sh as binary and skips it,
+        // so
         // without the dedicated shell-script pass these expand to empty strings under real CI (`find / -type l`, `rm -rf `). replacePlaceholders must substitute them to the real
         // CI checkout directory names.
         Path repoPath = tempDir.resolve("tests-repo");
@@ -73,10 +73,18 @@ class ProgrammingExerciseRepositoryServiceTest {
 
         ProgrammingExerciseRepositoryService service = new ProgrammingExerciseRepositoryService(gitService, mock(UserRepository.class), mock(ResourceLoaderService.class),
                 Optional.<VersionControlService>empty(), repositorySourceCleaner);
+        // A second harness .sh that has no placeholders must be left byte-identical (the substitution is a no-op, not a rewrite).
+        FileUtils.writeStringToFile(repoPath.resolve("helper.sh").toFile(), "echo done\n", StandardCharsets.UTF_8);
+
         service.replacePlaceholders(exercise, repository);
 
         String runSh = Files.readString(repoPath.resolve("run.sh"));
         assertThat(runSh).doesNotContain("${").contains("find assignment/src").contains("rm -rf solution").contains("cd tests");
+        assertThat(Files.readString(repoPath.resolve("helper.sh"))).isEqualTo("echo done\n");
+
+        // Idempotent: re-running over the now-substituted tree changes nothing.
+        service.replacePlaceholders(exercise, repository);
+        assertThat(Files.readString(repoPath.resolve("run.sh"))).isEqualTo(runSh);
     }
 
     @Test

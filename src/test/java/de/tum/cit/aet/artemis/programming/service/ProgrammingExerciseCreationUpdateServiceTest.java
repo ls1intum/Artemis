@@ -51,7 +51,7 @@ class ProgrammingExerciseCreationUpdateServiceTest {
                 mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseAtlasIrisService.class), moduleFeatureService,
                 mock(TemplateProgrammingExerciseParticipationRepository.class), mock(SolutionProgrammingExerciseParticipationRepository.class),
                 mock(AuxiliaryRepositoryRepository.class), Optional.<VersionControlService>empty(), mock(ParticipationRepository.class), mock(GitService.class),
-                mock(CompetencyExerciseLinkService.class));
+                mock(CompetencyExerciseLinkService.class), Optional.<ProgrammingLanguageFeatureService>empty());
     }
 
     @Test

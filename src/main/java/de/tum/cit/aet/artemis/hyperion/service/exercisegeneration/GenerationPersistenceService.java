@@ -336,11 +336,8 @@ public class GenerationPersistenceService {
             }
             repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
         }
-        // Normalize the CI checkout-directory placeholders in the just-written tree to the same real-CI values an instructor-created exercise carries, exactly as exercise creation
-        // does. The agent works in a sandbox whose harness still carries (or re-introduces, e.g. by copying the worked reference) raw placeholders such as the Haskell run.sh's
-        // ${studentParentWorkingDirectoryName}/${solutionWorkingDirectory}; committed raw they expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the
-        // build
-        // so no test case syncs. Re-running the production substitution here is idempotent for the (already-clean) harnesses of every other language and corrective for these.
+        // The agent's produced tree can re-introduce raw ${...} placeholders (e.g. by copying the worked reference's run.sh), so normalize them to the real-CI checkout values the
+        // same way exercise creation does — idempotent for already-clean harnesses, corrective otherwise. See ProgrammingExerciseRepositoryService#replacePlaceholders.
         programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
     }
 

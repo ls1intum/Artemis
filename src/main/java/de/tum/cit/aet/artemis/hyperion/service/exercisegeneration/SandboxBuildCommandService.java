@@ -31,15 +31,10 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
  * tests into it, copies the chosen assignment ({@code solution/} or {@code template/}) into an {@code assignment/} directory next to the tests (so the test project's
  * {@code sourceDirectory} resolves against the assignment exactly as in CI), and runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
  * <p>
- * <strong>The verdict is no longer parsed inside the shell.</strong> Earlier versions re-implemented JUnit/SCA parsing in POSIX {@code awk} (a byte-lexer scrub, a
- * {@code <testcase>}
- * counter, an SCA category extractor) and printed nonce-stamped {@code HYPERION_*} marker lines the verifier scraped from stdout. That re-implementation could only ever
- * approximate
- * the production parsers and reopened a forgery surface (markup-looking text in a test's captured output). Instead, the script now COLLECTS the build-fresh report files into a
- * fixed,
- * verifier-owned directory ({@link #REPORTS_DIR}) and the trusted Java verifier copies that directory out of the container and parses it with the SAME production code the real
- * LocalCI pipeline uses ({@code TestResultXmlParser}, {@code ReportParser}). This gives parity-by-construction, a real XML parser, and production SARIF/GCC category derivation for
- * free. The script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line; the verdict is read entirely from the collected files in Java.
+ * The verdict is NOT parsed in the shell: the script only COLLECTS the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the trusted Java
+ * verifier copies that directory out and parses it with the SAME production code the LocalCI pipeline uses ({@code TestResultXmlParser}, {@code ReportParser}) —
+ * parity-by-construction
+ * with real SARIF/GCC categorisation. The script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line.
  */
 @Lazy
 @Service

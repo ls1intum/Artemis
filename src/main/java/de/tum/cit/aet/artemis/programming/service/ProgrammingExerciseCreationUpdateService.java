@@ -104,6 +104,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
@@ -114,7 +116,7 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService,
-            CompetencyExerciseLinkService competencyExerciseLinkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -134,6 +136,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     /**
@@ -192,13 +195,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
-        // Some languages' test harnesses reference a sibling solution/ checkout (Haskell's cabal `library solution`, OCaml's solution module): without the solution repository
-        // checked out next to the assignment, even the solution build cannot resolve its sources (`Cabal: can't find source for .../build/solution`). Such a language defines a
-        // SOLUTION checkout path; for it the solution checkout is not optional, so force it on so the created exercise is buildable by construction (a no-op for languages that
-        // already have it on, and never reached for languages without a solution checkout path).
-        if (requiresSolutionCheckout(programmingExercise.getProgrammingLanguage())) {
-            programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
-        }
+        forceSolutionCheckoutWhereTheHarnessRequiresIt(programmingExercise);
 
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
@@ -252,24 +249,22 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Whether the given language checks the solution repository out as a sibling directory during the build (its harness references {@code ${solutionWorkingDirectory}}). This is
-     * the
-     * single source of truth {@link RepositoryCheckoutService.RepositoryCheckoutPath#SOLUTION} encodes: it returns a path for such languages (Haskell, OCaml) and throws for all
-     * others. For those languages the solution checkout is mandatory, so the build config must enable it.
-     *
-     * @param language the exercise's programming language (may be {@code null})
-     * @return {@code true} if the solution repository must be checked out for this language to build
+     * Enables the solution-repository checkout for languages whose test harness needs it (Haskell, OCaml: the cabal/dune {@code library solution} reads a sibling
+     * {@code solution/}).
+     * Without it even the solution build cannot resolve its sources. The authoritative predicate is the same {@link ProgrammingLanguageFeature#checkoutSolutionRepositoryAllowed()}
+     * flag the CI trigger and validation gate on, so creation, validation and build stay in agreement. Only forces it when not already set, logging if it overrides an explicit
+     * opt-out.
      */
-    private static boolean requiresSolutionCheckout(ProgrammingLanguage language) {
-        if (language == null) {
-            return false;
+    private void forceSolutionCheckoutWhereTheHarnessRequiresIt(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
+        if (language == null || programmingLanguageFeatureService.isEmpty()) {
+            return;
         }
-        try {
-            RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(language);
-            return true;
-        }
-        catch (RuntimeException e) {
-            return false;
+        if (programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language).checkoutSolutionRepositoryAllowed()
+                && !programmingExercise.getBuildConfig().getCheckoutSolutionRepository()) {
+            programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
+            log.info("Enabled solution-repository checkout for {} exercise '{}': its test harness requires a sibling solution/ checkout to build.", language,
+                    programmingExercise.getTitle());
         }
     }
 

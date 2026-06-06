@@ -57,10 +57,8 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  * —
  * only the SOURCE of the {@link BuildSummary} they consume changed.
  * <p>
- * <strong>Non-forgeability without a nonce.</strong> Authenticity rests on the verifier running a re-seeded pristine script the agent cannot reach AND reading the reports from a
- * constant verifier-owned directory the agent cannot write — not on a per-run marker token. So the old anti-forgery nonce is gone: there are no stdout markers for the agent's test
- * code to forge in the first place. The residual "the agent's test writes a fake passing report at build time" is not widened by this change and is already neutralized by the
- * differential (a forged always-pass report also makes the TEMPLATE pass, tripping {@code checkTemplateFails}).
+ * Authenticity needs no nonce: the verifier runs a re-seeded pristine script the agent cannot reach and reads the reports from a constant verifier-owned directory the agent cannot
+ * write, so there are no stdout markers to forge. A forged always-pass report would also make the TEMPLATE pass, tripping {@code checkTemplateFails}.
  */
 @Lazy
 @Service
@@ -560,9 +558,9 @@ public class AuthoritativeVerificationService {
     }
 
     /**
-     * The SCA-parity gate: SCA reports carry no {@code <testcase>}, so the differential oracle is blind to them while production folds a penalty into the score. {@code verify.sh}
-     * emits a {@code HYPERION_SCA} line per finding and {@link ScaPenaltyParity} flags those production would actually penalise (graded, positively-penalised category, matched to
-     * the persisted categories); silent and verdict-unchanged when none would dock.
+     * The SCA-parity gate: SCA reports carry no {@code <testcase>}, so the differential oracle is blind to them while production folds a penalty into the score. The solution's SCA
+     * findings (parsed from the collected report files by the production {@code ReportParser}) are handed to {@link ScaPenaltyParity}, which flags those production would actually
+     * penalise (graded, positively-penalised category, matched to the persisted categories); silent and verdict-unchanged when none would dock.
      *
      * @param exercise the exercise whose SCA configuration governs grading
      * @param solution the solution build summary (its SCA findings are checked)
