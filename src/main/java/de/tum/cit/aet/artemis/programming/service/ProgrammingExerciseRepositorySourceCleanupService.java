@@ -67,17 +67,17 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      * separately.
      */
     private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
-            // JVM-on-Ares: the tests repo holds .java sources + a structure oracle. Kotlin is intentionally EXCLUDED: live validation showed the agent thrashes to the turn cap
-            // without
-            // the worked sample as a reference for the Kotlin+Maven+Ares test harness (Java succeeds because that toolchain is far more common to the model), so its sample is
-            // kept.
+            // Only languages whose clean scaffold was LIVE-VALIDATED (the agent authored a complete exercise grading 100%/0% on the empty harness) are enabled. Kotlin and R are
+            // intentionally EXCLUDED: each thrashed to the 100-turn cap with testCount=0 in live validation — without the worked sample as a reference for its less-common test
+            // harness the agent could not establish the test wiring (Java/Python/JS/TS/C#/Go/Dart/Ruby succeed because those toolchains are common to the model). Their samples
+            // stay.
             Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES),
             Map.entry(ProgrammingLanguage.PYTHON, Set.of("behavior_test.py", "structural_test.py", "structural_helpers.py")),
             Map.entry(ProgrammingLanguage.JAVASCRIPT, Set.of("behavior.test.js", "structural.test.js")),
             Map.entry(ProgrammingLanguage.TYPESCRIPT, Set.of("behavior.test.ts", "structural.test.ts")),
             Map.entry(ProgrammingLanguage.C_SHARP, Set.of("BehaviorTest.cs", "StructuralTest.cs")),
             Map.entry(ProgrammingLanguage.DART, Set.of("behavior_test.dart", "structural_test.dart")),
-            Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")), Map.entry(ProgrammingLanguage.R, Set.of("test-convert.R")),
+            Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")),
             Map.entry(ProgrammingLanguage.RUBY, Set.of("test_behavior.rb", "test_structural.rb")));
 
     private final GitService gitService;
