@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationExcepti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -72,10 +73,13 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseCreationUpdateService creationUpdateService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -85,6 +89,7 @@ public class GenerationPersistenceService {
         this.creationUpdateService = creationUpdateService;
         this.exerciseVersionService = exerciseVersionService;
         this.testCaseRepository = testCaseRepository;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
     }
 
     /**
@@ -199,7 +204,7 @@ public class GenerationPersistenceService {
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
-            mirrorProducedFilesIntoWorkingCopy(repository, repositoryType, producedFiles);
+            mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles);
             gitService.stageAllChanges(repository);
             gitService.commitToIsolatedBranchAndPush(repository, draftBranch, "Hyperion generation draft (needs review; NOT applied to the live exercise)", user);
             // Reset the working copy back to the untouched default branch so this checkout is not left sitting on the diverted commit for any later default-branch operation.
@@ -300,7 +305,7 @@ public class GenerationPersistenceService {
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
-            mirrorProducedFilesIntoWorkingCopy(repository, repositoryType, producedFiles);
+            mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles);
             repositoryService.commitChanges(repository, user);
             return gitService.getLastCommitHash(uri);
         }
@@ -315,12 +320,14 @@ public class GenerationPersistenceService {
      * {@link #deleteOrphanedFiles}) and then writes every produced file (replacing any existing one). Shared by the default-branch commit and the isolated draft-branch commit so
      * both produce an identical tree from the same produced files; the caller decides how to commit it.
      *
+     * @param exercise       the exercise being persisted (its checkout layout drives the placeholder normalization below)
      * @param repository     the checked-out repository working copy
      * @param repositoryType the repository type
      * @param producedFiles  the files to write (the sandbox-final tree)
      * @throws IOException if writing a file into the working copy fails
      */
-    private void mirrorProducedFilesIntoWorkingCopy(Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles) throws IOException {
+    private void mirrorProducedFilesIntoWorkingCopy(ProgrammingExercise exercise, Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles)
+            throws IOException {
         deleteOrphanedFiles(repository, repositoryType, producedFiles.keySet());
         for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
             String path = entry.getKey();
@@ -329,6 +336,12 @@ public class GenerationPersistenceService {
             }
             repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
         }
+        // Normalize the CI checkout-directory placeholders in the just-written tree to the same real-CI values an instructor-created exercise carries, exactly as exercise creation
+        // does. The agent works in a sandbox whose harness still carries (or re-introduces, e.g. by copying the worked reference) raw placeholders such as the Haskell run.sh's
+        // ${studentParentWorkingDirectoryName}/${solutionWorkingDirectory}; committed raw they expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the
+        // build
+        // so no test case syncs. Re-running the production substitution here is idempotent for the (already-clean) harnesses of every other language and corrective for these.
+        programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
     }
 
     /**

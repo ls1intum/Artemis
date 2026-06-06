@@ -138,6 +138,21 @@ public class SandboxBuildCommandService {
         // Materialize the tests at the language's real test checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
+        // CI directory placeholders for the seeded harness, mapped to the SAME real checkout layout production uses (and that the build phases above already use). The test working
+        // directory is the build root for Java/Python/… and a "tests/" subdir otherwise; the solution working directory is a sibling solution/ for the languages whose harness
+        // references it (Haskell/OCaml) and is otherwise irrelevant (the placeholder never appears, so the value is a harmless no-op).
+        String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
+        String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
+        // Materialize a sibling solution/ checkout EXACTLY when real CI would for the template/submission build: the language defines a solution checkout path (Haskell/OCaml) AND
+        // the
+        // exercise checks the solution out. The graded test target is still driven by the assignment under test (assignment/src); solution/ only satisfies the harness's reference
+        // (e.g. the Haskell cabal's `library solution` / the test mixin), so the template run compares the template against the REAL solution instead of against itself. For every
+        // other language no solution/ is created, so a broad-glob build cannot pick up the solution and the differential is unchanged.
+        boolean materializeSolution = !recipe.solutionDir().isEmpty() && recipe.checkoutSolution();
+        String solutionCopySection = materializeSolution
+                ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
+                        + "\"/ 2>/dev/null || true"
+                : ": # this language's harness references no sibling solution/ (CI does not check the solution out for the template/submission build)";
         // The script is intentionally plain POSIX sh so it runs in any of the ~20 language images (some have no bash). It must not abort before collecting the reports, so each
         // phase runs in its own subshell (re-rooted at the build dir, like real CI) and a non-zero exit is recorded rather than aborting the script.
         return """
@@ -160,14 +175,15 @@ public class SandboxBuildCommandService {
                 cp -a "$WORKSPACE/tests/." "$TEST_DEST"/ 2>/dev/null || true
                 mkdir -p "$BUILD_DIR/assignment"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$BUILD_DIR/assignment"/ 2>/dev/null || true
+                %s
                 # Substitute the CI directory placeholders inside the COPIED test harness, exactly as production exercise-creation does, so a seeded harness resolves against THIS build
-                # tree without the agent editing it. Both the student parent and solution working directory map to assignment/ (where the chosen assignment is copied in both runs); the
-                # test working directory is the build root. Build-tree copy only — the seeded source files are untouched.
+                # tree without the agent editing it. The student parent working directory is assignment/ (the chosen assignment, copied in both runs); the solution and test working
+                # directories use the language's real CI checkout layout. Build-tree copy only — the seeded source files are untouched.
                 find "$TEST_DEST" -type f 2>/dev/null | while IFS= read -r f; do
                     sed -e 's#${studentWorkingDirectory}#/assignment/src#g' \\
                         -e 's#${studentParentWorkingDirectoryName}#assignment#g' \\
-                        -e 's#${solutionWorkingDirectory}#assignment#g' \\
-                        -e 's#${testWorkingDirectory}#.#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
+                        -e 's#${solutionWorkingDirectory}#%s#g' \\
+                        -e 's#${testWorkingDirectory}#%s#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
                 # Anti-forgery: delete every pre-existing report XML before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
                 # this run are collected.
@@ -204,8 +220,9 @@ public class SandboxBuildCommandService {
                 echo "%s tests=$collected_tests sca=$collected_sca exit=$rc"
                 exit $rc
                 """
-                .formatted(GenerationWorkspaceService.WORKSPACE, REPORTS_DIR, testDestination, findExpression, phaseSection, COLLECTED_JUNIT_TOKEN, COLLECTED_NAME_SEPARATOR,
-                        findExpression, COLLECTED_JUNIT_TOKEN, buildScaCollectSection(scaFindExpression), COLLECTED_MARKER);
+                .formatted(GenerationWorkspaceService.WORKSPACE, REPORTS_DIR, testDestination, solutionCopySection, solutionPlaceholderValue, testPlaceholderValue, findExpression,
+                        phaseSection, COLLECTED_JUNIT_TOKEN, COLLECTED_NAME_SEPARATOR, findExpression, COLLECTED_JUNIT_TOKEN, buildScaCollectSection(scaFindExpression),
+                        COLLECTED_MARKER);
     }
 
     /**
@@ -266,13 +283,13 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * The build phases (each already placeholder-substituted), the JUnit report locations, the test checkout directory ({@code ""} = build root), and — when static code analysis
-     * is
-     * ENABLED for the exercise — the SCA tool report file names ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) the SCA collection scans. The SCA list is EMPTY when SCA is
-     * disabled,
-     * so the generated script collects no SCA reports and a non-SCA exercise's behaviour is unchanged.
+     * The build phases (each already placeholder-substituted), the JUnit report locations, the assignment/test/solution checkout directories ({@code testDir == ""} = build root;
+     * {@code solutionDir == ""} = the language checks out no sibling solution), whether the exercise checks the solution out for the template/submission build, and — when static
+     * code analysis is ENABLED for the exercise — the SCA tool report file names ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) the SCA collection scans. The SCA list is EMPTY
+     * when SCA is disabled, so the generated script collects no SCA reports and a non-SCA exercise's behaviour is unchanged.
      */
-    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String testDir, List<String> scaReportFiles) {
+    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, String solutionDir, boolean checkoutSolution,
+            List<String> scaReportFiles) {
     }
 
     /**
@@ -286,6 +303,11 @@ public class SandboxBuildCommandService {
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getAssignmentCheckoutPath() : null, "assignment");
         String testDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.TEST, exercise,
                 exercise.getBuildConfig() != null ? exercise.getBuildConfig().getTestCheckoutPath() : null, "");
+        // The solution checkout path is defined only for languages whose harness references a sibling solution/ (Haskell/OCaml); for every other language the enum throws and
+        // checkoutPath returns "" — so solutionDir is empty and no solution/ is materialized. checkoutSolution mirrors the exercise's real-CI flag (default false).
+        String solutionDir = checkoutPath(RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION, exercise,
+                exercise.getBuildConfig() != null ? exercise.getBuildConfig().getSolutionCheckoutPath() : null, "");
+        boolean checkoutSolution = exercise.getBuildConfig() != null && exercise.getBuildConfig().getCheckoutSolutionRepository();
 
         List<BuildPhaseDTO> phases = List.of();
         if (buildPhasesTemplateService.isPresent()) {
@@ -313,7 +335,7 @@ public class SandboxBuildCommandService {
 
         List<String> phaseScripts = phases.stream().map(BuildPhaseDTO::script).filter(s -> s != null && !s.isBlank()).map(s -> substitute(s, assignmentDir, testDir)).toList();
         if (!phaseScripts.isEmpty()) {
-            return new BuildRecipe(phaseScripts, reportGlobs, testDir, scaReportFiles);
+            return new BuildRecipe(phaseScripts, reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
         }
         // Generic fallback mirroring build_and_run_tests.sh: prefer a Gradle wrapper, then Maven, then a system Gradle.
         String fallback = """
@@ -321,7 +343,7 @@ public class SandboxBuildCommandService {
                 elif [ -f pom.xml ]; then mvn clean test;
                 elif [ -f build.gradle ]; then gradle clean test --no-daemon;
                 else echo 'No recognized build system' >&2; exit 2; fi""";
-        return new BuildRecipe(List.of(fallback), reportGlobs, testDir, scaReportFiles);
+        return new BuildRecipe(List.of(fallback), reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
     }
 
     /**

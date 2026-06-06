@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -64,6 +65,8 @@ class GenerationPersistenceServiceTest {
 
     private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
+    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     private GenerationPersistenceService service;
 
     private ProgrammingExercise exercise;
@@ -86,6 +89,7 @@ class GenerationPersistenceServiceTest {
         creationUpdateService = mock(ProgrammingExerciseCreationUpdateService.class);
         exerciseVersionService = mock(ExerciseVersionService.class);
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
+        programmingExerciseRepositoryService = mock(ProgrammingExerciseRepositoryService.class);
         // The build-gate adjustment waits for the freshly triggered tests-build to re-sync the COMPLETE set: it captures a pre-build baseline and waits for the count to move off
         // it
         // and settle. Return empty first (baseline) then a single non-build-gate case, so the wait settles at once and zero-weights nothing in these generic tests.
@@ -93,7 +97,7 @@ class GenerationPersistenceServiceTest {
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(), Set.of(behaviourCase));
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                creationUpdateService, exerciseVersionService, testCaseRepository);
+                creationUpdateService, exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService);
         service.setTestCaseSyncTimingForTests(Duration.ofSeconds(2), Duration.ofMillis(5));
 
         exercise = mock(ProgrammingExercise.class);
@@ -158,6 +162,21 @@ class GenerationPersistenceServiceTest {
 
         // A successful persist records a new exercise version.
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
+    }
+
+    @Test
+    void persist_normalizesCheckoutPlaceholders_inEveryCommittedRepository_soNoHarnessShipsRawPlaceholders() throws Exception {
+        // The agent's sandbox harness can carry (or re-introduce) raw ${...} checkout placeholders — most visibly the Haskell run.sh, whose ${studentParentWorkingDirectoryName}/
+        // ${solutionWorkingDirectory} expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the build so no test case syncs. The persist must re-run the same
+        // production placeholder substitution exercise creation applies, on EACH committed repository's working copy, so the committed harness is byte-identical to an
+        // instructor-created one. We assert the normalization happens for all three repositories (template, solution, tests).
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        service.persist(exercise, user, outcome);
+
+        verify(programmingExerciseRepositoryService, times(3)).replacePlaceholders(exercise, repository);
     }
 
     @Test

@@ -710,12 +710,18 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
+     * <p>
+     * This is run once at exercise creation; it is also re-run by the Hyperion generation persist path after the agent-produced files are mirrored into the working copy, so a
+     * harness file the agent overwrote with a still-templated copy (e.g. the Haskell {@code run.sh}, whose
+     * {@code ${studentParentWorkingDirectoryName}}/{@code ${solutionWorkingDirectory}}
+     * would otherwise expand to empty strings in real CI) is normalized to the same real-CI checkout values an instructor-created exercise carries. The operation is idempotent:
+     * an already-substituted file contains no placeholders and is left byte-identical.
      *
      * @param programmingExercise The related programming exercise
      * @param repository          The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
-    void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+    public void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
         final Map<String, String> replacements = new HashMap<>();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 

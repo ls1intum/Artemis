@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
@@ -105,6 +106,45 @@ class SandboxBuildCommandServiceTest {
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
         assertThat(script).contains("s#${studentParentWorkingDirectoryName}#assignment#g").contains("s#${solutionWorkingDirectory}#assignment#g")
                 .contains("s#${studentWorkingDirectory}#/assignment/src#g").contains("s#${testWorkingDirectory}#.#g");
+    }
+
+    @Test
+    void verifyScript_materializesSiblingSolution_andSubstitutesRealLayout_forSolutionCheckoutLanguages() {
+        // Haskell's harness references ${solutionWorkingDirectory} (the cabal's `library solution`, the test mixin). Real CI checks out a sibling solution/ for the
+        // template/submission build when checkoutSolutionRepository is set, and substitutes ${solutionWorkingDirectory}->solution (NOT the collapsed assignment). The sandbox must
+        // reproduce that exactly, so the template run compares the template against the REAL solution rather than against itself (a collapse would make the template trivially pass
+        // -> false reject).
+        ProgrammingExercise haskell = new ProgrammingExercise();
+        haskell.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setCheckoutSolutionRepository(true);
+        haskell.setBuildConfig(buildConfig);
+
+        String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "./run.sh -s", null, false, List.of("test-reports/results.xml")))).verifyScriptContent(haskell);
+
+        // A sibling solution/ is materialized from the seeded solution workspace, alongside assignment/.
+        assertThat(script).contains("mkdir -p \"$BUILD_DIR/solution\"").contains("cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/solution\"/");
+        // The harness placeholders resolve to the real CI layout: solution/ (not the collapsed assignment), test root for Haskell.
+        assertThat(script).contains("s#${solutionWorkingDirectory}#solution#g").contains("s#${studentParentWorkingDirectoryName}#assignment#g")
+                .contains("s#${testWorkingDirectory}#.#g");
+    }
+
+    @Test
+    void verifyScript_doesNotMaterializeSolution_forLanguagesThatDoNotCheckItOut_soTheDifferentialIsUnchanged() {
+        // Every language other than Haskell/OCaml checks out no sibling solution/ for the template/submission build (the enum throws -> solutionDir empty). The sandbox must NOT
+        // create a solution/ for them, so a broad-glob build cannot pick up solution sources and inflate/short-circuit the differential; the ${solutionWorkingDirectory}
+        // placeholder
+        // never appears in their harness, so its (no-op) substitution stays at the historical collapse value.
+        ProgrammingExercise go = new ProgrammingExercise();
+        go.setProgrammingLanguage(ProgrammingLanguage.GO);
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setCheckoutSolutionRepository(true); // even when requested, Go has no solution checkout path, so none is materialized
+        go.setBuildConfig(buildConfig);
+
+        String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "go test ./...", null, false, List.of()))).verifyScriptContent(go);
+
+        assertThat(script).doesNotContain("cp -a \"$WORKSPACE/solution/.").doesNotContain("mkdir -p \"$BUILD_DIR/solution\"");
+        assertThat(script).contains("s#${solutionWorkingDirectory}#assignment#g");
     }
 
     /**
