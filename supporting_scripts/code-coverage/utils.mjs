@@ -2,24 +2,22 @@ import path from 'path';
 import fs from 'fs';
 
 /**
- * Parse vitest.config.ts to extract module names from include patterns.
- * The vitest.config.ts is the single source of truth for which modules use Vitest.
+ * Returns the set of client modules that run on Vitest. The entire Angular client now runs on Vitest
+ * (Jest has been removed), so every top-level module directory under src/main/webapp/app is a Vitest
+ * module. Enumerating the directories keeps this correct without maintaining an explicit list.
  *
  * @param {string} projectRoot - The root directory of the project
  * @returns {Set<string>} A set of module names that use Vitest
  */
 export function getVitestModules(projectRoot) {
-    const vitestConfigPath = path.join(projectRoot, 'vitest.config.ts');
-    if (!fs.existsSync(vitestConfigPath)) {
+    const appDir = path.join(projectRoot, 'src/main/webapp/app');
+    if (!fs.existsSync(appDir)) {
         return new Set();
     }
-    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
-    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
-    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
-    const modules = new Set();
-    let match;
-    while ((match = modulePattern.exec(content)) !== null) {
-        modules.add(match[1]);
-    }
-    return modules;
+    return new Set(
+        fs
+            .readdirSync(appDir, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name),
+    );
 }
