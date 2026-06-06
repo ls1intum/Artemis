@@ -98,12 +98,9 @@ class HyperionScaffoldingEndToEndTest extends AbstractSpringIntegrationLocalCILo
         assertThat(testFiles).as("%s %s tests working tree is non-empty", language, projectType).isNotEmpty();
 
         // The emptyRepositories=true contract (ProgrammingExerciseRepositorySourceCleanupService#clearRepositoriesForAiGeneration): the language's source files are cleared from
-        // template
-        // and
-        // solution by extension (build manifests and the keep-list preserved), while the tests repository is kept intact. We replicate production's exact source filter and assert
-        // no
-        // clearable source survives in template or solution; the tests tree, copied verbatim and never cleared, stays non-empty (asserted above) — the asymmetry that the clearing
-        // was scoped to the code repos.
+        // template and solution by extension (build manifests and the keep-list preserved). The tests repository keeps its build/report harness and SCA config (so it stays
+        // non-empty, asserted above), and for the allowlisted languages also has its sample test sources stripped. We replicate production's exact source filter and assert no
+        // clearable source survives in template or solution.
         java.util.Set<String> sourceExtensions = sourceExtensionsFor(language);
         assertThat(templateFiles).as("%s %s template sources were cleared", language, projectType).noneMatch(path -> isClearableSource(path, sourceExtensions));
         assertThat(solutionFiles).as("%s %s solution sources were cleared", language, projectType).noneMatch(path -> isClearableSource(path, sourceExtensions));

@@ -117,7 +117,9 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @param emptyRepositories   if true, clear the sources in the template and solution repositories after setup (for AI generation); the test repository is kept intact
+     * @param emptyRepositories   if true, clear the sources in the template and solution repositories after setup (for AI generation); the test repository keeps its harness but,
+     *                                for
+     *                                the allowlisted languages, has its sample test sources stripped too
      * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
@@ -136,7 +138,7 @@ public class ProgrammingExerciseRepositoryService {
 
         if (emptyRepositories) {
             repositorySourceCleaner.clearRepositoriesForAiGeneration(programmingExercise.getProgrammingLanguage(), exerciseResources.repository, solutionResources.repository,
-                    exerciseCreator);
+                    testResources.repository, exerciseCreator);
         }
     }
 

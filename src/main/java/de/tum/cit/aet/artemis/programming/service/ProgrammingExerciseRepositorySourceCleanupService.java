@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -24,8 +25,11 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Clears the template/solution source files of a programming exercise so the repositories are an empty, buildable starting point for AI exercise generation (Hyperion): the agent
- * authors the sources from scratch. The build scaffolding (manifests, dotfiles, test harness) is kept in place so the cleared repository is still a valid, buildable clone target.
+ * Clears the source files of a programming exercise so the repositories are an empty, buildable starting point for AI exercise generation (Hyperion): the agent authors the sources
+ * from scratch instead of first deleting a worked sample. The template/solution sources are always cleared; the tests repository keeps its build/report harness and SCA config but,
+ * for the allowlisted languages (Java first, see {@link #TESTS_SAMPLE_STRIP_LANGUAGES}), also has its sample test sources and sample structure oracle stripped. The build
+ * scaffolding
+ * (manifests, dotfiles, test harness) is kept in place so every cleared repository is still a valid, buildable clone target.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -40,6 +44,22 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      */
     private static final Set<String> AI_GENERATION_KEEP_FILES = Set.of("Package.swift", "build.sbt");
 
+    /**
+     * Languages for which the TESTS repository's <em>sample test sources</em> are stripped for AI generation, so the agent starts from a clean harness instead of having to delete
+     * a
+     * worked example first. Restricted to languages whose test harness contains NO source-extension infrastructure that the build imports (Java's harness is build manifests + SCA
+     * config + the runtime-regenerated structure oracle, none of it a graded {@code .java} the build depends on). Other languages keep their sample intact until individually
+     * validated — C's {@code Tests.py} imports its concrete test modules, OCaml's {@code dune}, Rust's proc-macro/structural reflection, Swift's {@code XCTestManifests} and
+     * Haskell's {@code Interface.hs} are source-extension infrastructure that cannot simply be deleted.
+     */
+    private static final Set<ProgrammingLanguage> TESTS_SAMPLE_STRIP_LANGUAGES = EnumSet.of(ProgrammingLanguage.JAVA);
+
+    /**
+     * The structure-oracle descriptor that ships with the JVM sample exercise. It is regenerated per exercise from the classpath by {@code StructuralOracleSeedingService}, so a
+     * sample copy must not linger in the cleaned scaffold (it would otherwise be an orphaned oracle for a different exercise).
+     */
+    private static final String STRUCTURAL_ORACLE_FILE = "test.json";
+
     private final GitService gitService;
 
     public ProgrammingExerciseRepositorySourceCleanupService(GitService gitService) {
@@ -47,21 +67,78 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
     }
 
     /**
-     * Clears the template and solution repositories for AI generation (the agent authors these from scratch). The TESTS repository is intentionally <strong>kept intact</strong> as
-     * the coherent canonical test scaffold the agent adapts: clearing its example test sources would break harnesses that import or otherwise depend on them — C's {@code Tests.py}
-     * imports its concrete test modules, OCaml's {@code test/} holds the dune build target, and Rust's proc-macro/structural reflection, Swift's {@code XCTestManifests}, and
-     * Haskell's {@code Interface.hs} are source-extension infrastructure that cannot be regenerated. Keeping the test repo also gives the agent a correct, working reference of the
-     * language's test-framework conventions to write its own tests against; the agent replaces the example test cases with its exercise's tests as part of generation.
+     * Clears the repositories for AI generation so the agent starts from a clean, buildable scaffold rather than a worked sample it must delete first. The template and solution
+     * repositories have their sources cleared (the agent authors these from scratch). The TESTS repository keeps its build/report harness and SCA config, but — for the languages
+     * on
+     * {@link #TESTS_SAMPLE_STRIP_LANGUAGES} (Java first) — its <em>sample test sources</em> and sample structure oracle are removed too, so the agent does not begin on top of
+     * another
+     * exercise's tests. Languages not on that allowlist keep their sample test repo intact, because their harness imports source-extension infrastructure that cannot simply be
+     * deleted (C's {@code Tests.py}, OCaml's {@code dune}, Rust's proc-macro reflection, Swift's {@code XCTestManifests}, Haskell's {@code Interface.hs}).
      *
      * @param programmingLanguage the exercise's programming language (selects the source extensions to clear)
      * @param templateRepository  the template repository to clear
      * @param solutionRepository  the solution repository to clear
+     * @param testsRepository     the tests repository whose sample sources are stripped for the allowlisted languages
      * @param exerciseCreator     the user performing the cleanup (used as Git commit author)
      */
     public void clearRepositoriesForAiGeneration(final ProgrammingLanguage programmingLanguage, final Repository templateRepository, final Repository solutionRepository,
-            final User exerciseCreator) {
+            final Repository testsRepository, final User exerciseCreator) {
         clearRepositorySourcesSafely(programmingLanguage, templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
         clearRepositorySourcesSafely(programmingLanguage, solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
+        clearTestsSampleSourcesSafely(programmingLanguage, testsRepository, exerciseCreator);
+    }
+
+    private void clearTestsSampleSourcesSafely(final ProgrammingLanguage programmingLanguage, final Repository testsRepository, final User exerciseCreator) {
+        if (!TESTS_SAMPLE_STRIP_LANGUAGES.contains(programmingLanguage)) {
+            // Keep the sample tests intact for languages not yet validated for stripping (their harness may import the sample sources).
+            return;
+        }
+        try {
+            clearTestsSampleSources(programmingLanguage, testsRepository, exerciseCreator);
+        }
+        catch (IOException | GitAPIException ex) {
+            log.warn("Failed to clear tests sample sources for AI generation in {}. Continuing without tests cleanup.", testsRepository.getRemoteRepositoryUri(), ex);
+        }
+    }
+
+    /**
+     * Removes the sample test SOURCES (the worked example's test cases + the Ares structure-oracle classes) and the sample structure oracle ({@value #STRUCTURAL_ORACLE_FILE}) from
+     * the tests repository, keeping the build/report harness, SCA config, and every non-source file so the repo stays a buildable, gradable clone target. The structure-oracle
+     * classes are regenerated per exercise from the classpath by {@code StructuralOracleSeedingService}, and the agent authors the behaviour tests itself — so neither needs to be
+     * pre-seeded as a sample.
+     *
+     * @param programmingLanguage the exercise's programming language (selects the source extensions to clear)
+     * @param repository          the tests repository to clean
+     * @param exerciseCreator     the user performing the cleanup
+     * @throws IOException     If file cleanup in the repository fails.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
+     */
+    void clearTestsSampleSources(final ProgrammingLanguage programmingLanguage, final Repository repository, final User exerciseCreator) throws IOException, GitAPIException {
+        final Path repositoryRoot = repository.getLocalPath();
+        boolean changed = deleteLooseLanguageSources(repositoryRoot, programmingLanguage);
+        changed |= deleteFilesNamed(repositoryRoot, STRUCTURAL_ORACLE_FILE);
+        if (!changed) {
+            log.info("Nothing to clear in tests repository {} for AI generation (no sample sources of the language found).", repository.getRemoteRepositoryUri());
+            return;
+        }
+        ensureRepositoryNotEmpty(repositoryRoot);
+        commitAndPushRepository(repository, "Cleared tests sample sources for AI generation", true, exerciseCreator);
+    }
+
+    /** Deletes every regular file named {@code fileName} anywhere under the repository (outside {@code .git}). Returns whether anything was deleted. */
+    private static boolean deleteFilesNamed(final Path repositoryRoot, final String fileName) throws IOException {
+        if (!Files.isDirectory(repositoryRoot)) {
+            return false;
+        }
+        final List<Path> toDelete;
+        try (Stream<Path> files = Files.walk(repositoryRoot)) {
+            toDelete = files.filter(Files::isRegularFile).filter(path -> !repositoryRoot.relativize(path).startsWith(".git"))
+                    .filter(path -> path.getFileName().toString().equals(fileName)).toList();
+        }
+        for (Path path : toDelete) {
+            Files.delete(path);
+        }
+        return !toDelete.isEmpty();
     }
 
     private void clearRepositorySourcesSafely(final ProgrammingLanguage programmingLanguage, final Repository repository, final RepositoryType repositoryType,
@@ -140,7 +217,9 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      * drops
      * empty directories). Covers the source-dir conventions across languages ({@code src}, {@code lib}, {@code Sources}, R's {@code R}, C++'s {@code include}, Dart's {@code bin},
      * …).
-     * The TESTS repository is never cleared (see {@link #clearRepositoriesForAiGeneration}), so it has none.
+     * The TESTS repository has no conventional source directory whose emptied layout must be preserved (its stripped sample sources do not sit in a layout-bearing source dir), so
+     * it
+     * has none.
      */
     private static List<Path> conventionalSourceDirectories(final Path repositoryRoot, final RepositoryType repositoryType) {
         if (repositoryType == RepositoryType.TESTS) {
