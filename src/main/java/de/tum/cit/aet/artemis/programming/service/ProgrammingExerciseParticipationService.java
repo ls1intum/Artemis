@@ -392,7 +392,8 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation enriched with its latest submission and corresponding result (if available)
      * @throws EntityNotFoundException if no participation with the given ID exists in any of the three repositories
      */
-    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId)
+            throws EntityNotFoundException {
         Optional<TemplateProgrammingExerciseParticipation> template = templateParticipationRepository.findById(participationId);
         if (template.isPresent()) {
             return attachLatestSubmissionWithResult(template.get(), participationId);
