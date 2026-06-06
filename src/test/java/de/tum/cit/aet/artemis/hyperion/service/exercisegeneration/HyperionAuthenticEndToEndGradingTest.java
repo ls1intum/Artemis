@@ -668,7 +668,8 @@ class HyperionAuthenticEndToEndGradingTest extends AbstractProgrammingIntegratio
         exercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, dockerImage).toBuildPlanConfiguration());
         // emptyRepositories=true: scaffold the language skeleton, then clear the template/solution sources (exactly as production does before from-scratch AI generation); the
         // tests
-        // repo (including any structural oracle) is kept intact by production design. emptyRepositories=false: keep the full canonical exercise for the adapt scenario.
+        // repo keeps its harness + SCA config, and for the allowlisted languages (Java) its sample test sources are stripped too. emptyRepositories=false: keep the full canonical
+        // exercise for the adapt scenario.
         ProgrammingExercise created = creationService.createProgrammingExercise(exercise, emptyRepositories);
         if (staticCodeAnalysisEnabled) {
             // Create the production default SCA categories (the creation endpoint does this in production), then PROMOTE one mapped category to GRADED with a positive penalty so
