@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -336,7 +337,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Attachment persistedAttachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
         assertThat(attachmentVideoUnit2.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(persistedAttachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
-        assertThat(attachmentVideoUnit1.competencyLinks()).anyMatch(link -> link.competency().id() == competency.getId());
+        assertThat(attachmentVideoUnit1.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), any());
     }
 
@@ -401,7 +402,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachmentVideoUnitDTO = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + this.attachmentVideoUnit.getId(), HttpStatus.OK,
                 AttachmentVideoUnitDTO.class);
         assertThat(attachmentVideoUnitDTO.attachment().id()).isEqualTo(this.attachment.getId());
-        assertThat(attachmentVideoUnitDTO.competencyLinks()).anyMatch(link -> link.competency().id() == competency.getId());
+        assertThat(attachmentVideoUnitDTO.competencyLinks()).anyMatch(link -> Objects.equals(link.competency().id(), competency.getId()));
         // The PDF preview relies on the lightweight lecture reference when saving; the response must keep it
         assertThat(attachmentVideoUnitDTO.lecture()).isNotNull();
         assertThat(attachmentVideoUnitDTO.lecture().id()).isEqualTo(lecture1.getId());

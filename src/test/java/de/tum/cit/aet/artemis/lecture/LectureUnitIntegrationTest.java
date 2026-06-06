@@ -205,8 +205,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         // verify the persisted order directly, which is the actual contract the client relies on.
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.OK);
         List<LectureUnit> reorderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits();
-        assertThat(reorderedUnits.get(0).getId()).isEqualTo(newlyOrderedList.get(0));
-        assertThat(reorderedUnits.get(1).getId()).isEqualTo(newlyOrderedList.get(1));
+        assertThat(reorderedUnits).extracting(LectureUnit::getId).containsExactlyElementsOf(newlyOrderedList);
     }
 
     @Test
