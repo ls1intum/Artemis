@@ -93,6 +93,8 @@ public class MathExerciseResource {
         MathExercise exercise = new MathExercise();
         mathExerciseDTO.applyToEntity(exercise);
         applyCourse(mathExerciseDTO, exercise);
+        exercise.validateTitle();
+        exercise.validateGeneralSettings();
         MathExercise saved = mathExerciseRepository.findByIdWithCategories(mathExerciseRepository.save(exercise).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/math/math-exercises/" + saved.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, saved.getTitle())).body(MathExerciseDTO.of(saved));
@@ -117,6 +119,8 @@ public class MathExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existing, null);
         mathExerciseDTO.applyToEntity(existing);
         applyCourse(mathExerciseDTO, existing);
+        existing.validateTitle();
+        existing.validateGeneralSettings();
         MathExercise saved = mathExerciseRepository.findByIdWithCategories(mathExerciseRepository.save(existing).getId()).orElseThrow();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(MathExerciseDTO.of(saved));
     }
@@ -207,6 +211,7 @@ public class MathExerciseResource {
         MathExercise target = new MathExercise();
         importedExerciseDTO.applyToEntity(target);
         applyCourse(importedExerciseDTO, target);
+        target.validateGeneralSettings();
         MathExercise result = mathExerciseRepository.findByIdWithCategories(mathExerciseImportService.importMathExercise(sourceExercise, target).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/math/math-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(MathExerciseDTO.of(result));

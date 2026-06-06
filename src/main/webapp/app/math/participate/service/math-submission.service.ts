@@ -43,7 +43,14 @@ export class MathSubmissionService {
             .get<MathSubmission>(`api/math/math-submissions/${submissionId}`, {
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<MathSubmission>) => res.body!));
+            .pipe(
+                map((res: HttpResponse<MathSubmission>) => {
+                    if (!res.body) {
+                        throw new Error('Empty response body for getMathSubmission');
+                    }
+                    return res.body;
+                }),
+            );
     }
 
     getSubmittedSubmissions(exerciseId: number): Observable<MathSubmission[]> {

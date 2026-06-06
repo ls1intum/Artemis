@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
@@ -56,6 +56,9 @@ export class MathExerciseService implements ExerciseServicable<MathExercise> {
     }
 
     import(adaptedSourceMathExercise: MathExercise): Observable<EntityResponseType> {
+        if (adaptedSourceMathExercise.id === undefined) {
+            return throwError(() => new Error('Cannot import a math exercise without a source exercise id'));
+        }
         const copy = ExerciseService.convertExerciseFromClient(adaptedSourceMathExercise);
         return this.http
             .post<MathExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceMathExercise.id}`, copy, { observe: 'response' })
