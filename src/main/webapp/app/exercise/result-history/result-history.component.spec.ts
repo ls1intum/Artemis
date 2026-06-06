@@ -47,14 +47,13 @@ describe('ResultHistoryComponent', () => {
             { rated: true, id: 3, participation },
         ]);
         fixture.detectChanges();
-        component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
+        expect(component.displayedResults()).toEqual([
             { rated: true, id: 1, participation },
             { rated: true, id: 2, participation },
             { rated: true, id: 3, participation },
         ]);
-        expect(component.showPreviousDivider).toBe(false);
-        expect(component.movedLastRatedResult).toBeFalsy();
+        expect(component.showPreviousDivider()).toBe(false);
+        expect(component.movedLastRatedResult()).toBeFalsy();
 
         fixture.componentRef.setInput('results', [
             { rated: false, id: 1, participation },
@@ -65,16 +64,15 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 6, participation },
         ]);
         fixture.detectChanges();
-        component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
+        expect(component.displayedResults()).toEqual([
             { rated: false, id: 2, participation },
             { rated: false, id: 3, participation },
             { rated: false, id: 4, participation },
             { rated: false, id: 5, participation },
             { rated: false, id: 6, participation },
         ]);
-        expect(component.showPreviousDivider).toBe(true);
-        expect(component.movedLastRatedResult).toBeFalsy();
+        expect(component.showPreviousDivider()).toBe(true);
+        expect(component.movedLastRatedResult()).toBeFalsy();
     });
 
     it('should initialize with mixed rated results', () => {
@@ -86,14 +84,13 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 3, participation },
         ]);
         fixture.detectChanges();
-        component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
+        expect(component.displayedResults()).toEqual([
             { rated: true, id: 1, participation },
             { rated: false, id: 2, participation },
             { rated: false, id: 3, participation },
         ]);
-        expect(component.showPreviousDivider).toBe(false);
-        expect(component.movedLastRatedResult).toBeFalsy();
+        expect(component.showPreviousDivider()).toBe(false);
+        expect(component.movedLastRatedResult()).toBeFalsy();
 
         fixture.componentRef.setInput('results', [
             { rated: true, id: 1, participation },
@@ -104,15 +101,34 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 6, participation },
         ]);
         fixture.detectChanges();
-        component.ngOnChanges();
-        expect(component.displayedResults).toEqual([
+        expect(component.displayedResults()).toEqual([
             { rated: true, id: 1, participation },
             { rated: false, id: 3, participation },
             { rated: false, id: 4, participation },
             { rated: false, id: 5, participation },
             { rated: false, id: 6, participation },
         ]);
-        expect(component.showPreviousDivider).toBe(true);
-        expect(component.movedLastRatedResult).toBe(true);
+        expect(component.showPreviousDivider()).toBe(true);
+        expect(component.movedLastRatedResult()).toBe(true);
+    });
+
+    it('should move a visible last rated result without duplicating it', () => {
+        const participation = { id: 1, submissions: [] };
+        const results = [
+            { rated: true, id: 1, participation },
+            { rated: false, id: 2, participation },
+            { rated: true, id: 3, participation },
+            { rated: false, id: 4, participation },
+            { rated: false, id: 5, participation },
+            { rated: false, id: 6, participation },
+        ];
+        fixture.componentRef.setInput('participationInput', participation);
+        fixture.componentRef.setInput('results', results);
+        fixture.detectChanges();
+
+        expect(component.displayedResults()).toEqual([results[2], results[1], results[3], results[4], results[5]]);
+        expect(component.displayedResults().map((result) => result.id)).toEqual([3, 2, 4, 5, 6]);
+        expect(component.showPreviousDivider()).toBe(true);
+        expect(component.movedLastRatedResult()).toBe(true);
     });
 });
