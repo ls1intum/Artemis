@@ -313,17 +313,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
     });
 
-<<<<<<< HEAD
-    it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
-        const user2 = <User>{ id: 100 };
-        const discardPendingSubmissionsWithConfirmationStub = jest.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
-        const updateAfterNewAssessment = jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
-=======
     it('should update assessor correctly if the manual assessment is overridden', async () => {
-        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const user2 = <User>{ id: 100 };
         const discardPendingSubmissionsWithConfirmationStub = vi.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
->>>>>>> develop
         result.assessor = user2;
         result.hasComplaint = false;
         comp.ngOnInit();
