@@ -515,7 +515,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
 
             mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
 
             // Verify users were not deleted
             User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -623,7 +623,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser12admin");
 
             mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
 
             // Verify users were soft deleted
             User deletedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();

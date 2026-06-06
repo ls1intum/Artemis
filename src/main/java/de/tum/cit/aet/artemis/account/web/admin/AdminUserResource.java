@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -399,6 +400,11 @@ public class AdminUserResource {
 
     /**
      * Delete users: deletes the provided users
+     * <p>
+     * The logins are passed in the request body on purpose: this is an internal admin bulk operation over an
+     * unbounded list of identifiers (e.g. "delete all not-enrolled users"), which would otherwise overflow the
+     * request-line / query-parameter limits if sent as query parameters. This endpoint is therefore intentionally
+     * exempt from the "DELETE must not carry a body" convention.
      *
      * @param logins user logins to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -406,7 +412,7 @@ public class AdminUserResource {
     @DeleteMapping("users")
     public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
-        List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
+        List<String> deletedUsers = Collections.synchronizedList(new ArrayList<>());
 
         // Remove protected users from the list
         logins.remove(IRIS_BOT_LOGIN);
