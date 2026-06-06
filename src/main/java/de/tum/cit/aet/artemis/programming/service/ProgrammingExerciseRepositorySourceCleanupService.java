@@ -43,7 +43,7 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      */
     private static final Set<String> AI_GENERATION_KEEP_FILES = Set.of("Package.swift", "build.sbt");
 
-    /** The Java/Kotlin sample test sources: the example behaviour test, the four Ares structure-oracle classes, and the structure-oracle descriptor (all classpath-regenerated). */
+    /** The Java sample test sources: the example behaviour test, the four Ares structure-oracle classes, and the structure-oracle descriptor (all classpath-regenerated). */
     private static final Set<String> JVM_ARES_SAMPLE_FILES = Set.of("SortingExampleBehaviorTest.java", "ClassTest.java", "MethodTest.java", "AttributeTest.java",
             "ConstructorTest.java", "test.json");
 
@@ -67,8 +67,11 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      * separately.
      */
     private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
-            // JVM-on-Ares: the tests repo holds .java sources + a structure oracle regardless of the exercise language (Java and Kotlin share the identical sample set).
-            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES), Map.entry(ProgrammingLanguage.KOTLIN, JVM_ARES_SAMPLE_FILES),
+            // JVM-on-Ares: the tests repo holds .java sources + a structure oracle. Kotlin is intentionally EXCLUDED: live validation showed the agent thrashes to the turn cap
+            // without
+            // the worked sample as a reference for the Kotlin+Maven+Ares test harness (Java succeeds because that toolchain is far more common to the model), so its sample is
+            // kept.
+            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES),
             Map.entry(ProgrammingLanguage.PYTHON, Set.of("behavior_test.py", "structural_test.py", "structural_helpers.py")),
             Map.entry(ProgrammingLanguage.JAVASCRIPT, Set.of("behavior.test.js", "structural.test.js")),
             Map.entry(ProgrammingLanguage.TYPESCRIPT, Set.of("behavior.test.ts", "structural.test.ts")),

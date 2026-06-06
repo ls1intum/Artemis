@@ -253,24 +253,6 @@ class ProgrammingExerciseRepositoryServiceTest {
         assertThat(repoPath.resolve("test/test_structural.rb")).doesNotExist();
     }
 
-    @Test
-    void clearTestsSampleSources_kotlin_stripsTheJavaSampleNotKotlin() throws Exception {
-        // The Kotlin tests repo is a JVM/Ares harness whose test sources are .java (NOT .kt). The named strip removes the .java sample + test.json; an extension sweep on .kt would
-        // have missed it entirely.
-        Path repoPath = tempDir.resolve("tests");
-        FileUtils.writeStringToFile(repoPath.resolve("pom.xml").toFile(), "<project/>", StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(repoPath.resolve("test/de/test/SortingExampleBehaviorTest.java").toFile(), "class X {}", StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(repoPath.resolve("test/de/test/test.json").toFile(), "[]", StandardCharsets.UTF_8);
-
-        Repository repository = mockRepository(repoPath);
-        repositorySourceCleaner.clearTestsSampleSources(ProgrammingExerciseRepositorySourceCleanupService.testsSampleFileNamesByLanguage().get(ProgrammingLanguage.KOTLIN),
-                repository, new User());
-
-        assertThat(repoPath.resolve("pom.xml")).exists();
-        assertThat(repoPath.resolve("test/de/test/SortingExampleBehaviorTest.java")).doesNotExist();
-        assertThat(repoPath.resolve("test/de/test/test.json")).doesNotExist();
-    }
-
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.MethodSource("supportedTestsStripLanguages")
     void everyConfiguredSampleFile_existsInTheLanguageTemplate_failClosedAgainstDrift(ProgrammingLanguage language, java.util.Set<String> sampleNames) throws Exception {
