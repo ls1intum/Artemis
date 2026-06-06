@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.math;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +12,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.dto.MathSubmissionDTO;
+import de.tum.cit.aet.artemis.math.repository.MathSubmissionRepository;
 import de.tum.cit.aet.artemis.math.util.MathExerciseFactory;
 import de.tum.cit.aet.artemis.math.util.MathExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -32,6 +38,14 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationTestRepository;
+
+    @Autowired
+    private MathSubmissionRepository mathSubmissionRepository;
+
+    private Course course;
+
     private MathExercise exercise;
 
     private StudentParticipation participation;
@@ -39,7 +53,7 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course = mathExerciseUtilService.addCourseWithMathExercise();
+        course = mathExerciseUtilService.addCourseWithMathExercise();
         exercise = (MathExercise) course.getExercises().iterator().next();
         participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
     }
@@ -56,6 +70,41 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(result.id()).isNotNull();
         assertThat(result.submitted()).isFalse();
         assertThat(result.results()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createMathSubmission_setsLifecycleMetadataAndFinishesParticipation() throws Exception {
+        MathSubmissionDTO submissionDTO = MathExerciseFactory.generateMathSubmissionDTO(true);
+
+        MathSubmissionDTO result = request.postWithResponseBody("/api/math/exercises/" + exercise.getId() + "/math-submissions", submissionDTO, MathSubmissionDTO.class,
+                HttpStatus.OK);
+
+        assertThat(result.id()).isNotNull();
+        assertThat(result.submitted()).isTrue();
+        assertThat(result.submissionDate()).isNotNull();
+
+        // the server (not the client) must own the lifecycle metadata and state
+        MathSubmission persisted = mathSubmissionRepository.findById(result.id()).orElseThrow();
+        assertThat(persisted.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(persisted.getSubmissionDate()).isNotNull();
+        assertThat(studentParticipationTestRepository.findById(participation.getId()).orElseThrow().getInitializationState()).isEqualTo(InitializationState.FINISHED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createMathSubmission_afterDueDate_returnsForbidden() throws Exception {
+        // exercise whose due date has already passed, with a participation that was started before the due date
+        MathExercise pastExercise = MathExerciseFactory.generateMathExercise(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                course);
+        mathExerciseUtilService.saveExercise(pastExercise);
+        StudentParticipation pastParticipation = participationUtilService.createAndSaveParticipationForExercise(pastExercise, TEST_PREFIX + "student1");
+        pastParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        studentParticipationTestRepository.save(pastParticipation);
+
+        MathSubmissionDTO submissionDTO = MathExerciseFactory.generateMathSubmissionDTO(true);
+
+        request.postWithResponseBody("/api/math/exercises/" + pastExercise.getId() + "/math-submissions", submissionDTO, MathSubmissionDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.dto.MathSubmissionDTO;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
 import de.tum.cit.aet.artemis.math.repository.MathSubmissionRepository;
+import de.tum.cit.aet.artemis.math.service.MathSubmissionService;
 
 @Lazy
 @Conditional(MathEnabled.class)
@@ -50,13 +51,16 @@ public class MathSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final MathSubmissionService mathSubmissionService;
+
     public MathSubmissionResource(MathSubmissionRepository mathSubmissionRepository, MathExerciseRepository mathExerciseRepository, UserRepository userRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, MathSubmissionService mathSubmissionService) {
         this.mathSubmissionRepository = mathSubmissionRepository;
         this.mathExerciseRepository = mathExerciseRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
+        this.mathSubmissionService = mathSubmissionService;
     }
 
     @PostMapping("exercises/{exerciseId}/math-submissions")
@@ -78,29 +82,28 @@ public class MathSubmissionResource {
         MathExercise mathExercise = mathExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
         // Re-check current course membership: a StudentParticipation persists after un-enrollment, so its existence alone is not sufficient authorization.
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, mathExercise, user);
-        StudentParticipation participation = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, user.getLogin()).orElseThrow();
 
         MathSubmission submission;
         if (dto.id() != null) {
-            // Updating an existing submission: load it and verify it belongs to this participation, so a client-supplied id
-            // cannot be used to overwrite another student's submission.
+            // Updating an existing submission: load it so only content/submitted change and the rest of the row stays intact.
             submission = mathSubmissionRepository.findByIdWithResultsAndParticipation(dto.id()).orElseThrow();
-            if (submission.getParticipation() == null || !participation.getId().equals(submission.getParticipation().getId())) {
-                throw new AccessForbiddenException("mathSubmission", dto.id());
-            }
             submission.setSubmitted(Boolean.TRUE.equals(dto.submitted()));
             submission.setContent(dto.content());
         }
         else {
             submission = dto.toEntity();
         }
-        submission.setParticipation(participation);
-        submission = mathSubmissionRepository.save(submission);
-        submission = mathSubmissionRepository.findByIdWithResults(submission.getId()).orElseThrow();
+        // Re-check course membership and, for updates, verify the submission belongs to the current user (prevents injecting into another student's submission).
+        mathSubmissionService.checkSubmissionAllowanceElseThrow(mathExercise, submission, user);
+        // Enforce the due date and apply the standard non-programming submission lifecycle (submission date, MANUAL type, FINISHED participation, no injected results).
+        MathSubmission saved = mathSubmissionService.handleMathSubmission(submission, mathExercise, user);
 
-        participation.setExercise(mathExercise);
-        submission.setParticipation(participation);
-        return MathSubmissionDTO.of(submission);
+        StudentParticipation participation = (StudentParticipation) saved.getParticipation();
+        if (participation != null) {
+            // attach the categories-loaded exercise so the DTO can project it without a LazyInitializationException
+            participation.setExercise(mathExercise);
+        }
+        return MathSubmissionDTO.of(saved);
     }
 
     /**

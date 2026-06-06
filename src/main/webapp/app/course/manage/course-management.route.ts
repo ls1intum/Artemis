@@ -283,8 +283,10 @@ export const courseManagementRoutes: Routes = [
                         redirectTo: 'exercises',
                     },
                     {
+                        // Only the bare list path redirects to the unified exercises view; math-exercises/new, /:id, /:id/edit, … must fall through to mathExerciseRoute below.
                         path: 'math-exercises',
                         redirectTo: 'exercises',
+                        pathMatch: 'full',
                     },
                     {
                         path: '',
