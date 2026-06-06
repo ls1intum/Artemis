@@ -56,8 +56,8 @@ public class SandboxBuildCommandService {
     static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
     /**
-     * Verifier-owned, agent-unreachable directory the pristine script collects build-fresh report files INTO and the verifier {@code copyOut}s FROM. A constant path the verifier
-     * knows a priori — NEVER derived from agent output — so the bytes the verifier parses cannot be redirected by anything the agent writes under {@code /workspace}.
+     * Verifier-owned (see {@link #PRISTINE_VERIFY_DIR}), agent-unreachable directory the pristine script collects build-fresh report files INTO and the verifier {@code copyOut}s
+     * FROM.
      */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
@@ -92,16 +92,10 @@ public class SandboxBuildCommandService {
         this.buildScriptProviderService = buildScriptProviderService;
     }
 
-    /**
-     * @return the command that runs the PRISTINE (verifier-controlled, outside {@code /workspace}) verification with the solution as the assignment
-     */
     public String pristineSolutionBuildCommand() {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
     }
 
-    /**
-     * @return the command that runs the PRISTINE verification with the template as the assignment
-     */
     public String pristineTemplateBuildCommand() {
         return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
     }
@@ -133,16 +127,12 @@ public class SandboxBuildCommandService {
         // Materialize the tests at the language's real test checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        // CI directory placeholders for the seeded harness, mapped to the SAME real checkout layout production uses (and that the build phases above already use). The test working
-        // directory is the build root for Java/Python/… and a "tests/" subdir otherwise; the solution working directory is a sibling solution/ for the languages whose harness
-        // references it (Haskell/OCaml) and is otherwise irrelevant (the placeholder never appears, so the value is a harmless no-op).
+        // CI directory placeholder values for the seeded harness, mapped to the SAME real checkout layout production uses. When the language has no solution checkout the
+        // solution placeholder never appears, so its "assignment" fallback is a harmless no-op.
         String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
-        // Materialize a sibling solution/ checkout EXACTLY when real CI would for the template/submission build: the language defines a solution checkout path (Haskell/OCaml) AND
-        // the
-        // exercise checks the solution out. The graded test target is still driven by the assignment under test (assignment/src); solution/ only satisfies the harness's reference
-        // (e.g. the Haskell cabal's `library solution` / the test mixin), so the template run compares the template against the REAL solution instead of against itself. For every
-        // other language no solution/ is created, so a broad-glob build cannot pick up the solution and the differential is unchanged.
+        // Materialize a sibling solution/ checkout EXACTLY when real CI would (the language defines a solution checkout path — Haskell/OCaml — AND the exercise checks the solution
+        // out), so the harness reference (e.g. the Haskell cabal's `library solution`) is satisfied. The graded target stays assignment/src; other languages get no solution/.
         boolean materializeSolution = !recipe.solutionDir().isEmpty() && recipe.checkoutSolution();
         String solutionCopySection = materializeSolution
                 ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
@@ -278,10 +268,8 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * The build phases (each already placeholder-substituted), the JUnit report locations, the assignment/test/solution checkout directories ({@code testDir == ""} = build root;
-     * {@code solutionDir == ""} = the language checks out no sibling solution), whether the exercise checks the solution out for the template/submission build, and — when static
-     * code analysis is ENABLED for the exercise — the SCA tool report file names ({@code spotbugsXml.xml}, {@code ruff.sarif}, …) the SCA collection scans. The SCA list is EMPTY
-     * when SCA is disabled, so the generated script collects no SCA reports and a non-SCA exercise's behaviour is unchanged.
+     * Non-obvious field semantics: {@code testDir == ""} means the tests sit at the build root (not a {@code tests/} subdir); {@code solutionDir == ""} means the language checks
+     * out no sibling solution; an empty {@code scaReportFiles} means SCA is disabled (no SCA reports collected, non-SCA behaviour unchanged).
      */
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, String solutionDir, boolean checkoutSolution,
             List<String> scaReportFiles) {

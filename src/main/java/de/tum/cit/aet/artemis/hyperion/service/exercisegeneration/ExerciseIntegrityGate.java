@@ -53,17 +53,11 @@ final class ExerciseIntegrityGate {
     private ExerciseIntegrityGate() {
     }
 
-    /**
-     * Returns the path's first component (the segment before the first {@code /}), or the whole path if it has none.
-     */
     private static String firstComponent(String path) {
         int slash = path.indexOf('/');
         return slash < 0 ? path : path.substring(0, slash);
     }
 
-    /**
-     * Returns the path's basename (the segment after the last {@code /}), or the whole path if it has none.
-     */
     private static String basename(String path) {
         int slash = path.lastIndexOf('/');
         return slash < 0 ? path : path.substring(slash + 1);
@@ -181,19 +175,12 @@ final class ExerciseIntegrityGate {
     }
 
     /**
-     * Detects tampering with the seeded tests-repo harness: a harness/build/manifest file whose BUILD-LAYOUT lines (where the build resolves the submission/solution/template
-     * sources) changed versus the seed, after normalizing the CI directory-placeholder substitution the pipeline itself applies, or a seeded harness file that was deleted. Only
-     * the
-     * seed's build-layout lines are compared (positionally, after placeholder normalization), NOT the whole file, so creation-time placeholders the sandbox does not substitute
-     * ({@code ${packageName}}, {@code ${exerciseName}}) never count as tampering — exactly the narrow, certain win that catches the Haskell {@code hs-source-dirs} rewrite (and a
-     * .NET {@code ProjectReference} / a JS {@code workspaces} repoint) while never penalizing a genuinely-good exercise. A change to the file's line structure (so the seed's
-     * layout
-     * line index no longer holds the matching directive) is itself treated as tampering. Returns one rejection reason per offending file. Fails OPEN when no seed snapshot is
-     * available, so the gate never spuriously rejects when the snapshot could not be captured.
+     * Detects harness tampering (see class javadoc): only the seed's build-layout lines are compared positionally, after placeholder normalization, so a deleted harness file or a
+     * moved source/solution/template path is flagged while creation-time placeholders the sandbox does not substitute never count. Fails OPEN when no seed snapshot is available.
      *
      * @param seedTestsFiles     the tests-repo files snapshotted at seed time (repository-relative); empty disables the gate
      * @param producedTestsFiles the tests-repo files read back after generation (repository-relative)
-     * @return the rejection reasons (empty when the harness layout is intact or the gate is disabled)
+     * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is disabled)
      */
     static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles) {
         if (seedTestsFiles == null || seedTestsFiles.isEmpty()) {
@@ -245,26 +232,21 @@ final class ExerciseIntegrityGate {
     private static final int MIN_LEAK_BODY_LENGTH = 40;
 
     /**
-     * Detects a solution leak in the template that the differential build oracle would NOT catch: a TEMPLATE file that copies a reference-solution IMPLEMENTATION file at a path
-     * the
-     * tests do not grade (so the build is unaffected, yet the answer ships to students). The hard cases this must DISTINGUISH:
+     * Detects a solution leak the differential oracle cannot see (see class javadoc). The hard part is distinguishing what to flag:
      * <ul>
-     * <li>It must NOT flag files that are legitimately identical between template and solution — shared interfaces/headers (e.g. a C++ {@code include/stack.hpp} declaration), git
-     * config dotfiles ({@code .gitignore}, {@code .gitattributes}), or harness files. These are identical at the SAME path on purpose, so they are excluded by definition (an
+     * <li>It must NOT flag files legitimately identical between template and solution — shared interfaces/headers (e.g. a C++ {@code include/stack.hpp} declaration), git config
+     * dotfiles ({@code .gitignore}, {@code .gitattributes}), or harness files. These are identical at the SAME path on purpose, so they are excluded by definition (an
      * implementation file is one that DIFFERS from the template at its own path).</li>
      * <li>It must NOT double-flag a template that copies the solution into the SAME, graded path (e.g. {@code template/src/Exercise.hs} == {@code solution/src/Exercise.hs}) — that
      * makes the template pass its tests and is already rejected by the differential oracle's "template must fail" gate.</li>
      * <li>It MUST flag the solution implementation copied into an EXTRA template file at a non-graded path (e.g. {@code template/lib/Reference.hs}, or a residue tree — though
      * residue is already stripped on read-back).</li>
      * </ul>
-     * The rule: collect the SOLUTION implementation bodies (solution source files, non-dotfile, non-harness, that DIFFER from the template at the same path). Flag any template
-     * file
-     * (non-dotfile, non-harness) whose body equals one of those, EXCEPT a template file sitting at a path where the solution holds the same body (the differential-oracle case).
      * Fails OPEN when either side is empty.
      *
      * @param templateFiles the produced TEMPLATE repository files (repository-relative; residue already stripped)
      * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
-     * @return the rejection reasons (a single reason listing the leaked paths, or empty when no leak)
+     * @return a single reason listing the leaked paths, or empty when no leak
      */
     static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {

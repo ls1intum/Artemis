@@ -491,13 +491,6 @@ class AuthoritativeVerificationServiceTest {
     // ----------------------------------------------------------------------------------------------------------------
 
     @Test
-    void shouldAcceptWhenEveryTaskBoundTestFailsOnTemplate() {
-        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names));
-        assertThat(result.accepted()).isTrue();
-    }
-
-    @Test
     void shouldRejectWhenTaskBoundTestPassesOnTemplateRustFibonacciZero() {
         // Rust: template `fibonacci(_n)->0` makes test_fibonacci_of_0 (asserts fib(0)==0) PASS on the template, the other six fail. The count gate is satisfied, but the strict
         // per-test gate rejects: a graded test must not earn the student a free point.

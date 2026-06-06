@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * it then triggers the canonical CI build for the tests so the platform's own pipeline discovers and synchronises the
  * {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase}
  * set (the same path a manual instructor edit uses), updates the problem statement if it changed, and records a new exercise version (which refreshes search indexing and
- * notifies open editors). All of this reuses existing services rather than re-implementing them.
+ * notifies open editors).
  */
 @Lazy
 @Service
@@ -100,10 +100,6 @@ public class GenerationPersistenceService {
 
     /**
      * The result of persisting a non-accepted recovery draft.
-     * <p>
-     * The single field that matters for the safety invariant is {@code liveExerciseUntouched}: when {@code true} the working exercise on the default branch was NOT modified (the
-     * draft was diverted to {@code draftBranch} for review), so a failed adapt cannot regress a previously-working exercise. When {@code false} the draft was committed to the
-     * default branch the normal way — only ever chosen for a from-scratch target, which had nothing to lose.
      *
      * @param liveExerciseUntouched {@code true} if the live default branch was left byte-identical (adapt target); {@code false} if the draft was committed to the default branch
      *                                  (from-scratch target)
@@ -127,11 +123,10 @@ public class GenerationPersistenceService {
      * @return the result describing whether the live exercise was left untouched and, if so, the isolated branch the draft was pushed to
      */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        // Decide adapt-vs-from-scratch before writing anything, so a later commit failure can never leave the exercise half-overwritten (in adapt mode the default branch is
-        // untouched).
+        // Decide adapt-vs-from-scratch before writing anything, so a later commit failure can never leave the exercise half-overwritten.
         boolean adaptTarget = anyRepositoryHasContent(exercise);
         if (!adaptTarget) {
-            // From-scratch: nothing to lose. Commit the draft to the default branch exactly as an accepted run does so it is editable in place.
+            // From-scratch: commit the draft to the default branch exactly as an accepted run does.
             persist(exercise, user, outcome);
             return new RecoveryPersistResult(false, null);
         }
@@ -180,10 +175,9 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Writes the produced files into a repository's working copy and commits them to an ISOLATED branch (never the default branch), pushing only that branch so the live exercise
-     * on
-     * the default branch is left byte-identical. The same orphan-mirroring/harness-protection as the default-branch commit applies so the draft branch is a faithful image of the
-     * sandbox-final tree. A commit/push failure for one repository is propagated so the recovery reports a real failure rather than a half-saved draft.
+     * Writes the produced files into a repository's working copy and commits them to an ISOLATED branch (never the default branch), pushing only that branch. The same
+     * orphan-mirroring/harness-protection as the default-branch commit applies so the draft branch is a faithful image of the sandbox-final tree. A commit/push failure for one
+     * repository is propagated so the recovery reports a real failure rather than a half-saved draft.
      *
      * @param exercise       the exercise being recovered
      * @param user           the commit author
@@ -260,13 +254,10 @@ public class GenerationPersistenceService {
         // 3. Trigger the canonical CI build for the tests; its result drives test-case synchronisation and task binding asynchronously, exactly as a manual edit to the tests repo
         // does.
         if (testsCommitHash != null) {
-            // Snapshot the test-case count BEFORE triggering. An earlier exercise-setup build may have already synced a PARTIAL/stale set (e.g. a lone configure case from a build
-            // that failed at configure time); the freshly triggered tests-build re-syncs the COMPLETE set. We must wait for that complete set, not the stale snapshot, before
-            // zero-weighting — otherwise a build gate that only appears in the full sync (e.g. CompileSort) stays graded and the template scores above 0%.
+            // Snapshot the test-case count BEFORE triggering, so the zero-weight step can wait past a stale/partial set for the complete sync. See zeroWeightBuildGateTestCases.
             int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
             triggerTestsBuild(exercise, testsCommitHash);
-            // 3b. Once the tests-build syncs the test cases (at the default weight 1.0), align production grading with the differential oracle: zero-weight the build-gate cases.
-            // The C/C++ FACT CompileSort/TestConfigure pass on the compiling template, so without this a student submitting the untouched template would score above 0%.
+            // 3b. Align production grading with the differential oracle: zero-weight the build-gate cases. See zeroWeightBuildGateTestCases.
             zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
         }
 

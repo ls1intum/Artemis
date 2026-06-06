@@ -47,17 +47,14 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  * one
  * test must exist.
  * <p>
- * <strong>The verdict is parsed with PRODUCTION code, not in the shell.</strong> The pristine {@code verify.sh} runs the real per-language build phases and COLLECTS the
- * build-fresh
- * report files into a fixed, verifier-owned directory ({@link SandboxBuildCommandService#REPORTS_DIR}). This service then {@code copyOut}s that directory (a constant path the
- * verifier knows a priori, never derived from agent output), validates the tar with the hardened {@link CollectedReports} reader (regular files only, no symlink/hardlink, no path
- * escape, bounded size), and parses the surviving files with the SAME production parsers the real LocalCI pipeline uses: {@link TestResultXmlParser} for JUnit (which skips
- * {@code <skipped>} testcases exactly as production grading does, so skipped-test parity is guaranteed) and {@link ReportParser} for SCA (whose findings carry the real derived
- * category, including SARIF/GCC). This gives parity-by-construction, a real XML parser, and production SCA category derivation; the differential and integrity gates are unchanged
- * —
- * only the SOURCE of the {@link BuildSummary} they consume changed.
+ * <strong>The verdict is parsed with PRODUCTION code, not in the shell.</strong> The pristine {@code verify.sh} COLLECTS the build-fresh report files into a fixed, verifier-owned
+ * directory ({@link SandboxBuildCommandService#REPORTS_DIR}) which this service {@code copyOut}s (a constant path known a priori, never derived from agent output), validates with
+ * the
+ * hardened {@link CollectedReports} reader (regular files only, no symlink/hardlink, no path escape, bounded size), and parses with the SAME production parsers the real LocalCI
+ * pipeline uses ({@link TestResultXmlParser} for JUnit, {@link ReportParser} for SCA). This gives parity-by-construction; only the SOURCE of the {@link BuildSummary} differs from
+ * production, not the differential or integrity gates.
  * <p>
- * Authenticity needs no nonce: the verifier runs a re-seeded pristine script the agent cannot reach and reads the reports from a constant verifier-owned directory the agent cannot
+ * Authenticity needs no nonce: the verifier runs a re-seeded pristine script the agent cannot reach and reads reports from a constant verifier-owned directory the agent cannot
  * write, so there are no stdout markers to forge. A forged always-pass report would also make the TEMPLATE pass, tripping {@code checkTemplateFails}.
  */
 @Lazy
@@ -128,12 +125,8 @@ public class AuthoritativeVerificationService {
      * A best-effort, LANGUAGE-AGNOSTIC dead-file probe surfaced to the agent's self-check (advisory only — never a gate): a source file present in exactly ONE of {@code solution/}
      * and {@code template/}. Since the two repos must differ only in their (unimplemented) method bodies, a source file in one but not the other is a likely abandoned orphan from
      * a
-     * replaced approach (the from-scratch prompt warns about exactly this). It deliberately ignores build manifests and hidden files (legitimately repo-specific) and never throws
-     * —
-     * any probe error yields an empty list, so the self-check degrades to "no dead-file hint" rather than failing. It is purely informational; the differential verdict ignores it.
+     * replaced approach. Ignores build manifests and hidden files (legitimately repo-specific) and never throws — any probe error yields an empty list (fail-open to "no hint").
      *
-     * @param sandbox   the sandbox session
-     * @param sessionId the session handle
      * @return the repo-qualified paths present in exactly one of the two assignment repos, capped; empty when the probe is unavailable or finds nothing
      */
     private static List<String> possiblyDeadWorkspaceFiles(InteractiveSandbox sandbox, String sessionId) {
@@ -159,8 +152,9 @@ public class AuthoritativeVerificationService {
             "cargo.toml", "cargo.lock", "makefile", "package.json", "package-lock.json", "tsconfig.json", "build.sbt", "pubspec.yaml", "pubspec.lock");
 
     /**
-     * Lists the assignment repo's SOURCE files (repo-relative) for the dead-file probe: regular files under the repo, excluding hidden files/dirs and the known build manifests
-     * (which are legitimately repo-specific). Returns an empty set on any non-success, so the probe fails open.
+     * Lists the assignment repo's SOURCE files (repo-relative) for the dead-file probe: regular files, excluding hidden files/dirs and the known build manifests. Returns an empty
+     * set
+     * on any non-success, so the probe fails open.
      */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
         String repoRoot = GenerationWorkspaceService.WORKSPACE + "/" + repoDirectory;
@@ -184,7 +178,7 @@ public class AuthoritativeVerificationService {
         return files;
     }
 
-    // Package-private convenience overloads used only by the unit test (no integrity/structural inputs); production calls the full verify(...) below.
+    // Package-private convenience overloads used only by the unit test; production calls the full verify(...) below.
     VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         return verify(sandbox, sessionId, exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of());
     }
@@ -205,19 +199,19 @@ public class AuthoritativeVerificationService {
      * The integrity gates fail OPEN when their inputs are GENUINELY empty (a legitimately empty repo) but fail CLOSED when a repo seeded non-empty extracts empty at verify time
      * (signalled via {@code extractionFailedRepositories}), so a flaky read-back cannot silently disable a gate.
      *
-     * @param sandbox                      the sandbox session the differential builds run in
-     * @param sessionId                    the sandbox session handle
-     * @param exercise                     the exercise whose per-language {@code verify.sh} is rendered and run
-     * @param seedTestsFiles               tests-repo files snapshotted at seed time (repository-relative); enables the harness-immutability gate
-     * @param producedTestsFiles           tests-repo files read back after generation (repository-relative)
-     * @param producedTemplateFiles        template-repo files read back after generation (repository-relative); enables the solution-leak gate
-     * @param producedSolutionFiles        solution-repo files read back after generation (repository-relative)
+     * @param sandbox                      the open sandbox session the pristine builds run in
+     * @param sessionId                    the sandbox session id
+     * @param exercise                     the exercise being verified (drives the per-language build recipe)
+     * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability gate
+     * @param producedTestsFiles           tests-repo files read back after generation; compared against the seed snapshot for the harness-immutability gate
+     * @param producedTemplateFiles        template-repo files read back after generation; enables the solution-leak gate
+     * @param producedSolutionFiles        solution-repo files read back after generation; the leak gate flags solution bodies that surfaced in the template
      * @param extractionFailedRepositories repository directory names whose read-back FAILED (seeded non-empty but extracted empty); fail-closed signal distinct from a genuinely
      *                                         empty repo
      * @param seededStructuralTestNames    the AUTHORITATIVE structural test names the seeder injected this run (never agent-supplied); a {@code [task]} bound to one is exempt from
      *                                         binding RESOLUTION but still participates in the differential. Empty for callers without it (the from-scratch path falls back to the
      *                                         name-shape exemption)
-     * @return the verdict and, on rejection, the reasons
+     * @return the verdict (accepted, solution-passed, template-failed, test count, and the rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
@@ -230,7 +224,7 @@ public class AuthoritativeVerificationService {
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
 
         // Sandbox-free integrity gates the build cannot see: a tampered graded-verbatim harness, or a solution leaked into the student-facing template. Both fail OPEN on genuinely
-        // empty inputs. These run ONLY post-loop (the self-check skips them): they need the seed snapshot and read-back files the agent loop does not have mid-session.
+        // empty inputs. Post-loop only (the self-check skips them): they need the seed snapshot and read-back files the agent loop does not have mid-session.
         List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles);
         boolean harnessIntact = harnessTamperingReasons.isEmpty();
         reasons.addAll(harnessTamperingReasons);
@@ -259,10 +253,10 @@ public class AuthoritativeVerificationService {
      * the
      * sole acceptance truth. Each call re-runs the two builds (no stale cache), so the report always reflects the current workspace.
      *
-     * @param sandbox   the sandbox session the differential builds run in
-     * @param sessionId the sandbox session handle
-     * @param exercise  the exercise whose per-language {@code verify.sh} is rendered and run (its SCA configuration governs the SCA gate)
-     * @return the structured in-loop report
+     * @param sandbox   the open sandbox session the pristine builds run in
+     * @param sessionId the sandbox session id
+     * @param exercise  the exercise being checked (drives the per-language build recipe)
+     * @return the agent-readable differential report (per-test pass/fail on solution and template, parser-form names, wrongly-passing template tests, unresolved bindings)
      */
     public AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         // The agent could not bind to structural tests seeded AFTER it submits, so the self-check passes no authoritative seeded set; the name-shape exemption still applies.
@@ -283,16 +277,12 @@ public class AuthoritativeVerificationService {
 
     /**
      * Runs the shared, sandbox-DEPENDENT half of verification ONCE: re-seeds and runs the two pristine builds, parses them with the production parsers, reads the problem
-     * statement,
-     * and applies every actionable gate (solution passes, template fails, emitter soundness, task-binding presence/resolution, the two no-test-passes-template gates, and SCA
-     * parity). Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the acceptance verdict are computed by identical
+     * statement, and applies every actionable gate (solution passes, template fails, emitter soundness, task-binding presence/resolution, the two no-test-passes-template gates,
+     * and
+     * SCA parity). Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the acceptance verdict are computed by identical
      * code.
      *
-     * @param sandbox                   the sandbox session
-     * @param sessionId                 the session handle
-     * @param exercise                  the exercise (its {@code verify.sh} and SCA configuration)
      * @param seededStructuralTestNames the authoritative seeded structural test names exempt from binding resolution (empty for the self-check)
-     * @return the parsed build summaries plus the actionable gate outcome (reasons, pass flag, and the derived agent-facing lists)
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Set<String> seededStructuralTestNames) {
         List<String> reasons = new ArrayList<>();
@@ -338,10 +328,6 @@ public class AuthoritativeVerificationService {
      * adds
      * the integrity gates and verdict) and the in-loop {@link #selfCheck} (which renders the agent observation).
      *
-     * @param solution               the parsed solution build summary
-     * @param template               the parsed template build summary
-     * @param solutionPassed         whether the solution gate held
-     * @param templateFailed         whether the template gate held
      * @param actionableGatesPass    whether EVERY sandbox-dependent gate held (the integrity gates are layered on top by {@link #verify})
      * @param actionableReasons      the human-readable reasons any sandbox-dependent gate failed (empty when all hold); the SAME wording {@link #verify} surfaces
      * @param unresolvedTaskBindings the {@code [task]} bindings referencing no real test (surfaced to the agent verbatim)
@@ -356,11 +342,7 @@ public class AuthoritativeVerificationService {
      * the container and parses them with the production parsers into a {@link BuildSummary}. The reports path is a CONSTANT the verifier knows a priori (never derived from agent
      * output), and the tar is validated by {@link CollectedReports} before any byte is parsed.
      *
-     * @param sandbox        the sandbox session
-     * @param sessionId      the session handle
-     * @param buildCommand   the pristine verify.sh invocation for this assignment
      * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdir name and the copyOut prefix
-     * @return the parsed build summary
      */
     private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
         SandboxExecResult run = sandbox.exec(sessionId, VERIFY_TIMEOUT, "sh", "-c", buildCommand);
@@ -386,10 +368,6 @@ public class AuthoritativeVerificationService {
 
     /**
      * The solution gate: the solution must compile, run at least one test, and have every test pass. Appends a rejection reason to {@code reasons} otherwise.
-     *
-     * @param solution the solution build summary
-     * @param reasons  the running list of rejection reasons (appended to on failure)
-     * @return {@code true} when the solution compiled, ran tests, and passed them all
      */
     private static boolean checkSolutionPasses(BuildSummary solution, List<String> reasons) {
         boolean solutionPassed = !solution.timedOut() && solution.exitCode() == 0 && solution.tests() > 0 && solution.failures() == 0 && solution.errors() == 0;
@@ -413,9 +391,6 @@ public class AuthoritativeVerificationService {
      * a real starting point, and {@code tests()==0} means it did not compile). Appends a rejection reason to {@code reasons} otherwise.
      *
      * @param solution the solution build summary (its test count is the reference)
-     * @param template the template build summary
-     * @param reasons  the running list of rejection reasons (appended to on failure)
-     * @return {@code true} when the template compiled, ran the same tests, and (correctly) failed enough of them
      */
     private static boolean checkTemplateFails(BuildSummary solution, BuildSummary template, List<String> reasons) {
         int testCount = solution.tests();
@@ -462,11 +437,6 @@ public class AuthoritativeVerificationService {
     /**
      * Emitter soundness, fail-CLOSED: the pristine {@code verify.sh} always emits a TESTNAME per {@code <testcase>} and a TESTFAIL per failing one, so a missing/short set is
      * evidence of a broken or forged emitter that would silently disable the binding-resolution and per-test gates. We REJECT rather than skip, appending a reason for each gap.
-     *
-     * @param solution the solution build summary
-     * @param template the template build summary
-     * @param reasons  the running list of rejection reasons (appended to on failure)
-     * @return whether the solution name list and the template fail-name list are complete enough to trust
      */
     private static EmitterSoundness checkEmitterSoundness(BuildSummary solution, BuildSummary template, List<String> reasons) {
         boolean solutionNamesComplete = solution.tests() > 0 && solution.testNames().size() >= solution.tests();
@@ -492,11 +462,7 @@ public class AuthoritativeVerificationService {
      * silently shows no progress in Artemis, which the differential build cannot detect. Decides from the precomputed unresolved list (so the agent self-check can surface the same
      * names verbatim) and fails open when no trustworthy set was emitted.
      *
-     * @param unresolvedTaskBindings   the precomputed {@code [task]} bindings that resolve to no real test (the C++/Catch2 bare-name trap)
-     * @param solution                 the solution build summary (its test names are the resolution target, included in the message)
-     * @param problemStatementHasTasks whether the problem statement contains any {@code [task]} binding at all
-     * @param reasons                  the running list of rejection reasons (appended to on failure)
-     * @return whether every {@code [task]} binding resolves to a real (or seeded-structural) test name
+     * @param unresolvedTaskBindings the precomputed {@code [task]} bindings that resolve to no real test (the C++/Catch2 bare-name trap)
      */
     private static boolean checkTaskBindingsResolve(List<String> unresolvedTaskBindings, BuildSummary solution, boolean problemStatementHasTasks, List<String> reasons) {
         boolean taskBindingsResolve = unresolvedTaskBindings.isEmpty();
@@ -512,13 +478,7 @@ public class AuthoritativeVerificationService {
      * The strict per-test differential gate: every {@code [task]}-bound test the SOLUTION passes must FAIL on the TEMPLATE. A graded test the template already satisfies (a
      * {@code return 0} stub passing {@code fibonacci(0)==0}) hands the student a free point even if the count gate passed. Fails open when the name/fail sets are untrustworthy.
      *
-     * @param problemStatement         the produced problem statement
-     * @param solution                 the solution build summary
-     * @param template                 the template build summary
-     * @param problemStatementHasTasks whether the problem statement contains any {@code [task]} binding
-     * @param taskBindingsResolve      whether the bindings resolve (the gate only reports when they do)
-     * @param reasons                  the running list of rejection reasons (appended to on failure)
-     * @return whether no {@code [task]}-bound test passes on the template
+     * @param taskBindingsResolve whether the bindings resolve (the gate only reports when they do)
      */
     private static boolean checkNoTaskBoundTestPassesTemplate(String problemStatement, BuildSummary solution, BuildSummary template, boolean problemStatementHasTasks,
             boolean taskBindingsResolve, List<String> reasons) {
@@ -537,11 +497,6 @@ public class AuthoritativeVerificationService {
      * bare-template student {@code >0%} (observed: a Python template at 22.2% from one unbound test). We require every solution-passing test to FAIL on the template, except the
      * build/compile/configure gates ({@link #isBuildGateTest}) that legitimately pass on both because the same-signature template compiles by design. Fails open under the same
      * guards as the {@code [task]} gate.
-     *
-     * @param solution the solution build summary
-     * @param template the template build summary
-     * @param reasons  the running list of rejection reasons (appended to on failure)
-     * @return whether no gradable test passes on the template
      */
     private static boolean checkNoGradableTestPassesTemplate(BuildSummary solution, BuildSummary template, List<String> reasons) {
         List<String> gradableTestsPassingOnTemplate = gradableTestsThatPassOnTemplate(solution, template);
@@ -561,11 +516,6 @@ public class AuthoritativeVerificationService {
      * The SCA-parity gate: SCA reports carry no {@code <testcase>}, so the differential oracle is blind to them while production folds a penalty into the score. The solution's SCA
      * findings (parsed from the collected report files by the production {@code ReportParser}) are handed to {@link ScaPenaltyParity}, which flags those production would actually
      * penalise (graded, positively-penalised category, matched to the persisted categories); silent and verdict-unchanged when none would dock.
-     *
-     * @param exercise the exercise whose SCA configuration governs grading
-     * @param solution the solution build summary (its SCA findings are checked)
-     * @param reasons  the running list of rejection reasons (appended to on failure)
-     * @return whether the solution produces no SCA finding production would penalise
      */
     private boolean checkSolutionScaClean(ProgrammingExercise exercise, BuildSummary solution, List<String> reasons) {
         List<String> penalisingScaFindings = penalisingScaFindings(exercise, solution);
@@ -581,10 +531,6 @@ public class AuthoritativeVerificationService {
     /**
      * Fail-CLOSED on a read-back gap: a repo seeded non-empty but extracted empty silently disables the harness/leak gates, so we reject rather than accept on that doubt. (A
      * genuinely empty repo is reported as NOT failed and stays fail-open.)
-     *
-     * @param extractionFailedRepositories the repository directory names whose read-back failed (seeded non-empty but extracted empty)
-     * @param reasons                      the running list of rejection reasons (appended to on failure)
-     * @return whether every repository was read back successfully
      */
     private static boolean checkExtractionSound(Set<String> extractionFailedRepositories, List<String> reasons) {
         boolean extractionSound = extractionFailedRepositories == null || extractionFailedRepositories.isEmpty();
@@ -633,10 +579,10 @@ public class AuthoritativeVerificationService {
      * <p>
      * <strong>Structural-test exemption (W1).</strong> A STRUCTURAL-SHAPED binding need not resolve: the seeder injects {@code testClass[X]} tests AFTER the agent submits and only
      * for a class absent from the template, so a binding the agent wrote up front for a class the seeder declined to enforce would otherwise force a wasted retry. This is sound —
-     * such
-     * a binding backs only machinery, and the differential is keyed to REAL test names regardless of binding shape (a real test named {@code testClass[Evil]} still must fail on
      * the
-     * template). When the authoritative seeded set is supplied, a binding in it is also treated as resolved.
+     * differential is keyed to REAL test names regardless of binding shape (a real test named {@code testClass[Evil]} still must fail on the template). When the authoritative
+     * seeded
+     * set is supplied, a binding in it is also treated as resolved.
      */
     private static List<String> unresolvedTaskBindings(String problemStatement, List<String> actualTestNames, int testCount, Set<String> seededStructuralTestNames) {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
