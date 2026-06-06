@@ -309,6 +309,7 @@
                 "fileUploadEditor": "Datei-Upload",
                 "quizEditor": "Quiz",
                 "iris": "Iris",
+                "collapsePanel": "Panel einklappen",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende",
