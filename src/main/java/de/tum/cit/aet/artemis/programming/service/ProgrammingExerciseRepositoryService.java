@@ -768,9 +768,12 @@ public class ProgrammingExerciseRepositoryService {
         }
         FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
         // Shell scripts are classified as binary by FileUtil (so the markdown/upload binary filter never tries to read/rewrite them) and are therefore SKIPPED by the recursive
-        // replacement above. But a language's test harness can drive its build through a shell script committed in the tests repository (e.g. Haskell's run.sh) whose checkout-directory
-        // placeholders MUST be substituted — otherwise under real CI they expand to empty strings (`find ${studentParentWorkingDirectoryName}/` -> `find /`, `rm -rf ${solutionWorkingDirectory}`
-        // -> `rm -rf `) and the build fails so no test case is produced. Apply the (exercise-specific) replacements to the repository's shell scripts directly, bypassing the binary guard.
+        // replacement above. But a language's test harness can drive its build through a shell script committed in the tests repository (e.g. Haskell's run.sh) whose
+        // checkout-directory
+        // placeholders MUST be substituted — otherwise under real CI they expand to empty strings (`find ${studentParentWorkingDirectoryName}/` -> `find /`, `rm -rf
+        // ${solutionWorkingDirectory}`
+        // -> `rm -rf `) and the build fails so no test case is produced. Apply the (exercise-specific) replacements to the repository's shell scripts directly, bypassing the
+        // binary guard.
         replaceVariablesInShellScripts(repository.getLocalPath().toAbsolutePath(), replacements);
     }
 

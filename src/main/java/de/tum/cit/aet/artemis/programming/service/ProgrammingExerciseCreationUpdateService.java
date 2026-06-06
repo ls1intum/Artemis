@@ -252,7 +252,8 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Whether the given language checks the solution repository out as a sibling directory during the build (its harness references {@code ${solutionWorkingDirectory}}). This is the
+     * Whether the given language checks the solution repository out as a sibling directory during the build (its harness references {@code ${solutionWorkingDirectory}}). This is
+     * the
      * single source of truth {@link RepositoryCheckoutService.RepositoryCheckoutPath#SOLUTION} encodes: it returns a path for such languages (Haskell, OCaml) and throws for all
      * others. For those languages the solution checkout is mandatory, so the build config must enable it.
      *
