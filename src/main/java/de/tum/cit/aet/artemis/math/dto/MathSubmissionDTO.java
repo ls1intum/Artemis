@@ -48,8 +48,9 @@ public record MathSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submis
          */
         public static MathParticipationDTO of(StudentParticipation participation) {
             MathExerciseDTO exerciseDTO = null;
-            if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof MathExercise pe && Hibernate.isInitialized(pe.getCategories())) {
-                exerciseDTO = MathExerciseDTO.of(pe);
+            if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof MathExercise mathExercise
+                    && Hibernate.isInitialized(mathExercise.getCategories())) {
+                exerciseDTO = MathExerciseDTO.of(mathExercise);
             }
             String login = participation.getStudent().map(User::getLogin).orElse(null);
             String name = participation.getStudent().map(User::getName).orElse(null);

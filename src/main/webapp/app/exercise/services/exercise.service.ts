@@ -591,12 +591,13 @@ export class ExerciseService {
                 break;
             case ExerciseType.TEXT:
             case ExerciseType.FILE_UPLOAD:
-            case ExerciseType.MATH:
+            case ExerciseType.MATH: {
                 const textOrFileUploadOrMathExercise = exercise as TextExercise & FileUploadExercise & MathExercise;
                 if (textOrFileUploadOrMathExercise.exampleSolution) {
                     exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadOrMathExercise.exampleSolution);
                 }
                 break;
+            }
             case ExerciseType.PROGRAMMING:
                 programmingExercise = exercise as ProgrammingExercise;
                 break;

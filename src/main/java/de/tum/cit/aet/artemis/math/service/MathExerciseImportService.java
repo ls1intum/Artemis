@@ -61,9 +61,9 @@ public class MathExerciseImportService extends ExerciseImportService {
         MathExercise savedExercise = mathExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(savedExercise, Optional.ofNullable(importedExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
+        savedExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, savedExercise));
 
-        return newExercise;
+        return savedExercise;
     }
 
     /**

@@ -75,7 +75,7 @@
                 },
                 "math": {
                     "name": "Math Exercises",
-                    "description": "Enables math exercises where students build step-by-step derivations that are checked automatically."
+                    "description": "Enables math exercises where students build step-by-step derivations that are reviewed manually."
                 },
                 "lecture": {
                     "name": "Lectures",

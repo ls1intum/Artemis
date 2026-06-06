@@ -45,7 +45,7 @@ export class MathSubmissionComponent implements OnInit {
         if (participationIdParam === undefined || Number.isNaN(participationIdParam)) {
             return;
         }
-        this.mathSubmissionService.getDataForMathEditor(participationIdParam!).subscribe({
+        this.mathSubmissionService.getDataForMathEditor(participationIdParam).subscribe({
             next: (response) => {
                 const submission = response.body ?? new MathSubmission();
                 this.submission.set(submission);

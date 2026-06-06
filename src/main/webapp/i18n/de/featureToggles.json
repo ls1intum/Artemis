@@ -75,7 +75,7 @@
                 },
                 "math": {
                     "name": "Mathematik-Aufgaben",
-                    "description": "Aktiviert Mathematik-Aufgaben, bei denen Studierende schrittweise Herleitungen erstellen, die automatisch überprüft werden."
+                    "description": "Aktiviert Mathematik-Aufgaben, bei denen Studierende schrittweise Herleitungen erstellen, die manuell überprüft werden."
                 },
                 "lecture": {
                     "name": "Vorlesungen",
