@@ -94,12 +94,13 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createMathSubmission_afterDueDate_returnsForbidden() throws Exception {
-        // exercise whose due date has already passed, with a participation that was started before the due date
-        MathExercise pastExercise = MathExerciseFactory.generateMathExercise(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
-                course);
+        // exercise whose due date has already passed, with a participation that was started before the due date.
+        // Derive all dates from a single baseline so the test data is deterministic and not timing-sensitive.
+        final ZonedDateTime baseTime = ZonedDateTime.now();
+        MathExercise pastExercise = MathExerciseFactory.generateMathExercise(baseTime.minusDays(3), baseTime.minusDays(1), baseTime.plusDays(1), course);
         mathExerciseUtilService.saveExercise(pastExercise);
         StudentParticipation pastParticipation = participationUtilService.createAndSaveParticipationForExercise(pastExercise, TEST_PREFIX + "student1");
-        pastParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        pastParticipation.setInitializationDate(baseTime.minusDays(2));
         studentParticipationTestRepository.save(pastParticipation);
 
         MathSubmissionDTO submissionDTO = MathExerciseFactory.generateMathSubmissionDTO(true);
@@ -163,6 +164,6 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         var results = request.getList("/api/math/exercises/" + exercise.getId() + "/math-submissions", HttpStatus.OK, MathSubmissionDTO.class);
 
-        assertThat(results).isNotEmpty();
+        assertThat(results).hasSize(1);
     }
 }
