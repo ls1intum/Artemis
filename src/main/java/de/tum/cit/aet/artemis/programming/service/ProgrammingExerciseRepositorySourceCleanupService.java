@@ -5,9 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -27,9 +27,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 /**
  * Clears the source files of a programming exercise so the repositories are an empty, buildable starting point for AI exercise generation (Hyperion): the agent authors the sources
  * from scratch instead of first deleting a worked sample. The template/solution sources are always cleared; the tests repository keeps its build/report harness and SCA config but,
- * for the allowlisted languages (Java first, see {@link #TESTS_SAMPLE_STRIP_LANGUAGES}), also has its sample test sources and sample structure oracle stripped. The build
- * scaffolding
- * (manifests, dotfiles, test harness) is kept in place so every cleared repository is still a valid, buildable clone target.
+ * for the supported languages (see {@link #TESTS_SAMPLE_FILE_NAMES}), also has its named sample test sources stripped. The build scaffolding (manifests, dotfiles, test harness) is
+ * kept in place so every cleared repository is still a valid, buildable clone target.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -44,21 +43,39 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      */
     private static final Set<String> AI_GENERATION_KEEP_FILES = Set.of("Package.swift", "build.sbt");
 
-    /**
-     * Languages for which the TESTS repository's <em>sample test sources</em> are stripped for AI generation, so the agent starts from a clean harness instead of having to delete
-     * a
-     * worked example first. Restricted to languages whose test harness contains NO source-extension infrastructure that the build imports (Java's harness is build manifests + SCA
-     * config + the runtime-regenerated structure oracle, none of it a graded {@code .java} the build depends on). Other languages keep their sample intact until individually
-     * validated — C's {@code Tests.py} imports its concrete test modules, OCaml's {@code dune}, Rust's proc-macro/structural reflection, Swift's {@code XCTestManifests} and
-     * Haskell's {@code Interface.hs} are source-extension infrastructure that cannot simply be deleted.
-     */
-    private static final Set<ProgrammingLanguage> TESTS_SAMPLE_STRIP_LANGUAGES = EnumSet.of(ProgrammingLanguage.JAVA);
+    /** The Java/Kotlin sample test sources: the example behaviour test, the four Ares structure-oracle classes, and the structure-oracle descriptor (all classpath-regenerated). */
+    private static final Set<String> JVM_ARES_SAMPLE_FILES = Set.of("SortingExampleBehaviorTest.java", "ClassTest.java", "MethodTest.java", "AttributeTest.java",
+            "ConstructorTest.java", "test.json");
 
     /**
-     * The structure-oracle descriptor that ships with the JVM sample exercise. It is regenerated per exercise from the classpath by {@code StructuralOracleSeedingService}, so a
-     * sample copy must not linger in the cleaned scaffold (it would otherwise be an orphaned oracle for a different exercise).
+     * The exact SAMPLE test-source file names (by base name) to remove from the TESTS repository for AI generation, per language, so the agent starts from a clean harness instead
+     * of
+     * deleting a worked example first. These are the example behaviour/structural tests of the shipped sample exercise; the build/report harness, SCA config, and every other file
+     * are
+     * kept so the repository stays a buildable, gradable clone target.
+     * <p>
+     * It is a NAMED set, not an extension sweep, deliberately: most harnesses keep their own source-extension infrastructure that must survive (Python {@code __init__.py}, Ruby
+     * {@code test_helper.rb}/{@code assignment_path.rb}, C# {@code GlobalUsings.cs}, R {@code testthat.R}), and a JVM tests repo keeps its tests as {@code .java} regardless of the
+     * exercise language (Kotlin), so an extension sweep would delete the harness or miss the sample. Each set was derived per language by reading the actual template + harness and
+     * confirming the harness DISCOVERS tests (no import/name dependency on the sample). The Java/Kotlin structure-oracle classes + {@code test.json} are regenerated per exercise
+     * from
+     * the classpath by {@code StructuralOracleSeedingService}, so removing the sample copy is safe.
+     * <p>
+     * Languages absent from this map keep their sample test repo intact, because their harness IMPORTS/NAMES the sample (C's {@code Tests.py}, OCaml {@code dune}, Rust
+     * proc-macros,
+     * Swift {@code XCTestManifests}, Haskell {@code .cabal main-is}, C++ FACT {@code add_executable}) and need a minimal compiling stub rather than a deletion — handled
+     * separately.
      */
-    private static final String STRUCTURAL_ORACLE_FILE = "test.json";
+    private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
+            // JVM-on-Ares: the tests repo holds .java sources + a structure oracle regardless of the exercise language (Java and Kotlin share the identical sample set).
+            Map.entry(ProgrammingLanguage.JAVA, JVM_ARES_SAMPLE_FILES), Map.entry(ProgrammingLanguage.KOTLIN, JVM_ARES_SAMPLE_FILES),
+            Map.entry(ProgrammingLanguage.PYTHON, Set.of("behavior_test.py", "structural_test.py", "structural_helpers.py")),
+            Map.entry(ProgrammingLanguage.JAVASCRIPT, Set.of("behavior.test.js", "structural.test.js")),
+            Map.entry(ProgrammingLanguage.TYPESCRIPT, Set.of("behavior.test.ts", "structural.test.ts")),
+            Map.entry(ProgrammingLanguage.C_SHARP, Set.of("BehaviorTest.cs", "StructuralTest.cs")),
+            Map.entry(ProgrammingLanguage.DART, Set.of("behavior_test.dart", "structural_test.dart")),
+            Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")), Map.entry(ProgrammingLanguage.R, Set.of("test-convert.R")),
+            Map.entry(ProgrammingLanguage.RUBY, Set.of("test_behavior.rb", "test_structural.rb")));
 
     private final GitService gitService;
 
@@ -66,14 +83,20 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
         this.gitService = gitService;
     }
 
+    /** The per-language tests-repo sample file-name strip sets (immutable). Package-private for the unit tests and the fail-closed template-inventory guard. */
+    static Map<ProgrammingLanguage, Set<String>> testsSampleFileNamesByLanguage() {
+        return TESTS_SAMPLE_FILE_NAMES;
+    }
+
     /**
      * Clears the repositories for AI generation so the agent starts from a clean, buildable scaffold rather than a worked sample it must delete first. The template and solution
      * repositories have their sources cleared (the agent authors these from scratch). The TESTS repository keeps its build/report harness and SCA config, but — for the languages
-     * on
-     * {@link #TESTS_SAMPLE_STRIP_LANGUAGES} (Java first) — its <em>sample test sources</em> and sample structure oracle are removed too, so the agent does not begin on top of
-     * another
-     * exercise's tests. Languages not on that allowlist keep their sample test repo intact, because their harness imports source-extension infrastructure that cannot simply be
-     * deleted (C's {@code Tests.py}, OCaml's {@code dune}, Rust's proc-macro reflection, Swift's {@code XCTestManifests}, Haskell's {@code Interface.hs}).
+     * in
+     * {@link #TESTS_SAMPLE_FILE_NAMES} — its named <em>sample test sources</em> are removed too, so the agent does not begin on top of another exercise's tests. Languages absent
+     * from
+     * that map keep their sample test repo intact, because their harness imports/names the sample (C's {@code Tests.py}, OCaml's {@code dune}, Rust's proc-macro reflection,
+     * Swift's
+     * {@code XCTestManifests}, Haskell's {@code .cabal main-is}) and needs a minimal compiling stub rather than a deletion.
      *
      * @param programmingLanguage the exercise's programming language (selects the source extensions to clear)
      * @param templateRepository  the template repository to clear
@@ -89,12 +112,13 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
     }
 
     private void clearTestsSampleSourcesSafely(final ProgrammingLanguage programmingLanguage, final Repository testsRepository, final User exerciseCreator) {
-        if (!TESTS_SAMPLE_STRIP_LANGUAGES.contains(programmingLanguage)) {
-            // Keep the sample tests intact for languages not yet validated for stripping (their harness may import the sample sources).
+        final Set<String> sampleFileNames = TESTS_SAMPLE_FILE_NAMES.get(programmingLanguage);
+        if (sampleFileNames == null) {
+            // Keep the sample tests intact for languages not yet supported for stripping (their harness imports/names the sample and needs a stub, not a deletion).
             return;
         }
         try {
-            clearTestsSampleSources(programmingLanguage, testsRepository, exerciseCreator);
+            clearTestsSampleSources(sampleFileNames, testsRepository, exerciseCreator);
         }
         catch (IOException | GitAPIException ex) {
             log.warn("Failed to clear tests sample sources for AI generation in {}. Continuing without tests cleanup.", testsRepository.getRemoteRepositoryUri(), ex);
@@ -102,38 +126,35 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
     }
 
     /**
-     * Removes the sample test SOURCES (the worked example's test cases + the Ares structure-oracle classes) and the sample structure oracle ({@value #STRUCTURAL_ORACLE_FILE}) from
-     * the tests repository, keeping the build/report harness, SCA config, and every non-source file so the repo stays a buildable, gradable clone target. The structure-oracle
-     * classes are regenerated per exercise from the classpath by {@code StructuralOracleSeedingService}, and the agent authors the behaviour tests itself — so neither needs to be
-     * pre-seeded as a sample.
+     * Removes the named SAMPLE test source files (the worked example's behaviour/structural tests and, for the JVM languages, the structure oracle) from the tests repository,
+     * keeping the build/report harness, SCA config, and every other file so the repo stays a buildable, gradable clone target. The agent authors its own tests, and the JVM
+     * structure-oracle classes are regenerated per exercise from the classpath by {@code StructuralOracleSeedingService}, so none of the removed files needs to be pre-seeded.
      *
-     * @param programmingLanguage the exercise's programming language (selects the source extensions to clear)
-     * @param repository          the tests repository to clean
-     * @param exerciseCreator     the user performing the cleanup
+     * @param sampleFileNames the exact base names of the sample test sources to delete (everything else is harness and kept)
+     * @param repository      the tests repository to clean
+     * @param exerciseCreator the user performing the cleanup
      * @throws IOException     If file cleanup in the repository fails.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void clearTestsSampleSources(final ProgrammingLanguage programmingLanguage, final Repository repository, final User exerciseCreator) throws IOException, GitAPIException {
+    void clearTestsSampleSources(final Set<String> sampleFileNames, final Repository repository, final User exerciseCreator) throws IOException, GitAPIException {
         final Path repositoryRoot = repository.getLocalPath();
-        boolean changed = deleteLooseLanguageSources(repositoryRoot, programmingLanguage);
-        changed |= deleteFilesNamed(repositoryRoot, STRUCTURAL_ORACLE_FILE);
-        if (!changed) {
-            log.info("Nothing to clear in tests repository {} for AI generation (no sample sources of the language found).", repository.getRemoteRepositoryUri());
+        if (!deleteFilesNamed(repositoryRoot, sampleFileNames)) {
+            log.info("Nothing to clear in tests repository {} for AI generation (no sample test sources found).", repository.getRemoteRepositoryUri());
             return;
         }
         ensureRepositoryNotEmpty(repositoryRoot);
         commitAndPushRepository(repository, "Cleared tests sample sources for AI generation", true, exerciseCreator);
     }
 
-    /** Deletes every regular file named {@code fileName} anywhere under the repository (outside {@code .git}). Returns whether anything was deleted. */
-    private static boolean deleteFilesNamed(final Path repositoryRoot, final String fileName) throws IOException {
+    /** Deletes every regular file whose base name is in {@code fileNames} anywhere under the repository (outside {@code .git}). Returns whether anything was deleted. */
+    private static boolean deleteFilesNamed(final Path repositoryRoot, final Set<String> fileNames) throws IOException {
         if (!Files.isDirectory(repositoryRoot)) {
             return false;
         }
         final List<Path> toDelete;
         try (Stream<Path> files = Files.walk(repositoryRoot)) {
             toDelete = files.filter(Files::isRegularFile).filter(path -> !repositoryRoot.relativize(path).startsWith(".git"))
-                    .filter(path -> path.getFileName().toString().equals(fileName)).toList();
+                    .filter(path -> fileNames.contains(path.getFileName().toString())).toList();
         }
         for (Path path : toDelete) {
             Files.delete(path);
