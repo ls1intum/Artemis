@@ -163,7 +163,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * Load all exercise groups of the current exam.
      */
     loadExerciseGroups() {
-        return this.examManagementService.find(this.courseId, this.examId, false, true);
+        return this.examManagementService.find(this.courseId, this.examId, true);
     }
 
     /**

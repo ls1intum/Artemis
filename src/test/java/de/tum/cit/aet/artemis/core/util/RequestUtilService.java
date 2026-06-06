@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
@@ -819,11 +818,6 @@ public class RequestUtilService {
         }
 
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructMapType(Map.class, keyType, valueType));
-    }
-
-    public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
-        performMvcRequest(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
-        restoreSecurityContext();
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
