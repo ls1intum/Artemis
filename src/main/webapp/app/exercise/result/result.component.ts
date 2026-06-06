@@ -199,7 +199,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * Executed when changes happen sets the corresponding template status to display a message.
      * @param changes The hashtable of the occurred changes as SimpleChanges object.
+     *
+     * NOTE (signal migration): intentionally NOT migrated to computed()/effect() yet — a faithful conversion is blocked by:
+     *   1. It reads {@code changes.isBuilding.previousValue} to detect the building→not-building EDGE (re-evaluate only when a
+     *      build finishes). Signal inputs expose no previousValue, so this needs manual prior-value tracking.
+     *   2. It dispatches on WHICH input changed — only {@code changes.participation || changes.result} re-runs the full
+     *      ngOnInit normalisation; a single effect() over those signals cannot tell which one fired and would over-run.
+     *   3. ngOnInit()/evaluate() write back to the same model() signals they read (result/participation), which an effect()
+     *      reading them would turn into a feedback loop.
+     * Tracked for future removal once a signal-friendly approach exists.
      */
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue and which-input-changed dispatch.
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
             // If the participation or result changes, we need to re-initialize the component.
