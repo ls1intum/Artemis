@@ -61,10 +61,9 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
      * from
      * the classpath by {@code StructuralOracleSeedingService}, so removing the sample copy is safe.
      * <p>
-     * Languages absent from this map keep their sample test repo intact, because their harness IMPORTS/NAMES the sample (C's {@code Tests.py}, OCaml {@code dune}, Rust
-     * proc-macros,
-     * Swift {@code XCTestManifests}, Haskell {@code .cabal main-is}, C++ FACT {@code add_executable}) and need a minimal compiling stub rather than a deletion — handled
-     * separately.
+     * Languages absent from this map keep their sample test repo intact: their harness IMPORTS/NAMES the sample (C's {@code Tests.py}, OCaml {@code dune}, Rust proc-macros, Swift
+     * {@code XCTestManifests}, Haskell {@code .cabal main-is}) and they have not yet been live-validated to strip cleanly. (C++ FACT also names its sample via CMake
+     * {@code add_executable}, but is validated: deletion transiently breaks the build and the agent recreates the named file from the discoverable reference.)
      */
     private static final Map<ProgrammingLanguage, Set<String>> TESTS_SAMPLE_FILE_NAMES = Map.ofEntries(
             // Decoupled-harness languages whose clean scaffold is LIVE-VALIDATED (agent grades 100%/0%). The agent also gets the worked sample as a read-only reference under
@@ -78,7 +77,11 @@ public class ProgrammingExerciseRepositorySourceCleanupService {
             Map.entry(ProgrammingLanguage.C_SHARP, Set.of("BehaviorTest.cs", "StructuralTest.cs")),
             Map.entry(ProgrammingLanguage.DART, Set.of("behavior_test.dart", "structural_test.dart")),
             Map.entry(ProgrammingLanguage.GO, Set.of("behavior_test.go", "structural_test.go")),
-            Map.entry(ProgrammingLanguage.RUBY, Set.of("test_behavior.rb", "test_structural.rb")));
+            Map.entry(ProgrammingLanguage.RUBY, Set.of("test_behavior.rb", "test_structural.rb")),
+            // C++ is COUPLED (CMake add_executable names src/sort-test.cpp) yet still strips cleanly: deleting it transiently breaks CMake configure, and the agent — guided by the
+            // discoverable reference — recreates src/sort-test.cpp and authors a working FACT exercise (live-validated: accepted, 8 tests, grades 100%/0%; the build-gate cases are
+            // zero-weighted as usual). R stays EXCLUDED: it failed across three runs (thrash / buggy solution / thrash) — unreliable regardless of the reference.
+            Map.entry(ProgrammingLanguage.C_PLUS_PLUS, Set.of("sort-test.cpp")));
 
     private final GitService gitService;
 
