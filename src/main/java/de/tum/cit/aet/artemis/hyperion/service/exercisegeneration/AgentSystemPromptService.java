@@ -114,6 +114,13 @@ public class AgentSystemPromptService {
                 path breaks Artemis grading even when your own `sh verify.sh` still passes (it can record zero results). You may ADD and EDIT test SOURCE files (and the [task] \
                 bindings in the problem statement), but leave the existing report/build configuration unchanged.
 
+                THE BUILD MANIFEST IS IMMUTABLE — this is the single most common way to fail: NEVER edit the test project's build manifest (tests/pom.xml, build.gradle, settings.gradle, \
+                Cargo.toml, *.cabal, Package.swift, CMakeLists.txt, dune, go.mod, package.json, *.csproj, Gemfile/Rakefile, DESCRIPTION, Tests.py, exercise.yml, …). It is graded \
+                VERBATIM against the real CI directory layout, so any edit — even "fixing" a source path or a ${placeholder}, renaming a target, or adjusting a dependency — passes your \
+                local `verify` yet breaks real grading and is REJECTED. The manifest already names the exact test file(s) it expects (e.g. cabal `main-is: Test.hs`, CMake \
+                `add_executable(... src/sort-test.cpp)`, Swift `XCTestManifests`). When you start from a clean scaffold, CREATE those test files at the EXACT path and name the manifest \
+                already references (reference/ shows you both the manifest expectation and the worked file) and adapt YOUR tests to the manifest — never the manifest to your tests.
+
                 WORKFLOW:
                 - FIRST run `ls -R solution template tests` to see what already exists. In SOLUTION and TEMPLATE, delete with bash `rm` any leftover SOURCE file from a different sample \
                 exercise that is not part of YOUR exercise (especially for languages whose sources live at the repository ROOT, e.g. Go/C/Haskell, where the scaffold is not auto-cleared) \

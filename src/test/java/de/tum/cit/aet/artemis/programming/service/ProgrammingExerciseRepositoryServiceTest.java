@@ -187,25 +187,25 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void clearRepositoriesForAiGeneration_unsupportedLanguage_keepsTheTestsSampleIntact() throws Exception {
-        // Haskell is NOT yet supported for tests-stripping (its .cabal NAMES the sample test module, so it needs a stub, not a deletion), so its tests repo must be left untouched
-        // while template/solution are still cleared. This pins the gating: a language is only stripped once it has a validated manifest.
+        // A compile-only language (Assembler) is not generation-capable and is never in the tests-strip map, so its tests repo must be left untouched while template/solution are
+        // still cleared. This pins the gating: a language is stripped only when it is in TESTS_SAMPLE_FILE_NAMES.
         Path templatePath = tempDir.resolve("template");
-        FileUtils.writeStringToFile(templatePath.resolve("src/Exercise.hs").toFile(), "module Exercise where", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(templatePath.resolve("src/main.asm").toFile(), "section .text", StandardCharsets.UTF_8);
         Path solutionPath = tempDir.resolve("solution");
-        FileUtils.writeStringToFile(solutionPath.resolve("src/Exercise.hs").toFile(), "module Exercise where\nf = 1", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(solutionPath.resolve("src/main.asm").toFile(), "section .text\nmov eax, 1", StandardCharsets.UTF_8);
         Path testsPath = tempDir.resolve("tests");
-        FileUtils.writeStringToFile(testsPath.resolve("test/Test.hs").toFile(), "module Test where", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(testsPath.resolve("test/sample_test.asm").toFile(), "; sample test", StandardCharsets.UTF_8);
 
         Repository templateRepo = mockRepository(templatePath);
         Repository solutionRepo = mockRepository(solutionPath);
         Repository testsRepo = mockRepository(testsPath);
 
-        repositorySourceCleaner.clearRepositoriesForAiGeneration(ProgrammingLanguage.HASKELL, templateRepo, solutionRepo, testsRepo, new User());
+        repositorySourceCleaner.clearRepositoriesForAiGeneration(ProgrammingLanguage.ASSEMBLER, templateRepo, solutionRepo, testsRepo, new User());
 
         // Template/solution sources are cleared, but the tests repo's sample is preserved and never committed against.
-        assertThat(templatePath.resolve("src/Exercise.hs")).doesNotExist();
-        assertThat(solutionPath.resolve("src/Exercise.hs")).doesNotExist();
-        assertThat(testsPath.resolve("test/Test.hs")).as("an unsupported language keeps its tests sample intact").exists();
+        assertThat(templatePath.resolve("src/main.asm")).doesNotExist();
+        assertThat(solutionPath.resolve("src/main.asm")).doesNotExist();
+        assertThat(testsPath.resolve("test/sample_test.asm")).as("an unsupported language keeps its tests sample intact").exists();
         verify(gitService, never()).commitAndPush(same(testsRepo), anyString(), anyBoolean(), any());
     }
 
