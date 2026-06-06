@@ -402,6 +402,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 AttachmentVideoUnitDTO.class);
         assertThat(attachmentVideoUnitDTO.attachment().id()).isEqualTo(this.attachment.getId());
         assertThat(attachmentVideoUnitDTO.competencyLinks()).anyMatch(link -> link.competency().id() == competency.getId());
+        // The PDF preview relies on the lightweight lecture reference when saving; the response must keep it
+        assertThat(attachmentVideoUnitDTO.lecture()).isNotNull();
+        assertThat(attachmentVideoUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
     }
 
     @Test

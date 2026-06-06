@@ -24,7 +24,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, String description, String videoSource, Set<CompetencyLinkDTO> competencyLinks,
-        AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, @JsonProperty("type") String type) implements LectureUnitDTO {
+        AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, AttachmentDTO.LectureReferenceDTO lecture, @JsonProperty("type") String type)
+        implements LectureUnitDTO {
 
     public AttachmentVideoUnitDTO {
         type = "attachment";
@@ -42,7 +43,9 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
                 : Set.of();
         List<SlideDTO> slides = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides()) ? unit.getSlides().stream().map(SlideDTO::from).toList() : List.of();
         AttachmentDTO attachment = unit.getAttachment() != null ? AttachmentDTO.of(unit.getAttachment()) : null;
+        // The PDF preview reads attachmentVideoUnit.lecture.id when saving/updating, so keep the lightweight lecture reference.
+        AttachmentDTO.LectureReferenceDTO lecture = AttachmentDTO.LectureReferenceDTO.of(unit.getLecture());
         return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), competencyLinks, attachment, slides,
-                unit.isCompleted(), unit.isVisibleToStudents(), unit.getType());
+                unit.isCompleted(), unit.isVisibleToStudents(), lecture, unit.getType());
     }
 }
