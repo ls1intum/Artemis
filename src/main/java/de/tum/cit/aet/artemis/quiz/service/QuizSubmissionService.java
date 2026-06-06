@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -411,9 +412,17 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
-        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(savedQuizSubmission, quizExercise);
+        QuizExercise quizExerciseWithQuestions = getQuizExerciseWithQuestions(quizExercise);
+        QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(savedQuizSubmission, quizExerciseWithQuestions);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
+    }
+
+    private QuizExercise getQuizExerciseWithQuestions(QuizExercise quizExercise) {
+        if (quizExercise.getQuizQuestions() != null && Hibernate.isInitialized(quizExercise.getQuizQuestions())) {
+            return quizExercise;
+        }
+        return quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
     }
 
     private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,

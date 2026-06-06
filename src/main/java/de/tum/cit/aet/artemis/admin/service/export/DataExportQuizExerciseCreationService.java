@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.DragAndDropQuizAnswerConversionService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionQuestionConnector;
 
 /**
  * A service to create the data export for quiz exercise participations.
@@ -92,10 +93,11 @@ public class DataExportQuizExerciseCreationService {
      */
     private boolean createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir, boolean includeResults,
             Optional<List<String>> exportErrors) {
-        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findByExercise_Id(quizExercise.getId());
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findByExerciseIdWithChildCollections(quizExercise.getId());
         boolean errorOccurred = false;
         for (var submission : participation.getSubmissions()) {
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
+            QuizSubmissionQuestionConnector.reconnectSubmittedAnswersToLoadedQuestions(quizSubmission, quizQuestions);
             List<String> multipleChoiceQuestionsSubmissions = new ArrayList<>();
             List<String> shortAnswerQuestionsSubmissions = new ArrayList<>();
             for (var question : quizQuestions) {

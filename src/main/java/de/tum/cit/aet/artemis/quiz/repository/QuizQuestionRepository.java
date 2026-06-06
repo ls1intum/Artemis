@@ -32,6 +32,19 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
 
     Set<QuizQuestion> findByExercise_Id(long id);
 
+    /**
+     * Finds all quiz questions for an exercise with their type-specific child collections initialized.
+     *
+     * @param exerciseId the id of the quiz exercise
+     * @return the quiz questions with initialized child collections
+     */
+    @Transactional(readOnly = true)
+    default Set<QuizQuestion> findByExerciseIdWithChildCollections(long exerciseId) {
+        Set<QuizQuestion> questions = findByExercise_Id(exerciseId);
+        questions.forEach(this::initializeChildCollections);
+        return questions;
+    }
+
     @Query("""
             SELECT question
             FROM QuizQuestion question
@@ -177,6 +190,11 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
         return question;
     }
 
+    /**
+     * Initializes the type-specific lazy child collections of the given managed quiz question.
+     *
+     * @param question the quiz question whose child collections should be initialized
+     */
     default void initializeChildCollections(QuizQuestion question) {
         long questionId = question.getId();
         switch (question) {
