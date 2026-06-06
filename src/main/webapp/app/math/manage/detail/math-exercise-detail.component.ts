@@ -100,8 +100,11 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(exerciseId: number) {
         this.mathExerciseService.find(exerciseId).subscribe((mathExerciseResponse: HttpResponse<MathExercise>) => {
-            this.mathExercise = mathExerciseResponse.body!;
-            this.onExerciseLoaded();
+            const exercise = mathExerciseResponse.body;
+            if (exercise) {
+                this.mathExercise = exercise;
+                this.onExerciseLoaded();
+            }
         });
     }
 
