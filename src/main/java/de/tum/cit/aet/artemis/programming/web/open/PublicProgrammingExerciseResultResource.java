@@ -92,7 +92,7 @@ public class PublicProgrammingExerciseResultResource {
 
         if (participationId != null) {
             try {
-                participation = programmingExerciseParticipationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
+                participation = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
                 log.info("Successfully retrieved participation via ID: {}", participationId);
             }
             catch (ContinuousIntegrationException cISException) {
