@@ -116,7 +116,7 @@ public class ExamAccessService {
      * @return a ResponseEntity with the exam
      */
     public StudentExam getOrCreateStudentExamElseThrow(Long courseId, Long examId) {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -321,7 +321,7 @@ public class ExamAccessService {
      */
     public void checkCourseAndExamAccessForStudentElseThrow(Long courseId, Long examId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
         if (authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             checkExamBelongsToCourseElseThrow(courseId, examId);

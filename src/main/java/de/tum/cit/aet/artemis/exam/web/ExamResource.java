@@ -594,7 +594,7 @@ public class ExamResource {
     @GetMapping("exams/active")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -610,7 +610,7 @@ public class ExamResource {
     @GetMapping("exams")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
     }
 
@@ -750,7 +750,7 @@ public class ExamResource {
         Course course = exam.getCourse();
         checkExamCourseIdElseThrow(courseId, exam);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
@@ -1125,7 +1125,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
@@ -1285,7 +1285,7 @@ public class ExamResource {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
         Course course = courseRepository.findWithEagerExercisesById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);

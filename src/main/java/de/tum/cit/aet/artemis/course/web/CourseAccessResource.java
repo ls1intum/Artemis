@@ -101,7 +101,7 @@ public class CourseAccessResource {
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
         Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseAccessService.enrollUserForCourseOrThrow(user, course);
@@ -119,7 +119,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
         courseAccessService.unenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok().build();
@@ -135,7 +135,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for enrollment");
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
         enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
@@ -153,7 +153,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
         final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
                 .toList();
         return ResponseEntity.ok(courses);
@@ -407,7 +407,7 @@ public class CourseAccessResource {
     @NonNull
     private ResponseEntity<Void> addUserToCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+            Optional<User> userToAddToGroup = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
             }
@@ -495,7 +495,7 @@ public class CourseAccessResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
-        Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+        Optional<User> userToRemoveFromGroup = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }

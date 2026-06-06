@@ -54,7 +54,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was created with SUPER_ADMIN authority
-        Optional<User> createdAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> createdAdmin = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(testAdminUsername);
         assertThat(createdAdmin).isPresent();
 
         User admin = createdAdmin.get();
@@ -113,7 +113,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was updated with SUPER_ADMIN authority
-        Optional<User> updatedAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> updatedAdmin = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(testAdminUsername);
         assertThat(updatedAdmin).isPresent();
 
         User admin = updatedAdmin.get();

@@ -169,7 +169,7 @@ public class CourseArchiveResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
         long start = System.nanoTime();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
         Set<CourseForArchiveDTO> courses = courseArchiveService.getAllCoursesForCourseArchive();
         log.debug("courseService.getCoursesForArchive done");

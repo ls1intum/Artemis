@@ -115,7 +115,7 @@ public class ParticipationAuthorizationCheckService {
      * @return True, if the current user is allowed to access the participation; false otherwise.
      */
     public boolean canAccessParticipation(@NonNull final ParticipationInterface participation) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return canAccessParticipation(participation, user);
     }
 

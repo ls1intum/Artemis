@@ -123,7 +123,7 @@ public class UserResource {
     @PutMapping("users/initialize")
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

@@ -1069,7 +1069,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         // Check if quiz has already started or ended, and reuse the fetched batches
         Set<QuizBatch> batches = checkQuizEditable(originalQuiz);

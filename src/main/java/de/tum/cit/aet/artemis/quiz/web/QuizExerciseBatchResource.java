@@ -95,7 +95,7 @@ public class QuizExerciseBatchResource {
     public ResponseEntity<QuizBatchDTO> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("Students cannot join quiz batches for exam exercises", ENTITY_NAME, "notAllowedInExam");
         }
@@ -123,7 +123,7 @@ public class QuizExerciseBatchResource {
     public ResponseEntity<QuizBatchWithPasswordDTO> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("Batches cannot be created for exam exercises", ENTITY_NAME, "notAllowedInExam");
@@ -150,7 +150,7 @@ public class QuizExerciseBatchResource {
         log.info("REST request to start quiz batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         if (!user.getId().equals(batch.getCreator())) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);

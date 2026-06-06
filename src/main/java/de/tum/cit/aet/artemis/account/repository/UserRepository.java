@@ -81,56 +81,28 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    // TODO (Phase 9): the following findOneWithGroups* EntityGraph methods eagerly load user.groups for dual-write compatibility.
-    // Remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthorities* variants instead.
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Optional<User> findOneWithGroupsByActivationKey(String activationKey);
-
     Optional<User> findOneByResetKey(String resetKey);
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
     List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
-
     Optional<User> findOneByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber);
-
+    // TODO (Phase 9): remove once user_groups table is dropped (used by UserTestRepository.saveOrUpdate to prevent Hibernate NPE on merge)
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+    // --- courseRoles variants ---
 
-    @Query("""
-            SELECT u
-            FROM User u
-            LEFT JOIN FETCH u.groups
-            LEFT JOIN FETCH u.authorities
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE u.login = :login
-                AND clp.course.id = :courseId
-            """)
-    Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles" })
+    Optional<User> findOneWithCourseRolesByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles" })
+    Optional<User> findOneWithCourseRolesByActivationKey(String activationKey);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndInternal(String login, boolean internal);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndInternal(String email, boolean internal);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
-
-    // --- courseRoles variants (replacing the groups variants above in Phase 4) ---
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles" })
+    Optional<User> findOneWithCourseRolesByEmailIgnoreCase(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesByLogin(String login);
@@ -219,14 +191,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Set<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
 
-    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsById instead
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
-
-    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin instead
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
-
     @Query("""
             SELECT user
             FROM User user
@@ -234,9 +198,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE organization.id = :organizationId
             """)
     Set<User> findAllByOrganizationId(@Param("organizationId") Long organizationId);
-
-    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
-    Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT DISTINCT user
@@ -249,25 +210,28 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
-    // TODO (Phase 9): the following findAllWithGroups* and findAllByDeletedIsFalseAndGroupsContains methods use user_groups.
-    // Remove once user_groups table is dropped; replace with UserCourseRole-based queries.
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(String groupName);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "learnerProfile" })
-    Set<User> findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(String groupName);
-
+    /**
+     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their
+     * course roles, authorities and learner profile (including course learner profiles).
+     *
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @return set of matching users (course roles, authorities and learner profile initialized)
+     */
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-                LEFT JOIN FETCH user.authorities userAuthority
+                LEFT JOIN FETCH user.courseRoles
+                LEFT JOIN FETCH user.authorities
+                LEFT JOIN FETCH user.learnerProfile
             WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user
+                    AND ucr.course.id = :courseId AND ucr.role = :role)
             """)
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
+    Set<User> findAllWithCourseRolesAndAuthoritiesAndLearnerProfileByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
 
-    Set<User> findAllByDeletedIsFalseAndGroupsContains(String groupName);
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Set<User> findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
@@ -315,27 +279,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> searchByLoginOrNameInCourseWithRole(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users in a group by their login or full name.
-     *
-     * @param groupName   Name of group in which to search for users
-     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @return list of found users that match the search criteria
-     */
-    // TODO (Phase 8): delete once test callers (ProgrammingExerciseTestService, TeamIntegrationTest) are migrated
-    @Query("""
-            SELECT DISTINCT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
-
-    /**
      * Searches for users by their full name in a course (any role).
      *
      * @param courseId   ID of the course in which to search
@@ -351,9 +294,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
     List<User> searchByNameInCourse(@Param("courseId") long courseId, @Param("nameOfUser") String nameOfUser);
-
-    @EntityGraph(type = LOAD, attributePaths = "groups")
-    List<User> findUsersWithGroupsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT DISTINCT user
@@ -394,12 +334,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findUsersByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
         long total = countUsersByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
@@ -494,22 +434,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchChannelModeratorsWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchChannelModeratorsWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findModeratorsByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findDistinctUsersWithGroupsByIdIn(ids); // these users are moderators
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids); // these users are moderators
         long total = countModeratorsByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
-
-    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based lookups
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
 
     /**
      * Finds all non-deleted users enrolled in a course with the given role whose login is in the given set.
@@ -549,9 +482,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findAllByCourseIdAndRoleAndRegistrationNumberIn(@Param("courseId") long courseId, @Param("role") CourseRole role,
             @Param("registrationNumbers") Set<String> registrationNumbers);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
     /**
      * Fetches all non-deleted users enrolled in a course with any of the given roles.
@@ -667,9 +597,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         long total = countUserIdsByLoginOrNameInCourse(loginOrName, courseId);
         return new PageImpl<>(users, pageable, total);
     }
-
-    @EntityGraph(type = LOAD, attributePaths = "groups")
-    List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
 
     @Query("""
             SELECT DISTINCT user.id
@@ -985,43 +912,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneByEmailIgnoreCase(email));
     }
 
-    // TODO (Phase 9): the following getUserWithGroupsAndAuthorities* convenience methods wrap group-based EntityGraph fetches.
-    // Replace with getUserWithCourseRolesAndAuthorities* variants and remove once user_groups table is dropped.
-
-    /**
-     * Get user with user groups and authorities of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthorities() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
-    }
-
-    /**
-     * Get user with user groups and authorities of currently logged-in user
-     *
-     * @param courseId the id of the course for which to load the user and the course learner profile
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
-    }
-
-    /**
-     * Get user with user groups, authorities and organizations of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
-    }
-
     /**
      * Get the login of the currently logged-in user.
      * If no user is logged in, an exception is thrown.
@@ -1037,17 +927,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         throw new EntityNotFoundException("ERROR: No current user login found!");
     }
 
-    /**
-     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.name())
-     *
-     * @param username the username of the user who should be retrieved from the database
-     * @return the user that belongs to the given principal with eagerly loaded groups and authorities
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthorities(@NonNull String username) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
-    }
-
     @NonNull
     default User getUserWithCourseRolesAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
@@ -1059,52 +938,66 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(username));
     }
 
-    // TODO (Phase 9): the following findUserWithGroupsAndAuthoritiesBy* wrappers call group-based EntityGraph fetches.
-    // Remove once user_groups table is dropped.
+    /**
+     * Get user with course roles, authorities and organizations of currently logged-in user
+     *
+     * @return currently logged-in user
+     */
+    @NonNull
+    default User getUserWithCourseRolesAndAuthoritiesAndOrganizations() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
+    }
 
     /**
-     * Finds a single user with groups and authorities using the registration number
+     * Get user with course roles, authorities and learner profile of currently logged-in user
+     *
+     * @param courseId the id of the course for which to load the user and the course learner profile
+     * @return currently logged-in user
+     */
+    @NonNull
+    default User getUserWithCourseRolesAndAuthoritiesAndLearnerProfile(long courseId) {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
+    }
+
+    /**
+     * Finds a single user with course roles and authorities using the registration number
      *
      * @param registrationNumber user registration number as string
-     * @return the user with groups and authorities
+     * @return the user with course roles and authorities
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
+    default Optional<User> findUserWithCourseRolesAndAuthoritiesByRegistrationNumber(String registrationNumber) {
         if (!StringUtils.hasText(registrationNumber)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+        return findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(registrationNumber);
     }
 
     /**
-     * Finds a single user with groups and authorities using the login name
+     * Finds a single user with course roles and authorities using the login name
      *
      * @param login user login string
-     * @return the user with groups and authorities
+     * @return the user with course roles and authorities
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByLogin(String login) {
+    default Optional<User> findUserWithCourseRolesAndAuthoritiesByLogin(String login) {
         if (!StringUtils.hasText(login)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByLogin(login);
+        return findOneWithCourseRolesAndAuthoritiesByLogin(login);
     }
 
     /**
-     * Finds a single user with groups and authorities using the email
+     * Finds a single user with course roles and authorities using the email
      *
      * @param email user email string
-     * @return the user with groups and authorities
+     * @return the user with course roles and authorities
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByEmail(String email) {
+    default Optional<User> findUserWithCourseRolesAndAuthoritiesByEmail(String email) {
         if (!StringUtils.hasText(email)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByEmail(email);
-    }
-
-    // TODO (Phase 9): remove once user_groups table is dropped; use findByIdWithCourseRolesAndAuthoritiesElseThrow instead
-    @NonNull
-    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
+        return findOneWithCourseRolesAndAuthoritiesByEmail(email);
     }
 
     @NonNull
@@ -1113,15 +1006,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Find user with eagerly loaded groups, authorities and organizations by its id
+     * Find user with eagerly loaded course roles, authorities and organizations by its id
      *
      * @param userId the id of the user to find
-     * @return the user with groups, authorities and organizations if it exists, else throw exception
+     * @return the user with course roles, authorities and organizations if it exists, else throw exception
      */
-    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsById instead
     @NonNull
-    default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
+    default User findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(long userId) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(userId), userId);
     }
 
     /**
@@ -1140,9 +1032,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param course object
      * @return students for given course
      */
-    // TODO (Phase 9): replace with a UCR-based query that also fetches learnerProfile once user_groups table is dropped
     default Set<User> getStudentsWithLearnerProfile(Course course) {
-        return findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllWithCourseRolesAndAuthoritiesAndLearnerProfileByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
     }
 
     /**
@@ -1183,11 +1074,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default Set<User> getUsersInCourse(Course course) {
         return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR));
-    }
-
-    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
-    default Long countUserInGroup(String groupName) {
-        return countByDeletedIsFalseAndGroupsContains(groupName);
     }
 
     /**
@@ -1266,7 +1152,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param organization the organization to add to the user
      */
     default void addOrganizationToUser(Long userId, Organization organization) {
-        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        User user = findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (!user.getOrganizations().contains(organization)) {
             user.getOrganizations().add(organization);
             save(user);
@@ -1280,7 +1166,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param organization the organization to remove from the user
      */
     default void removeOrganizationFromUser(Long userId, Organization organization) {
-        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        User user = findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (user.getOrganizations().contains(organization)) {
             user.getOrganizations().remove(organization);
             save(user);
@@ -1608,16 +1494,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
-    // TODO (Phase 9): rewrite to use courseRoles fetch instead of groups once user_groups table is dropped
     @Query("""
             SELECT jhiUser
             FROM CalendarSubscriptionTokenStore store
                 JOIN store.user jhiUser
-                LEFT JOIN FETCH jhiUser.groups
+                LEFT JOIN FETCH jhiUser.courseRoles
                 LEFT JOIN FETCH jhiUser.authorities
             WHERE store.token = :token
             """)
-    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 
     /**
      * Removes the specified group from all users in a single database operation.

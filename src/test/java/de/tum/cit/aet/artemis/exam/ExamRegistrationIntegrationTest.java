@@ -175,7 +175,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
-        User student99 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
+        User student99 = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP

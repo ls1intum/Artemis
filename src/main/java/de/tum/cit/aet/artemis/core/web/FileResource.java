@@ -353,7 +353,7 @@ public class FileResource {
             return ResponseEntity.badRequest().build();
         }
 
-        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        User requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
         if (!usersOfTheSubmission.contains(requestingUser) && !authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
@@ -487,7 +487,7 @@ public class FileResource {
         LectureUnitApi unitApi = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
         LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Lecture lecture = api.findByIdElseThrow(lectureId);
 
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);

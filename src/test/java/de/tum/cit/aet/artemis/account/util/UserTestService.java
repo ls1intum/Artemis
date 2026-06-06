@@ -137,7 +137,7 @@ public class UserTestService {
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userTestRepository.save(student);
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        student = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         final var event = new ScienceEvent();
         event.setIdentity(student.getLogin());
@@ -279,7 +279,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -304,7 +304,7 @@ public class UserTestService {
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
-        final var updatedUserInDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserInDB = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
         assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 
@@ -484,9 +484,10 @@ public class UserTestService {
 
     // Test
     public void createUser_verifyNoGroupMembership() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(Long.MAX_VALUE));
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
@@ -499,7 +500,7 @@ public class UserTestService {
 
         request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
-        var createdUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
+        var createdUserOrEmpty = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(newUser.getLogin());
         assertThat(createdUserOrEmpty).isPresent();
 
         var createdUser = createdUserOrEmpty.get();

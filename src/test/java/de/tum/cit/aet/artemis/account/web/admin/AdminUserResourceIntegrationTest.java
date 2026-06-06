@@ -84,7 +84,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
 
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(unchangedUser.getAuthorities()).extracting(Authority::getName).doesNotContain(Role.ADMIN.getAuthority());
         }
     }
@@ -185,7 +185,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isOk());
 
             // Verify user was updated to super admin
-            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User updatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
         }
 
@@ -204,7 +204,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isOk());
 
             // Verify super admin authority was revoked
-            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User updatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.getName()).contains(Role.STUDENT.getAuthority());
         }
 
@@ -224,7 +224,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isOk());
 
             // Verify user was updated while maintaining super admin authority
-            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User updatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
             assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
         }
@@ -306,7 +306,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isForbidden());
 
             // Verify user was not activated
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(unchangedUser.getActivated()).isFalse();
         }
 
@@ -322,7 +322,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isForbidden());
 
             // Verify user was not deactivated
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(unchangedUser.getActivated()).isTrue();
         }
 
@@ -337,7 +337,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
-            User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User activatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(activatedUser.getActivated()).isTrue();
         }
 
@@ -352,7 +352,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
-            User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User deactivatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(deactivatedUser.getActivated()).isFalse();
         }
     }
@@ -372,7 +372,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
-            User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User activatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(activatedUser.getActivated()).isTrue();
         }
 
@@ -388,7 +388,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
-            User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+            User deactivatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(superUser.getId());
             assertThat(deactivatedUser.getActivated()).isFalse();
         }
 
@@ -403,7 +403,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
-            User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User activatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(activatedUser.getActivated()).isTrue();
         }
 
@@ -418,7 +418,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
-            User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+            User deactivatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(regularUser.getId());
             assertThat(deactivatedUser.getActivated()).isFalse();
         }
     }
@@ -442,7 +442,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isForbidden());
 
             // Verify user was not updated
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(unchangedUser.getFirstName()).isNotEqualTo("UpdatedFirstName");
         }
 
@@ -458,7 +458,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isForbidden());
 
             // Verify user was not activated
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(unchangedUser.getActivated()).isFalse();
         }
 
@@ -474,7 +474,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isForbidden());
 
             // Verify user was not deactivated
-            User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User unchangedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(unchangedUser.getActivated()).isTrue();
         }
 
@@ -550,7 +550,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isOk());
 
             // Verify user was updated
-            User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User updatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
         }
 
@@ -566,7 +566,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
-            User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User activatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(activatedUser.getActivated()).isTrue();
         }
 
@@ -582,7 +582,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
-            User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
+            User deactivatedUser = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(adminUser.getId());
             assertThat(deactivatedUser.getActivated()).isFalse();
         }
 
@@ -640,7 +640,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
         void updateUser_removeSuperAdminFromDefaultAdmin_badRequest() throws Exception {
             // Get the default admin user (created by UserService.applicationReady())
-            User defaultAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
+            User defaultAdmin = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
 
             // Verify the default admin has super admin authority
             assertThat(defaultAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
@@ -654,7 +654,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isBadRequest());
 
             // Verify the default admin still has super admin authority
-            User unchangedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
+            User unchangedAdmin = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(defaultAdmin.getId());
             assertThat(unchangedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
         }
 
@@ -662,7 +662,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
         void updateUser_updateDefaultAdminKeepingSuperAdmin_success() throws Exception {
             // Get the default admin user
-            User defaultAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
+            User defaultAdmin = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
 
             // Update the default admin while keeping super admin rights
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(defaultAdmin.getLogin());
@@ -674,7 +674,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(status().isOk());
 
             // Verify the update was applied and super admin authority is retained
-            User updatedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
+            User updatedAdmin = userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(defaultAdmin.getId());
             assertThat(updatedAdmin.getFirstName()).isEqualTo("UpdatedDefaultAdmin");
             assertThat(updatedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
         }

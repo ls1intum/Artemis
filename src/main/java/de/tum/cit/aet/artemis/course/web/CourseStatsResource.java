@@ -95,7 +95,7 @@ public class CourseStatsResource {
     public ResponseEntity<List<Course>> getCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
         userRepository.setUserCountsForCourses(courses);
         return ResponseEntity.ok(courses);

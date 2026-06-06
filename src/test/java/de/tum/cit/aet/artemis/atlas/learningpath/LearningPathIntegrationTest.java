@@ -535,7 +535,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        final var student = userTestRepository.findOneWithCourseRolesAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
@@ -561,7 +561,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     void testGetLearningPathNavigationPreferences(int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        final var student = userTestRepository.findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        final var student = userTestRepository.findOneWithCourseRolesAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
         CourseLearnerProfile learnerProfile = student.getLearnerProfile().getCourseLearnerProfiles().stream().filter(clp -> clp.getCourse().getId().equals(course.getId()))
                 .findFirst().orElseThrow();
         learnerProfile.setAimForGradeOrBonus(aimForGradeOrBonus);

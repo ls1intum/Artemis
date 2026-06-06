@@ -232,7 +232,7 @@ public class AdminCourseResource {
         }
         String courseIcon = courseRepository.getCourseIconById(courseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + courseTitle);
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to delete the course {}", user.getLogin(), courseTitle);
@@ -311,7 +311,7 @@ public class AdminCourseResource {
             throw new EntityNotFoundException("Course", courseId);
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_COURSE, "course=" + courseTitle);
         auditEventRepository.add(auditEvent);
         log.info("User {} has requested to reset the course {}", user.getLogin(), courseTitle);

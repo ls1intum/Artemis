@@ -75,7 +75,7 @@ public class ExerciseScoresChartResource {
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // we only consider exercises in which the student had a chance to earn a score (released and due date over)
         List<ExerciseScoresDTO> exerciseScoresDTOList = exerciseScoresChartService.getExerciseScores(filterExercises(course.getExercises()), user);

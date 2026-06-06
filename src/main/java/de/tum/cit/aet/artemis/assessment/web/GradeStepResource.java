@@ -113,7 +113,7 @@ public class GradeStepResource {
         log.debug("REST request to get all grade steps for exam: {}", examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = api.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -189,7 +189,7 @@ public class GradeStepResource {
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         Optional<GradingScale> optionalGradingScale = gradingScaleRepository.findByCourseId(courseId);
         if (optionalGradingScale.isEmpty()) {
@@ -227,7 +227,7 @@ public class GradeStepResource {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         Exam exam = api.findByIdElseThrow(examId);

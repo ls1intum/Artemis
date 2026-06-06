@@ -163,7 +163,7 @@ public class TutorialGroupResource {
     public ResponseEntity<List<TutorialGroupSummaryDTO>> getTutorialGroupsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
@@ -232,7 +232,7 @@ public class TutorialGroupResource {
         log.debug("REST request to create TutorialGroup: {} in course: {}", createTutorialGroupRequestDTO, courseId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         if (tutorialGroupRepository.existsByTitleAndCourse(createTutorialGroupRequestDTO.title(), course)) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
@@ -299,7 +299,7 @@ public class TutorialGroupResource {
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
 
         Course course = tutorialGroup.getCourse();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         User oldTutor = tutorialGroup.getTeachingAssistant();
         User newTutor = userRepository.findByIdElseThrow(updateTutorialGroupRequestDTO.tutorId());
 
@@ -396,7 +396,7 @@ public class TutorialGroupResource {
         var tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
@@ -422,14 +422,14 @@ public class TutorialGroupResource {
         var tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
         boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
             throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can deregister a student.");
         }
 
-        User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
+        User studentToDeregister = userRepository.getUserWithCourseRolesAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
         return ResponseEntity.noContent().build();
     }
@@ -452,7 +452,7 @@ public class TutorialGroupResource {
             throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         var isUserTutorInTutorialGroup = tutorialGroupRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
         var isUserAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
         if (!isUserTutorInTutorialGroup && !isUserAtLeastEditorInCourse) {
@@ -536,7 +536,7 @@ public class TutorialGroupResource {
     public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         String csvContent;
         try {

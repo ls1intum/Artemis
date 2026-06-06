@@ -161,7 +161,7 @@ public class ExamRegistrationService {
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         try {
-            User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+            User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
             for (var i = 0; i < examUserDTOs.size(); i++) {
@@ -240,7 +240,7 @@ public class ExamRegistrationService {
             return;
         }
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
@@ -301,7 +301,7 @@ public class ExamRegistrationService {
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed user {} from the exam {} with id {}. This also deleted a potentially existing student exam with all its participations and submissions.",
@@ -342,7 +342,7 @@ public class ExamRegistrationService {
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithCourseRolesAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",

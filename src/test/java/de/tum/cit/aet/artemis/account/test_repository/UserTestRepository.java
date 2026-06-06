@@ -46,17 +46,17 @@ public interface UserTestRepository extends UserRepository {
 
     /**
      * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
-     * with their associated groups.
+     * with their associated course roles.
      *
      * @param pageable the pagination information.
      * @return a paginated list of {@link User} entities that are not marked as deleted. If no entities are found, returns an empty page.
      */
-    default Page<User> findAllWithGroupsByDeletedIsFalse(Pageable pageable) {
+    default Page<User> findAllWithCourseRolesByDeletedIsFalse(Pageable pageable) {
         List<Long> ids = findUserIdsByDeletedIsFalse(pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
         long total = countUsersByDeletedIsFalse();
         return new PageImpl<>(users, pageable, total);
     }

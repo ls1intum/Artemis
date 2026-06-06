@@ -430,7 +430,7 @@ public class TutorialGroupService {
 
     private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupImportDataDTO> registrations) {
         var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupImportDataDTO::title).filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet());
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
                 .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());

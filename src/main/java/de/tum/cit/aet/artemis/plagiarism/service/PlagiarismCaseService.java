@@ -66,7 +66,7 @@ public class PlagiarismCaseService {
             plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.verdictMessage());
         }
         plagiarismCase.setVerdictDate(ZonedDateTime.now());
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         plagiarismCase.setVerdictBy(user);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         // Notify the student about the verdict

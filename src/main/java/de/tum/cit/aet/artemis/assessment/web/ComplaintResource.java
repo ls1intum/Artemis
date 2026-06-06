@@ -152,7 +152,7 @@ public class ComplaintResource {
             return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         Exercise exercise = participation.getExercise();
         boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
@@ -213,7 +213,7 @@ public class ComplaintResource {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
 
@@ -254,7 +254,7 @@ public class ComplaintResource {
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
@@ -290,7 +290,7 @@ public class ComplaintResource {
     public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
         filterStudentInformationFromComplaints(complaints, false);

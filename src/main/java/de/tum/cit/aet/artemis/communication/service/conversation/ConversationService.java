@@ -417,7 +417,7 @@ public class ConversationService {
             if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
                 return userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(pageable, searchTerm, course.getId());
             }
-            return userRepository.searchAllWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+            return userRepository.searchAllWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
         }
         else {
             var roles = new HashSet<CourseRole>();
@@ -433,7 +433,7 @@ public class ConversationService {
                     if (!(conversation instanceof Channel)) {
                         throw new IllegalArgumentException("The filter CHANNEL_MODERATOR is only allowed for channels!");
                     }
-                    return userRepository.searchChannelModeratorsWithGroupsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+                    return userRepository.searchChannelModeratorsWithCourseRolesByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }

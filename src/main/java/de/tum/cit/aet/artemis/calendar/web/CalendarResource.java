@@ -130,7 +130,7 @@ public class CalendarResource {
     @GetMapping(value = "courses/{courseId}/calendar-events-ics", produces = "text/calendar")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        User user = userRepository.findOneWithCourseRolesAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -211,7 +211,7 @@ public class CalendarResource {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);

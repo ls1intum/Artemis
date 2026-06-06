@@ -111,7 +111,7 @@ public class CourseUpdateResource {
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates

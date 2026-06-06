@@ -41,7 +41,7 @@ public class CourseOverviewService {
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
         if (isAdmin && !onlyActive) {
             // TODO: we should avoid using findAll() here, as it might return a huge amount of data

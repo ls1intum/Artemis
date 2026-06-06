@@ -86,7 +86,7 @@ public class QuizExerciseDeletionResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
                 .map(question -> ((DragAndDropQuestion) question)).toList();

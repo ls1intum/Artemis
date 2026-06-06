@@ -107,7 +107,7 @@ public class ParticipationRetrievalResource {
     public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return new ResponseEntity<>(participation, HttpStatus.OK);
     }
@@ -142,7 +142,7 @@ public class ParticipationRetrievalResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);

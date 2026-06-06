@@ -46,7 +46,7 @@ public class ConversationAuthorizationService {
         var persistenceUtil = Persistence.getPersistenceUtil();
         if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
                 || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+            userToCheck = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
         }
         return userToCheck;
     }

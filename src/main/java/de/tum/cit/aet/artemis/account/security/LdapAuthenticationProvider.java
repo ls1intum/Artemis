@@ -95,7 +95,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
             // this is an edge case which could happen when the user email changed or the user has multiple email addresses and used a secondary email to login
             // therefore, double check if the Artemis User with the LDAP login (based on the given email) exists. If yes, we will use this user and update the LDAP values below
             // without this code a second user would be created in Artemis which is not what we want (additionally this would fail because of unique constraints)
-            optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUserDto.getLogin());
+            optionalUser = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(ldapUserDto.getLogin());
         }
 
         // Use the given password to authenticate the user in the LDAP
@@ -187,9 +187,9 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
     private Optional<User> findArtemisUser(boolean isEmail, String loginOrEmail) {
         return isEmail ?
         // It's an email, try to find the Artemis user in the database based on the email
-                userRepository.findOneWithGroupsAndAuthoritiesByEmail(loginOrEmail) :
+                userRepository.findOneWithCourseRolesAndAuthoritiesByEmail(loginOrEmail) :
                 // It's a login, try to find the Artemis user in the database based on the login
-                userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOrEmail);
+                userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(loginOrEmail);
     }
 
     /**

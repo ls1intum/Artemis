@@ -209,7 +209,7 @@ public class TextExerciseCreationUpdateResource {
         final TextExercise originalExercise = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(updateTextExerciseDTO.id());
 
         // Check that the user is authorized to update the exercise
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
 
@@ -309,7 +309,7 @@ public class TextExerciseCreationUpdateResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);

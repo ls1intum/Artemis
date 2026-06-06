@@ -142,7 +142,7 @@ public class ExerciseResource {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
 
         // Exam exercise
@@ -206,7 +206,7 @@ public class ExerciseResource {
 
         log.debug("REST request to get exercise with example solution: {}", exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -239,7 +239,7 @@ public class ExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (exercise instanceof ProgrammingExercise) {
@@ -344,7 +344,7 @@ public class ExerciseResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<ExerciseDetailsDTO> getExerciseDetails(@PathVariable Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
 
         final boolean isAtLeastTAForExercise = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);

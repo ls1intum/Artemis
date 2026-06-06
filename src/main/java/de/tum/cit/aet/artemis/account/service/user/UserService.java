@@ -180,7 +180,7 @@ public class UserService {
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
         log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
 
-        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        Optional<User> existingInternalAdmin = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
             existingInternalAdmin.get().setActivated(true);
@@ -220,7 +220,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+        return userRepository.findOneWithCourseRolesByActivationKey(key).map(user -> {
             activateUser(user);
             return user;
         });
@@ -316,14 +316,14 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneWithCourseRolesByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
         // Find user that has the same email
-        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        optionalExistingUser = userRepository.findOneWithCourseRolesByEmailIgnoreCase(userDTO.getEmail());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
 
@@ -431,7 +431,7 @@ public class UserService {
                 // handle edge case, the user already exists in Artemis, but for some reason the values differ
                 if (StringUtils.hasText(ldapUser.getLogin())) {
                     // load the user with groups and authorities because they might be needed later
-                    var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUser.getLogin());
+                    var existingUser = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
@@ -443,7 +443,7 @@ public class UserService {
                 User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
                 // load the user with groups and authorities because they might be needed later
-                return userRepository.findOneWithGroupsAndAuthoritiesById(user.getId());
+                return userRepository.findOneWithCourseRolesAndAuthoritiesById(user.getId());
             }
             else {
                 log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
@@ -458,7 +458,7 @@ public class UserService {
      * @param login user login string
      */
     public void softDeleteUser(String login) {
-        userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+        userRepository.findOneWithCourseRolesByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
@@ -616,7 +616,7 @@ public class UserService {
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null) {
             if (!Hibernate.isInitialized(user.getGroups())) {
-                user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+                user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
             }
             if (!user.getGroups().contains(groupName)) {
                 user.getGroups().add(groupName);
@@ -644,7 +644,7 @@ public class UserService {
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null) {
             if (!Hibernate.isInitialized(user.getGroups())) {
-                user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+                user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
             }
             user.getGroups().remove(groupName);
         }
@@ -720,13 +720,13 @@ public class UserService {
     private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         Optional<User> optionalUser = Optional.empty();
         if (StringUtils.hasText(login)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByLogin(login);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByEmail(email);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            optionalUser = userRepository.findUserWithCourseRolesAndAuthoritiesByRegistrationNumber(registrationNumber);
         }
         return optionalUser;
     }

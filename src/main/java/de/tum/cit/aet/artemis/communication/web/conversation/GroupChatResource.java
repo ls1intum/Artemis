@@ -86,7 +86,7 @@ public class GroupChatResource extends ConversationManagementResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody GroupChatCreationDTO groupChatCreationDTO) throws URISyntaxException {
         var otherChatParticipantsLogins = groupChatCreationDTO.memberLogins();
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to create group chat in course {} between: {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
         checkMessagingEnabledElseThrow(course);
@@ -129,7 +129,7 @@ public class GroupChatResource extends ConversationManagementResource {
         checkMessagingEnabledElseThrow(courseId);
 
         var originalGroupChat = groupChatRepository.findByIdElseThrow(groupChatId);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         if (!originalGroupChat.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The group chat does not belong to the course", GROUP_CHAT_ENTITY_NAME, "groupChat.course.mismatch");
         }
@@ -157,7 +157,7 @@ public class GroupChatResource extends ConversationManagementResource {
         }
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
@@ -190,7 +190,7 @@ public class GroupChatResource extends ConversationManagementResource {
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
 
         groupChatAuthorizationService.isAllowedToRemoveUsersFromGroupChat(groupChatFromDatabase, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);

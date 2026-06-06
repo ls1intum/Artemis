@@ -108,7 +108,7 @@ public class TextAssessmentEventResource {
     @GetMapping("event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         Integer numberOfTutors = textAssessmentEventRepository.getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(courseId, exerciseId);
@@ -128,7 +128,7 @@ public class TextAssessmentEventResource {
      */
     private boolean validateEvent(TextAssessmentEvent event) {
         // avoid access from tutor if they are not part of the course
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         // The ID check is defense-in-depth: the DTO doesn't have an ID field, so client-specified IDs
         // are silently ignored during JSON deserialization. This check guards against future changes.

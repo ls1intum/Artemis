@@ -136,7 +136,7 @@ public class QuizExerciseEvaluationResource {
             throw new BadRequestAlertException("The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.", ENTITY_NAME, "quizExerciseNotEnded");
         }
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
 

@@ -161,7 +161,7 @@ public class AttachmentResource {
     @DeleteMapping("attachments/{attachmentId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();

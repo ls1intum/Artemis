@@ -78,7 +78,7 @@ public class ReactionService {
         }
 
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithCourseRolesAndAuthorities();
         final long targetId = reactionDTO.relatedPostId();
 
         Reaction reaction = new Reaction();
@@ -106,7 +106,7 @@ public class ReactionService {
      * @param courseId   id of the course the according posting belongs to
      */
     public void deleteReactionByIdIfAllowedElseThrow(Long reactionId, Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithCourseRolesAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 

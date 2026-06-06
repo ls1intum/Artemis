@@ -209,7 +209,7 @@ public class ProgrammingExerciseRetrievalResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         var programmingExercise = programmingExerciseService.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
@@ -283,7 +283,7 @@ public class ProgrammingExerciseRetrievalResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
@@ -302,7 +302,7 @@ public class ProgrammingExerciseRetrievalResource {
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter,
             @RequestParam ProgrammingLanguage programmingLanguage) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user));
     }
 

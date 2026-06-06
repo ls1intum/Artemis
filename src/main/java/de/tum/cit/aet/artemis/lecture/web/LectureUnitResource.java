@@ -162,7 +162,7 @@ public class LectureUnitResource {
             throw new BadRequestAlertException("Requested lecture unit is not yet visible for students", ENTITY_NAME, "lectureUnitNotReleased");
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user));

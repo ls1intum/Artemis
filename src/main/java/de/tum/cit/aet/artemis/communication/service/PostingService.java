@@ -315,7 +315,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");

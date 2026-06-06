@@ -39,7 +39,7 @@ class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {
     void ensureIrisBotUserExists_createsBot() {
         irisBotUserService.ensureIrisBotUserExists();
 
-        var botUser = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(IRIS_BOT_LOGIN);
+        var botUser = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(IRIS_BOT_LOGIN);
         assertThat(botUser).isPresent();
         assertThat(botUser.get().getFirstName()).isEqualTo("Iris");
         assertThat(botUser.get().getLastName()).isEqualTo("Bot");
@@ -52,10 +52,10 @@ class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ensureIrisBotUserExists_idempotent() {
         irisBotUserService.ensureIrisBotUserExists();
-        User first = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
+        User first = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
 
         irisBotUserService.ensureIrisBotUserExists();
-        User second = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
+        User second = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(IRIS_BOT_LOGIN).orElseThrow();
 
         assertThat(first.getId()).isEqualTo(second.getId());
     }

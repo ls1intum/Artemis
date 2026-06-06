@@ -70,7 +70,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithCourseRolesAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for removing the lock on the complaint");
         }
@@ -117,7 +117,7 @@ public class ComplaintResponseService {
         }
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithCourseRolesAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for refreshing the lock on the complaint");
         }
@@ -166,7 +166,7 @@ public class ComplaintResponseService {
         if (complaint.getComplaintResponse() != null) {
             throw new IllegalArgumentException("Complaint response already exists for given complaint");
         }
-        User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        User user = this.userRepository.getUserWithCourseRolesAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for creating the empty complaint response");
         }
@@ -219,7 +219,7 @@ public class ComplaintResponseService {
         ComplaintResponse complaintResponseFromDatabase = complaintResponseRepository.findByIdElseThrow(complaintResponseId);
         // TODO: make this retrieval redundant by proper fetching
         Complaint originalComplaint = complaintRepository.findWithEagerAssessorByIdElseThrow(complaintResponseFromDatabase.getComplaint().getId());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         validateUserPermissionAndLockStatus(originalComplaint, complaintResponseFromDatabase, user);
         validateComplaintResponseEmpty(complaintResponseFromDatabase);
         validateOriginalComplaintNotAnswered(originalComplaint);
