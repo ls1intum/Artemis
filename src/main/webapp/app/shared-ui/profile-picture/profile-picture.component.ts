@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { getInitialsFromString } from 'app/foundation/util/text.utils';
 import { getBackgroundColorHue } from 'app/foundation/util/color.utils';
@@ -12,7 +12,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     styleUrls: ['./profile-picture.component.scss'],
     imports: [RouterLink, CommonModule, FontAwesomeModule],
 })
-export class ProfilePictureComponent implements OnInit, OnChanges {
+export class ProfilePictureComponent {
     imageSizeInRem = input<string>('2.15');
     fontSizeInRem = input<string>('0.9');
     authorName = input<string | undefined>(undefined);
@@ -27,25 +27,10 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
     isBoxShadow = input<boolean>(false);
     imageBackgroundColor = input<string | undefined>(undefined);
 
-    profilePictureBackgroundColor: string;
-    userProfilePictureInitials: string;
-    imageSize: string;
-    fontSize: string;
+    readonly userProfilePictureInitials = computed(() => (this.authorName() === undefined ? 'NA' : getInitialsFromString(this.authorName()!)));
+    readonly profilePictureBackgroundColor = computed(() => getBackgroundColorHue(this.authorId()?.toString() ?? this.authorName()));
+    readonly imageSize = computed(() => this.imageSizeInRem().replaceAll('rem', '') + 'rem');
+    readonly fontSize = computed(() => this.fontSizeInRem().replaceAll('rem', '') + 'rem');
 
     protected readonly faCog = faCog;
-
-    ngOnInit(): void {
-        this.updateImageData();
-    }
-
-    ngOnChanges() {
-        this.updateImageData();
-    }
-
-    private updateImageData() {
-        this.userProfilePictureInitials = this.authorName() === undefined ? 'NA' : getInitialsFromString(this.authorName()!);
-        this.profilePictureBackgroundColor = getBackgroundColorHue(this.authorId()?.toString() ?? this.authorName());
-        this.imageSize = this.imageSizeInRem().replaceAll('rem', '') + 'rem';
-        this.fontSize = this.fontSizeInRem().replaceAll('rem', '') + 'rem';
-    }
 }
