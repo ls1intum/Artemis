@@ -7,26 +7,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
-// Coverage file paths
-const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
+// Coverage file path (the entire client runs on Vitest)
 const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 
 const VITEST_MODULES = getVitestModules(PROJECT_ROOT);
 
-// Load coverage files
-let jestSummary = {};
+// Load coverage file
 let vitestSummary = {};
-
-// Jest has been removed; the entire client runs on Vitest. The Jest coverage summary no longer
-// exists, so its absence is expected and the (now empty) jestSummary is simply unused.
-if (fs.existsSync(jestSummaryPath)) {
-    try {
-        jestSummary = JSON.parse(fs.readFileSync(jestSummaryPath, 'utf-8'));
-    } catch (error) {
-        console.error('❌ Failed to parse Jest coverage-summary.json:', error);
-        process.exit(1);
-    }
-}
 
 if (fs.existsSync(vitestSummaryPath)) {
     try {
@@ -247,10 +234,7 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         lines: { total: 0, covered: 0 },
     };
 
-    // Use Vitest coverage for Vitest modules, Jest for everything else
-    const summary = VITEST_MODULES.has(module) ? vitestSummary : jestSummary;
-
-    for (const [filePath, metricsData] of Object.entries(summary)) {
+    for (const [filePath, metricsData] of Object.entries(vitestSummary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
         if (!metricsData || typeof metricsData !== 'object') {
@@ -272,8 +256,7 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    const testFramework = VITEST_MODULES.has(module) ? '[vitest]' : '[jest]';
-    const moduleFailed = evaluateAndPrintMetrics(`${module} ${testFramework}`, aggregatedMetrics, thresholds);
+    const moduleFailed = evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
     if (moduleFailed) {
         anyModuleFailed = true;
     }
