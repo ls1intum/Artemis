@@ -576,7 +576,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.testRun = FALSE
-                AND se.exam.testExam = FALSE
+                AND se.exam.examType = de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
                 AND se.exam.course.id IN :courseIds
             """)
     Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);

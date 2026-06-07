@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { ExamType } from 'app/exam/shared/entities/exam.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type ExamModeBadgeSize = 'default' | 'large';
 
