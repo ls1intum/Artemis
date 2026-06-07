@@ -28,7 +28,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 
@@ -87,26 +86,12 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        executeSend(recipient.getEmail(), recipient.getLogin(), subject, content, isMultipart, isHtml);
-    }
-
-    /**
-     * Sends an e-mail to the specified recipient asynchronously
-     *
-     * @param recipient   who should be contacted.
-     * @param subject     The mail subject
-     * @param content     The content of the mail. Can be enriched with HTML tags
-     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
-     * @param isHtml      Whether the mail should support HTML tags
-     */
-    @Async
     public void sendEmail(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         executeSend(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml);
     }
 
     /**
-     * Sends an e-mail to the specified sender synchronously
+     * Sends an e-mail to the specified recipient synchronously
      *
      * @param recipient   who should be contacted.
      * @param subject     The mail subject
@@ -114,24 +99,25 @@ public class MailSendingService {
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
      */
-    public void sendEmailSync(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        executeSend(recipient.getEmail(), recipient.getLogin(), subject, content, isMultipart, isHtml);
+    public void sendEmailSync(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        executeSend(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml);
     }
 
     /**
-     * Builds and sends an e-mail to the specified sender synchronously
+     * Builds and sends an e-mail to the specified recipient synchronously
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    public void buildAndSendSync(@NonNull User recipient, @NonNull String subjectKey, @NonNull String contentTemplate, @NonNull Map<String, Object> additionalContextVariables) {
+    public void buildAndSendSync(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull String contentTemplate,
+            @NonNull Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, List.of(), contentTemplate, additionalContextVariables);
     }
 
     /**
-     * Builds and sends an e-mail to the specified sender asynchronously
+     * Builds and sends an e-mail to the specified recipient asynchronously
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
@@ -139,12 +125,13 @@ public class MailSendingService {
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
     @Async
-    public void buildAndSendAsync(@NonNull User recipient, @NonNull String subjectKey, @NonNull String contentTemplate, @NonNull Map<String, Object> additionalContextVariables) {
+    public void buildAndSendAsync(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull String contentTemplate,
+            @NonNull Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, List.of(), contentTemplate, additionalContextVariables);
     }
 
     /**
-     * Builds and sends an e-mail to the specified sender asynchronously with subject arguments
+     * Builds and sends an e-mail to the specified recipient asynchronously with subject arguments
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
@@ -153,13 +140,13 @@ public class MailSendingService {
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
     @Async
-    public void buildAndSendAsync(@NonNull User recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+    public void buildAndSendAsync(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
             @NonNull Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, subjectArgs, contentTemplate, additionalContextVariables);
     }
 
     /**
-     * Builds and sends an e-mail to the specified sender
+     * Builds and sends an e-mail to the specified recipient
      *
      * @param recipient                  who should be contacted.
      * @param subjectKey                 The locale key of the subject
@@ -167,9 +154,9 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    private void buildAndSend(@NonNull User recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+    private void buildAndSend(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
             @NonNull Map<String, Object> additionalContextVariables) {
-        String localeKey = recipient.getLangKey();
+        String localeKey = recipient.langKey();
         if (localeKey == null) {
             localeKey = "en";
         }
@@ -192,7 +179,7 @@ public class MailSendingService {
             return;
         }
 
-        executeSend(recipient.getEmail(), recipient.getLogin(), subject, content, false, true);
+        executeSend(recipient.email(), recipient.login(), subject, content, false, true);
     }
 
     /**

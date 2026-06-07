@@ -175,7 +175,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void newLoginEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         var contextVariables = createLoginEmailContext("Password", "17.02.2026", "10:30:00 (Europe/Berlin)", "Web Browser", "http://localhost:9000/account/password");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Password");
@@ -190,7 +190,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
         var contextVariables = createLoginEmailContext("Passwort", "17.02.2026", "10:30:00 (Europe/Berlin)", "Webbrowser", "http://localhost:9000/account/password");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Passwort");
@@ -202,7 +202,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void newPasskeyEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/passkeys");
@@ -213,7 +213,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void newPasskeyEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/passkeys");
@@ -224,7 +224,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void vcsAccessTokenExpiredEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                new HashMap<>());
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/vcs-token");
@@ -235,7 +236,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void vcsAccessTokenExpiredEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail",
+                new HashMap<>());
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/vcs-token");
@@ -254,7 +256,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         contextVariables.put("sshKey", sshKey);
         contextVariables.put("expiryDate", "17.02.2026 - 10:30:00");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning",
+                "mail/notification/sshKeyHasExpiredEmail", contextVariables);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("My Laptop Key");
@@ -275,7 +278,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         contextVariables.put("sshKey", sshKey);
         contextVariables.put("expiryDate", "17.02.2026 - 10:30:00");
 
-        testMailSendingService.buildAndSendSync(recipient, "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning", "mail/notification/sshKeyHasExpiredEmail", contextVariables);
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.sshKeyExpiry.sshKeysHasExpiredWarning",
+                "mail/notification/sshKeyHasExpiredEmail", contextVariables);
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Mein Laptop Key");
