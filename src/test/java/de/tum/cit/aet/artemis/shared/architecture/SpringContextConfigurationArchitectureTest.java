@@ -26,7 +26,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -41,7 +43,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTe
  * When {@code @MockitoSpyBean}, {@code @MockitoBean}, {@code @TestPropertySource}, or {@code @ActiveProfiles}
  * annotations differ between test classes, Spring creates separate contexts, causing additional server starts.
  * <p>
- * We enforce a maximum of 8 server starts during test execution via the GitHub Action in
+ * We enforce a maximum of 9 server starts during test execution via the GitHub Action in
  * {@code supporting_scripts/extract_number_of_server_starts.sh}.
  *
  * @see <a href="https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html">Spring Test Context Caching</a>
@@ -56,7 +58,7 @@ class SpringContextConfigurationArchitectureTest extends AbstractArchitectureTes
             // Base class for all integration tests
             AbstractArtemisIntegrationTest.class,
             // Independent tests without CI/CD integration
-            AbstractSpringIntegrationIndependentTest.class,
+            AbstractSpringIntegrationIndependentTestBase.class, AbstractSpringIntegrationIndependentTest.class, AbstractSpringIntegrationIndependentBatchTest.class,
             // Jenkins + LocalVC integration tests
             AbstractSpringIntegrationJenkinsLocalVCTest.class, AbstractSpringIntegrationJenkinsLocalVCTestBase.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class,
