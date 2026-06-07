@@ -562,8 +562,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 // submission date only, no answers, no results) so the dashboard can show "Submitted, waiting for due date".
                 assertThat(participation.getSubmissions()).hasSize(1);
                 var submission = participation.getSubmissions().iterator().next();
-                assertThat(submission.isSubmitted()).isTrue();
                 assertThat(submission).isInstanceOf(QuizSubmission.class);
+                assertThat(submission.isSubmitted()).isTrue();
                 assertThat(submission.getResults()).isEmpty();
                 assertThat(results).isEmpty();
                 var quizSubmission = (QuizSubmission) submission;
