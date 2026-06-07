@@ -4,8 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -50,12 +53,14 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -66,6 +71,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -168,6 +174,14 @@ public class ProgrammingExerciseImportService {
         }
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
+            final boolean buildAndTestDateChanged = !Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newProgrammingExercise, computedBuildAndTestDate);
+            if (buildAndTestDateChanged || feedbackRequestsChanged) {
+                programmingExerciseRepository.save(newProgrammingExercise);
+            }
+        }
         programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {
@@ -200,6 +214,16 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
         return newProgrammingExercise;
+    }
+
+    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
+            return false;
+        }
+
+        programmingExercise.setAllowFeedbackRequests(false);
+        return true;
     }
 
 }

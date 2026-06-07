@@ -59,17 +59,18 @@ public class BuildPhasesTemplateResource {
      * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis Whether the static analysis template should be used
      * @param sequentialRuns Whether the sequential runs template should be used
+     * @param examMode       Whether the template is requested for exam mode
      * @return The requested build plan phases, or 404 if the file doesn't exist
      */
     @GetMapping({ "templates/{language}/{projectType}", "templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
-            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns) {
-        log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}", language, projectType,
-                staticAnalysis, sequentialRuns);
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns, @RequestParam(value = "examMode") boolean examMode) {
+        log.debug("REST request to get phases template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, exam mode {}", language,
+                projectType, staticAnalysis, sequentialRuns, examMode);
 
-        return getBuildPhasesTemplateFileContentWithResponse(language, projectType, staticAnalysis, sequentialRuns);
+        return getBuildPhasesTemplateFileContentWithResponse(language, projectType, staticAnalysis, sequentialRuns, examMode);
     }
 
     /**
@@ -82,14 +83,18 @@ public class BuildPhasesTemplateResource {
      * @param optionalProjectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @param staticAnalysis      Whether the static analysis template should be used
      * @param sequentialRuns      Whether the sequential runs template should be used
+     * @param examMode            Whether the exercise is in exam mode
      * @return The requested build plan phases, or 404 if the phases don't exist
      */
     private ResponseEntity<BuildPlanPhasesDTO> getBuildPhasesTemplateFileContentWithResponse(ProgrammingLanguage language, Optional<ProjectType> optionalProjectType,
-            boolean staticAnalysis, boolean sequentialRuns) {
+            boolean staticAnalysis, boolean sequentialRuns, boolean examMode) {
         try {
             List<BuildPhaseDTO> phases = buildPhasesTemplateService.getBuildPlanPhasesFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             if (phases == null) {
                 return ResponseEntity.notFound().build();
+            }
+            if (examMode) {
+                phases = buildPhasesTemplateService.applyExamDefaults(phases);
             }
             final String image = buildPhasesTemplateService.getDefaultDockerImageFor(language, optionalProjectType);
 
