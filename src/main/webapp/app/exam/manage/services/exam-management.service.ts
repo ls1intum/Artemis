@@ -684,6 +684,6 @@ interface ExamImportDTO {
 }
 
 export interface ExamRegistrationResultDTO {
-    notFoundStudents: ExamUserDTO[];
-    rejectedStaffStudents: ExamUserDTO[];
+    notFoundStudents?: ExamUserDTO[];
+    rejectedStaffStudents?: ExamUserDTO[];
 }

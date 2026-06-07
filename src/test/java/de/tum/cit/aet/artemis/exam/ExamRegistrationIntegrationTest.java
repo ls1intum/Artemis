@@ -222,8 +222,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", studentsToRegister,
                 ExamRegistrationResultDTO.class, HttpStatus.OK);
         assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder(registrationNumber4WithTypo, null);
-        assertThat(result.rejectedStaffStudents()).isEmpty();
-
+        assertThat(result.rejectedStaffStudents()).isNullOrEmpty();
         // TODO check audit events stored properly
 
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
@@ -279,7 +278,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 List.of(dto1, dto2, dto3, dto4), ExamRegistrationResultDTO.class, HttpStatus.OK);
         assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactly(dto4.registrationNumber());
-        assertThat(result.rejectedStaffStudents()).isEmpty();
+        assertThat(result.rejectedStaffStudents()).isNullOrEmpty();
     }
 
     @Test
@@ -449,7 +448,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 List.of(studentDto, editorDto, tutorDto), ExamRegistrationResultDTO.class, HttpStatus.OK);
 
         assertThat(result.rejectedStaffStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder("2000002", "2000003");
-        assertThat(result.notFoundStudents()).isEmpty();
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
