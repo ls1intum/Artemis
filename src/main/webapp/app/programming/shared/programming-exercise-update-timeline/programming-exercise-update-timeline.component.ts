@@ -1,7 +1,6 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Dayjs } from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -14,13 +13,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseFeedbackSuggestionOptionsComponent, ExerciseTimelineComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
