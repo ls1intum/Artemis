@@ -78,7 +78,7 @@ public class MailSendingService {
     }
 
     /**
-     * Sends an e-mail to the specified sender asynchronously
+     * Sends an e-mail to the specified recipient asynchronously
      *
      * @param recipient   who should be contacted.
      * @param subject     The mail subject
@@ -92,7 +92,7 @@ public class MailSendingService {
     }
 
     /**
-     * Sends an e-mail to the specified sender asynchronously
+     * Sends an e-mail to the specified recipient asynchronously
      *
      * @param recipient   who should be contacted.
      * @param subject     The mail subject
