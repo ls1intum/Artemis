@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockProgrammingExerciseInstructionAnalysisService } from 'test/helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
@@ -10,6 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionAnalysisComponent>;
     let debugElement: DebugElement;
@@ -25,8 +28,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     describe('Component tests', () => {
         let analysisService: ProgrammingExerciseInstructionAnalysisService;
 
-        let analyzeProblemStatementStub: jest.SpyInstance;
-        let emitAnalysisSpy: jest.SpyInstance;
+        let analyzeProblemStatementStub: ReturnType<typeof vi.spyOn>;
+        let emitAnalysisSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -37,25 +40,25 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                     },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(ProgrammingExerciseInstructionAnalysisComponent);
-                    comp = fixture.componentInstance;
-                    debugElement = fixture.debugElement;
+            });
+            fixture = TestBed.createComponent(ProgrammingExerciseInstructionAnalysisComponent);
+            comp = fixture.componentInstance;
+            debugElement = fixture.debugElement;
 
-                    analysisService = TestBed.inject(ProgrammingExerciseInstructionAnalysisService);
+            analysisService = TestBed.inject(ProgrammingExerciseInstructionAnalysisService);
 
-                    analyzeProblemStatementStub = jest.spyOn(analysisService, 'analyzeProblemStatement');
-                    emitAnalysisSpy = jest.spyOn(comp.problemStatementAnalysis, 'emit');
-                });
+            analyzeProblemStatementStub = vi.spyOn(analysisService, 'analyzeProblemStatement');
+            emitAnalysisSpy = vi.spyOn(comp.problemStatementAnalysis, 'emit');
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.useRealTimers();
+            vi.restoreAllMocks();
         });
 
-        it('should display the received analysis from the service', fakeAsync(() => {
+        it('should display the received analysis from the service', () => {
+            vi.useFakeTimers();
+
             const completeAnalysis = {
                 '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },
                 '2': {
@@ -75,12 +78,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
             // dummy data.
             const testCases = ['testabc'];
-            comp.problemStatement = problemStatement;
-            comp.taskRegex = taskRegex;
-            comp.exerciseTestCases = testCases;
+            fixture.componentRef.setInput('problemStatement', problemStatement);
+            fixture.componentRef.setInput('taskRegex', taskRegex);
+            fixture.componentRef.setInput('exerciseTestCases', testCases);
 
-            comp.ngOnInit();
-            tick(500);
+            // The first detectChanges runs the component lifecycle (ngOnInit) which sets up the
+            // debounced analysis subscription and triggers the initial analysis.
+            fixture.detectChanges();
+            vi.advanceTimersByTime(500);
 
             // check first analysis
             expect(comp.missingTestCases).toEqual(missingTestCases);
@@ -90,14 +95,9 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Use a different problem statement to trigger analysis again
             // (distinctUntilChanged skips identical problem statements)
             const updatedProblemStatement = problemStatement + ' updated';
-            comp.problemStatement = updatedProblemStatement;
-            triggerChanges(comp, {
-                property: 'problemStatement',
-                currentValue: updatedProblemStatement,
-                previousValue: problemStatement,
-                firstChange: false,
-            });
-            tick(500); // Update is debounced, otherwise we would send updates on every change.
+            fixture.componentRef.setInput('problemStatement', updatedProblemStatement);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(500); // Update is debounced, otherwise we would send updates on every change.
             fixture.detectChanges();
 
             // Check internal state of the component.
@@ -106,7 +106,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
 
             // Check that an event with the updated analysis is emitted.
-            // We expect two calls, once in ngOnInit and once in ngOnChanges (with different problem statements)
+            // We expect two calls, once in ngOnInit and once on the input change (with different problem statements)
             expect(emitAnalysisSpy).toHaveBeenCalledTimes(2);
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
@@ -117,8 +117,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBeNull();
             expect(testCaseIssues).not.toBeNull();
-            tick(500);
-        }));
+            vi.advanceTimersByTime(500);
+        });
 
         describe('Analysis service integration test', () => {
             const missingTestCases = ['test6', 'test7'];
@@ -126,9 +126,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             const repeatedTestCases = ['test3', 'test4'];
 
             it('should not render if no test cases were provided', () => {
-                comp.problemStatement = problemStatement;
-                comp.taskRegex = taskRegex;
-                triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement });
+                fixture.componentRef.setInput('problemStatement', problemStatement);
+                fixture.componentRef.setInput('taskRegex', taskRegex);
                 fixture.detectChanges();
 
                 expect(debugElement.nativeElement.innerHtml).toBeUndefined();
@@ -137,10 +136,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 expect(comp.repeatedTestCases).toEqual([]);
             });
 
-            it('should render warnings on missing, invalid and repeated test cases', fakeAsync(() => {
-                comp.problemStatement = problemStatement;
-                comp.taskRegex = taskRegex;
-                comp.exerciseTestCases = exerciseTestCases;
+            it('should render warnings on missing, invalid and repeated test cases', () => {
+                vi.useFakeTimers();
 
                 const completeAnalysis = {
                     '0': {
@@ -155,23 +152,19 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
                 analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, repeatedTestCases, missingTestCases });
 
-                comp.ngOnInit();
-
-                triggerChanges(
-                    comp,
-                    { property: 'problemStatement', currentValue: problemStatement, firstChange: false },
-                    { property: 'exerciseTestCases', currentValue: exerciseTestCases },
-                );
+                fixture.componentRef.setInput('problemStatement', problemStatement);
+                fixture.componentRef.setInput('taskRegex', taskRegex);
+                fixture.componentRef.setInput('exerciseTestCases', exerciseTestCases);
 
                 fixture.detectChanges();
-                tick(500);
+                vi.advanceTimersByTime(500);
 
                 expect(debugElement.nativeElement.innerHtml).toBeUndefined();
                 expect(debugElement.query(By.css('fa-icon'))).not.toBeNull();
                 expect(comp.missingTestCases).toEqual(missingTestCases);
                 expect(comp.invalidTestCases).toEqual(invalidTestCases);
                 expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
-            }));
+            });
         });
     });
 });
