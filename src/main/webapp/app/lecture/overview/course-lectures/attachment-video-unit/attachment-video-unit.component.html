@@ -141,15 +141,12 @@
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
                 <div class="iris-sidebar__header">
-                    <label class="lecture-sync-toggle" for="lecture-sync-toggle">
-                        <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
-                        <p-toggleswitch
-                            inputId="lecture-sync-toggle"
-                            [ngModel]="synchronizeVideoAndSlides()"
-                            [disabled]="!synchronizationAvailable()"
-                            (ngModelChange)="onSynchronizationToggleChange($event)"
-                        />
-                    </label>
+                    @if (synchronizationAvailable()) {
+                        <label class="lecture-sync-toggle" for="lecture-sync-toggle">
+                            <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
+                            <p-toggleswitch inputId="lecture-sync-toggle" [ngModel]="synchronizeVideoAndSlides()" (ngModelChange)="onSynchronizationToggleChange($event)" />
+                        </label>
+                    }
                     <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
                         <fa-icon [icon]="faXmark" />
                     </button>

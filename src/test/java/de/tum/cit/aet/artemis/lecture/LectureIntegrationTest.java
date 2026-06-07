@@ -351,7 +351,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .filter(unit -> unit.id().equals(attachmentVideoUnitWithSlides.getId())).findFirst().orElseThrow();
         assertThat(attachmentVideoUnitDTO.slides()).hasSize(numberOfSlides);
         assertThat(attachmentVideoUnitDTO.attachment()).isNotNull();
-        assertThat(attachmentVideoUnitDTO.attachment().slidePageNumbers()).isEqualTo(attachmentVideoUnitWithSlides.getAttachment().getSlidePageNumbers());
+        assertThat(attachmentVideoUnitDTO.attachment().displayPageNumbers()).isEqualTo(attachmentVideoUnitWithSlides.getAttachment().getDisplayPageNumbers());
     }
 
     @Test
@@ -364,7 +364,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLecture_ExerciseAndAttachmentReleased_shouldGetLectureWithAllLectureUnits() throws Exception {
-        attachmentOfAttachmentVideoUnit.setSlidePageNumbers(List.of(75, 76, 77));
+        attachmentOfAttachmentVideoUnit.setDisplayPageNumbers(List.of(75, 76, 77));
         attachmentRepository.save(attachmentOfAttachmentVideoUnit);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
@@ -378,7 +378,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
                 .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
         assertThat(attachmentUnitDTO.attachment()).isNotNull();
-        assertThat(attachmentUnitDTO.attachment().slidePageNumbers()).containsExactly(75, 76, 77);
+        assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
 
         testGetLecture(lecture1.getId());
     }

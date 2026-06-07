@@ -712,23 +712,52 @@ describe('AttachmentVideoUnitComponent', () => {
 
     describe('Fullscreen behavior', () => {
         it('disables video-slide synchronization when slide page numbers are duplicated', () => {
-            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 8];
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 8];
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
             component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 }]);
 
             expect(component.synchronizationAvailable()).toBe(false);
         });
 
-        it('disables video-slide synchronization when transcript pages are not in the attachment mapping', () => {
-            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+        it('allows video slides without PDF correspondence and keeps PDF position', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [8, 9];
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
-            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 11', slideNumber: 11 }]);
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Intro', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            // Sync should be available despite extra video slides
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            // PDF should stay when video shows slide not in PDF, then move when slide is in PDF
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 2, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](7);
+
+            expect(goToPage).not.toHaveBeenCalled();
+
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(1);
+        });
+
+        it('disables synchronization when video and PDF have no overlapping pages', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [25, 26, 28, 42, 100];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 17', slideNumber: 17 },
+                { startTime: 10, endTime: 15, text: 'Slide 18', slideNumber: 18 },
+                { startTime: 20, endTime: 25, text: 'Slide 19', slideNumber: 19 },
+            ]);
 
             expect(component.synchronizationAvailable()).toBe(false);
         });
 
         it('syncs the PDF viewer when the active video slide changes', () => {
-            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
             component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 8', slideNumber: 8 }]);
 
@@ -742,7 +771,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('seeks the video when the PDF page changes', () => {
-            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
             component.transcriptSegments.set([
                 { startTime: 2, endTime: 5, text: 'Slide 7', slideNumber: 7 },

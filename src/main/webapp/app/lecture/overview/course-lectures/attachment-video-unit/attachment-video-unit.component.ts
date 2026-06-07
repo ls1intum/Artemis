@@ -612,7 +612,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         pdfPageToDisplayedPageNumber: Map<number, number>;
         displayedPageNumberToVideoTimestamp: Map<number, number>;
     } {
-        const displayedPageNumbers = this.lectureUnit().attachment?.slidePageNumbers ?? [];
+        const displayedPageNumbers = this.lectureUnit().attachment?.displayPageNumbers ?? [];
         const transcriptSegments = this.transcriptSegments();
 
         const displayedPageNumberToPdfPage = new Map<number, number>();
@@ -642,12 +642,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
 
             hasTranscriptSlideNumber = true;
-            if (!displayedPageNumberToPdfPage.has(slideNumber)) {
-                return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
-            }
 
-            if (!displayedPageNumberToVideoTimestamp.has(slideNumber)) {
-                displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
+            // Only include pages with PDF correspondence in timestamp map
+            // Pages without correspondence are simply skipped
+            if (displayedPageNumberToPdfPage.has(slideNumber)) {
+                if (!displayedPageNumberToVideoTimestamp.has(slideNumber)) {
+                    displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
+                }
             }
         }
 
