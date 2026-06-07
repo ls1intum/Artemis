@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -52,7 +52,6 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
-    faArrowRight = faArrowRight;
 
     ngOnInit(): void {
         const data = this.dialogConfig?.data;

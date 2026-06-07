@@ -11,6 +11,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
@@ -35,7 +36,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationLocalVCSamlTest.class, AbstractSpringIntegrationJenkinsLocalVCTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class, AbstractSpringIntegrationLocalCILocalVCTest.class,
-            AbstractSpringIntegrationIndependentTest.class);
+            AbstractSpringIntegrationIndependentTest.class, AbstractSpringIntegrationIndependentBatchTest.class);
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {

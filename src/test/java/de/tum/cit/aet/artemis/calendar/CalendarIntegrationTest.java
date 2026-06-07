@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
  * Note: <br>
  * In the following test class tutors, editors and instructors are referred to as course staff members.
  */
-class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;

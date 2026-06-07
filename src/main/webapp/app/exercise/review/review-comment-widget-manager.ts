@@ -488,7 +488,8 @@ export class ReviewCommentWidgetManager {
             endLineNumber: endLine,
             endColumn,
         });
-        if (currentCode !== inlineFix.expectedCode) {
+        // expectedCode/replacementCode may be absent when empty (@JsonInclude(NON_EMPTY)); treat absent as empty.
+        if (currentCode !== (inlineFix.expectedCode ?? '')) {
             return InlineFixApplyResult.OUTDATED;
         }
 
@@ -500,7 +501,7 @@ export class ReviewCommentWidgetManager {
                     endLineNumber: endLine,
                     endColumn,
                 },
-                text: inlineFix.replacementCode,
+                text: inlineFix.replacementCode ?? '',
                 forceMoveMarkers: true,
             },
         ]);

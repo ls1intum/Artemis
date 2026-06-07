@@ -117,6 +117,46 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         expect(comp.programmingExercise().buildConfig?.timeoutSeconds).toBe(0);
     });
 
+    it('should reload template when programming language changes on the same exercise instance', () => {
+        comp.programmingLanguage = programmingExercise.programmingLanguage;
+        comp.projectType = programmingExercise.projectType;
+        comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
+        buildPhasesTemplateServiceMock.getTemplate.mockClear();
+
+        programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+
+        fixture.detectChanges();
+
+        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledOnce();
+        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(
+            ProgrammingLanguage.KOTLIN,
+            programmingExercise.projectType,
+            programmingExercise.staticCodeAnalysisEnabled,
+            programmingExercise.buildConfig?.sequentialTestRuns,
+        );
+    });
+
+    it('should reload template when project type changes on the same exercise instance', () => {
+        comp.programmingLanguage = programmingExercise.programmingLanguage;
+        comp.projectType = programmingExercise.projectType;
+        comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
+        comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
+        buildPhasesTemplateServiceMock.getTemplate.mockClear();
+
+        programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+
+        fixture.detectChanges();
+
+        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledOnce();
+        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(
+            programmingExercise.programmingLanguage,
+            ProjectType.PLAIN_MAVEN,
+            programmingExercise.staticCodeAnalysisEnabled,
+            programmingExercise.buildConfig?.sequentialTestRuns,
+        );
+    });
+
     it('should reset custom build plan when template loading fails', () => {
         programmingExercise.buildConfig!.buildPlanConfiguration = 'x';
         programmingExercise.buildConfig!.buildScript = 'y';
