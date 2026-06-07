@@ -81,7 +81,7 @@ describe('Test Run Management Component', () => {
 
             await Promise.resolve();
 
-            expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
+            expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
             expect(userSpy).toHaveBeenCalledOnce();
 

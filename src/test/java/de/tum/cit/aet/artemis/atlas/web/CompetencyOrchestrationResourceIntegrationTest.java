@@ -64,7 +64,8 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // call ever runs so no CompetencyExerciseLink can have been created.
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadGateway()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("LLM_ERROR"))
-                .andExpect(jsonPath("$.summary").isNotEmpty()).andExpect(jsonPath("$.appliedActions").isArray()).andExpect(jsonPath("$.appliedActions").isEmpty());
+                // @JsonInclude(NON_EMPTY) omits the empty appliedActions list from the response; its absence asserts no actions were applied.
+                .andExpect(jsonPath("$.summary").isNotEmpty()).andExpect(jsonPath("$.appliedActions").doesNotExist());
 
         assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).isEmpty();
     }

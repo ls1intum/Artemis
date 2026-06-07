@@ -235,7 +235,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(submitButton.nativeElement.disabled).toBe(false);
 
         // Remove one of the existing team members via the rendered remove link.
-        const studentRemoveLink = debugElement.query(By.css('.jest-student-remove-link'));
+        const studentRemoveLink = debugElement.query(By.css('.student-remove-link'));
         expect(studentRemoveLink).not.toBeNull();
         studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
         fixture.detectChanges(false);

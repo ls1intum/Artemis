@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/programming/manage/update/remove-auxiliary-repository-button.component';
@@ -9,26 +11,28 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { provideHttpClient } from '@angular/common/http';
 
 describe('RemoveAuxiliaryRepositoryButton', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: RemoveAuxiliaryRepositoryButtonComponent;
     let fixture: ComponentFixture<RemoveAuxiliaryRepositoryButtonComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
             providers: [provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(RemoveAuxiliaryRepositoryButtonComponent);
-                comp = fixture.componentInstance;
-            });
+        });
+        fixture = TestBed.createComponent(RemoveAuxiliaryRepositoryButtonComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('row', new AuxiliaryRepository());
         fixture.detectChanges();
         expect(comp).toBeDefined();
     });
@@ -37,13 +41,14 @@ describe('RemoveAuxiliaryRepositoryButton', () => {
         const auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.id = 4;
         const auxiliaryRepositories = [auxiliaryRepository];
-        comp.programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        comp.programmingExercise.auxiliaryRepositories = auxiliaryRepositories;
-        comp.row = auxiliaryRepository;
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.auxiliaryRepositories = auxiliaryRepositories;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('row', auxiliaryRepository);
 
         fixture.detectChanges();
         comp.removeAuxiliaryRepository();
 
-        expect(comp.programmingExercise.auxiliaryRepositories).toBeEmpty();
+        expect(comp.programmingExercise().auxiliaryRepositories).toEqual([]);
     });
 });

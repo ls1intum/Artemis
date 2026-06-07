@@ -277,7 +277,7 @@ describe('Plagiarism Split View Component', () => {
 
         const plagiarismComparison = createPlagiarismComparison();
 
-        const plagiarismCasesServiceSpy = jest
+        const plagiarismCasesServiceSpy = vi
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
             .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison>));
 

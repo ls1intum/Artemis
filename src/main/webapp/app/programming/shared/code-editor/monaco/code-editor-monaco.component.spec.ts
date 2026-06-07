@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -524,6 +524,131 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.selectFileInEditor(binaryFile);
         // The stale binary load must not flip binaryFileSelected, which would hide Monaco for the text file.
         expect(comp.binaryFileSelected()).toBe(false);
+    });
+
+    describe('image previews', () => {
+        let createObjectURLMock: Mock;
+        let revokeObjectURLMock: Mock;
+
+        beforeEach(() => {
+            createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url');
+            revokeObjectURLMock = vi.fn();
+            (URL as any).createObjectURL = createObjectURLMock;
+            (URL as any).revokeObjectURL = revokeObjectURLMock;
+        });
+
+        it('should fetch image files as a blob and create a preview URL instead of using the editor', async () => {
+            const fileName = 'assets/logo.png';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            const changeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            await comp.selectFileInEditor(fileName);
+
+            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName);
+            expect(createObjectURLMock).toHaveBeenCalledOnce();
+            expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
+            expect(comp.imagePreviewError()).toBe(false);
+            expect(comp.binaryFileSelected()).toBe(false);
+            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName);
+            expect(changeModelSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an in-flight image load when the user switches files', async () => {
+            const fileName = 'assets/logo.png';
+            const otherFileName = 'src/Main.java';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            const pendingSelection = comp.selectFileInEditor(fileName);
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            await pendingSelection;
+
+            expect(createObjectURLMock).not.toHaveBeenCalled();
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+        });
+
+        it('should set image preview error and emit when image loading fails', async () => {
+            const fileName = 'assets/broken.png';
+            const errorCallbackStub = vi.fn();
+            comp.onError.subscribe(errorCallbackStub);
+            const failingSubject = new Subject<Blob>();
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            const pending = comp.selectFileInEditor(fileName);
+            failingSubject.error(new Error('boom'));
+            await pending;
+
+            expect(comp.imagePreviewError()).toBe(true);
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+            expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith('loadingFailed');
+        });
+
+        it('should ignore an in-flight image load failure when the user switches files', async () => {
+            const fileName = 'assets/broken.png';
+            const otherFileName = 'src/Main.java';
+            const errorCallbackStub = vi.fn();
+            comp.onError.subscribe(errorCallbackStub);
+            const failingSubject = new Subject<Blob>();
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(failingSubject);
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            const pending = comp.selectFileInEditor(fileName);
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            failingSubject.error(new Error('boom'));
+            await pending;
+
+            expect(comp.imagePreviewError()).toBe(false);
+            expect(errorCallbackStub).not.toHaveBeenCalled();
+        });
+
+        it('should revoke the previous URL when two in-flight loads for the same file resolve back-to-back', async () => {
+            const fileName = 'assets/logo.png';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            const firstSubject = new Subject<Blob>();
+            const secondSubject = new Subject<Blob>();
+            const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
+            createObjectURLMock.mockReturnValueOnce('blob:first-url').mockReturnValueOnce('blob:second-url');
+            fixture.componentRef.setInput('selectedFile', fileName);
+
+            // Kick off two loads for the same file before either resolves (mirrors the editorWasRefreshed re-entry path).
+            const firstPending = comp.selectFileInEditor(fileName);
+            const secondPending = comp.selectFileInEditor(fileName);
+            firstSubject.next(blob);
+            firstSubject.complete();
+            secondSubject.next(blob);
+            secondSubject.complete();
+            await Promise.all([firstPending, secondPending]);
+
+            expect(getFileAsBlobSpy).toHaveBeenCalledTimes(2);
+            expect(createObjectURLMock).toHaveBeenCalledTimes(2);
+            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:first-url');
+            expect(comp.imagePreviewUrl()).toBe('blob:second-url');
+        });
+
+        it('should revoke the previously generated image preview URL when switching files', async () => {
+            const imageFileName = 'assets/logo.png';
+            const otherFileName = 'src/Main.java';
+            const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
+            vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValue(of(blob));
+            vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
+            vi.spyOn(comp.editor(), 'setPosition').mockImplementation(() => {});
+            vi.spyOn(comp.editor(), 'setScrollTop').mockImplementation(() => {});
+            loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'class Main {}' }));
+            fixture.componentRef.setInput('selectedFile', imageFileName);
+
+            await comp.selectFileInEditor(imageFileName);
+            expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
+
+            fixture.componentRef.setInput('selectedFile', otherFileName);
+            await comp.selectFileInEditor(otherFileName);
+
+            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:mock-url');
+            expect(comp.imagePreviewUrl()).toBeUndefined();
+        });
     });
 
     it.each([
