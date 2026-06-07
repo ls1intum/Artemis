@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * For individual exercises, {@code teamStudentNames} is null.
  * For team exercises, it contains the sorted list of member full names.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationNameExportDTO(String participantName, String participantIdentifier, List<String> teamStudentNames) {
 }

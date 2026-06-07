@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * {@code justification} is the one-sentence reason the orchestrator commits to alongside the
  * mutation and is shown in the result dialog.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AppliedActionDTO(ActionType type, Long competencyId, String competencyTitle, @Nullable Long exerciseId, @Nullable Double weight, String detail,
         String justification) {
 

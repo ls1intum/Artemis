@@ -558,7 +558,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else if (exercise instanceof QuizExercise) {
-                // Before the quiz has ended, the dashboard shows only that the student submitted, without answers or results.
+                // Since #12842, a submitted quiz before the due date exposes a sanitized submission (submitted flag and
+                // submission date only, no answers, no results) so the dashboard can show "Submitted, waiting for due date".
                 assertThat(participation.getSubmissions()).hasSize(1);
                 var submission = participation.getSubmissions().iterator().next();
                 assertThat(submission).isInstanceOf(QuizSubmission.class);

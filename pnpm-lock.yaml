@@ -47,7 +47,7 @@ overrides:
   express: 5.2.1
   fast-uri: 3.1.2
   globals: 17.6.0
-  hono: 4.12.18
+  hono: 4.12.23
   '@hono/node-server': 1.19.13
   ip-address: 10.2.0
   js-yaml: 4.1.1
@@ -1774,7 +1774,7 @@ packages:
     resolution: {integrity: sha512-TsQLe4i2gvoTtrHje625ngThGBySOgSK3Xo2XRYOdqGN1teR8+I7vchQC46uLJi8OF62YTYA3AhSpumtkhsaKQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: 4.12.18
+      hono: 4.12.23
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4906,8 +4906,8 @@ packages:
   hls.js@1.6.16:
     resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
-  hono@4.12.18:
-    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
+  hono@4.12.23:
+    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
     engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
@@ -8861,9 +8861,9 @@ snapshots:
   '@harperfast/extended-iterable@1.0.3':
     optional: true
 
-  '@hono/node-server@1.19.13(hono@4.12.18)':
+  '@hono/node-server@1.19.13(hono@4.12.23)':
     dependencies:
-      hono: 4.12.18
+      hono: 4.12.23
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -9208,7 +9208,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.26.0(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.13(hono@4.12.18)
+      '@hono/node-server': 1.19.13(hono@4.12.23)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -9218,7 +9218,7 @@ snapshots:
       eventsource-parser: 3.1.0
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.18
+      hono: 4.12.23
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -12081,7 +12081,7 @@ snapshots:
 
   hls.js@1.6.16: {}
 
-  hono@4.12.18: {}
+  hono@4.12.23: {}
 
   hookified@1.15.1: {}
 
