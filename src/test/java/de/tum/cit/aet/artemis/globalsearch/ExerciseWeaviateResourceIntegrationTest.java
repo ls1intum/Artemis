@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -953,7 +954,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             channel.setIsPublic(true);
             channel.setIsCourseWide(true);
             channel.setIsAnnouncementChannel(false);
-
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
             Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
 
             // Wait for channel to be indexed — capture security context for awaitility thread
@@ -978,4 +980,65 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
     }
 
+    @Nested
+    class CommunicationFilteringTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCommunicationChannelsFilteredByCourseConfig() throws Exception {
+            User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+            // 1. Course with enabled communication
+            Course courseWithComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            courseWithComm.setShortName("commOn");
+            courseWithComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(courseWithComm);
+
+            // 2. Course with disabled communication
+            Course courseWithoutComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            courseWithoutComm.setShortName("commOff");
+            courseWithoutComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+            courseRepository.save(courseWithoutComm);
+
+            // Create exercises
+            var ex1 = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseWithComm, true);
+            ex1.setTitle(SEARCH_PREFIX + " CommEnabled Exercise");
+            exerciseRepository.save(ex1);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(ex1));
+
+            var ex2 = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseWithoutComm, true);
+            ex2.setTitle(SEARCH_PREFIX + " CommDisabled Exercise");
+            exerciseRepository.save(ex2);
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(ex2));
+
+            // Create channels
+            Channel channel1 = new Channel();
+            channel1.setName(SEARCH_PREFIX + " search-comm-on");
+            channel1.setIsPublic(true);
+            var createdChannel1 = channelService.createChannel(courseWithComm, channel1, Optional.of(instructor));
+            searchableEntityWeaviateService.upsertChannelAsync(de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO.fromChannel(createdChannel1));
+
+            Channel channel2 = new Channel();
+            channel2.setName(SEARCH_PREFIX + " search-comm-off");
+            channel2.setIsPublic(true);
+            var createdChannel2 = channelService.createChannel(courseWithoutComm, channel2, Optional.of(instructor));
+            searchableEntityWeaviateService.upsertChannelAsync(de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO.fromChannel(createdChannel2));
+
+            var securityContext = SecurityContextHolder.getContext();
+
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                SecurityContextHolder.setContext(securityContext);
+
+                var results1 = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + courseWithComm.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles1 = getResultTitles(results1);
+                assertThat(titles1).contains(SEARCH_PREFIX + " CommEnabled Exercise");
+                assertThat(titles1).anyMatch(t -> t.contains("search-comm-on"));
+
+                var results2 = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + courseWithoutComm.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles2 = getResultTitles(results2);
+                assertThat(titles2).contains(SEARCH_PREFIX + " CommDisabled Exercise");
+                assertThat(titles2).noneMatch(t -> t.contains("search-comm-off"));
+            });
+        }
+    }
 }

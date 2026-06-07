@@ -118,12 +118,12 @@
                         class="form-check-input"
                         name="allowFeedbackRequests"
                         [(ngModel)]="allowFeedbackRequests"
-                        [disabled]="assessmentType() !== AssessmentType.SEMI_AUTOMATIC"
+                        [disabled]="!isFeedbackRequestsToggleEnabled()"
                         id="allowFeedbackRequests"
                     />
                     @if (isAthenaEnabled) {
                         <label
-                            [ngStyle]="assessmentType() !== AssessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+                            [ngStyle]="!isFeedbackRequestsToggleEnabled() ? { color: 'grey' } : {}"
                             class="form-control-label"
                             for="allowFeedbackRequests"
                             jhiTranslate="artemisApp.programmingExercise.timeline.athenaFeedbackRequests"
@@ -131,7 +131,7 @@
                         <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.athenaFeedbackRequestsTooltip" />
                     } @else {
                         <label
-                            [ngStyle]="assessmentType() !== AssessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
+                            [ngStyle]="!isFeedbackRequestsToggleEnabled() ? { color: 'grey' } : {}"
                             class="form-control-label"
                             for="allowFeedbackRequests"
                             jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
