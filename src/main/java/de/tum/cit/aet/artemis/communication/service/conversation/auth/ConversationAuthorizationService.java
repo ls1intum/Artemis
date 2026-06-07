@@ -32,10 +32,10 @@ public class ConversationAuthorizationService {
     }
 
     /**
-     * Returns a {@link User} object with authorities and groups loaded.
+     * Returns a {@link User} object with authorities and course roles loaded.
      *
-     * @param user the {@link User} object to check for loaded authorities and groups
-     * @return the {@link User} object, potentially after loading the authorities and groups
+     * @param user the {@link User} object to check for loaded authorities and course roles
+     * @return the {@link User} object, potentially after loading the authorities and course roles
      * @throws IllegalArgumentException if the user parameter is null
      */
     protected User getUserIfNecessary(User user) {
@@ -44,7 +44,7 @@ public class ConversationAuthorizationService {
         }
         var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
+        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "courseRoles") || userToCheck.getCourseRoles() == null
                 || userToCheck.getAuthorities() == null) {
             userToCheck = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
         }

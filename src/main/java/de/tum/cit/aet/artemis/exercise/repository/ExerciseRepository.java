@@ -516,9 +516,11 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
-     * Fetches the number of student participations in the given exercise
+     * Fetches the number of student participations in the given exercise.
+     * The {@code courseId} must be passed explicitly because for exam exercises {@code exercise.course} is {@code null}.
      *
      * @param exerciseId the id of the exercise to get the amount for
+     * @param courseId   the id of the course the exercise belongs to (via direct course or via exam)
      * @return The number of student participations as <code>Long</code>
      */
     @Query("""
@@ -526,9 +528,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 JOIN e.studentParticipations p
             WHERE e.id = :exerciseId
-                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = p.student.id AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = p.student.id AND ucr.course.id = :courseId AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
-    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
+    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId, @Param("courseId") Long courseId);
 
     /**
      * Fetches the number of team participations in the given exercise

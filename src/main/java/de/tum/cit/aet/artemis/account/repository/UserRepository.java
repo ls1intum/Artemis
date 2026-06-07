@@ -386,7 +386,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
-        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, pageable);
+        // Use an unsorted pageable for the ID lookup: SELECT DISTINCT user.id cannot ORDER BY firstName/lastName (not in SELECT)
+        // The final result ordering is applied by findUsersByIdsWithCourseRolesOrdered.
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, unsortedPageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -511,7 +514,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                JOIN FETCH user.authorities
+                LEFT JOIN FETCH user.authorities
                 JOIN user.courseRoles ucr
             WHERE ucr.course.id = :courseId
                 AND ucr.role IN :roles
