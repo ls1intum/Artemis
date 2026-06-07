@@ -1,4 +1,4 @@
-import { Component, DoCheck, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, DoCheck, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -22,6 +22,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
 
     readonly programmingExercise = input.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    readonly isExamMode = input(false);
 
     readonly programmingExerciseDockerImageComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 
@@ -31,17 +32,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
     sequentialTestRuns?: boolean;
     isImportFromFile = false;
 
-    buildPlanPhases: BuildPlanPhases = {
-        phases: [
-            {
-                name: '',
-                script: '# enter the script of this phase',
-                condition: 'ALWAYS',
-                forceRun: false,
-                resultPaths: [],
-            },
-        ],
-    } as BuildPlanPhases;
+    readonly phases = computed(() => this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
+    readonly dockerImage = computed(() => this.buildPhasesTemplateService.buildPlan()?.dockerImage ?? '');
 
     ngOnInit() {
         const buildConfig = this.programmingExercise().buildConfig;
@@ -49,7 +41,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         if (configJson) {
             const parsed = parseBuildPlanPhases(configJson);
             if (parsed?.phases?.length) {
-                this.buildPlanPhases = parsed as BuildPlanPhases;
+                this.buildPhasesTemplateService.buildPlan.set(parsed as BuildPlanPhases);
                 return;
             }
         }
@@ -57,17 +49,19 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         const legacyBuildScript = buildConfig?.buildScript;
         if (!legacyBuildScript?.trim() || !this.programmingExercise().programmingLanguage) {
             this.resetCustomBuildPlan();
+            this.buildPhasesTemplateService.resetToDefault();
             return;
         }
 
         // convert legacy format to the new phases
         const convertedBuildPlanPhases = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(legacyBuildScript, configJson);
         if (convertedBuildPlanPhases) {
-            this.buildPlanPhases = convertedBuildPlanPhases;
+            this.buildPhasesTemplateService.buildPlan.set(convertedBuildPlanPhases);
             return;
         }
 
         this.resetCustomBuildPlan();
+        this.buildPhasesTemplateService.resetToDefault();
     }
 
     ngDoCheck() {
@@ -114,17 +108,13 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         this.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
         if (!isImportFromFile || !programmingExercise.buildConfig?.buildPlanConfiguration) {
-            this.buildPhasesTemplateService.getTemplate(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (buildPlanPhases) => {
-                    if (!buildPlanPhases?.phases?.length) {
-                        return;
-                    }
-                    this.buildPlanPhases = buildPlanPhases;
-                },
-                error: () => {
-                    this.resetCustomBuildPlan();
-                },
-            });
+            this.buildPhasesTemplateService.fetchTemplate(
+                this.programmingExerciseCreationConfig().isExamMode,
+                this.programmingLanguage,
+                this.projectType,
+                this.staticCodeAnalysisEnabled,
+                this.sequentialTestRuns,
+            );
         }
         this.programmingExerciseCreationConfig().buildPlanLoaded = true;
         if (!programmingExercise.buildConfig?.buildPlanConfiguration) {
@@ -139,7 +129,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * Called when the build phases editor emits a change.
      */
     onPhasesChange(phases: BuildPhase[]) {
-        this.buildPlanPhases = { ...this.buildPlanPhases, phases };
+        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? { ...state, phases } : ({ phases } as BuildPlanPhases)));
     }
 
     /**
@@ -148,7 +138,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * @param dockerImage the selected Docker image
      */
     setDockerImage(dockerImage: string) {
-        this.buildPlanPhases = { ...this.buildPlanPhases, dockerImage: dockerImage.trim() };
+        this.buildPhasesTemplateService.buildPlan.update((state) =>
+            state ? { ...state, dockerImage: dockerImage.trim() } : ({ dockerImage: dockerImage.trim(), phases: [] } as BuildPlanPhases),
+        );
     }
 
     /**
@@ -157,10 +149,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
      * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
      */
     getBuildPlanPhasesJSON(): string | undefined {
-        if (!this.buildPlanPhases?.phases?.length || !this.arePhaseNamesValid(this.buildPlanPhases.phases)) {
+        const buildPlan = this.buildPhasesTemplateService.buildPlan();
+        if (!buildPlan?.phases?.length || !this.arePhaseNamesValid(buildPlan.phases)) {
             return undefined;
         }
-        return JSON.stringify(this.buildPlanPhases);
+        return JSON.stringify(buildPlan);
     }
 
     arePhaseNamesValid(phases: BuildPhase[]): boolean {

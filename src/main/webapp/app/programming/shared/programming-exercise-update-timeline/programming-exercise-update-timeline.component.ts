@@ -1,20 +1,26 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Subject } from 'rxjs';
+import { EMPTY, Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { AutomaticAfterDueDatePreviewRequest, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { isEqual } from 'lodash-es';
+import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',
@@ -25,6 +31,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     protected readonly AssessmentType = AssessmentType;
 
@@ -34,6 +42,8 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     complaintsInCourseEnabled = input(false);
     exampleSolutionPublicationDateSet = input(true);
     isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    customizeBuildPlan = input<boolean | undefined>(undefined);
+    skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
 
     releaseDate = model<Dayjs | undefined>();
@@ -59,6 +69,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
     isSemiAutomaticAssessmentToggleEnabled = computed(() => this.isExamMode() || this.isImport() || !!this.dueDate());
     isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
+    isFeedbackRequestsToggleEnabled = computed(() => this.computeIsFeedbackRequestsToggleEnabled());
     isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
     isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
 
@@ -67,10 +78,36 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     formValid = true;
     formEmpty = false;
     formValidChanges = new Subject<boolean>();
-    isAthenaEnabled: boolean;
+    isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+    isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+
+    private previousAutomaticAfterDueDatePreviewRequest: AutomaticAfterDueDatePreviewRequest | undefined = undefined;
+    private automaticAfterDueDatePreviewRequests = new Subject<AutomaticAfterDueDatePreviewRequest>();
 
     constructor() {
+        this.automaticAfterDueDatePreviewRequests
+            .pipe(
+                switchMap((requestData) =>
+                    this.programmingExerciseService.previewAutomaticAfterDueDateDate(requestData).pipe(
+                        catchError(() => {
+                            this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                            this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+                            this.previousAutomaticAfterDueDatePreviewRequest = undefined;
+                            return EMPTY;
+                        }),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((previewDate) => {
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(previewDate);
+                this.isDatePickerForRunningTestsAfterDueDateVisible.set(previewDate !== undefined);
+            });
+
         effect(() => {
+            if (this.isLocalCIEnabled) {
+                return;
+            }
             if (!this.isEnablingToRunTestsAfterDueDateToggleVisible()) {
                 this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
             }
@@ -108,8 +145,20 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (this.allowFeedbackRequests()) {
                 this.assessmentDueDate.set(undefined);
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                if (!this.isLocalCIEnabled) {
+                    this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                }
             }
+        });
+        effect(() => {
+            if (this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate() && this.allowFeedbackRequests()) {
+                this.allowFeedbackRequests.set(false);
+            }
+        });
+        effect(() => {
+            this.buildPhasesTemplateService.buildPlan();
+            this.customizeBuildPlan();
+            this.updateAutomaticAfterDueDatePreview();
         });
     }
 
@@ -121,7 +170,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             this.assessmentType.set(AssessmentType.AUTOMATIC);
         }
 
-        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+        this.updateAutomaticAfterDueDatePreview();
     }
 
     toggleAssessmentType() {
@@ -159,7 +208,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         }
         if (this.isDatePickerForRunningTestsAfterDueDateVisible()) {
             timelineItems.push({
-                kind: 'optional',
+                kind: this.isLocalCIEnabled ? 'required' : 'optional',
                 labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
                 date: this.buildAndTestStudentSubmissionsAfterDueDate,
             });
@@ -184,7 +233,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     private computeIsEnablingToRunTestsAfterDueDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate;
+        return (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate) && !this.isLocalCIEnabled;
     }
 
     private computeIsSemiAutomaticAssessmentToggleVisible(): boolean {
@@ -201,6 +250,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         );
     }
 
+    private computeIsFeedbackRequestsToggleEnabled(): boolean {
+        return this.assessmentType() === AssessmentType.SEMI_AUTOMATIC && !(this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate());
+    }
+
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
         const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate;
@@ -211,5 +264,63 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         return toSignal(this.activatedRoute.url.pipe(map((segments) => segments.some((segment) => ['import', 'import-from-file'].includes(segment.path)))), {
             initialValue: false,
         });
+    }
+
+    private updateAutomaticAfterDueDatePreview() {
+        if (!this.isLocalCIEnabled || this.skipAutomaticAfterDueDatePreview()) {
+            return;
+        }
+
+        const dueDate = this.dueDate();
+        if (!dueDate && !this.isExamMode()) {
+            this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+            this.previousAutomaticAfterDueDatePreviewRequest = undefined;
+            return;
+        }
+
+        const routeExamId = findParamInRouteHierarchy(this.activatedRoute, 'examId');
+
+        let hasAfterDueDateBuildPhase: boolean | undefined = undefined;
+        if (this.customizeBuildPlan()) {
+            hasAfterDueDateBuildPhase = !!this.buildPhasesTemplateService.buildPlan()?.phases?.some((phase) => phase.condition === 'AFTER_DUE_DATE');
+        } else if (this.isImport()) {
+            hasAfterDueDateBuildPhase = this.getImportedHasAfterDueDateBuildPhase();
+        }
+
+        const programmingExercise = this.exercise();
+
+        const requestData: AutomaticAfterDueDatePreviewRequest = {
+            programmingExerciseId: programmingExercise.id,
+            examId: this.isExamMode() ? (routeExamId ? Number(routeExamId) : undefined) : undefined,
+            dueDate: this.isExamMode() ? undefined : convertDateFromClient(dueDate),
+            hasAfterDueDateBuildPhase: hasAfterDueDateBuildPhase,
+            programmingLanguage: programmingExercise.programmingLanguage,
+            projectType: programmingExercise.projectType,
+            staticCodeAnalysisEnabled: !!programmingExercise.staticCodeAnalysisEnabled,
+            sequentialTestRuns: !!programmingExercise.buildConfig?.sequentialTestRuns,
+        };
+
+        if (isEqual(requestData, this.previousAutomaticAfterDueDatePreviewRequest)) {
+            return;
+        }
+        this.previousAutomaticAfterDueDatePreviewRequest = requestData;
+
+        if (requestData.hasAfterDueDateBuildPhase === false) {
+            this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+            return;
+        }
+
+        this.automaticAfterDueDatePreviewRequests.next(requestData);
+    }
+
+    private getImportedHasAfterDueDateBuildPhase(): boolean | undefined {
+        const parsedBuildPlan = parseBuildPlanPhases(this.exercise().buildConfig?.buildPlanConfiguration);
+        if (!parsedBuildPlan) {
+            return undefined;
+        }
+
+        return parsedBuildPlan.phases.some((phase) => phase.condition === 'AFTER_DUE_DATE');
     }
 }

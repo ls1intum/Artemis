@@ -1,12 +1,5 @@
 - name: setup_the_build_environment
   script: |-
-    #!/usr/bin/env bash
-
-    # ------------------------------
-    # Task Description:
-    # Build and run all tests
-    # ------------------------------
-
     # Update ownership to avoid permission issues
     sudo chown artemis_user:artemis_user .
     # Update ownership in ${studentParentWorkingDirectoryName} and test-reports
@@ -25,13 +18,6 @@
     cd ..
 - name: setup_makefile
   script: |-
-    #!/usr/bin/env bash
-
-    # ------------------------------
-    # Task Description:
-    # Setup makefile
-    # ------------------------------
-
     shadowFilePath="../${testWorkingDirectory}/testUtils/c/shadow_exec.c"
 
     foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' ${studentParentWorkingDirectoryName}/Makefile`
@@ -44,29 +30,25 @@
 
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" ${studentParentWorkingDirectoryName}/Makefile
-- name: build_and_run_all_tests
+- name: compile
+  script: |-
+    sudo chown artemis_user:artemis_user .
+    mkdir -p target
+    gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c 2> target/gcc_warnings.txt
+- name: test
   script: |-
     #!/usr/bin/env bash
 
-    # ------------------------------
-    # Task Description:
-    # Build and run all tests if the compilation succeeds
-    # ------------------------------
-    sudo chown artemis_user:artemis_user .
-    mkdir -p target
-    # Capture GCC warnings to a file for static code analysis
-    gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c 2> target/gcc_warnings.txt || error=true
+    cd ${testWorkingDirectory} || exit 0
+    python3 Tests.py || true
+  resultPaths:
+    - 'test-reports/*.xml'
+- name: static_code_analysis
+  script: |-
     # Convert GCC text output to XML format for the SCA parser
     if [ -f target/gcc_warnings.txt ] && [ -s target/gcc_warnings.txt ]; then
         python3 ${testWorkingDirectory}/Converter.py -i target/gcc_warnings.txt -o target/gcc.xml
     fi
-    if [ ! $error ]
-    then
-        cd ${testWorkingDirectory} || exit 0
-        python3 Tests.py || true
-    else
-        exit 1
-    fi
+  forceRun: true
   resultPaths:
     - target/gcc.xml
-    - 'test-reports/*.xml'
