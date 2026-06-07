@@ -3,8 +3,7 @@
  *
  * These specs exercise Monaco's real text-editing engine (insert/replace/cursor/selection) via the
  * editor action adapters, so — unlike the rest of the client suite — they must run against the REAL
- * `monaco-editor` package rather than the lightweight mock used everywhere else. This mirrors how the
- * legacy Jest setup ran them (jest.config.js mapped `monaco-editor` to `editor.api.js`).
+ * `monaco-editor` package rather than the lightweight mock used everywhere else.
  *
  * Run as a separate Vitest project so the global `monaco-editor` -> mock alias in vitest.config.ts is
  * not applied here.
@@ -18,7 +17,7 @@ export default defineConfig({
     logLevel: 'error',
     resolve: {
         alias: {
-            // Real Monaco (no mock) for these integration specs, matching the legacy Jest mapping.
+            // Real Monaco (no mock) for these integration specs.
             'monaco-editor': path.resolve(__dirname, 'node_modules/monaco-editor/esm/vs/editor/editor.api.js'),
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),

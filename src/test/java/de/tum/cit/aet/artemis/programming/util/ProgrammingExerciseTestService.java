@@ -2391,6 +2391,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
+        RepositoryExportTestUtil.deleteStudentBareRepo(exercise, team.getShortName(), localVCBasePath);
 
         // The shared setup pre-creates the team's repository on disk (setupRepositoryMocksParticipant). This test
         // models a NEW participation whose repository is created for the first time and whose creation (copy) fails,

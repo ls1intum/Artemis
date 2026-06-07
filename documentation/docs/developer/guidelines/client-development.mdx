@@ -359,51 +359,8 @@ https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-ge
 *  Out of DOM references
 *  Closures
 
-Mocks not being restored after the end of a test, especially when it involves global objects: https://making.close.com/posts/finding-the-cause-of-a-memory-leak-in-jest
-
 RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-memory-leaks-angular-observable-ngondestroy
 
-
-**What are ways to identify memory leaks?**
-
-**Number 1:** Manually checking the heap usage and identifying heap dumps for causes of memory leaks
-https://chanind.github.io/javascript/2019/10/12/jest-tests-memory-leak.html
-
-Corresponding commands from the article for our project (enter in the root directory of the project):
-
-```text
-node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
-```
-
-```text
-node --inspect-brk --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
-```
-
-A live demonstration of this technique to find the reason for memory leaks in the repository: https://www.youtube.com/watch?v=GOYmouFrGrE
-
-**Number 2:** Using the experimental leak detection feature from jest
-
-
-```text
---detectLeaks **EXPERIMENTAL**: Detect memory leaks in tests.
-                               After executing a test, it will try to garbage collect the global object used,
-                               and fail if it was leaked [boolean] [default: false]
-
---runInBand, -i Run all tests serially in the current process
-(rather than creating a worker pool of child processes that run tests). This is sometimes useful for debugging, but such use cases are pretty rare.
-```
-
-Navigate into src/test/javascript and run either
-
-```text
-jest --detectLeaks --runInBand
-```
-
-or
-
-```text
-jest --detectLeaks
-```
 
 ## UI/UX & Layout
 

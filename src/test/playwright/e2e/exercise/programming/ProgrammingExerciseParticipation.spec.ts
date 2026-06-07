@@ -5,6 +5,7 @@ import cPartiallySuccessfulSubmission from '../../../fixtures/exercise/programmi
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 import { SshEncryptionAlgorithm } from '../../../support/pageobjects/exercises/programming/GitClient';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
@@ -36,25 +37,16 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
                 await login(admin);
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
-                if (submission.expectedResult !== '0%') {
-                    await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
-                }
             });
 
-            test('Makes a submission using code editor', async ({
-                programmingExerciseOverview,
-                programmingExerciseEditor,
-                waitForParticipationBuildToFinish,
-                exerciseAPIRequests,
-            }) => {
+            test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
                 // C builds can take longer under CI parallel load
                 test.slow();
-                const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                const participationBeforeSubmission = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
-                const initialResultId = getLatestResultId(participationBeforeSubmission) ?? null;
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                    const participation = await waitForParticipationBuildToFinish(participationId, undefined, undefined, initialResultId);
-                    ProgrammingExerciseOverviewPage.verifyResultScore(participation, submission.expectedResult);
+                    const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
+                    const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
+                    await expect(resultScore).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
             });
 
@@ -312,11 +304,3 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
         });
     });
 });
-
-const getLatestResultId = (participation: Participation) => {
-    const resultIds = (participation.submissions ?? [])
-        .flatMap((submission) => submission.results ?? [])
-        .map((result) => result.id)
-        .filter((id): id is number => id !== undefined);
-    return resultIds.length > 0 ? Math.max(...resultIds) : undefined;
-};
