@@ -1,12 +1,5 @@
 - name: setup_the_build_environment
   script: |-
-    #!/usr/bin/env bash
-
-    # ------------------------------
-    # Task Description:
-    # Build and run all tests
-    # ------------------------------
-
     # Update ownership to avoid permission issues
     sudo chown artemis_user:artemis_user .
     # Update ownership in ${studentParentWorkingDirectoryName} and test-reports
@@ -25,13 +18,6 @@
     cd ..
 - name: setup_makefile
   script: |-
-    #!/usr/bin/env bash
-
-    # ------------------------------
-    # Task Description:
-    # Setup makefile
-    # ------------------------------
-
     shadowFilePath="../${testWorkingDirectory}/testUtils/c/shadow_exec.c"
 
     foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' ${studentParentWorkingDirectoryName}/Makefile`
@@ -44,20 +30,13 @@
 
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" ${studentParentWorkingDirectoryName}/Makefile
-- name: build_and_run_all_tests
+- name: compile
   script: |-
-    #!/usr/bin/env bash
-
-    # ------------------------------
-    # Task Description:
-    # Build and run all tests if the compilation succeeds
-    # ------------------------------
     sudo chown artemis_user:artemis_user .
-    gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c || error=true
-    if [ ! $error ]
-    then
-        cd ${testWorkingDirectory} || exit 0
-        python3 Tests.py || true
-    fi
+    gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c
+- name: test
+  script: |-
+    cd ${testWorkingDirectory} || exit 0
+    python3 Tests.py || true
   resultPaths:
     - 'test-reports/*.xml'
