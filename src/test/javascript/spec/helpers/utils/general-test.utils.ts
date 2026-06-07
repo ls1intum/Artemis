@@ -18,12 +18,12 @@ export const getElements = (debugElement: DebugElement, identifier: string) => {
 
 export const expectElementToBeEnabled = (element: null | any) => {
     expect(element).not.toBeNull();
-    expect(element.disabled).toBeFalse();
+    expect(element.disabled).toBe(false);
 };
 
 export const expectElementToBeDisabled = (element: null | any) => {
     expect(element).not.toBeNull();
-    expect(element.disabled).toBeTrue();
+    expect(element.disabled).toBe(true);
 };
 
 /**

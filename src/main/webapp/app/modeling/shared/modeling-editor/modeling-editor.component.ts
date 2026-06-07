@@ -122,7 +122,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 readonly: this.readOnly(),
                 scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
-                scale: 0.8,
             });
 
             // Expose the ApollonEditor instance on the host DOM element for E2E test access.

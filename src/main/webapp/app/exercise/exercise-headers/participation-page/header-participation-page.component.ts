@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, ViewEncapsulation, input } from '@angular/core';
+import { Component, ViewEncapsulation, computed, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -33,26 +33,49 @@ import { getLatestResultOfStudentParticipation } from 'app/exercise/participatio
         ArtemisTimeAgoPipe,
     ],
 })
-export class HeaderParticipationPageComponent implements OnInit, OnChanges {
+export class HeaderParticipationPageComponent {
     readonly ButtonType = ButtonType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly title = input<string>();
     readonly exercise = input<Exercise>();
     readonly participation = input<StudentParticipation>();
 
-    public exerciseStatusBadge = 'bg-success';
-    public exerciseCategories: ExerciseCategory[];
-    public achievedPoints?: number;
+    readonly exerciseStatusBadge = computed<string>(() => {
+        const exercise = this.exercise();
+        if (exercise) {
+            return hasExerciseDueDatePassed(exercise, this.participation()) ? 'bg-danger' : 'bg-success';
+        }
+        return 'bg-success';
+    });
 
-    dueDate?: dayjs.Dayjs;
+    readonly exerciseCategories = computed<ExerciseCategory[] | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise) {
+            return exercise.categories || [];
+        }
+        return undefined;
+    });
+
+    readonly dueDate = computed<dayjs.Dayjs | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise) {
+            return getExerciseDueDate(exercise, this.participation());
+        }
+        return undefined;
+    });
+
+    readonly achievedPoints = computed<number | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise) {
+            const result = getLatestResultOfStudentParticipation(this.participation(), false, true);
+            if (result?.rated) {
+                return roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
+            }
+        }
+        return undefined;
+    });
+
     getIcon = getIcon;
-
-    /**
-     * Sets the status badge and categories of the exercise on init
-     */
-    ngOnInit(): void {
-        this.ngOnChanges();
-    }
 
     /**
      * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
@@ -67,22 +90,5 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Sets the status badge and categories of the exercise on changes
-     */
-    ngOnChanges() {
-        const exercise = this.exercise();
-        const participation = this.participation();
-        if (exercise) {
-            this.exerciseStatusBadge = hasExerciseDueDatePassed(exercise, participation) ? 'bg-danger' : 'bg-success';
-            this.exerciseCategories = exercise.categories || [];
-            this.dueDate = getExerciseDueDate(exercise, participation);
-            const result = getLatestResultOfStudentParticipation(participation, false, true);
-            if (result?.rated) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
-            }
-        }
     }
 }
