@@ -40,6 +40,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
@@ -87,7 +88,7 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
@@ -97,7 +98,7 @@ class CourseNotificationEmailServiceTest {
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
             assertThat(capturedContext.getVariable("notificationType")).isEqualTo("ANNOUNCEMENT");
-            assertThat(capturedContext.getVariable("recipient")).isEqualTo(recipient);
+            assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
         });
     }
@@ -112,7 +113,8 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/ASSIGNMENT_RELEASED"), any(Context.class))).thenReturn("Test Content");
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(englishUser, germanUser));
+        courseNotificationEmailService.sendCourseNotification(notification,
+                List.of(CourseNotificationRecipientDTO.from(englishUser), CourseNotificationRecipientDTO.from(germanUser)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource, times(1)).getMessage(eq("email.courseNotification.ASSIGNMENT_RELEASED.title"), any(), eq(Locale.forLanguageTag("en")));
@@ -143,7 +145,7 @@ class CourseNotificationEmailServiceTest {
 
         when(messageSource.getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class))).thenThrow(new NoSuchMessageException("Message code not found"));
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.UNKNOWN_TYPE.title"), any(), any(Locale.class));
@@ -160,7 +162,7 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(eq("email.courseNotification.VALID_TYPE.title"), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/VALID_TYPE"), any(Context.class))).thenThrow(new TemplateProcessingException("Template not found"));
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.VALID_TYPE.title"), any(), any(Locale.class));
@@ -181,7 +183,7 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("de")))).thenReturn("Test Subject");
         when(templateEngine.process(eq("mail/course_notification/ANNOUNCEMENT"), any(Context.class))).thenReturn("Test Content");
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(user1, user2));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(user1), CourseNotificationRecipientDTO.from(user2)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource).getMessage(eq("email.courseNotification.ANNOUNCEMENT.title"), any(), eq(Locale.forLanguageTag("en")));
@@ -204,7 +206,7 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(templateEngine).process(anyString(), contextCaptor.capture());
@@ -212,7 +214,7 @@ class CourseNotificationEmailServiceTest {
             Context capturedContext = contextCaptor.getValue();
             assertThat(capturedContext.getVariable("serverUrl")).isEqualTo(serverUrl);
             assertThat(capturedContext.getVariable("notificationType")).isEqualTo("DETAILED_NOTIFICATION");
-            assertThat(capturedContext.getVariable("recipient")).isEqualTo(recipient);
+            assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
             assertThat(capturedContext.getVariable("parameters")).isEqualTo(parameters);
             assertThat(capturedContext.getVariable("creationDate")).isEqualTo(creationDate);
@@ -231,7 +233,7 @@ class CourseNotificationEmailServiceTest {
         when(messageSource.getMessage(eq(expectedLocalePrefix), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(eq(expectedTemplatePath), any(Context.class))).thenReturn("Test Content");
 
-        courseNotificationEmailService.sendCourseNotification(notification, List.of(recipient));
+        courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
 
         // Assert
         Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {

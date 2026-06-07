@@ -41,6 +41,19 @@ public interface PushNotificationDeviceConfigurationRepository extends ArtemisJp
     List<PushNotificationDeviceConfiguration> findByUserIn(@Param("users") Set<User> users, @Param("deviceType") PushNotificationDeviceType deviceType);
 
     /**
+     * @param userIds    the ids of the users you want the deviceTokens for.
+     * @param deviceType the device type you want the deviceTokens to be found for. Either Firebase or APNS.
+     * @return Finds all the deviceTokens for a specific deviceType for a set of user ids.
+     */
+    @Query("""
+            SELECT p FROM PushNotificationDeviceConfiguration p
+            WHERE p.expirationDate > CURRENT_TIMESTAMP()
+                AND p.owner.id IN :userIds
+                AND p.deviceType = :deviceType
+            """)
+    List<PushNotificationDeviceConfiguration> findByUserIdIn(@Param("userIds") Set<Long> userIds, @Param("deviceType") PushNotificationDeviceType deviceType);
+
+    /**
      * Cleans up the old/expired push notifications device configurations
      */
     @Transactional // ok because of delete

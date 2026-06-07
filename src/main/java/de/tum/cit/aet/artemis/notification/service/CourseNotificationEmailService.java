@@ -24,8 +24,8 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
@@ -98,13 +98,13 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      * </p>
      *
      * @param courseNotification The notification data to be sent
-     * @param recipients         The list of users who should receive the notification
+     * @param recipients         The list of recipients who should receive the notification
      */
     @Async
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         recipients.forEach(recipient -> {
-            String localeKey = recipient.getLangKey();
+            String localeKey = recipient.langKey();
             if (localeKey == null) {
                 localeKey = "en";
             }
@@ -145,7 +145,8 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            mailSendingService.sendEmailSync(MailRecipientDTO.from(recipient), subject, content, false, true);
+            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null);
+            mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true);
         });
     }
 

@@ -19,11 +19,16 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
  */
 class NotificationMailServiceArchitectureTest extends AbstractArchitectureTest {
 
-    // Exact package (no trailing "..") so the rule covers the services directly in 'notification.service.notifications'
-    // but not the 'push_notifications' subpackage, whose native-push services legitimately operate on device/user entities.
+    // Exact package (no trailing "..") so the domain rule covers the services directly in 'notification.service.notifications'
+    // but not the 'push_notifications' subpackage, whose native-push services legitimately operate on push-notification device entities.
     private static final String NOTIFICATIONS_SERVICE_PACKAGE = ARTEMIS_PACKAGE + ".notification.service.notifications";
 
+    // Recursive (trailing "..") so the User-independence rule also covers the 'push_notifications' subpackage.
+    private static final String NOTIFICATIONS_SERVICE_TREE = ARTEMIS_PACKAGE + ".notification.service.notifications..";
+
     private static final String DOMAIN_PACKAGE = "..domain..";
+
+    private static final String USER_ENTITY = ARTEMIS_PACKAGE + ".account.domain.User";
 
     /**
      * The mail rendering ({@code MailService}) and mail sending ({@code MailSendingService}) services must never depend
@@ -51,6 +56,24 @@ class NotificationMailServiceArchitectureTest extends AbstractArchitectureTest {
                 .haveNameNotMatching(".*\\.(GroupNotificationService|SingleUserNotificationService|GroupNotificationScheduleService)(\\$.*)?").should().dependOnClassesThat()
                 .resideInAPackage(DOMAIN_PACKAGE)
                 .because("services in 'notification.service.notifications' should operate on DTOs rather than JPA domain entities (notification orchestrators excluded for now)");
+        rule.check(productionClasses);
+    }
+
+    /**
+     * Enforces that the services in {@code notification.service.notifications} (including the {@code push_notifications}
+     * subpackage) do not depend on the JPA {@code User} entity, so notification recipients are passed as DTOs
+     * ({@link de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO} /
+     * {@link de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO}).
+     * <p>
+     * {@code SingleUserNotificationService} is the remaining documented exception: its public methods receive a
+     * {@code User} from external assessment/plagiarism/communication callers and forward it to the course-notification
+     * dispatcher, which performs the {@code User -> DTO} conversion.
+     */
+    @Test
+    void notificationServicesMustNotDependOnUserEntity() {
+        ArchRule rule = noClasses().that().resideInAPackage(NOTIFICATIONS_SERVICE_TREE).and().haveNameNotMatching(".*\\.SingleUserNotificationService(\\$.*)?").should()
+                .dependOnClassesThat().haveFullyQualifiedName(USER_ENTITY).because(
+                        "notification services should reference recipient DTOs instead of the JPA User entity (SingleUserNotificationService is the remaining documented exception)");
         rule.check(productionClasses);
     }
 }
