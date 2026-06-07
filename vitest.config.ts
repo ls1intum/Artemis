@@ -72,7 +72,7 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude prod configuration file (not really testable)
             ],
             thresholds: {
-                // Floors set just below current actuals to absorb Jest->Vitest migration drift; re-tune when migration completes.
+                // Floors set just below current actuals; ratchet up as coverage improves.
                 lines: 88.8,
                 statements: 88.7,
                 branches: 73.6,
