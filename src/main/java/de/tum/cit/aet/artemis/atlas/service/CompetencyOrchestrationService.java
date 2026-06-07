@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -191,26 +192,7 @@ public class CompetencyOrchestrationService {
         if (chatClient == null) {
             return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
-        List<ProgrammingExercise> exercises = new ArrayList<>();
-        for (Long id : exerciseIds) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findById(id).orElse(null);
-            if (exercise == null) {
-                log.info("Atlas orchestrator (batch) skipping exercise {}: not found", id);
-                continue;
-            }
-            if (exercise.isExamExercise()) {
-                log.info("Atlas orchestrator (batch) skipping exam exercise {}", id);
-                continue;
-            }
-            // Defence against a stale/corrupt accumulator entry — never run an exercise under a
-            // course id that does not own it, otherwise we would mix course content.
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (course == null || course.getId() == null || course.getId() != courseId) {
-                log.warn("Atlas orchestrator (batch) skipping exercise {}: course ownership mismatch (expected {}, got {})", id, courseId, course == null ? null : course.getId());
-                continue;
-            }
-            exercises.add(exercise);
-        }
+        List<ProgrammingExercise> exercises = resolveBatchExercises(courseId, exerciseIds);
         if (exercises.isEmpty()) {
             return CompetencyOrchestrationResultDTO.success("No applicable exercises in batch.", List.of());
         }
@@ -231,13 +213,14 @@ public class CompetencyOrchestrationService {
 
     /**
      * Runs the manual "suggest competencies" flow: force-drains the course's accumulator
-     * (bypassing the debounce window) so any pending changes are processed in this single
-     * user-initiated invocation, then orchestrates the clicked exercise last so its result becomes
-     * the HTTP response. Holds the per-course run lock for the whole batch — a concurrent manual
-     * press or a scheduled tick observes IN_PROGRESS while we are running.
+     * (bypassing the debounce window) and merges the clicked exercise into the drained set, so any
+     * pending changes plus the clicked exercise are reasoned over in a single batched LLM call. The
+     * returned result therefore covers the whole batch, not just the clicked exercise. Holds the
+     * per-course run lock for the whole batch — a concurrent manual press or a scheduled tick
+     * observes IN_PROGRESS while we are running.
      *
      * @param exerciseId the manually triggered exercise (always processed, even when not queued)
-     * @return the orchestration result for the manually triggered exercise
+     * @return the single batch result covering the clicked exercise and any queued changes
      */
     public CompetencyOrchestrationResultDTO runWithQueuedFlush(long exerciseId) {
         ProgrammingExercise clicked = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -257,35 +240,48 @@ public class CompetencyOrchestrationService {
         try {
             Optional<BatchClaim> drained = contentChangeAccumulatorService.claimBatchNow(courseId);
             Set<Long> queuedExerciseIds = drained.map(BatchClaim::exerciseIds).orElseGet(Set::of);
+            // Queued changes first, clicked exercise last; a LinkedHashSet dedupes the clicked id if
+            // it was also queued so it is rendered (and run) only once.
             Set<Long> mergedExerciseIds = new LinkedHashSet<>(queuedExerciseIds);
-            mergedExerciseIds.remove(exerciseId);
-            log.info("Atlas orchestrator (manual flush) course {} processing {} queued exercise(s) before exercise {}", courseId, mergedExerciseIds.size(), exerciseId);
-            for (Long queuedId : mergedExerciseIds) {
-                try {
-                    ProgrammingExercise queued = programmingExerciseRepository.findById(queuedId).orElse(null);
-                    if (queued == null || queued.isExamExercise()) {
-                        log.info("Atlas orchestrator (manual flush) skipping queued exercise {}: not a programming course exercise", queuedId);
-                        continue;
-                    }
-                    // Defence against a stale/corrupt accumulator entry — never run a queued exercise
-                    // under a course id that does not own it, otherwise we would mix course content.
-                    var queuedCourse = queued.getCourseViaExerciseGroupOrCourseMember();
-                    if (queuedCourse == null || queuedCourse.getId() == null || queuedCourse.getId() != courseId) {
-                        log.warn("Atlas orchestrator (manual flush) skipping queued exercise {}: course ownership mismatch (expected {}, got {})", queuedId, courseId,
-                                queuedCourse == null ? null : queuedCourse.getId());
-                        continue;
-                    }
-                    orchestrateExercise(queued, courseId);
-                }
-                catch (Exception ex) {
-                    log.warn("Atlas orchestrator (manual flush) per-exercise run failed exerciseId={}: {}", queuedId, ex.getMessage(), ex);
-                }
+            mergedExerciseIds.add(exerciseId);
+            log.info("Atlas orchestrator (manual flush) course {} running batch of {} exercise(s) (including clicked exercise {})", courseId, mergedExerciseIds.size(), exerciseId);
+            List<ProgrammingExercise> exercises = resolveBatchExercises(courseId, mergedExerciseIds);
+            if (exercises.isEmpty()) {
+                return CompetencyOrchestrationResultDTO.success("No applicable exercises in batch.", List.of());
             }
-            return orchestrateExercise(clicked, courseId);
+            return orchestrateBatch(exercises, courseId);
         }
         finally {
             runMap.remove(courseId, claim);
         }
+    }
+
+    /**
+     * Resolves a set of exercise ids into the programming exercises eligible for orchestration,
+     * dropping unknown and exam exercises and — as a defence against a stale/corrupt accumulator
+     * entry — any whose owning course does not match {@code courseId} (mixing course content is
+     * never correct). Order of {@code exerciseIds} is preserved.
+     */
+    private List<ProgrammingExercise> resolveBatchExercises(long courseId, Collection<Long> exerciseIds) {
+        List<ProgrammingExercise> exercises = new ArrayList<>();
+        for (Long id : exerciseIds) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findById(id).orElse(null);
+            if (exercise == null) {
+                log.info("Atlas orchestrator (batch) skipping exercise {}: not found", id);
+                continue;
+            }
+            if (exercise.isExamExercise()) {
+                log.info("Atlas orchestrator (batch) skipping exam exercise {}", id);
+                continue;
+            }
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null || course.getId() == null || course.getId() != courseId) {
+                log.warn("Atlas orchestrator (batch) skipping exercise {}: course ownership mismatch (expected {}, got {})", id, courseId, course == null ? null : course.getId());
+                continue;
+            }
+            exercises.add(exercise);
+        }
+        return exercises;
     }
 
     /**

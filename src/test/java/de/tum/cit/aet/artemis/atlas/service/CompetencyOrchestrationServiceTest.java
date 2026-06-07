@@ -159,6 +159,7 @@ class CompetencyOrchestrationServiceTest {
         foreignQueued.setCourse(otherCourse);
 
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
+        when(programmingExerciseRepository.findById(20L)).thenReturn(Optional.of(clicked));
         when(programmingExerciseRepository.findById(77L)).thenReturn(Optional.of(foreignQueued));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
@@ -176,23 +177,32 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void runWithQueuedFlush_orchestratesQueuedBeforeClicked() {
+    void runWithQueuedFlush_batchesQueuedAndClickedInOneRun() {
         ProgrammingExercise clicked = courseExercise(20L);
         ProgrammingExercise queued = courseExercise(33L);
 
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(programmingExerciseRepository.findById(33L)).thenReturn(Optional.of(queued));
+        when(programmingExerciseRepository.findById(20L)).thenReturn(Optional.of(clicked));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
-        // Both calls to extractContent throw so we can verify ordering without driving the full LLM path.
-        when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenThrow(new RuntimeException("stop"));
+        when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        // Fail at render so we exercise the single-batch preparation path (queued + clicked) without driving the LLM.
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
 
-        createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
 
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        // Queued change is rendered before the clicked exercise, but it is a single batched run:
+        // the course index is fetched once and only one prompt is rendered.
         InOrder order = inOrder(contentExtractionService);
         order.verify(contentExtractionService).extractContent(queued);
         order.verify(contentExtractionService).extractContent(clicked);
+        verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
+        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
     }
 
     @Test

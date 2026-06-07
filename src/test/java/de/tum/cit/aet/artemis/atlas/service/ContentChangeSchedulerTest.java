@@ -101,7 +101,8 @@ class ContentChangeSchedulerTest {
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
         when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
         when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
-        when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenReturn(CompetencyOrchestrationResultDTO.failed("nope", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+                .thenReturn(CompetencyOrchestrationResultDTO.failed("nope", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
 
         scheduler.tick();
 
