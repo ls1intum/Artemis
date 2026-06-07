@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * @param jobId the started job id (also the websocket topic suffix)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationJobStartDTO(String jobId) {
 }

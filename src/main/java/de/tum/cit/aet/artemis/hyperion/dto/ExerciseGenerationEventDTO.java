@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                             {@code null}
  * @param timestamp        the moment the event was produced
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationEventDTO(Type type, @Nullable String message, @Nullable CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
         Instant timestamp) implements Serializable {
 

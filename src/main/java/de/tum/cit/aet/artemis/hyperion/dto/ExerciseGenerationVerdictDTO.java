@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param testCount      the number of tests discovered
  * @param reasons        human-readable explanations of any failed gate (empty when accepted)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationVerdictDTO(boolean accepted, boolean solutionPassed, boolean templateFailed, int testCount, List<String> reasons) implements Serializable {
 
     @Serial

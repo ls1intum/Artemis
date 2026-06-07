@@ -11,6 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param running whether the run is still active; when {@code true} the client should subscribe to the websocket to keep receiving live events
  * @param events  the events produced so far, oldest first, to replay into the transcript
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, List<ExerciseGenerationEventDTO> events) {
 }
