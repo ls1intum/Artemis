@@ -175,6 +175,61 @@ public class CompetencyOrchestrationService {
     }
 
     /**
+     * Runs the automatic pipeline over a whole accumulated batch in a single orchestrator
+     * invocation: all changed exercises are rendered into one EXERCISE CHANGE BATCH and reasoned
+     * over in one LLM call, rather than one call per exercise. Exam and unknown exercises, plus any
+     * whose owning course does not match {@code courseId}, are dropped silently. Holds the per-course
+     * {@link #runMap} claim once for the whole batch — a concurrent manual run or scheduled tick
+     * observes {@link CompetencyOrchestrationResultDTO.Status#IN_PROGRESS}.
+     *
+     * @param courseId    the course whose buffered batch is being drained
+     * @param exerciseIds programming-exercise ids in the batch
+     * @return the single batch result; {@code SUCCESS} when the run completed (even with zero
+     *         applicable exercises), {@code IN_PROGRESS} when another run holds the course lock
+     */
+    public CompetencyOrchestrationResultDTO runBatch(long courseId, Set<Long> exerciseIds) {
+        if (chatClient == null) {
+            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
+        }
+        List<ProgrammingExercise> exercises = new ArrayList<>();
+        for (Long id : exerciseIds) {
+            ProgrammingExercise exercise = programmingExerciseRepository.findById(id).orElse(null);
+            if (exercise == null) {
+                log.info("Atlas orchestrator (batch) skipping exercise {}: not found", id);
+                continue;
+            }
+            if (exercise.isExamExercise()) {
+                log.info("Atlas orchestrator (batch) skipping exam exercise {}", id);
+                continue;
+            }
+            // Defence against a stale/corrupt accumulator entry — never run an exercise under a
+            // course id that does not own it, otherwise we would mix course content.
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (course == null || course.getId() == null || course.getId() != courseId) {
+                log.warn("Atlas orchestrator (batch) skipping exercise {}: course ownership mismatch (expected {}, got {})", id, courseId, course == null ? null : course.getId());
+                continue;
+            }
+            exercises.add(exercise);
+        }
+        if (exercises.isEmpty()) {
+            return CompetencyOrchestrationResultDTO.success("No applicable exercises in batch.", List.of());
+        }
+
+        RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exercises.getFirst().getId(), Instant.now());
+        RunInfo existing = runMap.putIfAbsent(courseId, claim);
+        if (existing != null) {
+            log.info("Atlas orchestrator (batch) rejected for course {}: run {} already in progress for exercise {}", courseId, existing.runId(), existing.exerciseId());
+            return CompetencyOrchestrationResultDTO.inProgress("Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.");
+        }
+        try {
+            return orchestrateBatch(exercises, courseId);
+        }
+        finally {
+            runMap.remove(courseId, claim);
+        }
+    }
+
+    /**
      * Runs the manual "suggest competencies" flow: force-drains the course's accumulator
      * (bypassing the debounce window) so any pending changes are processed in this single
      * user-initiated invocation, then orchestrates the clicked exercise last so its result becomes
@@ -263,7 +318,7 @@ public class CompetencyOrchestrationService {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
-            String renderedChanges = renderExerciseChangeBatch(exerciseId, extracted.title(), extracted.extractedLearningText());
+            String renderedChanges = renderExerciseChangeBatch(List.of(new ExerciseChange(exerciseId, extracted.title(), extracted.extractedLearningText())));
             // Map.of key order is irrelevant: the prompt template references both placeholders by
             // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex
             // guarantees neither user-supplied string can break out and reposition the other.
@@ -289,6 +344,46 @@ public class CompetencyOrchestrationService {
                     CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
         }
         log.info("Atlas orchestrator completed for exercise {} (course {}) with {} applied action(s)", exerciseId, courseId, appliedActions.size());
+        String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
+        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+    }
+
+    /**
+     * Orchestrates a batch of exercises in one LLM call. All exercises are extracted and rendered
+     * into a single numbered EXERCISE CHANGE BATCH; the prompt already reasons across multiple
+     * entries. Caller is responsible for holding the per-course {@link #runMap} claim.
+     */
+    private CompetencyOrchestrationResultDTO orchestrateBatch(List<ProgrammingExercise> exercises, long courseId) {
+        String systemPrompt;
+        try {
+            List<ExerciseChange> changes = new ArrayList<>();
+            for (ProgrammingExercise exercise : exercises) {
+                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+                changes.add(new ExerciseChange(exercise.getId(), extracted.title(), extracted.extractedLearningText()));
+            }
+            CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
+            String renderedIndex = renderCompetencyIndex(competencyIndex);
+            String renderedChanges = renderExerciseChangeBatch(changes);
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+        }
+        catch (Exception ex) {
+            log.warn("Atlas orchestrator (batch) preparation failed for course {}: {}", courseId, ex.getMessage(), ex);
+            return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
+        }
+        List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
+        String content;
+        try {
+            content = callChatClient(systemPrompt, courseId, appliedActions);
+        }
+        catch (Exception ex) {
+            log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
+            if (appliedActions.isEmpty()) {
+                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+            }
+            return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).", List.copyOf(appliedActions),
+                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+        }
+        log.info("Atlas orchestrator (batch) completed for course {} over {} exercise(s) with {} applied action(s)", courseId, exercises.size(), appliedActions.size());
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
         return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
     }
@@ -325,10 +420,24 @@ public class CompetencyOrchestrationService {
         return builder.build();
     }
 
-    private static String renderExerciseChangeBatch(long exerciseId, String title, String problemStatement) {
-        String safeTitle = sanitizeForPrompt(title, EXERCISE_TITLE_MAX);
-        String safeBody = problemStatement == null || problemStatement.isBlank() ? "(no problem statement available)" : sanitizeForPrompt(problemStatement, PROBLEM_STATEMENT_MAX);
-        return "1. [UPDATE id=" + exerciseId + "] " + safeTitle + "\n" + safeBody;
+    private static String renderExerciseChangeBatch(List<ExerciseChange> changes) {
+        StringBuilder sb = new StringBuilder();
+        int index = 1;
+        for (ExerciseChange change : changes) {
+            String safeTitle = sanitizeForPrompt(change.title(), EXERCISE_TITLE_MAX);
+            String safeBody = change.problemStatement() == null || change.problemStatement().isBlank() ? "(no problem statement available)"
+                    : sanitizeForPrompt(change.problemStatement(), PROBLEM_STATEMENT_MAX);
+            if (index > 1) {
+                sb.append("\n\n");
+            }
+            sb.append(index).append(". [UPDATE id=").append(change.exerciseId()).append("] ").append(safeTitle).append('\n').append(safeBody);
+            index++;
+        }
+        return sb.toString();
+    }
+
+    /** One extracted exercise change rendered as a numbered entry in the EXERCISE CHANGE BATCH block. */
+    private record ExerciseChange(long exerciseId, String title, @Nullable String problemStatement) {
     }
 
     /**

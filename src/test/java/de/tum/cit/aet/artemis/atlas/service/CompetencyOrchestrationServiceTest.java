@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.FAILED;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.IN_PROGRESS;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.PARTIAL;
+import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.SUCCESS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -227,6 +228,65 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
         assertThat(result.appliedActions()).hasSize(1);
         assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
+        verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
+    }
+
+    @Test
+    void runBatch_noChatClient_returnsFailedNoChatClient() {
+        CompetencyOrchestrationResultDTO result = createService(null).runBatch(COURSE_ID, Set.of(10L, 11L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(NO_CHAT_CLIENT);
+        verify(programmingExerciseRepository, never()).findById(anyLong());
+        verify(runMap, never()).putIfAbsent(anyLong(), any());
+    }
+
+    @Test
+    void runBatch_onlyNonApplicableExercises_returnsSuccessWithoutClaimingLock() {
+        when(programmingExerciseRepository.findById(12L)).thenReturn(Optional.of(examExercise(12L)));
+        when(programmingExerciseRepository.findById(99L)).thenReturn(Optional.empty());
+
+        CompetencyOrchestrationResultDTO result = createService(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(12L, 99L));
+
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.appliedActions()).isEmpty();
+        // Exam and missing exercises are dropped before the per-course lock is even claimed.
+        verify(runMap, never()).putIfAbsent(anyLong(), any());
+    }
+
+    @Test
+    void runBatch_alreadyInProgress_returnsInProgress() {
+        when(programmingExerciseRepository.findById(10L)).thenReturn(Optional.of(courseExercise(10L)));
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L));
+
+        assertThat(result.status()).isEqualTo(IN_PROGRESS);
+        verify(runMap, never()).remove(anyLong(), any());
+    }
+
+    @Test
+    void runBatch_extractsAllExercisesInOneRun_thenReleasesLock() {
+        ProgrammingExercise first = courseExercise(10L);
+        ProgrammingExercise second = courseExercise(11L);
+        when(programmingExerciseRepository.findById(10L)).thenReturn(Optional.of(first));
+        when(programmingExerciseRepository.findById(11L)).thenReturn(Optional.of(second));
+        stubRunMap();
+        when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
+        when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        // Fail at render so we exercise the single-run preparation path without driving the LLM.
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 11L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        // Both exercises are extracted, but the course index is fetched only once — one batched run, not one per exercise.
+        verify(contentExtractionService).extractContent(first);
+        verify(contentExtractionService).extractContent(second);
+        verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
         verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
     }
 

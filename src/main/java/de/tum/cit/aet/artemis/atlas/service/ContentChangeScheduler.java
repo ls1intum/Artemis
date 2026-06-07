@@ -29,13 +29,12 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
  * Tick loop for the automatic competency pipeline. On every scheduled invocation the scheduler
  * asks the accumulator for courses whose debounce window has elapsed and, for each, tries to
  * acquire the scheduler-local lock before claiming the buffered batch. Holding the lock across
- * {@code claimDueBatch} → per-exercise orchestrator invocations prevents a concurrent tick on
- * another node from draining the same batch twice.
+ * {@code claimDueBatch} → {@code runBatch} prevents a concurrent tick on another node from
+ * draining the same batch twice.
  * <p>
- * Adapter note: {@link CompetencyOrchestrationService} exposes only the single-exercise
- * {@code run(exerciseId)} method, so this scheduler loops the claimed batch sequentially rather
- * than calling a batched entry point. When the orchestrator's batched signature lands, replace
- * {@link #processBatch} with a single call.
+ * The whole claimed batch is handed to {@link CompetencyOrchestrationService#runBatch} in a single
+ * orchestrator invocation, so the model reasons across all changed exercises at once rather than
+ * one LLM call per exercise.
  */
 @Conditional(AtlasEnabled.class)
 @Profile(PROFILE_SCHEDULING)
@@ -116,40 +115,37 @@ public class ContentChangeScheduler {
     }
 
     private void processBatch(long courseId, String runId, BatchClaim claim) {
-        int success = 0;
-        int failure = 0;
-        int reported = 0;
-        log.info("atlas.automatic course {} firing run {} with {} exercise(s)", courseId, runId, claim.exerciseIds().size());
-        for (Long exerciseId : claim.exerciseIds()) {
-            try {
-                CompetencyOrchestrationResultDTO result = orchestrationService.run(exerciseId);
-                if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.SUCCESS) {
-                    success++;
-                    reported++;
-                }
-                else if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.IN_PROGRESS) {
-                    // Concurrent course orchestration — requeue and let the next tick pick it up
-                    // instead of consuming the change event as a permanent failure.
-                    log.info("atlas.automatic course {} requeueing exercise {} (run {}): concurrent run in progress", courseId, exerciseId, runId);
-                    accumulator.record(courseId, exerciseId);
-                }
-                else {
-                    failure++;
-                    reported++;
-                }
-            }
-            catch (Exception ex) {
-                failure++;
-                reported++;
-                log.warn("atlas.automatic per-exercise run failed exerciseId={}: {}", exerciseId, ex.getMessage());
-            }
+        Set<Long> exerciseIds = claim.exerciseIds();
+        int exerciseCount = exerciseIds.size();
+        log.info("atlas.automatic course {} firing run {} with {} exercise(s)", courseId, runId, exerciseCount);
+
+        CompetencyOrchestrationResultDTO result;
+        try {
+            result = orchestrationService.runBatch(courseId, exerciseIds);
         }
-        if (reported == 0) {
-            // Whole batch came back IN_PROGRESS and was requeued — no completion to surface.
-            log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, claim.exerciseIds().size());
+        catch (Exception ex) {
+            log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
+            broadcastSummary(courseId, runId, exerciseCount, false);
             return;
         }
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, reported, success, failure, Instant.now(clock));
+
+        if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.IN_PROGRESS) {
+            // Concurrent course orchestration — requeue the whole batch and let the next tick pick it
+            // up instead of consuming the change events as a permanent failure. No completion to surface.
+            log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, exerciseCount);
+            for (Long exerciseId : exerciseIds) {
+                accumulator.record(courseId, exerciseId);
+            }
+            return;
+        }
+
+        boolean success = result != null && result.status() == CompetencyOrchestrationResultDTO.Status.SUCCESS;
+        broadcastSummary(courseId, runId, exerciseCount, success);
+    }
+
+    private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
+                Instant.now(clock));
         websocketMessagingService.sendMessage(String.format(TOPIC_TEMPLATE, courseId), summary);
     }
 }
