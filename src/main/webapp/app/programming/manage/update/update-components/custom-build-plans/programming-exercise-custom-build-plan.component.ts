@@ -17,8 +17,8 @@ import { LegacyBuildPlanConverterService } from 'app/programming/shared/services
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnInit {
-    private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
+    private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
     readonly programmingExercise = input.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();

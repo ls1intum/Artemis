@@ -817,9 +817,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
-            const summary = result.summary.trim();
+            // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
+            const summary = result.summary?.trim() ?? '';
             this.orchestrationDialogMessage.set(summary);
-            this.orchestrationDialogActions.set(result.appliedActions);
+            this.orchestrationDialogActions.set(result.appliedActions ?? []);
             this.orchestrationDialogVisible.set(true);
             if (result.status === CompetencyOrchestrationStatus.Partial) {
                 this.alertService.addAlert({
