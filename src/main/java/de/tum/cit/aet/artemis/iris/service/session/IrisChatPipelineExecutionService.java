@@ -149,7 +149,6 @@ public class IrisChatPipelineExecutionService {
     /**
      * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
      * Loads mode-specific data (exercise, lecture, submission) on top of the shared course and metrics base.
-     * Extracts lecture context from user messages and removes context blocks for clean LLM processing.
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
