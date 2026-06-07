@@ -29,10 +29,6 @@ enablePrePostScripts: true
 # peer range, this block (and the matching overrides) can be removed.
 peerDependencyRules:
     allowedVersions:
-        # eslint-plugin-jest-extended still declares "^7 || ^8 || ^9"; the plugin works fine on
-        # ESLint 10. Scoped to that one package so we don't silence legitimate ESLint-version
-        # warnings from other plugins. Drop this entry once upstream lists ESLint 10.
-        'eslint-plugin-jest-extended>eslint': '10'
         '@angular/animations': '21'
         '@angular/cdk': '21'
         '@angular/common': '21'
@@ -90,7 +86,7 @@ overrides:
     express: '5.2.1'
     fast-uri: '3.1.2'
     globals: '17.6.0'
-    hono: '4.12.18'
+    hono: '4.12.23'
     '@hono/node-server': '1.19.13'
     ip-address: '10.2.0'
     js-yaml: '4.1.1'

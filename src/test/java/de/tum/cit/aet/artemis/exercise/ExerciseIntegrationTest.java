@@ -57,13 +57,13 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
-class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exerciseintegration";
 
@@ -558,14 +558,17 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else if (exercise instanceof QuizExercise) {
-                var submission = participation.getSubmissions().iterator().next();
-                // Quizzes before the due date expose a sanitized submission for the participation status, but no results or answers.
+                // Since #12842, a submitted quiz before the due date exposes a sanitized submission (submitted flag and
+                // submission date only, no answers, no results) so the dashboard can show "Submitted, waiting for due date".
                 assertThat(participation.getSubmissions()).hasSize(1);
+                var submission = participation.getSubmissions().iterator().next();
+                assertThat(submission.isSubmitted()).isTrue();
                 assertThat(submission).isInstanceOf(QuizSubmission.class);
-                assertThat(results).isEmpty();
                 assertThat(submission.getResults()).isEmpty();
-                assertThat(((QuizSubmission) submission).getSubmittedAnswers()).isNullOrEmpty();
-                assertThat(((QuizSubmission) submission).getScoreInPoints()).isNull();
+                assertThat(results).isEmpty();
+                var quizSubmission = (QuizSubmission) submission;
+                assertThat(quizSubmission.getSubmittedAnswers()).isNullOrEmpty();
+                assertThat(quizSubmission.getScoreInPoints()).isNull();
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
