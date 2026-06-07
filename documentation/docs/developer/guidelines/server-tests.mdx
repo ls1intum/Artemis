@@ -167,7 +167,7 @@ Follow these tips to write performant tests:
 
 Spring Boot caches test application contexts and reuses them when configurations match.
 When certain annotations differ between test classes, Spring creates separate contexts, causing additional server starts.
-We enforce a maximum of **9 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
+We enforce a maximum of **10 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
 
 ### Annotations That Can Cause Context Pollution
 
