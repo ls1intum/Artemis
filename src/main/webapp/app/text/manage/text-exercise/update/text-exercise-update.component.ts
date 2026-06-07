@@ -2,7 +2,6 @@ import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, viewChild 
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -45,6 +44,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -63,13 +63,13 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
+        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {

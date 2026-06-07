@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { findItem, findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
@@ -33,6 +35,8 @@ const rootHasChildren = new TreeViewItem<number>({
 });
 
 describe('findItem', () => {
+    setupTestBed({ zoneless: true });
+
     it('should not find item if root is undefined', () => {
         expect(findItem(undefined, 1)).toBeUndefined();
     });
@@ -49,6 +53,8 @@ describe('findItem', () => {
 });
 
 describe('findItemInList', () => {
+    setupTestBed({ zoneless: true });
+
     it('should not find item if list is undefined', () => {
         expect(findItemInList(undefined, 1)).toBeUndefined();
     });

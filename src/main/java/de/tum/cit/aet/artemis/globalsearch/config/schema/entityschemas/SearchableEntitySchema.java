@@ -132,6 +132,8 @@ public final class SearchableEntitySchema {
 
         public static final String FILE_PATTERN = "file_pattern";
 
+        public static final String ASSESSMENT_TYPE = "assessment_type";
+
         public static final String START_DATE = "start_date";
 
         public static final String END_DATE = "end_date";
@@ -191,6 +193,7 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.QUIZ_MODE, TEXT, "The quiz mode: SYNCHRONIZED, BATCHED, INDIVIDUAL (quiz exercises only)"),
             nonSearchable(Properties.QUIZ_DURATION, INT, "The quiz duration in seconds (quiz exercises only)"),
             nonSearchable(Properties.FILE_PATTERN, TEXT, "The accepted file pattern (file upload exercises only)"),
+            filterable(Properties.ASSESSMENT_TYPE, TEXT, "The assessment type: AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA (exercises only)"),
             nonSearchable(Properties.START_DATE, DATE, "The start date (exercises, lectures, exams)"), nonSearchable(Properties.END_DATE, DATE, "The end date (lectures, exams)"),
             nonSearchable(Properties.DUE_DATE, DATE, "The due date (exercises only)"),
             filterable(Properties.LECTURE_ID, INT, "The ID of the parent lecture (lecture_unit rows only, used for bulk delete on lecture deletion)"),

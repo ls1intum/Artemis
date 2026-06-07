@@ -1,7 +1,7 @@
-@if (isInCourseManagement) {
+@if (isInCourseManagement()) {
     <a
         class="btn btn-secondary navbar-btn me-3 open-repository-button"
-        [routerLink]="repositoryLink"
+        [routerLink]="repositoryLink()"
         target="_blank"
         rel="noopener noreferrer"
         [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
@@ -10,18 +10,18 @@
         <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.repo"></span>
     </a>
 }
-@if (commitState === CommitState.CONFLICT) {
+@if (commitState() === CommitState.CONFLICT) {
     <div>
         <button
             id="resolve_conflict_button"
             type="button"
             class="btn btn-danger navbar-btn me-3"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [overwriteDisabled]="disableActions"
+            [overwriteDisabled]="disableActions()"
             (click)="resetRepository()"
             [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
         >
-            @if (isResolvingConflict) {
+            @if (isResolvingConflict()) {
                 <span>
                     <fa-icon [icon]="faCircleNotch" animation="spin" />
                     <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
@@ -38,11 +38,11 @@
         type="button"
         class="btn btn-primary navbar-btn me-3"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+        [overwriteDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
         (click)="onRefresh()"
         [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
-        @if (editorState === EditorState.REFRESHING) {
+        @if (editorState() === EditorState.REFRESHING) {
             <span>
                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                 <span jhiTranslate="artemisApp.editor.refreshing"></span>
@@ -58,10 +58,10 @@
         class="btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="
-            disableActions ||
-            editorState === EditorState.REFRESHING ||
-            editorState === EditorState.SAVING ||
-            (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
+            disableActions() ||
+            editorState() === EditorState.REFRESHING ||
+            editorState() === EditorState.SAVING ||
+            (commitState() !== CommitState.UNCOMMITTED_CHANGES && commitState() !== CommitState.CLEAN)
         "
         (click)="commit()"
         [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"

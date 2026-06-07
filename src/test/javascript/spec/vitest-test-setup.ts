@@ -1,20 +1,19 @@
+/// <reference types="vitest/globals" />
 /**
  * Global Vitest Test Setup for Artemis
  *
- * Parallel to jest-test-setup.ts, this provides global mocks for Vitest tests.
+ * Provides the global mocks/polyfills for the Vitest client test suite (Vitest is the sole client test runner).
+ * The triple-slash reference above makes Vitest's global test APIs (describe/it/expect/vi) ambient for every
+ * spec without each file having to import them
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
  * NOTE: All tests run in zoneless mode - do not import zone.js
  */
 import '@angular/compiler';
 import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
+// Mock the canvas 2D context in jsdom (used by the PDF preview and Apollon diagram specs).
+import 'vitest-canvas-mock';
 import { vi } from 'vitest';
-
-// Provide a jest-compatible global so that legacy mocks (e.g. jest-canvas-mock) work under Vitest.
-// Must be set before requiring jest-canvas-mock, hence the synchronous require below.
-(globalThis as unknown as { jest: typeof vi }).jest = vi;
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-require('jest-canvas-mock');
 
 import 'app/foundation/util/array.extension';
 

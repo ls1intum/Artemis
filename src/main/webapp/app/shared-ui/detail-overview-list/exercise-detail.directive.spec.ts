@@ -1,7 +1,7 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseDetailDirective } from 'app/shared-ui/detail-overview-list/exercise-detail.directive';
-import { Component, ViewChild } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import type {
     BooleanDetail,
     DateDetail,
@@ -33,7 +33,7 @@ import { vi } from 'vitest';
     imports: [ExerciseDetailDirective],
 })
 class TestDetailHostComponent {
-    @ViewChild(ExerciseDetailDirective) directive: ExerciseDetailDirective;
+    directive = viewChild.required(ExerciseDetailDirective);
     detail: Detail;
 }
 
@@ -106,19 +106,19 @@ describe('ExerciseDetailDirective', () => {
     });
 
     function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
-        const createComponentSpy = vi.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
         component.detail = detailToBeChecked;
         fixture.changeDetectorRef.detectChanges();
-        component.directive.ngOnInit();
+        component.directive().ngOnInit();
 
         expect(createComponentSpy).not.toHaveBeenCalled();
     }
 
     function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
-        const createComponentSpy = vi.spyOn(component.directive.viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
+        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
         component.detail = detailToBeChecked;
         fixture.changeDetectorRef.detectChanges();
-        component.directive.ngOnInit();
+        component.directive().ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
     }

@@ -12,7 +12,7 @@
 // TODO Overloading malloc seems to cause problems with asan:
 // ==25708==AddressSanitizer CHECK failed: ../../../../src/libsanitizer/asan/asan_posix.cc:50 "((tsd_key_inited)) != (0)" (0x0, 0x0)
 //     <empty stack>
-#if !defined(__SANITIZE_ADDRESS__)
+#if !defined(__SANITIZE_ADDRESS__) && !defined(GBS_DISABLE_MALLOC_SHADOW)
 // Replace the regular malloc call and fill
 // the returning pointer with random garbage data
 extern void* __libc_malloc(size_t size);

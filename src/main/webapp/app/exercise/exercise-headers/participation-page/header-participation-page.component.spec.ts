@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -21,6 +21,7 @@ describe('HeaderParticipationPage', () => {
     setupTestBed({ zoneless: true });
 
     let component: HeaderParticipationPageComponent;
+    let fixture: ComponentFixture<HeaderParticipationPageComponent>;
 
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
@@ -39,11 +40,11 @@ describe('HeaderParticipationPage', () => {
             providers: [],
         }).compileComponents();
 
-        const fixture = TestBed.createComponent(HeaderParticipationPageComponent);
+        fixture = TestBed.createComponent(HeaderParticipationPageComponent);
         component = fixture.componentInstance;
 
         exercise = new ProgrammingExercise(undefined, undefined);
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         participation = new StudentParticipation(ParticipationType.PROGRAMMING);
     });
@@ -51,16 +52,15 @@ describe('HeaderParticipationPage', () => {
     it('should set the status badge', () => {
         const dueDate1 = dayjs().subtract(2, 'days');
         exercise.dueDate = dueDate1;
-        component.ngOnInit();
-        expect(component.exerciseStatusBadge).toBe('bg-danger');
-        expect(component.dueDate).toEqual(dueDate1);
+        fixture.componentRef.setInput('exercise', exercise);
+        expect(component.exerciseStatusBadge()).toBe('bg-danger');
+        expect(component.dueDate()).toEqual(dueDate1);
 
         const dueDate2 = dayjs().add(1, 'day');
         participation.individualDueDate = dueDate2;
-        component.participation = participation;
-        component.ngOnChanges();
-        expect(component.exerciseStatusBadge).toBe('bg-success');
-        expect(component.dueDate).toEqual(dueDate2);
+        fixture.componentRef.setInput('participation', participation);
+        expect(component.exerciseStatusBadge()).toBe('bg-success');
+        expect(component.dueDate()).toEqual(dueDate2);
     });
 
     it('should always publish the results for regular exercises', () => {
@@ -88,42 +88,35 @@ describe('HeaderParticipationPage', () => {
     });
 
     it('should not apply changes if no exercise is set', () => {
-        // @ts-ignore
-        component.exercise = undefined;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('exercise', undefined);
 
-        // Expect default values
-        expect(component.exerciseStatusBadge).toBe('bg-success');
-        expect(component.exerciseCategories).toBeUndefined();
-        expect(component.dueDate).toBeUndefined();
+        expect(component.exerciseStatusBadge()).toBe('bg-success');
+        expect(component.exerciseCategories()).toBeUndefined();
+        expect(component.dueDate()).toBeUndefined();
     });
 
     it('should display achieved points accordingly', () => {
-        component.exercise.maxPoints = 100;
-        component.participation = { submissions: [{ results: [] }] } as StudentParticipation;
-        component.ngOnChanges();
-        expect(component.achievedPoints).toBeUndefined();
+        component.exercise()!.maxPoints = 100;
+        fixture.componentRef.setInput('participation', { submissions: [{ results: [] }] } as StudentParticipation);
+        expect(component.achievedPoints()).toBeUndefined();
 
-        component.participation = { submissions: [{ results: [{ score: 42 } as Result] }] } as StudentParticipation;
-        component.ngOnChanges();
-        expect(component.achievedPoints).toBeUndefined();
+        fixture.componentRef.setInput('participation', { submissions: [{ results: [{ score: 42 } as Result] }] } as StudentParticipation);
+        expect(component.achievedPoints()).toBeUndefined();
 
-        component.participation = { submissions: [{ results: [{ score: 42, rated: true } as Result] }] } as StudentParticipation;
-        component.ngOnChanges();
-        expect(component.achievedPoints).toBe(42);
+        fixture.componentRef.setInput('participation', { submissions: [{ results: [{ score: 42, rated: true } as Result] }] } as StudentParticipation);
+        expect(component.achievedPoints()).toBe(42);
     });
 
     it('should select the result with later completion date even if its id is lower', () => {
-        component.exercise.maxPoints = 100;
+        component.exercise()!.maxPoints = 100;
         const earlierDate = dayjs().subtract(2, 'hours');
         const laterDate = dayjs().subtract(1, 'hours');
 
         const resultWithLowerId = { id: 1, score: 80, rated: true, completionDate: laterDate } as Result;
         const resultWithHigherId = { id: 2, score: 50, rated: true, completionDate: earlierDate } as Result;
 
-        component.participation = { submissions: [{ results: [resultWithHigherId, resultWithLowerId] }] } as StudentParticipation;
+        fixture.componentRef.setInput('participation', { submissions: [{ results: [resultWithHigherId, resultWithLowerId] }] } as StudentParticipation);
 
-        component.ngOnChanges();
-        expect(component.achievedPoints).toBe(80);
+        expect(component.achievedPoints()).toBe(80);
     });
 });
