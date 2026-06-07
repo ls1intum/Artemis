@@ -40,6 +40,10 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.setTimelineDate('Release Date', date);
     }
 
+    async setStartDate(date: Dayjs) {
+        await this.setTimelineDate('Start Date', date);
+    }
+
     async setDueDate(date: Dayjs) {
         await this.setTimelineDate('Due Date', date);
     }
