@@ -1,14 +1,20 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, afterRenderEffect, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { CardModule } from 'primeng/card';
+import { StepsModule } from 'primeng/steps';
+import { TextareaModule } from 'primeng/textarea';
+import { MenuItem } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subscription, forkJoin } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,7 +23,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
-import { GenerationFileChange, GenerationRepo, parseGenerationProgress } from 'app/hyperion/exercise-generation/generation-progress.model';
+import { GENERATION_PHASE_ORDER, GenerationFileChange, GenerationRepo, parseGenerationProgress } from 'app/hyperion/exercise-generation/generation-progress.model';
 import {
     ExerciseGenerationEvent,
     ExerciseGenerationVerdict,
@@ -37,7 +43,19 @@ const REPO_ORDER: GenerationRepo[] = ['solution', 'template', 'tests', 'other'];
     templateUrl: './hyperion-exercise-generation.component.html',
     styleUrl: './hyperion-exercise-generation.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ButtonModule, TagModule, ProgressBarModule, CardModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        ButtonModule,
+        TagModule,
+        ProgressBarModule,
+        CardModule,
+        StepsModule,
+        TextareaModule,
+        FormsModule,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private generationService = inject(HyperionExerciseGenerationService);
@@ -45,6 +63,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -54,6 +73,13 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     /** When {@code true}, automatically starts a generation run once on load (used by the create flow's auto-start). */
     readonly autoStart = input<boolean>(false);
+
+    /**
+     * Optional router link to the code editor where a recovered draft's review comments live. When set on a NEEDS_REVIEW
+     * outcome, the card offers an "open in editor" button. The editor host itself leaves this undefined (the comments are
+     * already on screen), so the button is correctly absent there; the detail-page host points the instructor to the editor.
+     */
+    readonly reviewCommentsLink = input<unknown[] | undefined>(undefined);
 
     /** Emitted with {@code true} once an exercise has been generated and saved, so the parent can refresh. */
     readonly generationCompleted = output<boolean>();
@@ -68,6 +94,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     readonly diffLoading = signal<boolean>(false);
 
+    /** Optional free-text guidance the instructor can add before retrying, threaded into the next run as its prompt. */
+    readonly retryGuidance = signal<string>('');
+
     readonly canCancel = computed(() => this.running() && !!this.jobId() && !this.cancelling());
     readonly succeeded = computed(() => this.finalEvent()?.type === 'DONE' && this.finalEvent()?.completionStatus === 'SUCCESS');
     /** A near-miss that was recovered: a best-effort draft was saved with review comments to resolve (distinct from a clean, verified success). */
@@ -78,6 +107,16 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
     readonly phaseKey = computed(() => this.progress().phase);
+
+    /** The four working phases rendered as stepper steps, labels resolved from i18n. The {@code done} phase reuses the last step (all complete). */
+    readonly phaseSteps = computed<MenuItem[]>(() =>
+        GENERATION_PHASE_ORDER.map((phase) => ({ label: this.translateService.instant(`artemisApp.programmingExercise.generateExercise.phase.${phase}`) })),
+    );
+    /** Index of the current phase within {@link GENERATION_PHASE_ORDER}; {@code done} keeps the last step active so the stepper reads as complete. */
+    readonly phaseIndex = computed(() => {
+        const index = GENERATION_PHASE_ORDER.indexOf(this.phaseKey());
+        return index === -1 ? GENERATION_PHASE_ORDER.length - 1 : index;
+    });
     readonly currentStep = computed(() => this.progress().currentStep);
     readonly attempt = computed(() => this.progress().attempt);
     readonly attemptTotal = computed(() => this.progress().attemptTotal);
@@ -179,16 +218,17 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.generate();
     }
 
-    generate(): void {
+    generate(guidance?: string): void {
         if (this.running()) {
             return;
         }
         this.reset();
         this.running.set(true);
         this.startTimer();
-        // No brief here: a retry reuses the prior run's context (the persisted draft / problem statement).
+        // A retry reuses the prior run's context (the persisted draft / problem statement); optional instructor guidance is threaded in as the run's prompt.
+        const prompt = guidance?.trim() || undefined;
         this.generationService
-            .generateExercise(this.exerciseId(), undefined)
+            .generateExercise(this.exerciseId(), prompt)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (start) => {
@@ -302,6 +342,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.progressEvents.set([]);
         this.finalEvent.set(undefined);
         this.showLog.set(false);
+        this.retryGuidance.set('');
         this.terminalFocusHandled = false;
     }
 

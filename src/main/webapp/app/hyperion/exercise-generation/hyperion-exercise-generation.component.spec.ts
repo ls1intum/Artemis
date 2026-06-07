@@ -3,6 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 import { ExerciseGenerationEvent, HyperionExerciseGenerationWebsocketService } from 'app/hyperion/services/hyperion-exercise-generation-websocket.service';
@@ -55,6 +56,7 @@ describe('HyperionExerciseGenerationComponent', () => {
                 { provide: ProgrammingExerciseService, useValue: programmingExerciseService },
                 { provide: DialogService, useValue: dialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideRouter([]),
             ],
         });
         create();
@@ -368,5 +370,69 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(component.finalEvent()).toBeUndefined();
         expect(component.showLog()).toBe(false);
         expect(component.elapsedSeconds()).toBe(0);
+    });
+
+    it('maps each phase to the right stepper index, with done keeping the last step active', () => {
+        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-steps' }));
+        component.generate();
+
+        // preparing -> 0 (initial phase before any recognised line)
+        expect(component.phaseIndex()).toBe(0);
+
+        jobStream.next({ type: 'PROGRESS', message: 'Turn 1: write_file solution/A.java' });
+        expect(component.phaseKey()).toBe('authoring');
+        expect(component.phaseIndex()).toBe(1);
+
+        jobStream.next({ type: 'PROGRESS', message: 'Verifying the generated exercise (attempt 1 of 3)' });
+        expect(component.phaseKey()).toBe('verifying');
+        expect(component.phaseIndex()).toBe(2);
+
+        jobStream.next({ type: 'PROGRESS', message: 'Verification passed. Saving the exercise' });
+        expect(component.phaseKey()).toBe('saving');
+        expect(component.phaseIndex()).toBe(3);
+
+        // A terminal event forces the done phase, which keeps the last step active (all steps complete).
+        jobStream.next({ type: 'DONE', completionStatus: 'SUCCESS', message: 'saved' });
+        expect(component.phaseKey()).toBe('done');
+        expect(component.phaseIndex()).toBe(3);
+    });
+
+    it('threads the typed retry guidance into the next run while a plain retry passes none', () => {
+        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-guided' }));
+        component.generate();
+        jobStream.next({ type: 'DONE', completionStatus: 'PARTIAL', message: 'not verified' });
+        expect(component.canRetry()).toBe(true);
+
+        component.retryGuidance.set('  also cover the empty input  ');
+        // The "Try again" button calls generate(retryGuidance()); the trimmed guidance becomes the run's prompt.
+        component.generate(component.retryGuidance());
+        expect(generationService.generateExercise).toHaveBeenLastCalledWith(42, 'also cover the empty input');
+
+        // A new run reset the guidance signal back to empty.
+        expect(component.retryGuidance()).toBe('');
+
+        // A subsequent plain retry (whitespace-only guidance) sends no prompt.
+        jobStream.next({ type: 'DONE', completionStatus: 'PARTIAL', message: 'still not verified' });
+        component.retryGuidance.set('   ');
+        component.generate(component.retryGuidance());
+        expect(generationService.generateExercise).toHaveBeenLastCalledWith(42, undefined);
+    });
+
+    it('shows the open-in-editor link only when needs-review AND a review link is provided', () => {
+        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-link' }));
+        component.generate();
+        jobStream.next({ type: 'DONE', completionStatus: 'NEEDS_REVIEW', message: 'draft saved' });
+        fixture.detectChanges();
+
+        const linkText = 'artemisApp.programmingExercise.generateExercise.openInEditor';
+        // Without a link input the button is absent even though the outcome needs review (the editor host omits it).
+        expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(linkText);
+
+        fixture.componentRef.setInput('reviewCommentsLink', ['/course-management', 1, 'programming-exercises', 42, 'edit']);
+        fixture.detectChanges();
+        expect(component.needsReview()).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain(linkText);
+        // It renders as a real router link the host can follow to the editor.
+        expect((fixture.nativeElement as HTMLElement).querySelector('a[href*="programming-exercises"]')).not.toBeNull();
     });
 });

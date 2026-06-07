@@ -231,7 +231,7 @@
                                         }
 
                                         <!-- Finding-free "Adapt exercise" path: opens the same adapt dialog without a finding (instructions required). -->
-                                        @if (exercise.id) {
+                                        @if (exercise.isAtLeastEditor && exercise.id) {
                                             <button class="ai-menu-item" (click)="openFreeAdaptDialog(); aiMenuPopover.hide()" [disabled]="isAiApplying()">
                                                 <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                                 <span jhiTranslate="artemisApp.review.adaptExercise.menuAction"></span>

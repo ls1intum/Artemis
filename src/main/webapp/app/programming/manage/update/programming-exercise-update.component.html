@@ -50,6 +50,8 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 [showGenerateWithAi]="showGenerateWithAi()"
+                [generationLanguageSupported]="generationLanguageSupported()"
+                [generationLanguagesLoading]="generationLanguagesLoading()"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
                 [formInvalid]="!!getInvalidReasons().length"
                 (problemStatementChange)="calculateFormStatusSections()"
@@ -85,3 +87,4 @@
         </div>
     </form>
 </div>
+<p-confirmDialog />

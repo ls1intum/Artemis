@@ -933,7 +933,10 @@
                 "entireExerciseHelp": "Speichert die Aufgabe mit leeren Repositories, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst. Dabei wird der Einrichtungsassistent verlassen und die Aufgabe geöffnet, wo du den Lauf verfolgen kannst.",
                 "generate": "Aufgabe generieren",
                 "retry": "Erneut versuchen",
-                "retryHint": "Der vorherige Lauf wurde nicht gespeichert. Füge unten Hinweise zu den Problemen hinzu und versuche es erneut.",
+                "retryHint": "Der vorherige Lauf wurde nicht gespeichert. Füge unten optional Hinweise hinzu und versuche es erneut.",
+                "guidanceLabel": "Hinweise für den nächsten Versuch (optional)",
+                "guidancePlaceholder": "z. B. auch den Leereingabe-Sonderfall abdecken; die Vorlage zu einem klareren Gerüst machen",
+                "openInEditor": "Im Code-Editor öffnen, um die Review-Kommentare zu lösen",
                 "cancel": "Abbrechen",
                 "cancelling": "Wird abgebrochen…",
                 "runningHint": "Das dauert in der Regel einige Minuten. Der Fortschritt wird hier angezeigt; die Aufgabe wird erst nach erfolgreicher Verifizierung gespeichert.",
@@ -975,7 +978,13 @@
                 "gateTemplateMet": "Vorlage scheitert wie erwartet",
                 "gateTemplateUnmet": "Vorlage besteht unerwartet",
                 "gateTests": "Tests",
-                "reasonsHeading": "Warum es nicht akzeptiert wurde"
+                "reasonsHeading": "Warum es nicht akzeptiert wurde",
+                "languageUnsupportedTooltip": "KI-Generierung ist für diese Programmiersprache noch nicht verfügbar.",
+                "languageLoadingTooltip": "Sprachunterstützung wird geprüft…",
+                "confirmTitle": "Gesamte Aufgabe generieren?",
+                "confirmMessage": "Artemis Intelligence speichert diese Aufgabe mit leeren Repositories, verlässt den Einrichtungsassistenten und generiert die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert alles, bevor du es behältst. Dies dauert einige Minuten und verbraucht KI-Credits.",
+                "confirmAccept": "Aufgabe generieren",
+                "confirmReject": "Abbrechen"
             }
         },
         "error": {

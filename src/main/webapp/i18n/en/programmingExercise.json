@@ -933,7 +933,10 @@
                 "entireExerciseHelp": "Saves the exercise with empty repositories, then generates the solution, a failing template, tests, and the problem statement — and verifies them before you keep it. This leaves the setup wizard and opens the exercise where you can watch the run.",
                 "generate": "Generate exercise",
                 "retry": "Try again",
-                "retryHint": "The previous run was not saved. Add guidance below addressing the issues, then try again.",
+                "retryHint": "The previous run was not saved. Optionally add guidance below, then try again.",
+                "guidanceLabel": "Guidance for the next attempt (optional)",
+                "guidancePlaceholder": "e.g. also cover the empty-input edge case; make the template a clearer stub",
+                "openInEditor": "Open in the code editor to resolve the review comments",
                 "cancel": "Cancel",
                 "cancelling": "Cancelling…",
                 "runningHint": "This usually takes a few minutes. Progress streams here; the exercise is only saved once it is verified.",
@@ -975,7 +978,13 @@
                 "gateTemplateMet": "Template fails as required",
                 "gateTemplateUnmet": "Template unexpectedly passes",
                 "gateTests": "tests",
-                "reasonsHeading": "Why it was not accepted"
+                "reasonsHeading": "Why it was not accepted",
+                "languageUnsupportedTooltip": "AI generation is not available for this programming language yet.",
+                "languageLoadingTooltip": "Checking language support…",
+                "confirmTitle": "Generate the entire exercise?",
+                "confirmMessage": "Artemis Intelligence will save this exercise with empty repositories, leave the setup wizard, and generate the solution, a failing template, tests, and the problem statement — verifying everything before you keep it. This runs for a few minutes and uses AI credits.",
+                "confirmAccept": "Generate exercise",
+                "confirmReject": "Cancel"
             }
         },
         "error": {

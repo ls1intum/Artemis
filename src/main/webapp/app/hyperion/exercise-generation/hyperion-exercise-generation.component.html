@@ -10,19 +10,18 @@
 
         @if (running()) {
             <div class="generation-status">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                    <!-- Only the coarse phase/attempt text is a live region, so the screen reader announces stage transitions, not the per-second timer tick. -->
-                    <span class="fw-semibold" role="status" aria-live="polite">
-                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.phase.{{ phaseKey() }}"></span>
+                <!-- p-steps is not a live region; this visually-hidden status span announces the coarse phase transitions to screen readers, not the per-second timer tick. -->
+                <span class="visually-hidden" role="status" aria-live="polite" jhiTranslate="artemisApp.programmingExercise.generateExercise.phase.{{ phaseKey() }}"></span>
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <p-steps class="generation-steps flex-grow-1" [readonly]="true" [model]="phaseSteps()" [activeIndex]="phaseIndex()" />
+                    <small class="text-color-secondary text-nowrap" aria-hidden="true">
                         @if (showAttempt()) {
-                            <span class="text-color-secondary ms-2">{{
+                            <span class="me-2">{{
                                 'artemisApp.programmingExercise.generateExercise.attempt' | artemisTranslate: { attempt: attempt(), total: attemptTotal() }
                             }}</span>
                         }
-                    </span>
-                    <small class="text-color-secondary" aria-hidden="true">{{
-                        'artemisApp.programmingExercise.generateExercise.elapsed' | artemisTranslate: { time: elapsedDisplay() }
-                    }}</small>
+                        {{ 'artemisApp.programmingExercise.generateExercise.elapsed' | artemisTranslate: { time: elapsedDisplay() } }}
+                    </small>
                 </div>
                 <p-progressBar mode="indeterminate" [style]="{ height: '6px' }" aria-hidden="true" />
                 @if (currentStep(); as step) {
@@ -121,6 +120,21 @@
                 }
             }
 
+            @if (canRetry() && !succeeded()) {
+                <div class="generation-guidance mt-3">
+                    <label class="fw-semibold d-block mb-1" for="generation-retry-guidance" jhiTranslate="artemisApp.programmingExercise.generateExercise.guidanceLabel"></label>
+                    <textarea
+                        pTextarea
+                        id="generation-retry-guidance"
+                        class="w-100"
+                        rows="3"
+                        [ngModel]="retryGuidance()"
+                        (ngModelChange)="retryGuidance.set($event)"
+                        [placeholder]="'artemisApp.programmingExercise.generateExercise.guidancePlaceholder' | artemisTranslate"
+                    ></textarea>
+                </div>
+            }
+
             <div class="d-flex gap-2 mt-3 flex-wrap" #actionButtons>
                 @if (succeeded()) {
                     <span #reviewButton>
@@ -129,8 +143,14 @@
                         </p-button>
                     </span>
                 }
+                @if (needsReview() && reviewCommentsLink()) {
+                    <!-- A real anchor (not a button) so it is a proper, right-click/keyboard-navigable link to the editor where the review comments live. -->
+                    <a pButton severity="primary" size="small" [routerLink]="reviewCommentsLink()">
+                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.openInEditor"></span>
+                    </a>
+                }
                 @if (canRetry() && !succeeded()) {
-                    <p-button severity="secondary" outlined size="small" [disabled]="running()" (onClick)="generate()">
+                    <p-button severity="secondary" outlined size="small" [disabled]="running()" (onClick)="generate(retryGuidance())">
                         <span jhiTranslate="artemisApp.programmingExercise.generateExercise.retry"></span>
                     </p-button>
                 }

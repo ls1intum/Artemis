@@ -13,6 +13,8 @@ vi.mock('y-monaco', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Tooltip } from 'primeng/tooltip';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs';
@@ -647,6 +649,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
             // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
             (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
             fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('generationLanguageSupported', true);
             // A brief is required (consistent with the problem-statement action): the button is disabled until one is entered.
             comp.userPrompt.set('A bounded integer stack with push, pop, peek and a fixed capacity.');
             fixture.detectChanges();
@@ -662,6 +665,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         it('disables the entire-exercise action until a brief is entered', () => {
             (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
             fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('generationLanguageSupported', true);
             comp.userPrompt.set('');
             fixture.detectChanges();
 
@@ -676,6 +680,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         it('disables and explains the entire-exercise action when the form is invalid', () => {
             (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
             fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('generationLanguageSupported', true);
             comp.userPrompt.set('Implement a bank account.');
 
             // A valid form with a brief: the action is enabled and carries the normal tooltip.
@@ -688,6 +693,50 @@ describe('ProgrammingExerciseProblemComponent', () => {
             fixture.componentRef.setInput('formInvalid', true);
             fixture.detectChanges();
             expect(button.disabled).toBe(true);
+        });
+
+        it('renders the entire-exercise action but disabled with the unsupported-language tooltip when the language is not supported (R2)', () => {
+            // Discoverability: the action must stay visible on an unsupported language (rendered, not removed), but disabled so it cannot be run.
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('generationLanguagesLoading', false);
+            fixture.componentRef.setInput('generationLanguageSupported', false);
+            fixture.componentRef.setInput('formInvalid', false);
+            comp.userPrompt.set('Implement a bank account.');
+            fixture.detectChanges();
+
+            const buttonDebugEl = fixture.debugElement.query(By.css('#generate-entire-exercise'));
+            expect(buttonDebugEl).not.toBeNull();
+            const button = buttonDebugEl.nativeElement as HTMLButtonElement;
+            // Even with a valid form and a brief, an unsupported language keeps the action disabled.
+            expect(button.disabled).toBe(true);
+            // The explanatory tooltip on the action resolves to the unsupported-language key (artemisTranslate / MockTranslateService echo the key).
+            const tooltipContent = buttonDebugEl.injector.get(Tooltip).content as string;
+            expect(tooltipContent).toContain('languageUnsupportedTooltip');
+
+            // Becomes enabled once the language is supported.
+            fixture.componentRef.setInput('generationLanguageSupported', true);
+            fixture.detectChanges();
+            expect(button!.disabled).toBe(false);
+        });
+
+        it('shows a skeleton instead of the entire-exercise action while the supported-language set is loading', () => {
+            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
+            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('generationLanguagesLoading', true);
+            fixture.componentRef.setInput('generationLanguageSupported', false);
+            comp.userPrompt.set('Implement a bank account.');
+            fixture.detectChanges();
+
+            // While loading: skeleton present, action absent (no wrongly-disabled "unsupported" flash).
+            expect((fixture.nativeElement as HTMLElement).querySelector('p-skeleton')).not.toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).toBeNull();
+
+            // Once loaded: skeleton gone, action rendered.
+            fixture.componentRef.setInput('generationLanguagesLoading', false);
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).querySelector('p-skeleton')).toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).not.toBeNull();
         });
     });
 });

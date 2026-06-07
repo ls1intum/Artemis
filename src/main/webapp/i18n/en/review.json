@@ -72,7 +72,14 @@
                 "cancel": "Cancel",
                 "started": "Adaptation started.",
                 "alreadyRunning": "An Artemis Intelligence run is already in progress for this exercise.",
-                "startError": "Could not start the Artemis Intelligence adaptation. Please try again."
+                "startError": "Could not start the Artemis Intelligence adaptation. Please try again.",
+                "presetsLabel": "Common adaptations",
+                "presetRegenerateTests": "Regenerate the tests",
+                "presetRegenerateTestsValue": "Regenerate the test suite to cover more behaviour and edge cases, keeping the same public API.",
+                "presetSimplifyTemplate": "Simplify the template",
+                "presetSimplifyTemplateValue": "Make the template a clean starting point: keep the public signatures but replace the bodies with clear TODO stubs.",
+                "presetEdgeCaseTests": "Add edge-case tests",
+                "presetEdgeCaseTestsValue": "Add tests for edge cases the current suite misses: empty, single-element, boundary, and error conditions."
             },
             "submitBeforeComment": "Submit the exercise before starting a thread."
         }

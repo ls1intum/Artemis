@@ -12,6 +12,17 @@
     color: var(--primary);
 }
 
+// Keep the read-only phase stepper compact so it fits the card header row alongside the elapsed/attempt text.
+.generation-steps ::ng-deep {
+    .p-steps {
+        font-size: 0.85rem;
+    }
+
+    .p-steps-item .p-menuitem-link {
+        padding: 0.25rem 0.5rem;
+    }
+}
+
 .generation-current-step {
     font-family: var(--bs-font-monospace, monospace);
     font-size: 0.8rem;

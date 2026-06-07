@@ -89,6 +89,34 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         });
     });
 
+    describe('presets (TIER-3, both modes)', () => {
+        const REGENERATE_TESTS_VALUE_KEY = 'artemisApp.review.adaptExercise.presetRegenerateTestsValue';
+        const SIMPLIFY_TEMPLATE_VALUE_KEY = 'artemisApp.review.adaptExercise.presetSimplifyTemplateValue';
+        const EDGE_CASE_TESTS_VALUE_KEY = 'artemisApp.review.adaptExercise.presetEdgeCaseTestsValue';
+
+        it('should set instructions to the resolved preset value in free mode and enable confirm', async () => {
+            const { comp } = await createComponent({});
+            expect(comp.confirmDisabled()).toBe(true);
+            comp.applyPreset(REGENERATE_TESTS_VALUE_KEY);
+            // MockTranslateService.instant echoes the key back as the resolved value.
+            expect(comp.instructions()).toBe(REGENERATE_TESTS_VALUE_KEY);
+            expect(comp.confirmDisabled()).toBe(false);
+        });
+
+        it('should set instructions to the resolved preset value in review-thread mode', async () => {
+            const { comp } = await createComponent({ findingText: 'Signature mismatch in solution.' });
+            comp.applyPreset(SIMPLIFY_TEMPLATE_VALUE_KEY);
+            expect(comp.instructions()).toBe(SIMPLIFY_TEMPLATE_VALUE_KEY);
+        });
+
+        it('should overwrite previously typed instructions when a preset is applied', async () => {
+            const { comp } = await createComponent({});
+            comp.instructions.set('something the instructor typed');
+            comp.applyPreset(EDGE_CASE_TESTS_VALUE_KEY);
+            expect(comp.instructions()).toBe(EDGE_CASE_TESTS_VALUE_KEY);
+        });
+    });
+
     it('should close with undefined result on cancel', async () => {
         const { comp } = await createComponent({ findingText: 'x' });
         comp.cancel();

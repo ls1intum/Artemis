@@ -59,29 +59,36 @@
             </button>
             @if (showGenerateWithAi()) {
                 <span class="tier-separator vr mx-1" aria-hidden="true"></span>
-                <button
-                    pButton
-                    type="button"
-                    id="generate-entire-exercise"
-                    severity="primary"
-                    size="small"
-                    [loading]="isGeneratingWithAi()"
-                    [disabled]="!userPrompt()?.trim() || isGeneratingWithAi() || isAiApplying() || formInvalid()"
-                    [pTooltip]="
-                        (formInvalid()
-                            ? 'artemisApp.programmingExercise.generateExercise.formInvalidTooltip'
-                            : 'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip'
-                        ) | artemisTranslate
-                    "
-                    tooltipPosition="top"
-                    (click)="generateWithAi.emit()"
-                >
-                    @if (!isGeneratingWithAi()) {
-                        <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
-                    }
-                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
-                </button>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.generateExercise.entireExerciseHelp" />
+                @if (generationLanguagesLoading()) {
+                    <!-- The server-driven supported-language set has not arrived yet; stand in with a skeleton sized to the action so the layout does not jump. -->
+                    <p-skeleton width="11rem" height="2rem" />
+                } @else {
+                    <button
+                        pButton
+                        type="button"
+                        id="generate-entire-exercise"
+                        severity="primary"
+                        size="small"
+                        [loading]="isGeneratingWithAi()"
+                        [disabled]="!userPrompt()?.trim() || isGeneratingWithAi() || isAiApplying() || formInvalid() || !generationLanguageSupported()"
+                        [pTooltip]="
+                            (formInvalid()
+                                ? 'artemisApp.programmingExercise.generateExercise.formInvalidTooltip'
+                                : !generationLanguageSupported()
+                                  ? 'artemisApp.programmingExercise.generateExercise.languageUnsupportedTooltip'
+                                  : 'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip'
+                            ) | artemisTranslate
+                        "
+                        tooltipPosition="top"
+                        (click)="generateWithAi.emit()"
+                    >
+                        @if (!isGeneratingWithAi()) {
+                            <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
+                        }
+                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
+                    </button>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.generateExercise.entireExerciseHelp" />
+                }
             }
         </div>
     }

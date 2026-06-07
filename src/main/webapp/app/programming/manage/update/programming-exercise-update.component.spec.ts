@@ -53,6 +53,7 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -527,38 +528,69 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
-    describe('generate with AI visibility', () => {
-        // The generation-supported set is now server-driven; the action shows only AFTER it has loaded (fails closed before). Tests prime the signal explicitly.
-        const SERVER_SUPPORTED = [ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON];
+    describe('saveWithAi confirmation (R5)', () => {
+        // The component declares ConfirmationService in its own `providers`, so resolve it from the component injector (not the root TestBed).
+        const getConfirmationService = (): ConfirmationService => fixture.debugElement.injector.get(ConfirmationService);
 
-        it('should show for every server-supported language once the set has loaded (S1)', () => {
-            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
-
+        it('asks for confirmation and does not save until the user accepts', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            entity.programmingLanguage = ProgrammingLanguage.JAVA;
-
+            entity.course = course;
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.hyperionEnabled = true;
+
+            const confirmSpy = vi.spyOn(getConfirmationService(), 'confirm').mockReturnValue(getConfirmationService());
+            const saveAiSpy = vi.spyOn(comp, 'saveExerciseWithAi');
+
+            comp.saveWithAi();
+
+            // The dialog is requested with the from-scratch confirmation strings, and nothing has been saved yet (reject is the default — no accept invoked).
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            const options = confirmSpy.mock.calls[0][0];
+            expect(options.header).toBe('artemisApp.programmingExercise.generateExercise.confirmTitle');
+            expect(options.message).toBe('artemisApp.programmingExercise.generateExercise.confirmMessage');
+            expect(options.acceptButtonProps?.label).toBe('artemisApp.programmingExercise.generateExercise.confirmAccept');
+            expect(options.rejectButtonProps?.label).toBe('artemisApp.programmingExercise.generateExercise.confirmReject');
+            expect(saveAiSpy).not.toHaveBeenCalled();
+        });
+
+        it('proceeds to save through the modal check when the user accepts', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+            // Take the from-scratch generation branch (not the plain-save early return) in saveExerciseWithAi.
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
+            vi.spyOn(comp, 'getInvalidReasons').mockReturnValue([]);
 
-            expect(comp.showGenerateWithAi()).toBe(true);
+            // Capture the accept callback so the test can simulate the user confirming.
+            const confirmSpy = vi.spyOn(getConfirmationService(), 'confirm').mockReturnValue(getConfirmationService());
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
 
-            // Kotlin (and the other server-supported languages) are supported, not just Java.
-            const kotlinExercise = new ProgrammingExercise(course, undefined);
-            kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
-            comp.programmingExercise = kotlinExercise;
-            expect(comp.showGenerateWithAi()).toBe(true);
+            comp.saveWithAi();
 
-            const pythonExercise = new ProgrammingExercise(course, undefined);
-            pythonExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
-            comp.programmingExercise = pythonExercise;
-            expect(comp.showGenerateWithAi()).toBe(true);
+            const accept = confirmSpy.mock.calls[0][0].accept!;
+            // Nothing happens before the user accepts.
+            expect(setupSpy).not.toHaveBeenCalled();
+
+            accept();
+
+            // On accept the from-scratch generation runs with empty repositories (the second arg is emptyRepositories=true).
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
         });
+    });
 
-        it('should hide before the supported set has loaded (fail-closed) (S5)', () => {
-            // Signal still at its empty default (the server set has not arrived / the call errored).
+    describe('generate with AI visibility', () => {
+        // The generation-supported set is now server-driven; it gates whether the entire-exercise action can run (generationLanguageSupported),
+        // NOT whether the action area is shown. showGenerateWithAi is purely STRUCTURAL (create + Hyperion + not an import), independent of language (R2).
+        const SERVER_SUPPORTED = [ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON];
+
+        it('should show structurally regardless of language, even before the supported set has loaded (R2)', () => {
+            // Supported set still at its empty default (server set has not arrived) — the action area must still be shown so the capability stays discoverable.
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -569,28 +601,61 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromSharing = false;
 
             expect(comp.supportedGenerationLanguages()).toEqual([]);
+            expect(comp.showGenerateWithAi()).toBe(true);
+
+            // A language with no generation profile (e.g. OCaml) still shows the action area — it is rendered-but-disabled in the child, not removed.
+            const ocamlExercise = new ProgrammingExercise(course, undefined);
+            ocamlExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            comp.programmingExercise = ocamlExercise;
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should hide for imports and edits (structural gate)', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+
+            comp.isImportFromExistingExercise = true;
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromExistingExercise = false;
+
+            comp.isImportFromFile = true;
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromFile = false;
+
+            comp.isImportFromSharing = true;
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromSharing = false;
+
+            // Editing an existing exercise (id set) hides the create-only action.
+            const existing = new ProgrammingExercise(course, undefined);
+            existing.programmingLanguage = ProgrammingLanguage.JAVA;
+            existing.id = 5;
+            comp.programmingExercise = existing;
             expect(comp.showGenerateWithAi()).toBe(false);
         });
 
-        it('should hide for a language not in the server set (S1)', () => {
-            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
-
+        it('should report generationLanguageSupported only for languages in the server set (fail-closed before load)', () => {
             const entity = new ProgrammingExercise(course, undefined);
-            // OCaml has only a best-effort server profile and is intentionally not offered in the create action.
-            entity.programmingLanguage = ProgrammingLanguage.OCAML;
-
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
-            comp.isImportFromExistingExercise = false;
-            comp.isImportFromFile = false;
-            comp.isImportFromSharing = false;
 
-            expect(comp.showGenerateWithAi()).toBe(false);
+            // Before the set loads, the language is treated as unsupported (action rendered-but-disabled).
+            expect(comp.generationLanguageSupported()).toBe(false);
+
+            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
+            expect(comp.generationLanguageSupported()).toBe(true);
+
+            const ocamlExercise = new ProgrammingExercise(course, undefined);
+            ocamlExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            comp.programmingExercise = ocamlExercise;
+            // OCaml has only a best-effort server profile and is not in the supported set.
+            expect(comp.generationLanguageSupported()).toBe(false);
         });
 
         it('should still show when id is null', () => {
-            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
-
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
             entity.id = null as unknown as number;
@@ -604,7 +669,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.showGenerateWithAi()).toBe(true);
         });
 
-        it('should load the supported set from the server on init when hyperion is enabled (S1)', () => {
+        it('should load the supported set from the server on init when hyperion is enabled and toggle the loading flag (S1)', () => {
             const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
             const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
@@ -613,9 +678,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(getSupported).toHaveBeenCalledOnce();
             expect(comp.supportedGenerationLanguages()).toEqual(SERVER_SUPPORTED);
+            // Loading flag cleared after the synchronous `of(...)` emission.
+            expect(comp.generationLanguagesLoading()).toBe(false);
         });
 
-        it('should keep the set empty (fail-closed) when the server call errors (S5)', () => {
+        it('should keep the set empty (fail-closed) and clear loading when the server call errors (S5)', () => {
             const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
             vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(throwError(() => new Error('boom')));
             vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
@@ -623,7 +690,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.ngOnInit();
 
             expect(comp.supportedGenerationLanguages()).toEqual([]);
-            expect(comp.showGenerateWithAi()).toBe(false);
+            expect(comp.generationLanguagesLoading()).toBe(false);
+        });
+
+        it('should leave the loading flag false and never call the server when hyperion is disabled', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            comp.ngOnInit();
+
+            expect(getSupported).not.toHaveBeenCalled();
+            expect(comp.generationLanguagesLoading()).toBe(false);
         });
     });
 

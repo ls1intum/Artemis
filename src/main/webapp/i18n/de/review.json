@@ -72,7 +72,14 @@
                 "cancel": "Abbrechen",
                 "started": "Anpassung gestartet.",
                 "alreadyRunning": "Für diese Aufgabe läuft bereits ein Artemis-Intelligence-Vorgang.",
-                "startError": "Die Anpassung durch Artemis Intelligence konnte nicht gestartet werden. Bitte versuche es erneut."
+                "startError": "Die Anpassung durch Artemis Intelligence konnte nicht gestartet werden. Bitte versuche es erneut.",
+                "presetsLabel": "Häufige Anpassungen",
+                "presetRegenerateTests": "Tests neu generieren",
+                "presetRegenerateTestsValue": "Generiere die Testsuite neu, sodass sie mehr Verhalten und Sonderfälle abdeckt, und behalte dieselbe öffentliche API bei.",
+                "presetSimplifyTemplate": "Vorlage vereinfachen",
+                "presetSimplifyTemplateValue": "Mache die Vorlage zu einem sauberen Ausgangspunkt: behalte die öffentlichen Signaturen, ersetze aber die Rümpfe durch klare TODO-Stubs.",
+                "presetEdgeCaseTests": "Sonderfall-Tests hinzufügen",
+                "presetEdgeCaseTestsValue": "Füge Tests für Sonderfälle hinzu, die die aktuelle Suite übersieht: leer, ein Element, Grenzwerte und Fehlerbedingungen."
             },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }

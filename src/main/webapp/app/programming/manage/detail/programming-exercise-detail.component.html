@@ -189,6 +189,11 @@
                         <jhi-hyperion-exercise-generation
                             [exerciseId]="programmingExercise.id"
                             [autoStart]="autoStartGeneration()"
+                            [reviewCommentsLink]="
+                                programmingExercise.templateParticipation?.id
+                                    ? [baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation!.id!]
+                                    : undefined
+                            "
                             (generationCompleted)="onExerciseGenerated($event)"
                         />
                     </div>

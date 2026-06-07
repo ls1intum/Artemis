@@ -13,6 +13,37 @@
         <div class="review-adapt-exercise-dialog__finding">{{ findingText }}</div>
     }
 
+    <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.presetsLabel"></label>
+    <div class="review-adapt-exercise-dialog__presets">
+        <button
+            pButton
+            type="button"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (click)="applyPreset('artemisApp.review.adaptExercise.presetRegenerateTestsValue')"
+            jhiTranslate="artemisApp.review.adaptExercise.presetRegenerateTests"
+        ></button>
+        <button
+            pButton
+            type="button"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (click)="applyPreset('artemisApp.review.adaptExercise.presetSimplifyTemplateValue')"
+            jhiTranslate="artemisApp.review.adaptExercise.presetSimplifyTemplate"
+        ></button>
+        <button
+            pButton
+            type="button"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (click)="applyPreset('artemisApp.review.adaptExercise.presetEdgeCaseTestsValue')"
+            jhiTranslate="artemisApp.review.adaptExercise.presetEdgeCaseTests"
+        ></button>
+    </div>
+
     <label class="review-adapt-exercise-dialog__label" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
     <textarea
         pTextarea

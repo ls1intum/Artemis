@@ -63,6 +63,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -84,7 +86,9 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -106,6 +110,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
     private readonly hyperionExerciseGenerationService = inject(HyperionExerciseGenerationService);
+    private readonly confirmationService = inject(ConfirmationService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -308,17 +313,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         );
     }
 
+    // STRUCTURAL eligibility only: the "Generate entire exercise" action area is shown in any supported create flow (create mode + Hyperion + not an import),
+    // INDEPENDENT of the selected language. This keeps the capability discoverable (R2) — on an unsupported language the action is rendered but disabled with an
+    // explanatory tooltip (see generationLanguageSupported), rather than silently vanishing. Whether the action can actually run is gated separately by
+    // generationLanguageSupported (and the form-validity guard in saveExerciseWithAi).
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
             this.programmingExerciseIdForAi() === undefined &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
-            !this.isImportFromSharingForAi() &&
-            // Server-driven: only languages whose generated exercise the differential oracle can verify (fails closed while the set has not loaded).
-            this.isGenerationSupportedLanguage(this.programmingExerciseLanguageForAi())
+            !this.isImportFromSharingForAi()
         );
     });
+
+    // Server-driven: whether the selected language is one whose generated exercise the differential oracle can verify. Fails closed (false) while the supported set
+    // has not loaded or if the call errored, so the action stays disabled until we positively know the language is supported.
+    generationLanguageSupported = computed(() => this.isGenerationSupportedLanguage(this.programmingExerciseLanguageForAi()));
+
+    // True only while the server's generation-supported language set is in flight (Hyperion enabled). The problem component renders a skeleton in place of the
+    // entire-exercise action while this is true, so the user does not briefly see a wrongly-disabled "unsupported language" state before the set arrives.
+    generationLanguagesLoading = signal<boolean>(false);
 
     private isGenerationSupportedLanguage(language: ProgrammingLanguage | undefined): boolean {
         return language !== undefined && this.supportedGenerationLanguages().includes(language);
@@ -640,10 +655,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         if (this.hyperionEnabled) {
-            // Load the server's generation-supported language set once; on error the set stays empty so the create action fails closed (stays hidden).
+            // Load the server's generation-supported language set once; on error the set stays empty so the entire-exercise action fails closed (stays disabled).
+            // While the call is in flight the problem component shows a skeleton instead of a wrongly-disabled action; both callbacks clear the loading flag.
+            this.generationLanguagesLoading.set(true);
             this.hyperionExerciseGenerationService.getSupportedLanguages().subscribe({
-                next: (languages) => this.supportedGenerationLanguages.set(languages),
-                error: () => this.supportedGenerationLanguages.set([]),
+                next: (languages) => {
+                    this.supportedGenerationLanguages.set(languages);
+                    this.generationLanguagesLoading.set(false);
+                },
+                error: () => {
+                    this.supportedGenerationLanguages.set([]);
+                    this.generationLanguagesLoading.set(false);
+                },
             });
         }
         this.defineSupportedProgrammingLanguages();
@@ -842,10 +865,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Saves the programming exercise with AI preparation.
+     * Confirms, then saves the programming exercise with AI preparation.
+     *
+     * From-scratch generation is consequential: it persists the exercise with empty repositories, navigates away from the wizard, runs for several minutes,
+     * and spends generation credits. We therefore gate it behind an explicit confirmation (R5). On reject nothing happens; on accept we proceed through the
+     * usual pre-update modal check before kicking off the generation.
      */
     saveWithAi() {
-        this.saveWithModalCheck(() => this.saveExerciseWithAi());
+        this.confirmationService.confirm({
+            header: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmTitle'),
+            message: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmMessage'),
+            acceptButtonProps: { label: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmAccept') },
+            rejectButtonProps: { label: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmReject'), severity: 'secondary', outlined: true },
+            accept: () => this.saveWithModalCheck(() => this.saveExerciseWithAi()),
+        });
     }
 
     private saveWithModalCheck(

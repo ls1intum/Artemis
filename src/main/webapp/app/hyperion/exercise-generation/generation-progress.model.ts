@@ -2,6 +2,9 @@ import { ExerciseGenerationEvent } from 'app/hyperion/services/hyperion-exercise
 
 export type GenerationPhase = 'preparing' | 'authoring' | 'verifying' | 'saving' | 'done';
 
+/** The linear order of the working phases (excluding the terminal {@code done}); drives the run card's stepper index. */
+export const GENERATION_PHASE_ORDER: GenerationPhase[] = ['preparing', 'authoring', 'verifying', 'saving'];
+
 export type GenerationRepo = 'solution' | 'template' | 'tests' | 'other';
 
 export interface GenerationFileChange {

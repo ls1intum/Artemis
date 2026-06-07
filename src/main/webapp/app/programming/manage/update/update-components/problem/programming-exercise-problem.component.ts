@@ -18,6 +18,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -53,6 +54,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
         ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
+        SkeletonModule,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
@@ -71,6 +73,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * with an explanatory tooltip (it persists the exercise, so it must not be invoked on an invalid form), mirroring the normal Save gating.
      */
     formInvalid = input<boolean>(false);
+    /**
+     * Whether the currently selected programming language is one the from-scratch generation oracle can verify. When {@code false}, the
+     * "Generate entire exercise" action is rendered but disabled with an explanatory tooltip, so the capability stays discoverable
+     * (R2) rather than silently vanishing on unsupported languages.
+     */
+    generationLanguageSupported = input<boolean>(false);
+    /** Whether the server-driven supported-language set is still loading; while {@code true} a skeleton stands in for the action. */
+    generationLanguagesLoading = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
     /** Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the detail page to auto-start the agentic run (wired to the parent's {@code saveWithAi()}). */
