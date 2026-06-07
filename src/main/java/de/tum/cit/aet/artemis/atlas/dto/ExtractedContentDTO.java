@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param extractedLearningText the raw learning-relevant text (e.g. problem statement markdown)
  * @param metadata              type-specific attributes; keys and value formats documented above
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExtractedContentDTO(String title, String extractedLearningText, Map<String, String> metadata) {
 
     public ExtractedContentDTO {

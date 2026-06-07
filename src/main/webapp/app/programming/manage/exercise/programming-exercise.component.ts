@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, model } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { Observable, merge } from 'rxjs';
@@ -9,6 +9,8 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { onError } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -82,10 +84,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private sortService = inject(SortService);
     private profileService = inject(ProfileService);
 
-    @Input() programmingExercises: ProgrammingExercise[] = [];
+    readonly programmingExercises = model<ProgrammingExercise[]>([]);
     filteredProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
@@ -113,7 +117,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faTimes = faTimes;
 
     protected get exercises() {
-        return this.programmingExercises;
+        return this.programmingExercises();
     }
 
     ngOnInit(): void {
@@ -123,13 +127,13 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     protected loadExercises(): void {
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body!;
+                const programmingExercises = res.body!;
                 const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                 this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
                 this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
                 // reconnect exercise with course
-                this.programmingExercises.forEach((exercise) => {
+                programmingExercises.forEach((exercise) => {
                     exercise.course = this.courseContext;
                     this.accountService.setAccessRightsForExercise(exercise);
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
@@ -152,15 +156,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     }
                     this.selectedExercises = [];
                 });
+                this.programmingExercises.set(programmingExercises);
                 this.applyFilter();
-                this.emitExerciseCount(this.programmingExercises.length);
+                this.emitExerciseCount(programmingExercises.length);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     protected applyFilter(): void {
-        this.filteredProgrammingExercises = this.programmingExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredProgrammingExercises = this.programmingExercises().filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredProgrammingExercises.length);
     }
 
@@ -212,7 +217,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.programmingExercises(), this.predicate, this.reverse);
         this.applyFilter();
     }
 
@@ -231,8 +236,13 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * Opens modal and executes a consistency check for the selected exercises
      */
     checkConsistencies() {
-        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
+        this.dialogService.open(ConsistencyCheckComponent, {
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+            data: { exercisesToCheck: this.selectedExercises },
+        });
     }
 
     fetchExerciseDeletionSummary(exercise: ProgrammingExercise): Observable<EntitySummary> {

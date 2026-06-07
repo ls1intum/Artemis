@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 /**
@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
  * - DataExportTutorialGroupService
  * - Enhanced DataExportCommunicationDataService (saved posts, notification settings, conversation participations)
  */
-class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndependentTest {
+class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "dataexportadditional";
 

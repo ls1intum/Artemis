@@ -20,6 +20,13 @@ export enum QuizMode {
     INDIVIDUAL = 'INDIVIDUAL',
 }
 
+export enum LiveQuizParticipationStatus {
+    NOT_STARTED = 'NOT_STARTED',
+    PARTICIPATING = 'PARTICIPATING',
+    SUBMITTED = 'SUBMITTED',
+    MISSED = 'MISSED',
+}
+
 export class QuizBatch {
     id?: number;
     startTime?: dayjs.Dayjs;

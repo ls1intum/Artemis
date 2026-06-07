@@ -37,10 +37,10 @@ import de.tum.cit.aet.artemis.admin.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 @ExtendWith(MockitoExtension.class)
-class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "dataexport";
 

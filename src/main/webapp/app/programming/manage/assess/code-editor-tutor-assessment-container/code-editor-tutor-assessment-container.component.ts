@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -47,6 +47,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -63,6 +64,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -82,7 +84,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -121,6 +123,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     localRepositoryLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    loadingFeedbackSuggestions = false;
 
     isAtLeastEditor = false;
 
@@ -139,9 +142,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     hasPendingChanges = false;
 
     // listener, will get notified upon loading of feedback
-    @Output() onFeedbackLoaded = new EventEmitter();
+    readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
+    readonly overrideNextSubmission = input<(submissionId: number) => any>();
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -152,6 +155,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     get unreferencedFeedbackSuggestions() {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
+    get hasAutomaticFeedback(): boolean {
+        return this.automaticFeedback.length > 0 || this.feedbackSuggestions.length > 0;
+    }
+
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
     }
 
     constructor() {
@@ -324,12 +335,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
-        const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
-        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
-            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
-        );
+        this.loadingFeedbackSuggestions = true;
+        try {
+            this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
+            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+            );
+        } finally {
+            this.loadingFeedbackSuggestions = false;
+        }
     }
 
     /**
@@ -338,13 +353,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile The file that has been selected in the editor.
      */
     highlightChangedLines(selectedFile: string) {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        const codeEditorContainer = this.codeEditorContainer();
+        if (selectedFile && codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
+                const lastLine = codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], codeEditorContainer.getText());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
@@ -374,7 +390,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private highlightLines(firstLine: number, lastLine: number) {
         // We add 1 to make the lines 1-based.
-        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
+        this.codeEditorContainer()!.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**
@@ -463,8 +479,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 }
 
                 // if override set, skip navigation
-                if (this.overrideNextSubmission) {
-                    this.overrideNextSubmission(response.id!);
+                const overrideNextSubmission = this.overrideNextSubmission();
+                if (overrideNextSubmission) {
+                    overrideNextSubmission(response.id!);
                     return;
                 }
 
