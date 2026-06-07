@@ -43,6 +43,14 @@
         (nextSubmission)="nextSubmission()"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
+        <jhi-feedback-suggestions-banner
+            jhiBannerSlot
+            [isLoading]="loadingFeedbackSuggestions"
+            [hasAutomaticFeedback]="hasAutomaticFeedback"
+            [isAssessor]="isAssessor"
+            [resultCompletionDate]="manualResult?.completionDate"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+        />
         @if (submission) {
             <ng-container *ngTemplateOutlet="assessment" />
         } @else {

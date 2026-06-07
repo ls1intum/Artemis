@@ -2371,6 +2371,14 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
+        RepositoryExportTestUtil.deleteStudentBareRepo(exercise, team.getShortName(), localVCBasePath);
+
+        // The shared setup pre-creates the team's repository on disk (setupRepositoryMocksParticipant). This test
+        // models a NEW participation whose repository is created for the first time and whose creation (copy) fails,
+        // so the target repository must not exist beforehand. Otherwise copyRepository treats it as a re-copy into an
+        // existing repository, which (since #12777) is intentionally preserved on failure instead of cleaned up.
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        versionControlService.deleteRepository(versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug));
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))

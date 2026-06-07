@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, untracked, viewChild } from '@angular/core';
+import { Component, DoCheck, OnInit, inject, input, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -16,7 +16,7 @@ import { LegacyBuildPlanConverterService } from 'app/programming/shared/services
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
+export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnInit {
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
@@ -43,36 +43,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         ],
     } as BuildPlanPhases;
 
-    // Snapshot of the previously seen input references, used to reproduce the reference-change semantics
-    // of the former ngOnChanges (which only fired when one of the two inputs changed by reference).
-    private previousInputs: { programmingExercise?: ProgrammingExercise; programmingExerciseCreationConfig?: ProgrammingExerciseCreationConfig } = {};
-
-    constructor() {
-        // Replaces the former ngOnChanges: react when either input reference changes and, if a reload is
-        // warranted, load the matching build-phases template. isImportFromFile is only derived from the
-        // creation config when that input itself changed (matching the old changes.programmingExerciseCreationConfig
-        // ?.currentValue?.isImportFromFile ?? false logic; a programmingExercise-only change yields false).
-        effect(() => {
-            const currentProgrammingExercise = this.programmingExercise();
-            const currentCreationConfig = this.programmingExerciseCreationConfig();
-
-            const programmingExerciseChanged = currentProgrammingExercise !== this.previousInputs.programmingExercise;
-            const creationConfigChanged = currentCreationConfig !== this.previousInputs.programmingExerciseCreationConfig;
-            this.previousInputs = { programmingExercise: currentProgrammingExercise, programmingExerciseCreationConfig: currentCreationConfig };
-
-            if (!programmingExerciseChanged && !creationConfigChanged) {
-                return;
-            }
-
-            untracked(() => {
-                if (this.shouldReloadTemplate()) {
-                    const isImportFromFile = creationConfigChanged ? (currentCreationConfig?.isImportFromFile ?? false) : false;
-                    this.loadBuildPhasesTemplate(isImportFromFile);
-                }
-            });
-        });
-    }
-
     ngOnInit() {
         const buildConfig = this.programmingExercise().buildConfig;
         const configJson = buildConfig?.buildPlanConfiguration;
@@ -98,6 +68,13 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         }
 
         this.resetCustomBuildPlan();
+    }
+
+    ngDoCheck() {
+        // the parent form mutates the exercise object in-place
+        if (this.shouldReloadTemplate()) {
+            this.loadBuildPhasesTemplate(this.programmingExerciseCreationConfig().isImportFromFile);
+        }
     }
 
     shouldReloadTemplate(): boolean {
