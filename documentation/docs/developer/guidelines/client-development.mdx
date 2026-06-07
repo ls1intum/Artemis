@@ -402,11 +402,49 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 }
 ```
 
-For new UI elements, use [PrimeNG](https://primeng.org/) components instead of Bootstrap components. Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete:
+#### Utility classes: Tailwind, not Bootstrap
+
+We are migrating from Bootstrap to [PrimeNG](https://primeng.org/) components + [Tailwind CSS v4](https://tailwindcss.com/) utilities. For **new and migrated** code:
+
+* **Components** (buttons, dialogs, tables, tooltips, inputs, …) use **PrimeNG**, styled via their own API (`severity`, `size`, `variant`, …) — never via utility overrides or `!important`.
+* **Layout & spacing** use **Tailwind utilities** in the template (`flex`, `grid grid-cols-12`, `mt-4`, `gap-2`, …). Do **not** add new Bootstrap utility classes (`d-flex`, `row`/`col-*`, `ms-2`, `btn`, …).
 
 ```html
-<div class="d-flex ms-2">some content</div>
+<div class="flex items-center gap-2">
+    <button pButton severity="primary" size="small">…</button>
+</div>
 ```
+
+The **spacer scale differs** — convert by rem value, not by number: Bootstrap `*-3` (1rem) → Tailwind `*-4`, BS `*-4` (1.5rem) → TW `*-6`, BS `*-5` (3rem) → TW `*-12`; BS `*-1`/`*-2` are unchanged. Bootstrap's 12-column `row`/`col-*` becomes `grid grid-cols-12` + `col-span-*` (a responsive `col-md-8` needs a base span, e.g. `col-span-12 md:col-span-8`); a `col-span-*` only works inside a `grid` parent, not a `flex` one.
+
+#### Colors: semantic tokens only
+
+Never use raw Tailwind palette classes (`text-green-500`, `bg-red-100`, …) or hardcoded hex/rgb in SCSS — they are not brand-bound and silently break theming and dark mode. Use semantic tokens, which resolve to the Artemis theme variables and adapt to dark mode automatically:
+
+| Need                                     | Use                                                                                                                                                                              |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brand / primary                          | `text-primary`, `bg-primary`, `text-primary-contrast` (PrimeNG / `tailwindcss-primeui`)                                                                                          |
+| Surfaces & muted text                    | `bg-surface-*`, `text-surface-*`, `text-muted-color` (PrimeNG / `tailwindcss-primeui`)                                                                                           |
+| State (success / error / warning / info) | `text-success`, `bg-danger`, `border-warning`, `text-info` — Artemis tokens defined in `src/main/webapp/tailwind.css` via `@theme inline { --color-success: var(--success); … }` |
+
+In SCSS, reference the theme variables (`var(--success)`, `var(--p-text-color)`, …) or `color-mix()` over them — never literal colors. The Artemis state colors come from `content/scss/themes/_default-variables.scss` (+ `_dark-variables.scss`), exposed as CSS custom properties by `_generate-css-vars.scss`.
+
+This is enforced in CI: an ESLint rule (`localRules/no-raw-tailwind-color-palette`) blocks raw palette classes in **all** client templates (static `class`, `[class.x]`, `[class]`, `[ngClass]`), and a stylelint override blocks hardcoded hex and `--bs-*` reintroduction in SCSS of migrated modules.
+
+<Callout variant={CalloutVariant.info}>
+While Bootstrap is still loaded, `text-success/danger/warning/info` and `bg-primary` are shadowed by Bootstrap's same-named `!important` utilities (which carry identical values), so they render correctly today and become authoritative automatically once Bootstrap is removed. Don't assume changing to/from these names alters rendering today — verify against the built CSS.
+</Callout>
+
+#### Keep in SCSS vs move to the template
+
+Prefer Tailwind utilities in the template, but **keep in component SCSS**: pseudo-classes/elements (`:hover`, `::before`), `@media`/print, `@keyframes`, `:host`, styles that target third-party / injected DOM (e.g. the Apollon canvas), and true magic numbers (keep the value visible with a comment rather than scattering arbitrary-value utilities like `min-w-[245px]`). Don't inline stateful or themed component styles just to avoid SCSS.
+
+#### Responsiveness & accessibility
+
+* **Full-viewport heights:** use **dynamic viewport units** (`min-h-dvh` / `h-dvh` / `100dvh`), never `min-h-screen` / `100vh` on screen media — `100vh` equals the _large_ viewport (`lvh`) and bleeds under the mobile address bar ([web.dev](https://web.dev/blog/viewport-units), [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/length)). `vh` is only fine inside `@media print`.
+* **Responsive grids stack mobile-first:** a `col-span-N` (N&lt;12) or `w-2/3` split must carry a full-width base (`col-span-12 lg:col-span-N`, `w-full lg:w-2/3`); bind responsive caps to the breakpoint token (`lg:max-w-[70vw]`) instead of a hardcoded `@media (min-width:1024px)`.
+* **Icon-only buttons need an accessible name:** an icon button whose label is hidden on mobile must keep that label in the accessibility tree — use `sr-only md:not-sr-only` (not `hidden md:inline`), or `[attr.aria-label]` when there is no label element (WCAG [4.1.2](https://www.w3.org/WAI/WCAG21/Understanding/name-role-value.html)). A bare `<fa-icon>` gets `aria-hidden`, so it never provides a name on its own.
+* **Reduced motion:** gate decorative animations with `@media (prefers-reduced-motion: reduce) { … animation: none; }` ([MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)); keep a textual state for parity.
 
 ### Chart Instantiation
 

@@ -109,6 +109,7 @@
                         ],
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
+                            "src/main/webapp/tailwind.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",

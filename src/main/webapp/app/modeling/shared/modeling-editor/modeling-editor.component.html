@@ -3,8 +3,8 @@
         <ng-template #header>
             <h4 jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
         </ng-template>
-        <div class="modal-body">
-            <table class="table">
+        <div>
+            <table class="w-full">
                 <tr>
                     <th jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.title"></th>
                     <td jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.text"></td>
@@ -62,13 +62,13 @@
             </table>
         </div>
         <ng-template #footer>
-            <button type="button" class="btn btn-outline" (click)="helpVisible.set(false)" jhiTranslate="entity.action.close"></button>
+            <button pButton type="button" variant="outlined" (click)="helpVisible.set(false)" jhiTranslate="entity.action.close"></button>
         </ng-template>
     </p-dialog>
     @if (!readOnly() && !isFullScreen) {
         <div class="help-and-status">
             @if (!readOnly() && showHelpButton()) {
-                <button type="button" class="btn btn-warning" (click)="openHelp()">
+                <button pButton type="button" severity="warn" (click)="openHelp()">
                     <fa-icon [icon]="farQuestionCircle" />&nbsp;
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
@@ -107,7 +107,7 @@
         }
     </div>
     @if (readOnly()) {
-        <div class="d-flex align-items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG" [class.full-screen-margin]="isFullScreen"></div>
+        <div class="flex items-center readonly-diagram scroll-container" [innerHtml]="readOnlySVG" [class.full-screen-margin]="isFullScreen"></div>
     }
 
     @if (withExplanation()) {

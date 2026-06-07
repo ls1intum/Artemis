@@ -1,0 +1,59 @@
+/*
+ * Tailwind CSS v4 utility layer for Artemis.
+ *
+ * Preflight (Tailwind's reset) is intentionally NOT imported so Bootstrap's Reboot stays authoritative
+ * during the incremental Bootstrap → PrimeNG/Tailwind migration. Until Bootstrap is removed app-wide,
+ * utilities also sit in their own layer below unlayered Bootstrap; style PrimeNG components via their own
+ * API (props / pass-through), never utility overrides, so no `!important` is needed. Re-enable Preflight
+ * (`@import 'tailwindcss/preflight.css' layer(base);`) and the PrimeNG cssLayer ordering
+ * (`tailwind-base, primeng, tailwind-utilities`) once Bootstrap is gone.
+ *
+ * `tailwindcss-primeui` binds the color utilities (bg-primary, text-surface-*, ...) to PrimeNG tokens,
+ * which AuraArtemis maps to the Artemis brand — one source of truth, dark-mode aware.
+ */
+@layer theme, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+/*
+ * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit
+ * `@source` below is scanned. Without this, Tailwind scans every template and emits a utility for any
+ * candidate class it finds — including Bootstrap component class names that double as Tailwind utilities
+ * (e.g. `.collapse` -> `visibility: collapse`, which hides expanded Bootstrap collapse panels app-wide).
+ */
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@plugin 'tailwindcss-primeui';
+
+/*
+ * Semantic brand state utilities (text-success / bg-danger / border-warning / text-info). `@theme inline`
+ * keeps each utility referencing the live var (`color: var(--success)`) so the CSS-var indirection and
+ * dark-mode swap resolve at use-site (https://tailwindcss.com/docs/theme#referencing-other-variables);
+ * the vars come from themes/_*-variables.scss via _generate-css-vars.scss.
+ *
+ * CAVEAT: these names + `bg-primary` collide with Bootstrap's unlayered `!important` utilities, which WIN
+ * the cascade today (values are kept in sync, so it's a no-op) and only become authoritative once Bootstrap
+ * is removed — verify against the built CSS, don't assume a rename changes rendering now. Always use these
+ * and the primeui tokens (text-primary, text-muted-color, text-primary-contrast); never raw palette
+ * (text-green-500), which isn't brand-bound.
+ */
+@theme inline {
+    --color-success: var(--success);
+    --color-danger: var(--danger);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+}
+
+/*
+ * Scope Tailwind's content scanning to the migrated module(s) only. Tailwind generates a utility for every
+ * candidate class it finds in the scanned sources; scanning the whole app would emit utilities whose names
+ * collide with Bootstrap component classes still used elsewhere (e.g. `.collapse` -> `visibility: collapse`
+ * would hide every expanded Bootstrap collapse panel app-wide). Keeping the source limited to migrated code
+ * means we only emit what those modules actually use. Add each module here as it is migrated off Bootstrap.
+ */
+@source './app/modeling';
+/* Shared exercise-wizard pickers migrated off Bootstrap (used by every exercise type's create/edit page). */
+@source './app/exercise/difficulty-picker';
+@source './app/exercise/included-in-overall-score-picker';
+
+/* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
+@custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));

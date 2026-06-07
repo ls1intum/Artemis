@@ -1,4 +1,4 @@
-<div class="d-flex flex-column">
+<div class="flex flex-col">
     <jhi-assessment-layout
         (navigateBack)="navigateBack()"
         [isLoading]="isLoading"
@@ -32,7 +32,7 @@
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
         />
         @if (submission) {
-            <div class="editor-container flex-grow-1">
+            <div class="editor-container grow">
                 @if (submission) {
                     <jhi-modeling-assessment
                         [diagramType]="modelingExercise?.diagramType"
@@ -55,7 +55,7 @@
                     <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false" />
                 }
             </div>
-            <div class="row mt-3">
+            <div class="flex flex-wrap mt-4">
                 @if (result && result.id) {
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
@@ -69,17 +69,17 @@
                     />
                 }
                 @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
-                    <div class="col-md-6">
+                    <div class="md:w-1/2">
                         <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
                         @if (hasAutomaticFeedback) {
-                            <div class="row">
-                                <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
+                            <div class="flex flex-wrap">
+                                <div class="mx-4 mb-2 highlighting-item color-cyan"></div>
                                 <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
                             </div>
                         }
                         @if (highlightMissingFeedback) {
-                            <div class="row">
-                                <div class="mx-3 mb-2 highlighting-item color-red"></div>
+                            <div class="flex flex-wrap">
+                                <div class="mx-4 mb-2 highlighting-item color-red"></div>
                                 <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
                             </div>
                         }
@@ -88,12 +88,12 @@
             </div>
         } @else {
             @if (!loadingInitialSubmission) {
-                <div class="alert alert-warning text-center mt-4" role="alert">
+                <p-message severity="warn" styleClass="w-full text-center mt-6">
                     <p jhiTranslate="artemisApp.modelingAssessment.notFound"></p>
-                    <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                    <a [routerLink]="exerciseDashboardLink" pButton severity="info" size="small" class="me-1 mb-1 assessment-dashboard">
+                        <span jhiTranslate="entity.action.exerciseDashboard"></span>
                     </a>
-                </div>
+                </p-message>
             }
         }
     </jhi-assessment-layout>

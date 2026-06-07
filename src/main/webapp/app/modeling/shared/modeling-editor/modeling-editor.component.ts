@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 import { isFullScreen } from 'app/foundation/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
@@ -18,7 +19,7 @@ import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule, ButtonModule],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;

@@ -3,6 +3,9 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
@@ -66,11 +69,15 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         FormFooterComponent,
         ArtemisTranslatePipe,
         ExerciseFeedbackSuggestionOptionsComponent,
+        InputNumberModule,
+        MessageModule,
+        SelectModule,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly alertService = inject(AlertService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
+    // TODO(bootstrap-migration): NgbModal retained until the shared SaveExerciseCommand / ExerciseUpdateWarningService dialog is migrated to PrimeNG DialogService (cross-module follow-up).
     private readonly modalService = inject(NgbModal);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
@@ -98,6 +105,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     protected readonly documentationType: DocumentationType = 'Model';
 
     UMLDiagramType = UMLDiagramType;
+
+    protected readonly diagramTypeOptions: { value: string; label: string }[] = [
+        { value: 'ClassDiagram', label: 'artemisApp.DiagramType.ClassDiagram' },
+        { value: 'ActivityDiagram', label: 'artemisApp.DiagramType.ActivityDiagram' },
+        { value: 'ObjectDiagram', label: 'artemisApp.DiagramType.ObjectDiagram' },
+        { value: 'UseCaseDiagram', label: 'artemisApp.DiagramType.UseCaseDiagram' },
+        { value: 'CommunicationDiagram', label: 'artemisApp.DiagramType.CommunicationDiagram' },
+        { value: 'ComponentDiagram', label: 'artemisApp.DiagramType.ComponentDiagram' },
+        { value: 'DeploymentDiagram', label: 'artemisApp.DiagramType.DeploymentDiagram' },
+        { value: 'PetriNet', label: 'artemisApp.DiagramType.PetriNet' },
+        { value: 'SyntaxTree', label: 'artemisApp.DiagramType.SyntaxTree' },
+        { value: 'Flowchart', label: 'artemisApp.DiagramType.Flowchart' },
+        { value: 'BPMN', label: 'artemisApp.DiagramType.BPMN' },
+        { value: 'Sfc', label: 'artemisApp.DiagramType.Sfc' },
+    ];
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;

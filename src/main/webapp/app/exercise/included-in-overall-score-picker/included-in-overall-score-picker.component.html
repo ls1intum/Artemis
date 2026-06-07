@@ -1,31 +1,34 @@
-<div class="btn-group">
-    <div
-        class="btn"
-        [ngClass]="{
-            'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY,
-            'btn-default': includedInOverallScore() !== IncludedInOverallScore.INCLUDED_COMPLETELY,
-        }"
+<div class="flex flex-wrap gap-2">
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_COMPLETELY ? 'primary' : 'secondary'"
+        [outlined]="includedInOverallScore() !== IncludedInOverallScore.INCLUDED_COMPLETELY"
         (click)="change(IncludedInOverallScore.INCLUDED_COMPLETELY)"
-        jhiTranslate="artemisApp.exercise.yes"
-    ></div>
-    <div
-        class="btn btn-default"
-        [ngClass]="{
-            'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS,
-            'btn-default': includedInOverallScore() !== IncludedInOverallScore.INCLUDED_AS_BONUS,
-        }"
+    >
+        <span jhiTranslate="artemisApp.exercise.yes"></span>
+    </button>
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="includedInOverallScore() === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'primary' : 'secondary'"
+        [outlined]="includedInOverallScore() !== IncludedInOverallScore.INCLUDED_AS_BONUS"
         (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
-        jhiTranslate="artemisApp.exercise.bonus"
-    ></div>
+    >
+        <span jhiTranslate="artemisApp.exercise.bonus"></span>
+    </button>
     @if (allowNotIncluded()) {
-        <div
-            class="btn btn-default"
-            [ngClass]="{
-                'btn-primary selected': includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED,
-                'btn-default': includedInOverallScore() !== IncludedInOverallScore.NOT_INCLUDED,
-            }"
+        <button
+            pButton
+            type="button"
+            size="small"
+            [severity]="includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED ? 'primary' : 'secondary'"
+            [outlined]="includedInOverallScore() !== IncludedInOverallScore.NOT_INCLUDED"
             (click)="change(IncludedInOverallScore.NOT_INCLUDED)"
-            jhiTranslate="artemisApp.exercise.no"
-        ></div>
+        >
+            <span jhiTranslate="artemisApp.exercise.no"></span>
+        </button>
     }
 </div>

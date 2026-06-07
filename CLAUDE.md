@@ -193,6 +193,8 @@ Organized by feature module:
   - All new UI elements must be implemented using PrimeNG components
   - We are migrating from Bootstrap to PrimeNG; do not introduce new Bootstrap components
   - Existing Bootstrap usage will be migrated incrementally
+  - **Layout/spacing: use Tailwind CSS v4 utilities, not Bootstrap utilities** (`flex`, `grid grid-cols-12`, `mt-4`, `gap-2` — not `d-flex`/`row`/`col-*`/`ms-2`). Mind the spacer scale: Bootstrap `*-3`/`*-4`/`*-5` (1/1.5/3rem) → Tailwind `*-4`/`*-6`/`*-12`; `col-span-*` needs a `grid` parent.
+  - **Colors: semantic tokens only.** Use `text-primary`/`bg-primary`/`text-surface-*`/`text-muted-color`/`text-primary-contrast` (`tailwindcss-primeui`) and `text-success`/`bg-danger`/`text-warning`/`text-info` (Artemis tokens in `src/main/webapp/tailwind.css`). Never raw Tailwind palette (`text-green-500`) or hardcoded hex/rgb in SCSS — reference `var(--token)`/`color-mix()`. Full guidance: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
   - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
 
 ### General

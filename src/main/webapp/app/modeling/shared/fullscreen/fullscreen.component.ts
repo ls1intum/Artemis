@@ -1,7 +1,8 @@
 import { Component, ElementRef, inject, input } from '@angular/core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/foundation/util/fullscreen.util';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -9,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-fullscreen',
     templateUrl: './fullscreen.component.html',
     styleUrls: ['./fullscreen.scss'],
-    imports: [NgbTooltip, FaIconComponent, ArtemisTranslatePipe],
+    imports: [ButtonModule, TooltipModule, FaIconComponent, ArtemisTranslatePipe],
 })
 export class FullscreenComponent {
     private fullScreenWrapper = inject(ElementRef);

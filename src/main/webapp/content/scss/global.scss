@@ -8,7 +8,9 @@
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 
 // Needed for mathematical formulas in markdown editor
-@import 'node_modules/katex/dist/katex.min.css';
+// Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file;
+// the 'node_modules/' prefix is treated as a relative path under PostCSS and breaks the build.
+@import 'katex/dist/katex.min.css';
 @import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
 
 // Needed for emojis in metis reactions
@@ -220,6 +222,25 @@ Generic styles
     &.form-check-input {
         border: 1px solid $ng-invalid-border;
     }
+}
+
+/* PrimeNG inputs (e.g. p-inputnumber) put the Angular validity classes on the component HOST, which wraps
+   the real input — so the generic left-bar indicator above lands on the wrapper and renders detached from
+   the field. Re-target it onto the inner input element so it reads as the field's own left edge, matching
+   native inputs. */
+p-inputnumber.ng-valid[required],
+p-inputnumber.ng-valid.required,
+p-inputnumber.ng-invalid:not(form) {
+    border-left: none;
+}
+
+p-inputnumber.ng-valid[required] .p-inputnumber-input,
+p-inputnumber.ng-valid.required .p-inputnumber-input {
+    border-left: 5px solid $ng-valid-border;
+}
+
+p-inputnumber.ng-invalid:not(form) .p-inputnumber-input {
+    border-left: 5px solid $ng-invalid-border;
 }
 
 /* other generic styles */

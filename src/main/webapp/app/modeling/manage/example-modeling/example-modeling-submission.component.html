@@ -1,49 +1,32 @@
 @if (exercise) {
-    <div class="row">
-        <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
+    <div class="grid grid-cols-12">
+        <div class="col-span-12 lg:col-span-7 flex flex-col justify-between">
             <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
                 Example Modeling Submission for Exercise {{ exercise?.title }}
             </h2>
             @if (toComplete) {
-                <h5 class="fw-light" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
+                <h5 class="font-light" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
             }
             @if (assessmentMode) {
                 <p jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction"></p>
             }
         </div>
         @if (exercise.isAtLeastEditor && !readOnly && !toComplete) {
-            <div class="col-12 col-lg-4 text-end">
+            <div class="col-span-12 lg:col-span-4 text-end">
                 @if (!assessmentMode) {
-                    <div class="d-flex justify-content-end flex-wrap align-items-center">
+                    <div class="flex justify-end flex-wrap items-center">
                         <div>
                             <div class="text-start">
                                 <span jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"></span>
                                 <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'" />
                             </div>
-                            <div class="btn-group" role="group">
-                                <input
-                                    type="radio"
-                                    class="btn-check"
-                                    name="mode"
-                                    id="read-and-confirm-button"
-                                    autocomplete="off"
-                                    [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
-                                    [(ngModel)]="selectedMode"
-                                />
-                                <label class="btn btn-outline-secondary" for="read-and-confirm-button" jhiTranslate="artemisApp.exampleSubmission.readAndConfirm"></label>
-                                <input
-                                    type="radio"
-                                    class="btn-check"
-                                    name="mode"
-                                    id="only-not-imported"
-                                    autocomplete="off"
-                                    [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
-                                    [(ngModel)]="selectedMode"
-                                />
-                                <label class="btn btn-outline-secondary" for="only-not-imported" jhiTranslate="artemisApp.exampleSubmission.assessCorrectly"></label>
-                            </div>
+                            <p-selectbutton [options]="modeSelectOptions" [(ngModel)]="selectedMode" optionLabel="label" optionValue="value" name="mode" [allowEmpty]="false">
+                                <ng-template let-item #item>
+                                    <span [jhiTranslate]="item.label"></span>
+                                </ng-template>
+                            </p-selectbutton>
                         </div>
-                        <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
+                        <button pButton type="button" severity="primary" (click)="upsertExampleModelingSubmission()" class="ms-2 w-full sm:w-auto sm:min-w-[245px]">
                             <fa-icon [icon]="faSave" />
                             @if (isNewSubmission) {
                                 <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
@@ -57,21 +40,21 @@
                     </div>
                 }
                 @if (assessmentMode) {
-                    <button (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
+                    <button pButton type="button" severity="primary" (click)="saveExampleAssessment()" class="w-full sm:w-auto sm:min-w-[245px]">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment"></span>
                     </button>
                 }
                 @if (exampleSubmission && !isNewSubmission) {
-                    <div class="mt-2 mb-3">
+                    <div class="mt-2 mb-4">
                         @if (!assessmentMode) {
-                            <button class="btn btn-secondary button-resize" (click)="showAssessment()">
+                            <button pButton type="button" severity="secondary" class="w-full sm:w-auto sm:min-w-[245px]" (click)="showAssessment()">
                                 <fa-icon [icon]="faChalkboardTeacher" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment"></span>
                             </button>
                         }
                         @if (assessmentMode) {
-                            <button class="btn btn-secondary button-resize" (click)="showSubmission()">
+                            <button pButton type="button" severity="secondary" class="w-full sm:w-auto sm:min-w-[245px]" (click)="showSubmission()">
                                 <fa-icon [icon]="faCodeBranch" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission"></span>
                             </button>
@@ -80,26 +63,26 @@
                 }
             </div>
         }
-        <div class="row">
-            <div class="col-9 mb-3">
-                <div class="row m-0 p-0 align-items-center">
-                    <span class="p-0 pe-2 col-md-auto"
+        <div class="col-span-12 grid grid-cols-12">
+            <div class="col-span-12 lg:col-span-9 mb-4">
+                <div class="flex flex-wrap items-center">
+                    <span class="pe-2"
                         ><strong>{{ 'artemisApp.exampleSubmission.legend.title' | artemisTranslate }} : </strong></span
                     >
-                    <div class="col d-flex">
+                    <div class="flex-1 flex">
                         @for (legendElement of legend.slice(0, 3); track legendElement) {
-                            <div class="d-flex align-items-center pe-5">
+                            <div class="flex items-center pe-12">
                                 <span class="pe-2">{{ legendElement.text | artemisTranslate }}</span>
-                                <div class="d-flex justify-content-center align-items-center p-0 legend-icon-wrapper">
+                                <div class="flex justify-center items-center p-0 legend-icon-wrapper">
                                     <fa-icon [icon]="legendElement.icon" [style.color]="legendElement.color" />
                                 </div>
                             </div>
                         }
                         <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
                         @if (toComplete) {
-                            <div class="d-flex align-items-center pe-5">
+                            <div class="flex items-center pe-12">
                                 <span class="pe-2">{{ legend[3].text | artemisTranslate }}</span>
-                                <div class="d-flex justify-content-center align-items-center p-0 legend-icon-wrapper warning-icon-wrapper">
+                                <div class="flex justify-center items-center p-0 legend-icon-wrapper warning-icon-wrapper">
                                     <fa-icon [icon]="legend[3].icon" />
                                 </div>
                             </div>
@@ -108,17 +91,20 @@
                 </div>
             </div>
             @if (readOnly) {
-                <div class="col-3 text-end mb-2">
-                    <button (click)="readAndUnderstood()" class="btn btn-success">
+                <div class="col-span-12 lg:col-span-3 text-end mb-2">
+                    <button pButton type="button" severity="success" (click)="readAndUnderstood()">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood"></span>
                     </button>
                 </div>
             }
             @if (toComplete) {
-                <div class="col-3 text-end mb-2">
+                <div class="col-span-12 lg:col-span-3 text-end mb-2">
                     <button
-                        class="btn btn-primary px-5"
+                        pButton
+                        type="button"
+                        severity="primary"
+                        class="px-12"
                         (click)="checkAssessment()"
                         [disabled]="!assessments || !assessmentsAreValid"
                         jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
@@ -126,20 +112,20 @@
                 </div>
             }
         </div>
-        <div class="col-12">
-            <div class="row flex-nowrap">
-                <div class="col editor-container-outer">
+        <div class="col-span-12">
+            <div class="flex flex-col lg:flex-row lg:flex-nowrap lg:gap-4">
+                <div class="flex-1 editor-container-outer">
                     @if (highlightedElements() && highlightedElements().size > 0) {
-                        <div class="col">
+                        <div class="flex-1">
                             <div [style.background-color]="highlightColor()" class="my-2 text-center">
                                 <span jhiTranslate="artemisApp.exampleSubmission.modelElementHint"></span>
                             </div>
                         </div>
                     }
-                    <div class="row editor-container-inner">
+                    <div class="grid grid-cols-12 editor-container-inner">
                         @if (!assessmentMode && exercise.diagramType) {
                             <jhi-modeling-editor
-                                class="col-12"
+                                class="col-span-12"
                                 [umlModel]="umlModel"
                                 [diagramType]="exercise.diagramType!"
                                 [readOnly]="readOnly"
@@ -152,7 +138,7 @@
                         @if (assessmentMode && exercise.diagramType) {
                             <!-- we do not need to send ref.+unref feedback to the child component, since it filters out unreferenced feedbacks anyway-->
                             <jhi-modeling-assessment
-                                class="col-12"
+                                class="col-span-12"
                                 [umlModel]="umlModel"
                                 [resultFeedbacks]="result?.feedbacks || []"
                                 [diagramType]="exercise.diagramType!"
@@ -170,7 +156,7 @@
                     <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
             only if an explanation text is there-->
                     @if (assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))) {
-                        <h3 class="mt-3">
+                        <h3 class="mt-4">
                             {{ 'artemisApp.exampleSubmission.assessmentExplanation' | artemisTranslate }}
                             <sup>
                                 <small>
@@ -182,7 +168,7 @@
                     <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
             only if an explanation text is there-->
                     @if (assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))) {
-                        <textarea class="form-control" rows="4" maxLength="2000" [(ngModel)]="assessmentExplanation" [disabled]="readOnly"></textarea>
+                        <textarea pTextarea class="w-full" rows="4" maxLength="2000" [(ngModel)]="assessmentExplanation" [disabled]="readOnly"></textarea>
                     }
                     @if (assessmentMode) {
                         @if (result && result.id) {
@@ -198,7 +184,7 @@
                 </div>
                 @if (exercise) {
                     <jhi-collapsable-assessment-instructions
-                        class="col-auto pe-2"
+                        class="w-full lg:w-auto pe-2"
                         [readOnly]="readOnly"
                         [exercise]="exercise"
                         [collapsed]="!readOnly && !toComplete"

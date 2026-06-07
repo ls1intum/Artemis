@@ -11,9 +11,14 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async setPoints(points: number) {
+        // The points field is a PrimeNG p-inputnumber (masked input): a plain fill() does not commit its
+        // value to ngModel, so we type and blur to drive its keystroke handling.
         const pointsField = this.page.locator('#field_points');
-        await pointsField.clear();
-        await pointsField.fill(points.toString());
+        await pointsField.click();
+        await pointsField.press('ControlOrMeta+a');
+        await pointsField.press('Delete');
+        await pointsField.pressSequentially(points.toString());
+        await pointsField.blur();
     }
 
     async save() {
@@ -29,19 +34,20 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async includeInOverallScore(selection: string = 'No') {
-        await this.page.locator('#modeling-includeInScore-picker').locator('.btn', { hasText: selection }).click({ force: true });
+        // The picker is now PrimeNG p-buttons (was a Bootstrap .btn-group).
+        await this.page.locator('#modeling-includeInScore-picker').locator('button', { hasText: selection }).click({ force: true });
     }
 
     async pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {
         const difficultyBar = this.page.locator('#modeling-difficulty-picker');
         if (options.hard) {
-            await difficultyBar.locator('.btn', { hasText: 'Hard' }).click();
+            await difficultyBar.locator('button', { hasText: 'Hard' }).click();
         } else if (options.medium) {
-            await difficultyBar.locator('.btn', { hasText: 'Medium' }).click();
+            await difficultyBar.locator('button', { hasText: 'Medium' }).click();
         } else if (options.easy) {
-            await difficultyBar.locator('.btn', { hasText: 'Easy' }).click();
+            await difficultyBar.locator('button', { hasText: 'Easy' }).click();
         } else {
-            await difficultyBar.locator('.btn', { hasText: 'No Level' }).click();
+            await difficultyBar.locator('button', { hasText: 'No Level' }).click();
         }
     }
 }

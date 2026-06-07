@@ -38,6 +38,9 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -147,6 +150,9 @@ describe('Example Modeling Submission Component', () => {
             imports: [
                 FormsModule,
                 FaIconComponent,
+                ButtonModule,
+                SelectButtonModule,
+                TextareaModule,
                 ExampleModelingSubmissionComponent,
                 MockTranslateValuesDirective,
                 MockComponent(FaLayersComponent),
@@ -197,7 +203,16 @@ describe('Example Modeling Submission Component', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(comp).toBe(comp);
+        expect(comp).toBeTruthy();
+    });
+
+    it('keeps i18n keys (not pre-translated strings) as the mode-toggle labels so it reacts to language switches', () => {
+        // The template renders each label through `[jhiTranslate]`; pre-translated strings would freeze the
+        // toggle to the boot language (the regression this guards against), so every label must stay a key.
+        expect(comp.modeSelectOptions.length).toBeGreaterThan(0);
+        for (const option of comp.modeSelectOptions) {
+            expect(option.label).toMatch(/^artemisApp\./);
+        }
     });
 
     it('should handle a new submission', () => {

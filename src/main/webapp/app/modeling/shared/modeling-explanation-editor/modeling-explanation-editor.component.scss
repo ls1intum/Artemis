@@ -18,6 +18,8 @@ $textareaHeight: 200px;
         outline: none;
         border: 1px solid var(--artemis-dark);
         background-color: var(--text-editor-focus-background);
-        box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
+
+        // was rgba(0, 0, 200, 0.04); now tracks the brand --primary (a slightly different blue) so it follows the theme
+        box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 4%, transparent);
     }
 }

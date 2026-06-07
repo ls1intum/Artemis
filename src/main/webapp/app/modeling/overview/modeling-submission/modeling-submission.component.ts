@@ -53,6 +53,7 @@ import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmp
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { MessageModule } from 'primeng/message';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -77,6 +78,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         HtmlForMarkdownPipe,
         ExerciseSubmitButtonComponent,
         UnifiedFeedbackComponent,
+        MessageModule,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

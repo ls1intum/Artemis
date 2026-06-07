@@ -23,6 +23,9 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -38,6 +41,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         DeleteButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        ButtonModule,
+        TagModule,
+        CheckboxModule,
     ],
 })
 export class ModelingExerciseComponent extends ExerciseComponent {

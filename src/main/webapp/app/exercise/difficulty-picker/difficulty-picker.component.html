@@ -1,26 +1,42 @@
-<div class="btn-group">
-    <div
-        class="btn"
-        [ngClass]="{ 'btn-primary selected': !exercise().difficulty, 'btn-default': exercise().difficulty }"
+<div class="flex flex-wrap gap-2">
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="!exercise().difficulty ? 'primary' : 'secondary'"
+        [outlined]="!!exercise().difficulty"
         (click)="setDifficulty(undefined)"
-        jhiTranslate="artemisApp.exercise.noLevel"
-    ></div>
-    <div
-        class="btn"
-        [ngClass]="{ 'btn-success selected': exercise().difficulty === DifficultyLevel.EASY, 'btn-default': exercise().difficulty !== DifficultyLevel.EASY }"
+    >
+        <span jhiTranslate="artemisApp.exercise.noLevel"></span>
+    </button>
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="exercise().difficulty === DifficultyLevel.EASY ? 'success' : 'secondary'"
+        [outlined]="exercise().difficulty !== DifficultyLevel.EASY"
         (click)="setDifficulty(DifficultyLevel.EASY)"
-        jhiTranslate="artemisApp.exercise.easy"
-    ></div>
-    <div
-        class="btn btn-default"
-        [ngClass]="{ 'btn-warning selected': exercise().difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise().difficulty !== DifficultyLevel.MEDIUM }"
+    >
+        <span jhiTranslate="artemisApp.exercise.easy"></span>
+    </button>
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="exercise().difficulty === DifficultyLevel.MEDIUM ? 'warn' : 'secondary'"
+        [outlined]="exercise().difficulty !== DifficultyLevel.MEDIUM"
         (click)="setDifficulty(DifficultyLevel.MEDIUM)"
-        jhiTranslate="artemisApp.exercise.medium"
-    ></div>
-    <div
-        class="btn btn-default"
-        [ngClass]="{ 'btn-danger selected': exercise().difficulty === DifficultyLevel.HARD, 'btn-default': exercise().difficulty !== DifficultyLevel.HARD }"
+    >
+        <span jhiTranslate="artemisApp.exercise.medium"></span>
+    </button>
+    <button
+        pButton
+        type="button"
+        size="small"
+        [severity]="exercise().difficulty === DifficultyLevel.HARD ? 'danger' : 'secondary'"
+        [outlined]="exercise().difficulty !== DifficultyLevel.HARD"
         (click)="setDifficulty(DifficultyLevel.HARD)"
-        jhiTranslate="artemisApp.exercise.hard"
-    ></div>
+    >
+        <span jhiTranslate="artemisApp.exercise.hard"></span>
+    </button>
 </div>

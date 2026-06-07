@@ -36,6 +36,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -49,6 +51,8 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        ButtonModule,
+        MessageModule,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {

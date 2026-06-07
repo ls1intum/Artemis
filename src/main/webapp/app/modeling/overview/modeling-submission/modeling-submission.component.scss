@@ -1,34 +1,13 @@
+// Dynamic viewport units (dvh, not svh) so the editor height tracks the mobile browser chrome and reclaims
+// space when it retracts, instead of bleeding under the address bar (100vh === lvh on mobile). The editor
+// column's 70vw cap lives on the template as `lg:max-w-[70vw]` so it stays bound to Tailwind's lg breakpoint.
+// See web.dev/blog/viewport-units.
 .submission-container {
-    min-height: 100vh;
-}
-
-jhi-modeling-editor {
-    width: 100%;
-}
-
-jhi-modeling-assessment {
-    width: 100%;
-}
-
-.editor-large {
-    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .editor-assessment {
-    max-width: 70vw;
-    height: 100vh;
-}
-
-.feedback-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.rg-bottom {
-    align-self: center;
-    cursor: row-resize;
+    height: 100dvh;
 }
 
 @media print {

@@ -33,7 +33,10 @@ import { Component, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
@@ -224,11 +227,15 @@ describe('ModelingExerciseUpdateComponent', () => {
         })
             .overrideComponent(ModelingExerciseUpdateComponent, {
                 set: {
+                    // Ngb→PrimeNG import-only swap so the existing tests still render; no new behavioral coverage claimed here.
                     imports: [
                         FormsModule,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
-                        NgbTooltip,
+                        TooltipModule,
+                        InputNumberModule,
+                        MessageModule,
+                        SelectModule,
                         ArtemisTranslatePipe,
                         MockComponent(FormDateTimePickerComponent),
                         StubExerciseTitleChannelNameComponent,

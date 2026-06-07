@@ -35,6 +35,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { ButtonModule } from 'primeng/button';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -50,6 +53,9 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
         UnreferencedFeedbackComponent,
         CollapsableAssessmentInstructionsComponent,
         ArtemisTranslatePipe,
+        ButtonModule,
+        SelectButtonModule,
+        TextareaModule,
     ],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
@@ -87,6 +93,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     isExamMode: boolean;
     selectedMode: ExampleSubmissionMode;
     ExampleSubmissionMode = ExampleSubmissionMode;
+
+    // i18n keys, translated in the template so the labels stay reactive on language change.
+    readonly modeSelectOptions = [
+        { label: 'artemisApp.exampleSubmission.readAndConfirm', value: ExampleSubmissionMode.READ_AND_CONFIRM },
+        { label: 'artemisApp.exampleSubmission.assessCorrectly', value: ExampleSubmissionMode.ASSESS_CORRECTLY },
+    ];
 
     legend = [
         {

@@ -10,6 +10,7 @@
 /uploads
 /local
 /test-results.xml
+/.ai/
 
 ######################
 # Node

@@ -1,10 +1,10 @@
 <div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions()">
     @if (title() || displayPoints()) {
-        <div class="card-header bg-primary text-white">
+        <div class="flex items-center w-full bg-primary text-primary-contrast px-4 py-2 text-base font-medium">
             @if (title()) {
                 <span>{{ title() }}</span>
             }
-            <span class="flex-fill"></span>
+            <span class="flex-1"></span>
             @if (displayPoints()) {
                 <jhi-score-display [score]="totalScore()" [maxPoints]="maxScore()" [maxBonusPoints]="maxBonusPoints()" [course]="course()" />
             }

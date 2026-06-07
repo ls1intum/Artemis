@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Tooltip } from 'primeng/tooltip';
+import { ButtonDirective } from 'primeng/button';
 
 // Mock the fullscreen utility before importing the component
 vi.mock('app/foundation/util/fullscreen.util', () => ({
@@ -123,20 +124,20 @@ describe('FullscreenComponent', () => {
             expect(button.nativeElement.classList.contains('top-left')).toBe(true);
         });
 
-        it('should render button with btn-primary class in extended mode', () => {
+        it('should render button with primary severity in extended mode', () => {
             fixture.componentRef.setInput('mode', 'extended');
             fixture.detectChanges();
 
-            const button = fixture.debugElement.query(By.css('button'));
-            expect(button.nativeElement.classList.contains('btn-primary')).toBe(true);
+            const button = fixture.debugElement.query(By.css('button[pButton]'));
+            expect(button.injector.get(ButtonDirective).severity).toBe('primary');
         });
 
-        it('should render button with btn-sm class in compact mode', () => {
+        it('should render button with small size in compact mode', () => {
             fixture.componentRef.setInput('mode', 'compact');
             fixture.detectChanges();
 
-            const button = fixture.debugElement.query(By.css('button'));
-            expect(button.nativeElement.classList.contains('btn-sm')).toBe(true);
+            const button = fixture.debugElement.query(By.css('button[pButton]'));
+            expect(button.injector.get(ButtonDirective).size).toBe('small');
         });
 
         it('should render fa-icon in compact mode', () => {
@@ -164,12 +165,10 @@ describe('FullscreenComponent', () => {
             expect(toggleSpy).toHaveBeenCalledOnce();
         });
 
-        it('should have ngbTooltip directive on button', () => {
-            const button = fixture.debugElement.query(By.css('button'));
-            // NgbTooltip directive is applied via [ngbTooltip] binding in template
-            // Check that the directive instance exists on the debug element
-            const ngbTooltipDirective = button.injector.get(NgbTooltip, null);
-            expect(ngbTooltipDirective).not.toBeNull();
+        it('should bind the fullscreen tooltip key to the button', () => {
+            const button = fixture.debugElement.query(By.css('button[pButton]'));
+            // MockTranslateService passes keys through, so the resolved tooltip content equals the i18n key — asserts the binding is wired.
+            expect(button.injector.get(Tooltip).content).toBe('artemisApp.modelingEditor.fullscreen.tooltip');
         });
     });
 

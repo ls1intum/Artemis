@@ -1,6 +1,6 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
     <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
-    <div class="d-flex align-items-center gap-2">
+    <div class="flex items-center gap-2">
         @if (!modelingExercise.id) {
             <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
         } @else if (!isImport && modelingExercise.id) {
@@ -15,13 +15,13 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
         <jhi-exercise-title-channel-name [exercise]="modelingExercise" [course]="modelingExercise.course" [isExamMode]="isExamMode" [isImport]="isImport" />
         @if (!isExamMode) {
-            <div class="form-group position-relative">
+            <div class="form-group relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
-        <hr class="mb-5" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.mode" id="artemisApp.exercise.sections.mode"></h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty"></label>
@@ -30,7 +30,7 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport" />
-        <hr class="mb-5" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" name="problemStatement" id="field_problemStatement" (keydown)="onMarkdownEditorKeydown($event)">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
@@ -53,7 +53,7 @@
                 />
             </div>
         }
-        <hr class="mb-5" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution"></label>
@@ -96,11 +96,11 @@
                 }
             </div>
         }
-        <hr class="mb-5" />
+        <hr class="mb-12" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
+            <div class="flex flex-col md:flex-row">
+                <div class="form-group grow">
                     <jhi-date-time-picker
                         #releaseDate
                         class="form-element"
@@ -112,7 +112,7 @@
                         name="releaseDate"
                     />
                 </div>
-                <div class="form-group flex-grow-1 ms-3">
+                <div class="form-group grow md:ms-4">
                     <jhi-date-time-picker
                         #startDate
                         class="form-element"
@@ -132,8 +132,8 @@
             </div>
         }
         @if (!isExamMode) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
+            <div class="flex flex-col md:flex-row">
+                <div class="form-group grow">
                     <jhi-date-time-picker
                         #dueDate
                         class="form-element"
@@ -150,7 +150,7 @@
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
                     }
                 </div>
-                <div class="form-group flex-grow-1 ms-3">
+                <div class="form-group grow md:ms-4">
                     <jhi-date-time-picker
                         #assessmentDueDate
                         class="form-element"
@@ -180,66 +180,58 @@
                 />
             </div>
         </div>
-        <div class="row">
-            <div class="col">
+        <div class="grid grid-cols-12">
+            <div class="col-span-6">
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
-                    <input
-                        type="number"
-                        required
-                        class="form-control"
-                        min="1"
-                        max="9999"
-                        name="points"
-                        id="field_points"
-                        [(ngModel)]="modelingExercise.maxPoints"
-                        #points="ngModel"
-                    />
+                    <p-inputnumber [required]="true" [min]="1" [max]="9999" name="points" inputId="field_points" [(ngModel)]="modelingExercise.maxPoints" #points="ngModel" />
                     @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
+                        <p-message severity="error" styleClass="w-full">
+                            <span jhiTranslate="artemisApp.exercise.pointsError"></span>
+                        </p-message>
                     }
                 </div>
             </div>
-            <div class="col">
+            <div class="col-span-6">
                 <div class="form-group" [hidden]="modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
-                    <input
-                        type="number"
+                    <p-inputnumber
                         [required]="modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        class="form-control"
-                        min="0"
-                        max="9999"
+                        [min]="0"
+                        [max]="9999"
                         name="bonusPoints"
-                        id="field_bonusPoints"
+                        inputId="field_bonusPoints"
                         [(ngModel)]="modelingExercise.bonusPoints"
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div
-                            class="alert alert-danger"
-                            [hidden]="modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            jhiTranslate="artemisApp.exercise.bonusPointsError"
-                        ></div>
+                        @if (modelingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                            <p-message severity="error" styleClass="w-full">
+                                <span jhiTranslate="artemisApp.exercise.bonusPointsError"></span>
+                            </p-message>
+                        }
                     }
                 </div>
             </div>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
-            <select [disabled]="isImport || !!modelingExercise.id" class="form-select" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType">
-                <option value="ClassDiagram" jhiTranslate="artemisApp.DiagramType.ClassDiagram"></option>
-                <option value="ActivityDiagram" jhiTranslate="artemisApp.DiagramType.ActivityDiagram"></option>
-                <option value="ObjectDiagram" jhiTranslate="artemisApp.DiagramType.ObjectDiagram"></option>
-                <option value="UseCaseDiagram" jhiTranslate="artemisApp.DiagramType.UseCaseDiagram"></option>
-                <option value="CommunicationDiagram" jhiTranslate="artemisApp.DiagramType.CommunicationDiagram"></option>
-                <option value="ComponentDiagram" jhiTranslate="artemisApp.DiagramType.ComponentDiagram"></option>
-                <option value="DeploymentDiagram" jhiTranslate="artemisApp.DiagramType.DeploymentDiagram"></option>
-                <option value="PetriNet" jhiTranslate="artemisApp.DiagramType.PetriNet"></option>
-                <option value="SyntaxTree" jhiTranslate="artemisApp.DiagramType.SyntaxTree"></option>
-                <option value="Flowchart" jhiTranslate="artemisApp.DiagramType.Flowchart"></option>
-                <option value="BPMN" jhiTranslate="artemisApp.DiagramType.BPMN"></option>
-                <option value="Sfc" jhiTranslate="artemisApp.DiagramType.Sfc"></option>
-            </select>
+            <p-select
+                [disabled]="isImport || !!modelingExercise.id"
+                [options]="diagramTypeOptions"
+                optionValue="value"
+                optionLabel="label"
+                name="diagramType"
+                [(ngModel)]="modelingExercise.diagramType"
+                inputId="field_diagramType"
+            >
+                <ng-template let-option #selectedItem>
+                    <span [jhiTranslate]="option.label"></span>
+                </ng-template>
+                <ng-template let-option #item>
+                    <span [jhiTranslate]="option.label"></span>
+                </ng-template>
+            </p-select>
         </div>
         @if (!isExamMode || modelingExercise.exerciseGroup?.exam?.testExam) {
             <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />

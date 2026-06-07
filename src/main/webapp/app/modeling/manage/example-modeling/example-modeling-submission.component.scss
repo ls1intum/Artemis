@@ -3,21 +3,20 @@
 }
 
 .editor-container-inner {
-    min-height: 80vh;
-}
-
-.button-resize {
-    min-width: 245px; // prevent buttons from cutting text when resizing
+    min-height: 80dvh; // dvh so the editor tracks the mobile browser chrome (see modeling-submission.component.scss)
 }
 
 .legend-icon-wrapper {
-    background-color: var(--bs-body-color);
+    background-color: var(--p-text-color);
     height: 29px;
     width: 29px;
     border-radius: 100%;
 }
 
 .warning-icon-wrapper {
-    background-color: var(--bs-yellow);
-    color: var(--bs-bg-color);
+    background-color: var(--warning);
+
+    // Glyph = 25% warning + 75% black, so it stays much darker than the warning fill in either theme
+    // (white-on-amber was ~2:1 and failed AA).
+    color: color-mix(in srgb, var(--warning) 25%, black);
 }

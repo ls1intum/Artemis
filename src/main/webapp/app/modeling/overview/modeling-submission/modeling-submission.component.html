@@ -1,9 +1,9 @@
 <div [id]="'exercise-' + modelingExercise?.id">
     @if (displayHeader() && examMode) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
+        <jhi-header-participation-page class="block mb-6" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
-                <span class="font-weight-normal">{{ examMode ? modelingExercise?.exerciseGroup?.title : modelingExercise?.title }}</span>
+                <span class="font-normal">{{ examMode ? modelingExercise?.exerciseGroup?.title : modelingExercise?.title }}</span>
             </span>
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
@@ -46,8 +46,8 @@
     }
 
     @if (isFeedbackView && showResultHistory) {
-        <div class="mb-4">
-            <div id="result-history" class="row mb-2">
+        <div class="mb-6">
+            <div id="result-history" class="flex flex-wrap mb-2">
                 <jhi-result-history
                     [results]="sortedResultHistory"
                     [exercise]="modelingExercise"
@@ -69,11 +69,11 @@
             <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission || submission.submitted || !isExamSummary()) {
-                    <div class="w-100">
-                        <div class="submission-container d-flex flex-column w-100">
-                            <div class="d-flex flex-column flex-md-row">
+                    <div class="w-full">
+                        <div class="submission-container flex flex-col w-full">
+                            <div class="flex flex-col md:flex-row">
                                 @if (modelingExercise.teamMode && (isActive || isLate)) {
-                                    <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
+                                    <div class="shrink-0 self-end md:self-stretch mb-2 md:ms-2 lg:ms-4">
                                         <jhi-team-participate-info-box
                                             [exercise]="modelingExercise"
                                             [participation]="participation"
@@ -84,11 +84,12 @@
                                 }
                             </div>
                             <jhi-fullscreen>
-                                <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
-                                    <div class="row" style="flex-grow: 1; display: flex">
+                                <div class="flex flex-col grow">
+                                    <div class="flex flex-wrap grow">
                                         @if (submission && (isActive || isLate) && !(result && !isAutomaticResult) && (!isLate || !submission.submitted) && !isFeedbackView) {
-                                            <div class="col-12 editor-large">
+                                            <div class="w-full min-h-dvh">
                                                 <jhi-modeling-editor
+                                                    class="w-full"
                                                     [readOnly]="!isOwnerOfParticipation"
                                                     [umlModel]="umlModel"
                                                     [diagramType]="modelingExercise.diagramType!"
@@ -98,7 +99,7 @@
                                                     [savedStatus]="{ isChanged, isSaving }"
                                                     (onModelPatch)="onModelPatch($event)"
                                                 />
-                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
+                                                <fa-icon [icon]="faGripLines" class="self-center cursor-row-resize text-muted-color" />
                                                 @if (modelingExercise.teamMode) {
                                                     <jhi-team-submission-sync
                                                         [exerciseType]="modelingExercise.type!"
@@ -113,8 +114,9 @@
                                             </div>
                                         }
                                         @if (((!isActive || (result && !isAutomaticResult)) && (!isLate || submission.submitted)) || isFeedbackView) {
-                                            <div class="col-8 editor-assessment">
+                                            <div class="w-full lg:w-2/3 lg:max-w-[70vw] editor-assessment">
                                                 <jhi-modeling-assessment
+                                                    class="w-full"
                                                     [umlModel]="umlModel"
                                                     [resultFeedbacks]="assessmentResult?.feedbacks || []"
                                                     [diagramType]="modelingExercise.diagramType!"
@@ -130,14 +132,14 @@
                                             </div>
                                         }
                                         @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
-                                            <div class="col-4 pt-5 editor-assessment overflow-auto">
+                                            <div class="w-full lg:w-1/3 pt-12 editor-assessment overflow-auto">
                                                 <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
                                                 @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
                                                 }
                                                 @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
-                                                    <div class="feedback-list">
+                                                    <div class="flex flex-col gap-3 mt-4">
                                                         <div id="component-feedback-table">
                                                             @for (feedback of referencedFeedback; track feedback.id) {
                                                                 @if (shouldBeDisplayed(feedback)) {
@@ -172,8 +174,12 @@
                         </div>
 
                         @if (result) {
-                            <div class="row">
-                                <jhi-rating class="mt-2 alert alert-info" [result]="result" [participation]="participation" />
+                            <div class="flex flex-wrap">
+                                <div class="mt-2">
+                                    <p-message severity="info" styleClass="w-full">
+                                        <jhi-rating [result]="result" [participation]="participation" />
+                                    </p-message>
+                                </div>
                             </div>
                         }
                         @if (result && !examMode && !isFeedbackView) {
@@ -190,7 +196,7 @@
             <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
-            <p right-body class="mb-3 markdown-preview">
+            <p right-body class="mb-4 markdown-preview">
                 @if (modelingExercise!.problemStatement) {
                     <span [innerHTML]="modelingExercise!.problemStatement! | htmlForMarkdown"></span>
                 }

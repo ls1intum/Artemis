@@ -1,12 +1,12 @@
 import { Component, input, output } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-included-in-overall-score-picker',
     templateUrl: './included-in-overall-score-picker.component.html',
-    imports: [TranslateDirective, NgClass],
+    imports: [TranslateDirective, ButtonModule],
 })
 export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

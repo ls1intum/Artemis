@@ -2,6 +2,7 @@ import requireSignalReferenceNgbModalInput from './require-signal-reference-ngb-
 import enforceSignalApis from './enforce-signal-apis.mjs';
 import enforceCleanupOnDestroy from './enforce-cleanup-on-destroy.mjs';
 import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-over-ngonchanges.mjs';
+import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 
 export default {
     rules: {
@@ -9,5 +10,6 @@ export default {
         'enforce-signal-apis': enforceSignalApis,
         'enforce-cleanup-on-destroy': enforceCleanupOnDestroy,
         'prefer-signal-reactivity-over-ngonchanges': preferSignalReactivityOverNgOnChanges,
+        'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
     },
 };

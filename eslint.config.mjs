@@ -333,4 +333,19 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+    {
+        // Forbid raw Tailwind color palette classes (e.g. text-green-500) in ALL client templates: Tailwind is
+        // loaded app-wide, so raw palette is wrong everywhere — use semantic brand tokens instead. The stylelint
+        // hex/--bs- guard (.stylelintrc.json) is still scoped per migrated module. See client-development.mdx (### Styling).
+        files: ['src/main/webapp/app/**/*.html'],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-raw-tailwind-color-palette': 'error',
+        },
+    },
 );

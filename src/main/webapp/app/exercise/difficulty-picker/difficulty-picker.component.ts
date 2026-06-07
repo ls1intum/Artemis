@@ -1,13 +1,12 @@
 import { Component, input, output } from '@angular/core';
+import { ButtonModule } from 'primeng/button';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-difficulty-picker',
     templateUrl: './difficulty-picker.component.html',
-    styles: ['div { cursor: pointer; }'],
-    imports: [TranslateDirective, NgClass],
+    imports: [TranslateDirective, ButtonModule],
 })
 export class DifficultyPickerComponent {
     readonly DifficultyLevel = DifficultyLevel;

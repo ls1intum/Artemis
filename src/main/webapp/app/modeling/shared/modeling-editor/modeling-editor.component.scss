@@ -75,12 +75,14 @@ $draggable-width: 15px;
 
 .scroll-container {
     scrollbar-width: thin; /* Firefox */
+    scrollbar-color: color-mix(in srgb, var(--body-color) 20%, transparent) transparent;
+
     &::-webkit-scrollbar {
         width: 6px; /* WebKit */
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
+        background-color: color-mix(in srgb, var(--body-color) 20%, transparent);
         border-radius: 3px;
     }
 }
@@ -96,5 +98,12 @@ $draggable-width: 15px;
 
     100% {
         transform: rotate(360deg);
+    }
+}
+
+// Respect users who request reduced motion: the textual "Saving" state still conveys the information.
+@media (prefers-reduced-motion: reduce) {
+    .spin {
+        animation: none;
     }
 }
