@@ -294,6 +294,14 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
+     * Returns the current playback time in seconds, or undefined if no video is loaded.
+     */
+    getCurrentTime(): number | undefined {
+        const videoElement = this.videoRef()?.nativeElement;
+        return videoElement?.currentTime;
+    }
+
+    /**
      * Updates the `currentSegmentIndex` signal based on playback time.
      * Scrolls the active transcript line into view via the transcript viewer component.
      */

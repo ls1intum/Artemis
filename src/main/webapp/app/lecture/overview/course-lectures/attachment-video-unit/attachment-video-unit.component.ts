@@ -52,7 +52,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
-import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
+import { LectureChatbotComponent, LectureContextProvider } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -102,6 +102,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
     readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
     readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
+    readonly pdfViewer = viewChild(PdfViewerComponent);
+    readonly videoPlayer = viewChild(VideoPlayerComponent);
+    readonly youtubePlayer = viewChild(YouTubePlayerComponent);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -202,6 +205,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly closeFullscreenAriaLabel = computed(() => {
         return this.isFullscreen() ? this.translateService.instant('artemisApp.lectureUnit.closeFullscreen') : undefined;
     });
+
+    readonly contextProvider = computed<LectureContextProvider>(() => ({
+        getCurrentPdfPage: () => this.pdfViewer()?.currentPageSignal(),
+        getCurrentVideoTimestamp: () => {
+            const videoPlayer = this.videoPlayer();
+            const youtubePlayer = this.youtubePlayer();
+            return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
+        },
+    }));
 
     constructor() {
         super();

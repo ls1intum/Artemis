@@ -73,6 +73,7 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/foundation/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { RemoveContextPipe } from 'app/iris/overview/context-text/remove-context.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
@@ -130,6 +131,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ArtemisTranslatePipe,
         AsPipe,
         HtmlForMarkdownPipe,
+        RemoveContextPipe,
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
@@ -345,6 +347,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /** Optional function to generate message prefix (e.g., context block) - called when sending messages */
+    readonly messagePrefixProvider = input<(() => string) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -805,8 +809,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
+            const prefixProvider = this.messagePrefixProvider();
+            const prefix = prefixProvider ? prefixProvider() : '';
+            const messageWithContext = prefix ? `${prefix}${content}` : content;
             this.chatService
-                .sendMessage(content)
+                .sendMessage(messageWithContext)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {

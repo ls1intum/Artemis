@@ -252,6 +252,13 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Returns the current playback time in seconds, or undefined if player is not ready.
+     */
+    getCurrentTime(): number | undefined {
+        return this.youtubePlayer?.getCurrentTime();
+    }
+
     private updateCurrentSegment(currentTime: number): void {
         const segments = this.transcriptSegments();
         const idx = segments.findIndex((s) => currentTime >= s.startTime && currentTime < s.endTime);
