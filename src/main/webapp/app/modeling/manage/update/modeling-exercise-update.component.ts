@@ -45,7 +45,6 @@ import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
-
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
