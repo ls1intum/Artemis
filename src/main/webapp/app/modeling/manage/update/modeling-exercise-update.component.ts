@@ -12,7 +12,6 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -44,6 +43,8 @@ import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -63,12 +64,12 @@ import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-
         ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
+        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

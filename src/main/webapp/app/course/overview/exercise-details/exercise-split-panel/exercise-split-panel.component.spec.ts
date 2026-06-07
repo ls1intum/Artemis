@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ChildrenOutletContexts, Router } from '@angular/router';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,7 +43,6 @@ describe('ExerciseSplitPanelComponent', () => {
                 { provide: ActivatedRoute, useValue: { parent: {}, firstChild: undefined } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 ChildrenOutletContexts,
-                provideNoopAnimations(),
             ],
         })
             .overrideComponent(ExerciseSplitPanelComponent, {
