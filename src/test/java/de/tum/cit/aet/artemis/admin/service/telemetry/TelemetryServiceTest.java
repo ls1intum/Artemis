@@ -27,10 +27,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 @ExtendWith(MockitoExtension.class)
-class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
+class TelemetryServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private RestTemplate restTemplate;

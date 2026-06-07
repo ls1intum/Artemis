@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private TeamRepository teamRepo;
