@@ -580,12 +580,12 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
     }
 
-    toggleAthenaFormativeEnabled(): void {
-        this.courseForm.controls['athenaFormativeEnabled'].setValue(this.course.athenaFormativeEnabled);
+    toggleAthenaFormativeEnabled(checked: boolean): void {
+        this.courseForm.controls['athenaFormativeEnabled'].setValue(checked);
     }
 
-    toggleAthenaGradingEnabled(): void {
-        this.courseForm.controls['athenaGradingEnabled'].setValue(this.course.athenaGradingEnabled);
+    toggleAthenaGradingEnabled(checked: boolean): void {
+        this.courseForm.controls['athenaGradingEnabled'].setValue(checked);
     }
 
     /**

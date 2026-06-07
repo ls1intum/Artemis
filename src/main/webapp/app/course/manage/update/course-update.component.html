@@ -407,7 +407,7 @@
                             [binary]="true"
                             [(ngModel)]="course.athenaFormativeEnabled"
                             [ngModelOptions]="{ standalone: true }"
-                            (onChange)="toggleAthenaFormativeEnabled()"
+                            (onChange)="toggleAthenaFormativeEnabled($event.checked)"
                         />
                         <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.formativeEnabled" for="field_athenaFormativeEnabled"></label>
                     </div>
@@ -417,7 +417,7 @@
                             [binary]="true"
                             [(ngModel)]="course.athenaGradingEnabled"
                             [ngModelOptions]="{ standalone: true }"
-                            (onChange)="toggleAthenaGradingEnabled()"
+                            (onChange)="toggleAthenaGradingEnabled($event.checked)"
                         />
                         <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.gradingEnabled" for="field_athenaGradingEnabled"></label>
                     </div>

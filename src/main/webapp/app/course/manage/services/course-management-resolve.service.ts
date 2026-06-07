@@ -15,12 +15,24 @@ export class CourseManagementResolve implements Resolve<Course> {
      * @param route - contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
-        if (route.params['courseId']) {
-            return this.courseManagementService.find(route.params['courseId']).pipe(
+        const courseId = this.findCourseId(route);
+        if (courseId) {
+            return this.courseManagementService.find(Number(courseId)).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );
         }
         return of(new Course());
+    }
+
+    private findCourseId(route: ActivatedRouteSnapshot): string | undefined {
+        let current: ActivatedRouteSnapshot | null = route;
+        while (current) {
+            if (current.params['courseId']) {
+                return current.params['courseId'];
+            }
+            current = current.parent;
+        }
+        return undefined;
     }
 }

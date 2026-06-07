@@ -28,24 +28,8 @@
                 onDelete="CASCADE"/>
     </changeSet>
 
-    <!-- changeSet-2: migrate any courses that had a flag set to true -->
+    <!-- changeSet-2: clear exercise Athena settings for consistency -->
     <changeSet id="20260527000001-2" author="artemis">
-        <sql>
-            INSERT INTO course_athena_config (course_id, formative_enabled, grading_enabled)
-            SELECT id, athena_formative_enabled, athena_grading_enabled
-            FROM course
-            WHERE athena_formative_enabled = TRUE OR athena_grading_enabled = TRUE
-        </sql>
-    </changeSet>
-
-    <!-- changeSet-3: drop the old columns from course -->
-    <changeSet id="20260527000001-3" author="artemis">
-        <dropColumn tableName="course" columnName="athena_formative_enabled"/>
-        <dropColumn tableName="course" columnName="athena_grading_enabled"/>
-    </changeSet>
-
-    <!-- changeSet-4 (unchanged): clear exercise Athena settings for consistency -->
-    <changeSet id="20260527000001-4" author="artemis">
         <sql>UPDATE exercise SET feedback_suggestion_module = NULL</sql>
         <sql>UPDATE exercise SET allow_manual_feedback_requests = FALSE</sql>
     </changeSet>
