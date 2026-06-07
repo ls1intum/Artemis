@@ -1,0 +1,24 @@
+{
+    "userRegistrationModal": {
+        "description": "Enter a search term to find users by name, login, matriculation number, or email. Select users and click Register when done.",
+        "searchPlaceholder": "Search by name, login, matriculation number or email",
+        "viewingSelectedPlaceholder": "Viewing selected users...",
+        "initialTitle": "Start by searching for users",
+        "initialHint": "Enter a name, login, or matriculation number or email in the search box above.",
+        "noResultsTitle": "No users found matching \"{{term}}\"",
+        "noResultsHint": "Try a different search term.",
+        "viewSelected": "View Selected ({{count}})",
+        "backToSearch": "Back to Search",
+        "selectedCount": "{{count}} selected",
+        "clearSelection": "Clear Selection",
+        "registerButton": "Register ({{count}})",
+        "alreadyRegisteredTooltip": "The user is already registered.",
+        "searchError": "An error occurred while searching for users.",
+        "registerError": "An error occurred while registering the users.",
+        "columns": {
+            "nameLogin": "Name / Login",
+            "matriculationNumber": "Matriculation Number",
+            "email": "Email"
+        }
+    }
+}

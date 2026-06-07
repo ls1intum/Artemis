@@ -623,6 +623,20 @@
                     "viewExam": "View exam",
                     "remove": "Deregister"
                 },
+                "filter": {
+                    "All": "All",
+                    "ExamMissing": "Exam missing",
+                    "NotStarted": "Not started",
+                    "Started": "Started",
+                    "Submitted": "Submitted",
+                    "DidNotAttend": "Did not attend",
+                    "AttendanceNotChecked": "Attendance check failed",
+                    "AttendanceChecked": "Attendance check passed"
+                },
+                "filterGroup": {
+                    "progress": "Progress",
+                    "attendance": "Attendance"
+                },
                 "menu": {
                     "manageStudents": "Register students",
                     "examLogistics": "Exam logistics",
@@ -637,7 +651,7 @@
                     "verifyAttendance": "Verify attendance"
                 },
                 "addDialog": {
-                    "title": "Add students",
+                    "title": "Add Students",
                     "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
                     "searchPlaceholder": "Search students",
                     "loadingStudents": "Loading students...",

@@ -4,7 +4,7 @@ import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
-import { generateUUID } from '../../utils';
+import { generateUUID, getExamBuildAndTestAfterDueDate } from '../../utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -101,14 +101,17 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.QUIZ:
                 exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
                 break;
-            case ExerciseType.PROGRAMMING:
+            case ExerciseType.PROGRAMMING: {
+                const buildAndTestStudentSubmissionsAfterDueDate = getExamBuildAndTestAfterDueDate(exam);
                 exercise = await this.exerciseAPIRequests.createProgrammingExercise({
                     exerciseGroup,
                     title,
                     assessmentType: additionalData.progExerciseAssessmentType,
                     programmingLanguage: additionalData.programmingLanguage,
+                    buildAndTestStudentSubmissionsAfterDueDate,
                 });
                 break;
+            }
         }
         // Ensure exerciseGroup is always attached to the returned exercise,
         // as the server response may not include it
