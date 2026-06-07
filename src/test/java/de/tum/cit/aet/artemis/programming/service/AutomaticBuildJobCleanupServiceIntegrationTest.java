@@ -11,10 +11,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 
 // Note: The retention-period property is configured in AbstractSpringIntegrationIndependentTest to avoid creating a separate Spring context
 class AutomaticBuildJobCleanupServiceIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {

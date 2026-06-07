@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { SshUserSettingsFingerprintsService } from 'app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 

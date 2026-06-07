@@ -1,9 +1,9 @@
 import { Component, OnInit, output, signal } from '@angular/core';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-exercises-search',

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
@@ -9,8 +9,8 @@ import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-prerequisite',

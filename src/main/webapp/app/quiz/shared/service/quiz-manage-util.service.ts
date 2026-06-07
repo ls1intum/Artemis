@@ -10,7 +10,7 @@ import {
     MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_POINTS,
-} from 'app/shared/constants/input.constants';
+} from 'app/foundation/constants/input.constants';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';

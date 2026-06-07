@@ -28,10 +28,10 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest {
+class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "teamwebsocketservice";
 
@@ -61,7 +61,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     private String importFromExerciseUrl(Exercise sourceExercise) {
-        return "/api/exercise/exercises/" + modelingExercise.getId() + "/teams/import-from-exercise/" + sourceExercise.getId() + "?importStrategyType="
+        return "/api/exercise/exercises/" + modelingExercise.getId() + "/teams/import-from-exercise?sourceExerciseId=" + sourceExercise.getId() + "&importStrategyType="
                 + TeamImportStrategyType.PURGE_EXISTING;
     }
 

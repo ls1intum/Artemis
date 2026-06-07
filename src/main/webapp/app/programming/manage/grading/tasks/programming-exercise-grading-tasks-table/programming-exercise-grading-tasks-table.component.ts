@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -7,15 +7,15 @@ import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/ent
 import { ProgrammingExerciseTask } from '../programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { ProgrammingExerciseServerSideTask } from 'app/programming/shared/entities/programming-exercise-task.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseTaskComponent } from '../programming-exercise-task/programming-exercise-task.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -33,9 +33,9 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private taskService = inject(ProgrammingExerciseTaskService);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() course: Course;
-    @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly course = input.required<Course>();
+    readonly gradingStatisticsObservable = input.required<Observable<ProgrammingExerciseGradingStatistics>>();
 
     // Icons
     faAngleDown = faAngleDown;
@@ -59,8 +59,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     ngOnInit(): void {
         this.allTasksExpandedSubject = new Subject();
-        this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
+        this.gradingStatisticsObservable().subscribe((gradingStatistics) => {
+            this.taskService.configure(this.exercise(), this.course(), gradingStatistics).subscribe(this.updateTasks);
         });
 
         this.currentSort = {
@@ -68,7 +68,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             descending: true,
         };
 
-        this.isExamExercise = isExamExercise(this.exercise);
+        this.isExamExercise = isExamExercise(this.exercise());
     }
 
     updateTasks = () => {

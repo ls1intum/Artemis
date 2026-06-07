@@ -51,7 +51,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThatDb(() -> {
             log.info("Start courses for dashboard call for multiple courses");
-            var userCourses = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+            var userCourses = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
         }).hasBeenCalledAtMostTimes(8);
@@ -68,7 +68,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         var course = courses.getFirst();
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
-            var userCourse = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+            var userCourse = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
         }).hasBeenCalledAtMostTimes(19);

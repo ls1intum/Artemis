@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EmojiUtils } from 'app/communication/emoji/emoji.utils';
 
 @Component({

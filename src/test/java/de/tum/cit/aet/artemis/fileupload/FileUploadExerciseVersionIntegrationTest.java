@@ -126,7 +126,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        FileUploadExercise importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + fileUploadExercise.getId(), exerciseToImport,
+        FileUploadExercise importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), exerciseToImport,
                 FileUploadExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded

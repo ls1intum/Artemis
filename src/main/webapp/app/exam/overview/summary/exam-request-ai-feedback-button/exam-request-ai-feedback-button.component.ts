@@ -14,16 +14,15 @@ import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { isTestExam } from 'app/exam/shared/entities/exam.model';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 const FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_requested_';
 
@@ -115,14 +114,22 @@ export class ExamRequestAiFeedbackButtonComponent {
     // Per-exercise alerts may fire earlier as individual results arrive.
     readonly isGenerating = computed(() => (this.isRequestingFeedback() || this.feedbackRequested()) && !this.hasAllAthenaResultsForCurrentAttempt());
 
-    get hasAnyAthenaResultForCurrentAttempt(): boolean {
+    readonly hasAnyAthenaResultForCurrentAttempt = computed(() => {
         return (this.studentExam()?.exercises ?? []).some((exercise) => {
             if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
                 return false;
             }
-            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
-            return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+            return this.hasAnyAthenaResultForLatestSubmission(exercise);
         });
+    });
+
+    private hasAnyAthenaResultForLatestSubmission(exercise: Exercise): boolean {
+        const submissions = exercise.studentParticipations?.[0]?.submissions ?? [];
+        if (submissions.length === 0) {
+            return false;
+        }
+        const currentSubmission = submissions.reduce<Submission>((acc, s) => ((s.id ?? 0) > (acc.id ?? 0) ? s : acc), submissions[0]);
+        return (currentSubmission.results ?? []).some((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
     }
 
     private athenaResultSubscriptions: Subscription[] = [];
@@ -140,12 +147,19 @@ export class ExamRequestAiFeedbackButtonComponent {
         });
 
         // Read the persisted "feedback requested" flag whenever the studentExam input is (re)set.
+        // Prune the key once the server has an Athena result for this attempt — it's redundant from then on.
         effect(() => {
             const exam = this.studentExam();
             if (exam?.id === undefined) {
                 return;
             }
+            const serverHasResult = this.hasAnyAthenaResultForCurrentAttempt();
             untracked(() => {
+                if (serverHasResult) {
+                    this.localStorageService.remove(this.getFeedbackRequestedStorageKey());
+                    this.feedbackRequested.set(false);
+                    return;
+                }
                 this.feedbackRequested.set(this.localStorageService.retrieve<boolean>(this.getFeedbackRequestedStorageKey()) ?? false);
             });
         });
@@ -211,7 +225,7 @@ export class ExamRequestAiFeedbackButtonComponent {
                 error: (error: HttpErrorResponse) => {
                     this.isRequestingFeedback.set(false);
                     const errorKey = error.error?.errorKey;
-                    this.alertService.error(errorKey ? `artemisApp.exercise.${errorKey}` : `error.http.${error.status}`);
+                    this.alertService.error(errorKey ? this.translationKeyForErrorKey(errorKey) : `error.http.${error.status}`);
                 },
             });
     }
@@ -232,12 +246,12 @@ export class ExamRequestAiFeedbackButtonComponent {
                     this.athenaFeedbackUsed.set(usage.used);
                     this.athenaFeedbackLimit.set(usage.limit);
                     // If the server already counts this attempt as consumed, don't bump again on incoming websocket results.
-                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
+                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt();
                     this.subscribeToAthenaResultsForCurrentAttempt();
                 },
                 error: () => {
                     this.alertService.error('artemisApp.exam.examSummary.feedbackUsageLoadFailed');
-                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt;
+                    this.currentAttemptCounted = this.hasAnyAthenaResultForCurrentAttempt();
                     this.subscribeToAthenaResultsForCurrentAttempt();
                 },
             });
@@ -262,8 +276,7 @@ export class ExamRequestAiFeedbackButtonComponent {
             if ((exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) || exercise.id === undefined) {
                 continue;
             }
-            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
-            if (latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+            if (this.hasAnyAthenaResultForLatestSubmission(exercise)) {
                 initialReceived.add(exercise.id);
             }
         }
@@ -318,5 +331,12 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     private getFeedbackRequestedStorageKey(): string {
         return `${FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX}${this.studentExam()?.id}`;
+    }
+
+    private translationKeyForErrorKey(errorKey: string): string {
+        if (errorKey === 'noFeedbackSuggestionModuleConfigured') {
+            return `artemisApp.exam.examSummary.${errorKey}`;
+        }
+        return `artemisApp.exercise.${errorKey}`;
     }
 }

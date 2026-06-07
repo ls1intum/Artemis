@@ -1,0 +1,125 @@
+/* stylelint-disable selector-pseudo-element-no-unknown */
+:host {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:host ::ng-deep .gutter.gutter-horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 8px;
+    cursor: col-resize;
+    background-color: transparent;
+
+    &::before {
+        display: none;
+    }
+}
+
+:host ::ng-deep .split-gutter-handle {
+    display: flex;
+    gap: 1px;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+        content: '';
+        display: block;
+        width: 2px;
+        height: 12px;
+        background: var(--bs-body-color);
+        border-radius: 1px;
+    }
+}
+
+.right-panel-collapse-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 2.5rem;
+    padding: 0;
+    color: var(--bs-body-color);
+    background: transparent;
+    border: 0;
+    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-primary);
+        background: var(--bs-tertiary-bg);
+    }
+}
+
+.right-panel-tabs {
+    min-width: 0;
+}
+
+.collapsed-right-panel {
+    width: 3rem;
+    min-width: 3rem;
+    margin-left: 12px;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+.collapsed-right-panel-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    color: var(--bs-body-color);
+    background: transparent;
+    border: 0;
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible,
+    &.active {
+        color: var(--bs-primary);
+        background: var(--bs-tertiary-bg);
+    }
+}
+
+:host ::ng-deep {
+    .p-tablist-tab-list {
+        border-width: 0 0 var(--bs-border-width) 0;
+        border-color: var(--bs-border-color);
+        gap: 0.5rem;
+    }
+
+    .p-tablist-active-bar {
+        display: none;
+    }
+
+    .p-tab {
+        border-width: 0 0 var(--bs-border-width) 0;
+        padding: 8px;
+
+        &.p-tab-active {
+            color: var(--bs-body-color);
+            border-color: var(--bs-primary);
+            background: transparent;
+        }
+
+        &:not(.p-disabled):focus-visible {
+            outline: 2px solid var(--bs-primary);
+            outline-offset: 2px;
+        }
+
+        &:not(.p-tab-active):not(.p-disabled):hover {
+            color: var(--bs-body-color);
+            background: transparent;
+            border-color: transparent;
+        }
+    }
+
+    .p-tablist {
+        background: transparent;
+    }
+}

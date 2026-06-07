@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,26 +19,23 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -47,13 +44,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [
         AssessmentLayoutComponent,
         TranslateDirective,
-        NgbTooltip,
-        FaIconComponent,
         ModelingAssessmentComponent,
         CollapsableAssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
-        ArtemisTranslatePipe,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
@@ -96,6 +91,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
+    loadingFeedbackSuggestions = false;
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
@@ -107,9 +103,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
-
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faQuestionCircle = faQuestionCircle;
 
     constructor() {
         const translateService = this.translateService;
@@ -202,14 +195,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
-            next: async (submission?: ModelingSubmission) => {
+            next: (submission?: ModelingSubmission) => {
                 if (!submission) {
                     // there are no unassessed submissions
                     this.submission = undefined;
                     return;
                 }
 
-                await this.handleReceivedSubmission(submission);
+                this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -222,7 +215,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    private async handleReceivedSubmission(submission: ModelingSubmission): Promise<void> {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
@@ -262,16 +255,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result.feedbacks = [];
         }
 
-        // Only load suggestions for new assessments, they don't make sense later.
-        // The assessment is new if it only contains automatic feedback.
-        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
-            this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
-
-            if (this.result) {
-                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
-            }
-        }
-
         this.handleFeedback(this.result?.feedbacks);
 
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
@@ -282,6 +265,35 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
         this.isLoading = false;
+
+        // Only load suggestions for new assessments, they don't make sense later.
+        // The assessment is new if it only contains automatic feedback.
+        // Load after isLoading=false so the page is interactive while AI suggestions fetch.
+        const automaticFeedbackCount = this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
+        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+            void this.fetchAndApplyFeedbackSuggestions();
+        }
+    }
+
+    private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
+        const submissionAtStart = this.submission;
+        const resultAtStart = this.result;
+        this.loadingFeedbackSuggestions = true;
+        try {
+            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise!, submissionAtStart!);
+            if (this.submission !== submissionAtStart || this.result !== resultAtStart) {
+                return;
+            }
+            this.feedbackSuggestions = suggestions;
+            if (this.result) {
+                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+            }
+            this.handleFeedback(this.result?.feedbacks);
+        } finally {
+            if (this.submission === submissionAtStart) {
+                this.loadingFeedbackSuggestions = false;
+            }
+        }
     }
 
     /**
@@ -309,7 +321,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
             },
             error: () => {
                 this.onError();
@@ -488,26 +500,28 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
-        this.modelingAssessmentService
-            .updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note)
-            .subscribe({
-                next: (response) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this.result = response.body!;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.feedback);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note).subscribe({
+            next: (response) => {
+                assessmentAfterComplaint.onSuccess();
+                this.result = response.body!;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**

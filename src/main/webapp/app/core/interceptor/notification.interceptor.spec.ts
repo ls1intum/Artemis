@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHandler, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TestBed } from '@angular/core/testing';
 
 describe(`NotificationInterceptor`, () => {

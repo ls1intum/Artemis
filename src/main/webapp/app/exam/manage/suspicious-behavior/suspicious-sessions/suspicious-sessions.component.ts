@@ -3,7 +3,7 @@ import { Component, OnInit, input, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks

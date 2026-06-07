@@ -225,9 +225,9 @@
                 </div>
             </div>
         }
-        <div class="chat-body" [class.not-accepted]="!userAccepted()" [class.empty-state]="isEmptyState()" #chatBody>
+        <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
             @if (messages()?.length) {
-                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
@@ -346,6 +346,9 @@
                                 <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
                             </div>
                         }
+                        @if (shouldShowStatusBar()) {
+                            <jhi-chat-status-bar [stages]="stages()" />
+                        }
                     </div>
                 </div>
             }
@@ -354,9 +357,6 @@
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 </div>
-            }
-            @if (shouldShowStatusBar()) {
-                <jhi-chat-status-bar [stages]="stages()" />
             }
             @if (!userAccepted()) {
                 <div class="p-chat">
@@ -375,15 +375,6 @@
                     </div>
                 </div>
             }
-            <button
-                type="button"
-                class="scroll-to-bottom"
-                [hidden]="isScrolledToBottom()"
-                (click)="scrollToBottom('smooth')"
-                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-            >
-                <fa-icon [icon]="faArrowDown" />
-            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
@@ -398,6 +389,15 @@
             @if (isAIEnabled()) {
                 <div class="chat-input">
                     <div class="chat-input-inner">
+                        <button
+                            type="button"
+                            class="scroll-to-bottom"
+                            [hidden]="isScrolledToBottom()"
+                            (click)="scrollToBottom('smooth')"
+                            [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowDown" />
+                        </button>
                         <div class="textarea-wrapper">
                             <textarea
                                 [ngModel]="newMessageTextContent()"

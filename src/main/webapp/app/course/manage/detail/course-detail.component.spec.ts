@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

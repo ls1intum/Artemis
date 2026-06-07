@@ -8,8 +8,8 @@ import { CalendarDesktopWeekPresentationComponent } from './calendar-desktop-wee
 import { CalendarEventsPerDaySectionComponent } from 'app/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';

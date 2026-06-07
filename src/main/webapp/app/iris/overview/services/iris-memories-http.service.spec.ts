@@ -51,7 +51,7 @@ describe('IrisMemoriesHttpService', () => {
 
     it('should get a specific user memory with relations and URL-encode the id', async () => {
         const rawId = 'a/b?c=d e';
-        const expectedUrl = `api/iris/user/memory/${encodeURIComponent(rawId)}`;
+        const expectedUrl = `api/iris/user/memories/${encodeURIComponent(rawId)}`;
         const returnedFromService: MemirisMemoryWithRelationsDTO = {
             id: rawId,
             title: 'Title',
@@ -79,7 +79,7 @@ describe('IrisMemoriesHttpService', () => {
         let completed = false;
         service.deleteUserMemory(memoryId).subscribe(() => (completed = true));
 
-        const req = httpMock.expectOne(`api/iris/user/memory/${memoryId}`);
+        const req = httpMock.expectOne(`api/iris/user/memories/${memoryId}`);
         expect(req.request.method).toBe('DELETE');
         req.flush(null, { status: 200, statusText: 'OK' });
         await vi.waitFor(() => expect(completed).toBe(true));

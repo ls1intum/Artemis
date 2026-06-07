@@ -4,7 +4,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * Displays a warning for instructors on submission page, team page and the assessment page.

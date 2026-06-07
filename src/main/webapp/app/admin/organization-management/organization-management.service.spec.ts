@@ -10,8 +10,8 @@ import { Router } from '@angular/router';
 
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { User } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';

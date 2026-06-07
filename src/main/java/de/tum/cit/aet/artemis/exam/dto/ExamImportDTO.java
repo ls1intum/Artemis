@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamImportDTO(@NotNull String title, @Nullable ExamType examType, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, @Nullable ZonedDateTime testExamPracticeStartDate, int workingTime, @Nullable String startText,

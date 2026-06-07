@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PlagiarismComparison } from './PlagiarismComparison';
 import { PlagiarismStatus } from './PlagiarismStatus';
 import { PlagiarismSubmission } from './PlagiarismSubmission';
@@ -5,6 +7,8 @@ import { PlagiarismResult } from './PlagiarismResult';
 import { PlagiarismMatch } from './PlagiarismMatch';
 
 describe('PlagiarismComparison', () => {
+    setupTestBed({ zoneless: true });
+
     let plagiarismComparison: PlagiarismComparison;
     let mockSubmissionA: PlagiarismSubmission;
     let mockSubmissionB: PlagiarismSubmission;

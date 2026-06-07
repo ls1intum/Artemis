@@ -8,14 +8,12 @@ import { FileType } from 'app/programming/shared/code-editor/model/code-editor.m
 export class RepositoryService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/programming/repository';
-
     /**
      * Checks whether the participation data is clean or not.
      * @param participationId The identifier of the participation.
      */
     isClean(participationId: number): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}`).pipe(map((data) => ({ isClean: data.isClean })));
+        return this.http.get<any>(`api/programming/participations/${participationId}/repository`).pipe(map((data) => ({ isClean: data.isClean })));
     }
 
     /**
@@ -23,7 +21,7 @@ export class RepositoryService {
      * @param participationId The identifier of the participation.
      */
     commit(participationId: number): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/commit`, {});
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/commit`, {});
     }
 
     /**
@@ -31,7 +29,7 @@ export class RepositoryService {
      * @param participationId The identifier of the participation.
      */
     pull(participationId: number): Observable<void> {
-        return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
+        return this.http.get<void>(`api/programming/participations/${participationId}/repository/pull`, {});
     }
 }
 
@@ -49,14 +47,12 @@ export interface IRepositoryFileService {
 export class RepositoryFileService implements IRepositoryFileService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/programming/repository';
-
     /**
      * Get files of a specific participation.
      * @param participationId The identifier of the participation.
      */
     query(participationId: number): Observable<{ [fileName: string]: FileType }> {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.resourceUrl}/${participationId}/files`);
+        return this.http.get<{ [fileName: string]: FileType }>(`api/programming/participations/${participationId}/repository/files`);
     }
 
     /**
@@ -66,7 +62,7 @@ export class RepositoryFileService implements IRepositoryFileService {
      */
     get(participationId: number, fileName: string): Observable<any> {
         return this.http
-            .get(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
+            .get(`api/programming/participations/${participationId}/repository/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
             .pipe(map((data) => ({ fileContent: data })));
     }
 
@@ -77,7 +73,7 @@ export class RepositoryFileService implements IRepositoryFileService {
      * @param fileContent The content of the file.
      */
     update(participationId: number, fileName: string, fileContent: string): Observable<any> {
-        return this.http.put(`${this.resourceUrl}/${participationId}/file`, fileContent, {
+        return this.http.put(`api/programming/participations/${participationId}/repository/file`, fileContent, {
             params: new HttpParams().set('file', fileName),
         });
     }
@@ -88,7 +84,7 @@ export class RepositoryFileService implements IRepositoryFileService {
      * @param fileName The name of the file to be created.
      */
     createFile(participationId: number, fileName: string): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/file`, '', { params: new HttpParams().set('file', fileName) });
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/file`, '', { params: new HttpParams().set('file', fileName) });
     }
 
     /**
@@ -98,7 +94,7 @@ export class RepositoryFileService implements IRepositoryFileService {
 
      */
     createFolder(participationId: number, folderName: string): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/folder`, '', { params: new HttpParams().set('folder', folderName) });
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/folder`, '', { params: new HttpParams().set('folder', folderName) });
     }
 
     /**
@@ -109,7 +105,7 @@ export class RepositoryFileService implements IRepositoryFileService {
 
      */
     rename(participationId: number, currentFilePath: string, newFilename: string): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/rename-file`, { currentFilePath, newFilename });
+        return this.http.post<void>(`api/programming/participations/${participationId}/repository/rename-file`, { currentFilePath, newFilename });
     }
 
     /**
@@ -118,6 +114,6 @@ export class RepositoryFileService implements IRepositoryFileService {
      * @param fileName The name of the file to be deleted.
      */
     delete(participationId: number, fileName: string): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName) });
+        return this.http.delete<void>(`api/programming/participations/${participationId}/repository/file`, { params: new HttpParams().set('file', fileName) });
     }
 }

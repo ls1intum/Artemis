@@ -1,4 +1,4 @@
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 

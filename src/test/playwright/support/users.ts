@@ -75,7 +75,7 @@ export class PlaywrightUserManagement {
     }
 
     public async getUserInfo(username: string, page: Page): Promise<User> {
-        const response = await page.request.get(`${BASE_API}/core/admin/users/${username}`);
+        const response = await page.request.get(`${BASE_API}/account/admin/users/${username}`);
         return response.json();
     }
 

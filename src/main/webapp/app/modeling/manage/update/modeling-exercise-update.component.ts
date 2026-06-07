@@ -13,7 +13,6 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -24,25 +23,26 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -62,11 +62,11 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
         ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

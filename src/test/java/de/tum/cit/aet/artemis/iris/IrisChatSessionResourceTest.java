@@ -305,7 +305,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
 
         assertThat(location).isNotNull();
         String path = location.getPath();
-        assertThat(path).matches("/api/iris/chat/" + course.getId() + "/session/\\d+");
+        assertThat(path).matches("/api/iris/chat/courses/" + course.getId() + "/sessions/\\d+");
         long createdId = Long.parseLong(path.substring(path.lastIndexOf('/') + 1));
         IrisChatSession persisted = irisChatSessionRepository.findById(createdId).orElseThrow();
         assertThat(persisted.getMode()).isEqualTo(mode);
@@ -401,11 +401,11 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     // =========================================================================
 
     private String overviewUrl() {
-        return "/api/iris/chat/" + course.getId() + "/sessions/overview";
+        return "/api/iris/chat/courses/" + course.getId() + "/sessions/overview";
     }
 
     private String sessionUrl(long sessionId) {
-        return "/api/iris/chat/" + course.getId() + "/session/" + sessionId;
+        return "/api/iris/chat/courses/" + course.getId() + "/sessions/" + sessionId;
     }
 
     private String currentUrl(IrisChatMode mode, long entityId) {

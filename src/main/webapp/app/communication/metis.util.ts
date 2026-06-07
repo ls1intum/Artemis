@@ -132,7 +132,7 @@ export interface ContextInformation {
  */
 export type RouteComponents = (string | number)[];
 
-export const MetisWebsocketChannelPrefix = '/topic/metis/';
+export const MetisWebsocketChannelPrefix = '/topic/communication/';
 
 /**
  * whitespace accepted only together with a character excluding newline character

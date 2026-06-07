@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 
@@ -28,7 +29,8 @@ import de.tum.cit.aet.artemis.core.service.ScheduleService;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminScheduleResource {
 
     private final ScheduleService scheduleService;

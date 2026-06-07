@@ -116,10 +116,10 @@ public class QuizTrainingResource {
      * @param submittedAnswerDTO the submitted answer payload by the user for the quiz question (rich entity-shaped JSON)
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
+    @PostMapping("courses/{courseId}/training-questions/{trainingQuestionId}/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId, @RequestParam boolean isRated,
-            @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
+    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable("trainingQuestionId") long quizQuestionId,
+            @RequestParam boolean isRated, @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
         log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();

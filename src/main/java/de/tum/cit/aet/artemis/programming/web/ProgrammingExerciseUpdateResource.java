@@ -343,6 +343,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setStartDate(dto.startDate());
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setAssessmentType(dto.assessmentType());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // Only set boolean values if they are explicitly provided (not null)

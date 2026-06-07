@@ -8,7 +8,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

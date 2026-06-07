@@ -421,8 +421,10 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var expectedKnowledgeAreas = Stream.of(knowledgeArea, knowledgeArea1).map(StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO::of).toList();
                 var expectedSources = Stream.of(source, source1, source2).map(SourceDTO::of).toList();
 
-                var actualCatalog = request.get("/api/atlas/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
+                var actualCatalogJson = request.get("/api/atlas/admin/standardized-competencies/export", HttpStatus.OK, String.class);
+                var actualCatalog = request.getObjectMapper().readValue(actualCatalogJson, StandardizedCompetencyCatalogDTO.class);
 
+                assertThat(actualCatalogJson).contains("\n  \"");
                 assertThat(actualCatalog.knowledgeAreas()).containsAll(expectedKnowledgeAreas);
                 assertThat(actualCatalog.sources()).containsAll(expectedSources);
             }

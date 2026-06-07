@@ -1,5 +1,5 @@
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
 
 export interface TutorialGroupFreePeriodDTO {

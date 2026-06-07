@@ -9,7 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OnboardingCommunicationComponent } from './onboarding-communication.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('OnboardingCommunicationComponent', () => {

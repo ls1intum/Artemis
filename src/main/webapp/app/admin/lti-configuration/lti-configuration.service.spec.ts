@@ -9,7 +9,7 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 
 describe('LtiConfigurationService', () => {
     setupTestBed({ zoneless: true });
@@ -96,7 +96,7 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/lti/admin/lti-platform`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platforms`);
         expect(req.request.method).toBe('PUT');
         req.flush(dummyResponse);
     });
@@ -109,7 +109,7 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/lti/admin/lti-platform/${platformId}`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platforms/${platformId}`);
         expect(req.request.method).toBe('DELETE');
         req.flush(dummyResponse);
     });
@@ -128,7 +128,7 @@ describe('LtiConfigurationService', () => {
             expect(response.status).toBe(200);
         });
 
-        const req = httpMock.expectOne(`api/lti/admin/lti-platform`);
+        const req = httpMock.expectOne(`api/lti/admin/lti-platforms`);
         expect(req.request.method).toBe('POST');
         req.flush(dummyResponse);
     });

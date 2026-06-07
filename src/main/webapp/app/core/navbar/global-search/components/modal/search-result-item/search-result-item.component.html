@@ -77,11 +77,11 @@
                 </div>
             }
 
-            <!-- Description -->
-            @if (result().description) {
-                <p class="result-description mb-0 text-secondary small text-truncate-2">
-                    {{ result().description }}
-                </p>
+            @if (cleanedDescription()) {
+                <div
+                    class="result-description mb-0 text-secondary small"
+                    [innerHTML]="cleanedDescription() | htmlForMarkdown: [] : PREVIEW_ALLOWED_TAGS : PREVIEW_ALLOWED_ATTRS"
+                ></div>
             }
         </div>
     </div>

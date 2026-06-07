@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type CourseTutorialGroupDetailSessionStatusChipVariant = 'REGULAR' | 'CANCELLED' | 'RESCHEDULED' | 'RELOCATED';
 

@@ -16,7 +16,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -34,9 +34,9 @@ import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/qu
 import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';

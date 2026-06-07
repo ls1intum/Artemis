@@ -59,7 +59,7 @@ describe('AdminDataExportsService', () => {
 
         const exportPromise = firstValueFrom(service.getAllDataExports(0, 20));
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/core/admin/data-exports?page=0&size=20' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/data-exports?page=0&size=20' });
         req.flush(mockExports, {
             headers: { 'X-Total-Count': '50' },
         });
@@ -79,7 +79,7 @@ describe('AdminDataExportsService', () => {
 
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `api/core/admin/data-exports/${login}?executeNow=false`,
+            url: `api/admin/data-exports/${login}?executeNow=false`,
         });
         req.flush({});
 
@@ -93,7 +93,7 @@ describe('AdminDataExportsService', () => {
 
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `api/core/admin/data-exports/${login}?executeNow=true`,
+            url: `api/admin/data-exports/${login}?executeNow=true`,
         });
         req.flush({});
 
@@ -106,7 +106,7 @@ describe('AdminDataExportsService', () => {
 
         service.downloadDataExport(dataExportId);
 
-        expect(windowSpy).toHaveBeenCalledWith('api/core/admin/data-exports/123/download', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith('api/admin/data-exports/123/download', '_blank');
     });
 
     it('should convert date strings to dayjs objects', async () => {
@@ -123,7 +123,7 @@ describe('AdminDataExportsService', () => {
 
         const exportPromise = firstValueFrom(service.getAllDataExports());
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/core/admin/data-exports?page=0&size=20' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/data-exports?page=0&size=20' });
         req.flush([mockExport], {
             headers: { 'X-Total-Count': '1' },
         });
@@ -136,7 +136,7 @@ describe('AdminDataExportsService', () => {
     it('should use default pagination values', async () => {
         const exportPromise = firstValueFrom(service.getAllDataExports());
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/core/admin/data-exports?page=0&size=20' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/data-exports?page=0&size=20' });
         req.flush([], { headers: { 'X-Total-Count': '0' } });
 
         const result = await exportPromise;
@@ -147,7 +147,7 @@ describe('AdminDataExportsService', () => {
     it('should handle custom pagination values', async () => {
         const exportPromise = firstValueFrom(service.getAllDataExports(2, 50));
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/core/admin/data-exports?page=2&size=50' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/data-exports?page=2&size=50' });
         req.flush([], { headers: { 'X-Total-Count': '100' } });
 
         const result = await exportPromise;

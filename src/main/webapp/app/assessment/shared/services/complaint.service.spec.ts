@@ -10,12 +10,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ComplaintService', () => {
     setupTestBed({ zoneless: true });
@@ -29,19 +33,19 @@ describe('ComplaintService', () => {
     const stringTime2 = '2022-05-12T18:12:11.140Z';
     const dayjsTime3 = dayjs();
 
-    const clientComplaint1 = new Complaint();
+    const clientComplaint1 = new ComplaintDTO();
     clientComplaint1.id = 42;
     clientComplaint1.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint1.result = new Result();
+    clientComplaint1.result = new ResultSimpleDTO();
     clientComplaint1.submittedTime = dayjsTime1;
     clientComplaint1.complaintText = 'Test text';
 
     const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
 
-    const clientComplaint2 = new Complaint();
+    const clientComplaint2 = new ComplaintDTO();
     clientComplaint2.id = 42;
     clientComplaint2.complaintType = ComplaintType.MORE_FEEDBACK;
-    clientComplaint2.result = new Result();
+    clientComplaint2.result = new ResultSimpleDTO();
     clientComplaint2.submittedTime = dayjsTime2;
     clientComplaint2.complaintText = 'Test text';
 
@@ -458,4 +462,170 @@ describe('ComplaintService', () => {
     function clone(object: object): object {
         return Object.assign({}, object);
     }
+
+    it('findAllWithoutStudentInformationForCourseId', () => {
+        const courseId = 69;
+        const complaintType = ComplaintType.COMPLAINT;
+
+        complaintService.findAllWithoutStudentInformationForCourseId(courseId, complaintType).subscribe((received) => {
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
+        });
+
+        const res = httpMock.expectOne({ method: 'GET' });
+        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
+    });
+
+    it('should remove result references from feedbacks for update after complaint', () => {
+        const result = new Result();
+        result.id = 1;
+
+        const feedback = new Feedback();
+        feedback.id = 10;
+        feedback.result = result;
+
+        const sanitizedFeedbacks = complaintService.getFeedbacksForUpdateAfterComplaint([feedback]);
+
+        expect(sanitizedFeedbacks).toHaveLength(1);
+        expect(sanitizedFeedbacks[0]).not.toBe(feedback);
+        expect(sanitizedFeedbacks[0].id).toBe(feedback.id);
+        expect(sanitizedFeedbacks[0].result).toBeUndefined();
+        expect(feedback.result).toBe(result);
+    });
+
+    it('should sanitize complaint response for update after complaint', () => {
+        const complaint = new Complaint();
+        complaint.id = 42;
+        complaint.accepted = false;
+        complaint.complaintType = ComplaintType.COMPLAINT;
+        complaint.result = new Result();
+
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = 11;
+        complaintResponse.responseText = 'response';
+        complaintResponse.complaint = complaint;
+
+        const sanitizedComplaintResponse = complaintService.getComplaintResponseForUpdateAfterComplaint(complaintResponse);
+
+        expect(sanitizedComplaintResponse).not.toBe(complaintResponse);
+        expect(sanitizedComplaintResponse.id).toBe(11);
+        expect(sanitizedComplaintResponse.responseText).toBe('response');
+        expect(sanitizedComplaintResponse.complaint).toEqual({
+            id: 42,
+            accepted: false,
+            complaintType: ComplaintType.COMPLAINT,
+        });
+        expect(sanitizedComplaintResponse.complaint!.result).toBeUndefined();
+    });
+
+    describe('convertComplaintFromServer', () => {
+        it('should map base fields and attach the provided result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 7;
+            dto.complaintText = 'Why only 80%?';
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = true;
+            dto.submittedTime = dayjsTime1;
+
+            const result = new Result();
+            result.id = 99;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, result);
+
+            expect(complaint).toBeInstanceOf(Complaint);
+            expect(complaint.id).toBe(7);
+            expect(complaint.complaintText).toBe('Why only 80%?');
+            expect(complaint.complaintType).toBe(ComplaintType.COMPLAINT);
+            expect(complaint.accepted).toBe(true);
+            expect(complaint.submittedTime?.toISOString()).toBe(dayjsTime1.toISOString());
+            expect(complaint.result).toBe(result);
+        });
+
+        it('should tolerate an undefined result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 8;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.id).toBe(8);
+            expect(complaint.result).toBeUndefined();
+        });
+
+        it('should map a student participant onto complaint.student', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 3, name: 'Student One', login: 'student1', isStudent: true } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.student).toBeInstanceOf(User);
+            expect(complaint.student?.id).toBe(3);
+            expect(complaint.student?.name).toBe('Student One');
+            expect(complaint.student?.login).toBe('student1');
+            expect(complaint.team).toBeUndefined();
+        });
+
+        it('should map a team participant onto complaint.team', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 4, name: 'Team Awesome', login: 'team-awesome', isStudent: false } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.team).toBeInstanceOf(Team);
+            expect(complaint.team?.id).toBe(4);
+            expect(complaint.team?.name).toBe('Team Awesome');
+            expect(complaint.team?.shortName).toBe('team-awesome');
+            expect(complaint.student).toBeUndefined();
+        });
+    });
+
+    describe('convertComplaintFromServerInList', () => {
+        it('should reconstruct the reduced result, exercise title, assessor and feedbacks', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 11;
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = false;
+            dto.result = {
+                id: 55,
+                completionDate: dayjsTime1,
+                score: 80,
+                rated: true,
+                assessmentType: AssessmentType.MANUAL,
+                assessor: { id: 9, login: 'tutor1', name: 'Tutor One' },
+                exerciseTitle: 'My Exercise',
+                feedbacks: [{ id: 1, credits: 5, reference: 'reference-id', detailText: 'Good' } as FeedbackDTO],
+                submission: { id: 21, participation: { id: 31, exercise: { id: 41, type: ExerciseType.TEXT } } },
+            } as ResultSimpleDTO;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.id).toBe(11);
+            expect(complaint.accepted).toBe(false);
+            expect(complaint.result).toBeInstanceOf(Result);
+            expect(complaint.result?.id).toBe(55);
+            expect(complaint.result?.score).toBe(80);
+            expect(complaint.result?.rated).toBe(true);
+            expect(complaint.result?.assessmentType).toBe(AssessmentType.MANUAL);
+            expect(complaint.result?.assessor?.login).toBe('tutor1');
+            expect(complaint.result?.feedbacks).toHaveLength(1);
+            expect(complaint.result?.submission?.id).toBe(21);
+            const participation = complaint.result?.submission?.participation as StudentParticipation;
+            expect(participation.id).toBe(31);
+            expect(participation.exercise?.id).toBe(41);
+            expect(participation.exercise?.type).toBe(ExerciseType.TEXT);
+            expect(participation.exercise?.title).toBe('My Exercise');
+        });
+
+        it('should leave result undefined when the DTO has no result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 12;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.id).toBe(12);
+            expect(complaint.result).toBeUndefined();
+        });
+    });
 });

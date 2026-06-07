@@ -7,21 +7,21 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('AiExperienceSettingsComponent', () => {
     setupTestBed({ zoneless: true });

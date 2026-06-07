@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
@@ -30,7 +31,8 @@ import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminSbomResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSbomResource.class);

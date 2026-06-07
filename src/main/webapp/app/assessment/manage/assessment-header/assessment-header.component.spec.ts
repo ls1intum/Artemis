@@ -5,7 +5,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Result } from '../../../exercise/shared/entities/result/result.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('AssessmentHeaderComponent', () => {
     setupTestBed({ zoneless: true });

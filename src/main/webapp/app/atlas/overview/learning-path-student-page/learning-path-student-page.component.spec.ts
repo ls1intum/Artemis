@@ -11,11 +11,11 @@ import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { MockProvider } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 

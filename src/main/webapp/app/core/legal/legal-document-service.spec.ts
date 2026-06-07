@@ -40,10 +40,10 @@ describe('LegalDocumentService', () => {
         let promise;
         if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
             promise = firstValueFrom(service.updatePrivacyStatement(update));
-            req = httpMock.expectOne({ method: 'PUT', url: 'api/core/admin/privacy-statement' });
+            req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/privacy-statement' });
         } else {
             promise = firstValueFrom(service.updateImprint(update));
-            req = httpMock.expectOne({ method: 'PUT', url: 'api/core/admin/imprint' });
+            req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/imprint' });
         }
         req.flush(update);
         const resp = await promise;
@@ -65,10 +65,10 @@ describe('LegalDocumentService', () => {
             let promise;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
                 promise = firstValueFrom(service.getPrivacyStatementForUpdate(lang));
-                req = httpMock.expectOne({ method: 'GET', url: `api/core/admin/privacy-statement-for-update?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/admin/privacy-statement-for-update?language=${lang}` });
             } else {
                 promise = firstValueFrom(service.getImprintForUpdate(lang));
-                req = httpMock.expectOne({ method: 'GET', url: `api/core/admin/imprint-for-update?language=${lang}` });
+                req = httpMock.expectOne({ method: 'GET', url: `api/admin/imprint-for-update?language=${lang}` });
             }
             req.flush(expected);
             const resp = await promise;

@@ -5,55 +5,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Set;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
-import de.tum.cit.aet.artemis.admin.service.SbomService;
-import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
-import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
-import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
-import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -67,9 +29,7 @@ import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
         "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30" })
-public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
+public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
 
     protected static final WeaviateContainer weaviateContainer;
 
@@ -82,221 +42,5 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
         WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
-    }
-
-    @MockitoSpyBean
-    protected OAuth2JWKSService oAuth2JWKSService;
-
-    @MockitoSpyBean
-    protected LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
-
-    @MockitoSpyBean
-    protected ExamLiveEventsService examLiveEventsService;
-
-    @MockitoSpyBean
-    protected GroupNotificationScheduleService groupNotificationScheduleService;
-
-    @MockitoSpyBean
-    protected CompetencyProgressService competencyProgressService;
-
-    @MockitoSpyBean
-    protected CompetencyProgressApi competencyProgressApi;
-
-    // NOTE: MockitoBean is used here because ChatModel and ChatClient cannot be instantiated in tests without Azure OpenAI credentials
-    // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
-    @MockitoBean
-    protected ChatModel chatModel;
-
-    @MockitoBean
-    protected ChatClient chatClient;
-
-    @MockitoBean
-    protected ChatMemory chatMemory;
-
-    @MockitoBean
-    protected ChatMemoryRepository chatMemoryRepository;
-
-    // Mock for TUM Live service used in TUM Live playlist resource
-    @MockitoBean
-    protected TumLiveService tumLiveService;
-
-    // Mock PasskeyAuthenticationService to allow super admin operations in tests
-    // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
-    @MockitoSpyBean
-    protected PasskeyAuthenticationService passkeyAuthenticationService;
-
-    // Spy beans moved here to avoid creating separate Spring contexts in AdminSbomResourceIntegrationTest and VulnerabilityScanScheduleServiceTest
-    @MockitoSpyBean
-    protected ArtemisVersionService artemisVersionService;
-
-    @MockitoSpyBean
-    protected VulnerabilityService vulnerabilityService;
-
-    @MockitoSpyBean
-    protected ProfileService profileService;
-
-    @MockitoSpyBean
-    protected SbomService sbomService;
-
-    @BeforeEach
-    protected void setupSpringAIMocks() {
-        if (chatModel != null) {
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
-        }
-        // Mock passkey authentication to always return true for super admin operations in tests
-        // Use doReturn instead of when().thenReturn() because the method throws an exception
-        doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
-        // Default to SBOM-available in tests; individual tests can override to exercise the missing-SBOM path.
-        // VulnerabilityScanScheduleService short-circuits with no email when isSbomAvailable() returns false.
-        doReturn(true).when(sbomService).isSbomAvailable();
-    }
-
-    @AfterEach
-    @Override
-    protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
-        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService);
-        if (chatModel != null) {
-            Mockito.reset(chatModel);
-        }
-        if (chatClient != null) {
-            Mockito.reset(chatClient);
-        }
-        if (tumLiveService != null) {
-            Mockito.reset(tumLiveService);
-        }
-        if (chatMemoryRepository != null) {
-            Mockito.reset(chatMemoryRepository);
-        }
-        if (chatMemory != null) {
-            Mockito.reset(chatMemory);
-        }
-        super.resetSpyBeans();
-    }
-
-    @Override
-    public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
-        log.debug("Called mockConnectorRequestsForSetup with args {}, {}, {}, {}", exercise, failToCreateCiProject, useCustomBuildPlanDefinition, useCustomBuildPlanWorked);
-    }
-
-    @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos) {
-        log.debug("Called mockConnectorRequestsForImport with args {}, {}, {}, {}", sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
-    }
-
-    @Override
-    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
-        log.debug("Called mockConnectorRequestForImportFromFile with args {}", exerciseForImport);
-    }
-
-    @Override
-    public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
-            boolean shouldPlanEnableFail) {
-        log.debug("Called mockImportProgrammingExerciseWithFailingEnablePlan with args {}, {}, {}, {}", sourceExercise, exerciseToBeImported, planExistsInCi, shouldPlanEnableFail);
-    }
-
-    @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        log.debug("Called mockConnectorRequestsForStartParticipation with args {}, {}, {}, {}", exercise, username, users, ltiUserExists);
-    }
-
-    @Override
-    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-        log.debug("Called mockConnectorRequestsForResumeParticipation with args {}, {}, {}, {}", exercise, username, users, ltiUserExists);
-    }
-
-    @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
-        log.debug("Called mockUpdatePlanRepositoryForParticipation with args {}, {}", exercise, username);
-    }
-
-    @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) {
-        log.debug("Called mockUpdatePlanRepository with args {}, {}, {}, {}", exercise, planName, repoNameInCI, repoNameInVcs);
-    }
-
-    @Override
-    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockCopyBuildPlan with args {}", participation);
-    }
-
-    @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockConfigureBuildPlan with args {}", participation);
-    }
-
-    @Override
-    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockTriggerFailedBuild with args {}", participation);
-    }
-
-    @Override
-    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockNotifyPush with args {}", participation);
-    }
-
-    @Override
-    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockTriggerParticipationBuild with args {}", participation);
-    }
-
-    @Override
-    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockTriggerInstructorBuildAll with args {}", participation);
-    }
-
-    @Override
-    public void resetMockProvider() {
-        log.debug("Called resetMockProvider");
-    }
-
-    @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) {
-        log.debug("Called mockDeleteBuildPlan with args {}, {}, {}", projectKey, planName, shouldFail);
-    }
-
-    @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
-        log.debug("Called mockDeleteBuildPlanProject with args {}, {}", projectKey, shouldFail);
-    }
-
-    @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
-        log.debug("Called mockGetBuildPlan with args {}, {}, {}, {}, {}, {}", projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
-    }
-
-    @Override
-    public void mockGetBuildPlanConfig(String projectKey, String planName) {
-        log.debug("Called mockGetBuildPlanConfig with args {}, {}", projectKey, planName);
-    }
-
-    @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
-        log.debug("Called mockHealthInCiService with args {}, {}", isRunning, httpStatus);
-    }
-
-    @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
-        log.debug("Called mockCheckIfProjectExistsInCi with args {}, {}, {}", exercise, existsInCi, shouldFail);
-    }
-
-    @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
-        log.debug("Called mockCheckIfBuildPlanExists with args {}, {}, {}, {}", projectKey, templateBuildPlanId, buildPlanExists, shouldFail);
-    }
-
-    @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        log.debug("Called mockTriggerBuild with args {}", solutionParticipation);
-    }
-
-    @Override
-    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        log.debug("Called mockTriggerBuildFailed with args {}", solutionParticipation);
-    }
-
-    @Override
-    public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
-        log.debug("Requested CI project {}", exercise.getProjectKey());
     }
 }

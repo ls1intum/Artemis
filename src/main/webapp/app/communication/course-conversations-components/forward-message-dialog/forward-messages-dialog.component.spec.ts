@@ -12,9 +12,9 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

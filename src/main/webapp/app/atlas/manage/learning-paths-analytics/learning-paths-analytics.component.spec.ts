@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

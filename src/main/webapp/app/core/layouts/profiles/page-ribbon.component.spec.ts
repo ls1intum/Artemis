@@ -5,7 +5,7 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 

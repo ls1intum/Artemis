@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private TeamRepository teamRepo;
@@ -56,15 +56,15 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private static final String REGISTRATION_NUMBER_PREFIX = "tii";
 
     private String fromExerciseEndpointUrl() {
-        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise?sourceExerciseId=";
     }
 
     private String importFromExerciseUrl(Exercise exercise, TeamImportStrategyType importStrategyType) {
-        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + importStrategyType;
+        return fromExerciseEndpointUrl() + exercise.getId() + "&importStrategyType=" + importStrategyType;
     }
 
     private String importFromExerciseUrl(Exercise exercise) {
-        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
+        return fromExerciseEndpointUrl() + exercise.getId() + "&importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
     }
 
     private String importFromSourceExerciseUrl(TeamImportStrategyType importStrategyType) {

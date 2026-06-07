@@ -17,12 +17,12 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
     setupTestBed({ zoneless: true });

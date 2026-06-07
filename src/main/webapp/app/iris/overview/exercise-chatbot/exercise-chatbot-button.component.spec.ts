@@ -22,7 +22,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { UserService } from 'app/account/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 

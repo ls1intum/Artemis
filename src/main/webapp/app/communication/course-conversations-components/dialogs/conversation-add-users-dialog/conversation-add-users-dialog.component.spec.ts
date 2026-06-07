@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -11,7 +11,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { Course } from 'app/course/shared/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { By } from '@angular/platform-browser';

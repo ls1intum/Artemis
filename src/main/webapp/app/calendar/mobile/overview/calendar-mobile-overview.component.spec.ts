@@ -8,7 +8,7 @@ import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -18,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
-import * as calendarUtils from 'app/shared/util/global.utils';
+import * as calendarUtils from 'app/foundation/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {
     setupTestBed({ zoneless: true });

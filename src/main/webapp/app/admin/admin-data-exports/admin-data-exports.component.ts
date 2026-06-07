@@ -4,16 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { faBan, faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 /**
  * Admin component for managing user data exports in accordance with GDPR Art. 15.

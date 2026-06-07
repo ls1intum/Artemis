@@ -1,6 +1,6 @@
 import { Component, Signal, TemplateRef, computed, inject, input, output } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { facSidebar } from 'app/shared/icons/icons';
+import { facSidebar } from 'app/foundation/icons/icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

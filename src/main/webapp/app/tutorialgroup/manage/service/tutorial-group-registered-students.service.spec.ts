@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from './tutorial-group-registered-students.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';

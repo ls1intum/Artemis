@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
 

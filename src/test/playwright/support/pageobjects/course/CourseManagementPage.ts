@@ -159,7 +159,7 @@ export class CourseManagementPage {
      * @param selector The selector for the group action button.
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/${groupType}/${credentials.username}`);
+        const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
         await this.page.locator('#user-management-dropdown').click();
         await this.page.locator(selector).click();
         await this.confirmUserIntoGroup(credentials);
@@ -206,7 +206,7 @@ export class CourseManagementPage {
     }
 
     async updateCourse(course: Course) {
-        const response = this.page.waitForResponse(`api/core/courses/${course.id}`);
+        const response = this.page.waitForResponse(`api/course/courses/${course.id}`);
         await this.page.locator('#save-entity').click();
         await response;
     }

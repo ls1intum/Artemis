@@ -4,13 +4,12 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Observable, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -20,10 +19,10 @@ import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-resp
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -32,6 +31,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ComplaintsStudentViewComponent', () => {
     setupTestBed({ zoneless: true });
@@ -64,7 +64,7 @@ describe('ComplaintsStudentViewComponent', () => {
         examStudentReviewStart: dayjs().subtract(complaintTimeLimitDays, 'day'),
         examStudentReviewEnd: dayjs().add(complaintTimeLimitDays, 'day'),
     } as Exam;
-    const complaint = new Complaint();
+    const complaint = new ComplaintDTO();
     const numberOfComplaints = 42;
 
     let component: ComplaintsStudentViewComponent;
@@ -170,7 +170,7 @@ describe('ComplaintsStudentViewComponent', () => {
             await fixture.whenStable();
 
             expectExamDefault();
-            expect(component.complaint).toStrictEqual(complaint);
+            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
             expect(userMock).toHaveBeenCalledTimes(1);
@@ -258,7 +258,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should initialize with complaint', async () => {
             await testInitWithResultStub(of({ body: complaint } as EntityResponseType));
-            expect(component.complaint).toStrictEqual(complaint);
+            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
         });
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {

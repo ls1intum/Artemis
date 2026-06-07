@@ -11,12 +11,12 @@ import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/u
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
@@ -25,9 +25,9 @@ import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entitie
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from '../../shared/entities/course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
@@ -70,7 +70,7 @@ export class CourseManagementService implements OnDestroy {
     private courseNotificationService = inject(CourseNotificationService);
     private localStorageService = inject(LocalStorageService);
 
-    private resourceUrl = 'api/core/courses';
+    private resourceUrl = 'api/course/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 

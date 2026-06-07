@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +53,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(regularUser.getId());
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
         }
 
@@ -67,7 +68,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(superUser.getId());
             managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority())); // removed super-admin role
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
         }
 
@@ -81,7 +82,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(regularUser.getId());
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
 
             User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
@@ -98,7 +99,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newsuperadmin");
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
 
             // Verify user was not created
@@ -111,7 +112,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newadmin");
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
 
             // Verify user was not created
@@ -124,7 +125,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newstudent");
             managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isCreated());
 
             // Verify user was created with correct authorities
@@ -143,7 +144,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newsuperadmin2");
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isCreated());
 
             // Verify user was created with super admin authority
@@ -158,7 +159,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newregularuser");
             managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isCreated());
 
             // Verify user was created
@@ -181,7 +182,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(regularUser.getId());
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
             // Verify user was updated to super admin
@@ -200,7 +201,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(superUser.getId());
             managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
             // Verify super admin authority was revoked
@@ -220,7 +221,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setFirstName("UpdatedFirstName");
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
             // Verify user was updated while maintaining super admin authority
@@ -240,7 +241,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addSuperAdmin(TEST_PREFIX + "test4");
             User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test4superadmin");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users/" + superUser.getLogin())).andExpect(status().isForbidden());
 
             // Verify user was not deleted
             assertThat(userUtilService.userExistsWithLogin(superUser.getLogin())).isTrue();
@@ -252,7 +253,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser4");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
 
             // Verify user was soft deleted
             User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
@@ -270,7 +271,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addSuperAdmin(TEST_PREFIX + "test5");
             User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test5superadmin");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users/" + superUser.getLogin())).andExpect(status().isOk());
 
             // Verify user was soft deleted
             User deletedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
@@ -283,7 +284,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser5");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
 
             // Verify user was soft deleted
             User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
@@ -303,7 +304,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             superUser.setActivated(false);
             userTestRepository.save(superUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isForbidden());
+            mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isForbidden());
 
             // Verify user was not activated
             User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
@@ -319,7 +320,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             superUser.setActivated(true);
             userTestRepository.save(superUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isForbidden());
+            mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isForbidden());
 
             // Verify user was not deactivated
             User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
@@ -334,7 +335,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             regularUser.setActivated(false);
             userTestRepository.save(regularUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
             User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
@@ -349,7 +350,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             regularUser.setActivated(true);
             userTestRepository.save(regularUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
             User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
@@ -369,7 +370,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             superUser.setActivated(false);
             userTestRepository.save(superUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
             User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
@@ -385,7 +386,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             superUser.setActivated(true);
             userTestRepository.save(superUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
             User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
@@ -400,7 +401,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             regularUser.setActivated(false);
             userTestRepository.save(regularUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
             User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
@@ -415,7 +416,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             regularUser.setActivated(true);
             userTestRepository.save(regularUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
             User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
@@ -438,7 +439,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setFirstName("UpdatedFirstName");
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isForbidden());
 
             // Verify user was not updated
@@ -455,7 +456,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             adminUser.setActivated(false);
             userTestRepository.save(adminUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isForbidden());
+            mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isForbidden());
 
             // Verify user was not activated
             User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
@@ -471,7 +472,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             adminUser.setActivated(true);
             userTestRepository.save(adminUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isForbidden());
+            mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isForbidden());
 
             // Verify user was not deactivated
             User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
@@ -485,7 +486,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser4");
             User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser4admin");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + adminUser.getLogin())).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users/" + adminUser.getLogin())).andExpect(status().isForbidden());
 
             // Verify user was not deleted
             User unchangedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
@@ -505,8 +506,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser6");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
 
-            mockMvc.perform(delete("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
 
             // Verify users were not deleted
             User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -525,7 +526,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newadminsuperadmin");
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
-            mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isCreated());
 
             // Verify user was created with correct authorities
@@ -546,7 +547,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setFirstName("UpdatedFirstName");
             managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
             // Verify user was updated
@@ -563,7 +564,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             adminUser.setActivated(false);
             userTestRepository.save(adminUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/activate")).andExpect(status().isOk());
 
             // Verify user was activated
             User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
@@ -579,7 +580,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             adminUser.setActivated(true);
             userTestRepository.save(adminUser);
 
-            mockMvc.perform(patch("/api/core/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isOk());
+            mockMvc.perform(patch("/api/account/admin/users/" + adminUser.getId() + "/deactivate")).andExpect(status().isOk());
 
             // Verify user was deactivated
             User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(adminUser.getId());
@@ -593,7 +594,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser10");
             User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser10admin");
 
-            mockMvc.perform(delete("/api/core/admin/users/" + adminUser.getLogin())).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users/" + adminUser.getLogin())).andExpect(status().isOk());
 
             // Verify user was soft deleted
             User deletedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
@@ -613,8 +614,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser12");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser12admin");
 
-            mockMvc.perform(delete("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(java.util.List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
 
             // Verify users were soft deleted
             User deletedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -650,7 +651,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setId(defaultAdmin.getId());
             managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority())); // Remove super admin, keep only student
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isBadRequest());
 
             // Verify the default admin still has super admin authority
@@ -670,7 +671,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             managedUserVM.setFirstName("UpdatedDefaultAdmin");
             managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName(), Role.STUDENT.getAuthority()));
 
-            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
             // Verify the update was applied and super admin authority is retained

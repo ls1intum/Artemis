@@ -1,16 +1,16 @@
 import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
-import { decodeBase64url } from 'app/shared/util/base64.util';
+import { decodeBase64url } from 'app/foundation/util/base64.util';
 import { InvalidCredentialError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-credential.error';
 import {
     getLoginCredentialWithGracefullyHandlingAuthenticatorIssues,
     getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues,
 } from 'app/account/user/settings/passkey-settings/util/credential.util';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
 import { createCredentialOptions } from 'app/account/user/settings/passkey-settings/util/credential-option.util';
-import { getOS } from 'app/shared/util/os-detector.util';
+import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserAbortedPasskeyCreationError } from 'app/account/user/settings/passkey-settings/entities/errors/user-aborted-passkey-creation.error';
 import { InvalidStateError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-state.error';
 import { AccountService } from 'app/core/auth/account.service';

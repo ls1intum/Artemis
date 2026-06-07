@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { MockDirective } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
 import { TranslateService } from '@ngx-translate/core';

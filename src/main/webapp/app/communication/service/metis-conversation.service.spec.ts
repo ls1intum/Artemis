@@ -6,8 +6,8 @@ import { GroupChatService } from 'app/communication/conversations/service/group-
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';

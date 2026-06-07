@@ -95,7 +95,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * are deleted in a transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "results_order")
     @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();
 

@@ -16,6 +16,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -27,11 +28,11 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exer
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -43,8 +44,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -52,14 +53,14 @@ import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lt
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -68,7 +69,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { Component, input } from '@angular/core';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 // Simple mock to avoid ng-mocks issues with signal-based viewChild
 @Component({
@@ -83,9 +84,9 @@ import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
@@ -380,6 +381,37 @@ describe('CourseExerciseDetailsComponent', () => {
         results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([result2, result1]);
+    });
+
+    describe('live quiz status seeding', () => {
+        it.each([
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }] }, LiveQuizParticipationStatus.NOT_STARTED],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }] }, LiveQuizParticipationStatus.PARTICIPATING],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], quizEnded: true }, LiveQuizParticipationStatus.MISSED],
+            [{ type: ExerciseType.PROGRAMMING }, undefined],
+        ])('should seed the live quiz status from the loaded exercise', (exerciseData, expected) => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+
+            comp.handleNewExercise({ exercise: exerciseData as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBe(expected);
+        });
+
+        it('should seed SUBMITTED when the graded participation has a submitted submission', () => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue({ submissions: [{ submitted: true }] } as StudentParticipation);
+
+            comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizBatches: [{ started: true }] } as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.SUBMITTED);
+        });
+
+        it('should not override an ended quiz where the student submitted (results are shown instead)', () => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue({ submissions: [{ submitted: true }] } as StudentParticipation);
+
+            comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizEnded: true } as unknown as Exercise });
+
+            expect(comp.liveQuizStatus()).toBeUndefined();
+        });
     });
 
     it('should handle new programming exercise', () => {

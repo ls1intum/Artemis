@@ -49,11 +49,11 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
@@ -158,7 +158,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
-        request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
+                HttpStatus.FORBIDDEN);
     }
 
     private void createChannelsForLectures(List<Lecture> lectures) {
@@ -565,7 +566,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
 
-        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null,
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         // load new lecture with its lecture units and attachments

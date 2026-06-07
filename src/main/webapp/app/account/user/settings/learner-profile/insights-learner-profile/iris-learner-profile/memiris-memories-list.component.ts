@@ -1,25 +1,27 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/shared/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { MemirisMemory, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 import { firstValueFrom } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { MemirisMemoryDetailsComponent } from './memiris-memory-details.component';
 
 @Component({
     selector: 'jhi-memiris-memories-list',
-    imports: [CommonModule, TranslateDirective, FaIconComponent, NgbModalModule, MemirisMemoryDetailsComponent],
+    imports: [CommonModule, TranslateDirective, FaIconComponent, MemirisMemoryDetailsComponent],
     templateUrl: './memiris-memories-list.component.html',
 })
 export class MemirisMemoriesListComponent implements OnInit {
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     // Signals for component state
     loading = signal<boolean>(false);
@@ -148,7 +150,6 @@ export class MemirisMemoriesListComponent implements OnInit {
      * Opens the conflict resolution modal. Applies deletions silently on close.
      */
     openResolveConflictsModal() {
-        const modalRef: NgbModalRef = this.modalService.open(ResolveMemoriesConflictsModalComponent, { size: 'lg', backdrop: 'static' });
         const groups = this.conflictGroups();
         const detailsMap: Record<string, MemirisMemoryWithRelationsDTO | undefined> = {};
         for (const g of groups) {
@@ -156,17 +157,21 @@ export class MemirisMemoriesListComponent implements OnInit {
                 if (!detailsMap[gid]) detailsMap[gid] = this.buildDetails(gid);
             }
         }
-        modalRef.componentInstance.conflictGroups = groups;
-        modalRef.componentInstance.details = detailsMap;
-        modalRef.result
-            .then((deletedIds: string[] | undefined) => {
-                if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-                    this.applyDeletions(deletedIds);
-                }
-            })
-            .catch(() => {
-                // Dismissed: keep current state without reloading
-            });
+        const ref = this.dialogService.open(ResolveMemoriesConflictsModalComponent, {
+            header: this.translateService.instant('artemisApp.iris.memories.conflict.modalTitle'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { conflictGroups: groups, details: detailsMap },
+        });
+        // onClose emits a single value: the deleted ids when resolved, or undefined when dismissed.
+        ref?.onClose.subscribe((deletedIds: string[] | undefined) => {
+            if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+                this.applyDeletions(deletedIds);
+            }
+        });
     }
 
     /**

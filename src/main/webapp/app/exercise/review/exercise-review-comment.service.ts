@@ -5,7 +5,7 @@ import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/share
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import {
     ExerciseEditorSyncEvent,
