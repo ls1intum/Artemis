@@ -685,6 +685,14 @@ public class UserService {
         return Optional.empty();
     }
 
+    /**
+     * Resolves a user by registration number, login, or email WITHOUT adding them to any course group.
+     * Used by callers (e.g. exam registration) that must reject certain users before granting course access.
+     */
+    public Optional<User> findUserWithoutAddingToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
+        return findUser(registrationNumber, login, email);
+    }
+
     private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         Optional<User> optionalUser = Optional.empty();
         if (StringUtils.hasText(login)) {
