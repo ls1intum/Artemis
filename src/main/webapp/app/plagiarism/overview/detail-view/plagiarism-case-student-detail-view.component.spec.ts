@@ -1,6 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/plagiarism/overview/detail-view/plagiarism-case-student-detail-view.component';
-import { EntityResponseType, PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -18,10 +20,12 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('Plagiarism Cases Student View Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PlagiarismCaseStudentDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseStudentDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    let plagiarismCasesServiceSpy: jest.SpyInstance<Observable<EntityResponseType>>;
+    let plagiarismCasesServiceSpy: ReturnType<typeof vi.spyOn>;
 
     const ancestorRouteParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
     const routeParamsSubject = new BehaviorSubject<Params>({ plagiarismCaseId: 1 });
@@ -61,9 +65,9 @@ describe('Plagiarism Cases Student View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCaseStudentDetailViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
+        plagiarismCasesServiceSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
         plagiarismCasesServiceSpy.mockImplementation(
-            (courseId, plagiarismCaseId) =>
+            (courseId: number, plagiarismCaseId: number) =>
                 of({
                     body: {
                         ...plagiarismCase,
@@ -74,63 +78,63 @@ describe('Plagiarism Cases Student View Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should set plagiarism case on initialization', fakeAsync(() => {
+    it('should set plagiarism case on initialization', async () => {
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase).toEqual(plagiarismCase);
-    }));
+    });
 
-    it('should set isAfterDueDate', fakeAsync(() => {
+    it('should set isAfterDueDate', async () => {
         const now = dayjs();
         exercise.dueDate = now.add(1, 'day');
         component.ngOnInit();
-        tick();
-        expect(component.isAfterDueDate).toBeFalse();
-    }));
+        await Promise.resolve();
+        expect(component.isAfterDueDate).toBe(false);
+    });
 
-    it('should unset isAfterDueDate', fakeAsync(() => {
+    it('should unset isAfterDueDate', async () => {
         const now = dayjs();
         exercise.dueDate = now.subtract(1, 'day');
         component.ngOnInit();
-        tick();
-        expect(component.isAfterDueDate).toBeTrue();
-    }));
+        await Promise.resolve();
+        expect(component.isAfterDueDate).toBe(true);
+    });
 
-    it('should load plagiarism case on route update', fakeAsync(() => {
+    it('should load plagiarism case on route update', async () => {
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
 
         // Test courseId change
         ancestorRouteParamsSubject.next({ courseId: 2 });
-        tick();
+        await Promise.resolve();
 
         expect(component.courseId).toBe(2);
         expect(component.plagiarismCaseId).toBe(1);
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase?.id).toBe(1);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 
         // Test plagiarismCaseId update with the same id
         routeParamsSubject.next({ plagiarismCaseId: 1 });
-        tick();
+        await Promise.resolve();
 
         // plagiarismCaseId does not change so it should not update.
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 
         // Test plagiarismCaseId change
         routeParamsSubject.next({ plagiarismCaseId: 2 });
-        tick();
+        await Promise.resolve();
 
         expect(component.courseId).toBe(2);
         expect(component.plagiarismCaseId).toBe(2);
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase?.id).toBe(2);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(2);
@@ -138,13 +142,13 @@ describe('Plagiarism Cases Student View Component', () => {
         // Test both courseId and plagiarismCaseId change
         ancestorRouteParamsSubject.next({ courseId: 3 });
         routeParamsSubject.next({ plagiarismCaseId: 4 });
-        tick();
+        await Promise.resolve();
 
         expect(component.courseId).toBe(3);
         expect(component.plagiarismCaseId).toBe(4);
-        tick();
+        await Promise.resolve();
         expect(component.plagiarismCase?.id).toBe(4);
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(3);
-    }));
+    });
 });

@@ -58,8 +58,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('should request confirmation dialog on deleteComment', () => {
         const confirmSpy = vi.spyOn(confirmationService, 'confirm');
         comp.deleteComment(5);
-        expect(confirmSpy).toHaveBeenCalledOnce();
-        expect(confirmSpy).toHaveBeenCalledWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
+        expect(confirmSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: expect.any(String), header: expect.any(String) }));
     });
 
     it('should delete comment when deletion is confirmed', () => {

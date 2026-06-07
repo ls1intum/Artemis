@@ -67,7 +67,7 @@
                     }
                 </div>
                 <div class="form-check">
-                    <label for="internal" class="form-check-label" ngbTooltip="{{ 'artemisApp.userManagement.passwordTooltip' | artemisTranslate }}">
+                    <label for="internal" class="form-check-label" [pTooltip]="'artemisApp.userManagement.passwordTooltip' | artemisTranslate">
                         <input class="form-check-input" type="checkbox" id="internal" name="internal" formControlName="internal" />
                         <span jhiTranslate="artemisApp.userManagement.internal"></span>
                     </label>

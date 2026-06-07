@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,6 +12,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -63,9 +65,9 @@ public class Attachment extends DomainObject implements Serializable {
     @Column(name = "student_version")
     private String studentVersion;
 
-    @Convert(converter = SlidePageNumberListConverter.class)
-    @Column(name = "slide_page_numbers")
-    private List<Integer> slidePageNumbers;
+    @Column(name = "display_page_numbers")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Integer> displayPageNumbers;
 
     public String getName() {
         return name;
@@ -148,24 +150,24 @@ public class Attachment extends DomainObject implements Serializable {
     }
 
     /**
-     * Gets the slide page numbers mapping for this attachment's PDF.
-     * The list maps slide numbers to their corresponding page numbers in the PDF:
-     * Index 0 = page number for slide 1, Index 1 = page number for slide 2, etc.
-     * A value of -1 indicates the slide has no corresponding page number.
+     * Gets the display page numbers mapping for this attachment's PDF.
+     * The list maps slide numbers to the displayed page numbers detected in the PDF:
+     * Index 0 = displayed page number for slide 1, Index 1 = displayed page number for slide 2, etc.
+     * A value of -1 indicates the slide has no detected displayed page number.
      *
-     * @return list of page numbers indexed by slide number (0-based), or null if not applicable
+     * @return list of displayed page numbers indexed by slide number (0-based), or null if not applicable
      */
-    public List<Integer> getSlidePageNumbers() {
-        return slidePageNumbers;
+    public List<Integer> getDisplayPageNumbers() {
+        return displayPageNumbers;
     }
 
     /**
-     * Sets the slide page numbers mapping for this attachment's PDF.
+     * Sets the display page numbers mapping for this attachment's PDF.
      *
-     * @param slidePageNumbers list of page numbers indexed by slide number (0-based), or null
+     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based), or null
      */
-    public void setSlidePageNumbers(List<Integer> slidePageNumbers) {
-        this.slidePageNumbers = slidePageNumbers;
+    public void setDisplayPageNumbers(List<Integer> displayPageNumbers) {
+        this.displayPageNumbers = displayPageNumbers;
     }
 
     public Boolean isVisibleToStudents() {

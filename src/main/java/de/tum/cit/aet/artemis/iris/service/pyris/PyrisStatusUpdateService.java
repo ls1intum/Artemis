@@ -9,9 +9,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
@@ -47,11 +44,6 @@ public class PyrisStatusUpdateService {
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
-
-    private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = JsonObjectMapper.get();
-
-    private static final TypeReference<List<Integer>> INTEGER_LIST_TYPE = new TypeReference<>() {
-    };
 
     private final PyrisJobService pyrisJobService;
 
@@ -160,12 +152,10 @@ public class PyrisStatusUpdateService {
     /**
      * Handles the status update of a lecture ingestion job.
      * <p>
-     * On non-terminal callbacks: passes the {@code result} field to the checkpoint handler if present.
+     * On EVERY callback (not just terminal): passes the {@code result} field to the checkpoint handler.
      * This allows Artemis to save transcription data mid-pipeline and transition TRANSCRIBING → INGESTING.
      * <p>
-     * On terminal callback: extracts slide page numbers from {@code result} and notifies the processing service
-     * that the job completed or failed. The {@code result} field is NOT treated as checkpoint data on terminal
-     * callbacks to avoid duplicate processing.
+     * On terminal callback: notifies the processing service that the job completed or failed.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
@@ -173,22 +163,20 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
 
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-
-        // Only treat result as checkpoint data on non-terminal callbacks
-        // On terminal callbacks, result contains slide page numbers extracted below
-        if (!isDone && statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
+        // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
+        if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
             processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
         }
+
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             String rawCode = statusUpdate.errorCode();
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
-            List<Integer> slidePageNumbers = success ? extractSlidePageNumbers(statusUpdate.result()) : null;
-
+            List<Integer> displayPageNumbers = success ? statusUpdate.displayPageNumbers() : null;
             log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
-            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, slidePageNumbers));
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, displayPageNumbers));
             pyrisJobService.removeJob(job);
         }
         else {
@@ -231,32 +219,6 @@ public class PyrisStatusUpdateService {
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
-    }
-
-    /**
-     * Extracts the slide page numbers list from the PyRIS result JSON.
-     *
-     * @param resultJson the result JSON from PyRIS containing a "slidePageNumbers" array
-     * @return the list of page numbers as provided by PyRIS, or null if not present or malformed
-     */
-    private List<Integer> extractSlidePageNumbers(String resultJson) {
-        if (resultJson == null || resultJson.isBlank()) {
-            return null;
-        }
-
-        try {
-            var jsonNode = objectMapper.readTree(resultJson);
-            var listNode = jsonNode.get("slidePageNumbers");
-            if (listNode == null || !listNode.isArray()) {
-                return null;
-            }
-            List<Integer> extracted = objectMapper.convertValue(listNode, INTEGER_LIST_TYPE);
-            return extracted.isEmpty() ? null : extracted;
-        }
-        catch (Exception e) {
-            log.debug("Failed to extract slidePageNumbers from result JSON", e);
-            return null;
-        }
     }
 
 }

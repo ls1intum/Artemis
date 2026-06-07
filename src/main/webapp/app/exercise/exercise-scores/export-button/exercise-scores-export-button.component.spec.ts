@@ -182,7 +182,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // GIVEN
         const exportCSVStub = vi.spyOn(resultService, 'triggerDownloadCSV');
         const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
-        component.exercise = exercise1;
+        fixture.componentRef.setInput('exercise', exercise1);
 
         // WHEN
         component.exportResults(false, false);
@@ -244,7 +244,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const getResultsStub = vi
             .spyOn(resultService, 'getResultsWithPointsPerGradingCriterion')
             .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
-        component.exercises = [exercise1, exercise2];
+        fixture.componentRef.setInput('exercises', [exercise1, exercise2]);
 
         // WHEN
         component.exportResults(false, false);
@@ -292,7 +292,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // @ts-ignore (stubbing a private method)
         const exportAsCsvStub = vi.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
         const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         // WHEN
         component.exportResults(withTestCases, withFeedback);

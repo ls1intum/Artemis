@@ -7,12 +7,14 @@
             </div>
             <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.title"></h5>
         </div>
-        <div class="card-body" [ngbCollapse]="isCollapsed()">
-            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
-            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
-            <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
-            <div [innerHTML]="importExample | htmlForMarkdown"></div>
-        </div>
+        @if (!isCollapsed()) {
+            <div class="card-body">
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
+                <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
+                <div [innerHTML]="importExample | htmlForMarkdown"></div>
+            </div>
+        }
     </div>
     <input class="mt-3" type="file" accept="application/json" (change)="onFileChange($event)" />
     <h4 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.title"></h4>
@@ -30,7 +32,7 @@
                             <fa-icon
                                 class="me-2"
                                 [icon]="getIcon(competency.taxonomy)"
-                                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                [pTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                                 [fixedWidth]="true"
                             />
                             <h6 class="mb-0">{{ competency.title }}</h6>

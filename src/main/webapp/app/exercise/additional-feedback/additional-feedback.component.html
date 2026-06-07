@@ -1,17 +1,17 @@
 <div id="additional-feedback">
     <b>
         <fa-icon [icon]="faCommentDots" />&nbsp;
-        @if (additional) {
+        @if (additional()) {
             <span jhiTranslate="artemisApp.assessment.additionalFeedback"></span>
         }
-        @if (!additional) {
+        @if (!additional()) {
             <span jhiTranslate="artemisApp.assessment.feedback"></span>
         }
         :</b
     >
     <br />
     <br />
-    @for (singleFeedback of feedback; track singleFeedback) {
+    @for (singleFeedback of feedback(); track singleFeedback) {
         <div
             class="alert"
             [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"

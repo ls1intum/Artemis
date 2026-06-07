@@ -38,9 +38,14 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.question-reevaluation-title-input {
+    flex: 1;
+    min-width: 0;
 
     input {
-        flex: 1;
+        width: 100%;
         min-width: 0;
     }
 }

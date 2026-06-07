@@ -1,6 +1,6 @@
 <div class="feedback-text">
     @if (!previewText) {
-        <p>{{ feedback.text }}</p>
+        <p>{{ feedback().text }}</p>
     } @else {
         @if (isCollapsed) {
             <div>
@@ -14,7 +14,7 @@
         } @else {
             <div>
                 <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="toggleCollapse()" />
-                <jhi-feedback-text [feedback]="feedback" />
+                <jhi-feedback-text [feedback]="feedback()" />
             </div>
         }
     }

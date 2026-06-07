@@ -140,8 +140,7 @@ describe('ExerciseMetadataSyncService', () => {
         service.initialize(context);
         service.initialize(context);
 
-        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledOnce();
-        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledWith();
+        expect(exerciseEditorSyncService.subscribeToUpdates).toHaveBeenCalledExactlyOnceWith();
 
         service.destroy();
 

@@ -87,10 +87,10 @@ class LectureContentProcessingServiceTest {
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository, attachmentRepository,
-                Optional.of(irisLectureApi), websocketMessagingService);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
+                websocketMessagingService);
 
-        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
+        service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
 
         testLecture = new Lecture();
         testLecture.setId(1L);
@@ -153,9 +153,9 @@ class LectureContentProcessingServiceTest {
             // Given: No Iris API
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
-            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository,
-                    attachmentRepository, Optional.empty(), mock(WebsocketMessagingService.class));
-            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
+            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
+                    Optional.empty(), mock(WebsocketMessagingService.class));
+            service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback, attachmentRepository);
 
             service.triggerProcessing(testUnit);
 
@@ -408,7 +408,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldSaveSlidePageNumbersOnSuccess() {
+        void shouldSaveDisplayPageNumbersOnSuccess() {
             Attachment attachment = new Attachment();
             testUnit.setAttachment(attachment);
             testState.setPhase(ProcessingPhase.INGESTING);
@@ -421,12 +421,30 @@ class LectureContentProcessingServiceTest {
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, List.of(1, 2, -1));
 
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(testUnit.getAttachment().getSlidePageNumbers()).containsExactly(1, 2, -1);
+            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
             verify(attachmentRepository).save(attachment);
         }
 
         @Test
-        void shouldNotSaveSlidePageNumbersWhenAttachmentIsNull() {
+        void shouldPreserveDisplayPageNumbersWhenNullOnSuccess() {
+            Attachment attachment = new Attachment();
+            attachment.setDisplayPageNumbers(List.of(1, 2, -1));
+            testUnit.setAttachment(attachment);
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testUnit.getAttachment().getDisplayPageNumbers()).containsExactly(1, 2, -1);
+            verify(attachmentRepository, never()).save(attachment);
+        }
+
+        @Test
+        void shouldNotSaveDisplayPageNumbersWhenAttachmentIsNull() {
             testUnit.setAttachment(null);
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
@@ -620,6 +638,27 @@ class LectureContentProcessingServiceTest {
             service.triggerProcessing(testUnit);
 
             verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldClearDisplayPageNumbersOnAttachmentChange() {
+            Attachment attachment = new Attachment();
+            attachment.setVersion(2);
+            attachment.setLink("slides.pdf");
+            attachment.setDisplayPageNumbers(List.of(1, 2, -1));
+            testUnit.setAttachment(attachment);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setAttachmentVersion(1);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            assertThat(attachment.getDisplayPageNumbers()).isNull();
+            verify(attachmentRepository).save(attachment);
         }
 
         @Test
