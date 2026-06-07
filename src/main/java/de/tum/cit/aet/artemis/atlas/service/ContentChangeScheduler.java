@@ -131,11 +131,12 @@ public class ContentChangeScheduler {
 
         if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.IN_PROGRESS) {
             // Concurrent course orchestration — requeue the whole batch and let the next tick pick it
-            // up instead of consuming the change events as a permanent failure. No completion to surface.
+            // up instead of consuming the change events as a permanent failure. The requeue also
+            // refunds the daily-run reservation taken by claimDueBatch, so a long concurrent run does
+            // not let repeated retry ticks burn the per-course cap without an actual run. No completion
+            // to surface.
             log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, exerciseCount);
-            for (Long exerciseId : exerciseIds) {
-                accumulator.record(courseId, exerciseId);
-            }
+            accumulator.requeueAfterConcurrentRun(courseId, exerciseIds);
             return;
         }
 

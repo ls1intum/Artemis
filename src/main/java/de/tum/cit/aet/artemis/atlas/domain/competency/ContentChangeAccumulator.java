@@ -51,6 +51,17 @@ public record ContentChangeAccumulator(Set<Long> exerciseIds, Instant lastEventT
         return new ContentChangeAccumulator(Set.of(), lastEventTime, newCount, today);
     }
 
+    /**
+     * Releases one daily-run reservation taken by {@link #claim}. Used when a claimed batch could
+     * not actually run because a concurrent orchestration held the course lock and is being
+     * requeued — without this the optimistic reservation would permanently burn quota on every
+     * retry tick. Floors at zero and resets the counter when the stored date is no longer today.
+     */
+    public ContentChangeAccumulator refundDailyRun(LocalDate today) {
+        int baseCount = today.equals(dailyRunCountDate) ? dailyRunCount : 0;
+        return new ContentChangeAccumulator(exerciseIds, lastEventTime, Math.max(0, baseCount - 1), today);
+    }
+
     /** True when at least one exercise id is queued. */
     public boolean hasContent() {
         return !exerciseIds.isEmpty();

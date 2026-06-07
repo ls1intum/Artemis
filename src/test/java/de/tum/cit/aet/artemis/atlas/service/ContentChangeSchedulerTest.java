@@ -138,9 +138,10 @@ class ContentChangeSchedulerTest {
 
         scheduler.tick();
 
-        // A concurrent run holds the course lock — the whole batch is requeued and nothing is surfaced.
-        verify(accumulator).record(COURSE_ID, 10L);
-        verify(accumulator).record(COURSE_ID, 11L);
+        // A concurrent run holds the course lock — the whole batch is requeued (refunding the daily
+        // reservation so retry ticks do not burn quota) and nothing is surfaced.
+        verify(accumulator).requeueAfterConcurrentRun(COURSE_ID, exerciseIds);
+        verify(accumulator, never()).record(anyLong(), anyLong());
         verify(accumulator).releaseLock(COURSE_ID);
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }

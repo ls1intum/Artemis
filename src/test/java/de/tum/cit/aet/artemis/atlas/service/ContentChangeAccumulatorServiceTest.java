@@ -156,6 +156,31 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
+    void requeueAfterConcurrentRun_refundsReservationSoRetriesDoNotBurnDailyCap() {
+        service.record(1L, 200L);
+
+        // More claim+requeue cycles than the daily cap: each models a scheduler tick that drained the
+        // batch but hit a concurrent run, so the reservation must be refunded and the batch stay claimable.
+        for (int i = 0; i < DAILY_CAP + 2; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("retry tick #%d must still claim the batch", i + 1).isPresent();
+            assertThat(claim.get().exerciseIds()).containsExactly(200L);
+            service.requeueAfterConcurrentRun(1L, claim.get().exerciseIds());
+        }
+
+        // The cap was never consumed by the retries: a full run of DAILY_CAP scheduled orchestrations
+        // is still available, and only then is the cap exhausted.
+        for (int i = 0; i < DAILY_CAP; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).as("scheduled run #%d after retries", i + 1).isPresent();
+            service.record(1L, 300L + i);
+        }
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("cap exhausted only after DAILY_CAP real runs").isEmpty();
+    }
+
+    @Test
     void tryClaimLock_secondAcquirerIsRejectedUntilRelease() throws Exception {
         assertThat(service.tryClaimLock(42L)).isTrue();
         java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();

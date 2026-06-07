@@ -808,7 +808,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
         this.orchestrationRunning.set(true);
         try {
-            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
+            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
@@ -830,7 +830,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             const summary = body?.summary?.trim() || '';
             if (httpErr?.status === 409) {
                 this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
-            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
+            } else if (httpErr?.status === 422 || httpErr?.status === 500 || httpErr?.status === 502 || httpErr?.status === 503) {
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: summary || 'artemisApp.atlasOrchestrator.error',

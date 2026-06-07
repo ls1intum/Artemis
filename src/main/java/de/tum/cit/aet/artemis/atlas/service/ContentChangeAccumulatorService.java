@@ -154,6 +154,25 @@ public class ContentChangeAccumulatorService {
     }
 
     /**
+     * Requeue a batch that was claimed via {@link #claimDueBatch(long)} but could not actually run
+     * because a concurrent orchestration held the per-course run lock. Re-merges the exercise ids
+     * (restarting the debounce window) and releases the daily-run reservation taken by the claim in
+     * a single atomic step, so retry-only ticks never consume automatic quota. A no-op for an empty
+     * id set.
+     *
+     * @param courseId    the course whose batch is being requeued
+     * @param exerciseIds the exercise ids to re-add to the accumulator
+     */
+    public void requeueAfterConcurrentRun(long courseId, Set<Long> exerciseIds) {
+        if (exerciseIds.isEmpty()) {
+            return;
+        }
+        Instant now = Instant.now(clock);
+        LocalDate today = LocalDate.now(clock);
+        map.executeOnKey(courseId, new RequeueEntryProcessor(new HashSet<>(exerciseIds), now, today));
+    }
+
+    /**
      * Best-effort scheduler-local lock on a course key. Used by {@code ContentChangeScheduler} to
      * ensure only one node drains a given course's batch per tick. Returns {@code true} when the
      * lock was acquired, {@code false} when another tick already owns it. The lease bounds the
@@ -278,6 +297,40 @@ public class ContentChangeAccumulatorService {
             BatchClaim claim = new BatchClaim(current.exerciseIds());
             entry.setValue(current.claim(today, countQuota));
             return claim;
+        }
+    }
+
+    /**
+     * Hazelcast-side requeue: re-merge claimed ids and release one daily-run reservation atomically.
+     * Used by the scheduler when a claimed batch hit a concurrent run and must retry without the
+     * earlier optimistic quota reservation sticking.
+     */
+    static final class RequeueEntryProcessor implements EntryProcessor<Long, ContentChangeAccumulator, Void>, Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private final Set<Long> exerciseIds;
+
+        private final Instant now;
+
+        private final LocalDate today;
+
+        RequeueEntryProcessor(Set<Long> exerciseIds, Instant now, LocalDate today) {
+            this.exerciseIds = exerciseIds;
+            this.now = now;
+            this.today = today;
+        }
+
+        @Override
+        public Void process(java.util.Map.Entry<Long, ContentChangeAccumulator> entry) {
+            ContentChangeAccumulator current = entry.getValue();
+            ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
+            for (Long exerciseId : exerciseIds) {
+                next = next.with(exerciseId, now);
+            }
+            entry.setValue(next.refundDailyRun(today));
+            return null;
         }
     }
 

@@ -574,6 +574,25 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(dialog.visible()).toBe(false);
     });
 
+    it('should surface the summary when Atlas orchestrator returns INTERNAL_ERROR (500)', async () => {
+        recreateFixtureWithAtlasModule();
+
+        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+            new HttpErrorResponse({
+                status: 500,
+                error: { status: CompetencyOrchestrationStatus.Failed, summary: 'Atlas orchestrator run failed.' },
+            }),
+        );
+        comp.programmingExercise = buildInstructorExerciseForDialog();
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+
+        // A 500 must not fall through to the silent onError path — the returned summary is shown.
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'Atlas orchestrator run failed.', disableTranslation: true });
+    });
+
     it('should error when Atlas orchestrator request throws', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
