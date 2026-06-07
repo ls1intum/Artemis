@@ -1,6 +1,6 @@
-import { Component, EventEmitter, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -13,8 +13,9 @@ import { JsonPipe } from '@angular/common';
     styleUrls: ['./quiz-confirm-import-invalid-questions-modal.scss'],
     imports: [FormsModule, TranslateDirective, FaIconComponent, JsonPipe],
 })
-export class QuizConfirmImportInvalidQuestionsModalComponent {
-    activeModal = inject(NgbActiveModal);
+export class QuizConfirmImportInvalidQuestionsModalComponent implements OnInit {
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
 
     // Icons
     faBan = faBan;
@@ -22,19 +23,19 @@ export class QuizConfirmImportInvalidQuestionsModalComponent {
     faExclamationTriangle = faExclamationTriangle;
 
     invalidFlaggedQuestions: ValidationReason[];
-    shouldImport: EventEmitter<void> = new EventEmitter<void>();
+
+    ngOnInit() {
+        this.invalidFlaggedQuestions = this.dialogConfig.data.invalidFlaggedQuestions;
+    }
 
     /**
-     * Reset the git repository.
-     *
-     * @function resetRepository
+     * Confirm importing the (partially invalid) questions.
      */
     importQuestions() {
-        this.activeModal.close();
-        this.shouldImport.emit();
+        this.dialogRef.close(true);
     }
 
     closeModal() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 }

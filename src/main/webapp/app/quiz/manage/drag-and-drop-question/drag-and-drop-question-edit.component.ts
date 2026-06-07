@@ -19,7 +19,7 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -134,7 +134,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);
 
@@ -293,13 +292,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
         this.backgroundReady = true;
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * This function opens the modal for the help dialog.
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
     }
 
     /**

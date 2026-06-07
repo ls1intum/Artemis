@@ -1,5 +1,5 @@
 <div class="form-group">
-    @if (isAssigmentRepositoryEditable) {
+    @if (isAssigmentRepositoryEditable()) {
         <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
@@ -10,11 +10,11 @@
             name="assignmentRepositoryCheckoutPath"
             id="field_assignmentRepositoryCheckoutPath"
             [pattern]="pattern()"
-            [(ngModel)]="assignmentCheckoutPath"
+            [ngModel]="assignmentCheckoutPath()"
             (ngModelChange)="onAssigmentRepositoryCheckoutPathChange($event)"
         />
     }
-    @if (isTestRepositoryEditable) {
+    @if (isTestRepositoryEditable()) {
         <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.tests"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
@@ -24,12 +24,12 @@
             class="form-control"
             name="testRepositoryCheckoutPath"
             id="field_testRepositoryCheckoutPath"
-            [(ngModel)]="testCheckoutPath"
+            [ngModel]="testCheckoutPath()"
             (ngModelChange)="onTestRepositoryCheckoutPathChange($event)"
             [pattern]="pattern()"
         />
     }
-    @if (isSolutionRepositoryEditable) {
+    @if (isSolutionRepositoryEditable()) {
         <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.solution"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
@@ -39,7 +39,7 @@
             class="form-control"
             name="solutionRepositoryCheckoutPath"
             id="field_solutionRepositoryCheckoutPath"
-            [(ngModel)]="solutionCheckoutPath"
+            [ngModel]="solutionCheckoutPath()"
             (ngModelChange)="onSolutionRepositoryCheckoutPathChange($event)"
             [pattern]="pattern()"
         />

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,44 +15,44 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseTaskComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseTaskComponent>;
     let comp: ProgrammingExerciseTaskComponent;
     let taskService: ProgrammingExerciseTaskService;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            declarations: [ProgrammingExerciseTaskComponent, MockComponent(TestCasePassedBuildsChartComponent), MockPipe(ArtemisTranslatePipe)],
+        TestBed.configureTestingModule({
+            imports: [ProgrammingExerciseTaskComponent, MockComponent(TestCasePassedBuildsChartComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseTaskComponent);
-                comp = fixture.componentInstance;
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseTaskComponent);
+        comp = fixture.componentInstance;
 
-                comp.openSubject = new Subject();
+        fixture.componentRef.setInput('openSubject', new Subject());
 
-                taskService = TestBed.inject(ProgrammingExerciseTaskService);
-                jest.spyOn(comp.updateTasksEvent, 'emit');
-            });
+        taskService = TestBed.inject(ProgrammingExerciseTaskService);
+        vi.spyOn(comp.updateTasksEvent, 'emit');
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => vi.restoreAllMocks());
 
     it('should handle test cases updates', () => {
         const testCase = {
             changed: false,
         };
 
-        jest.spyOn(taskService, 'initializeTask').mockReturnValue({} as ProgrammingExerciseTask);
+        fixture.componentRef.setInput('task', {} as ProgrammingExerciseTask);
+        vi.spyOn(taskService, 'initializeTask').mockReturnValue({} as ProgrammingExerciseTask);
 
         comp.testUpdateHandler(testCase);
 
-        expect(testCase.changed).toBeTrue();
+        expect(testCase.changed).toBe(true);
         expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
     });
 
     it('should handle task updates', () => {
-        comp.task = {
+        fixture.componentRef.setInput('task', {
             stats: undefined,
             weight: 4,
             bonusMultiplier: 1,
@@ -62,7 +64,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
                 { testName: 'test3', weight: 3 },
                 { testName: 'test4', weight: 4 },
             ],
-        };
+        });
         const expected = [
             {
                 bonusMultiplier: 1,
@@ -100,7 +102,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
 
         comp.taskUpdateHandler();
 
-        expect(comp.task.testCases).toEqual(expected);
+        expect(comp.task().testCases).toEqual(expected);
         expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
     });
 
@@ -108,8 +110,8 @@ describe('ProgrammingExerciseTaskComponent', () => {
         taskService.currentTasks = [{ taskName: 'Not assigned to task', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
 
         comp.ngOnInit();
-        expect(comp.onlyViewTestCases).toBeTrue();
-        expect(comp.open).toBeTrue();
+        expect(comp.onlyViewTestCases).toBe(true);
+        expect(comp.open).toBe(true);
     });
 
     it('should show the tasks if there are more than one', () => {

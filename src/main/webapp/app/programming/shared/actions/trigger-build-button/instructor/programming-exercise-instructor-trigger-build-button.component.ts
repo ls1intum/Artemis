@@ -16,23 +16,22 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
     private translateService = inject(TranslateService);
     private dialogService = inject(DialogService);
 
-    // Icons
     faRedo = faRedo;
 
     constructor() {
         super();
-        this.showForSuccessfulSubmissions = true;
+        this.showForSuccessfulSubmissions.set(true);
         this.personalParticipation = false;
     }
 
-    triggerBuild = (event: any) => {
-        // The button might be placed in other elements that have a click listener, so catch the click here.
+    triggerBuild = (event: MouseEvent) => {
+        // The button is often nested inside other click handlers; stop propagation so the parent action does not also fire.
         event.stopPropagation();
-        if (this.participationHasLatestSubmissionWithoutResult) {
+        if (this.participationHasLatestSubmissionWithoutResult()) {
             super.triggerFailed().subscribe();
             return;
         }
-        if (!this.lastResultIsManual) {
+        if (!this.lastResultIsManual()) {
             super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
             return;
         }
