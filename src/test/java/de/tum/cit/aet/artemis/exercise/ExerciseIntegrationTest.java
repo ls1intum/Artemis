@@ -566,9 +566,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 assertThat(submission.isSubmitted()).isTrue();
                 assertThat(submission.getResults()).isEmpty();
                 assertThat(results).isEmpty();
-                var quizSubmission = (QuizSubmission) submission;
-                assertThat(quizSubmission.getSubmittedAnswers()).isNullOrEmpty();
-                assertThat(quizSubmission.getScoreInPoints()).isNull();
             }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result

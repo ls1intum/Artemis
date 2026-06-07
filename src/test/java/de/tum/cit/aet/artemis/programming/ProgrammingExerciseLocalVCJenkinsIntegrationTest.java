@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 // TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -430,7 +430,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_testNotCreatedError() throws Exception {
         AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
         try {
-            programmingExerciseTestService.studentTeamRepo.resetLocalRepo();
             doAnswer(invocation -> {
                 LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
                 Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
@@ -445,7 +444,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         }
         finally {
             if (targetRepositoryPath.get() != null) {
-                RepositoryExportTestUtil.safeDeleteDirectory(targetRepositoryPath.get());
+                FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
             }
         }
     }

@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
@@ -18,6 +17,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.SystemReader;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -209,10 +209,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     private static volatile boolean fileUploadPathInitialized = false;
 
-    private static final Object JGIT_SYSTEM_READER_LOCK = new Object();
-
-    private static volatile boolean jgitSystemReaderConfigured = false;
-
     @BeforeAll
     static void setup() {
         // Configure JGit to skip reading system-level git config files.
@@ -236,110 +232,87 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      * causing test failures on some machines.
      */
     private static void configureJGitSystemReader() {
-        if (jgitSystemReaderConfigured) {
-            return;
-        }
-        synchronized (JGIT_SYSTEM_READER_LOCK) {
-            if (jgitSystemReaderConfigured) {
-                return;
+        final var defaultReader = getSystemReader();
+
+        SystemReader.setInstance(new SystemReader() {
+
+            @Override
+            public String getHostname() {
+                return defaultReader.getHostname();
             }
-            final var defaultReader = SystemReader.getInstance();
-            final var platform = getPlatform(defaultReader);
 
-            SystemReader.setInstance(new SystemReader() {
+            @Override
+            public String getenv(String variable) {
+                return defaultReader.getenv(variable);
+            }
 
-                @Override
-                public String getHostname() {
-                    return defaultReader.getHostname();
-                }
+            @Override
+            public String getProperty(String key) {
+                return defaultReader.getProperty(key);
+            }
 
-                @Override
-                public String getenv(String variable) {
-                    return defaultReader.getenv(variable);
-                }
+            @Override
+            public FileBasedConfig openUserConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                return defaultReader.openUserConfig(parent, fs);
+            }
 
-                @Override
-                public String getProperty(String key) {
-                    return defaultReader.getProperty(key);
-                }
+            @Override
+            public FileBasedConfig openSystemConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                // Return an empty config instead of reading the potentially large system gitconfig
+                return new FileBasedConfig(parent, null, fs) {
 
-                @Override
-                public FileBasedConfig openUserConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                    return defaultReader.openUserConfig(parent, fs);
-                }
+                    @Override
+                    public void load() {
+                        // Don't load anything - skip system config
+                    }
 
-                @Override
-                public FileBasedConfig openSystemConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                    // Return an empty config instead of reading the potentially large system gitconfig.
-                    return new FileBasedConfig(parent, null, fs) {
+                    @Override
+                    public boolean isOutdated() {
+                        return false;
+                    }
+                };
+            }
 
-                        @Override
-                        public void load() {
-                            // Don't load anything - skip system config.
-                        }
+            @Override
+            public FileBasedConfig openJGitConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
+                return defaultReader.openJGitConfig(parent, fs);
+            }
 
-                        @Override
-                        public boolean isOutdated() {
-                            return false;
-                        }
-                    };
-                }
+            @Override
+            public Instant now() {
+                return defaultReader.now();
+            }
 
-                @Override
-                public FileBasedConfig openJGitConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                    return defaultReader.openJGitConfig(parent, fs);
-                }
+            @Override
+            public ZoneOffset getTimeZoneAt(Instant when) {
+                return defaultReader.getTimeZoneAt(when);
+            }
 
-                @Override
-                public Instant now() {
-                    return defaultReader.now();
-                }
+            @SuppressWarnings("deprecation")
+            @Override
+            public long getCurrentTime() {
+                return defaultReader.getCurrentTime();
+            }
 
-                @Override
-                public ZoneOffset getTimeZoneAt(Instant when) {
-                    return defaultReader.getTimeZoneAt(when);
-                }
-
-                @SuppressWarnings("deprecation")
-                @Override
-                public long getCurrentTime() {
-                    return defaultReader.getCurrentTime();
-                }
-
-                @SuppressWarnings("deprecation")
-                @Override
-                public int getTimezone(long when) {
-                    return defaultReader.getTimezone(when);
-                }
-
-                @Override
-                public boolean isWindows() {
-                    return platform.isWindows();
-                }
-
-                @Override
-                public boolean isMacOS() {
-                    return platform.isMacOS();
-                }
-
-                @Override
-                public boolean isLinux() {
-                    return platform.isLinux();
-                }
-            });
-            jgitSystemReaderConfigured = true;
-        }
+            @SuppressWarnings("deprecation")
+            @Override
+            public int getTimezone(long when) {
+                return defaultReader.getTimezone(when);
+            }
+        });
     }
 
-    private static Platform getPlatform(SystemReader defaultReader) {
-        final var osName = defaultReader.getProperty("os.name");
-        final var isWindows = osName != null && osName.startsWith("Windows");
-        final var isMacOS = "Mac OS X".equals(osName) || "Darwin".equals(osName);
-        final var isLinux = osName != null && osName.toLowerCase(Locale.ROOT).startsWith("linux");
-        return new Platform(isWindows, isMacOS, isLinux);
-    }
+    private static @NonNull SystemReader getSystemReader() {
+        SystemReader defaultReader = SystemReader.getInstance();
 
-    private record Platform(boolean isWindows, boolean isMacOS, boolean isLinux) {
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+        return defaultReader;
     }
 
     @BeforeEach
