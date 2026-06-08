@@ -2,11 +2,14 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
@@ -68,6 +72,9 @@ class ExerciseMappingToolsServiceTest {
     @Mock
     private AtlasAgentSessionCacheService sessionCacheService;
 
+    @Mock
+    private ContentExtractionService contentExtractionService;
+
     private ExerciseMappingToolsService service;
 
     private ObjectMapper objectMapper;
@@ -84,7 +91,11 @@ class ExerciseMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository, courseRepository, authorizationCheckService,
-                userRepository, Optional.of(atlasMLApi), sessionCacheService);
+                userRepository, Optional.of(atlasMLApi), sessionCacheService, contentExtractionService);
+
+        // Content extraction is mocked: preview uses extractContent(exercise, false) for the AtlasML
+        // suggestion description (extractContent(exercise, true)). Lenient: not every test reaches the preview path.
+        lenient().when(contentExtractionService.extractContent(any(), anyBoolean())).thenReturn(new ExtractedContentDTO("Bubble Sort", "Bubble Sort", Map.of()));
 
         course = new Course();
         course.setId(10L);
@@ -177,7 +188,7 @@ class ExerciseMappingToolsServiceTest {
     @Test
     void preview_usesLlmSuggestedFlags_whenAtlasMLApiMissing() {
         ExerciseMappingToolsService serviceWithoutAtlasML = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository,
-                courseRepository, authorizationCheckService, userRepository, Optional.empty(), sessionCacheService);
+                courseRepository, authorizationCheckService, userRepository, Optional.empty(), sessionCacheService, contentExtractionService);
 
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
