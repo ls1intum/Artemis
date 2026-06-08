@@ -292,7 +292,7 @@
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
                 "refinementAssistance": "Problemstellung verfeinern",
-                "tieredHint": "Entwirf die Problemstellung oder lass Artemis Intelligence die gesamte Aufgabe erstellen.",
+                "tieredHint": "Zwei KI-Wege: nur die Problemstellung entwerfen und selbst verfeinern, oder die gesamte Aufgabe erzeugen – Lösung, Vorlage, Tests und Problemstellung.",
                 "draftHint": "Entwirf die Aufgabenbeschreibung oder verfeinere die aktuelle Problemstellung.",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
@@ -328,7 +328,8 @@
                     "close": "Schließen",
                     "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
                 },
-                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden.",
+                "orSeparator": "oder"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

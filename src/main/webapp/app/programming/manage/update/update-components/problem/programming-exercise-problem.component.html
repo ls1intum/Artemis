@@ -58,7 +58,10 @@
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (showGenerateWithAi()) {
-                <span class="tier-separator vr mx-1" aria-hidden="true"></span>
+                <!-- The two AI actions are alternatives: draft just the statement, OR generate the whole exercise. The "or" makes that explicit. -->
+                <span class="tier-separator d-inline-flex align-items-center text-color-secondary text-uppercase small mx-1">
+                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.orSeparator"></span>
+                </span>
                 @if (generationLanguagesLoading()) {
                     <!-- The server-driven supported-language set has not arrived yet; stand in with a skeleton sized to the action so the layout does not jump. -->
                     <p-skeleton width="11rem" height="2rem" />

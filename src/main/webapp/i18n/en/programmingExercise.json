@@ -292,7 +292,7 @@
                 "tasksOfExercise": "Tasks:",
                 "generationAssistance": "Generate Draft Problem Statement",
                 "refinementAssistance": "Refine Problem Statement",
-                "tieredHint": "Draft the statement, or let Artemis Intelligence build the whole exercise.",
+                "tieredHint": "Two ways to use AI: draft just the problem statement to refine yourself, or generate the entire exercise — solution, template, tests, and statement.",
                 "draftHint": "Draft the exercise brief, or refine the current problem statement.",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
@@ -328,7 +328,8 @@
                     "close": "Close",
                     "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
                 },
-                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement.",
+                "orSeparator": "or"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
