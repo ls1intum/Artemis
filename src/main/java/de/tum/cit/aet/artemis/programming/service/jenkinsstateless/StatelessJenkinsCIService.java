@@ -105,9 +105,6 @@ public class StatelessJenkinsCIService implements StatelessCIService {
             String buildApiUrl = jenkinsConnectorBaseUrl + "/api/v1/build";
 
             // POST the DTO to the Jenkins connector's build API
-            restTemplate.postForObject(buildApiUrl, request, Void.class);
-
-            // Generate a UUID for this build request
             HadesBuildResponseDTO response = restTemplate.postForObject(buildApiUrl, request, HadesBuildResponseDTO.class);
             if (response == null) {
                 throw new ContinuousIntegrationException("Received empty build ID from Hades");
