@@ -354,7 +354,7 @@ public class ProgrammingExerciseTestService {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
 
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
@@ -600,7 +600,7 @@ public class ProgrammingExerciseTestService {
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         var importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise,
                 "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
@@ -728,7 +728,7 @@ public class ProgrammingExerciseTestService {
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -744,7 +744,7 @@ public class ProgrammingExerciseTestService {
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -866,7 +866,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", exercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setStaticCodeAnalysisEnabled(false);
 
         // TODO: at the moment, it does not work that the copied repositories include the same files as ones that have been created originally
@@ -910,7 +910,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         if (addAuxRepos) {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
@@ -966,7 +966,7 @@ public class ProgrammingExerciseTestService {
             programmingExerciseBuildConfigRepository.save(sourceExercise.getBuildConfig());
             sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
             ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                    courseUtilService.addEmptyCourse());
+                    courseUtilService.addEnrolledEmptyCourse(userPrefix));
             exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
 
             // Mock requests
@@ -998,11 +998,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
         // programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, true, true);
@@ -1021,10 +1021,10 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void importExercise_planDoesntExist() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
 
         // Mock requests
         mockDelegate.mockImportProgrammingExerciseWithFailingEnablePlan(sourceExercise, exerciseToBeImported, false, false);
@@ -1043,7 +1043,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void testImportProgrammingExercise_team_modeChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
@@ -1052,7 +1052,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setMode(TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exerciseToBeImported);
@@ -1082,7 +1082,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void testImportProgrammingExercise_individual_modeChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
         sourceExercise.setMode(TEAM);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         programmingExerciseRepository.save(sourceExercise);
@@ -1100,7 +1100,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
@@ -1124,11 +1124,11 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
@@ -1149,11 +1149,12 @@ public class ProgrammingExerciseTestService {
 
     public void testImportProgrammingExercise_scaChange_activated() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, userPrefix).getExercises()
+                .iterator().next();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setStaticCodeAnalysisEnabled(true);
         exerciseToBeImported.setMaxStaticCodeAnalysisPenalty(80);
 
@@ -1183,11 +1184,12 @@ public class ProgrammingExerciseTestService {
 
     public void testImportProgrammingExerciseLockRepositorySubmissionPolicyChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, userPrefix).getExercises()
+                .iterator().next();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
 
         var submissionPolicy = new LockRepositoryPolicy();
         submissionPolicy.setSubmissionLimit(5);
@@ -1211,7 +1213,8 @@ public class ProgrammingExerciseTestService {
 
     public void testImportProgrammingExerciseNoneSubmissionPolicyChange() throws Exception {
         // Setup exercises for import
-        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
+        ProgrammingExercise sourceExercise = (ProgrammingExercise) programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, userPrefix).getExercises()
+                .iterator().next();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         var submissionPolicy = new LockRepositoryPolicy();
         submissionPolicy.setSubmissionLimit(5);
@@ -1221,7 +1224,7 @@ public class ProgrammingExerciseTestService {
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(userPrefix));
         exerciseToBeImported.setSubmissionPolicy(null);
 
         // Mock requests
@@ -2111,7 +2114,7 @@ public class ProgrammingExerciseTestService {
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
             Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
 
-        final var course = courseUtilService.addEmptyCourse();
+        final var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
         var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -2567,8 +2570,8 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(userPrefix);
 
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false);
         sourceExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(sourceExercise);

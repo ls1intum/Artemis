@@ -36,7 +36,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void setUp() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 5, 1, 0, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

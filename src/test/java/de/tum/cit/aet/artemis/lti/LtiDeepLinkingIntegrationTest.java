@@ -46,7 +46,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         user.setInternal(false);
         userTestRepository.save(user);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         course.setOnlineCourse(true);
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
     }

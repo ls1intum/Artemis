@@ -20,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -45,6 +44,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final String TEST_PREFIX = "examregistrationtest";
 
+    /** Student not enrolled in the test course; exercises the not-in-course branches. */
+    private static final String OTHER_PREFIX = "examregistrationother";
+
     public static final String STUDENT_111 = TEST_PREFIX + "student111";
 
     @Autowired
@@ -55,9 +57,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamRegistrationService examRegistrationService;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -86,10 +85,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        // Add a student that is not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.addUsers(OTHER_PREFIX, 1, 0, 0, 0); // outsider student — never enrolled in course
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         exam1 = examUtilService.addExam(course1);
@@ -110,7 +108,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         int studentCountBefore = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + OTHER_PREFIX + "student1", null, HttpStatus.OK, null);
         assertThat(userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
                 .hasSize(studentCountBefore + 1);
     }
@@ -126,7 +124,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + OTHER_PREFIX + "student1", null, HttpStatus.OK, null);
 
         Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsAfter).hasSize(1);
@@ -135,14 +133,14 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.BAD_REQUEST,
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", null, HttpStatus.BAD_REQUEST,
                 null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveStudentToExam_testExam() throws Exception {
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", HttpStatus.BAD_REQUEST);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -293,9 +291,17 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
+
+        // Remove student99 if they were accidentally enrolled by the prefix-based enrollment from a
+        // previous @BeforeEach run (2nd-run persistence bug), so the baseline count is predictable.
+        // Use addStudent (not createAndSaveUser) so student99 gets ROLE_USER authority — the
+        // findAllByCourseIdAndCourseRolesInWithAuthorities query requires a LEFT JOIN FETCH on authorities.
+        userUtilService.addStudent(TEST_PREFIX + "student99"); // not registered for the course
+        User student99 = userUtilService.getUserByLogin(TEST_PREFIX + "student99");
+        userUtilService.unenrollUserFromCourse(student99, course1);
+
         int numberOfStudentsInCourse = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
 
-        User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
         userUtilService.enrollUserInCourse(student99, course1, CourseRole.STUDENT);
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
         assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
@@ -357,10 +363,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
         assertThatThrownBy(
-                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student42")))
+                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(OTHER_PREFIX + "student1")))
                 .isInstanceOf(BadRequestAlertException.class);
     }
 

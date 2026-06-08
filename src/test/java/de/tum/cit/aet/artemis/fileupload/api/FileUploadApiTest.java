@@ -50,9 +50,9 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportFileUploadExerciseViaApi() {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
         String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
@@ -72,7 +72,7 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindFileUploadExerciseWithCompetencyViaApi() throws NoUniqueQueryException {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();
 
         Optional<FileUploadExercise> optionalExercise = fileUploadImportApi.findUniqueWithCompetenciesByTitleAndCourseId(expectedFileUploadExercise.getTitle(), course.getId());

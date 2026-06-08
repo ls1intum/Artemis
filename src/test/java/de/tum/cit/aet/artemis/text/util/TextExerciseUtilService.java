@@ -219,6 +219,19 @@ public class TextExerciseUtilService {
     /**
      * Creates and saves a Course with one TextExercise.
      *
+     * @param title      The title of the created TextExercise
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created Course
+     */
+    public Course addEnrolledCourseWithOneReleasedTextExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneReleasedTextExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a Course with one TextExercise.
+     *
      * @param title The title of the created TextExercise
      * @return The newly created Course
      */
@@ -497,6 +510,18 @@ public class TextExerciseUtilService {
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
+    }
+
+    /**
+     * Creates and saves a Course with one finished TextExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithOneFinishedTextExercise(String userPrefix) {
+        Course course = addCourseWithOneFinishedTextExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**

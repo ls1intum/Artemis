@@ -54,8 +54,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX)
-                .stream().filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
+        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService
+                .createPostsWithAnswerPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX).stream()
+                .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
 
         existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).toList();
 

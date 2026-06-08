@@ -113,6 +113,19 @@ public class ModelingExerciseUtilService {
     }
 
     /**
+     * Creates and saves a Course with a ModelingExercise and enrolls the users identified by the given prefix.
+     *
+     * @param title      The title of the ModelingExercise
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithOneModelingExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneModelingExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
      *
      * @param title The title of the ModelingExercise
@@ -166,7 +179,7 @@ public class ModelingExerciseUtilService {
      *
      * @return The created Course
      */
-    public Course addCourseWithDifferentModelingExercises() {
+    public Course addEnrolledCourseWithDifferentModelingExercises(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>());
         ModelingExercise classExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         classExercise.setTitle("ClassDiagram");
@@ -235,6 +248,8 @@ public class ModelingExerciseUtilService {
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
+
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 

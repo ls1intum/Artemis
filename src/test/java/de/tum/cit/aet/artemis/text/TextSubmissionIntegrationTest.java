@@ -97,8 +97,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        Course course2 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        Course course1 = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        Course course2 = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
         releasedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course1.getExercises(), "Text");
         finishedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course2.getExercises(), "Finished");
         lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, TEST_PREFIX + "student1");

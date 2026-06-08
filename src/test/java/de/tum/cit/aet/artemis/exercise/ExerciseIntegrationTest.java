@@ -102,11 +102,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, NUMBER_OF_TUTORS, 0, 1);
-
-        // Add users that are not in exercise/course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student11");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
+        // Outsider users (student11, tutor6, instructor2) are created inside the individual
+        // test methods that need them to avoid accidental enrollment when other tests create
+        // a prefix-enrolled course in their own bodies.
     }
 
     @Test
@@ -148,7 +146,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
@@ -169,7 +167,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentParticipationCountByIdFiltersNonStudentParticipants() throws Exception {
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), null);
 
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
@@ -187,7 +185,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentParticipationCountByIdFiltersNonStudentParticipantsForExamExercise() throws Exception {
-        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
 
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "instructor1");
@@ -337,6 +335,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExamExercise_asStudent_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student11");
         getExamExercise();
     }
 
@@ -357,7 +356,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var size = exercises.size();
 
         // Test for exercise with upcoming due date.
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var exercise = course.getExercises().iterator().next();
         assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
         exercises = request.getList("/api/exercise/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
@@ -448,7 +447,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
     void testGetExamExerciseForExampleSolution() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
@@ -560,6 +559,13 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
+            else if (exercise instanceof QuizExercise) {
+                // Quiz exercises with a submitted submission expose a sanitized submission (submitted flag + date only)
+                // so the client can show "Submitted, waiting for due date" before the quiz ends.
+                // No results are visible until the quiz has ended.
+                assertThat(participation.getSubmissions()).hasSize(1);
+                assertThat(results).isEmpty();
+            }
             else {
                 // All other exercises have no visible result, and therefore no submission to transmit the result
                 assertThat(participation.getSubmissions()).isEmpty();
@@ -591,7 +597,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExercise_forbidden() throws Exception {
-        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student11");
+        // Use a course without TEST_PREFIX enrollment so student11 is not enrolled (it should be FORBIDDEN)
+        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text");
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
         request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
@@ -634,7 +642,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        var course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        var course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = participationUtilService.generateExampleSubmission(validModel, exercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
@@ -645,21 +653,23 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
-        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
+        // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text").getExercises().iterator().next();
         request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
-        var exercise = programmingExerciseUtilService.addCourseWithOneProgrammingExercise().getExercises().iterator().next();
+        var exercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX).getExercises().iterator().next();
         request.get("/api/exercise/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
-        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        var exercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX).getExercises().iterator().next();
         var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
@@ -711,7 +721,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
-        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
+        // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text").getExercises().iterator().next();
         request.get("/api/exercise/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
@@ -732,14 +744,16 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testResetExercise_forbidden() throws Exception {
-        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
+        // Use a course without TEST_PREFIX enrollment so instructor2 is not enrolled (it should be FORBIDDEN)
+        var exercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text").getExercises().iterator().next();
         request.delete("/api/exercise/exercises/" + exercise.getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetSecondCorrectionEnabledFlagEnable() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
 
         boolean isSecondCorrectionEnabled = request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class,
@@ -750,7 +764,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetSecondCorrectionEnabledFlagDisable() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setSecondCorrectionEnabled(true);
         exerciseRepository.save(exercise);
@@ -762,7 +776,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testSetSecondCorrectionEnabledFlagForbidden() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6");
+        // Use a course without TEST_PREFIX enrollment so tutor6 is not enrolled (it should be FORBIDDEN)
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Text");
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.FORBIDDEN);
     }
@@ -795,7 +811,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetExerciseTitle() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         exercise.setTitle("Test Exercise");
         exercise = exerciseRepository.save(exercise);
@@ -805,7 +821,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetExamExerciseTitle() throws Exception {
-        TextExercise textExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise textExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final String expectedTitle = textExercise.getExerciseGroup().getTitle();
         final String title = request.get("/api/exercise/exercises/" + textExercise.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(expectedTitle);
@@ -820,7 +836,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestDueDate() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
@@ -838,7 +854,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestDueDateWhenNoIndividualDueDate() throws Exception {
-        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course courseWithOneReleasedTextExercise = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
         participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");

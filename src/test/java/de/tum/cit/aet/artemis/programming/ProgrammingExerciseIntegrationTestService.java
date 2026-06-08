@@ -264,10 +264,10 @@ public class ProgrammingExerciseIntegrationTestService {
         localVCLocalCITestService.setPort(serverPort);
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(userPrefix);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
-        programmingExerciseInExam = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseInExam = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(userPrefix);
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
                 .orElseThrow();
 
@@ -946,7 +946,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         // Create a new course with different id.
-        Course newCourse = courseUtilService.createCourse();
+        Course newCourse = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Assign new course to the programming exercise.
         ProgrammingExercise newProgrammingExercise = programmingExercise;
@@ -1382,7 +1382,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
         params.add("updateTemplate", String.valueOf(updateTemplate));
-        var programmingExerciseSca = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        var programmingExerciseSca = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
 
         setupMocksForConsistencyChecksOnImport(programmingExercise);
         setupMocksForConsistencyChecksOnImport(programmingExerciseSca);
@@ -1884,7 +1884,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResult() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExercise.getId()).orElseThrow();
 
@@ -1895,7 +1895,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
@@ -2194,7 +2194,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
         userUtilService.addInstructor(testPrefix + "instructoralt1");
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),
                 HttpStatus.FORBIDDEN);
@@ -2205,8 +2205,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 

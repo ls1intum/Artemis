@@ -42,7 +42,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
@@ -227,7 +227,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExerciseChannel() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(programmingExercise);
 

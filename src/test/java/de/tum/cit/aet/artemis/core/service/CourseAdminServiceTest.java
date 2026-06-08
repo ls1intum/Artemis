@@ -58,7 +58,7 @@ class CourseAdminServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest
     @Test
     void testCourseSummary() {
         SecurityUtils.setAuthorizationObject();
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         var programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), course);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));

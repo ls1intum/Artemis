@@ -88,7 +88,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_passIfNonExamSubmission() {
-        Course tmpCourse = courseUtilService.addEmptyCourse();
+        Course tmpCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exercise nonExamExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
         examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, student1);

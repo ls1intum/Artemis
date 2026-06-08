@@ -174,7 +174,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @BeforeEach
     void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
@@ -448,7 +448,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
         exam = examRepository.save(exam);

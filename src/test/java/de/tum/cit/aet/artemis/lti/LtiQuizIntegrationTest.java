@@ -125,7 +125,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private QuizExercise createSimpleQuizExercise(ZonedDateTime releaseDate, int duration) {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setOnlineCourse(true);
         courseRepository.save(course);
 

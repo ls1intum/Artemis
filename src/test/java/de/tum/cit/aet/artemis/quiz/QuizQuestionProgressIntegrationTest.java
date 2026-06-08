@@ -285,7 +285,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     void testSubmitForTraining() throws Exception {
         // Use a quiz exercise attached to the course so the training-submit endpoint can resolve the question
         // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdElseThrow).
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();
@@ -369,7 +369,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_typeMismatch_returns400() throws Exception {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
@@ -392,7 +392,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_dragAndDropQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).findFirst().orElseThrow();
 
@@ -420,7 +420,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_shortAnswerQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
 
@@ -445,7 +445,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizQuestionsForPractice() throws Exception {
 
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
         quizExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));

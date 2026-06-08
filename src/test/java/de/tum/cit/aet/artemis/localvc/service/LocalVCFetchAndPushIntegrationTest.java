@@ -111,7 +111,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         instructor1 = users.stream().filter(u -> u.getLogin().equals(TEST_PREFIX + "instructor1")).findFirst().orElseThrow();
 
         // Setup course without programming exercise (we'll create exercises via REST API)
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // Mock LDAP authentication
         mockLdapUserAuthentication();
@@ -1071,7 +1071,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void setupExam() throws Exception {
             // Enroll TEST_PREFIX users into the course via UCR (addEmptyCourse enrolls "" prefix users only)
-            courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
+            userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
             // Create exam with exercise group
             exam = examUtilService.addExamWithExerciseGroup(course, true);

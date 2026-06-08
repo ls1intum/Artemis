@@ -47,6 +47,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
         }
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
     @Override

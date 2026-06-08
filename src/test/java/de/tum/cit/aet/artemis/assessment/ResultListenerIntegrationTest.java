@@ -91,7 +91,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
         // creating course
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);

@@ -75,7 +75,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @BeforeEach
     void setUp() throws InvalidNameException {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();

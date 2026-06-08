@@ -62,7 +62,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
 
         // creating course
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         // creating text exercise
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         textExercise.setMaxPoints(10.0);

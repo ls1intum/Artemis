@@ -133,6 +133,18 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
+     * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithThreeFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithThreeFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise.
      *
      * @return The created Course
@@ -146,6 +158,18 @@ public class FileUploadExerciseUtilService {
         List<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId).stream().toList();
         assertThat(exercises).as("three exercises got stored").hasSize(3);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
+        return course;
+    }
+
+    /**
+     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFourFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFourFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
@@ -177,6 +201,18 @@ public class FileUploadExerciseUtilService {
         exerciseRepository.saveAll(fileUploadExercises);
 
         return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
+    }
+
+    /**
+     * Creates and saves a new Course with one assessed FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**

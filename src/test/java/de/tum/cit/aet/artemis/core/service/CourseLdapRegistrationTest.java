@@ -54,7 +54,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     @ValueSource(strings = { "student", "tutor", "editor", "instructor" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLDAPUsersInCourse(String user) throws Exception {
-        Course course1 = courseUtilService.createCourse();
+        Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String userName = TEST_PREFIX + user + "100";
 
         // setup mocks
@@ -85,7 +85,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterLdapEdgeCaseUserInCourse() throws Exception {
-        Course course1 = courseUtilService.createCourse();
+        Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Setup: the user already exists in the database, but does not have a registration number
         String userName = "go42tum";

@@ -67,6 +67,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
             users.add(student42);
         }
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
     @Override
@@ -170,10 +171,11 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
         conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
         // then
-        // TODO: Hibernate 7 increased query count from 10 to 11 — investigate remaining 1 extra query in a follow-up
+        // TODO: Hibernate 7 increased query count from 10 to 11; UCR migration adds 4 extra (course-role loading) — investigate in a follow-up
         // 4 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
         // + 1 additional query from Hibernate 7 entity loading changes
-        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
+        // + 4 additional queries from UserCourseRole loading (replaces group-based auth)
+        assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(15);
 
         // cleanup
         conversationMessageRepository.deleteById(post.id());
@@ -221,7 +223,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnChannelIfExerciseOrLectureOrExamHidden_asTutor() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "tutor1");
         createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "tutor1");
 
@@ -233,7 +235,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotReturnChannelIfExerciseOrExamHidden_asStudent() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         List<Long> futureVisibleDateIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
         List<Long> pastVisibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
         List<Long> visibleIds = List.of(futureVisibleDateIds.get(2), pastVisibleChannelIds.get(0), pastVisibleChannelIds.get(1), pastVisibleChannelIds.get(2));
@@ -567,7 +569,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void responsibleUsers_shouldReturnCorrectValue() throws Exception {
-        var instructors = users.stream().filter((u) -> u.getGroups().contains("instructor")).map((u) -> new ResponsibleUserDTO(u.getName(), u.getEmail())).toList();
+        var instructors = users.stream().filter((u) -> u.getLogin().startsWith(testPrefix + "instructor")).map((u) -> new ResponsibleUserDTO(u.getName(), u.getEmail())).toList();
 
         var responsibleUsers = request.getList("/api/communication/courses/" + exampleCourseId + "/code-of-conduct/responsible-users", HttpStatus.OK, ResponsibleUserDTO.class);
         assertThat(responsibleUsers).hasSameElementsAs(instructors).hasSameSizeAs(instructors);

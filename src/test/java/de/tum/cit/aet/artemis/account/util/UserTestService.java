@@ -718,7 +718,7 @@ public class UserTestService {
         // try to get token for non existent participation
         request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
 
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         courseRepository.save(course);
 
@@ -745,7 +745,7 @@ public class UserTestService {
     // Test
     public void getAndCreateParticipationVcsAccessTokenForTeamExercise() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         exercise.setMode(ExerciseMode.TEAM);
         exerciseTestRepository.save(exercise);
@@ -849,7 +849,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
@@ -915,7 +915,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -938,7 +938,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -962,7 +962,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -993,7 +993,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1020,7 +1020,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1047,7 +1047,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {

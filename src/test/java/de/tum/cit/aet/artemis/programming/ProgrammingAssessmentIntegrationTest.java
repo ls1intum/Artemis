@@ -69,7 +69,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));

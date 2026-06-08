@@ -870,8 +870,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // remove all UCR entries to simulate unenrollment (user loses course access)
-        courseUtilService.removeAllCourseEnrollments(course);
+        // Unenroll student1 to simulate losing course access
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(student1, course);
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());

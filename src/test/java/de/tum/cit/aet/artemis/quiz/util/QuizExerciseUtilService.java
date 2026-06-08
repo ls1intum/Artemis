@@ -112,6 +112,19 @@ public class QuizExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course with one quiz exercise with the given title and enrolls the users identified by the given prefix.
+     *
+     * @param title      The title of the quiz exercise.
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created course with the quiz, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneQuizExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneQuizExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a course with one quiz exercise with the given title.
      * The quiz is synchronized and has a duration of 120 seconds.
      *

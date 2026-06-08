@@ -99,7 +99,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -845,7 +845,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_badRequest() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExam().getId());
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1);
@@ -877,7 +877,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExerciseWithAuxRepo = programmingExerciseRepository
                     .findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
@@ -993,7 +993,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);

@@ -49,7 +49,7 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
         super.initTestCase();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 0);
 
-        var programmingCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var programmingCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(programmingCourse, ProgrammingExercise.class);
         // Allow manual results
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

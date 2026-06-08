@@ -83,7 +83,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void initTestCase() throws Exception {
         log.debug("Test setup start");
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = courseUtilService.addCourseWithModelingAndTextExercise();
+        course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         emptyModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");

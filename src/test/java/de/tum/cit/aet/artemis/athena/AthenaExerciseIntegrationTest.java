@@ -75,7 +75,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 1, 1);
 
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExercise);

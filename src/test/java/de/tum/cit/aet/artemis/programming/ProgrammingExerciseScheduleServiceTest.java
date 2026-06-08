@@ -84,7 +84,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void init() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 

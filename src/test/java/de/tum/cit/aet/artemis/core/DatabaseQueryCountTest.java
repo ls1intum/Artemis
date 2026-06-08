@@ -49,7 +49,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
         }).hasBeenCalledAtMostTimes(8);
-        // TODO: Hibernate 7 increased query count from 6 to 7-8 — investigate remaining extra queries in a follow-up
+        // TODO: Hibernate 7 increased query count from 6 to 7-8 â€” investigate remaining extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get all active courses
         // 1 DB call to load all exercises
@@ -66,7 +66,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
         }).hasBeenCalledAtMostTimes(19);
-        // TODO: Hibernate 7 increased query count from 15 to 18-19 — investigate remaining extra queries in a follow-up
+        // TODO: Hibernate 7 increased query count from 15 to 18-19 â€” investigate remaining extra queries in a follow-up
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories
@@ -85,7 +85,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamQueryCount() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         StudentExam studentExam = examUtilService.addStudentExamForActiveExamWithUser(course, TEST_PREFIX + "student1");
 
         assertThatDb(() -> startWorkingOnExam(studentExam)).hasBeenCalledAtMostTimes(7);

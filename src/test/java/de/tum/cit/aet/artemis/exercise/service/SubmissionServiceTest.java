@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -86,9 +85,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ComplaintUtilService complaintUtilService;
 
-    @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
-
     private User student1;
 
     private User tutor1;
@@ -135,7 +131,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
 
-        examCourse = courseUtilService.createCourse(TEST_PREFIX);
+        examCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(examCourse);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -170,7 +166,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowanceGroupCheck() {
         // Remove student1 from the course so they have no enrollment — access should be denied
-        userCourseRoleRepository.deleteByUser_IdAndCourse_Id(student1.getId(), examCourse.getId());
+        userUtilService.unenrollUserFromCourse(student1, examCourse);
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }
 

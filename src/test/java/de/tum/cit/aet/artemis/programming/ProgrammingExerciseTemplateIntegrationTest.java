@@ -225,7 +225,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests();
     }

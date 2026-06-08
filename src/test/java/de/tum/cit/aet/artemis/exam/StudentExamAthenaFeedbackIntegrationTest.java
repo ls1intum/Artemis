@@ -93,7 +93,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         otherStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
     }
 
     private static void detachExerciseParticipationsCollection(StudentExam studentExam) {
@@ -246,12 +246,12 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             studentExam.addExercise(textExercise);
             studentExam.addExercise(modelingExercise);
 
-            // text submission already has an Athena result — must not block the modeling peer
+            // text submission already has an Athena result â€” must not block the modeling peer
             StudentParticipation textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
             TextSubmission textSubmission = addTextSubmission(textParticipation, "Answer for which Athena feedback was already generated.");
             saveAthenaResult(textSubmission, textExercise.getId(), ZonedDateTime.now());
 
-            // modeling submission has no result yet — should still get dispatched
+            // modeling submission has no result yet â€” should still get dispatched
             StudentParticipation modelingParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, student.getLogin());
             addModelingSubmission(modelingParticipation);
 

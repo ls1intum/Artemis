@@ -38,7 +38,7 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);

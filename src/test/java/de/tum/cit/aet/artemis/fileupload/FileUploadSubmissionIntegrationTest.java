@@ -71,7 +71,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course = fileUploadExerciseUtilService.addCourseWithFourFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFourFileUploadExercise(TEST_PREFIX);
         releasedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         finishedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "finished");
         assessedFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "assessed");
@@ -200,7 +200,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamExerciseSubmission_withoutParticipation() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, user);
 
         var exam = examRepository.findByCourseId(course.getId()).getFirst();
@@ -415,7 +415,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         request.get("/api/fileupload/exercises/" + modelingExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.BAD_REQUEST, FileUploadSubmission.class);
     }
@@ -485,7 +485,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getDataForFileUpload_wrongExerciseType() throws Exception {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,

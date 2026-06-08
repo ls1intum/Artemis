@@ -60,7 +60,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 0);
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         idOfCourse = course.getId();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfIndividualTextExercise = textExercise.getId();

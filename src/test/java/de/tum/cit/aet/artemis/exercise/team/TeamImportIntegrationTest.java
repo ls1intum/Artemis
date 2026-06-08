@@ -90,7 +90,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
-        course = courseUtilService.addCourseWithModelingAndTextExercise();
+        course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
 
         // Make both source and destination exercise team exercises
         sourceExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Modeling");

@@ -106,6 +106,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
     @AfterEach
@@ -888,7 +889,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course);
         Lecture lecture = lectureUtilService.createLecture(course);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
@@ -902,7 +903,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getExerciseChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course);
         TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(1));
@@ -945,7 +946,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void createFeedbackChannel_asStudent_shouldReturnForbidden() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
         ChannelDTO channelDTO = new ChannelDTO();

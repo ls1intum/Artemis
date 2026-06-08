@@ -27,7 +27,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() {
         // Create course with the test prefix
-        course1 = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         // Create users for the course (1 student, 1 tutor, 1 editor, 1 instructor)
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }

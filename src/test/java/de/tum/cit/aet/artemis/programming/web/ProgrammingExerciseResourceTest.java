@@ -98,7 +98,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         userUtilService.enrollUserInCourse(student1, course, CourseRole.STUDENT);
 
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

@@ -141,7 +141,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
-        course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepository.save(textExercise);

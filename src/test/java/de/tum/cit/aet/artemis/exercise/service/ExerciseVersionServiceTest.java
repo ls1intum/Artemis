@@ -177,7 +177,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
 
         // save again to db without changing versionable data
-        Course newCourse = courseUtilService.addEmptyCourse();
+        Course newCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exercise.setCourse(newCourse);
         saveExerciseByType(exercise);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -239,13 +239,13 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private TextExercise createTextExercise() {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         return (TextExercise) course.getExercises().iterator().next();
     }
 
     private ProgrammingExercise createProgrammingExercise() {
 
-        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        ProgrammingExercise newProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX);
         newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(newProgrammingExercise);
 
@@ -284,20 +284,20 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private ModelingExercise createModelingExercise() {
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         // Create a modeling exercise
         Exercise exercise = course.getExercises().iterator().next();
         return modelingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
     }
 
     private QuizExercise createQuizExercise() {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         quizExerciseRepository.flush();
         return (QuizExercise) course.getExercises().iterator().next();
     }
 
     private FileUploadExercise createFileUploadExercise() {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         fileUploadExerciseRepository.flush();
         return (FileUploadExercise) course.getExercises().iterator().next();
     }

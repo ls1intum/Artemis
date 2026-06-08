@@ -135,7 +135,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create course with a released programming exercise
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         releasedExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         releasedExercise.setTitle(SEARCH_PREFIX + " Released Exercise");
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));

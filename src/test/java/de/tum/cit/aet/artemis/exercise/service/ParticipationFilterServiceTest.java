@@ -41,7 +41,7 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var textExercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         var modelingExercise = ModelingExerciseFactory.generateModelingExercise(null, null, null, null, course);
         var quizExercise = QuizExerciseFactory.generateQuizExercise(null, null, null, course);

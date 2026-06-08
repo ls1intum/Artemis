@@ -108,7 +108,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
 
         // Initialize with 3 max complaints and 7-day max complaint due date
-        course = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
+        course = courseUtilService.addEnrolledCourseWithModelingAndTextAndFileUploadExercise(TEST_PREFIX);
         modelingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
@@ -332,7 +332,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponse_examExercise() throws Exception {
-        TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
 
         Exam exam = examExercise.getExam();
@@ -771,7 +771,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseUsingTheCourseExerciseCall_badRequest() throws Exception {
         // Set up Exam, Exercise, Participation and Complaint
-        final TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examExerciseComplaint = new ComplaintRequestDTO(Objects.requireNonNull(textSubmission.getLatestResult()).getId(), "This is not fair", ComplaintType.COMPLAINT,
@@ -783,7 +783,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseOutsideOfStudentReviewTime_badRequest() throws Exception {
-        final TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         final TextSubmission savedSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1",
@@ -861,7 +861,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExam_courseComplaintsEnabled_exceededCourseLimit_success() throws Exception {
-        TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         examCourse = courseUtilService.updateCourseComplaintTextLimit(examCourse, 25);
         // enable course complaints
@@ -878,7 +878,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExam_courseComplaintsDisabled_notExceededTextLimit() throws Exception {
-        TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         // disable course complaints
         examCourse.setMaxComplaintTimeDays(0);
@@ -892,7 +892,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExam_courseComplaintsDisabled_exceededTextLimit() throws Exception {
-        TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Course examCourse = examExercise.getCourseViaExerciseGroupOrCourseMember();
         // disable course complaints
         examCourse.setMaxComplaintTimeDays(0);

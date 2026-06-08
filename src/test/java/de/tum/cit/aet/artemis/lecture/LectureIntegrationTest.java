@@ -280,7 +280,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
-        Course otherAuthorizedCourse = courseUtilService.addEmptyCourse();
+        Course otherAuthorizedCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
 
         LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Mismatched Update", "Updated with mismatched course",
@@ -563,7 +563,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport() throws Exception {
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
 
         var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,

@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -57,10 +56,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
         var tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         var instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        userUtilService.enrollUserInCourse(tutor1, course, CourseRole.TEACHING_ASSISTANT);
-        userUtilService.enrollUserInCourse(instructor1, course, CourseRole.INSTRUCTOR);
-        userUtilService.enrollUserInCourse(student1, course, CourseRole.STUDENT);
+        course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
 
         exercise = course.getExercises().iterator().next();
 

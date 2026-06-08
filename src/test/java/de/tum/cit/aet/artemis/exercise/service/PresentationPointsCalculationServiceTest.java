@@ -50,7 +50,7 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
 
     @BeforeEach
     void init() {
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 

@@ -114,8 +114,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User editor1 = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        course1 = courseUtilService.addEmptyCourse();
-        course2 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         userUtilService.enrollUserInCourse(instructor1, course1, CourseRole.INSTRUCTOR);
         userUtilService.enrollUserInCourse(instructor2, course2, CourseRole.INSTRUCTOR);
         userUtilService.enrollUserInCourse(tutor1, course1, CourseRole.TEACHING_ASSISTANT);

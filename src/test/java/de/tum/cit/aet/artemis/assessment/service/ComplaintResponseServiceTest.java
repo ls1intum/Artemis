@@ -82,7 +82,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentT
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        Course course = courseUtilService.createCourse(TEST_PREFIX);
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         this.student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         this.student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");

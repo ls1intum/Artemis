@@ -36,10 +36,8 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     void setup() {
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         // Only TEST_PREFIX instructor is enrolled; OTHER_PREFIX instructor has no UCR entry and will be denied.
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         featureToggleService.enableFeature(Feature.AtlasAgent);
     }

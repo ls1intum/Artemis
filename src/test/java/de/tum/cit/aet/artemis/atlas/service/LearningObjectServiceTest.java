@@ -58,7 +58,7 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {arguments}")

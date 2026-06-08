@@ -72,7 +72,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
             userTestRepository.save(user);
         }
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
 
         activateIrisGlobally();
         activateIrisFor(course);

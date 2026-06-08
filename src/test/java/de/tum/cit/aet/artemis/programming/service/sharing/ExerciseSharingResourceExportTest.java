@@ -72,7 +72,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void setupExercise() throws Exception {
 
-        programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases(),
+        programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX),
                 ProgrammingExercise.class);
         // Wire LocalVC URIs for base repos and persist so export service can locate them
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise1);

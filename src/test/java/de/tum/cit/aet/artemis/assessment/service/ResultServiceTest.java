@@ -98,7 +98,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void reset() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         this.programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");

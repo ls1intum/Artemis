@@ -39,8 +39,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         userUtilService.addInstructor(TEST_PREFIX + "instructorother1");
-        additionalEmptyCourse = courseUtilService.addEmptyCourse();
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        additionalEmptyCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
@@ -139,7 +139,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     private void testSearchTermMatchesId() throws Exception {
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");

@@ -36,11 +36,11 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create source course with some content
-        sourceCourse = courseUtilService.createCourse();
+        sourceCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         sourceCourse = courseRepository.save(sourceCourse);
 
         // Create target course
-        targetCourse = courseUtilService.createCourse();
+        targetCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         targetCourse = courseRepository.save(targetCourse);
 
         // Add FAQs to source course
@@ -197,7 +197,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getImportSummary_emptySourceCourse_shouldReturnZeroCounts() throws Exception {
         // Create an empty source course
-        Course emptyCourse = courseUtilService.createCourse();
+        Course emptyCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         emptyCourse = courseRepository.save(emptyCourse);
 
         CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + emptyCourse.getId(), HttpStatus.OK,
@@ -216,7 +216,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importMaterial_fromEmptyCourse_shouldReturnZeroImported() throws Exception {
         // Create an empty source course
-        Course emptyCourse = courseUtilService.createCourse();
+        Course emptyCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         emptyCourse = courseRepository.save(emptyCourse);
 
         CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(emptyCourse.getId(), true, true, true, true, true, true);

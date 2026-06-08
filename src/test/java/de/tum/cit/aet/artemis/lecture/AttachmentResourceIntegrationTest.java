@@ -50,7 +50,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
         attachment = LectureFactory.generateAttachment(null);
         attachment = attachmentRepository.save(attachment);
-        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");

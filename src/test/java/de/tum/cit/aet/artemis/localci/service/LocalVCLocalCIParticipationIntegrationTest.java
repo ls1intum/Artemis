@@ -33,7 +33,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
@@ -42,7 +42,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));

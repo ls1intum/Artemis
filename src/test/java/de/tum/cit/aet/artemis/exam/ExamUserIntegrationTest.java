@@ -67,7 +67,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
         var student4 = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // same registration number as in test pdf file
         student1.setRegistrationNumber("03756882");

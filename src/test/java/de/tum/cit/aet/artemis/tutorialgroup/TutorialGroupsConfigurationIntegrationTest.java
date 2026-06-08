@@ -84,7 +84,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();

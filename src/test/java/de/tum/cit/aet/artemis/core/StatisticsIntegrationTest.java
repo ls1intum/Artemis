@@ -100,9 +100,9 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void testStatisticsEndpointResponseSizes() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         // addCourseWithOneModelingExercise does a bare save; enroll TEST_PREFIX users so numberOfStudentsOrTeamsInCourse is non-zero
-        courseUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
+        // userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         var now = ZonedDateTime.now();
         TextExercise exercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(1), course);
         course.addExercises(exercise);
@@ -166,7 +166,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCourseAndExerciseStatistics() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
 
         // --- Course statistics ---
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);

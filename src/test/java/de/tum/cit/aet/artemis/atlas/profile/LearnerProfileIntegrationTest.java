@@ -29,12 +29,14 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     void setupTestScenario() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
-        // Add users that are not in the course
+        // Course must be created BEFORE outsider users are saved so that enrollPrefixedUsersInCourse
+        // (called inside createEnrolledCourse) does not pick them up.
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        learnerProfileUtilService.createCourseLearnerProfileForUsers(TEST_PREFIX, Set.of(course));
+
+        // Add users that are not in the course (created AFTER enrollment so they stay unenrolled)
         userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
-
-        Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
-        learnerProfileUtilService.createCourseLearnerProfileForUsers(TEST_PREFIX, Set.of(course));
     }
 
     @Test

@@ -94,7 +94,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         student2.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);

@@ -146,7 +146,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @BeforeEach
     void setupTest() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 2);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
@@ -157,7 +157,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 TEST_PREFIX + "student1");
         Submission programmingSubmission = participationUtilService.addSubmission(programmingExerciseParticipation, new ProgrammingSubmission());
         participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
-        Course secondCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course secondCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         modelingExercise = ExerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
@@ -644,7 +644,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

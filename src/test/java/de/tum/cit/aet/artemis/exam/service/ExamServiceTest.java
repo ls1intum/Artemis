@@ -68,7 +68,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void init() {
         countExamsBeforeTests = examRepository.findAllCurrentAndUpcomingExams().size();
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         examInThePast = examUtilService.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
         examInTheFuture = examUtilService.addExam(course1, ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(1));

@@ -55,7 +55,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
     }
 
@@ -156,7 +156,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
@@ -181,7 +181,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_notInstructorInCourse_forbidden() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
@@ -192,7 +192,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionId_notInstructorInCourse_forbidden() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
@@ -203,7 +203,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionVersionsBySubmissionIdForTextExercise_returnsCorrectContent() throws Exception {
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);

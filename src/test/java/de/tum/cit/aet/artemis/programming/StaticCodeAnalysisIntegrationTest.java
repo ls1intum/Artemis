@@ -46,7 +46,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        programmingExerciseSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        programmingExerciseSCAEnabled = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled = programmingExerciseRepository.save(programmingExerciseSCAEnabled);
         course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());

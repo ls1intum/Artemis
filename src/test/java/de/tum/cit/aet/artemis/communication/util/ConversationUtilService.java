@@ -40,8 +40,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
@@ -136,28 +134,8 @@ public class ConversationUtilService {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         course = courseRepo.save(course);
-        enrollPrefixedUsersInCourse(course, userPrefix);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
-    }
-
-    /**
-     * Enrolls users into {@code user_course_role} by login prefix.
-     * Finds users whose logins start with {@code userPrefix + "student"}, {@code userPrefix + "tutor"},
-     * {@code userPrefix + "editor"}, and {@code userPrefix + "instructor"} and creates the corresponding
-     * {@code UserCourseRole} rows. Pass {@code ""} for the default (no-prefix) test users.
-     *
-     * @param course     the course to enroll users into
-     * @param userPrefix the test user prefix (e.g. {@code "examint"}), or {@code ""} for the default users
-     */
-    public void enrollPrefixedUsersInCourse(Course course, String userPrefix) {
-        enrollByLoginPrefix(course, userPrefix + "student", CourseRole.STUDENT);
-        enrollByLoginPrefix(course, userPrefix + "tutor", CourseRole.TEACHING_ASSISTANT);
-        enrollByLoginPrefix(course, userPrefix + "editor", CourseRole.EDITOR);
-        enrollByLoginPrefix(course, userPrefix + "instructor", CourseRole.INSTRUCTOR);
-    }
-
-    private void enrollByLoginPrefix(Course course, String loginPrefix, CourseRole role) {
-        userRepo.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
     }
 
     /**

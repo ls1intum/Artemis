@@ -370,7 +370,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_DnD_MissingTempID_badRequest() throws Exception {
-        // Creating a quiz with a new drag item (id=null) is now valid — the DTO layer
+        // Creating a quiz with a new drag item (id=null) is now valid â€” the DTO layer
         // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
@@ -449,7 +449,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_SA_MissingTempID_badRequest() throws Exception {
-        // Creating a quiz with a new spot (id=null) is now valid — the DTO layer
+        // Creating a quiz with a new spot (id=null) is now valid â€” the DTO layer
         // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
@@ -605,7 +605,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteQuizExerciseWithChannel() throws Exception {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(quizExercise);
 
@@ -1324,9 +1324,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     /**
      * Regression tests for the production incident on 2026-04-23 where clicking "Start Quiz Now" on a quiz with open
      * student tabs produced {@code ObjectNotFoundException: AnswerOption with id 'N'} on every subsequent submit. The
-     * root cause was the handler re-persisting the full quiz graph via {@code saveAndFlush}, which — combined with
+     * root cause was the handler re-persisting the full quiz graph via {@code saveAndFlush}, which â€” combined with
      * {@code @OneToMany + @OrderColumn + orphanRemoval=true} on {@code MultipleChoiceQuestion.answerOptions} and its
-     * DnD/SA siblings — DELETE+INSERTed every option / drag item / drop location / short-answer spot row with fresh
+     * DnD/SA siblings â€” DELETE+INSERTed every option / drag item / drop location / short-answer spot row with fresh
      * primary keys. These tests pin the fix: lifecycle actions must now go through targeted UPDATE queries that leave
      * the child PKs untouched.
      */
@@ -1344,7 +1344,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
         assertChildIdsUnchanged(before, after, "START_NOW");
-        // START_NOW must actually start the quiz — the synchronized batch's startTime must be persisted. Without this
+        // START_NOW must actually start the quiz â€” the synchronized batch's startTime must be persisted. Without this
         // assertion, a regression that skipped the batch INSERT (e.g. invoking an UPDATE query on a transient batch
         // whose id is null) would slip through the child-id-preservation check.
         assertThat(startNowResponse.startDate()).as("START_NOW must persist a batch startTime").isNotNull();
@@ -1967,7 +1967,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                         new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         quizExercise.setCourse(course);
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
@@ -2016,7 +2016,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     void importQuizExerciseFromExamToCourse() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1));
         quizExercise.setExerciseGroup(null);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
@@ -2037,7 +2037,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
 
         quizExercise.setExerciseGroup(null);
-        Course course1 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         quizExercise.setCourse(course1);
 
         importQuizExerciseWithFiles(quizExercise, List.of(), FORBIDDEN);
@@ -2087,7 +2087,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(changedQuiz).isNotNull();
 
         changedQuiz.setMode(ExerciseMode.INDIVIDUAL);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         changedQuiz.setCourse(course);
 
         changedQuiz = importQuizExerciseWithFiles(changedQuiz, List.of(), HttpStatus.CREATED);
@@ -2279,7 +2279,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterForCourseDashboard_QuizSubmissionButNoParticipation() {
-        Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());

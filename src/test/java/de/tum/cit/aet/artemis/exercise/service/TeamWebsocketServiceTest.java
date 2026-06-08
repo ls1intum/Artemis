@@ -72,7 +72,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 exercise.setMode(ExerciseMode.TEAM);

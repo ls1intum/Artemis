@@ -224,7 +224,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getFileUploadExercise() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
@@ -265,14 +265,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getFileUploadExerciseFails_wrongId() throws Exception {
-        fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         request.get("/api/fileupload/file-upload-exercises/" + 555555, HttpStatus.NOT_FOUND, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         for (var exercise : course.getExercises()) {
             request.get("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, FileUploadExercise.class);
         }
@@ -281,7 +281,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
@@ -299,7 +299,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExercise_asInstructor() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         var exerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
@@ -313,7 +313,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFileUploadExerciseWithChannel() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(fileUploadExercise);
 
@@ -336,7 +336,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteFileUploadExercise_asStudent() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
@@ -347,14 +347,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExerciseFails_WithWrongId() throws Exception {
-        fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         request.delete("/api/fileupload/file-upload-exercises/" + 5555555, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
@@ -372,7 +372,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_asInstructor() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         Competency newCompetency = competencyUtilService.createCompetency(course);
         assertThat(newCompetency.getCourse().getId()).as("courseId was not updated").isEqualTo(course.getId());
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
@@ -397,7 +397,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
@@ -443,7 +443,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         // Test case 2: Course exercise - send DTO with both courseId and exerciseGroupId set
-        Course testCourse = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course testCourse = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise courseExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(testCourse.getExercises(), "released");
         UpdateFileUploadExerciseDTO courseDtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(courseExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
@@ -536,7 +536,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
-        var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
                 FileUploadExercise.class);
 
@@ -548,21 +548,21 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
-        var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
-        var course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
@@ -591,7 +591,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_shouldDeleteFeedbacks() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
@@ -615,7 +615,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", UpdateFileUploadExerciseDTO.of(fileUploadExercise),
@@ -625,7 +625,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
         fileUploadExerciseToBeConflicted.setId(123456789L);
@@ -636,7 +636,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         // Create a DTO with matching non-existent ID (to pass ID match validation, then fail with NOT_FOUND)
@@ -664,7 +664,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        final Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         fileUploadExercise.setId(null);
         fileUploadExercise.setAssessmentDueDate(null);
@@ -687,7 +687,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        final Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         fileUploadExercise.setId(null);
         fileUploadExercise.setAssessmentDueDate(null);
@@ -784,7 +784,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
         var config = new PlagiarismDetectionConfig();
@@ -805,9 +805,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         expectedFileUploadExercise.setCourse(course2);
         expectedFileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
 
@@ -832,9 +832,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
         String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
@@ -858,9 +858,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseFromCourseToCourseNegativeCourseIdBadRequest() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         expectedFileUploadExercise.setCourse(course2);
         request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + -1, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -868,7 +868,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportFileUploadExerciseCourseNotSetBadRequest() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         expectedFileUploadExercise.setCourse(null);
         request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + expectedFileUploadExercise.getId(), expectedFileUploadExercise,
@@ -879,7 +879,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAllExercisesOnPageAsEditorSuccess() throws Exception {
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         final var now = ZonedDateTime.now();
         FileUploadExercise exercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
         String title = TEST_PREFIX + "testGetAllExercisesOnPageAsEditorSuccess";
@@ -896,7 +896,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "ta1", roles = "TA")
     void testImportFileUploadExerciseAsTeachingAssistantFails() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         var sourceExerciseId = expectedFileUploadExercise.getId();
         request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
@@ -921,7 +921,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     }
 
     private void testGetFileUploadExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         final FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
         // Utility function to avoid duplication

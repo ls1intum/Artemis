@@ -83,7 +83,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course1 = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
+        Course course1 = courseUtilService.addEnrolledCourseWithModelingAndTextAndFileUploadExercise(TEST_PREFIX);
         course1.getExercises().forEach(exercise -> {
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");

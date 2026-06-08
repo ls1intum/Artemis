@@ -56,7 +56,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
             userTestRepository.save(user);
         }
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 

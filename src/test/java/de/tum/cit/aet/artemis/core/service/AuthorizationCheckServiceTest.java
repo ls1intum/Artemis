@@ -66,7 +66,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         @BeforeEach
         void initTestCase() {
-            Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+            Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
             modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
             participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
@@ -358,7 +358,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         @BeforeEach
         void setUp() {
-            course = courseUtilService.addEmptyCourse(TEST_PREFIX);
+            course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
             userUtilService.addSuperAdmin(TEST_PREFIX);
             superAdmin = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 

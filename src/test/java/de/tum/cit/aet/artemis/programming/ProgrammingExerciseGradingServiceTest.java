@@ -82,7 +82,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 5, 1, 0, 1);
-        programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
 
         programmingExercise = generateDefaultProgrammingExercise();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -122,14 +122,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {
-            Course course = super.courseUtilService.addEmptyCourse();
+            Course course = super.courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
             Long programmingExerciseId = super.programmingExerciseUtilService.addProgrammingExerciseToCourse(course).getId();
             return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
         }
 
         @Override
         ProgrammingExercise generateScaProgrammingExercise() {
-            Long programmingExerciseId = super.programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories().getId();
+            Long programmingExerciseId = super.programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX).getId();
             return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
         }
 

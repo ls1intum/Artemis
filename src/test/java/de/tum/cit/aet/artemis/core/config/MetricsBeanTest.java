@@ -121,7 +121,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var users = userUtilService.addUsers(TEST_PREFIX + "active", 3, 0, 0, 0);
 
-        var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        var course1 = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
 
         var textExercise = ExerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
@@ -439,7 +439,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testEnsureCourseInformationIsSet() {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setTitle(null);
         course.setShortName("metricCourseShort");
         course.setSemester(null);

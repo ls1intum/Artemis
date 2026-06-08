@@ -41,7 +41,7 @@ class ExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndependen
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = (TextExercise) course.getExercises().iterator().next();
         exerciseVersionService.createExerciseVersion(textExercise);
     }

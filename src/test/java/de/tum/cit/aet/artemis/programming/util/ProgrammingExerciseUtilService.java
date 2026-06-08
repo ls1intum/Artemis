@@ -197,6 +197,18 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a programming exercise. Test cases are added.
+     *
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The newly created programming exercise with test cases.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(String userPrefix) {
+        ProgrammingExercise programmingExercise = addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(userPrefix);
+        addTestCasesToProgrammingExercise(programmingExercise);
+        return programmingExercise;
+    }
+
+    /**
      * Creates and saves a course with an exam and an exercise group with a programming exercise. The provided title and short name are used for the exercise and test cases are
      * added.
      *
@@ -234,6 +246,28 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
         return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", false);
+    }
+
+    /**
+     * Creates and saves a course (with enrolled prefix users) with an exam and an exercise group with a programming exercise.
+     * Uses {@code "Testtitle"} as title and {@code "TESTEXFOREXAM"} as short name.
+     *
+     * @param userPrefix The prefix used to look up test users for enrollment
+     * @return The newly created exam programming exercise.
+     */
+    public ProgrammingExercise addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(String userPrefix) {
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exerciseGroup);
+        ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+
+        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExercise.setBuildConfig(savedBuildConfig);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        return programmingExercise;
     }
 
     /**
@@ -321,6 +355,31 @@ public class ProgrammingExerciseUtilService {
      */
     public Course addCourseWithOneProgrammingExercise() {
         return addCourseWithOneProgrammingExercise(false);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(false);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and enrolls the users identified by the given prefix.
+     *
+     * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
+     * @param userPrefix               the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, String userPrefix) {
+        var course = addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -492,6 +551,18 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course with a java programming exercise with static code analysis enabled and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The newly created programming exercise, with prefix users enrolled in the course.
+     */
+    public ProgrammingExercise addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(String userPrefix) {
+        ProgrammingExercise exercise = addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+        userUtilService.enrollPrefixedUsersInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return exercise;
+    }
+
+    /**
      * Creates and saves a course with a java programming exercise with static code analysis enabled.
      *
      * @return The newly created programming exercise.
@@ -533,6 +604,18 @@ public class ProgrammingExerciseUtilService {
         var category4 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Potential Bugs", CategoryState.FEEDBACK, 5D, 20D);
         var categories = staticCodeAnalysisCategoryRepository.saveAll(List.of(category1, category2, category3, category4));
         programmingExercise.setStaticCodeAnalysisCategories(new HashSet<>(categories));
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise and test cases and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     * @return The newly created course with a programming exercise, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneProgrammingExerciseAndTestCases(String userPrefix) {
+        Course course = addCourseWithOneProgrammingExerciseAndTestCases();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**

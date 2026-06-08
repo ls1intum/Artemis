@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -393,7 +394,7 @@ public class UserUtilService {
             // the detached user's plain HashSet. At flush, PersistentSet.hasDeletes() → NPE (sn is null).
             // saveOrUpdate loads the user WITH groups eagerly (initialising sn) and updates fields in-place,
             // avoiding the NPE. This workaround is removed in Phase 9 when the groups field is dropped.
-            usersToAdd = usersToAdd.stream().map(userTestRepository::saveOrUpdate).toList();
+            usersToAdd = usersToAdd.stream().map(userTestRepository::saveOrUpdate).collect(Collectors.toCollection(ArrayList::new));
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -499,6 +500,28 @@ public class UserUtilService {
      */
     public void enrollUserInCourse(final User user, final Course course, final CourseRole role) {
         userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+    }
+
+    /**
+     * Enrolls all test users matching the given login prefix in the given course. Looks up users whose login starts with
+     * {@code userPrefix + "student"}, {@code userPrefix + "tutor"}, {@code userPrefix + "editor"}, and
+     * {@code userPrefix + "instructor"} and creates the corresponding {@link UserCourseRole} entries.
+     * <p>
+     * This is the equivalent of {@code CourseUtilService.enrollPrefixedUsersInCourse} for use inside exercise util services
+     * that do not have a direct reference to {@code CourseUtilService}.
+     *
+     * @param course     the course to enroll the users in
+     * @param userPrefix the login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}
+     */
+    public void enrollPrefixedUsersInCourse(final Course course, final String userPrefix) {
+        enrollByLoginPrefix(course, userPrefix + "student", CourseRole.STUDENT);
+        enrollByLoginPrefix(course, userPrefix + "tutor", CourseRole.TEACHING_ASSISTANT);
+        enrollByLoginPrefix(course, userPrefix + "editor", CourseRole.EDITOR);
+        enrollByLoginPrefix(course, userPrefix + "instructor", CourseRole.INSTRUCTOR);
+    }
+
+    private void enrollByLoginPrefix(final Course course, final String loginPrefix, final CourseRole role) {
+        userTestRepository.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
     }
 
     /**
@@ -626,6 +649,38 @@ public class UserUtilService {
     public void removeUserFromAllCourses(String login) {
         User user = getUserByLogin(login);
         userCourseRoleRepository.deleteByUser_Id(user.getId());
+    }
+
+    /**
+     * Removes the {@code user_course_role} entry for a specific user and course,
+     * effectively unenrolling the user from it.
+     *
+     * @param user   the user to unenroll
+     * @param course the course from which the user should be unenrolled
+     */
+    public void unenrollUserFromCourse(User user, Course course) {
+        userCourseRoleRepository.deleteByUser_IdAndCourse_Id(user.getId(), course.getId());
+    }
+
+    /**
+     * Removes the {@code user_course_role} entry for a specific user, course, and role.
+     *
+     * @param user   the user to unenroll
+     * @param course the course from which the user should be unenrolled
+     * @param role   the specific role to remove
+     */
+    public void unenrollUserFromCourseByRole(User user, Course course, CourseRole role) {
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+    }
+
+    /**
+     * Removes all {@code user_course_role} entries for the given course,
+     * effectively unenrolling all users from it.
+     *
+     * @param course the course whose enrollments should be cleared
+     */
+    public void removeAllCourseEnrollments(Course course) {
+        userCourseRoleRepository.deleteByCourse_Id(course.getId());
     }
 
     /**

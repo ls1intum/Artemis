@@ -58,7 +58,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
      */
     @BeforeEach
     void initTestCase() {
-        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1", TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1", TEST_PREFIX);
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
         textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();

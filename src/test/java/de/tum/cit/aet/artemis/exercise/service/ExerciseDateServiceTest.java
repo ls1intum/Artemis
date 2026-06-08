@@ -72,7 +72,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
         SecurityUtils.setAuthorizationObject();
 
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {

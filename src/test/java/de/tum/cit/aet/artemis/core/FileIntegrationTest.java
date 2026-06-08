@@ -114,7 +114,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUploadExamUserSignature() throws Exception {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
         var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
@@ -419,7 +419,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
 
-        String unsanitizedName = "test–file"; // contains en-dash
+        String unsanitizedName = "testâ€“file"; // contains en-dash
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
@@ -440,7 +440,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
-            assertThat(contentDisposition).doesNotContain("–");
+            assertThat(contentDisposition).doesNotContain("â€“");
             assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
         }
     }
@@ -449,7 +449,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUploadAndRetrieveFileForConversation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
-        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX);
         var conversation = posts.getFirst().getConversation();
         var course = conversation.getCourse();
 
@@ -467,7 +467,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUploadFileForConversationTooLarge() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
-        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        var posts = conversationUtilService.createPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX);
         var conversation = posts.getFirst().getConversation();
         var course = conversation.getCourse();
 
@@ -600,7 +600,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExamUserSignatureCacheHeaders() throws Exception {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
         var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
         var file = new MockMultipartFile("file", "signature.png", "image/png", "signature data".getBytes());

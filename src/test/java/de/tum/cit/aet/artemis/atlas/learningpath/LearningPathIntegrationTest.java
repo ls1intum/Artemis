@@ -79,13 +79,15 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     void setupTestScenario() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
-        // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
-
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
+        // Course must be created BEFORE outsider users are saved so that enrollPrefixedUsersInCourse
+        // (called inside createCoursesWithExercisesAndLectures) does not pick them up.
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
+
+        // Add users that are not in the course (created AFTER enrollment so they stay unenrolled)
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
         competencies = competencyUtilService.createCompetencies(course, 5);
 
         // set threshold to 60, 70, 80, 90 and 100 respectively
@@ -157,7 +159,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     private Competency importCompetencyRESTCall() throws Exception {
-        final var course2 = courseUtilService.createCourse();
+        final var course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         final var competencyToImport = competencyUtilService.createCompetency(course2);
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competencyToImport.getId()), Optional.empty(), false, false, false, Optional.empty(),
                 false);
@@ -350,7 +352,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetAverageProgressForCourse_emptyCalculation() throws Exception {
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         assertAverageProgress(course.getId(), HttpStatus.OK, 0.0);
         assertAverageProgress(99999L, HttpStatus.FORBIDDEN, null);
     }

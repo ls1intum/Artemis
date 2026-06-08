@@ -78,7 +78,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateQuizLeaderboardEntry() {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
         QuizQuestionProgressData data = new QuizQuestionProgressData();
@@ -100,7 +100,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
         User user3 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student3");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         userTestRepository.save(user);
         userTestRepository.save(user2);
         userTestRepository.save(user3);
@@ -131,7 +131,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeLeaderboardEntry() throws Exception {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         userTestRepository.save(user);
         courseTestRepository.save(course);
         request.get("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardWithCurrentUserEntryDTO.class);
@@ -151,7 +151,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateLeaderboardSettings() throws Exception {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         userTestRepository.save(user);
         courseTestRepository.save(course);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
@@ -166,7 +166,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateQuizLeaderboardEntryWithFailedAttemptOnSameDay() {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
 
@@ -202,7 +202,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateLeaderboardScoreWithNewQuestions() {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboard.setDueDate(ZonedDateTime.now(ZoneOffset.UTC).plusDays(1));
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);

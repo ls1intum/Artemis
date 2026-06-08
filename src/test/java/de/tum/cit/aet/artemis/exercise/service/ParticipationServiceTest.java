@@ -94,7 +94,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         this.programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
@@ -204,11 +204,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     void testStartExercise_newParticipation(ExerciseType exerciseType) {
         Course course;
         if (exerciseType == ExerciseType.PROGRAMMING) {
-            course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             setUpProgrammingExerciseMocks();
         }
         else {
-            course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+            course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         }
         Exercise exercise = course.getExercises().iterator().next();
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

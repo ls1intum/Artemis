@@ -35,7 +35,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
     }
 
     @Test

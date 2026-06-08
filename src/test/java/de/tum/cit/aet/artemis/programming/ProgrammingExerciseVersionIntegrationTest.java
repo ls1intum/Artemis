@@ -82,7 +82,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Arrange: Create a new programming exercise
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -176,7 +176,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     void testImportExercise_createsExerciseVersion() throws Exception {
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
         // Create request parameters
         var params = new LinkedMultiValueMap<String, String>();

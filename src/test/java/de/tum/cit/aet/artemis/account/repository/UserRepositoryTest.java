@@ -214,7 +214,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course and exercise without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
 
         // Create a regular user who is not enrolled
@@ -251,7 +251,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin = userRepository.save(admin);
 
         // Create a course, exercise, and participation without the super admin or admin being enrolled
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "student");
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, student.getLogin());

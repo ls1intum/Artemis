@@ -77,7 +77,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         courseUtilService.addOnlineCourseConfigurationToCourse(course);
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
