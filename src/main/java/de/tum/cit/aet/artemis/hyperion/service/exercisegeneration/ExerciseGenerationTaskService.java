@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
@@ -46,13 +47,17 @@ public class ExerciseGenerationTaskService {
 
     private final ExerciseGenerationJobService jobService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ExerciseGenerationTaskService(ExerciseGenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService,
-            GenerationRecoveryService recoveryService, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService) {
+            GenerationRecoveryService recoveryService, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.recoveryService = recoveryService;
         this.websocket = websocket;
         this.jobService = jobService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -66,9 +71,12 @@ public class ExerciseGenerationTaskService {
     public void runAsync(ExerciseGenerationStartedEvent event) {
         String jobId = event.jobId();
         User user = event.user();
-        ProgrammingExercise exercise = event.exercise();
         String userPrompt = event.userPrompt();
-        long exerciseId = exercise.getId();
+        long exerciseId = event.exercise().getId();
+        // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
+        // detached from the persistence context, so touching them (e.g. buildConfig.getBranch() during seeding) throws LazyInitializationException. Re-load it here with those
+        // associations eagerly initialized so the whole generation flow runs against a self-contained entity.
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(exerciseId).orElseGet(event::exercise);
         String login = user.getLogin();
         String topic = TOPIC_PREFIX + jobId;
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),

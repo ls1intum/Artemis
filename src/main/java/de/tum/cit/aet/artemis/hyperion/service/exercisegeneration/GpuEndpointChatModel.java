@@ -28,9 +28,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * A real {@link ChatModel} that delegates to the GPU OpenWebUI endpoint (OpenAI-compatible tool-calling), used by the end-to-end Hyperion generation test so the production
- * {@code AgentLoopRunner} + {@code ToolCallingManager} drive a real LLM. It maps a Spring AI {@link Prompt} (system/user/assistant/tool messages + tool definitions) into an
- * OpenAI chat-completions request and maps the response (assistant text + tool calls) back into a Spring AI {@link ChatResponse}.
+ * A {@link ChatModel} that delegates to an OpenAI-compatible OpenWebUI endpoint (tool-calling) such as the TUM gpt-oss-120b GPU deployment. It maps a Spring AI {@link Prompt}
+ * (system/user/assistant/tool messages + tool definitions) into an OpenAI chat-completions request and maps the response (assistant text + tool calls) back into a Spring AI
+ * {@link ChatResponse}.
+ * <p>
+ * Registered as the Hyperion {@code ChatModel} bean by {@link de.tum.cit.aet.artemis.hyperion.config.HyperionGpuChatModelConfiguration} when an
+ * {@code artemis.hyperion.gpu.api-key}
+ * is configured (so the production {@code AgentLoopRunner} + {@code ToolCallingManager} drive the real LLM), and also constructed directly by the end-to-end Hyperion generation
+ * tests against the same endpoint.
  */
 public class GpuEndpointChatModel implements ChatModel {
 
@@ -39,6 +44,14 @@ public class GpuEndpointChatModel implements ChatModel {
     private final String apiKey;
 
     private final String model;
+
+    /**
+     * Per-request timeout. A loaded or cold gpt-oss-120b deployment regularly takes well over a minute for a single tool-calling turn (especially the first few, and large-context
+     * turns); a tighter bound makes the agent loop waste its model-call retries on calls that would otherwise have completed. Generous so a slow-but-healthy endpoint is not
+     * treated
+     * as a failure.
+     */
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(300);
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -54,7 +67,7 @@ public class GpuEndpointChatModel implements ChatModel {
     public ChatResponse call(Prompt prompt) {
         try {
             ObjectNode body = buildRequest(prompt);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/api/chat/completions")).timeout(Duration.ofSeconds(120)).header("Authorization", "Bearer " + apiKey)
+            HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + "/api/chat/completions")).timeout(REQUEST_TIMEOUT).header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body))).build();
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {

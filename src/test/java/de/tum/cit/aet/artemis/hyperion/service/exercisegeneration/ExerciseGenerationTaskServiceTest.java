@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Tests terminal-state handling of the async generation task: an accepted run persists clean ({@code SUCCESS}); a non-accepted run is recovered into a draft with review comments
@@ -40,6 +42,8 @@ class ExerciseGenerationTaskServiceTest {
 
     private ExerciseGenerationJobService jobService;
 
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
     private ExerciseGenerationTaskService taskService;
 
     private ProgrammingExercise exercise;
@@ -53,10 +57,13 @@ class ExerciseGenerationTaskServiceTest {
         recoveryService = mock(GenerationRecoveryService.class);
         websocket = mock(HyperionWebsocketService.class);
         jobService = mock(ExerciseGenerationJobService.class);
-        taskService = new ExerciseGenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService);
+        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
+        taskService = new ExerciseGenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(7L);
+        // The task re-loads the exercise with its associations eagerly initialized; return the same mock so the terminal-state assertions are unaffected.
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(7L)).thenReturn(Optional.of(exercise));
         user.setLogin("instructor1");
         when(jobService.isCancelled(anyString())).thenReturn(false);
     }
