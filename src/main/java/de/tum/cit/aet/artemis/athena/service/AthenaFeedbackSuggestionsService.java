@@ -329,16 +329,26 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Ensures that the submission does not already have an Athena-generated result.
-     * Scans every result on the submission, not just the latest, to also catch the case where a later non-Athena
-     * result was added on top of an existing Athena result.
+     * Returns whether the submission has any Athena-generated result. Scans every result on the submission, not just
+     * the latest, to also catch the case where a later non-Athena result was added on top of an existing Athena result.
+     *
+     * @param submission the student's submission to inspect
+     * @return {@code true} if any Athena result is present for the submission
+     */
+    public boolean submissionHasAthenaResult(Submission submission) {
+        return submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
+    }
+
+    /**
+     * Ensures that the submission does not have any Athena-generated result. Scans every result on the submission,
+     * not just the latest, to also catch the case where a later non-Athena result was added on top of an existing
+     * Athena result.
      *
      * @param submission the student's submission to validate
-     * @throws BadRequestAlertException if an Athena result is already present for the submission
+     * @throws BadRequestAlertException if any Athena result is present for the submission
      */
-    public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
-        boolean hasAthenaResult = submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
-        if (hasAthenaResult) {
+    public void checkSubmissionHasNoAthenaResultOrThrow(Submission submission) {
+        if (submissionHasAthenaResult(submission)) {
             log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
             throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
         }

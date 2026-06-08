@@ -35,13 +35,13 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
-class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "tutorparticipationintegration";
 

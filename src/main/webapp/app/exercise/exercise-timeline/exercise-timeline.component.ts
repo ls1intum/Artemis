@@ -7,19 +7,23 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 
-export type TimelineItem =
-    | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
-    | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> };
+export interface TimelineItem {
+    kind: 'required' | 'optional';
+    labelStringKey: string;
+    date: WritableSignal<Dayjs | undefined>;
+    otherRequiredItem?: TimelineItem;
+}
 
-export type ExerciseTimelineStatus = {
+export interface ExerciseTimelineStatus {
     valid: boolean;
     empty: boolean;
-};
+}
 
 type InternalTimelineItem = TimelineItem & {
     internalDate: Date | undefined;
     isInputRequiredButUndefined: boolean;
     isBeforePreviousDate: boolean;
+    isOtherRequiredItemDateUndefined: boolean;
     tooltip: string | undefined;
 };
 
@@ -49,7 +53,7 @@ export class ExerciseTimelineComponent {
         });
     }
 
-    updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
+    updateDate(item: TimelineItem, newInternalDate: Date | string | null) {
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
@@ -58,27 +62,38 @@ export class ExerciseTimelineComponent {
         item.date.set(newDate);
     }
 
-    handleManualInput(item: TimelineItem, event: Event): void {
+    handleManualInput(item: TimelineItem, event: Event) {
         const value = (event.target as HTMLInputElement).value;
-        if (value.trim() === '') {
-            this.updateDate(item, null);
-            return;
-        }
-
-        if (!this.fullDateTimePattern.test(value)) {
-            return;
-        }
-
-        const parsedDate = dayjs(value, this.dateTimeFormat, true);
-        if (parsedDate.isValid()) {
+        const parsedDate = this.parseManualInput(value);
+        if (parsedDate !== undefined) {
             this.setDateIfChanged(item, parsedDate);
+        }
+        if (value === '') {
+            this.setDateIfChanged(item, undefined);
         }
     }
 
-    private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
+    handleBlur(item: TimelineItem, event: Event) {
+        const inputElement = event.target as HTMLInputElement;
+        const input = inputElement.value;
+        const inputWasCleared = input === '';
+        const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
+        if (currentInputIsInvalidDate && !inputWasCleared) {
+            const previousDate = item.date();
+            inputElement.value = previousDate ? previousDate.format(this.dateTimeFormat) : '';
+        }
+    }
+
+    private setDateIfChanged(item: TimelineItem, newDate?: Dayjs) {
         const currentDate = item.date();
         if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);
+    }
+
+    private parseManualInput(value: string): Dayjs | undefined {
+        if (!this.fullDateTimePattern.test(value)) return undefined;
+        const parsedDate = dayjs(value, this.dateTimeFormat, true);
+        return parsedDate.isValid() ? parsedDate : undefined;
     }
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {
@@ -92,20 +107,27 @@ export class ExerciseTimelineComponent {
                     return previousDate !== undefined && date.isBefore(previousDate);
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
+            const otherRequiredItem = item.otherRequiredItem;
+            const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             let tooltip: string | undefined;
             if (isBeforePreviousDate) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
             } else if (isInputRequiredButUndefined) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
+            } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
+                const otherInputName = this.translateService.instant(otherRequiredItem.labelStringKey);
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
             }
 
             return {
                 kind: item.kind,
                 labelStringKey: item.labelStringKey,
                 date: item.date,
+                otherRequiredItem: item.otherRequiredItem,
                 internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
                 isBeforePreviousDate,
+                isOtherRequiredItemDateUndefined,
                 tooltip,
             };
         });
@@ -114,7 +136,7 @@ export class ExerciseTimelineComponent {
     private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
         const items = this.internalTimelineItems();
         return {
-            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined),
+            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined),
             empty: items.some((item) => item.date() === undefined),
         };
     }

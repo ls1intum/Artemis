@@ -13,15 +13,15 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * edit, or complement the competency. Each exercise ref includes the current link weight so
  * the orchestrator can reason honestly about existing evidence strength before reweighting.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyDetailDTO(Long id, String title, String description, CompetencyTaxonomy taxonomy, String type, ZonedDateTime softDueDate, Integer masteryThreshold,
         Boolean optional, List<ExerciseRefDTO> exercises, List<LectureUnitRefDTO> lectureUnits) {
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseRefDTO(Long id, String title, String type, Double weight) {
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LectureUnitRefDTO(Long id, String name, String type) {
     }
 }

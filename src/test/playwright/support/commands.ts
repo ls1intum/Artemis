@@ -379,12 +379,14 @@ export class Commands {
      * @param participationId - ID of the participation to wait for.
      * @param interval - Interval in milliseconds between checks.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
+     * @param initialResultId - Latest result ID before the build starts. Pass null when there was no previous result; omit to let this helper take the snapshot.
      */
     static waitForParticipationBuildToFinish = async (
         exerciseAPIRequests: ExerciseAPIRequests,
         participationId: number,
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
+        initialResultId?: number | null,
     ) => {
         if (participationId == null || isNaN(participationId)) {
             throw new Error(`[waitForParticipationBuildToFinish] Invalid participationId: ${participationId}. Cannot poll for build result.`);
@@ -401,12 +403,14 @@ export class Commands {
 
         // Snapshot the highest result ID before the student's build starts so we can
         // detect a genuinely new result even if it arrives before the first poll.
-        let initialResultId: number | undefined;
-        try {
-            const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
-            initialResultId = getLatestResultId(participation);
-        } catch {
-            // ignore — we will poll until we see a new result ID
+        if (initialResultId === undefined) {
+            try {
+                const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                initialResultId = getLatestResultId(participation) ?? null;
+            } catch {
+                // ignore — we will poll until we see a new result ID
+                initialResultId = null;
+            }
         }
 
         while (Date.now() - startTime < timeout) {

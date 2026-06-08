@@ -30,41 +30,34 @@ describe('DifficultyBadge', () => {
 
     it('should show an info badge if no difficulty level should be shown', () => {
         fixture.componentRef.setInput('showNoLevel', true);
-        component.ngOnChanges();
-        component.ngOnInit();
 
-        expect(component.badgeClass).toBe('bg-info');
+        expect(component.badgeClass()).toBe('bg-info');
     });
 
     it('should show no badge if the exercise has no difficulty level', () => {
         fixture.componentRef.setInput('showNoLevel', false);
-        component.ngOnChanges();
-        component.ngOnInit();
 
-        expect(component.badgeClass).toBeUndefined();
+        expect(component.badgeClass()).toBeUndefined();
     });
 
     it('should a success badge for easy exercises', () => {
         exercise.difficulty = DifficultyLevel.EASY;
-        component.ngOnChanges();
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass).toBe('bg-success');
+        expect(component.badgeClass()).toBe('bg-success');
     });
 
     it('should a warning badge for medium difficulty exercises', () => {
         exercise.difficulty = DifficultyLevel.MEDIUM;
-        component.ngOnChanges();
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass).toBe('bg-warning');
+        expect(component.badgeClass()).toBe('bg-warning');
     });
 
     it('should a danger badge for hard exercises', () => {
         exercise.difficulty = DifficultyLevel.HARD;
-        component.ngOnChanges();
-        component.ngOnInit();
+        fixture.componentRef.setInput('exercise', exercise);
 
-        expect(component.badgeClass).toBe('bg-danger');
+        expect(component.badgeClass()).toBe('bg-danger');
     });
 });
