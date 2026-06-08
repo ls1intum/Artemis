@@ -243,8 +243,9 @@
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
             },
             "athena": {
-                "formativeEnabled": "Enable formative feedback requests",
-                "gradingEnabled": "Enable grading feedback suggestions"
+                "enabled": "AI-Assisted Feedback for Exercises Enabled",
+                "formativeEnabled": "Formative Feedback Requests Enabled",
+                "gradingEnabled": "Grading Feedback Suggestions Enabled"
             },
             "onlineCourse": {
                 "title": "Online Course",

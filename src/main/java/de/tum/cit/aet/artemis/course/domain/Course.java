@@ -31,6 +31,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -798,6 +799,8 @@ public class Course extends DomainObject {
         this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
     }
 
+    @JsonProperty("athenaFormativeEnabled")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public boolean isAthenaFormativeEnabled() {
         return athenaFormativeEnabled;
     }
@@ -806,6 +809,8 @@ public class Course extends DomainObject {
         this.athenaFormativeEnabled = athenaFormativeEnabled;
     }
 
+    @JsonProperty("athenaGradingEnabled")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public boolean isAthenaGradingEnabled() {
         return athenaGradingEnabled;
     }

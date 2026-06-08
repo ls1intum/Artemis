@@ -401,26 +401,43 @@
                     </div>
                 }
                 @if (isAthenaEnabled) {
-                    <div class="d-flex align-items-center gap-2 mt-3">
-                        <p-checkbox
-                            inputId="field_athenaFormativeEnabled"
-                            [binary]="true"
-                            [(ngModel)]="course.athenaFormativeEnabled"
+                    <div class="nested-form-group-head form-check">
+                        <input
+                            id="field_athenaEnabled"
+                            class="form-check-input"
+                            type="checkbox"
+                            [(ngModel)]="athenaEnabled"
                             [ngModelOptions]="{ standalone: true }"
-                            (onChange)="toggleAthenaFormativeEnabled($event.checked)"
+                            (change)="toggleAthenaEnabled()"
                         />
-                        <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.formativeEnabled" for="field_athenaFormativeEnabled"></label>
+                        <label for="field_athenaEnabled" class="form-check-label" jhiTranslate="artemisApp.course.athena.enabled"></label>
                     </div>
-                    <div class="d-flex align-items-center gap-2 mt-2">
-                        <p-checkbox
-                            inputId="field_athenaGradingEnabled"
-                            [binary]="true"
-                            [(ngModel)]="course.athenaGradingEnabled"
-                            [ngModelOptions]="{ standalone: true }"
-                            (onChange)="toggleAthenaGradingEnabled($event.checked)"
-                        />
-                        <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.gradingEnabled" for="field_athenaGradingEnabled"></label>
-                    </div>
+                    @if (athenaEnabled) {
+                        <div>
+                            <div class="nested-form-group form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    name="athenaFormativeEnabled"
+                                    id="field_athenaFormativeEnabled"
+                                    [checked]="course.athenaFormativeEnabled"
+                                    (change)="toggleAthenaFormativeEnabled()"
+                                />
+                                <label class="form-check-label" jhiTranslate="artemisApp.course.athena.formativeEnabled" for="field_athenaFormativeEnabled"></label>
+                            </div>
+                            <div class="nested-form-group last form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    name="athenaGradingEnabled"
+                                    id="field_athenaGradingEnabled"
+                                    [checked]="course.athenaGradingEnabled"
+                                    (change)="toggleAthenaGradingEnabled()"
+                                />
+                                <label class="form-check-label" jhiTranslate="artemisApp.course.athena.gradingEnabled" for="field_athenaGradingEnabled"></label>
+                            </div>
+                        </div>
+                    }
                 }
                 <!-- Not part of model -->
                 <div class="nested-form-group-head form-check">

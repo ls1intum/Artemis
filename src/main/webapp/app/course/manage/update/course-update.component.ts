@@ -46,7 +46,6 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
-import { Checkbox } from 'primeng/checkbox';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -76,7 +75,6 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,
-        Checkbox,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -133,6 +131,7 @@ export class CourseUpdateComponent implements OnInit {
     atlasEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
+    athenaEnabled = false;
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -196,6 +195,7 @@ export class CourseUpdateComponent implements OnInit {
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+        this.athenaEnabled = !!(this.course.athenaFormativeEnabled || this.course.athenaGradingEnabled);
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
@@ -575,17 +575,28 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
+    changeRestrictedAthenaModulesEnabled(): void {
         this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
         this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
     }
 
-    toggleAthenaFormativeEnabled(checked: boolean): void {
-        this.courseForm.controls['athenaFormativeEnabled'].setValue(checked);
+    toggleAthenaEnabled(): void {
+        if (!this.athenaEnabled) {
+            this.course.athenaFormativeEnabled = false;
+            this.course.athenaGradingEnabled = false;
+            this.courseForm.controls['athenaFormativeEnabled'].setValue(false);
+            this.courseForm.controls['athenaGradingEnabled'].setValue(false);
+        }
     }
 
-    toggleAthenaGradingEnabled(checked: boolean): void {
-        this.courseForm.controls['athenaGradingEnabled'].setValue(checked);
+    toggleAthenaFormativeEnabled(): void {
+        this.course.athenaFormativeEnabled = !this.course.athenaFormativeEnabled;
+        this.courseForm.controls['athenaFormativeEnabled'].setValue(this.course.athenaFormativeEnabled);
+    }
+
+    toggleAthenaGradingEnabled(): void {
+        this.course.athenaGradingEnabled = !this.course.athenaGradingEnabled;
+        this.courseForm.controls['athenaGradingEnabled'].setValue(this.course.athenaGradingEnabled);
     }
 
     /**

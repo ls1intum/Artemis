@@ -243,8 +243,9 @@
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
             },
             "athena": {
-                "formativeEnabled": "Formative Feedbackanfragen aktivieren",
-                "gradingEnabled": "Bewertungs-Feedbackvorschläge aktivieren"
+                "enabled": "KI-gestützte Feedbackunterstützung für Übungen aktiviert",
+                "formativeEnabled": "Formative Feedbackanfragen aktiviert",
+                "gradingEnabled": "Bewertungs-Feedbackvorschläge aktiviert"
             },
             "onlineCourse": {
                 "title": "Onlinekurs",
