@@ -125,8 +125,8 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.splitOnWide()).toBe(true);
     });
 
-    it('should disable wide splitting when the read-only editor is shown as feedback tab', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+    it.each([false, undefined])('should disable wide splitting when the read-only editor is shown as feedback tab and allowOnlineEditor is %s', (allowOnlineEditor) => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
         fixture.detectChanges();
 

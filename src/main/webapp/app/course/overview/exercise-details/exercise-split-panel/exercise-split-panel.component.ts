@@ -152,7 +152,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly showEditorAsFeedbackTab = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor === false;
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true;
     });
 
     readonly showReadOnlyEditorAsFeedbackTab = computed(() => this.showEditorPanel() && this.showEditorAsFeedbackTab());
