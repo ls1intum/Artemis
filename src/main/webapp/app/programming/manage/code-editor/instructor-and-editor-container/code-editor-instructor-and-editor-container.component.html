@@ -241,6 +241,15 @@
                                                 <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                                 <span jhiTranslate="artemisApp.review.adaptExercise.menuAction"></span>
                                             </button>
+                                            <!-- Adapt from SEVERAL review comments at once: only offered when the instructor has selected adaptable findings via "Apply with AI". -->
+                                            @if (selectedAdaptableCommentCount() > 0) {
+                                                <button class="ai-menu-item" (click)="adaptWithSelectedComments(); aiMenuPopover.hide()" [disabled]="isAiApplying()">
+                                                    <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                                    <span>{{
+                                                        'artemisApp.review.adaptExercise.adaptSelected' | artemisTranslate: { count: selectedAdaptableCommentCount() }
+                                                    }}</span>
+                                                </button>
+                                            }
                                         }
                                     }
                                 </div>

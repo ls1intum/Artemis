@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -45,6 +45,17 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * This state is scoped to the active exercise/editor session and is never persisted independently.
      */
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
+
+    /**
+     * The currently-selected feedback threads (resolved from {@link selectedFeedbackThreadIds}) that still exist, in selection order. Used to assemble a single Artemis Intelligence
+     * adapt request from several review comments at once.
+     */
+    readonly selectedFeedbackThreads = computed<CommentThread[]>(() => {
+        const byId = new Map(this.threads().map((thread) => [thread.id, thread]));
+        return this.selectedFeedbackThreadIds()
+            .map((id) => byId.get(id))
+            .filter((thread): thread is CommentThread => thread !== undefined);
+    });
 
     /**
      * Sets the active exercise context and clears thread state when it changes.

@@ -203,6 +203,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         setExercise: ReturnType<typeof vi.fn>;
         reloadThreads: ReturnType<typeof vi.fn>;
         threads: WritableSignal<any[]>;
+        selectedFeedbackThreads: WritableSignal<any[]>;
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -346,6 +347,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             setExercise: vi.fn(),
             reloadThreads: vi.fn(),
             threads: signal([]),
+            selectedFeedbackThreads: signal([]),
         };
         reviewCommentService.reloadThreads.mockImplementation((onLoaded?: () => void) => onLoaded?.());
 
@@ -523,6 +525,43 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('does not open the free dialog without editor rights (S6)', () => {
             comp.exercise = createMockExercise({ isAtLeastEditor: false });
             comp.openFreeAdaptDialog();
+            expect(dialogService.open).not.toHaveBeenCalled();
+        });
+
+        const consistencyThread = (id: number, text: string) =>
+            ({
+                id,
+                targetType: CommentThreadLocationType.SOLUTION_REPO,
+                comments: [
+                    {
+                        id,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        createdDate: '2024-01-01T00:00:00Z',
+                        content: { contentType: CommentContentType.CONSISTENCY_CHECK, category: 'C', severity: 'HIGH', text },
+                    },
+                ],
+            }) as any;
+
+        it('adapts from SEVERAL selected review comments at once, sending the combined findings plus typed instructions (multi-comment)', () => {
+            reviewCommentService.selectedFeedbackThreads.set([consistencyThread(1, 'first finding'), consistencyThread(2, 'second finding')]);
+            dialogService.open.mockReturnValue({ onClose: of({ instructions: 'also simplify' } as ReviewAdaptExerciseDialogResult), close: vi.fn() });
+
+            comp.adaptWithSelectedComments();
+
+            // The dialog is opened with the combined, numbered findings as the feedback to address.
+            const openData = dialogService.open.mock.calls[0][1].data;
+            expect(openData.findingText).toContain('first finding');
+            expect(openData.findingText).toContain('second finding');
+            // The run is started with BOTH findings and the typed instructions.
+            const feedback = adaptationService.adaptExercise.mock.calls[0][1] as string;
+            expect(feedback).toContain('first finding');
+            expect(feedback).toContain('second finding');
+            expect(feedback).toContain('also simplify');
+        });
+
+        it('does not open the multi-comment adapt dialog when no adaptable comments are selected', () => {
+            reviewCommentService.selectedFeedbackThreads.set([]);
+            comp.adaptWithSelectedComments();
             expect(dialogService.open).not.toHaveBeenCalled();
         });
     });

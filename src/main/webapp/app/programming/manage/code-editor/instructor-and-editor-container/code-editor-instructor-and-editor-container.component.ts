@@ -55,7 +55,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { combineAdaptFeedback, getFirstCommentByCreatedDateThenId, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -164,6 +164,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly isAiApplying = this.aiOps.isAiApplying;
     readonly showDiff = this.aiOps.showDiff;
     readonly hyperionEnabled = this.aiOps.hyperionEnabled;
+
+    /** How many of the review comments the instructor has selected for AI ("Apply with AI") are adaptable findings — gates the "Adapt with N selected comments" menu action. */
+    protected readonly selectedAdaptableCommentCount = computed(
+        () => this.exerciseReviewCommentService.selectedFeedbackThreads().filter((thread) => this.extractConsistencyIssueContent(thread) !== undefined).length,
+    );
+
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
 
@@ -569,6 +575,37 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 return;
             }
             this.startAdaptation(exerciseId, instructions);
+        });
+    }
+
+    /**
+     * Adapts the exercise from SEVERAL selected review comments at once: opens the adapt dialog showing the combined findings and lets the instructor add extra instructions, then
+     * starts one adaptation run addressing all of them. Wires up the previously inert "select comment for AI" multi-selection.
+     */
+    adaptWithSelectedComments(): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId || !this.exercise?.isAtLeastEditor || !this.hyperionEnabled) {
+            return;
+        }
+        const findingsText = selectedThreadsFindingsText(this.exerciseReviewCommentService.selectedFeedbackThreads(), this.translateService);
+        if (!findingsText) {
+            return;
+        }
+        this.adaptDialogRef =
+            this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+                header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                width: '40vw',
+                // The combined findings are shown read-only as the feedback to address; the instructor's typed instructions are optional and sent in addition.
+                data: { findingText: findingsText },
+            }) ?? undefined;
+        this.adaptDialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+            if (!result) {
+                return; // dialog cancelled
+            }
+            this.startAdaptation(exerciseId, combineAdaptFeedback(findingsText, result.instructions, this.translateService));
         });
     }
 

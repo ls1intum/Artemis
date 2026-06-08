@@ -33,7 +33,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { adaptFindingText, combineAdaptFeedback, sortCommentsByCreatedDateThenId, threadLocationLabel } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
@@ -306,22 +306,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     /** Builds the human-readable description of the finding (category, severity, location, text) shown in the dialog and embedded in the feedback prompt. */
     private assembleFindingText(issueContent: ConsistencyIssueCommentContent): string {
-        const category = this.translateService.instant('artemisApp.hyperion.consistencyCheck.category.' + issueContent.category);
-        const severity = this.translateService.instant('artemisApp.review.consistencySeverity.' + issueContent.severity);
-        const location = this.getThreadLocationLabel(this.thread());
-        const header = location ? `${category} (${severity}) — ${location}` : `${category} (${severity})`;
-        return `${header}\n${issueContent.text}`.trim();
+        return adaptFindingText(issueContent, this.getThreadLocationLabel(this.thread()), this.translateService);
     }
 
     /** Assembles the feedback prompt sent to Artemis Intelligence: the finding to address followed by any optional instructor instructions. */
     private assembleAdaptFeedback(issueContent: ConsistencyIssueCommentContent, instructions?: string): string {
-        const findingSection = `${this.translateService.instant('artemisApp.review.adaptExercise.feedbackLabel')}\n${this.assembleFindingText(issueContent)}`;
-        const trimmedInstructions = instructions?.trim();
-        if (!trimmedInstructions) {
-            return findingSection.trim();
-        }
-        const instructionsSection = `${this.translateService.instant('artemisApp.review.adaptExercise.instructionsLabel')}\n${trimmedInstructions}`;
-        return `${findingSection}\n\n${instructionsSection}`.trim();
+        return combineAdaptFeedback(this.assembleFindingText(issueContent), instructions, this.translateService);
     }
 
     /**
@@ -538,39 +528,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     };
 
     private getThreadLocationLabel(thread: CommentThread): string | undefined {
-        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
-        if (!lineNumber || lineNumber < 1) {
-            return undefined;
-        }
-
-        const repositoryLabel = this.getRepositoryLabel(thread.targetType);
-        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return `${repositoryLabel}:${lineNumber}`;
-        }
-
-        const filePath = thread.filePath ?? thread.initialFilePath;
-        if (!filePath) {
-            return undefined;
-        }
-
-        return `${repositoryLabel}: ${filePath}:${lineNumber}`;
-    }
-
-    private getRepositoryLabel(targetType: CommentThreadLocationType): string {
-        switch (targetType) {
-            case CommentThreadLocationType.PROBLEM_STATEMENT:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.problemStatement');
-            case CommentThreadLocationType.TEMPLATE_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.template');
-            case CommentThreadLocationType.SOLUTION_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.solution');
-            case CommentThreadLocationType.TEST_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.tests');
-            case CommentThreadLocationType.AUXILIARY_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.auxiliary');
-            default:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
-        }
+        return threadLocationLabel(thread, this.translateService);
     }
 
     private getInlineFixDiffFileName(thread: CommentThread): string {

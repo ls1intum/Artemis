@@ -1,13 +1,48 @@
 import {
+    adaptFindingText,
+    combineAdaptFeedback,
+    firstConsistencyIssueContent,
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
     mapRepositoryToThreadLocationType,
     matchesSelectedRepository,
+    selectedThreadsFindingsText,
     sortCommentsByCreatedDateThenId,
+    threadLocationLabel,
 } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+/** A translate stub that echoes its key, so assertions read structurally. */
+const translate = { instant: (key: string) => key } as any;
+
+/** Builds a thread whose first comment is a consistency-check finding. */
+function consistencyThread(
+    overrides: { id?: number; category?: string; severity?: string; text?: string; targetType?: CommentThreadLocationType; filePath?: string; lineNumber?: number } = {},
+) {
+    return {
+        id: overrides.id ?? 1,
+        targetType: overrides.targetType ?? CommentThreadLocationType.SOLUTION_REPO,
+        filePath: overrides.filePath,
+        lineNumber: overrides.lineNumber,
+        comments: [
+            {
+                id: 1,
+                type: CommentType.CONSISTENCY_CHECK,
+                createdDate: '2024-01-01T00:00:00Z',
+                content: {
+                    contentType: CommentContentType.CONSISTENCY_CHECK,
+                    category: overrides.category ?? 'CAT',
+                    severity: overrides.severity ?? 'HIGH',
+                    text: overrides.text ?? 'finding text',
+                },
+            },
+        ],
+    } as any;
+}
 
 describe('matchesSelectedRepository', () => {
     afterEach(() => {
@@ -130,5 +165,59 @@ describe('getFirstCommentByCreatedDateThenId', () => {
 
     it('should return undefined for empty comments', () => {
         expect(getFirstCommentByCreatedDateThenId([] as any)).toBeUndefined();
+    });
+});
+
+describe('adapt feedback assembly', () => {
+    it('firstConsistencyIssueContent returns the content for a consistency thread and undefined otherwise', () => {
+        expect(firstConsistencyIssueContent(consistencyThread({ text: 'x' }))?.text).toBe('x');
+        const userThread = {
+            comments: [{ id: 1, type: CommentType.USER, createdDate: '2024-01-01T00:00:00Z', content: { contentType: CommentContentType.USER, text: 'hi' } }],
+        } as any;
+        expect(firstConsistencyIssueContent(userThread)).toBeUndefined();
+        expect(firstConsistencyIssueContent({ comments: [] } as any)).toBeUndefined();
+    });
+
+    it('threadLocationLabel includes the repository, file and line; undefined without a line', () => {
+        const label = threadLocationLabel(consistencyThread({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/A.java', lineNumber: 12 }), translate);
+        expect(label).toBe('artemisApp.review.relatedLocationRepository.solution: src/A.java:12');
+        expect(threadLocationLabel(consistencyThread({ lineNumber: undefined }), translate)).toBeUndefined();
+    });
+
+    it('adaptFindingText renders category, severity, location and text', () => {
+        const text = adaptFindingText({ category: 'C', severity: 'HIGH', text: 'the issue' } as any, 'Solution: A.java:3', translate);
+        expect(text).toContain('artemisApp.hyperion.consistencyCheck.category.C');
+        expect(text).toContain('artemisApp.review.consistencySeverity.HIGH');
+        expect(text).toContain('Solution: A.java:3');
+        expect(text).toContain('the issue');
+    });
+
+    it('combineAdaptFeedback appends instructions only when provided', () => {
+        const withInstructions = combineAdaptFeedback('FINDINGS', 'please simplify', translate);
+        expect(withInstructions).toContain('artemisApp.review.adaptExercise.feedbackLabel');
+        expect(withInstructions).toContain('FINDINGS');
+        expect(withInstructions).toContain('artemisApp.review.adaptExercise.instructionsLabel');
+        expect(withInstructions).toContain('please simplify');
+
+        const withoutInstructions = combineAdaptFeedback('FINDINGS', '   ', translate);
+        expect(withoutInstructions).toContain('FINDINGS');
+        expect(withoutInstructions).not.toContain('artemisApp.review.adaptExercise.instructionsLabel');
+    });
+
+    it('selectedThreadsFindingsText numbers multiple findings, omits the number for one, and drops non-consistency threads', () => {
+        const userThread = {
+            comments: [{ id: 9, type: CommentType.USER, createdDate: '2024-01-01T00:00:00Z', content: { contentType: CommentContentType.USER, text: 'hi' } }],
+        } as any;
+        const single = selectedThreadsFindingsText([consistencyThread({ text: 'only one' }), userThread], translate);
+        expect(single).toContain('only one');
+        expect(single).not.toMatch(/^1\./);
+
+        const multi = selectedThreadsFindingsText([consistencyThread({ id: 1, text: 'first' }), consistencyThread({ id: 2, text: 'second' })], translate);
+        expect(multi).toMatch(/^1\./);
+        expect(multi).toContain('first');
+        expect(multi).toContain('2.');
+        expect(multi).toContain('second');
+
+        expect(selectedThreadsFindingsText([userThread], translate)).toBe('');
     });
 });

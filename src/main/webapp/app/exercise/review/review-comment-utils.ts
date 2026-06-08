@@ -1,5 +1,7 @@
+import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
@@ -100,4 +102,101 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
         default:
             return false;
     }
+}
+
+/**
+ * Returns the consistency-issue content of a thread's first (chronological) comment, or {@code undefined} if that comment is not a consistency-check finding. Used to decide whether
+ * a thread can be turned into Artemis Intelligence adapt feedback.
+ *
+ * @param thread The comment thread to inspect.
+ */
+export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+    const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
+    if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    const content = firstComment.content as CommentContent | undefined;
+    if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    return content;
+}
+
+/**
+ * Maps a thread location type to its human-readable repository label.
+ */
+export function reviewRepositoryLabel(targetType: CommentThreadLocationType, translate: TranslateService): string {
+    switch (targetType) {
+        case CommentThreadLocationType.PROBLEM_STATEMENT:
+            return translate.instant('artemisApp.review.relatedLocationRepository.problemStatement');
+        case CommentThreadLocationType.TEMPLATE_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.template');
+        case CommentThreadLocationType.SOLUTION_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.solution');
+        case CommentThreadLocationType.TEST_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.tests');
+        case CommentThreadLocationType.AUXILIARY_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.auxiliary');
+        default:
+            return translate.instant('artemisApp.review.relatedLocationRepository.repository');
+    }
+}
+
+/**
+ * Builds a short location label ({@code Repository: file:line}) for a thread, or {@code undefined} when it has no concrete line.
+ */
+export function threadLocationLabel(thread: CommentThread, translate: TranslateService): string | undefined {
+    const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+    if (!lineNumber || lineNumber < 1) {
+        return undefined;
+    }
+    const repositoryLabel = reviewRepositoryLabel(thread.targetType, translate);
+    if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+        return `${repositoryLabel}:${lineNumber}`;
+    }
+    const filePath = thread.filePath ?? thread.initialFilePath;
+    if (!filePath) {
+        return undefined;
+    }
+    return `${repositoryLabel}: ${filePath}:${lineNumber}`;
+}
+
+/**
+ * The human-readable description of one finding (category, severity, location, text) shown in the adapt dialog and embedded in the feedback prompt.
+ */
+export function adaptFindingText(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined, translate: TranslateService): string {
+    const category = translate.instant('artemisApp.hyperion.consistencyCheck.category.' + issueContent.category);
+    const severity = translate.instant('artemisApp.review.consistencySeverity.' + issueContent.severity);
+    const header = locationLabel ? `${category} (${severity}) — ${locationLabel}` : `${category} (${severity})`;
+    return `${header}\n${issueContent.text}`.trim();
+}
+
+/**
+ * The combined, numbered findings text for a set of threads (only consistency-issue threads contribute); empty string when none qualify. A single finding is rendered without a
+ * leading number.
+ */
+export function selectedThreadsFindingsText(threads: CommentThread[], translate: TranslateService): string {
+    const findings = threads
+        .map((thread) => {
+            const issue = firstConsistencyIssueContent(thread);
+            return issue ? adaptFindingText(issue, threadLocationLabel(thread, translate), translate) : undefined;
+        })
+        .filter((text): text is string => !!text);
+    if (findings.length <= 1) {
+        return findings[0] ?? '';
+    }
+    return findings.map((text, index) => `${index + 1}. ${text}`).join('\n\n');
+}
+
+/**
+ * Assembles the adapt feedback prompt sent to Artemis Intelligence: the finding(s) to address followed by any optional instructor instructions.
+ */
+export function combineAdaptFeedback(findingsText: string, instructions: string | undefined, translate: TranslateService): string {
+    const findingSection = `${translate.instant('artemisApp.review.adaptExercise.feedbackLabel')}\n${findingsText}`;
+    const trimmedInstructions = instructions?.trim();
+    if (!trimmedInstructions) {
+        return findingSection.trim();
+    }
+    const instructionsSection = `${translate.instant('artemisApp.review.adaptExercise.instructionsLabel')}\n${trimmedInstructions}`;
+    return `${findingSection}\n\n${instructionsSection}`.trim();
 }

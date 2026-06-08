@@ -61,6 +61,7 @@
             "adaptExercise": {
                 "action": "Adapt with Artemis Intelligence",
                 "menuAction": "Adapt exercise",
+                "adaptSelected": "Adapt selected comments ({{count}})",
                 "title": "Adapt exercise with Artemis Intelligence",
                 "summary": "Artemis Intelligence will adapt this exercise to address this feedback.",
                 "freeSummary": "Tell Artemis Intelligence how to adapt this exercise.",

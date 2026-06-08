@@ -61,6 +61,7 @@
             "adaptExercise": {
                 "action": "Mit Artemis Intelligence anpassen",
                 "menuAction": "Aufgabe anpassen",
+                "adaptSelected": "Ausgewählte Kommentare anpassen ({{count}})",
                 "title": "Aufgabe mit Artemis Intelligence anpassen",
                 "summary": "Artemis Intelligence passt diese Aufgabe an, um dieses Feedback zu berücksichtigen.",
                 "freeSummary": "Sage Artemis Intelligence, wie diese Aufgabe angepasst werden soll.",
