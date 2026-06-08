@@ -108,7 +108,6 @@ describe('TableViewComponent', () => {
                 emptyMessageTranslation: 'custom.message',
                 scrollable: true,
                 scrollHeight: '400px',
-                rowActionsAlignment: 'start',
                 searchPlaceholder: 'custom.placeholder',
             };
             fixture.componentRef.setInput('options', fullOptions);
@@ -126,15 +125,13 @@ describe('TableViewComponent', () => {
             expect(resolved.emptyMessageTranslation).toBe('custom.message');
             expect(resolved.scrollable).toBe(true);
             expect(resolved.scrollHeight).toBe('400px');
-            expect(resolved.rowActionsAlignment).toBe('start');
             expect(resolved.searchPlaceholder).toBe('custom.placeholder');
         });
 
-        it('should use default scrollable, scrollHeight, rowActionsAlignment, searchPlaceholder', () => {
+        it('should use default scrollable, scrollHeight, searchPlaceholder', () => {
             const resolved = component['resolvedOptions']();
             expect(resolved.scrollable).toBe(false);
             expect(resolved.scrollHeight).toBeUndefined();
-            expect(resolved.rowActionsAlignment).toBe('end');
             expect(resolved.searchPlaceholder).toBe('artemisApp.course.exercise.search.searchPlaceholder');
         });
 
@@ -189,30 +186,30 @@ describe('TableViewComponent', () => {
 
     it('should compute item range begin correctly', () => {
         // Default state: first=0, totalRows=3
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
 
         // When total rows is 0, should be 0
         fixture.componentRef.setInput('totalRows', 0);
-        expect(component.itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
 
         // When total rows > 0
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeBegin()).toBe(1);
     });
 
     it('should compute item range end correctly', () => {
         // Default state: first=0, pageSize=50, totalRows=3
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 2 });
-        expect(component.itemRangeEnd()).toBe(2);
+        expect((component as any).itemRangeEnd()).toBe(2);
     });
 
     it('should compute item range begin from vals length when totalRows is undefined', () => {
         fixture.componentRef.setInput('totalRows', undefined);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(mockData.length);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(mockData.length);
     });
 
     it('should build renderer params correctly', () => {
@@ -258,6 +255,106 @@ describe('TableViewComponent', () => {
         expect(component['currentFirst']()).toBe(10);
         expect(onLazyLoadSpy).toHaveBeenCalledWith(lazyLoadEvent);
         expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('reset', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 5, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset pagination state and emit a lazy load event at page 0 with cleared filters', () => {
+            const mockTable = { first: 50, filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'name', sortOrder: 1 };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reset();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(component['currentPageSizeOverride']()).toBeUndefined();
+            expect(mockTable.first).toBe(0);
+            expect(mockTable.filters).toEqual({});
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.globalFilter).toBeNull();
+            expect(event.filters).toEqual({});
+        });
+
+        it('should cancel any pending search debounce and fire exactly once', () => {
+            vi.useFakeTimers();
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.onGlobalSearch('pending search');
+            component.reset();
+
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+
+            vi.advanceTimersByTime(500);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce(); // no second fire from the cancelled debounce
+        });
+    });
+
+    describe('reload', () => {
+        it('should be a no-op in non-lazy mode', () => {
+            fixture.componentRef.setInput('options', { lazy: false });
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(onLazyLoadSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset to page 0 and emit a lazy load event preserving sort and active filter', () => {
+            const mockTable = {
+                first: 50,
+                filters: { global: { value: 'my search', matchMode: 'contains' } },
+                sortField: 'name',
+                sortOrder: -1,
+            };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component.pageChange({ first: 50, rows: 10 });
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            expect(component['currentFirst']()).toBe(0);
+            expect(mockTable.first).toBe(0);
+            expect(onLazyLoadSpy).toHaveBeenCalledOnce();
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.first).toBe(0);
+            expect(event.sortField).toBe('name');
+            expect(event.sortOrder).toBe(-1);
+            expect(event.globalFilter).toBe('my search');
+        });
+
+        it('should use null for globalFilter when no search is active', () => {
+            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            const onLazyLoadSpy = vi.fn();
+            component.onLazyLoad.subscribe(onLazyLoadSpy);
+
+            component.reload();
+
+            const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
+            expect(event.globalFilter).toBeNull();
+        });
     });
 
     it('should handle page change event', () => {
@@ -308,11 +405,11 @@ describe('TableViewComponent', () => {
         expect(onRowSelectSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle selectedRow property', () => {
-        expect(component.selectedRow).toBeUndefined();
+    it('should handle tableSelection property', () => {
+        expect(component.tableSelection).toBeUndefined();
 
-        component.selectedRow = mockData[1];
-        expect(component.selectedRow).toEqual(mockData[1]);
+        component.tableSelection = mockData[1];
+        expect(component.tableSelection).toEqual(mockData[1]);
     });
 
     it('should debounce global search - single search', () => {
@@ -381,17 +478,17 @@ describe('TableViewComponent', () => {
 
     it('should maintain correct item range with updated total rows', () => {
         // Initial state
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(3);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(3);
 
         // Update total rows
         fixture.componentRef.setInput('totalRows', 10);
-        expect(component.itemRangeBegin()).toBe(1);
-        expect(component.itemRangeEnd()).toBe(10);
+        expect((component as any).itemRangeBegin()).toBe(1);
+        expect((component as any).itemRangeEnd()).toBe(10);
 
         // Change page size via pageChange
         component.pageChange({ first: 0, rows: 5 });
-        expect(component.itemRangeEnd()).toBe(5);
+        expect((component as any).itemRangeEnd()).toBe(5);
     });
 
     it('should handle empty data', () => {
@@ -400,8 +497,8 @@ describe('TableViewComponent', () => {
 
         expect(component.vals()).toEqual([]);
         expect(component.totalRows()).toBe(0);
-        expect(component.itemRangeBegin()).toBe(0);
-        expect(component.itemRangeEnd()).toBe(0);
+        expect((component as any).itemRangeBegin()).toBe(0);
+        expect((component as any).itemRangeEnd()).toBe(0);
     });
 
     it('should build params for each column in data row', () => {

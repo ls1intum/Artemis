@@ -613,18 +613,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!exercise.buildConfig?.buildScript &&
-                    !!buildPlanPhases?.dockerImage && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: buildPlanPhases?.dockerImage },
-                    },
+                !!buildPlanPhases?.dockerImage && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.dockerImage',
+                    data: { text: buildPlanPhases?.dockerImage },
+                },
                 !!exercise.buildConfig?.buildScript &&
                     !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
+                    },
+                this.localCIEnabled &&
+                    !!buildPlanPhases?.phases?.length && {
+                        type: DetailType.ProgrammingBuildPhases,
+                        title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
+                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise },
                     },
                 {
                     type: DetailType.Text,
@@ -812,9 +817,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
-            const summary = result.summary.trim();
+            // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
+            const summary = result.summary?.trim() ?? '';
             this.orchestrationDialogMessage.set(summary);
-            this.orchestrationDialogActions.set(result.appliedActions);
+            this.orchestrationDialogActions.set(result.appliedActions ?? []);
             this.orchestrationDialogVisible.set(true);
             if (result.status === CompetencyOrchestrationStatus.Partial) {
                 this.alertService.addAlert({

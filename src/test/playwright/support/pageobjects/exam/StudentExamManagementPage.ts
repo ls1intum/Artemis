@@ -78,7 +78,10 @@ export class StudentExamManagementPage {
     }
 
     async typeSearchText(text: string) {
-        const searchTextField = this.page.locator('input[placeholder="Search for registered students"]');
+        // The exam students page renders the shared search-filter component, whose input carries the stable
+        // aria-label "Filter Search Field". Target that instead of the user-facing placeholder copy (which has
+        // changed before and is translated), so the locator survives wording changes.
+        const searchTextField = this.page.getByRole('textbox', { name: 'Filter Search Field' });
         await searchTextField.clear();
         await searchTextField.fill(text);
     }

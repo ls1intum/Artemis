@@ -7,9 +7,11 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 
-export type TimelineItem =
-    | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
-    | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> };
+export type TimelineItem = {
+    kind: 'required' | 'optional';
+    labelStringKey: string;
+    date: WritableSignal<Dayjs | undefined>;
+};
 
 export type ExerciseTimelineStatus = {
     valid: boolean;
