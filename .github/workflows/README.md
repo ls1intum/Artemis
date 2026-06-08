@@ -25,6 +25,7 @@ ci.yml                                                            (single entry 
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
+├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 │
 ├── all-required-ci-passed       (jq gate over all of the above except e2e — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
@@ -53,13 +54,21 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-`e2e` is the deliberate exception: it is **advisory** (not in the gate's `needs:`). It runs
-for signal and posts its own status, but never blocks merge.
+Two jobs are deliberately **advisory** (not in the gate's `needs:`). They run for signal and
+post their own status, but never block merge:
 
-- **Speed.** E2E takes up to ~2 hours; the gate must not wait on it.
-- **Reliability.** E2E is flaky enough that requiring it would block good PRs on noise. Once it
-  is stabilised behind a merge queue (the `merge_group` trigger is already wired), it can move
-  into the gate.
+- **`e2e`.** E2E takes up to ~2 hours (the gate must not wait on it) and is flaky enough that
+  requiring it would block good PRs on noise. Once it is stabilised behind a merge queue (the
+  `merge_group` trigger is already wired), it can move into the gate.
+- **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
+  advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
+  so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
+  GitHub-hosted pool, in parallel, so it adds no load on the self-hosted runners and no merge
+  latency. Fork PRs are excluded (the SARIF upload needs `security-events: write`, which fork
+  tokens lack); forks are still covered by the post-merge push scan and the weekly scheduled
+  scan. The `schedule:` cron lives in `codeql-analysis.yml` because cron cannot be expressed in a
+  `workflow_call` reusable; that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in
+  one place.
 
 To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
 `ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
@@ -124,7 +133,7 @@ These workflows are intentionally NOT folded into the umbrella:
 
 | Workflow | Reason |
 |---|---|
-| `codeql-analysis.yml` | Security/compliance scan. Independent schedule, default-branch only. |
+| `codeql-analysis.yml` | Holds only the weekly `schedule:` cron (cron cannot live in a `workflow_call` child). The PR/push CodeQL signal is folded into the umbrella as the advisory `codeql` job (→ `ci-codeql.yml`), which the scheduled remnant also reuses. |
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `bean-instantiations.yml` | Java-source-only; independent, niche path filter. |
