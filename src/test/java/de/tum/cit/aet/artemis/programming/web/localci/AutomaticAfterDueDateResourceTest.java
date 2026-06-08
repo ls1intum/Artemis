@@ -52,9 +52,9 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
     void initTestCase() {
         // student1, tutor1, editor1, instructor1 are all members of the course that owns the exercise
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        // OTHER_EDITOR_LOGIN has EDITOR authority but is in a group that no course uses,
+        // OTHER_EDITOR_LOGIN has EDITOR authority but no UCR entry for any course created here,
         // so checkHasAtLeastRoleForExerciseElseThrow will deny them for every exercise here.
-        userUtilService.addEditor("other-editor-group", OTHER_EDITOR_LOGIN);
+        userUtilService.addEditor(OTHER_EDITOR_LOGIN);
 
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
