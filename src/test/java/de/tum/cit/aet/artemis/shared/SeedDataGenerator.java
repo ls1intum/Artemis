@@ -44,6 +44,10 @@ class SeedDataGenerator extends AbstractSpringIntegrationIndependentTest {
     // Optional 1:1 config rows the exercise factory auto-creates but that we do not seed; null the FK so the seed is self-contained.
     private static final Set<String> NULL_COLUMNS = Set.of("plagiarism_detection_config_id");
 
+    // Enum/flag columns the util leaves null but which Liquibase loadData would insert as "" (failing enum mapping on
+    // read). Force a valid value so the seed represents a finished, manually assessed submission. Keyed by column name.
+    private static final Map<String, String> DEFAULT_VALUES = Map.of("assessment_type", "MANUAL", "rated", "true", "initialization_state", "FINISHED", "jhi_type", "MANUAL");
+
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
@@ -92,8 +96,11 @@ class SeedDataGenerator extends AbstractSpringIntegrationIndependentTest {
     }
 
     private static String format(String column, Object value, Set<String> offsetColumns) {
-        if (value == null || NULL_COLUMNS.contains(column)) {
+        if (NULL_COLUMNS.contains(column)) {
             return "";
+        }
+        if (value == null) {
+            return DEFAULT_VALUES.getOrDefault(column, "");
         }
         if (offsetColumns.contains(column) && value instanceof Number number) {
             return String.valueOf(number.longValue() + OFFSET);
