@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 
 import jakarta.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,25 +22,20 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
+import de.tum.cit.aet.artemis.shared.SeedData;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
 class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "arsucloginst";
-
+    // Uses the shared read-only seed user instead of creating one per test (see SeedData).
     @Autowired
     private ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
 
-    @BeforeEach
-    void init() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 1);
-    }
-
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "INSTRUCTOR")
     void shouldSendEmailToUserWhenServiceMethodIsInvoked() throws EntityNotFoundException {
-        String username = TEST_PREFIX + "student1";
+        String username = SeedData.STUDENT_1_LOGIN;
 
         User user = userTestRepository.findOneByLogin(username).get();
 
@@ -52,9 +46,9 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "INSTRUCTOR")
     void shouldSendEmailToUserWhenLogingInWithEmail() throws EntityNotFoundException {
-        String username = TEST_PREFIX + "student1";
+        String username = SeedData.STUDENT_1_LOGIN;
 
         User user = userTestRepository.findOneByLogin(username).get();
 
@@ -65,7 +59,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "INSTRUCTOR")
     void shouldHandleUserNotFoundGracefully() throws EntityNotFoundException {
         String username = "nonexistentuser";
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
