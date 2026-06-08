@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Conditional;
@@ -108,7 +109,7 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();

@@ -3,13 +3,15 @@ package de.tum.cit.aet.artemis.iris.dto;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO for sending messages to Iris with optional uncommitted file changes and context information.
+ * DTO for sending messages to Iris with optional uncommitted file changes and optional context information.
  *
  * @param content               the message content
  * @param messageDifferentiator used to differentiate messages
@@ -18,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
-        @Nullable List<IrisMessageContextDTO> context) {
+        @Valid @Nullable List<IrisMessageContextDTO> context) {
 
     /**
      * Compact constructor that normalizes null uncommittedFiles to an empty map.

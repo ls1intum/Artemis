@@ -132,7 +132,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
-     * Sends all messages of the session to the LLM with optional uncommitted file changes and context information.
+     * Sends all messages of the session to the LLM with optional uncommitted file changes and optional context information.
      *
      * @param session          The chat session
      * @param uncommittedFiles The uncommitted files from the client

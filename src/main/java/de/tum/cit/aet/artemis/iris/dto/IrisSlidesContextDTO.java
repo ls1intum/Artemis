@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,7 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param page          the current page number
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisSlidesContextDTO(@JsonProperty("type") @NonNull String type, @NonNull Long lectureUnitId, @NonNull Integer page) implements IrisMessageContextDTO {
+public record IrisSlidesContextDTO(@JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId, @Min(1) @NonNull Integer page)
+        implements IrisMessageContextDTO {
 
     /**
      * Convenience constructor that automatically sets the type to "slides".

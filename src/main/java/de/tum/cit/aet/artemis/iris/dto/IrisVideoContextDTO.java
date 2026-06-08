@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,7 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param timestamp     video timestamp in seconds (supports decimals like 125.5)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisVideoContextDTO(@JsonProperty("type") @NonNull String type, @NonNull Long lectureUnitId, @NonNull Double timestamp) implements IrisMessageContextDTO {
+public record IrisVideoContextDTO(@JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId, @PositiveOrZero @NonNull Double timestamp)
+        implements IrisMessageContextDTO {
 
     /**
      * Convenience constructor that automatically sets the type to "video".
