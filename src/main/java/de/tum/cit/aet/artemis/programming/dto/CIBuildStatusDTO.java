@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * DTO for CI build status information from external CI connectors.
  * This only contains the state of the build, not the results.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CIBuildStatusDTO(String buildId, BuildStatus status, Instant startTime, Instant endTime, String commitHash, String branch, String errorMessage) {
 
     public enum BuildStatus {

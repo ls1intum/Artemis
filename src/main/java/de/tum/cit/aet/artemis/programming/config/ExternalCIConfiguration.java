@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
  * which replaces the direct Jenkins integration with a microservice approach.
  */
 @Configuration
+@Lazy
 @Profile("external-ci")
 public class ExternalCIConfiguration {
 

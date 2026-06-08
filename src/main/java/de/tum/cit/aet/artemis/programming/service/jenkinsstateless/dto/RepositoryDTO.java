@@ -11,6 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * SHARED DTO - Used by both Artemis core and CI connector microservices
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record RepositoryDTO(@NotBlank String url, String commitHash, String cloneLocation, String accessToken) {
 }

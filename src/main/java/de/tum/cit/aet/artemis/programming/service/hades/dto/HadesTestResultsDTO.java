@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @JsonProperty("uuid") UUID UUID,
         @JsonProperty("assignmentRepoBranchName") String assignmentRepoBranchName, @JsonProperty("assignmentRepoCommitHash") String assignmentRepoCommitHash,
         @JsonProperty("testsRepoCommitHash") String testsRepoCommitHash, @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
@@ -36,7 +38,7 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
 
     @Override
     public @Nullable String assignmentRepoCommitHash() {
-        return assignmentRepoBranchName;
+        return assignmentRepoCommitHash;
     }
 
     @Override
@@ -54,6 +56,11 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
         return isBuildSuccessful;
     }
 
+    /**
+     * Calculates the total number of tests across all test suites.
+     * + *
+     * `@return` the sum of all tests
+     */
     public int getSum() {
         var sum = 0;
         for (TestSuiteDTO testSuiteDTO : results) {
@@ -84,6 +91,12 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
         return parseBuildLogsFromLogs(logs());
     }
 
+    /**
+     * Parses Hades log entries into BuildLogEntry objects.
+     * <p>
+     * `@param` logEntries the list of Hades log entries
+     * `@return` the list of parsed build log entries
+     */
     public static List<BuildLogEntry> parseBuildLogsFromLogs(List<HadesLogEntryDTO> logEntries) {
         final List<BuildLogEntry> buildLogs = new ArrayList<>();
 

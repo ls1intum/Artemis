@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.Repositor
  * sends the build request to HadesService.
  */
 
+@Lazy
 @Service
 @Profile(PROFILE_HADES)
 public class HadesTriggerService implements ContinuousIntegrationTriggerService {
@@ -107,6 +109,14 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         triggerBuild(participation);
     }
 
+    /**
+     * Generates the build script for the given participation by resolving active build phases
+     * and concatenating their scripts into a single shell command.
+     * <p>
+     * `@param` buildConfig the build configuration containing build phases
+     * `@param` participation the programming exercise participation
+     * `@param` programmingExercise the programming exercise
+     */
     public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
         programmingExercise.setBuildConfig(buildConfig);
 

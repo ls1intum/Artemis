@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The metadata is a hashmap containing key-value pairs for the metadata which should be shared between all build steps.
  * The API Specification for Hades can be found here: <a href="https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go">...</a>
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps)
         implements Serializable {
 

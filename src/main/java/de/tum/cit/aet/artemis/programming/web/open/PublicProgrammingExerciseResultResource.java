@@ -88,21 +88,13 @@ public class PublicProgrammingExerciseResultResource {
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 
-        ProgrammingExerciseParticipation participation = null;
+        SecurityUtils.setAuthorizationObject();
 
-        if (participationId != null) {
-            try {
-                participation = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
-                log.info("Successfully retrieved participation via ID: {}", participationId);
-            }
-            catch (ContinuousIntegrationException cISException) {
-                log.warn("Could not retrieve participation ID either: {}", cISException.getMessage());
-                throw new EntityNotFoundException("Participation could not be found via plan key or participation ID");
-            }
-        }
+        ProgrammingExerciseParticipation participation = programmingExerciseParticipationService
+                .findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
+        log.info("Successfully retrieved participation via ID: {}", participationId);
 
         // Process the new result from the build result.
-        assert participation != null;
         Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.

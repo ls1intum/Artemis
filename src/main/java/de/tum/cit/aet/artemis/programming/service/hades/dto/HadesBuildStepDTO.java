@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String workingDir, HashMap<String, String> metadata, String script,
-        @JsonProperty("continue_on_error") boolean ContinueOnError) implements Serializable {
+        @JsonProperty("continue_on_error") boolean continueOnError) implements Serializable {
 
     public record VolumeMount(String name, String mountPath) {
     }

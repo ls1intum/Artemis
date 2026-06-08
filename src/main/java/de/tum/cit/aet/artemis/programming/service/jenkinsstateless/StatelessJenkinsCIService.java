@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTrig
  * This service handles all CI operations by delegating to the microservice via
  * REST API calls.
  */
+@Lazy
 @Service
 @Profile(PROFILE_STATELESS_JENKINS)
 public class StatelessJenkinsCIService implements StatelessCIService {
@@ -105,7 +108,11 @@ public class StatelessJenkinsCIService implements StatelessCIService {
             restTemplate.postForObject(buildApiUrl, request, Void.class);
 
             // Generate a UUID for this build request
-            UUID buildId = UUID.randomUUID();
+            HadesBuildResponseDTO response = restTemplate.postForObject(buildApiUrl, request, HadesBuildResponseDTO.class);
+            if (response == null) {
+                throw new ContinuousIntegrationException("Received empty build ID from Hades");
+            }
+            UUID buildId = UUID.fromString(response.jobId());
             log.debug("Build request submitted with ID: {}", buildId);
 
             return buildId;
