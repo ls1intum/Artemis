@@ -4,9 +4,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { switchMap } from 'rxjs';
 
 @Component({

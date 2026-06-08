@@ -70,7 +70,7 @@
                 "loadingMessages": "Loading messages..."
             },
             "globalSearch": {
-                "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + K)",
+                "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + S)",
                 "searchBarWithConversationSelected": "Search for a message in selected conversations",
                 "noConversationFound": "No conversation found for '{{ search }}'",
                 "noUserFound": "No user found for '{{ search }}'",

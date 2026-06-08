@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizQuestion, resetQuizQuestionForImport } from 'app/quiz/shared/entities/quiz-question.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizParticipation } from 'app/quiz/shared/entities/quiz-participation.model';
@@ -18,6 +18,13 @@ export enum QuizMode {
     SYNCHRONIZED = 'SYNCHRONIZED',
     BATCHED = 'BATCHED',
     INDIVIDUAL = 'INDIVIDUAL',
+}
+
+export enum LiveQuizParticipationStatus {
+    NOT_STARTED = 'NOT_STARTED',
+    PARTICIPATING = 'PARTICIPATING',
+    SUBMITTED = 'SUBMITTED',
+    MISSED = 'MISSED',
 }
 
 export class QuizBatch {

@@ -8,6 +8,8 @@ import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-heade
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
 import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-header',
@@ -27,7 +29,8 @@ export class ExerciseHeaderComponent {
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
-    readonly feedbackRequestLimit = input<number>(10);
+    readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     readonly newParticipation = output<StudentParticipation>();
 
     // Local signal to track a practice participation created in this session,
@@ -43,22 +46,19 @@ export class ExerciseHeaderComponent {
         return this.practiceParticipation() ?? this.localPracticeParticipation();
     });
 
-    readonly hasParticipation = computed(() => {
-        return !!this.studentParticipation() || !!this.effectivePracticeParticipation();
+    readonly hasGradedSubmission = computed(() => {
+        return !!this.studentParticipation()?.submissions?.some((s) => s.submitted);
     });
 
-    readonly hasBothParticipations = computed(() => {
-        // Also show both toggle buttons when the mode is explicitly set to 'practice'
-        // with a graded participation, even if the practice participation hasn't been
-        // created yet (e.g. quiz practice just started).
-        if (this.participationMode() === 'practice' && !!this.studentParticipation()) {
-            return true;
-        }
-        return !!this.studentParticipation() && !!this.effectivePracticeParticipation();
+    // Also treat practice as present when the mode is explicitly set to 'practice'
+    // with a graded participation, even if the practice participation hasn't been
+    // created yet (e.g. quiz practice just started).
+    readonly hasPracticeSubmission = computed(() => {
+        return !!this.effectivePracticeParticipation()?.submissions?.some((s) => s.submitted) || this.participationMode() === 'practice';
     });
 
     readonly activeParticipation = computed(() => {
-        return this.participationMode() === 'practice' ? (this.effectivePracticeParticipation() ?? this.studentParticipation()) : this.studentParticipation();
+        return this.participationMode() === 'practice' ? this.effectivePracticeParticipation() : this.studentParticipation();
     });
 
     readonly isViewingSubmission = signal(false);

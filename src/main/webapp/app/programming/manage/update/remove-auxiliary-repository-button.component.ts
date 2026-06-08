@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { Component, input, output } from '@angular/core';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
@@ -16,11 +16,11 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
 
-    @Input() row: AuxiliaryRepository;
+    readonly row = input.required<AuxiliaryRepository>();
 
-    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
+    readonly onRefresh = output<void>();
 
     // Icons
     faTrash = faTrash;
@@ -29,11 +29,23 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      * Removes the auxiliary repository of the selected row from the respective programming exercise.
      */
     removeAuxiliaryRepository() {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
-        this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
-        this.onRefresh.emit();
+        const programmingExercise = this.programmingExercise();
+        const auxiliaryRepositories = programmingExercise.auxiliaryRepositories;
+        if (!auxiliaryRepositories) {
+            return;
+        }
+        const row = this.row();
+        // Locate the row either by reference or by id, so a -1 from indexOf cannot accidentally remove the last repository.
+        let auxRepoIndex = auxiliaryRepositories.indexOf(row);
+        if (auxRepoIndex === -1 && row.id !== undefined) {
+            auxRepoIndex = auxiliaryRepositories.findIndex((repository) => repository.id === row.id);
+        }
+        if (auxRepoIndex === -1) {
+            return;
+        }
+        auxiliaryRepositories.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
+        this.onRefresh.emit(undefined);
         // This activates the angular change detection
-        this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];
+        programmingExercise.auxiliaryRepositories = [...auxiliaryRepositories];
     }
 }

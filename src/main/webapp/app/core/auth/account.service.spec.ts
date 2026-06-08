@@ -2,26 +2,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
     setupTestBed({ zoneless: true });
@@ -578,7 +578,7 @@ describe('AccountService', () => {
         it('should delete user VCS access token', () => {
             accountService.deleteUserVcsAccessToken().subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/core/account/user-vcs-access-token' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
             req.flush(null);
         });
 
@@ -589,7 +589,7 @@ describe('AccountService', () => {
                 expect(response.status).toBe(200);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
             req.flush({ status: 200 });
         });
 
@@ -601,7 +601,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(token);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush(token);
         });
 
@@ -611,7 +611,7 @@ describe('AccountService', () => {
 
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush(token);
         });
     });
@@ -763,7 +763,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(userToSave);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
             req.flush(userToSave);
         });
     });
@@ -950,7 +950,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.flush({});
 
             expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
@@ -961,7 +961,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.flush({});
 
             expect(accountService.userIdentity()).toBeUndefined();
@@ -972,7 +972,7 @@ describe('AccountService', () => {
 
             accountService.setUserEnabledMemiris(true);
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/core/account/enable-memiris' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
             req.error(new ProgressEvent('error'));
 
             // User should remain unchanged
@@ -988,7 +988,7 @@ describe('AccountService', () => {
                 expect(token).toBe(expectedToken);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/core/tool-token?tool=vscode' });
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/account/tool-token?tool=vscode' });
             req.flush(expectedToken);
         });
     });

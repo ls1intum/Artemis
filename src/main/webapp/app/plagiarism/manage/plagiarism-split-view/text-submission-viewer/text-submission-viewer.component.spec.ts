@@ -1,7 +1,9 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
 import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -11,7 +13,7 @@ import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,6 +24,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { PlagiarismFileElement } from '../../../shared/entities/PlagiarismFileElement';
 
 describe('Text Submission Viewer Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TextSubmissionViewerComponent;
     let fixture: ComponentFixture<TextSubmissionViewerComponent>;
     let repositoryService: CodeEditorRepositoryFileService;
@@ -37,7 +41,7 @@ describe('Text Submission Viewer Component', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
+            imports: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -64,35 +68,35 @@ describe('Text Submission Viewer Component', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('fetches a text submission', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
-        jest.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
+        vi.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
-        expect(comp.isProgrammingExercise).toBeFalse();
+        expect(comp.isProgrammingExercise).toBe(false);
     });
 
     it('fetches a programming submission', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
-        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
+        vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBeTrue();
-        expect(comp.cannotLoadFiles).toBeFalse();
+        expect(comp.isProgrammingExercise).toBe(true);
+        expect(comp.cannotLoadFiles).toBe(false);
     });
 
     it('does not fetch a programming submission', () => {
-        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
+        vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
         fixture.componentRef.setInput('hideContent', true);
 
         comp.ngOnChanges({
@@ -104,14 +108,14 @@ describe('Text Submission Viewer Component', () => {
 
     it('handles a programming submission fetch error', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
-        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
+        vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.cannotLoadFiles).toBeTrue();
+        expect(comp.cannotLoadFiles).toBe(true);
     });
 
     it('sorts and filters the files when fetching a programming submission', () => {
@@ -130,14 +134,14 @@ describe('Text Submission Viewer Component', () => {
         comp.matches()?.set('e', [{ from: new PlagiarismSubmissionElement(), to: new PlagiarismSubmissionElement() }]);
         comp.matches()?.set('kContinuedName', [{ from: new PlagiarismSubmissionElement(), to: new PlagiarismSubmissionElement() }]);
 
-        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
+        vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
-        expect(comp.isProgrammingExercise).toBeTrue();
+        expect(comp.isProgrammingExercise).toBe(true);
 
         // files with matches first, then the ones without match; each section ordered lexicographically
         const expectedFiles = [
@@ -163,7 +167,7 @@ describe('Text Submission Viewer Component', () => {
 
         const fileName = Object.keys(files)[1];
 
-        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'if(current>max)' }));
+        vi.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'if(current>max)' }));
 
         comp.handleFileSelect(fileName);
         await fixture.whenStable();
@@ -180,7 +184,7 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission);
         fixture.changeDetectorRef.detectChanges();
         const fileName = Object.keys(files)[4];
-        jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
+        vi.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
 
         comp.handleFileSelect(fileName);
 
@@ -215,7 +219,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor </span>sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>`;
@@ -253,7 +257,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.\nAt vero eos et accusam et justo duo.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor sit amet.</span>\n<span class="plagiarism-match">Consetetur sadipscing elitr.</span>\nAt vero eos et accusam et justo duo.`;
@@ -265,7 +269,7 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('should escape the text if no matches are present', () => {
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue([]);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue([]);
         const fileContent = 'Lorem ipsum dolor sit amet.\n<test>';
         const expectedFileContent = 'Lorem ipsum dolor sit amet.\n&lt;test&gt;';
 
@@ -301,7 +305,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\n<test> test text for inserting tokens';
         const expectedFileContent =
             'Lorem<span class="plagiarism-match"> ipsum &lt;fake-</span>token&gt;dolor sit amet.\n' +
@@ -340,7 +344,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\n<test> test text for inserting tokens';
         const expectedFileContent =
             '<span class="plagiarism-match">Lorem ipsum &lt;fake-token&gt;dolor sit amet.</span>\n' +
@@ -379,7 +383,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
         const expectedFileContent = '<span class="plagiarism-match">Lorem ipsu</span>m &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit a</span>met.';
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
@@ -416,7 +420,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.';
         const expectedFileContent = '<span class="plagiarism-match">Lorem ipsum &lt;fake-token&gt;dolor sit amet.</span>';
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
@@ -441,7 +445,7 @@ describe('Text Submission Viewer Component', () => {
                 } as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         const fileContent = 'Lorem ipsum <fake-token>dolor sit amet.\nLorem ipsum <fake-token>dolor sit amet';
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         const expectedFileContent = 'Lorem ipsum &lt;fake-t<span class="plagiarism-match">oken&gt;dolor sit amet.\nLorem ipsum &lt;fake-token&gt;dolor sit a</span>met';
@@ -470,7 +474,7 @@ describe('Text Submission Viewer Component', () => {
                 to: undefined as unknown as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         fixture.changeDetectorRef.detectChanges();
 
@@ -501,7 +505,7 @@ describe('Text Submission Viewer Component', () => {
                 to: undefined as unknown as PlagiarismSubmissionElement,
             },
         ];
-        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+        vi.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         fixture.changeDetectorRef.detectChanges();
 

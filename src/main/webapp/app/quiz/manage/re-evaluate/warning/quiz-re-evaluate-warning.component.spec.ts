@@ -5,12 +5,12 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizReEvaluateWarningComponent } from 'app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     setupTestBed({ zoneless: true });
@@ -27,7 +27,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;
     let quizReEvaluateService: QuizReEvaluateService;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
     let navigationUtilService: ArtemisNavigationUtilService;
 
     const course = { id: 123 } as Course;
@@ -69,10 +69,17 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         return quizExercise;
     };
 
+    const dialogConfig = { data: {} } as DynamicDialogConfig;
+
     beforeEach(() => {
+        const quizExercise = createQuizExercise();
+        const files = new Map<string, File>();
+        dialogConfig.data = { quizExercise, files };
+
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbActiveModal),
+                MockProvider(DynamicDialogRef),
+                { provide: DynamicDialogConfig, useValue: dialogConfig },
                 MockProvider(QuizReEvaluateService),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -85,16 +92,16 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
         quizReEvaluateService = TestBed.inject(QuizReEvaluateService);
-        activeModal = TestBed.inject(NgbActiveModal);
+        dialogRef = TestBed.inject(DynamicDialogRef);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
-        const quizExercise = createQuizExercise();
         comp.quizExercise = quizExercise;
         vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: createQuizExercise() })));
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize quiz exercise', () => {
@@ -103,10 +110,10 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         expect(comp.isSaving).toBe(false);
     });
 
-    it('should dismiss modal on clear', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+    it('should close the dialog without a result on clear', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         comp.clear();
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
+        expect(closeSpy).toHaveBeenCalledWith();
     });
 
     it('should detect question deleted', () => {
@@ -334,12 +341,13 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
     it('should close and navigate', () => {
         vi.useFakeTimers();
-        const closeSpy = vi.spyOn(activeModal, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         const navigateSpy = vi.spyOn(navigationUtilService, 'navigateBackFromExerciseUpdate').mockImplementation(() => {});
 
         comp.closeAndNavigate();
 
         expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith(true);
 
         vi.runAllTimers();
         expect(navigateSpy).toHaveBeenCalledWith(comp.quizExercise);

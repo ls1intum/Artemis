@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -7,7 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
@@ -80,7 +80,7 @@ export class ChatHistoryItemComponent {
     }
 
     private computeIcon(session: IrisSessionDTO): IconProp | undefined {
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return faKeyboard;
             case ChatServiceMode.TEXT_EXERCISE:
@@ -94,7 +94,7 @@ export class ChatHistoryItemComponent {
 
     private computeTooltipText(session: IrisSessionDTO): string | undefined {
         let key: string | undefined;
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
                 break;
@@ -111,10 +111,10 @@ export class ChatHistoryItemComponent {
     }
 
     private computeEntityRoute(session: IrisSessionDTO): string | undefined {
-        if (!session.chatMode || !session.entityId) {
+        if (!session.mode || !session.entityId) {
             return undefined;
         }
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
             case ChatServiceMode.TEXT_EXERCISE:
                 return `../exercises/${session.entityId}`;

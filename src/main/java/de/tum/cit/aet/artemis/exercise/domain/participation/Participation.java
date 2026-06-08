@@ -271,4 +271,8 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonIgnore
     public abstract String getType();
 
+    @JsonIgnore
+    public boolean isAtLeastInitialized() {
+        return this.initializationState == InitializationState.INITIALIZED || this.initializationState == InitializationState.FINISHED;
+    }
 }

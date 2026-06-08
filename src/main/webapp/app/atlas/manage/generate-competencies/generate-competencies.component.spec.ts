@@ -1,17 +1,15 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormControl, FormGroup } from '@angular/forms';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -19,26 +17,29 @@ import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/compet
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('GenerateCompetenciesComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
     let comp: GenerateCompetenciesComponent;
     let mockWebSocketSubject: Subject<any>;
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
         mockWebSocketSubject = new Subject<any>();
+        dialogClose = new Subject<any>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -68,9 +69,9 @@ describe('GenerateCompetenciesComponent', () => {
                 AlertService,
                 ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
             ],
         })
-            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(GenerateCompetenciesComponent);
@@ -145,8 +146,8 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should open modal to remove competency recommendations', () => {
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open');
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
@@ -180,8 +181,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should not submit for unviewed recommendations', async () => {
         fixture.detectChanges();
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open');
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
         const saveSpy = vi.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
@@ -199,11 +200,11 @@ describe('GenerateCompetenciesComponent', () => {
     it('should submit', async () => {
         fixture.detectChanges();
         const router = TestBed.inject(Router);
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
         const competencyService = TestBed.inject(CompetencyService);
 
         const navigateSpy = vi.spyOn(router, 'navigate');
-        const openSpy = vi.spyOn(modalService, 'open');
+        const openSpy = vi.spyOn(dialogService, 'open');
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [],
             status: 200,

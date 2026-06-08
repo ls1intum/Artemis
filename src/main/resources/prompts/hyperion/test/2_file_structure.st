@@ -16,13 +16,18 @@ Based on the following testing plan and programming language, determine the nece
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Use only classes, packages, and utilities that exist in the provided repository context.
 2. Do not add files for invented helpers such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless they are explicitly required by the plan and you also generate them in the output.
 3. Prefer the smallest file set that satisfies the testing plan and compiles against the provided codebase.
 4. Keep package names and paths consistent with the existing repository layout and testing conventions.
 
-If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which test files, packages, and repository artifacts each issue touches.
 2. Explain the mismatch between the required structure and the current or planned structure.

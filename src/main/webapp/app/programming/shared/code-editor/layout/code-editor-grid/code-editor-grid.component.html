@@ -1,6 +1,6 @@
-<div class="editor-wrapper" [class.assessment-wrapper]="isTutorAssessment">
+<div class="editor-wrapper" [class.assessment-wrapper]="isTutorAssessment()">
     <!-- Top bar -->
-    <nav class="editor-statusbar" [hidden]="!showEditorNavbar">
+    <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
     </nav>
     <div class="editor-main">
@@ -23,7 +23,7 @@
                 <ng-content select="[editorCenter]" />
             </div>
             <!-- Instructions -->
-            <div #instructions class="editor-sidebar-right collapsable" [hidden]="!showEditorSidebarRight">
+            <div #instructions class="editor-sidebar-right collapsable" [hidden]="!showEditorSidebarRight()">
                 @if (!rightPanelIsCollapsed) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
                         <span></span>
@@ -35,12 +35,12 @@
                 <ng-content select="[editorSidebarRight]" />
             </div>
         </div>
-        @if (showEditorBottomArea) {
+        @if (showEditorBottomArea()) {
             <!-- Required for resizing; don't remove empty span -->
             <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
         }
     </div>
-    @if (showEditorBottomArea) {
+    @if (showEditorBottomArea()) {
         <!-- Build Output -->
         <div #buildOutput class="editor-bottom collapsable">
             <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
@@ -50,7 +50,7 @@
             }
         </div>
     }
-    @if (isTutorAssessment) {
+    @if (isTutorAssessment()) {
         <div>
             <ng-content select="[editorBottom]" />
         </div>

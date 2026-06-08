@@ -3,12 +3,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
-import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -37,9 +36,9 @@ export class QuizAiGenerationService {
         question: MultipleChoiceQuestion,
         refinementPrompt: string,
     ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }> {
-        const request: QuizQuestionRefinementRequest = {
+        const request = {
             question: {
-                type: (question.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
+                type: (question.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
                 title: question.title?.trim() || 'Untitled Question',
                 questionText: question.text ?? '',
                 hint: question.hint ?? undefined,
@@ -52,13 +51,14 @@ export class QuizAiGenerationService {
                 })),
             },
             refinementPrompt,
-        };
+        } as QuizQuestionRefinementRequest;
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
                 if (response.type === 'success') {
+                    const success = response as QuizQuestionRefinementResponse & { question: Omit<GeneratedQuestion, 'id'> };
                     return {
-                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
+                        refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(success.question, 0)),
                         reasoning: response.reasoning,
                     };
                 }
@@ -79,7 +79,7 @@ export class QuizAiGenerationService {
     refineAllMultipleChoiceQuestions(courseId: number, questions: MultipleChoiceQuestion[], refinementPrompt: string): Observable<Map<MultipleChoiceQuestion, string>> {
         const request: QuizQuestionBulkRefinementRequest = {
             questions: questions.map((q) => ({
-                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
+                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
                 title: q.title?.trim() || 'Untitled Question',
                 questionText: q.text ?? '',
                 hint: q.hint ?? undefined,
@@ -98,7 +98,8 @@ export class QuizAiGenerationService {
                 const results = new Map<MultipleChoiceQuestion, string>();
                 response.refinements.forEach((refinement, index) => {
                     if (refinement.type === 'success') {
-                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(refinement.question, index));
+                        const success = refinement as QuizQuestionRefinementResponse & { question: Omit<GeneratedQuestion, 'id'> };
+                        this.applyRefinedContentToQuestion(questions[index], this.toGeneratedQuestion(success.question, index));
                         results.set(questions[index], refinement.reasoning);
                     }
                 });
@@ -129,7 +130,7 @@ export class QuizAiGenerationService {
         return original;
     }
 
-    private toGeneratedQuestion(question: GeneratedQuizQuestion, index: number): GeneratedQuestion {
+    private toGeneratedQuestion(question: Omit<GeneratedQuestion, 'id'>, index: number): GeneratedQuestion {
         return {
             id: `${question.type}-${index}`,
             type: question.type,

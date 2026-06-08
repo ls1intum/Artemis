@@ -35,15 +35,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -65,10 +66,10 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
-import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -112,9 +113,9 @@ public class StudentExamResource {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    private final ExamLiveEventsService examLiveEventsService;
-
     private final ExamLiveEventRepository examLiveEventRepository;
+
+    private final StudentExamLiveEventService studentExamLiveEventService;
 
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -128,7 +129,7 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -143,8 +144,8 @@ public class StudentExamResource {
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.examLiveEventsService = examLiveEventsService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.studentExamLiveEventService = studentExamLiveEventService;
     }
 
     /**
@@ -202,23 +203,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        var now = now();
-        if (workingTime <= 0) {
-            throw new BadRequestException();
-        }
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        var originalWorkingTime = studentExam.getWorkingTime();
-        studentExam.setWorkingTime(workingTime);
-        var savedStudentExam = studentExamRepository.save(studentExam);
-
-        if (!savedStudentExam.isTestRun()) {
-            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
-            if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
-            }
-        }
-
-        return ResponseEntity.ok(savedStudentExam);
+        return ResponseEntity.ok(studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime));
     }
 
     /**
@@ -238,19 +223,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
 
-        var student = userRepository.getUserByLoginElseThrow(studentLogin);
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, false).orElseThrow();
-
-        examAccessService.checkStudentExamExistsAndBelongsToExamElseThrow(studentExam.getId(), examId);
-
-        var exam = studentExam.getExam();
-        if (!exam.isVisibleToStudents()) {
-            throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
-        }
-
-        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message);
-
-        return ResponseEntity.ok(event.asDTO());
+        return ResponseEntity.ok(studentExamLiveEventService.createAttendanceCheckEvent(examId, studentLogin, message));
     }
 
     /**
@@ -303,6 +276,50 @@ public class StudentExamResource {
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback : Request Athena AI
+     * feedback for all text and modeling exercises in the given submitted test exam.
+     *
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to which the student exam belongs
+     * @param studentExamId the id of the student exam
+     * @return 200 OK if the feedback request was accepted
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> requestAthenaFeedbackForTestExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
+        User currentUser = userRepository.getUser();
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
+        studentExamService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage : Return how many
+     * Athena AI feedback requests the current user has already used for this test exam and the configured cap.
+     *
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to which the student exam belongs
+     * @param studentExamId the id of the student exam
+     * @return 200 OK with the usage information
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
+    @EnforceAtLeastStudent
+    public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        User currentUser = userRepository.getUser();
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
+        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUser.getId(), examId));
     }
 
     /**
@@ -380,7 +397,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
+    @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
@@ -562,7 +579,7 @@ public class StudentExamResource {
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/test-run")
+    @PostMapping({ "courses/{courseId}/exams/{examId}/test-runs", "courses/{courseId}/exams/{examId}/test-run" })
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
@@ -623,7 +640,7 @@ public class StudentExamResource {
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping("courses/{courseId}/exams/{examId}/test-run/{testRunId}")
+    @DeleteMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}", "courses/{courseId}/exams/{examId}/test-run/{testRunId}" })
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);

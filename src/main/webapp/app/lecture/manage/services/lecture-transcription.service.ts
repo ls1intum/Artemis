@@ -11,7 +11,7 @@ export class LectureTranscriptionService {
 
     getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
         return this.httpClient
-            .get<LectureTranscriptionDTO>(`api/lecture/lecture-unit/${lectureUnitId}/transcript`, {
+            .get<LectureTranscriptionDTO>(`api/lecture/lecture-units/${lectureUnitId}/transcript`, {
                 observe: 'response',
             })
             .pipe(
@@ -22,7 +22,7 @@ export class LectureTranscriptionService {
 
     getTranscriptionStatus(lectureUnitId: number): Observable<TranscriptionStatus | undefined> {
         return this.httpClient
-            .get<string>(`api/lecture/lecture-unit/${lectureUnitId}/transcript/status`, {
+            .get<string>(`api/lecture/lecture-units/${lectureUnitId}/transcript/status`, {
                 observe: 'response',
                 responseType: 'text' as 'json',
             })

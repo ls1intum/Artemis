@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, Renderer2, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, inject, input, output, viewChild } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -17,19 +17,15 @@ import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor
 export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private renderer = inject(Renderer2);
 
-    @ContentChild('editorSidebarRight', { static: false }) editorSidebarRight: ElementRef;
-    @ContentChild('editorSidebarLeft', { static: false }) editorSidebarLeft: ElementRef;
-    @ContentChild('editorBottomArea', { static: false }) editorBottomArea: ElementRef;
+    readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
+    readonly fileBrowserElement = viewChild.required<ElementRef>('fileBrowser');
+    readonly instructionsElement = viewChild.required<ElementRef>('instructions');
 
-    @ViewChild('buildOutput') buildOutputElement: ElementRef;
-    @ViewChild('fileBrowser') fileBrowserElement: ElementRef;
-    @ViewChild('instructions') instructionsElement: ElementRef;
-
-    @Input() isTutorAssessment = false;
-    @Input() showEditorNavbar = true;
-    @Input() showEditorSidebarRight = true;
-    @Input() showEditorBottomArea = true;
-    @Output() onResize = new EventEmitter<ResizeType>();
+    readonly isTutorAssessment = input(false);
+    readonly showEditorNavbar = input(true);
+    readonly showEditorSidebarRight = input(true);
+    readonly showEditorBottomArea = input(true);
+    readonly onResize = output<ResizeType>();
 
     fileBrowserIsCollapsed = false;
     rightPanelIsCollapsed = false;
@@ -151,7 +147,7 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
                 target.style.width = event.rect.width + 'px';
             });
 
-        if (this.showEditorBottomArea) {
+        if (this.showEditorBottomArea()) {
             this.resizableMinHeightBottom = window.screen.height / 6;
             this.interactResizableBottom = interact('.editor-bottom')
                 .resizable({
@@ -184,11 +180,11 @@ export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
         switch (collapsableElement) {
             case CollapsableCodeEditorElement.BuildOutput:
-                return this.buildOutputElement;
+                return this.buildOutputElement();
             case CollapsableCodeEditorElement.FileBrowser:
-                return this.fileBrowserElement;
+                return this.fileBrowserElement();
             case CollapsableCodeEditorElement.Instructions:
-                return this.instructionsElement;
+                return this.instructionsElement();
         }
     }
 

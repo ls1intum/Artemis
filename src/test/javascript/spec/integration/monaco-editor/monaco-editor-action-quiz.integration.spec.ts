@@ -1,18 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
-import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
-import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
-import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
-import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { InsertShortAnswerOptionAction } from 'app/editor/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
+import { InsertShortAnswerSpotAction } from 'app/editor/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorActionQuizIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
@@ -20,31 +24,26 @@ describe('MonacoEditorActionQuizIntegration', () => {
     let insertShortAnswerOptionAction: InsertShortAnswerOptionAction;
     let insertShortAnswerSpotAction: InsertShortAnswerSpotAction;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
-                insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(insertShortAnswerOptionAction);
-                fixture.detectChanges();
-                comp.registerAction(insertShortAnswerOptionAction);
-                comp.registerAction(insertShortAnswerSpotAction);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
+        insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(insertShortAnswerOptionAction);
+        fixture.detectChanges();
+        comp.registerAction(insertShortAnswerOptionAction);
+        comp.registerAction(insertShortAnswerSpotAction);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('MonacoInsertShortAnswerOption', () => {
@@ -101,14 +100,14 @@ describe('MonacoEditorActionQuizIntegration', () => {
     });
 
     describe('EditorInsertShortAnswerSpotAction', () => {
-        let insertAnswerOptionActionExecuteStub: jest.SpyInstance;
+        let insertAnswerOptionActionExecuteStub: MockInstance;
 
         beforeEach(() => {
-            insertAnswerOptionActionExecuteStub = jest.spyOn(insertShortAnswerOptionAction, 'executeInCurrentEditor').mockImplementation();
+            insertAnswerOptionActionExecuteStub = vi.spyOn(insertShortAnswerOptionAction, 'executeInCurrentEditor').mockImplementation(() => {});
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should forward the spot number & selection to the insertShortAnswerOptionAction', () => {

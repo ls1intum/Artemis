@@ -1,0 +1,45 @@
+name: Nightly LTI Interop
+
+# The workflow runs on a fixed schedule against the default branch and on manual dispatch.
+# It does not consume any untrusted GitHub event inputs (issue/PR titles, commit messages, etc.),
+# so command injection vectors from such inputs are not applicable here.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'        # 03:00 UTC daily
+  workflow_dispatch:           # manual ad-hoc runs
+
+concurrency:
+  group: nightly-lti-interop
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  moodle-interop:
+    name: nightly-lti / moodle
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Run nightly LTI Moodle interop suite
+        run: ./gradlew test --tests "de.tum.cit.aet.artemis.lti.nightly.NightlyLtiMoodleInteropTest" -DincludeTags='nightly-lti' -x webapp
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-lti-reports-moodle
+          path: build/reports/tests/test
+      - name: Notify on failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.LTI_NIGHTLY_SLACK_WEBHOOK }}
+          SLACK_TITLE: "Nightly LTI interop FAILED on develop (moodle)"
+          SLACK_COLOR: danger

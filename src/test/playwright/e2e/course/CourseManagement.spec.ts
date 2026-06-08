@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../support/users';
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
@@ -72,6 +72,9 @@ test.describe('Course management', { tag: '@fast' }, () => {
         });
 
         test('Manually adds and removes a student', async ({ navigationBar, courseManagement }) => {
+            // 4 openCourseManagement + 4 openCourse navigations + add/remove flows easily
+            // exceed the @fast 60s budget under heavy multi-node load. Triple it.
+            test.slow();
             const username = studentOne.username;
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
@@ -96,11 +99,19 @@ test.describe('Course management', { tag: '@fast' }, () => {
     });
 
     test.describe('Course creation', () => {
-        let course: Course;
-        let course2: Course;
+        let course: Course | undefined;
+        let course2: Course | undefined;
 
         test.beforeEach('Set course title and shortname', async ({ login }) => {
             await login(admin, '/');
+            // Reset the closure variables so the previous test's (already-deleted) course
+            // reference isn't carried into this test's afterEach. Without this reset the
+            // afterEach below would call deleteCourse on a stale id and the server would
+            // return 404, which historically (before the null-check added in #11885) showed
+            // up as a server-side ConstraintViolationException — the source of the long-lived
+            // "ConstraintViolationError" comment + 5 s retry workaround in deleteCourse.
+            course = undefined;
+            course2 = undefined;
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'playwright' + uid;
@@ -267,6 +278,11 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseMessages,
             communicationAPIRequests,
         }) => {
+            // Course delete with summary spawns ~15 API requests to populate the course +
+            // a slow DELETE on a course that has exercises/exam/messages attached, then
+            // re-loads course-management-overview which is a heavy aggregation. Even the
+            // tripled @slow budget (180s) routinely overruns under heavy multi-node load.
+            test.setTimeout(360_000);
             // Use API calls instead of UI navigation for faster user creation
             await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
             await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);

@@ -18,6 +18,25 @@
     min-width: 30%;
 }
 
+.highlight-post {
+    border-radius: 7px;
+    animation: highlight-post-fade 2s ease-in-out;
+}
+
+@keyframes highlight-post-fade {
+    0% {
+        background-color: rgba($primary, 0.25);
+    }
+
+    70% {
+        background-color: rgba($primary, 0.15);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
 @include media-breakpoint-down(sm) {
     .communication-content-sidebar {
         position: absolute;

@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -36,14 +37,13 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -79,8 +79,8 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/search/ask")
-    private URL lectureSearchAskApiURL;
+    @Value("${artemis.iris.url}/api/v1/pipelines/global-search/run")
+    private URL globalSearchAnswerApiURL;
 
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
@@ -116,48 +116,48 @@ public class IrisRequestMockProvider {
         }
     }
 
-    public void mockProgrammingExerciseChatResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/programming-exercise-chat/run", PyrisExerciseChatPipelineExecutionDTO.class, responseConsumer);
+    public void mockProgrammingExerciseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run", PyrisChatPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer, long submissionId) {
+    public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer, long submissionId) {
         // @formatter:off
         mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/programming-exercise-chat/run"))
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/chat/run"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var jsonNode = mapper.readTree(mockRequest.getBodyAsString());
 
-                assertThat(jsonNode.has("submission"))
-                    .withFailMessage("Request body must contain a 'submission' field")
+                assertThat(jsonNode.has("programmingExerciseSubmission"))
+                    .withFailMessage("Request body must contain a 'programmingExerciseSubmission' field")
                     .isTrue();
-                assertThat(jsonNode.get("submission").isObject())
-                    .withFailMessage("The 'submission' field must be an object")
+                assertThat(jsonNode.get("programmingExerciseSubmission").isObject())
+                    .withFailMessage("The 'programmingExerciseSubmission' field must be an object")
                     .isTrue();
-                assertThat(jsonNode.get("submission").has("id"))
-                    .withFailMessage("The 'submission' object must contain an 'id' field")
+                assertThat(jsonNode.get("programmingExerciseSubmission").has("id"))
+                    .withFailMessage("The 'programmingExerciseSubmission' object must contain an 'id' field")
                     .isTrue();
-                assertThat(jsonNode.get("submission").get("id").asLong())
+                assertThat(jsonNode.get("programmingExerciseSubmission").get("id").asLong())
                     .withFailMessage("Submission ID in request (%d) does not match expected ID (%d)",
-                        jsonNode.get("submission").get("id").asLong(), submissionId)
+                        jsonNode.get("programmingExerciseSubmission").get("id").asLong(), submissionId)
                     .isEqualTo(submissionId);
             })
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
-                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisChatPipelineExecutionDTO.class);
                 responseConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
         // @formatter:on
     }
 
-    public void mockTextExerciseChatResponse(Consumer<PyrisTextExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/text-exercise-chat/run", PyrisTextExerciseChatPipelineExecutionDTO.class, responseConsumer);
+    public void mockTextExerciseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run", PyrisChatPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockLectureChatResponse(Consumer<PyrisLectureChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/lecture-chat/run", PyrisLectureChatPipelineExecutionDTO.class, responseConsumer);
+    public void mockLectureChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run", PyrisChatPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockTutorSuggestionResponse(Consumer<PyrisTutorSuggestionPipelineExecutionDTO> responseConsumer) {
@@ -196,16 +196,16 @@ public class IrisRequestMockProvider {
         mockWebhookPost("/faqs/delete", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
     }
 
-    public void mockBuildFailedRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/programming-exercise-chat/run?event=build_failed", PyrisExerciseChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
+    public void mockBuildFailedRunResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run?event=build_failed", PyrisChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
     }
 
-    public void mockProgressStalledEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/programming-exercise-chat/run?event=progress_stalled", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
+    public void mockProgressStalledEventRunResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run?event=progress_stalled", PyrisChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
     }
 
-    public void mockCourseChatResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/course-chat/run", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
+    public void mockCourseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/chat/run", PyrisChatPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockRunError(int httpStatus) {
@@ -363,6 +363,17 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
+    public void mockSearchLectures(Object responseBody, List<Long> expectedCourseIds) {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var body = mockRequest.getBodyAsString();
+            assertThat(body).isNotNull();
+            var dto = mapper.readValue(body, PyrisLectureSearchRequestDTO.class);
+            assertThat(dto.courseIds()).containsExactlyInAnyOrderElementsOf(expectedCourseIds);
+            return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
+        });
+    }
+
     public void mockSearchLecturesError(HttpStatus status) {
         // @formatter:off
         mockServer
@@ -372,22 +383,22 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockSearchAsk(Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
+    /**
+     * Mocks an async POST to /api/v1/pipelines/global-search/run (returns 202) and exposes the parsed request DTO
+     * to the given consumer so tests can capture the job token via
+     * {@code dto.settings().authenticationToken()}.
+     */
+    public void mockGlobalSearchIrisAnswer(Consumer<PyrisGlobalSearchAnswerRequestDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisGlobalSearchAnswerRequestDTO.class);
+            responseConsumer.accept(dto);
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
     }
 
-    public void mockSearchAskError(HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
+    public void mockGlobalSearchIrisAnswerError(HttpStatus status) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
     // -------------------- Memiris endpoints --------------------

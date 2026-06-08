@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
 

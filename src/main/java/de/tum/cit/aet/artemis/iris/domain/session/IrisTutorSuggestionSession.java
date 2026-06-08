@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * An IrisTutorSuggestionSession represents a conversation between a user and an LLM in the context of a tutor suggestion.
@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Entity
 @DiscriminatorValue("TUTOR_SUGGESTION")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisTutorSuggestionSession extends IrisChatSession {
+public class IrisTutorSuggestionSession extends IrisSession {
 
     @JsonIgnore
     private Long postId;
 
     public IrisTutorSuggestionSession(Long postId, User user) {
-        super(user);
+        setUserId(user.getId());
         this.postId = postId;
     }
 
@@ -47,7 +47,7 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
     }
 
     @Override
-    public IrisChatMode getMode() {
-        return IrisChatMode.TUTOR_SUGGESTION;
+    public Long getEntityId() {
+        return postId;
     }
 }

@@ -38,7 +38,7 @@ export default createRule({
     create(context) {
         const parserServices = ESLintUtils.getParserServices(context);
         const typeChecker = parserServices.program.getTypeChecker();
-        const sourceCode = context.getSourceCode();
+        const sourceCode = context.sourceCode;
 
         const modalReferenceVariableNameToComponentClassNameMap = new Map();
 

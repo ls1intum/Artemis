@@ -8,7 +8,7 @@ import { ComplaintResponseService } from 'app/assessment/manage/services/complai
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { User, UserIdAndLoginDTO } from 'app/core/user/user.model';
+import { User, UserIdAndLoginDTO } from 'app/account/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintAction, ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

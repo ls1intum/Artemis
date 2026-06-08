@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-page-ribbon',

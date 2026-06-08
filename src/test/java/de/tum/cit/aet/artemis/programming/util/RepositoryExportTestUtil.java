@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +29,11 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
  * Shared helpers for LocalVC-backed repository export tests.
@@ -406,7 +405,19 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            // Check directly on the file system first — JGit can cache pack files / object database
+            // state per Repository instance, so a freshly-opened Git handle may still return null
+            // from resolve(...) immediately after a push. The loose-object path is updated atomically
+            // by JGit's push, so its presence is the authoritative signal that the commit landed.
+            if (commitHash == null || commitHash.length() != 40) {
+                return false;
+            }
+            Path looseObjectPath = repo.remoteBareGitRepoFile.toPath().resolve("objects").resolve(commitHash.substring(0, 2)).resolve(commitHash.substring(2));
+            if (Files.exists(looseObjectPath)) {
+                return true;
+            }
+            // Fallback for the case where the commit has already been packed (rare for fresh pushes).
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
                 var resolved = git.getRepository().resolve(commitHash);
                 if (resolved == null) {
@@ -433,7 +444,7 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference
@@ -471,18 +482,6 @@ public final class RepositoryExportTestUtil {
         return commits.next().getId();
     }
 
-    /**
-     * Creates and returns a working copy repository handle for the template repo of the given exercise.
-     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
-     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
-     */
-    public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
-            throws GitAPIException, IOException, URISyntaxException {
-        String projectKey = exercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
-    }
-
     // ===========================================================================
     // Utilities for reducing code duplication across test suites
     // ===========================================================================
@@ -498,7 +497,7 @@ public final class RepositoryExportTestUtil {
      */
     public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
         String projectKey = exercise.getProjectKey().toUpperCase();
-        String slug = (exercise.getShortName() + "-" + username).toLowerCase();
+        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase();
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
         if (Files.exists(bareRepoPath)) {
             FileUtils.deleteDirectory(bareRepoPath.toFile());

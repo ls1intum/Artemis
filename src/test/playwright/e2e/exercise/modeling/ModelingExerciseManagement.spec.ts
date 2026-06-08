@@ -15,9 +15,15 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
         let modelingExercise: ModelingExercise;
 
         test('Create a new modeling exercise', async ({ login, page, courseManagementExercises, modelingExerciseCreation, modelingExerciseEditor, modelingExerciseAssessment }) => {
+            // The full create-edit-example-assess flow includes three modeling-canvas warmups
+            // (each waiting on the Apollon editor + react-flow nodes), an example-submission
+            // creation, and an example-assessment cycle. The cumulative work routinely overruns
+            // the 60s @fast budget under multi-node CI load; observed worst case ~150s. Lift
+            // the per-test timeout to 180s via test.slow().
+            test.slow();
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exercises`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await courseManagementExercises.createModelingExercise();
             await modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
             await modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
@@ -26,13 +32,13 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             modelingExercise = await response.json();
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
             await expect(page.locator('.react-flow__node').first()).toBeAttached();
             await modelingExerciseCreation.save();
 
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/example-submissions`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await modelingExerciseEditor.clickCreateExampleSubmission();
             await modelingExerciseEditor.addComponentToExampleSolutionModel(1);
             await modelingExerciseEditor.addComponentToExampleSolutionModel(2);
@@ -47,7 +53,7 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await modelingExerciseEditor.waitForExampleSolutionEditor();
             await expect(modelingExerciseEditor.getModelingCanvas()).toBeVisible();
         });

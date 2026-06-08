@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -131,7 +131,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExercise.getId(), exerciseToImport,
+        ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + modelingExercise.getId(), exerciseToImport,
                 ModelingExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded

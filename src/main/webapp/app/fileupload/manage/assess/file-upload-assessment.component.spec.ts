@@ -13,7 +13,7 @@ import { MockComponent } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
 import { FileUploadAssessmentService } from './file-upload-assessment.service';
@@ -29,20 +29,21 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('FileUploadAssessmentComponent', () => {
     setupTestBed({ zoneless: true });
@@ -161,6 +162,14 @@ describe('FileUploadAssessmentComponent', () => {
                     provide: ComplaintService,
                     useValue: {
                         findBySubmissionId: vi.fn().mockReturnValue(of({ body: null })),
+                        convertComplaintFromServer: vi.fn((dto: ComplaintDTO, result?: Result) =>
+                            Object.assign(new Complaint(), dto, {
+                                accepted: dto.complaintIsAccepted ?? (dto as Complaint).accepted,
+                                result,
+                            }),
+                        ),
+                        getFeedbacksForUpdateAfterComplaint: vi.fn((feedbacks: Feedback[]) => feedbacks),
+                        getComplaintResponseForUpdateAfterComplaint: vi.fn((complaintResponse: ComplaintResponse) => complaintResponse),
                     },
                 },
                 {
@@ -355,15 +364,19 @@ describe('FileUploadAssessmentComponent', () => {
             const result = createResult(submission);
             result.hasComplaint = true;
             setLatestSubmissionResult(submission, result);
-            const complaint = new Complaint();
+            const complaint = new ComplaintDTO();
             complaint.id = 555;
             complaint.complaintText = 'Test complaint';
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.ngOnInit();
 
-            expect(component.complaint).toEqual(complaint);
+            expect(component.complaint).toMatchObject({
+                id: complaint.id,
+                complaintText: complaint.complaintText,
+            });
+            expect(component.complaint.result).toBe(component.result);
         });
 
         it('should show lock alert for unassessed submission owned by current user', async () => {
@@ -853,7 +866,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new Complaint();
             complaint.id = 123;
             complaint.complaintText = 'Test complaint';
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 
@@ -861,7 +874,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should not set complaint when response body is null', () => {
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as HttpResponse<Complaint>));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as HttpResponse<ComplaintDTO>));
 
             component.getComplaint();
 

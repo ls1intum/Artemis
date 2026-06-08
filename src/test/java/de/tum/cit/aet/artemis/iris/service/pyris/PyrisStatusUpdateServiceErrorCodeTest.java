@@ -16,11 +16,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 /**
@@ -38,9 +36,8 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     void setUp() {
         callbackApi = mock(ProcessingStateCallbackApi.class);
 
-        service = new PyrisStatusUpdateService(mock(PyrisJobService.class), mock(IrisExerciseChatSessionService.class), mock(IrisTextExerciseChatSessionService.class),
-                mock(IrisCourseChatSessionService.class), mock(IrisCompetencyGenerationService.class), mock(IrisLectureChatSessionService.class),
-                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi));
+        service = new PyrisStatusUpdateService(mock(PyrisJobService.class), mock(IrisChatSessionService.class), mock(IrisCompetencyGenerationService.class),
+                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi), mock(IrisWebsocketService.class));
     }
 
     @Test

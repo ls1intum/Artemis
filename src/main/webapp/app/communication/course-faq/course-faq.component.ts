@@ -3,19 +3,19 @@ import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
-import { onError } from 'app/shared/util/global.utils';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -23,7 +23,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrls: ['../../core/course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
+    styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })

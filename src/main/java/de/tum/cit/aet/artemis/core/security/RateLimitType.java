@@ -29,7 +29,17 @@ public enum RateLimitType {
      * <p>
      * Default: 30 requests per minute per client.
      */
-    PROBLEM_STATEMENT_RENDERING(30);
+    PROBLEM_STATEMENT_RENDERING(30),
+
+    /**
+     * Rate limit for AI pipeline endpoints triggered by search-as-you-type interactions.
+     * The Iris answer component uses a 600 ms debounce, giving a theoretical human maximum
+     * of ~100 RPM; 120 RPM sits just above that to allow comfortable real-world use
+     * while blocking automated abuse.
+     * <p>
+     * Default: 120 requests per minute per client.
+     */
+    AI_SEARCH_PIPELINE(120);
 
     private final int defaultRpm;
 

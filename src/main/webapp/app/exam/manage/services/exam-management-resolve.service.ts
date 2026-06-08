@@ -8,8 +8,8 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -42,7 +42,6 @@ export class ExamResolve implements Resolve<Exam> {
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
         const courseId = route.params['courseId'] ? route.params['courseId'] : undefined;
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
-        const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
         const isImport = route.data['requestOptions']?.forImport ?? false;
         if (isImport && examId) {
@@ -53,7 +52,7 @@ export class ExamResolve implements Resolve<Exam> {
                 map((response: HttpResponse<Exam>) => response.body!),
             );
         } else if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
+            return this.examManagementService.find(courseId, examId, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
                 map((response: HttpResponse<Exam>) => response.body!),
             );

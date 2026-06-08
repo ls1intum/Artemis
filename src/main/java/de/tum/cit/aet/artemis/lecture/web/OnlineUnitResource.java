@@ -33,20 +33,20 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.course.dto.OnlineResourceDTO;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -68,15 +68,15 @@ public class OnlineUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
-        this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -88,11 +88,11 @@ public class OnlineUnitResource {
      */
     @GetMapping("lectures/{lectureId}/online-units/{onlineUnitId}")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "onlineUnitId")
-    public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<OnlineUnitDTO> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
         var onlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitId);
         checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
-        return ResponseEntity.ok().body(onlineUnit);
+        return ResponseEntity.ok(OnlineUnitDTO.of(onlineUnit));
     }
 
     /**
@@ -114,7 +114,7 @@ public class OnlineUnitResource {
 
         // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        validateUrlStringAndReturnUrl(onlineUnitDto.source());
+        validateOnlineUnitSource(onlineUnitDto.source());
 
         // Precompute original competency IDs for progress update below
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
@@ -131,44 +131,54 @@ public class OnlineUnitResource {
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+        OnlineUnit savedOnlineUnit = existingOnlineUnit;
 
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
 
-        // convert into DTO
-        var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
-                existingOnlineUnit.getSource(), existingOnlineUnit.getCompetencyLinks().stream()
-                        .map(link -> new CompetencyLinkDTO(new CompetencyDTO(link.getCompetency().getId()), link.getWeight())).collect(Collectors.toSet()));
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedOnlineUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedOnlineUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedOnlineUnit.getId());
+            }
+        });
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(OnlineUnitDTO.of(existingOnlineUnit));
     }
 
     /**
      * POST /lectures/:lectureId/online-units : creates a new online unit.
      *
-     * @param lectureId  the id of the lecture to which the online unit should be added
-     * @param onlineUnit the online unit that should be created
+     * @param lectureId     the id of the lecture to which the online unit should be added
+     * @param onlineUnitDto the online unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new online unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
-        log.debug("REST request to create onlineUnit : {}", onlineUnit);
-        if (onlineUnit.getId() != null) {
+    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
+        log.debug("REST request to create onlineUnit : {}", onlineUnitDto);
+        if (onlineUnitDto.id() != null) {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        validateOnlineUnitSource(onlineUnitDto.source());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
+        if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
 
-        lectureUnitRepository.reconnectCompetencyLinks(onlineUnit);
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription(onlineUnitDto.description());
+        onlineUnit.setSource(onlineUnitDto.source());
+        onlineUnit.setName(onlineUnitDto.name());
+        onlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit);
 
         lecture.addLectureUnit(onlineUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
@@ -178,9 +188,15 @@ public class OnlineUnitResource {
         onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
-        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
+        });
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(OnlineUnitDTO.of(persistedUnit));
     }
 
     private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.[A-Za-z]{2,}$");
@@ -278,7 +294,17 @@ public class OnlineUnitResource {
      * @return The URL object
      * @throws BadRequestException If the URL string is invalid
      */
+    private static void validateOnlineUnitSource(String source) {
+        if (source == null || source.isBlank()) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+        validateUrlStringAndReturnUrl(source);
+    }
+
     private static URL validateUrlStringAndReturnUrl(String urlString) {
+        if (urlString == null || urlString.isBlank()) {
+            throw new BadRequestException("The specified link must not be empty");
+        }
         try {
             return new URI(urlString).toURL();
         }

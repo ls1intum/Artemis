@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 export type EntityResponseType = HttpResponse<Submission>;

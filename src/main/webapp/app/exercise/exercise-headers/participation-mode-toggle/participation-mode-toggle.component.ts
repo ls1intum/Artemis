@@ -1,7 +1,7 @@
 import { Component, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type ParticipationMode = 'practice' | 'graded';
 
@@ -14,7 +14,7 @@ export type ParticipationMode = 'practice' | 'graded';
 export class ParticipationModeToggleComponent {
     readonly mode = model.required<ParticipationMode>();
     readonly hasPractice = input(false);
-    readonly hasBoth = input(false);
+    readonly hasGraded = input(false);
 
     readonly faBook = faBook;
     readonly faGraduationCap = faGraduationCap;

@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
@@ -96,10 +96,30 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
-        await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
-        // Use a permissive glob so Angular sub-path routing (e.g. /exams/{id}/start)
-        // does not cause waitForURL to time out.
-        await this.page.waitForURL(`**/exams/${exam.id}**`);
+        const examUrl = `/courses/${course.id}/exams/${exam.id}`;
+        const urlPattern = `**/exams/${exam.id}**`;
+        // Under heavy multi-node load the exam landing page's Angular router occasionally
+        // leaves the page on /courses after login when a lazy chunk fails to bootstrap.
+        // A bare waitForURL then consumes the whole test budget. Re-issue the navigation
+        // up to two extra times on URL miss; pre-warm alone doesn't address this because
+        // exam routes have a no-navbar configuration that bypasses the navbar reload check.
+        await Commands.login(this.page, student, examUrl);
+        const urlSettles = async (timeoutMs: number): Promise<boolean> =>
+            this.page
+                .waitForURL(urlPattern, { timeout: timeoutMs })
+                .then(() => true)
+                .catch(() => false);
+        if (await urlSettles(30_000)) {
+            return;
+        }
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.goto(examUrl);
+            await this.page.waitForLoadState('load');
+            if (await urlSettles(20_000)) {
+                return;
+            }
+        }
+        throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {

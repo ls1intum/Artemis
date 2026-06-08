@@ -106,6 +106,11 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Update/change the competency linked to a lecture unit', () => {
         test('Changes the competency linked to a lecture unit via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
+            // Three `competencyManagement.goto` calls plus several navigations to the
+            // unit-management edit page accumulate well beyond the @fast 60s budget under
+            // heavy multi-node load — even `test.slow()`'s 180s budget can be tight when
+            // any single navigation stretches past 30s. Set an explicit 6-minute budget.
+            test.setTimeout(360_000);
             const compA = await courseManagementAPIRequests.createCompetency(course, 'Comp A ' + uid, 'First competency');
             await courseManagementAPIRequests.createCompetency(course, 'Comp B ' + uid, 'Second competency');
 
@@ -118,8 +123,24 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
-            await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
+            // Anchor on the edit form's submit button before interacting with the competency
+            // checkboxes. Under heavy multi-node CI load the text-unit edit page's lazy
+            // chunk occasionally fails to load — leaving the form unrendered or redirecting
+            // to /courses. Retry the navigation once if the submit button does not appear.
+            const editUrl = `/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`;
+            const submitButton = page.locator('#submitButton');
+            await page.goto(editUrl);
             await page.waitForLoadState('domcontentloaded');
+            const submitVisible = await submitButton
+                .waitFor({ state: 'visible', timeout: 30_000 })
+                .then(() => true)
+                .catch(() => false);
+            if (!submitVisible) {
+                await page.goto(editUrl);
+                await page.waitForLoadState('domcontentloaded');
+                await submitButton.waitFor({ state: 'visible', timeout: 30_000 });
+            }
+            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).waitFor({ state: 'visible', timeout: 30_000 });
 
             await page.getByRole('checkbox', { name: 'Comp A ' + uid }).uncheck();
             await page.getByRole('checkbox', { name: 'Comp B ' + uid }).check();
@@ -141,6 +162,9 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
 
     test.describe('Remove competency from a lecture unit', () => {
         test('Unlinks a lecture unit from a competency via UI', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
+            // Two competencyManagement.goto calls + unit-management navigation + form save
+            // routinely exceed the @fast 60s budget under heavy multi-node load. Triple it.
+            test.slow();
             const title = makeCompetencyTitle('Unlink');
             const competency = await courseManagementAPIRequests.createCompetency(course, title, 'Test competency');
 

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -7,7 +9,7 @@ import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
@@ -15,6 +17,8 @@ import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submis
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorStudentContainerComponent;
     let fixture: ComponentFixture<CodeEditorStudentContainerComponent>;
 
@@ -28,7 +32,6 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [],
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -40,24 +43,21 @@ describe('CodeEditorStudentContainerComponent', () => {
                 MockProvider(SubmissionPolicyService),
                 MockProvider(AlertService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
-                comp = fixture.componentInstance;
-                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-                submissionPolicyService = TestBed.inject(SubmissionPolicyService);
-            });
+        });
+        fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
+        comp = fixture.componentInstance;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should correctly initialize the number of submissions for submission policy', () => {
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
-        jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of({ active: true }));
-        const getParticipationSubmissionCountSpy = jest.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(5));
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of({ active: true }));
+        const getParticipationSubmissionCountSpy = vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount').mockReturnValue(of(5));
 
         comp.ngOnInit();
 
@@ -68,9 +68,9 @@ describe('CodeEditorStudentContainerComponent', () => {
     it.each([undefined, { active: false } as SubmissionPolicy])(
         'should not calculate the number of submissions for no or inactive submission policy',
         (submissionPolicy: SubmissionPolicy) => {
-            jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
-            jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
-            const getParticipationSubmissionCountSpy = jest.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
+            vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
+            const getParticipationSubmissionCountSpy = vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');
 
             comp.ngOnInit();
 

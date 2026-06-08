@@ -15,7 +15,7 @@ describe('BuildPhasesTemplateService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [BuildPhasesTemplateService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(BuildPhasesTemplateService);
@@ -27,20 +27,27 @@ describe('BuildPhasesTemplateService', () => {
     });
 
     it('builds the language/project endpoint and passes boolean query params', () => {
-        service.getTemplate(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false).subscribe();
+        service.fetchTemplate(true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN, true, false);
 
-        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/phases/templates/JAVA/PLAIN_MAVEN');
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/localci/phases/templates/JAVA/PLAIN_MAVEN');
         expect(req.request.params.get('staticAnalysis')).toBe('true');
         expect(req.request.params.get('sequentialRuns')).toBe('false');
-        req.flush({ phases: [] });
+        expect(req.request.params.get('examMode')).toBe('true');
+        const template = { phases: [{ name: 'test', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }] };
+        req.flush(template);
+
+        expect(service.buildPlan()).toEqual(template);
     });
 
     it('omits project type path segment and defaults booleans to false', () => {
-        service.getTemplate(ProgrammingLanguage.KOTLIN).subscribe();
+        service.fetchTemplate(true, ProgrammingLanguage.KOTLIN);
 
-        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/phases/templates/KOTLIN');
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/localci/phases/templates/KOTLIN');
         expect(req.request.params.get('staticAnalysis')).toBe('false');
         expect(req.request.params.get('sequentialRuns')).toBe('false');
+        expect(req.request.params.get('examMode')).toBe('true');
         req.flush({ phases: [] });
+
+        expect(service.buildPlan()).toEqual({ phases: [] });
     });
 });

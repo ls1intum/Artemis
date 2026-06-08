@@ -144,10 +144,28 @@
         "buildagent": {
             "sourcePaths": [
                 "src/main/java/de/tum/cit/aet/artemis/buildagent/",
-                "src/main/webapp/app/buildagent/"
+                "src/main/webapp/app/localci/"
             ],
             "testPaths": [
                 "e2e/exercise/programming/"
+            ]
+        },
+        "localci": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/localci/"
+            ],
+            "testPaths": [
+                "e2e/exercise/programming/"
+            ]
+        },
+        "localvc": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/localvc/",
+                "src/main/webapp/app/localvc/"
+            ],
+            "testPaths": [
+                "e2e/exercise/programming/",
+                "e2e/exam/ExamParticipation.spec.ts"
             ]
         },
         "plagiarism": {

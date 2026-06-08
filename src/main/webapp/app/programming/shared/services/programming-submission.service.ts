@@ -2,22 +2,22 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { createRequestOption } from 'app/foundation/util/request.util';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { findLatestResult } from 'app/shared/util/utils';
+import { findLatestResult } from 'app/foundation/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ProgrammingSubmissionState {
@@ -233,7 +233,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public fetchQueueReleaseDateEstimationByParticipationId(participationId: number): Observable<dayjs.Dayjs | undefined> {
-        return this.http.get<dayjs.Dayjs>('api/programming/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
+        return this.http.get<dayjs.Dayjs>('api/localci/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
     }
 
     /**
@@ -720,12 +720,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
+        return this.http.post(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
-        return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { params, observe: 'response' });
+        return this.http.post(`api/programming/participations/${participationId}/trigger-failed-build`, {}, { params, observe: 'response' });
     }
 
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
