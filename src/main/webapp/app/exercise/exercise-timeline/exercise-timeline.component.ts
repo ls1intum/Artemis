@@ -53,7 +53,7 @@ export class ExerciseTimelineComponent {
         });
     }
 
-    updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
+    updateDate(item: TimelineItem, newInternalDate: Date | string | null) {
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
@@ -62,24 +62,29 @@ export class ExerciseTimelineComponent {
         item.date.set(newDate);
     }
 
-    handleManualInput(item: TimelineItem, event: Event): void {
+    handleManualInput(item: TimelineItem, event: Event) {
         const value = (event.target as HTMLInputElement).value;
         const parsedDate = this.parseManualInput(value);
         if (parsedDate !== undefined) {
             this.setDateIfChanged(item, parsedDate);
         }
+        if (value === '') {
+            this.setDateIfChanged(item, undefined);
+        }
     }
 
-    handleBlur(item: TimelineItem, event: Event): void {
+    handleBlur(item: TimelineItem, event: Event) {
         const inputElement = event.target as HTMLInputElement;
-        const currentInputIsInvalidDate = this.parseManualInput(inputElement.value) === undefined;
-        if (currentInputIsInvalidDate) {
+        const input = inputElement.value;
+        const inputWasCleared = input === '';
+        const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
+        if (currentInputIsInvalidDate && !inputWasCleared) {
             const previousDate = item.date();
             inputElement.value = previousDate ? previousDate.format(this.dateTimeFormat) : '';
         }
     }
 
-    private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
+    private setDateIfChanged(item: TimelineItem, newDate?: Dayjs) {
         const currentDate = item.date();
         if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);
