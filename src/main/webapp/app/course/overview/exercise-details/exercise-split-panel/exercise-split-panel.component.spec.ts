@@ -14,6 +14,7 @@ import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-detail
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 vi.mock('split.js', () => ({
     default: vi.fn(() => ({ destroy: vi.fn(), getSizes: vi.fn(() => [65, 35]) })),
@@ -48,8 +49,8 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels>
-                            @if (showEditorPanel()) {
+                        <jhi-resizable-panels [splitOnWide]="!showReadOnlyEditorAsFeedbackTab()">
+                            @if (showEditorPanel() && !showReadOnlyEditorAsFeedbackTab()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                             @if (exercise().type !== ExerciseType.QUIZ) {
@@ -57,6 +58,9 @@ describe('ExerciseSplitPanelComponent', () => {
                             }
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
+                            }
+                            @if (showReadOnlyEditorAsFeedbackTab()) {
+                                <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
                         </jhi-resizable-panels>
                     `,
@@ -108,5 +112,27 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    it('should keep wide splitting enabled when online editor is disabled but no read-only editor panel is shown', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(resizablePanels.splitOnWide()).toBe(true);
+    });
+
+    it('should disable wide splitting when the read-only editor is shown as feedback tab', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+        expect(resizablePanels.splitOnWide()).toBe(false);
     });
 });

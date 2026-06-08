@@ -1,5 +1,5 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [splitOnWide]="!showEditorAsFeedbackTab()">
-    @if (showEditorPanel() && !showEditorAsFeedbackTab()) {
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [splitOnWide]="!showReadOnlyEditorAsFeedbackTab()">
+    @if (showEditorPanel() && !showReadOnlyEditorAsFeedbackTab()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
@@ -90,7 +90,7 @@
         </ng-template>
     }
 
-    @if (showEditorPanel() && showEditorAsFeedbackTab()) {
+    @if (showReadOnlyEditorAsFeedbackTab()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
