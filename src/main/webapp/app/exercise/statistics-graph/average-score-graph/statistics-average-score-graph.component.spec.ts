@@ -68,6 +68,8 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     const exercise11 = { exerciseId: 11, exerciseName: 'StatePattern', averageScore: 100, exerciseType: ExerciseType.MODELING };
 
     const returnValue = [exercise2, exercise4, exercise5, exercise8, exercise9, exercise10, exercise6, exercise11, exercise1, exercise3, exercise7];
+    // returnValue ordered ascending by averageScore — what the component renders after sorting (matches exerciseTypeStrings below)
+    const sortedScores = [exercise1, exercise2, exercise3, exercise4, exercise5, exercise6, exercise7, exercise8, exercise9, exercise10, exercise11];
 
     const courseAverageScore = 75;
 
@@ -94,8 +96,8 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         applyTypeFilterMock = vi.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
         applyCategoryFilterMock = vi.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
 
-        component.exerciseAverageScores = returnValue;
-        component.courseAverage = courseAverageScore;
+        fixture.componentRef.setInput('exerciseAverageScores', [...returnValue]);
+        fixture.componentRef.setInput('courseAverage', courseAverageScore);
         fixture.detectChanges();
     });
 
@@ -143,19 +145,19 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     it('should return the correct type stringification for the tooltips', () => {
         for (let i = 0; i < 10; i++) {
-            expect(component.convertTypeForTooltip(returnValue[i].exerciseName, returnValue[i].averageScore)).toBe(exerciseTypeStrings[i]);
+            expect(component.convertTypeForTooltip(sortedScores[i].exerciseName, sortedScores[i].averageScore)).toBe(exerciseTypeStrings[i]);
         }
     });
 
     it('should delegate the user to the correct pages', () => {
-        component.courseId = 42;
+        fixture.componentRef.setInput('courseId', 42);
 
         let event: any;
         let path: any[];
         for (let i = 0; i < 10; i++) {
-            event = { name: returnValue[i].exerciseName, value: returnValue[i].averageScore };
-            path = ['course-management', 42, exerciseTypeStrings[i] + '-exercises', returnValue[i].exerciseId, 'exercise-statistics'];
-            if (returnValue[i].exerciseType === ExerciseType.QUIZ) {
+            event = { name: sortedScores[i].exerciseName, value: sortedScores[i].averageScore };
+            path = ['course-management', 42, exerciseTypeStrings[i] + '-exercises', sortedScores[i].exerciseId, 'exercise-statistics'];
+            if (sortedScores[i].exerciseType === ExerciseType.QUIZ) {
                 path[4] = 'quiz-point-statistic';
             }
             component.onSelect(event);
@@ -190,10 +192,10 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             component.toggleType(type);
 
             expect(toggleTypeMock).toHaveBeenCalledOnce();
-            expect(toggleTypeMock).toHaveBeenCalledWith(type, returnValue);
+            expect(toggleTypeMock).toHaveBeenCalledWith(type, sortedScores);
             expect(applyCategoryFilterMock).toHaveBeenCalledOnce();
-            expect(applyCategoryFilterMock).toHaveBeenCalledWith(returnValue);
-            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(applyCategoryFilterMock).toHaveBeenCalledWith(sortedScores);
+            expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
 
             expect(component.currentPeriod).toBe(0);
         });
@@ -204,11 +206,11 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             component.toggleCategory(category);
 
             expect(toggleCategoryMock).toHaveBeenCalledOnce();
-            expect(toggleCategoryMock).toHaveBeenCalledWith(returnValue, category);
+            expect(toggleCategoryMock).toHaveBeenCalledWith(sortedScores, category);
             expect(applyTypeFilterMock).toHaveBeenCalledOnce();
-            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
-            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
             expect(component.currentPeriod).toBe(0);
         });
 
@@ -218,11 +220,11 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             component.toggleAllCategories();
 
             expect(toggleAllCategoriesMock).toHaveBeenCalledOnce();
-            expect(toggleAllCategoriesMock).toHaveBeenCalledWith(returnValue);
+            expect(toggleAllCategoriesMock).toHaveBeenCalledWith(sortedScores);
             expect(applyTypeFilterMock).toHaveBeenCalledOnce();
-            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
-            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
             expect(component.currentPeriod).toBe(0);
         });
 
@@ -232,11 +234,11 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             component.toggleExercisesWithNoCategory();
 
             expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledOnce();
-            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledWith(returnValue);
+            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledWith(sortedScores);
             expect(applyTypeFilterMock).toHaveBeenCalledOnce();
-            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(sortedScores);
 
-            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(component.currentlyDisplayableExercises).toStrictEqual(sortedScores);
             expect(component.currentPeriod).toBe(0);
         });
 

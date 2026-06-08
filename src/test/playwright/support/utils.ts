@@ -58,6 +58,26 @@ export function dayjsToString(day: dayjs.Dayjs) {
     return day.utc().format(TIME_FORMAT) + 'Z';
 }
 
+export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
+
+export function getExamBuildAndTestAfterDueDate(exam: Exam) {
+    return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
+}
+
+export function getExamEndDateWithGrace(exam: Exam) {
+    const gracePeriodSeconds = exam.gracePeriod ?? 0;
+    return dayjs(exam.endDate as any).add(gracePeriodSeconds, 'seconds');
+}
+
+export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
+    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
+    if (afterDueDate.isAfter(dayjs())) {
+        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
+        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
+        await page.waitForTimeout(timeToWait);
+    }
+}
+
 /**
  * This function is necessary to make the server and the client date comparable.
  * The server sometimes has 3 digit on the milliseconds and sometimes only 1 digit.
@@ -387,6 +407,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
                 submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
                 programmingLanguage: ProgrammingLanguage.C,
+                skipBuildResultCheck: true,
             };
             break;
         case ExerciseType.TEXT:

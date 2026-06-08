@@ -25,8 +25,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('MonacoEditorActionIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
@@ -41,13 +45,11 @@ describe('MonacoEditorActionIntegration', () => {
 
         fixture = TestBed.createComponent(MonacoEditorComponent);
         comp = fixture.componentInstance;
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         Object.assign(navigator, {
             clipboard: {
-                read: jest.fn(),
+                read: vi.fn(),
             },
         });
 
@@ -55,7 +57,7 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should throw when trying to register an action twice', () => {
@@ -90,8 +92,8 @@ describe('MonacoEditorActionIntegration', () => {
     });
 
     it('should not access the clipboard if no upload callback is specified', async () => {
-        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read');
-        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const clipboardReadSpy = vi.spyOn(navigator.clipboard, 'read');
+        const addPasteListenerSpy = vi.spyOn(comp['textEditorAdapter'], 'addPasteListener');
         const action = new AttachmentAction();
         comp.registerAction(action);
         // The addPasteListenerSpy should have received a function that does not result in the clipboard being read when called.
@@ -106,21 +108,21 @@ describe('MonacoEditorActionIntegration', () => {
         const imageBlob = new Blob([]);
         const imageClipboardItem: MockClipboardItem = {
             types: ['image/png'],
-            getType: jest.fn().mockResolvedValue(imageBlob),
+            getType: vi.fn().mockResolvedValue(imageBlob),
             presentationStyle: 'inline',
         };
 
         const nonImageBlob = new Blob(['Sample text content']);
         const textClipboardItem: MockClipboardItem = {
             types: ['text/plain'],
-            getType: jest.fn().mockResolvedValue(nonImageBlob),
+            getType: vi.fn().mockResolvedValue(nonImageBlob),
             presentationStyle: 'inline',
         };
 
         // Mock the clipboard read function to return the created ClipboardItems
-        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read').mockResolvedValue([imageClipboardItem, textClipboardItem]);
-        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
-        const uploadCallback = jest.fn();
+        const clipboardReadSpy = vi.spyOn(navigator.clipboard, 'read').mockResolvedValue([imageClipboardItem, textClipboardItem]);
+        const addPasteListenerSpy = vi.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const uploadCallback = vi.fn();
         const action = new AttachmentAction();
         action.setUploadCallback(uploadCallback);
         comp.registerAction(action);
@@ -209,7 +211,7 @@ describe('MonacoEditorActionIntegration', () => {
             { value: 'testCase1', id: '1' },
             { value: 'testCase2', id: '2' },
         ];
-        const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
+        const registerCompletionProviderStub = vi.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation(() => ({ dispose: () => {} }));
         comp.registerAction(action);
         expect(registerCompletionProviderStub).toHaveBeenCalledOnce();
         const completionFunction = registerCompletionProviderStub.mock.calls[0][1].provideCompletionItems;
@@ -238,8 +240,8 @@ describe('MonacoEditorActionIntegration', () => {
     it('should enter fullscreen', () => {
         const action = new FullscreenAction();
         comp.registerAction(action);
-        const enterFullscreenStub = jest.spyOn(FullscreenUtil, 'enterFullscreen').mockImplementation();
-        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
+        const enterFullscreenStub = vi.spyOn(FullscreenUtil, 'enterFullscreen').mockImplementation(() => {});
+        vi.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
         const dummyElement = document.createElement('div');
         action.element = dummyElement;
         action.executeInCurrentEditor();
@@ -256,8 +258,8 @@ describe('MonacoEditorActionIntegration', () => {
     it('should leave fullscreen', () => {
         const action = new FullscreenAction();
         comp.registerAction(action);
-        const exitFullscreenStub = jest.spyOn(FullscreenUtil, 'exitFullscreen').mockImplementation();
-        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
+        const exitFullscreenStub = vi.spyOn(FullscreenUtil, 'exitFullscreen').mockImplementation(() => {});
+        vi.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
         action.executeInCurrentEditor();
         expect(exitFullscreenStub).toHaveBeenCalledOnce();
     });
@@ -356,7 +358,7 @@ describe('MonacoEditorActionIntegration', () => {
         textToType?: string,
         initialText?: string,
     ): void {
-        const runSpy = jest.spyOn(action, 'run');
+        const runSpy = vi.spyOn(action, 'run');
         comp.registerAction(action);
         // Position
         action.executeInCurrentEditor(actionArgs);

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { onError } from 'app/foundation/util/global.utils';
@@ -32,8 +32,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     readonly faCircleNotch = faCircleNotch;
     readonly farPlayCircle = faPlayCircle;
 
-    @ViewChild('editor', { static: true })
-    editor: MonacoEditorComponent;
+    readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     isLoading = false;
 
     loadingResults = true;
@@ -93,12 +92,12 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     private initEditor() {
         this.onBuildPlanUpdate();
-        this.editor.layout();
+        this.editor().layout();
     }
 
     private onBuildPlanUpdate() {
         const text = this.buildPlan?.buildPlan ?? '';
-        this.editor.setText(text);
+        this.editor().setText(text);
     }
 
     /**
@@ -129,6 +128,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * @param tabSize The new tab size.
      */
     updateTabSize(tabSize: number) {
-        this.editor.updateModelIndentationSize(tabSize);
+        this.editor().updateModelIndentationSize(tabSize);
     }
 }

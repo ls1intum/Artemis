@@ -3,42 +3,13 @@ import { ESLintUtils } from '@typescript-eslint/utils';
 const createRule = ESLintUtils.RuleCreator(() => '');
 
 /**
- * Modules that have been fully migrated to Angular signal-based APIs.
- * Legacy decorators (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren)
- * must not be reintroduced in these modules.
+ * The entire Angular client has been migrated to signal-based APIs. Legacy decorators
+ * (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) must not be
+ * reintroduced anywhere in the client code under src/main/webapp/app (including co-located specs).
+ *
+ * This rule used to be scoped to an explicit allowlist of migrated modules; now that the migration
+ * is complete it applies to all client code, so no module list needs to be maintained.
  */
-// TODO: Add other modules here once they have been fully migrated to Angular signal-based APIs.
-// Still pending (legacy decorators remain): exercise, programming.
-const MIGRATED_MODULES = [
-    'account',
-    'admin',
-    'assessment',
-    'atlas',
-    'calendar',
-    'communication',
-    'core',
-    'course',
-    'editor',
-    'exam',
-    'fileupload',
-    'foundation',
-    'hyperion',
-    'iris',
-    'lecture',
-    'localci',
-    'localvc',
-    'logos',
-    'lti',
-    'modeling',
-    'notification',
-    'plagiarism',
-    'quiz',
-    'shared-ui',
-    'sharing',
-    'text',
-    'tutorialgroup',
-];
-
 const FORBIDDEN_DECORATORS = new Set(['Input', 'Output', 'ViewChild', 'ViewChildren', 'ContentChild', 'ContentChildren']);
 
 const SIGNAL_REPLACEMENTS = {
@@ -51,27 +22,25 @@ const SIGNAL_REPLACEMENTS = {
 };
 
 export default createRule({
-    name: 'enforce-signal-apis-in-migrated-modules',
+    name: 'enforce-signal-apis',
     meta: {
         type: 'problem',
         docs: {
             description:
-                'Forbid legacy Angular decorators (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) in modules that have been fully migrated to Angular signal-based APIs.',
+                'Forbid legacy Angular decorators (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) anywhere in the client code, which has been fully migrated to Angular signal-based APIs.',
         },
         messages: {
-            forbiddenDecorator:
-                "Legacy decorator '@{{decoratorName}}' is not allowed in the '{{moduleName}}' module which has been migrated to signal-based APIs. Use {{replacement}} instead.",
+            forbiddenDecorator: "Legacy decorator '@{{decoratorName}}' is not allowed; the client uses signal-based APIs. Use {{replacement}} instead.",
         },
         schema: [],
     },
     defaultOptions: [],
     create(context) {
-        // Normalize Windows backslashes so the `/app/<module>/` check works across operating systems.
+        // Normalize Windows backslashes so the client-code path check works across operating systems.
         const filename = (context.filename ?? context.getFilename()).replaceAll('\\', '/');
 
-        // Apply to all files (including test/spec files) in migrated modules
-        const migratedModule = MIGRATED_MODULES.find((mod) => filename.includes(`/app/${mod}/`));
-        if (!migratedModule) {
+        // Apply to all client code (including co-located test/spec files) under the Angular app directory.
+        if (!filename.includes('src/main/webapp/app/')) {
             return {};
         }
 
@@ -92,7 +61,6 @@ export default createRule({
                         messageId: 'forbiddenDecorator',
                         data: {
                             decoratorName,
-                            moduleName: migratedModule,
                             replacement: SIGNAL_REPLACEMENTS[decoratorName],
                         },
                     });

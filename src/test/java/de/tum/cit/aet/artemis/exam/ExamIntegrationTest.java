@@ -83,10 +83,12 @@ import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -925,45 +927,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true, true);
 
-        // Get the exam with all registered users
         // 1. without options
         var exam1 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
         assertThat(exam1.getExamUsers()).isEmpty();
         assertThat(exam1.getExerciseGroups()).isEmpty();
 
-        // 2. with students, without exercise groups
+        // 2. with exercise groups
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("withStudents", "true");
+        params.add("withExerciseGroups", "true");
         var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam2.getExamUsers()).hasSize(1);
-        assertThat(exam2.getExerciseGroups()).isEmpty();
-
-        // 3. with students, with exercise groups
-        params.add("withExerciseGroups", "true");
-        var exam3 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam3.getExamUsers()).hasSize(1);
-        assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
-            assertThat(exam3.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
-        }
-        assertThat(exam3.getNumberOfExamUsers()).isNotNull().isEqualTo(1);
-
-        // 4. without students, with exercise groups
-        params = new LinkedMultiValueMap<>();
-        params.add("withExerciseGroups", "true");
-        var exam4 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam4.getExamUsers()).isEmpty();
-        assertThat(exam4.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-
-        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
-            var exercises = exam3.getExerciseGroups().get(i).getExercises();
-            assertThat(exercises).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
+        assertThat(exam2.getExamUsers()).isEmpty();
+        assertThat(exam2.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
+        for (int i = 0; i < exam2.getExerciseGroups().size(); i++) {
+            assertThat(exam2.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
         }
 
-        var quiz = exam4.getExerciseGroups().get(1).getExercises();
+        var quiz = exam2.getExerciseGroups().get(1).getExercises();
         assertThat(quiz).isNotEmpty().allMatch(exercise -> exercise instanceof QuizExercise quizExercise && !quizExercise.getQuizQuestions().isEmpty());
 
-        ProgrammingExercise programming = (ProgrammingExercise) exam4.getExerciseGroups().get(6).getExercises().iterator().next();
+        ProgrammingExercise programming = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
         assertThat(programming.getTemplateParticipation()).isNotNull();
         assertThat(programming.getSolutionParticipation()).isNotNull();
     }
@@ -1132,6 +1114,29 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
+        ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
+        TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
+        exerciseGroup.addExercise(textExercise);
+        exam2.setNumberOfExercisesInExam(1);
+        examRepository.save(exam2);
+
+        examUtilService.addStudentExamWithUser(exam2, student1);
+        StudentParticipation failedPreparation = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, textExercise, student1);
+        studentParticipationRepository.save(failedPreparation);
+
+        assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(textExercise.getId(), false)).isOne();
+        assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(textExercise.getId())).isZero();
+
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isOne();
+        assertThat(returnedStatistics.allExamExercisesAllStudentsPrepared()).isFalse();
     }
 
     @Test

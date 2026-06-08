@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { problemStatement, problemStatementRepeatedTestCases } from 'test/helpers/sample/problemStatement.json';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -5,6 +7,8 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/m
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionAnalysisService', () => {
+    setupTestBed({ zoneless: true });
+
     const taskRegex = /\[task\](.*)/g;
 
     let analysisService: ProgrammingExerciseInstructionAnalysisService;

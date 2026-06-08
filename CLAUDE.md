@@ -11,7 +11,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 - **Server**: Spring Boot 3.5 (Java 25), MySQL, Hibernate, Hazelcast
 - **Client**: Angular 21, TypeScript, SCSS
 - **Build**: Gradle 9.3, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
-- **Testing**: JUnit 6, Vitest (preferred; Jest is deprecated and being migrated to Vitest), Playwright
+- **Testing**: JUnit 6, Vitest, Playwright
 
 ## Build & Development Commands
 
@@ -65,13 +65,6 @@ pnpm run vitest                      # Watch mode
 pnpm run vitest:run                  # Single run
 pnpm run vitest:coverage             # With coverage
 pnpm run vitest -- path/to/spec.ts   # Single Vitest file
-
-# Client (Jest - deprecated, being migrated to Vitest)
-pnpm test                            # Jest with coverage
-pnpm run test-diff                   # Test changed files vs origin/develop
-pnpm run test:ci                     # Full CI with module coverage check
-# Single test:
-pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 
 # E2E Tests (Playwright) — preferred way to run locally
 # The script auto-kills processes on ports 8080/9000/7921, starts Postgres, server, and client.
@@ -191,6 +184,7 @@ Organized by feature module:
   - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
   - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
   - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
+  - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` *does* fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
 - Avoid spread operator for objects
@@ -213,8 +207,7 @@ Organized by feature module:
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
 - Use `pnpm run test-diff` for incremental client work
-- **Client tests: Prefer Vitest over Jest for new tests**
-  - Jest is deprecated and being migrated to Vitest
+- **Client tests: Vitest**
   - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
   - Run Vitest: `pnpm run vitest` (watch), `pnpm run vitest:run` (single run), `pnpm run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present

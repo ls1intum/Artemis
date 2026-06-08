@@ -209,12 +209,6 @@ jobs:
         run: pnpm run compile:tests
       - name: TypeScript Test Without Typechecking
         run: pnpm run test:ci
-      - name: Upload Client Test Coverage Report
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Coverage Report Client Tests
-          path: build/test-results/lcov-report/
       - name: Upload Vitest Coverage Report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -227,15 +221,8 @@ jobs:
         with:
           name: Client Coverage Summaries
           path: |
-            build/test-results/jest/coverage-summary.json
             build/test-results/vitest/coverage/coverage-summary.json
           if-no-files-found: ignore
-      - name: Upload JUnit Test Results
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Client JUnit Test Results
-          path: junit.xml
       - name: Upload Vitest JUnit Test Results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

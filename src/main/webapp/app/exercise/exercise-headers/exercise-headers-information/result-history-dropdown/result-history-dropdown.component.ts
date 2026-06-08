@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -39,7 +39,6 @@ export class ResultHistoryDropdownComponent {
     private router = inject(Router);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
-    private destroyRef = inject(DestroyRef);
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
@@ -268,43 +267,28 @@ export class ResultHistoryDropdownComponent {
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
         const feedbackParams = prepareFeedbackComponentParameters(exercise, result, participation, templateStatus, undefined, exerciseServiceToUse);
 
-        const inputValues: Pick<FeedbackComponent, 'exercise' | 'result' | 'participation'> &
-            Partial<Pick<FeedbackComponent, 'exerciseType' | 'showScoreChart' | 'messageKey' | 'latestDueDate' | 'showMissingAutomaticFeedbackInformation'>> = {
-            exercise,
-            result,
-            participation,
-        };
-        if (feedbackParams.exerciseType) {
-            inputValues.exerciseType = feedbackParams.exerciseType;
-        }
-        if (feedbackParams.showScoreChart) {
-            inputValues.showScoreChart = feedbackParams.showScoreChart;
-        }
-        if (feedbackParams.messageKey) {
-            inputValues.messageKey = feedbackParams.messageKey;
-        }
-        if (feedbackParams.latestDueDate) {
-            inputValues.latestDueDate = feedbackParams.latestDueDate;
-        }
-        if (feedbackParams.showMissingAutomaticFeedbackInformation) {
-            inputValues.showMissingAutomaticFeedbackInformation = feedbackParams.showMissingAutomaticFeedbackInformation;
-        }
-
-        const dialogRef = this.dialogService.open(FeedbackComponent, {
-            width: '90vw',
+        this.dialogService.open(FeedbackComponent, {
+            header: this.translateService.instant('artemisApp.result.detail.feedback'),
+            width: '80rem',
+            breakpoints: {
+                '1400px': '75vw',
+                '1200px': '85vw',
+                '992px': '95vw',
+            },
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
-            showHeader: false,
-            inputValues,
-        });
-        dialogRef?.onChildComponentLoaded.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((component) => {
-            component.activeModal = {
-                close: (reason?: unknown) => dialogRef.close(reason),
-                dismiss: (reason?: unknown) => dialogRef.close(reason),
-                update: () => {},
-            };
+            dismissableMask: true,
+            data: {
+                exercise,
+                result,
+                participation,
+                exerciseType: feedbackParams.exerciseType,
+                showScoreChart: feedbackParams.showScoreChart,
+                messageKey: feedbackParams.messageKey,
+                latestDueDate: feedbackParams.latestDueDate,
+                showMissingAutomaticFeedbackInformation: feedbackParams.showMissingAutomaticFeedbackInformation,
+            },
         });
     }
 }

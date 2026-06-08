@@ -10,7 +10,7 @@ import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -18,6 +18,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { Course } from 'app/course/shared/entities/course.model';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     setupTestBed({ zoneless: true });
@@ -25,6 +27,8 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
     let component: ProgrammingExerciseUpdateTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
+    let httpTestingController: HttpTestingController;
+    let profileService: ProfileService;
 
     const startDate = dayjs().add(5, 'days');
     const nextDueDate = dayjs().add(6, 'days');
@@ -40,17 +44,21 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+                        snapshot: { params: { courseId: '1' }, paramMap: convertToParamMap({ courseId: '1' }) },
                         url: activatedRouteUrlSubject.asObservable(),
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                BuildPhasesTemplateService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        httpTestingController = TestBed.inject(HttpTestingController);
+        profileService = TestBed.inject(ProfileService);
 
         exercise = {
             id: 42,
@@ -83,6 +91,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     }
 
     afterEach(() => {
+        httpTestingController.verify();
         vi.restoreAllMocks();
     });
 
@@ -260,6 +269,65 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBe(false);
+    });
+
+    it('should preview the run tests after due date in LocalCI mode', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        createTestComponent();
+
+        const req = httpTestingController.expectOne('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body.programmingExerciseId).toBe(42);
+        expect(req.request.body.dueDate).toBeTruthy();
+
+        req.flush(afterDueDate.toISOString());
+        fixture.detectChanges();
+
+        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
+        expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(true);
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
+    });
+
+    it('should disable and reset feedback requests in LocalCI mode when the automatically managed run tests after due date exists', async () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.allowFeedbackRequests = true;
+        createTestComponent();
+
+        const req = httpTestingController.expectOne('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
+        req.flush(afterDueDate.toISOString());
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowFeedbackRequests');
+
+        expect(component.assessmentDueDate()).toBeUndefined();
+        expect(component.allowFeedbackRequests()).toBe(false);
+        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
+        expect(component.isFeedbackRequestsToggleEnabled()).toBe(false);
+        expect(checkbox.disabled).toBe(true);
+
+        component.allowFeedbackRequests.set(true);
+        fixture.detectChanges();
+
+        expect(component.allowFeedbackRequests()).toBe(false);
+    });
+
+    it('should not preview a LocalCI import when the imported build plan has no after due date phase', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
+        exercise.buildConfig = {
+            buildPlanConfiguration: JSON.stringify({
+                phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+            }),
+        } as any;
+        createTestComponent();
+
+        httpTestingController.expectNone('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
+        expect(component.buildAndTestStudentSubmissionsAfterDueDate()).toBeUndefined();
+        expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(false);
     });
 
     it('should display example solution publication date toggle if not in exam mode and no current mode record is available', () => {

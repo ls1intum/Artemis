@@ -3,7 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -20,7 +21,7 @@ import {
     problemStatementPlantUMLWithTest,
     problemStatementWithIds,
 } from 'test/helpers/sample/problemStatement.json';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -81,14 +82,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let openModalStub: ReturnType<typeof vi.spyOn>;
     let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
 
-    const modalRef = { componentInstance: {} };
+    const dialogRef = {} as unknown as DynamicDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -102,7 +103,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -116,11 +117,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        openModalStub = vi.spyOn(modalService, 'open');
+        openModalStub = vi.spyOn(dialogService, 'open');
         getLatestResultWithFeedbacks = vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
 
         fixture.componentRef.setInput('personalParticipation', true);
@@ -387,31 +388,27 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        openModalStub.mockReturnValue(modalRef as any);
+        openModalStub.mockReturnValue(dialogRef);
 
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [1],
-                result,
-                taskName: 'Implement Bubble Sort',
-                numberOfNotExecutedTests: 1,
-            } as FeedbackComponent,
-        } as any);
+            exercise,
+            exerciseType: ExerciseType.PROGRAMMING,
+            feedbackFilter: [1],
+            result,
+            taskName: 'Implement Bubble Sort',
+            numberOfNotExecutedTests: 1,
+        });
 
         mergeSortStep.nativeElement.click();
         verifyTask(2, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [2],
-                result,
-                taskName: 'Implement Merge Sort',
-                numberOfNotExecutedTests: 0,
-            } as FeedbackComponent,
-        } as any);
+            exercise,
+            exerciseType: ExerciseType.PROGRAMMING,
+            feedbackFilter: [2],
+            result,
+            taskName: 'Implement Merge Sort',
+            numberOfNotExecutedTests: 0,
+        });
     });
 
     it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests', async () => {
@@ -466,19 +463,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(bubbleSortStep).not.toBeNull();
         expect(mergeSortStep).not.toBeNull();
 
-        openModalStub.mockReturnValue(modalRef as any);
+        openModalStub.mockReturnValue(dialogRef);
 
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [1],
-                result,
-                taskName: 'Bubble Sort',
-                numberOfNotExecutedTests: 0,
-            } as FeedbackComponent,
-        } as any);
+            exercise,
+            exerciseType: ExerciseType.PROGRAMMING,
+            feedbackFilter: [1],
+            result,
+            taskName: 'Bubble Sort',
+            numberOfNotExecutedTests: 0,
+        });
 
         mergeSortStep.nativeElement.click();
         // Should not get called another time
@@ -548,10 +543,23 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 
-    const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
+    const verifyTask = (expectedInvocations: number, expectedData: Record<string, unknown>) => {
         expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
-        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
-        expect(modalRef).toEqual(expected);
+        expect(openModalStub).toHaveBeenLastCalledWith(
+            FeedbackComponent,
+            expect.objectContaining({
+                header: 'artemisApp.result.detail.feedbackForTask',
+                width: '50rem',
+                breakpoints: {
+                    '850px': '95vw',
+                },
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+                data: expect.objectContaining(expectedData),
+            }),
+        );
     };
 });
 
@@ -610,7 +618,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
