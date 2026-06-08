@@ -1,0 +1,24 @@
+@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
+    <p-message severity="info" class="d-flex align-items-center gap-1">
+        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
+    </p-message>
+}
+@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
+    <p-message severity="info" class="d-flex align-items-center gap-1">
+        <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
+        <fa-icon
+            [icon]="faQuestionCircle"
+            size="lg"
+            class="cursor-pointer"
+            [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
+            tooltipPosition="left"
+            tooltipStyleClass="feedback-suggestions-ai-tooltip"
+        />
+    </p-message>
+}
+@if (isLoading() && isFeedbackSuggestionsEnabled()) {
+    <p-message severity="secondary" class="d-flex align-items-center gap-1">
+        <fa-icon [icon]="faCircleNotch" animation="spin" />
+        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
+    </p-message>
+}

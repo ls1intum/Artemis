@@ -29,7 +29,6 @@ on:
     - '.whitesource'
     - 'artemis-server-cli'
     - 'CITATION.cff'
-    - 'jest.config.js'
     - 'linting.sh'
     - 'proxy.conf.mjs'
     - 'read.ms'

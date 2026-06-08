@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
@@ -7,15 +9,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('SwitchEditModeButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<SwitchEditModeButtonComponent>;
     let comp: SwitchEditModeButtonComponent;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             imports: [SwitchEditModeButtonComponent],
-            declarations: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
         comp = fixture.componentInstance;
@@ -29,7 +32,7 @@ describe('SwitchEditModeButtonComponent', () => {
     });
 
     it('should emit to call passed method when button is clicked', () => {
-        const switchEditModeSpy = jest.spyOn(comp.switchEditMode, 'emit');
+        const switchEditModeSpy = vi.spyOn(comp.switchEditMode, 'emit');
 
         const button = fixture.debugElement.query(By.css('jhi-button'));
         button.triggerEventHandler('onClick', null);

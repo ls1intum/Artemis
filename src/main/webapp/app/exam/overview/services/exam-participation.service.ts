@@ -204,6 +204,11 @@ export class ExamParticipationService {
 
     /**
      * Requests Athena AI feedback for all text and modeling exercises in the given submitted test exam.
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the submitted student exam to request feedback for
+     * @returns an observable that completes once the feedback dispatch has been triggered server-side
      */
     public requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/request-feedback`;
@@ -211,7 +216,12 @@ export class ExamParticipationService {
     }
 
     /**
-     * Fetches how many Athena AI feedback requests the current user has used for this test exam and the cap.
+     * Fetches how many Athena AI feedback requests the current user has used for this test exam and the configured cap.
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the student exam whose usage should be retrieved
+     * @returns an observable emitting the number of used requests and the configured request limit
      */
     public getAthenaFeedbackUsage(courseId: number, examId: number, studentExamId: number): Observable<{ used: number; limit: number }> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/athena-feedback-usage`;

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
@@ -16,11 +18,13 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     const userId = 4;
-    let participationVcsAccessLogSpy: jest.SpyInstance;
-    let repositoryVcsAccessLogSpy: jest.SpyInstance;
+    let participationVcsAccessLogSpy: ReturnType<typeof vi.spyOn>;
+    let repositoryVcsAccessLogSpy: ReturnType<typeof vi.spyOn>;
 
     const mockVcsAccessLog: VcsAccessLogDTO[] = [
         {
@@ -47,11 +51,11 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
     const route = { params: of({ repositoryId: '5' }) } as any as ActivatedRoute;
 
-    function setupTestBed() {
+    function createComponent() {
         fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-        repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
-        participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
+        repositoryVcsAccessLogSpy = vi.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
+        participationVcsAccessLogSpy = vi.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
     }
 
     beforeEach(async () => {
@@ -68,8 +72,12 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         }).compileComponents();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should load participation vcs access log', () => {
-        setupTestBed();
+        createComponent();
         fixture.detectChanges();
 
         expect(participationVcsAccessLogSpy).toHaveBeenCalledOnce();
@@ -79,7 +87,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         route.params = of({ exerciseId: '10', repositoryType: 'TEMPLATE' });
         TestBed.overrideProvider(ActivatedRoute, { useValue: route });
 
-        setupTestBed();
+        createComponent();
         fixture.detectChanges();
 
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();

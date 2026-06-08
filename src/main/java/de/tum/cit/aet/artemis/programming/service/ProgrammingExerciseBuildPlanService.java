@@ -102,8 +102,13 @@ public class ProgrammingExerciseBuildPlanService {
 
         // augment with default template or values
         if (buildPhasesTemplateService.isPresent()) {
-            final List<BuildPhaseDTO> phases = buildPhasesTemplateService.orElseThrow().getDefaultBuildPlanPhasesFor(programmingExercise);
-            final String dockerImage = buildPhasesTemplateService.orElseThrow().getDefaultDockerImageFor(programmingExercise);
+            final BuildPhasesTemplateService templateService = buildPhasesTemplateService.orElseThrow();
+            List<BuildPhaseDTO> phases = templateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+            if (programmingExercise.isExamExercise()) {
+                phases = templateService.applyExamDefaults(phases);
+            }
+
+            final String dockerImage = templateService.getDefaultDockerImageFor(programmingExercise);
 
             final BuildPlanPhasesDTO completePlan = new BuildPlanPhasesDTO(phases, dockerImage);
             buildConfig.setBuildPlanConfiguration(completePlan.toBuildPlanConfiguration());
