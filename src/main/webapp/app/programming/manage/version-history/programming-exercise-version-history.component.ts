@@ -8,7 +8,7 @@ import { ExerciseVersionHistoryLayoutComponent } from 'app/exercise/version-hist
 import { ExerciseVersionHistoryTimelineComponent } from 'app/exercise/version-history/shared/exercise-version-history-timeline.component';
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subscription, finalize } from 'rxjs';

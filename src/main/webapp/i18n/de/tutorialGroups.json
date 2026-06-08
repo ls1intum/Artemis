@@ -12,8 +12,7 @@
                 "everyWeek": "Jede Woche",
                 "everyNWeeks": "Alle {{ n }} Wochen"
             },
-            "timeZone": "Zeitzone: {{ timeZone }}",
-            "betaWarning": "Diese Funktion befindet sich derzeit im Beta-Stadium. Es können Bugs und Änderungen auftreten. Bitte melde Fehler unter: https://github.com/ls1intum/Artemis/issues "
+            "timeZone": "Zeitzone: {{ timeZone }}"
         },
         "entities": {
             "tutorialGroup": {
@@ -81,7 +80,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Sie ermöglicht es, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",

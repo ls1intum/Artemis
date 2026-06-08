@@ -1,0 +1,33 @@
+@import '../../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../../node_modules/bootstrap/scss/mixins';
+@import '../../shared/course-base-container/course-variables';
+@import '../../shared/course-base-container/course-base-container.component';
+
+// Make mat-sidenav-content a flex column so the sticky title bar and scrollable
+// body container share the fixed height correctly.
+::ng-deep .mat-drawer-content {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+// In sidebar mode the body container fills the remaining height and scrolls.
+.sidebar-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Component-specific styles only */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-left: auto;
+    gap: 0.5rem;
+
+    button.active {
+        box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
+    }
+}

@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Simple toggle component for enabling/disabling Iris at the course level.

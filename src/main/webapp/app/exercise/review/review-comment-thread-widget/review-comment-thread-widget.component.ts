@@ -15,8 +15,8 @@ import {
     viewChildren,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
@@ -31,8 +31,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
-import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
-import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
+import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -54,6 +54,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
+    readonly showFeedbackAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
@@ -93,6 +94,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
         const firstComment = this.firstComment();
@@ -159,8 +161,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             }
 
             diffEditor.setFileContents(
-                inlineFix.expectedCode,
-                inlineFix.replacementCode,
+                inlineFix.expectedCode ?? '',
+                inlineFix.replacementCode ?? '',
                 this.getInlineFixDiffFileName(thread),
                 this.getInlineFixDiffFileName(thread),
                 this.getInlineFixDiffLanguageId(thread),
@@ -249,6 +251,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             this.showThreadBody.set(false);
             this.onToggleCollapse.emit(true);
         }
+    }
+
+    /**
+     * Toggles whether the current thread should be included as feedback in the next Hyperion generation request.
+     */
+    toggleFeedbackSelection(): void {
+        if (!this.showFeedbackAction()) {
+            return;
+        }
+        this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
     }
 
     /**
@@ -516,12 +528,22 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     private getValidSuggestedInlineFix(inlineFix: InlineCodeChange | null | undefined): InlineCodeChange | undefined {
-        if (!inlineFix || inlineFix.expectedCode == null || inlineFix.replacementCode == null || inlineFix.applied == null) {
+        // Only structural fields are required; expectedCode/replacementCode may legitimately be absent.
+        if (!inlineFix || inlineFix.applied == null) {
             return undefined;
         }
         if (inlineFix.startLine == null || inlineFix.endLine == null || inlineFix.startLine < 1 || inlineFix.endLine < inlineFix.startLine) {
             return undefined;
         }
-        return inlineFix;
+        // The server serializes the fix with @JsonInclude(NON_EMPTY), which omits an empty expectedCode/replacementCode
+        // (e.g. a pure deletion has an empty replacement). An absent value therefore means an empty string, not a
+        // malformed fix; normalize it so downstream consumers (diff editor, apply-to-editor) always get well-formed strings.
+        return {
+            startLine: inlineFix.startLine,
+            endLine: inlineFix.endLine,
+            expectedCode: inlineFix.expectedCode ?? '',
+            replacementCode: inlineFix.replacementCode ?? '',
+            applied: inlineFix.applied,
+        };
     }
 }

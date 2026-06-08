@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
+import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
 
 /**
  * Tests each parser with an example file

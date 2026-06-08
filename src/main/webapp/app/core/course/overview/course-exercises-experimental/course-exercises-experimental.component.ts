@@ -4,11 +4,11 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { NgClass } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { faLayerGroup, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TimeGroupCategory } from 'app/shared/types/sidebar';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TimeGroupCategory } from 'app/foundation/types/sidebar';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { CourseExerciseGroup, handInLimitFor } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { StudentExerciseDevSettingsService } from './dev-settings/student-exercise-dev-settings.service';
@@ -51,7 +51,7 @@ function emptyAccordionGroups(): AccordionGroups {
 @Component({
     selector: 'jhi-course-exercises-experimental',
     templateUrl: './course-exercises-experimental.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-exercises-experimental.component.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss', './course-exercises-experimental.component.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective, StudentExerciseDevSettingsModalComponent],
 })
 export class CourseExercisesExperimentalComponent {

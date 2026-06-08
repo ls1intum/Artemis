@@ -321,3 +321,30 @@ default boolean isLocked() {
     return false;
 }
 ```
+
+## Sending emails
+
+**Emails MUST always be sent asynchronously.** No user-facing request thread should be blocked waiting for SMTP. The Artemis SMTP server can be slow, unreachable, or under load — none of that should be visible to the user as a slow login, slow signup, or slow registration response.
+
+The infrastructure already supports this:
+
+* `MailSendingService.sendEmail(...)` and `MailSendingService.buildAndSendAsync(...)` are annotated with `@Async` and are the **default** way to send email.
+* `MailSendingService.sendEmailSync(...)` and `MailSendingService.buildAndSendSync(...)` exist only for the rare case where a caller genuinely needs the send to complete before continuing (for example, integration tests that assert on a `MailpitClient` capture). Production code should not use them.
+
+### Make the *enclosing* method `@Async`, not only the send
+
+Marking `MailSendingService.sendEmail` `@Async` only offloads the SMTP dispatch. If your service method does work that is only needed for the email — a user lookup, a notification-setting check, template-variable preparation — that work still runs on the calling request thread when the enclosing method is synchronous, and it holds the JPA persistence context open for the duration of the request. **Annotate the enclosing service method with `@Async`** so the entire "decide whether to send and dispatch" path runs off the request thread.
+
+Canonical example: `ArtemisSuccessfulLoginService.sendLoginEmail` is annotated `@Async` so the post-login user lookup, the `GlobalNotificationSetting` check, the template-variable build, and the final `mailSendingService.buildAndSendAsync` call all execute on the async task executor — the login response returns to the client without waiting for any of them.
+
+### Three Spring-AOP rules to follow when adding `@Async`
+
+`@Async` is implemented by a Spring AOP proxy. The proxy is only consulted on calls that go *through* a bean reference, so these constraints apply:
+
+1. **Cross-bean call.** The caller of an `@Async` method must be in a *different* Spring bean than the method itself. Self-invocation inside the same class bypasses the proxy and silently runs synchronously — the annotation has no effect. If you need to offload work from within the same service, extract the work into a separate `@Service` and inject it.
+2. **`public` only.** Spring's default JDK proxies only advise `public` methods. Mark `@Async` methods `public`.
+3. **Fire-and-forget by default.** An `@Async void` method has no completion signal; callers must not rely on side effects (DB writes, mail dispatch) being visible immediately after the call returns. If you do need a result, return `CompletableFuture<T>` and treat it accordingly.
+
+### Avoid synchronous mail in request handlers
+
+The litmus test: if you can trace a path from a `@*Mapping` controller method to a synchronous `MailSendingService.send*Sync(...)` or to a synchronous mail-building method, that's a regression. The request thread will be blocked for the duration of the SMTP round-trip (and any retries inside the mail sender). Route the work through an `@Async` service method instead.

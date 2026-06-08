@@ -1,0 +1,108 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+
+    .timeline-item-row {
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+
+        .timeline-graphic {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: end;
+
+            .timeline-graphic-line {
+                flex: 1;
+                width: 3px;
+                background-color: var(--border-color);
+
+                &:last-child {
+                    flex: 0 0 5px;
+                    height: 5px;
+                }
+            }
+
+            .timeline-graphic-circle {
+                position: relative;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                box-sizing: border-box;
+
+                &.required {
+                    border: 3px solid var(--bs-danger);
+
+                    &.valid {
+                        border-color: var(--bs-success);
+                    }
+                }
+
+                &.optional {
+                    &::before {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 50%;
+                        background: repeating-conic-gradient(var(--bs-success) -19deg 19deg, transparent 19deg 41deg);
+                        content: '';
+                        mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 3px));
+                    }
+
+                    &.invalid {
+                        &::before {
+                            background: repeating-conic-gradient(var(--bs-danger) -19deg 19deg, transparent 19deg 41deg);
+                        }
+                    }
+                }
+
+                .timeline-graphic-circle-dot {
+                    position: relative;
+                    width: 0.8rem;
+                    height: 0.8rem;
+                    border-radius: 50%;
+                    background-color: var(--bs-success);
+
+                    &.invalid {
+                        background-color: var(--bs-danger);
+                    }
+                }
+            }
+        }
+
+        .label-and-input {
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            gap: 0.5rem;
+
+            .spacer {
+                height: 0.5rem;
+                width: 100%;
+            }
+
+            .datepicker-and-info {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+
+                .timeline-datepicker-info-icon {
+                    width: 1rem;
+                    color: var(--bs-danger);
+                    visibility: hidden;
+
+                    &.visible {
+                        visibility: visible;
+                    }
+                }
+            }
+
+            .timeline-datepicker {
+                width: 16rem;
+            }
+        }
+    }
+}

@@ -5,9 +5,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -15,7 +15,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -23,20 +23,20 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { ShortAnswerQuestionComponent } from '../../shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from '../../shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
@@ -547,6 +547,85 @@ describe('QuizParticipationComponent - live mode', () => {
         component.syncSubmitState();
 
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it.each([
+        ['live', true, false, 0, false, LiveQuizParticipationStatus.NOT_STARTED],
+        ['live', false, false, 0, false, LiveQuizParticipationStatus.PARTICIPATING],
+        ['live', false, true, -100, false, LiveQuizParticipationStatus.SUBMITTED],
+        ['live', false, false, -1, true, LiveQuizParticipationStatus.MISSED],
+    ])('should emit the live quiz status from syncSubmitState', (mode, waiting, submitted, remaining, quizEnded, expected) => {
+        component.mode = mode as string;
+        component.quizExercise = { id: 1, quizEnded: quizEnded as boolean } as QuizExercise;
+        component.waitingForQuizStart = waiting as boolean;
+        component.showingResult = false;
+        component.submission.submitted = submitted as boolean;
+        component.remainingTimeSeconds = remaining as number;
+        let emitted: LiveQuizParticipationStatus | undefined;
+        component.liveQuizStatusChange.subscribe((status) => (emitted = status));
+
+        component.syncSubmitState();
+
+        expect(emitted).toBe(expected);
+    });
+
+    it('should not emit a live quiz status before the quiz has loaded', () => {
+        component.mode = 'live';
+        component.quizExercise = undefined as unknown as QuizExercise;
+        component.waitingForQuizStart = false;
+        let emitCount = 0;
+        component.liveQuizStatusChange.subscribe(() => emitCount++);
+
+        component.syncSubmitState();
+
+        expect(emitCount).toBe(0);
+    });
+
+    it('should clear the live quiz status override when leaving live mode', () => {
+        // Start in live mode so an override is emitted, then switch away and ensure it is cleared.
+        component.mode = 'live';
+        component.quizExercise = { id: 1 } as QuizExercise;
+        component.waitingForQuizStart = false;
+        component.showingResult = false;
+        const emitted: (LiveQuizParticipationStatus | undefined)[] = [];
+        component.liveQuizStatusChange.subscribe((status) => emitted.push(status));
+
+        component.syncSubmitState();
+        component.mode = 'practice';
+        component.syncSubmitState();
+
+        expect(emitted).toEqual([LiveQuizParticipationStatus.PARTICIPATING, undefined]);
+    });
+
+    it('should emit the practice participation with its result after a practice submission', () => {
+        component.mode = 'practice';
+        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted: StudentParticipation | undefined;
+        component.practiceParticipationChanged.subscribe((p) => (emitted = p));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(participation);
+        expect(emitted!.testRun).toBe(true);
+        expect(emitted!.submissions).toEqual([submission]);
+        expect(submission.results).toEqual([result]);
+    });
+
+    it('should not emit a practice participation in preview mode', () => {
+        component.mode = 'preview';
+        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted = false;
+        component.practiceParticipationChanged.subscribe(() => (emitted = true));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(false);
     });
 
     it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {

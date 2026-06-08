@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { LeaderboardDTO, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 
 @Injectable({
     providedIn: 'root',

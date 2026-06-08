@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { Component, input, output } from '@angular/core';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-add-auxiliary-repository-button',
@@ -23,22 +23,23 @@ export class AddAuxiliaryRepositoryButtonComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly faPlus = faPlus;
 
-    @Input() programmingExercise: ProgrammingExercise;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
 
-    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
+    readonly onRefresh = output<void>();
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
      */
     addAuxiliaryRepositoryRow() {
-        if (this.programmingExercise.auxiliaryRepositories === undefined) {
-            this.programmingExercise.auxiliaryRepositories = [];
+        const programmingExercise = this.programmingExercise();
+        if (programmingExercise.auxiliaryRepositories === undefined) {
+            programmingExercise.auxiliaryRepositories = [];
         }
         const newAuxiliaryRepository = new AuxiliaryRepository();
         newAuxiliaryRepository.name = '';
         newAuxiliaryRepository.checkoutDirectory = '';
-        this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
-        this.onRefresh.emit();
-        this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
+        programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
+        this.onRefresh.emit(undefined);
+        programmingExercise.auxiliaryRepositories = [...programmingExercise.auxiliaryRepositories];
     }
 }

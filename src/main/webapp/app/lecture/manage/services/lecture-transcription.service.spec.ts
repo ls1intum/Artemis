@@ -30,7 +30,7 @@ describe('LectureTranscriptionService', () => {
         const dto: LectureTranscriptionDTO = { lectureUnitId: 1, language: 'en', segments: [] };
         let result: LectureTranscriptionDTO | undefined;
         service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
         req.flush(dto, { status: 200, statusText: 'OK' });
         expect(result).toEqual(dto);
     });
@@ -38,7 +38,7 @@ describe('LectureTranscriptionService', () => {
     it('should return undefined on get transcription error', () => {
         let result: LectureTranscriptionDTO | undefined;
         service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
         req.flush('error', { status: 404, statusText: 'Not Found' });
         expect(result).toBeUndefined();
     });
@@ -46,7 +46,7 @@ describe('LectureTranscriptionService', () => {
     it('should get transcription status', () => {
         let result: TranscriptionStatus | undefined;
         service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript/status`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
         req.flush('COMPLETED', { status: 200, statusText: 'OK' });
         expect(result).toBe('COMPLETED');
     });
@@ -54,7 +54,7 @@ describe('LectureTranscriptionService', () => {
     it('should return undefined on get transcription status error', () => {
         let result: TranscriptionStatus | undefined;
         service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript/status`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
         req.flush('error', { status: 500, statusText: 'Server Error' });
         expect(result).toBeUndefined();
     });
@@ -62,7 +62,7 @@ describe('LectureTranscriptionService', () => {
     it('should return undefined when transcription status response body is empty', () => {
         let result: TranscriptionStatus | undefined;
         service.getTranscriptionStatus(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript/status`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript/status`);
         req.flush('', { status: 200, statusText: 'OK' });
         expect(result).toBeUndefined();
     });
@@ -70,7 +70,7 @@ describe('LectureTranscriptionService', () => {
     it('should return undefined when transcription response body is null', () => {
         let result: LectureTranscriptionDTO | undefined;
         service.getTranscription(1).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript`);
+        const req = httpMock.expectOne(`api/lecture/lecture-units/1/transcript`);
         req.flush(null, { status: 200, statusText: 'OK' });
         expect(result).toBeUndefined();
     });

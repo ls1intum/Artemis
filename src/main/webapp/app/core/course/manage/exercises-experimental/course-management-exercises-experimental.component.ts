@@ -26,7 +26,7 @@ import {
     faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, GroupCompetencyLink, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ALL_MOCK_COMPETENCIES } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
@@ -37,11 +37,11 @@ import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage
 import { ExerciseManagementDevSettingsModalComponent } from 'app/core/course/manage/exercises-experimental/dev-settings/exercise-management-dev-settings-modal.component';
 import { ExerciseManagementDevSettingsService } from 'app/core/course/manage/exercises-experimental/dev-settings/exercise-management-dev-settings.service';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { CourseTitleBarToolbarDirective } from 'app/core/course/shared/directives/course-title-bar-toolbar.directive';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/course-title-bar-toolbar.directive';
 
 type View = 'type' | 'week' | 'group' | 'list';
 type SortField = 'title' | 'dueDate' | 'releaseDate' | 'assessmentDueDate' | 'points' | 'difficulty';

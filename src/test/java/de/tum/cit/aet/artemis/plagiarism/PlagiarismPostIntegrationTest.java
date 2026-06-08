@@ -29,18 +29,20 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -135,7 +137,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1));
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -223,7 +225,8 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
         Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
-        Post notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
@@ -236,13 +239,17 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         postToUpdate.setContent(userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                    new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 
-        Post updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.OK);
         conversationUtilService.assertSensitiveInformationHidden(updatedPost);
-        assertThat(updatedPost).isEqualTo(postToUpdate);
+        assertThat(updatedPost.id()).isEqualTo(postToUpdate.getId());
+        assertThat(updatedPost.title()).isEqualTo(postToUpdate.getTitle());
+        assertThat(updatedPost.content()).isEqualTo(postToUpdate.getContent());
     }
 
     @Test
@@ -251,20 +258,15 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.getFirst());
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class,
-                HttpStatus.FORBIDDEN);
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(),
+                new PlagiarismPostUpdateRequestDTO(postToNotUpdate.getTitle(), postToNotUpdate.getContent()), PostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testEditPostWithIdIsNull_badRequest() throws Exception {
-        Post postToUpdate = existingPosts.getFirst();
-        postToUpdate.setId(null);
-
-        Post updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
+    // Note: the previous testEditPostWithIdIsNull_badRequest case is no longer expressible — the request DTO
+    // has no id field, so the body/path-id mismatch path it used to exercise cannot be reached. Building the URL
+    // with a null path variable would yield "/posts/null" which produces a different (Spring path-binding) 400 —
+    // not the case the test intended to cover.
 
     // GET
 
@@ -275,10 +277,10 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
-        List<Post> returnedPosts = getPosts(params);
+        List<PostResponseDTO> returnedPosts = getPosts(params);
         // get the number of posts with a certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
-        assertThat(returnedPosts.getFirst().getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
+        assertThat(returnedPosts.getFirst().authorRole()).isEqualTo(UserRole.INSTRUCTOR);
     }
 
     @Test
@@ -288,7 +290,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
-        List<Post> returnedPosts = getPosts(params);
+        List<PostResponseDTO> returnedPosts = getPosts(params);
         // get the number of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
     }
@@ -300,7 +302,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
         assertThat(returnedPosts).isNull();
     }
 
@@ -309,7 +311,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, PostResponseDTO.class, params);
         assertThat(returnedPosts).isNull();
     }
 
@@ -378,9 +380,9 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @NonNull
-    private List<Post> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+    private List<PostResponseDTO> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, PostResponseDTO.class, params);
+        conversationUtilService.assertPostDtoSensitiveInformationHidden(returnedPosts);
         return returnedPosts;
     }
 

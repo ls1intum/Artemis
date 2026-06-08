@@ -25,15 +25,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.RatingListItemDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -131,7 +131,7 @@ public class RatingResource {
      * @param pageable - Pagination information (page, size, sort)
      * @return List of RatingListItemDTO with pagination info in headers
      */
-    @GetMapping("course/{courseId}/rating")
+    @GetMapping({ "courses/{courseId}/rating", "course/{courseId}/rating" })
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, Pageable pageable) {
         Page<RatingListItemDTO> ratings = ratingService.getAllRatingsForDashboard(courseId, pageable);

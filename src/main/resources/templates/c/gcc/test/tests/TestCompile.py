@@ -12,7 +12,10 @@ class TestCompile(AbstractProgramTest):
     makeTarget: str
 
     def __init__(self, makefileLocation: str, makeTarget: str = "main", requirements: List[str] = None, name: str = "TestCompile"):
-        super(TestCompile, self).__init__(name, makefileLocation, "make", requirements, timeoutSec=5)
+        # 30s (was 5s): compiling even a small C file with gcc can spike past 5s when several
+        # builds share the CPU on a loaded multi-node CI host. The timeout only bounds a
+        # genuinely stuck compile; a correct one finishes in well under a second.
+        super(TestCompile, self).__init__(name, makefileLocation, "make", requirements, timeoutSec=30)
         self.makeTarget = makeTarget
 
     def _run(self):

@@ -1,0 +1,132 @@
+@for (groupKey of Object.keys(groupedData()); track groupKey; let i = $index) {
+    @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length || sidebarItemAlwaysShow()[groupKey]) {
+        <div id="test-accordion-item-container-{{ i }}" class="pointer">
+            <div
+                [id]="'test-accordion-item-header-' + groupKey"
+                class="control-label d-flex align-items-center justify-content-between py-2 ps-2 bg-module"
+                (click)="toggleGroupCategoryCollapse(groupKey)"
+            >
+                <div class="my-2">
+                    @if (showLeadingIcon()) {
+                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon())?.[groupKey]" />
+                    }
+                    {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    @if (!groupedData()[groupKey].isHideCount) {
+                        ({{ (groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length }})
+                    }
+                </div>
+                <div class="icon-container pe-3">
+                    @if (totalUnreadMessagesPerGroup[groupKey] > 0 && collapseStateInternal()[groupKey]) {
+                        <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
+                    }
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseStateInternal()[groupKey]" />
+                </div>
+            </div>
+            @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue())?.length) {
+                <div id="test-accordion-item-content" [ngbCollapse]="collapseStateInternal()[groupKey]" class="bg-module">
+                    <div class="p-2">
+                        @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
+                            @if (weekGroup.showDateHeader) {
+                                <div class="text-muted small p-2 ps-0" [ngClass]="{ 'pt-0': first }">
+                                    {{
+                                        weekGroup.isNoDate
+                                            ? ('artemisApp.courseOverview.sidebar.noDate' | artemisTranslate)
+                                            : ('artemisApp.courseOverview.sidebar.weekRange'
+                                              | artemisTranslate
+                                                  : {
+                                                        start: (weekGroup.start | artemisDate: 'long-date'),
+                                                        end: (weekGroup.end | artemisDate: 'long-date'),
+                                                    })
+                                    }}
+                                </div>
+                            }
+                            <div>
+                                @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue(); let last = $last; track sidebarItem.id) {
+                                    <div [ngClass]="{ 'mb-2': !last }">
+                                        <!-- Optional nested group: the header card and its exercises sit inside one container -->
+                                        @if (sidebarItem.groupedItems?.length) {
+                                            <div
+                                                class="sidebar-group"
+                                                [class.sidebar-group--clickable]="sidebarItem.groupClickable === 'group'"
+                                                [class.sidebar-group--connected]="sidebarItem.groupConnected"
+                                                (click)="onGroupClicked($event, sidebarItem)"
+                                            >
+                                                @if (sidebarItem.groupHeaderStyle === 'label') {
+                                                    <div class="sidebar-group-label" [class.sidebar-group-label--clickable]="sidebarItem.groupClickable === 'heading'">
+                                                        <div class="sidebar-group-title d-flex align-items-center gap-2">
+                                                            @if (sidebarItem.icon) {
+                                                                <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
+                                                            }
+                                                            <span class="fw-semibold text-truncate">{{ sidebarItem.title }}</span>
+                                                            @if (sidebarItem.subtitleLeft) {
+                                                                <span class="ms-auto text-muted small">{{ sidebarItem.subtitleLeft }}</span>
+                                                            }
+                                                        </div>
+                                                        @if (sidebarItem.groupPickHint) {
+                                                            <div class="sidebar-group-hint" [ngClass]="sidebarItem.subtitleLeftClass" [title]="sidebarItem.subtitleLeftTooltip">
+                                                                @if (sidebarItem.subtitleLeftIcon) {
+                                                                    <fa-icon [icon]="sidebarItem.subtitleLeftIcon" />
+                                                                }
+                                                                {{ sidebarItem.groupPickHint }}
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                } @else {
+                                                    <div
+                                                        class="sidebar-group-header"
+                                                        jhiSidebarCard
+                                                        [size]="sidebarItem.size"
+                                                        [itemSelected]="itemSelected()"
+                                                        [sidebarType]="sidebarType()"
+                                                        [sidebarItem]="sidebarItem"
+                                                        [groupKey]="groupKey"
+                                                        (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                                    ></div>
+                                                }
+                                                <div class="sidebar-group-content">
+                                                    @for (variant of sidebarItem.groupedItems; track variant.id) {
+                                                        <div class="sidebar-group-variant">
+                                                            <div
+                                                                jhiSidebarCard
+                                                                [size]="variant.size"
+                                                                [itemSelected]="itemSelected()"
+                                                                [sidebarType]="sidebarType()"
+                                                                [sidebarItem]="variant"
+                                                                [groupKey]="groupKey"
+                                                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                                            ></div>
+                                                            @if (sidebarItem.groupSelectable) {
+                                                                <p-checkbox
+                                                                    class="sidebar-group-checkbox"
+                                                                    [binary]="true"
+                                                                    [ngModel]="variant.selected"
+                                                                    (ngModelChange)="onGroupVariantSelected(sidebarItem, variant, $event)"
+                                                                />
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        } @else {
+                                            <!-- loading sidebarCard with help of a directive depending on its size input-->
+                                            <div
+                                                jhiSidebarCard
+                                                [size]="sidebarItem.size"
+                                                [itemSelected]="itemSelected()"
+                                                [sidebarType]="sidebarType()"
+                                                [sidebarItem]="sidebarItem"
+                                                [groupKey]="groupKey"
+                                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                            ></div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            <hr class="my-1" />
+        </div>
+    }
+}

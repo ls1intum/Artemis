@@ -22,7 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -516,7 +516,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO(
                 exam.id,
                 exam.title,
                 exam.visibleDate,
@@ -672,4 +672,19 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("SELECT e.title FROM Exam e WHERE e.id = :examId")
     String findTitleById(@Param("examId") long examId);
+
+    /**
+     * Finds the exam that contains the given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return an Optional containing the exam if found, or empty otherwise
+     */
+    @Query("""
+            SELECT exam
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE ex.id = :exerciseId
+            """)
+    Optional<Exam> findByExerciseId(@Param("exerciseId") long exerciseId);
 }

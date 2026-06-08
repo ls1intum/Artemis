@@ -29,10 +29,15 @@ tasks.register("generateAllSbom") {
     group = "reporting"
 }
 
-// Copy SBOMs to resources for runtime access (if they exist)
-// This task copies pre-generated SBOMs without forcing regeneration
+// Copy SBOMs to resources for runtime access (if they exist).
+//
+// Behaviour is tied to the `-Pprod -Psbom` properties rather than the on-disk presence of
+// the SBOM files. Without both flags we proactively delete any stale `build/resources/main/sbom/`
+// left over from a previous run; the broader cleanup that prevents SBOM leakage into the WAR
+// itself lives in the `bootJar`/`bootWar` `doFirst` below (see the long comment near the
+// disable block for the rationale).
 tasks.register("copySbomsToResources") {
-    description = "Copy SBOM files to resources if they exist"
+    description = "Copy SBOM files into the WAR resources when -Pprod -Psbom is set"
     group = "build"
 
     // If cyclonedxBom runs, it must run before this task
@@ -40,9 +45,20 @@ tasks.register("copySbomsToResources") {
 
     doLast {
         def sbomDir = file("build/resources/main/sbom")
-        sbomDir.mkdirs()
+
+        if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
+            if (sbomDir.exists()) {
+                sbomDir.deleteDir()
+                logger.lifecycle("Removed stale SBOM resources (-Pprod -Psbom not both set)")
+            }
+            return
+        }
 
         def serverSbom = file("build/reports/sbom/server-sbom.json")
+        def clientSbom = file("build/reports/client-sbom.json")
+
+        sbomDir.mkdirs()
+
         if (serverSbom.exists()) {
             copy {
                 from serverSbom
@@ -51,7 +67,6 @@ tasks.register("copySbomsToResources") {
             logger.lifecycle("Copied server SBOM to resources")
         }
 
-        def clientSbom = file("build/reports/client-sbom.json")
         if (clientSbom.exists()) {
             copy {
                 from clientSbom
@@ -67,9 +82,56 @@ tasks.named("processResources") {
     finalizedBy "copySbomsToResources"
 }
 
-// For production builds, generate both server and client SBOMs before copying
-if (project.hasProperty("prod")) {
+// SBOM generation is expensive (cdxgen for the client pulls ~220 npm packages and the
+// CycloneDX Gradle plugin walks the full runtime classpath). On a cold build these legs
+// add ~60 s of work that is only needed for release-eligible artifacts. Gate behaviour
+// behind an explicit `-Psbom` opt-in so:
+//   - PR / feature-branch CI builds and local E2E runs skip SBOM generation by default
+//   - Release-eligible CI builds (develop / main / release/* / tags / release events)
+//     opt in via `-Psbom` and ship a WAR containing the SBOM files
+// The runtime AdminSbomResource handles the missing-SBOM case gracefully (returns 404),
+// and the admin UI renders an informational banner.
+if (project.hasProperty("prod") && project.hasProperty("sbom")) {
     tasks.named("copySbomsToResources") {
         dependsOn "cyclonedxBom", "generateClientSbom"
+    }
+}
+
+// Unless BOTH -Pprod and -Psbom are set, fully suppress SBOM generation and bundling. The
+// CycloneDX Gradle plugin is applied unconditionally in build.gradle (so its tasks remain
+// referenceable for the release path), and the Spring Boot Gradle plugin auto-wires
+// `cyclonedxBom` into `bootJar`/`bootWar`, copying its output to `META-INF/sbom/application.cdx.json`
+// inside the artefact. Disabling the SBOM tasks alone is not enough on incremental rebuilds:
+//
+//   1. `processResources` may stay UP-TO-DATE and re-stage a stale
+//      `build/reports/cyclonedx/application.cdx.json` into `build/resources/main/META-INF/sbom/`.
+//   2. A task-level `exclude "META-INF/sbom/**"` on `bootWar` is a no-op for `WEB-INF/classes`
+//      content — the War task only applies excludes to the webapp root spec, not classpath
+//      resources. (Verified: build `-Pprod -Pwar -Psbom bootWar`, then rebuild `-Pprod -Pwar
+//      bootWar` without `clean`; the WAR still contains `WEB-INF/classes/META-INF/sbom/...`.)
+//   3. Without an input that captures the SBOM mode, `bootWar` can be UP-TO-DATE after a
+//      `-Psbom` run and not re-run at all on the subsequent non-`-Psbom` build, leaving the
+//      previously-built WAR (which contains the SBOM) in place.
+//
+// Reliable knockout: delete the SBOM at its source (the report directories that feed both the
+// resource-staging and Spring Boot auto-wiring paths) right before `bootJar`/`bootWar` runs,
+// and declare the SBOM mode as a task input so `bootWar` invalidates when the mode flips.
+if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
+    tasks.named("cyclonedxBom").configure { enabled = false }
+    tasks.named("cyclonedxDirectBom").configure { enabled = false }
+    tasks.matching { it.name == "generateClientSbom" }.configureEach { enabled = false }
+    tasks.matching { it.name == "bootWar" || it.name == "bootJar" }.configureEach { archiveTask ->
+        archiveTask.inputs.property("sbomEnabled", false)
+        archiveTask.doFirst {
+            def staleDirs = [
+                file("build/resources/main/META-INF/sbom"),
+                file("build/reports/cyclonedx"),
+                file("build/reports/sbom"),
+            ]
+            staleDirs.findAll { it.exists() }.each {
+                it.deleteDir()
+                logger.lifecycle("Removed stale SBOM directory before ${archiveTask.name}: ${it}")
+            }
+        }
     }
 }

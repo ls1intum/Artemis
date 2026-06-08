@@ -24,9 +24,9 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
 
 /**
  * Validates application configuration at startup.

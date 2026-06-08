@@ -3,7 +3,7 @@ import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dt
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 export interface UpdateFileUploadExerciseDto {
     id: number;

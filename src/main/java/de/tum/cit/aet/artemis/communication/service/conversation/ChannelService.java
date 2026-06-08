@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -26,10 +28,8 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -78,6 +78,7 @@ public class ChannelService {
                 }
                 else {
                     service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                    service.deleteAllPostsForChannelAsync(channel.getId());
                 }
             });
         }
@@ -218,8 +219,11 @@ public class ChannelService {
      */
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                service.deleteAllPostsForChannelAsync(channel.getId());
+            });
             conversationService.deleteConversation(channel.getId());
-            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()));
         }
     }
 
@@ -540,8 +544,11 @@ public class ChannelService {
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                service.deleteAllPostsForChannelAsync(exerciseChannelId);
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
+            });
             conversationService.deleteConversation(exerciseChannelId);
-            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId));
         }
     }
 

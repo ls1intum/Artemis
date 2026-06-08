@@ -5,7 +5,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String exerciseTitle, String exerciseType, Double maxPoints, String shortName, String problemStatement,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, String difficulty, boolean isExamExercise, Long examId, Boolean isTestExam,
         ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, String programmingLanguage, String projectType, String diagramType, String quizMode,
-        Integer quizDuration, String filePattern) {
+        Integer quizDuration, String filePattern, String assessmentType) {
 
     /**
      * Extracts all required data from an {@link Exercise} entity. Must be called while the Hibernate
@@ -67,7 +68,19 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
                 exercise instanceof ProgrammingExercise pe && pe.getProjectType() != null ? pe.getProjectType().name() : null,
                 exercise instanceof ModelingExercise me && me.getDiagramType() != null ? me.getDiagramType().name() : null,
                 exercise instanceof QuizExercise qe && qe.getQuizMode() != null ? qe.getQuizMode().name() : null, exercise instanceof QuizExercise qe ? qe.getDuration() : null,
-                exercise instanceof FileUploadExercise fue ? fue.getFilePattern() : null);
+                exercise instanceof FileUploadExercise fue ? fue.getFilePattern() : null, deriveEffectiveAssessmentType(exercise));
+    }
+
+    /**
+     * Derives the effective assessment type for Weaviate indexing. If an exercise allows complaints
+     * for automatic assessments, it is treated as {@code SEMI_AUTOMATIC} so that TAs can find it
+     * via global search (they need a grading UI for complaint reviews).
+     */
+    private static String deriveEffectiveAssessmentType(Exercise exercise) {
+        if (exercise.getAllowComplaintsForAutomaticAssessments()) {
+            return AssessmentType.SEMI_AUTOMATIC.name();
+        }
+        return exercise.getAssessmentType() != null ? exercise.getAssessmentType().name() : null;
     }
 
     /**
@@ -107,6 +120,7 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
         putIfNotNull(properties, SearchableEntitySchema.Properties.QUIZ_MODE, quizMode);
         putIfNotNull(properties, SearchableEntitySchema.Properties.QUIZ_DURATION, quizDuration);
         putIfNotNull(properties, SearchableEntitySchema.Properties.FILE_PATTERN, filePattern);
+        putIfNotNull(properties, SearchableEntitySchema.Properties.ASSESSMENT_TYPE, assessmentType);
 
         return properties;
     }

@@ -12,8 +12,7 @@
                 "everyWeek": "Every week",
                 "everyNWeeks": "Every {{ n }} weeks"
             },
-            "timeZone": "Time Zone: {{ timeZone }}",
-            "betaWarning": "This feature is currently in beta. Bugs and breaking changes may occur. Please report any issues on: https://github.com/ls1intum/Artemis/issues"
+            "timeZone": "Time Zone: {{ timeZone }}"
         },
         "entities": {
             "tutorialGroup": {
@@ -81,7 +80,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Welcome to the tutorial group management page! A beta feature of Artemis that allows you to manage online and offline weekly tutorial groups. Start by either importing tutorial groups from a CSV file or by creating a new tutorial group manually.",
+                "intro": "Welcome to the tutorial group management page! It allows you to manage online and offline weekly tutorial groups. Start by either importing tutorial groups from a CSV file or by creating a new tutorial group manually.",
                 "title": "Tutorial Groups Management",
                 "freePeriodsButtons": "Holidays",
                 "creatTutorialGroupButton": "Create New Tutorial Group",

@@ -2,12 +2,12 @@ import { ChangeDetectorRef, Component, input, model } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,7 +32,7 @@ class StubModelingEditorComponent {
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -40,8 +40,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 describe('ModelingExamSubmissionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -130,8 +130,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.points');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: 0 });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.points');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: 0 });
         });
 
         it('should show exercise bonus score if any', () => {
@@ -144,8 +144,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.bonus');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.bonus');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: bonusPoints });
         });
 
         it('should call triggerSave if save exercise button is clicked', () => {

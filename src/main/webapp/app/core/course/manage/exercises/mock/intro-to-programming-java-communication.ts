@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 /**
  * Mock communication (a channel + a few messages) for an exercise group's Communication panel, so the

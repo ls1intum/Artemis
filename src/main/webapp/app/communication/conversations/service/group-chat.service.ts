@@ -16,7 +16,7 @@ export class GroupChatService {
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http
-            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/group-chats`, loginsOfChatPartners, { observe: 'response' })
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/group-chats`, { memberLogins: loginsOfChatPartners }, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 

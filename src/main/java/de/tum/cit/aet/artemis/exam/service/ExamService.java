@@ -39,6 +39,9 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -55,29 +58,26 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -1211,7 +1211,7 @@ public class ExamService {
         List<Long> numberOfComplaintsOpenByExercise = new ArrayList<>();
         List<Long> numberOfComplaintResponsesByExercise = new ArrayList<>();
         List<DueDateStat[]> numberOfAssessmentsFinishedOfCorrectionRoundsByExercise = new ArrayList<>();
-        List<Long> numberOfParticipationsGeneratedByExercise = new ArrayList<>();
+        List<Long> numberOfInitializedParticipationsByExercise = new ArrayList<>();
         List<Long> numberOfParticipationsForAssessmentGeneratedByExercise = new ArrayList<>();
 
         // loop over all exercises and retrieve all needed counts for the properties at once
@@ -1240,8 +1240,8 @@ public class ExamService {
                 }
             }
 
-            // get number of all generated participations
-            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
+            // get number of successfully initialized participations
+            numberOfInitializedParticipationsByExercise.add(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(exercise.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1253,13 +1253,13 @@ public class ExamService {
         long totalNumberOfComplaints = 0;
         long totalNumberOfComplaintResponse = 0;
         Long[] totalNumberOfAssessmentsFinished = new Long[numberOfCorrectionRoundsInExam];
-        long totalNumberOfParticipationsGenerated = 0;
+        long totalNumberOfInitializedParticipations = 0;
         long totalNumberOfParticipationsForAssessment = 0;
 
         if (isInstructor) {
             // sum up all counts for the different properties
-            for (Long numberOfParticipations : numberOfParticipationsGeneratedByExercise) {
-                totalNumberOfParticipationsGenerated += numberOfParticipations != null ? numberOfParticipations : 0;
+            for (Long numberOfInitialized : numberOfInitializedParticipationsByExercise) {
+                totalNumberOfInitializedParticipations += numberOfInitialized != null ? numberOfInitialized : 0;
             }
         }
         // sum up all counts for the different properties
@@ -1300,8 +1300,9 @@ public class ExamService {
             }
 
             // check if all exercises have been prepared for all students;
+            // exercises are only considered prepared if ALL participations are properly initialized
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
-                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfParticipationsGenerated;
+                    && (exam.getNumberOfExercisesInExam() * numberOfGeneratedStudentExams) == totalNumberOfInitializedParticipations;
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
@@ -1692,5 +1693,15 @@ public class ExamService {
             }
         }
         return events;
+    }
+
+    /**
+     * Get one exam by an exercise id.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exam
+     */
+    public Optional<Exam> findByExerciseId(final Long exerciseId) {
+        return examRepository.findByExerciseId(exerciseId);
     }
 }

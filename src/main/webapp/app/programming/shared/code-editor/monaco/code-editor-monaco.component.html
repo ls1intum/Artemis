@@ -45,7 +45,7 @@
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
-            [hidden]="!selectedFile() || loadingCount() > 0 || binaryFileSelected()"
+            [hidden]="!selectedFile() || loadingCount() > 0 || binaryFileSelected() || !!imagePreviewUrl() || imagePreviewError()"
             [readOnly]="editorLocked()"
             [textChangedEmitDelay]="200"
             #editor
@@ -54,6 +54,12 @@
 
         @if (!selectedFile() && !loadingCount()) {
             <p id="no-file-selected" class="text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile"></p>
+        } @else if (imagePreviewUrl(); as url) {
+            <div id="image-file-preview" class="image-file-preview">
+                <img [src]="url" [alt]="selectedFile()!" />
+            </div>
+        } @else if (imagePreviewError()) {
+            <p id="image-file-preview-error" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.imageFileLoadingFailed"></p>
         } @else if (binaryFileSelected()) {
             <p id="binary-file-selected" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.binaryFileSelected"></p>
         }

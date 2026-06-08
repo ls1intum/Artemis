@@ -2,13 +2,13 @@ import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
@@ -22,7 +22,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     let fixture: ComponentFixture<CourseCompetenciesRelationModalComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
 
     const courseId = 1;
     const courseCompetencies: CourseCompetency[] = [
@@ -39,13 +39,22 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     ];
 
     beforeEach(async () => {
+        dialogRef = {
+            close: vi.fn(),
+            onClose: new Subject<unknown>(),
+        } as unknown as DynamicDialogRef;
+
         await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
-                    provide: NgbActiveModal,
-                    useClass: MockNgbActiveModalService,
+                    provide: DynamicDialogRef,
+                    useValue: dialogRef,
+                },
+                {
+                    provide: DynamicDialogConfig,
+                    useValue: { data: { courseId, courseCompetencies } },
                 },
                 {
                     provide: TranslateService,
@@ -72,15 +81,12 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
-        activeModal = TestBed.inject(NgbActiveModal);
+        dialogRef = TestBed.inject(DynamicDialogRef);
 
         fixture = TestBed.createComponent(CourseCompetenciesRelationModalComponent);
         component = fixture.componentInstance;
 
         vi.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelationsByCourseId').mockResolvedValue(relations);
-
-        fixture.componentRef.setInput('courseId', courseId);
-        fixture.componentRef.setInput('courseCompetencies', courseCompetencies);
     });
 
     afterEach(() => {
@@ -119,7 +125,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     });
 
     it('should closeModal', () => {
-        const closeSpy = vi.spyOn(activeModal, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         component['closeModal']();
 

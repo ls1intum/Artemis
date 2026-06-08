@@ -167,7 +167,7 @@ Follow these tips to write performant tests:
 
 Spring Boot caches test application contexts and reuses them when configurations match.
 When certain annotations differ between test classes, Spring creates separate contexts, causing additional server starts.
-We enforce a maximum of **8 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
+We enforce a maximum of **10 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
 
 ### Annotations That Can Cause Context Pollution
 
@@ -192,7 +192,9 @@ Only the following abstract base test classes are permitted to define context-af
 
 | Base Test Class | Hazelcast Instance | Purpose |
 |-----------------|-------------------|---------|
+| `AbstractSpringIntegrationIndependentTestBase` | N/A | Shared mocks and setup for independent test buckets |
 | `AbstractSpringIntegrationIndependentTest` | `Artemis_independent` | Independent tests without CI/CD integration |
+| `AbstractSpringIntegrationIndependentBatchTest` | `Artemis_independent_batch` | Second independent bucket for balanced parallel execution |
 | `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins` | Jenkins + LocalVC integration |
 | `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_template` | Jenkins template tests |
 | `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_batch` | Jenkins batch tests |

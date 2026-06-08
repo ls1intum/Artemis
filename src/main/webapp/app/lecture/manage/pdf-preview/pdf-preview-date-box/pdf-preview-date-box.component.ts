@@ -4,10 +4,10 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 

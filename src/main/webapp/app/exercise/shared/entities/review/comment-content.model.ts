@@ -13,8 +13,11 @@ export interface UserCommentContent {
 export interface InlineCodeChange {
     startLine: number;
     endLine: number;
-    expectedCode: string;
-    replacementCode: string;
+    // expectedCode/replacementCode may be absent in the response: the server serializes this DTO with
+    // @JsonInclude(NON_EMPTY), which omits empty strings (e.g. an empty replacementCode for a pure deletion).
+    // Consumers must treat an absent value as an empty string.
+    expectedCode?: string;
+    replacementCode?: string;
     applied: boolean;
 }
 

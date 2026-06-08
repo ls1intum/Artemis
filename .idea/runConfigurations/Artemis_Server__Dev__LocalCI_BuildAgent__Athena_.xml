@@ -1,6 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis Server (Dev, LocalCI+BuildAgent, Athena)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="localci,localvc,artemis,scheduling,athena,buildagent,core,dev,local" />
+    <option name="ACTIVE_PROFILES" value="localci,localvc,artemis,scheduling,buildagent,core,dev,local" />
+    <!-- Athena is now toggled via the artemis.athena.enabled module-feature flag in your application-local.yml. -->
+    <!-- Set artemis.athena.enabled=true there (and configure artemis.athena.url / artemis.athena.secret) to enable Athena-backed feedback suggestions. -->
     <option name="ALTERNATIVE_JRE_PATH" value="25" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <module name="Artemis.main" />

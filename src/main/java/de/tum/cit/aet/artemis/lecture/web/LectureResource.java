@@ -36,17 +36,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -56,6 +54,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
@@ -435,15 +435,18 @@ public class LectureResource {
      * <p>
      * This will clone and import the whole lecture with associated lectureUnits and attachments.
      *
-     * @param sourceLectureId The ID of the original lecture which should get imported
-     * @param courseId        The ID of the course to import the lecture to
+     * @param sourceLectureIdQuery The ID of the original lecture which should get imported (provided as a query parameter; preferred)
+     * @param sourceLectureIdPath  The ID of the original lecture which should get imported (provided as a legacy path variable; deprecated)
+     * @param courseId             The ID of the course to import the lecture to
      * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
      *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("lectures/import/{sourceLectureId}")
+    @PostMapping({ "lectures/import", "lectures/import/{sourceLectureId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<SimpleLectureDTO> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
+    public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
+            @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
+        long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
