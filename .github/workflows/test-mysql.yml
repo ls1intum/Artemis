@@ -4,9 +4,11 @@ name: Test (MySQL)
 on:
   workflow_dispatch: # Manual trigger only for now
 
-# Limit the number of concurrent runs to one per PR
+# Manual-only workflow: dedupe repeated dispatches on the same ref (no PR context exists, so
+# keying on github.ref is what actually groups runs; the old pull_request.number fallback to
+# run_id was unique per run and never deduped).
 concurrency:
-  group: test-mysql-${{ github.event.pull_request.number || github.run_id }}
+  group: test-mysql-${{ github.ref }}
   cancel-in-progress: true
 
 # Keep in sync with ci-test.yml
