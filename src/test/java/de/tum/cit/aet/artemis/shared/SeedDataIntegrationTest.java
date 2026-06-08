@@ -22,6 +22,13 @@ class SeedDataIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    void allSeededStudentsArePresent() {
+        for (int index : SeedData.STUDENT_INDICES) {
+            assertThat(userTestRepository.findOneByLogin(SeedData.userLogin(index))).as("seed student %d", index).isPresent();
+        }
+    }
+
+    @Test
     void seededBaselineCourseIsPresent() {
         assertThat(courseRepository.findById(SeedData.COURSE_CHANNEL_1_ID)).as("seed course 9001").get().returns(SeedData.COURSE_CHANNEL_1_SHORT_NAME,
                 course -> course.getShortName());

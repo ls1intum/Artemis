@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.shared;
 
+import java.util.List;
+
 /**
  * References to the shared, read-only CSV seed data (see {@code config/liquibase/e2e/*.csv}). The seed is loaded once per
  * Spring context when the Liquibase {@code seed} (server tests) or {@code e2e} (Playwright) context is active, and it is
@@ -46,6 +48,20 @@ public final class SeedData {
     public static final long INSTRUCTOR_ID = 116L;
 
     public static final String INSTRUCTOR_LOGIN = "artemis_test_user_16";
+
+    /**
+     * Indices of the seeded students (login {@code artemis_test_user_<index>}, id {@code 100 + index}). All are enrolled
+     * in {@link #COURSE_CHANNEL_1_ID}'s students group. Index 6 is the tutor and 16 the instructor, hence the gaps.
+     */
+    public static final List<Integer> STUDENT_INDICES = List.of(1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20);
+
+    /**
+     * @param index the seed user index
+     * @return the login of the seed user with that index ({@code artemis_test_user_<index>})
+     */
+    public static String userLogin(int index) {
+        return "artemis_test_user_" + index;
+    }
 
     // ---- Baseline course (config/liquibase/e2e/courses.csv) ----
 
