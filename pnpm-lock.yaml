@@ -47,7 +47,7 @@ overrides:
   express: 5.2.1
   fast-uri: 3.1.2
   globals: 17.6.0
-  hono: 4.12.18
+  hono: 4.12.23
   '@hono/node-server': 1.19.13
   ip-address: 10.2.0
   js-yaml: 4.1.1
@@ -265,14 +265,14 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       primeng:
-        specifier: 21.1.8
-        version: 21.1.8(a12e0d0293e1759670eed4fbb514b2b5)
+        specifier: 21.1.9
+        version: 21.1.9(a12e0d0293e1759670eed4fbb514b2b5)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
       simple-statistics:
-        specifier: 7.8.9
-        version: 7.8.9
+        specifier: 7.9.0
+        version: 7.9.0
       split.js:
         specifier: 1.6.5
         version: 1.6.5
@@ -569,8 +569,6 @@ packages:
       '@angular/ssr': ^21.2.14
       '@web/test-runner': ^0.20.0
       browser-sync: ^3.0.2
-      jest: ^30.2.0
-      jest-environment-jsdom: ^30.2.0
       karma: ^6.3.0
       ng-packagr: ^21.0.0
       protractor: ^7.0.0
@@ -592,10 +590,6 @@ packages:
       '@web/test-runner':
         optional: true
       browser-sync:
-        optional: true
-      jest:
-        optional: true
-      jest-environment-jsdom:
         optional: true
       karma:
         optional: true
@@ -1774,7 +1768,7 @@ packages:
     resolution: {integrity: sha512-TsQLe4i2gvoTtrHje625ngThGBySOgSK3Xo2XRYOdqGN1teR8+I7vchQC46uLJi8OF62YTYA3AhSpumtkhsaKQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: 4.12.18
+      hono: 4.12.23
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4906,8 +4900,8 @@ packages:
   hls.js@1.6.16:
     resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
-  hono@4.12.18:
-    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
+  hono@4.12.23:
+    resolution: {integrity: sha512-eIaZ9qDgu7XV0pxOCrg7/WhnQ6Ivm22UcxhXx/A3dcbqbbYgBEkc6e/J/s7j2tS96zoB0S9VBdLwQNCWwUo4LA==}
     engines: {node: '>=16.9.0'}
 
   hookified@1.15.1:
@@ -5217,10 +5211,6 @@ packages:
   istanbul-reports@3.2.0:
     resolution: {integrity: sha512-HGYWWS/ehqTV3xN10i23tkPkpH46MLCIMFNCaaKNavAXTF1RkqxawEPtnjnGZ6XKSInBKkiOA5BKS+aZiY3AvA==}
     engines: {node: '>=8'}
-
-  jest-worker@27.5.1:
-    resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
-    engines: {node: '>= 10.13.0'}
 
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
@@ -6060,8 +6050,8 @@ packages:
   primeicons@7.0.0:
     resolution: {integrity: sha512-jK3Et9UzwzTsd6tzl2RmwrVY/b8raJ3QZLzoDACj+oTJ0oX7L9Hy+XnVwgo4QVKlKpnP/Ur13SXV/pVh4LzaDw==}
 
-  primeng@21.1.8:
-    resolution: {integrity: sha512-LvbecXxfcjbHqINa9Z3GxGKwyeWAaBCKZIJHoxZsSSUVnaz+mzqVHhvz/GAT2CC5EQhKxqex+8tm/OubErDTRg==}
+  primeng@21.1.9:
+    resolution: {integrity: sha512-Z76PtF08X0PNSTCNMobao8Qm71vC56mtZSdUtX/gsn4+q4x0NbUUtkeK1pc33a+kxVm2zkmOwzUIEGmb9VdoIA==}
     peerDependencies:
       '@angular/cdk': ^21.0.0
       '@angular/common': ^21.0.0
@@ -6411,8 +6401,8 @@ packages:
     resolution: {integrity: sha512-endqECJkfhozrXMK5ngu/UAA0xVcVEFdnHJCElGaExypjW+HK5i6zu3NteLoaX/iFbRUbC3+DjttQs0GARr+5w==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  simple-statistics@7.8.9:
-    resolution: {integrity: sha512-YT6MLqYsz7y1rQZOLFlOCCgSRpCi6bqY417yhoOLI7aVoBi29dD39EPrOE03W9DY25H0J0jizVsHZnkLzyGJFg==}
+  simple-statistics@7.9.0:
+    resolution: {integrity: sha512-OOF4uUZseYAC54r2/W58KxlIe4aA33GyPBrX4WMSxQq/NBNVNIOBlJerpGnb64jGH6cUIqKKOkMdhymtmKmpiA==}
 
   slash@5.1.0:
     resolution: {integrity: sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg==}
@@ -7181,7 +7171,7 @@ packages:
     engines: {node: '>=12'}
 
   xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz:
-    resolution: {tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
+    resolution: {integrity: sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==, tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
     version: 0.20.3
     engines: {node: '>=0.8'}
     hasBin: true
@@ -8861,9 +8851,9 @@ snapshots:
   '@harperfast/extended-iterable@1.0.3':
     optional: true
 
-  '@hono/node-server@1.19.13(hono@4.12.18)':
+  '@hono/node-server@1.19.13(hono@4.12.23)':
     dependencies:
-      hono: 4.12.18
+      hono: 4.12.23
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -9208,7 +9198,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.26.0(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.13(hono@4.12.18)
+      '@hono/node-server': 1.19.13(hono@4.12.23)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -9218,7 +9208,7 @@ snapshots:
       eventsource-parser: 3.1.0
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.18
+      hono: 4.12.23
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -12081,7 +12071,7 @@ snapshots:
 
   hls.js@1.6.16: {}
 
-  hono@4.12.18: {}
+  hono@4.12.23: {}
 
   hookified@1.15.1: {}
 
@@ -12367,12 +12357,6 @@ snapshots:
     dependencies:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.1
-
-  jest-worker@27.5.1:
-    dependencies:
-      '@types/node': 24.12.4
-      merge-stream: 2.0.0
-      supports-color: 8.1.1
 
   jiti@2.7.0: {}
 
@@ -13324,7 +13308,7 @@ snapshots:
 
   primeicons@7.0.0: {}
 
-  primeng@21.1.8(a12e0d0293e1759670eed4fbb514b2b5):
+  primeng@21.1.9(a12e0d0293e1759670eed4fbb514b2b5):
     dependencies:
       '@angular/cdk': 21.2.14(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@21.2.16(@angular/animations@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
       '@angular/common': 21.2.16(@angular/core@21.2.16(@angular/compiler@21.2.16)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
@@ -13765,7 +13749,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  simple-statistics@7.8.9: {}
+  simple-statistics@7.9.0: {}
 
   slash@5.1.0: {}
 
@@ -14105,7 +14089,6 @@ snapshots:
   terser-webpack-plugin@5.6.1(esbuild@0.28.0)(postcss@8.5.14)(webpack@5.106.2(esbuild@0.28.0)(postcss@8.5.14)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.46.0
       webpack: 5.106.2(esbuild@0.28.0)(postcss@8.5.14)

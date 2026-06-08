@@ -153,9 +153,8 @@ export class AthenaService {
     public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
         return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
             map((suggestions) => {
-                return suggestions.map((suggestion, index) => {
+                return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
-                    feedback.id = index;
                     feedback.credits = suggestion.credits;
                     feedback.positive = suggestion.credits >= 1;
 
@@ -165,7 +164,8 @@ export class AthenaService {
 
                     if (referenceId) {
                         feedback.type = FeedbackType.AUTOMATIC;
-                        feedback.text = suggestion.description;
+                        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}${suggestion.title}`;
+                        feedback.detailText = suggestion.description;
                         feedback.reference = suggestion.reference;
                         feedback.referenceId = referenceId;
                         feedback.referenceType = referenceType;

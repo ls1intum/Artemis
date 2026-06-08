@@ -755,6 +755,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.course).toBeUndefined();
             expect(comp.isImportFromExistingExercise).toBe(true);
             expect(comp.isExamMode).toBe(true);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
         });
 
         it('should reset dates, id and project key', () => {
@@ -767,6 +768,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(comp.isImportFromFile).toBe(false);
             expect(comp.isImportFromExistingExercise).toBe(true);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
 
             verifyImport(programmingExercise);
         });
@@ -859,6 +861,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(findSpy).toHaveBeenCalledWith(course.id);
             expect(comp.isExamMode).toBe(false);
             expect(comp.exerciseCategories).toBe(categories);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(false);
         });
 
         // Ensures that exerciseCategories remain empty in exam-mode imports.
@@ -888,6 +891,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
             expect(comp.isExamMode).toBe(true);
+            expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
 
             expect(comp.exerciseCategories).toEqual([]);
         });

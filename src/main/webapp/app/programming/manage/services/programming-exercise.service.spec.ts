@@ -31,6 +31,7 @@ describe('ProgrammingExercise Service', () => {
 
     let defaultProgrammingExercise: ProgrammingExercise;
     const resourceUrl = 'api/programming/programming-exercises';
+    const localCIResourceUrl = 'api/localci/programming-exercises';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -470,6 +471,39 @@ describe('ProgrammingExercise Service', () => {
         expect(convertedExercise).toBeDefined();
         expect(convertedExercise.templateParticipation).toBeDefined();
         expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
+
+    it('should preview automatic after due date with a date response', () => {
+        const isoDate = '2026-06-01T12:15:00Z';
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+            programmingLanguage: 'JAVA' as any,
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeDefined();
+            expect(result!.toISOString()).toBe(dayjs(isoDate).toISOString());
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(isoDate);
+    });
+
+    it('should preview automatic after due date with null response', () => {
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeUndefined();
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(null);
     });
 
     afterEach(() => {

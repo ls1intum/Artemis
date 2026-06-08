@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
  * GlobalCleanupListener performs a single
- * cleanup operation of local/server-integration-test after all server integration tests have completed.
+ * cleanup operation of local server-integration-test directories after all server integration tests have completed.
  *
  * <p>
  * This listener registers with the JUnit Platform Launcher to receive a callback
@@ -28,5 +28,6 @@ public class GlobalCleanupListener implements TestExecutionListener {
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
         RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test"));
+        RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test-independent-batch"));
     }
 }

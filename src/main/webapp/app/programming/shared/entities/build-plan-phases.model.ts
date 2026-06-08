@@ -33,6 +33,10 @@ export interface BuildPlanPhases {
 export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
 export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post_action']);
 
+export function hasExpectedTestsBeforeDueDate(phase: BuildPhase | undefined): boolean {
+    return !!phase && (phase.resultPaths?.length ?? 0) > 0 && phase.condition !== 'AFTER_DUE_DATE';
+}
+
 export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases | undefined {
     if (json == undefined) {
         return undefined;
@@ -48,9 +52,11 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     }
     return {
         ...data,
-        phases: data.phases.map((phase: BuildPhase) => ({
-            ...phase,
-            resultPaths: phase.resultPaths ?? [],
+        phases: data.phases.map((parsed: BuildPhase) => ({
+            ...parsed,
+            condition: parsed.condition ?? 'ALWAYS',
+            forceRun: parsed.forceRun ?? false,
+            resultPaths: parsed.resultPaths ?? [],
         })),
     } as BuildPlanPhases;
 }
@@ -68,7 +74,13 @@ function isBuildPhase(value: unknown): value is BuildPhase {
         return false;
     }
     const v = value as any;
-    return typeof v.name === 'string' && typeof v.script === 'string' && isBuildPhaseCondition(v.condition) && typeof v.forceRun === 'boolean' && isResultPaths(v.resultPaths);
+    return (
+        typeof v.name === 'string' &&
+        typeof v.script === 'string' &&
+        (v.condition === undefined || isBuildPhaseCondition(v.condition)) &&
+        (v.forceRun === undefined || typeof v.forceRun === 'boolean') &&
+        (v.resultPaths === undefined || isResultPaths(v.resultPaths))
+    );
 }
 
 function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
@@ -76,5 +88,5 @@ function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
 }
 
 function isResultPaths(resultPaths: any) {
-    return resultPaths === undefined || (Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string'));
+    return Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string');
 }
