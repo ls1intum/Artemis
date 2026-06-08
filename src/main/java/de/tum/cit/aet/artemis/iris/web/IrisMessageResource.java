@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -125,7 +126,7 @@ public class IrisMessageResource {
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
         // Extract context information from request (not persisted, only passed to Pyris)
-        List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
+        List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
         irisSessionService.requestMessageFromIris(session, uncommittedFiles, context);
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();

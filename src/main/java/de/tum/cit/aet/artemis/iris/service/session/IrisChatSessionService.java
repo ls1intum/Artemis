@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -137,8 +138,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param uncommittedFiles The uncommitted files from the client
      * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      */
-    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles,
-            List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context) {
+    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
         chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context);
     }
 
