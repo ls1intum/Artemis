@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
@@ -38,15 +37,16 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.shared.SeedData;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -82,6 +82,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
     private TextExercise finishedTextExercise;
 
     private TextExercise releasedTextExercise;
@@ -96,21 +99,22 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        Course course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        Course course2 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        releasedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course1.getExercises(), "Text");
-        finishedTextExercise = ExerciseUtilService.findTextExerciseWithTitle(course2.getExercises(), "Finished");
-        lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, TEST_PREFIX + "student1");
-        lateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        // Reuse the shared seed instead of creating two courses with users and exercises per test: claim a fresh empty
+        // exercise from the seed pool (each test gets its own, so it can submit/assess/mutate freely) and use the seed
+        // students (1, 2), tutor and instructor, who are already enrolled in the seed course that owns the pool.
+        finishedTextExercise = textExerciseRepository.findByIdElseThrow(SeedData.claimFinishedTextExerciseId());
+        releasedTextExercise = textExerciseRepository.findByIdElseThrow(SeedData.claimReleasedTextExerciseId());
+        lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, SeedData.STUDENT_1_LOGIN);
+        // Anchor the participation start to the (fixed) seed due date so it is before it (no individual-due-date extension).
+        lateParticipation.setInitializationDate(finishedTextExercise.getDueDate().minusDays(1));
         participationRepository.save(lateParticipation);
-        participationUtilService.createAndSaveParticipationForExercise(releasedTextExercise, TEST_PREFIX + "student1");
+        participationUtilService.createAndSaveParticipationForExercise(releasedTextExercise, SeedData.STUDENT_1_LOGIN);
 
         textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         lateTextSubmission = ParticipationFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
         notSubmittedTextSubmission = ParticipationFactory.generateTextSubmission("example text 2", Language.ENGLISH, false);
 
-        // Add users that are not in exercise/course
+        // Outsider users that are intentionally not in the seed course/exercise (used by the negative-authorization tests).
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
         userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
     }
@@ -129,9 +133,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithResult() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         participationUtilService.addResultToSubmission(textSubmission, AssessmentType.MANUAL);
 
         TextSubmission textSubmission = request.get("/api/text/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);
@@ -143,19 +147,19 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void getTextSubmissionWithResult_involved_allowed() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
         PlagiarismSubmission submissionA = new PlagiarismSubmission();
-        submissionA.setStudentLogin(TEST_PREFIX + "student1");
+        submissionA.setStudentLogin(SeedData.STUDENT_1_LOGIN);
         submissionA.setSubmissionId(this.textSubmission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(finishedTextExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
-        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userTestRepository.getUserByLoginElseThrow(SeedData.INSTRUCTOR_LOGIN));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
@@ -172,16 +176,16 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void getTextSubmissionWithResult_notInvolved_notAllowed() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         request.get("/api/text/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getAllTextSubmissions_studentHiddenForTutor() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN, SeedData.TUTOR_LOGIN);
 
         List<TextSubmission> textSubmissions = request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
                 TextSubmission.class);
@@ -192,9 +196,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = SeedData.INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void getAllTextSubmissions_studentVisibleForInstructor() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
 
         List<TextSubmission> textSubmissions = request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
@@ -204,30 +208,30 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void getAllTextSubmissions_assessedByTutorForStudent() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getAllTextSubmissions_notAssessedByTutorForTutor() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getAllTextSubmission_notTutorInExercise() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
 
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class);
@@ -238,10 +242,10 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithoutAssessment_lockSubmission() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin(SeedData.TUTOR_LOGIN);
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
 
         TextSubmission storedSubmission = request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
                 TextSubmission.class);
@@ -255,11 +259,16 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithoutAssessment_selectInTime() throws Exception {
+        // This test compares submission dates (now-1day vs now+1day) against the due date, so anchor the claimed
+        // exercise's due date to now (the seed pool uses fixed dates).
+        finishedTextExercise.setDueDate(ZonedDateTime.now());
+        finishedTextExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
+        finishedTextExercise = textExerciseRepository.save(finishedTextExercise);
 
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
-        lateTextSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, lateTextSubmission, TEST_PREFIX + "student2");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
+        lateTextSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, lateTextSubmission, SeedData.STUDENT_2_LOGIN);
 
         assertThat(textSubmission.getSubmissionDate()).as("first submission is in-time").isBefore(finishedTextExercise.getDueDate());
         assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(finishedTextExercise.getDueDate());
@@ -272,10 +281,10 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         TextSubmission submission = ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, false);
-        textExerciseUtilService.saveTextSubmission(finishedTextExercise, submission, TEST_PREFIX + "student1");
+        textExerciseUtilService.saveTextSubmission(finishedTextExercise, submission, SeedData.STUDENT_1_LOGIN);
 
         var response = request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class);
         assertThat(response).isNull();
@@ -284,31 +293,31 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = SeedData.TUTOR_LOGIN, roles = "TA")
     void getTextSubmissionWithoutAssessment_dueDateNotOver() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
 
         request.get("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN)
     void getTextSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
 
         request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN)
     void getResultsForCurrentStudent_assessorHiddenForStudent() throws Exception {
         textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN, SeedData.TUTOR_LOGIN);
 
         ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
         StudentParticipation studentParticipation = returnedExerciseDetails.exercise().getStudentParticipations().iterator().next();
@@ -316,10 +325,10 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void getDataForTextEditorWithResult() throws Exception {
-        TextSubmission textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, this.textSubmission, TEST_PREFIX + "student1",
-                TEST_PREFIX + "tutor1");
+        TextSubmission textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, this.textSubmission, SeedData.STUDENT_1_LOGIN,
+                SeedData.TUTOR_LOGIN);
         Long participationId = textSubmission.getParticipation().getId();
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
@@ -332,13 +341,13 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_afterDueDate_forbidden() throws Exception {
         request.put("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_beforeDueDate_isTeamMode() throws Exception {
         releasedTextExercise.setMode(ExerciseMode.TEAM);
         exerciseRepository.save(releasedTextExercise);
@@ -346,8 +355,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         team.setName("Team");
         team.setShortName("team");
         team.setExercise(releasedTextExercise);
-        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
-        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(SeedData.STUDENT_1_LOGIN).orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(SeedData.STUDENT_2_LOGIN).orElseThrow());
         teamRepository.save(releasedTextExercise, team);
 
         StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(releasedTextExercise, team.getId());
@@ -356,28 +365,28 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission submission = request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
                 HttpStatus.OK);
 
-        userUtilService.changeUser(TEST_PREFIX + "student1");
+        userUtilService.changeUser(SeedData.STUDENT_1_LOGIN);
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student1");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(SeedData.STUDENT_1_LOGIN);
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
 
-        userUtilService.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(SeedData.STUDENT_2_LOGIN);
         submission.setText(submission.getText() + " Extra contribution.");
         request.put("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", submission, HttpStatus.OK);
 
         // create new submission to simulate other teams working at the same time
         request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.OK);
 
-        userUtilService.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(SeedData.STUDENT_2_LOGIN);
         version = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(version).as("submission version was created").isNotEmpty();
-        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(TEST_PREFIX + "student2");
+        assertThat(version.orElseThrow().getAuthor().getLogin()).as("submission version has correct author").isEqualTo(SeedData.STUDENT_2_LOGIN);
         assertThat(version.get().getContent()).as("submission version has correct content").isEqualTo(submission.getText());
 
         submission.setText(submission.getText() + " Even more.");
         request.put("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", submission, HttpStatus.OK);
-        userUtilService.changeUser(TEST_PREFIX + "student2");
+        userUtilService.changeUser(SeedData.STUDENT_2_LOGIN);
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
 
@@ -387,7 +396,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
         TextSubmission submission = request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
                 HttpStatus.OK);
@@ -397,7 +406,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void saveAndSubmitTextSubmission_tooLarge() throws Exception {
         // should be ok
         char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH)];
@@ -413,7 +422,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_beforeDueDateWithTwoSubmissions_allowed() throws Exception {
         final var submitPath = "/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions";
         final var newSubmissionText = "Some other test text";
@@ -427,7 +436,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         lateParticipation.setInitializationDate(ZonedDateTime.now());
         participationRepository.save(lateParticipation);
@@ -436,7 +445,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void saveExercise_beforeDueDate() throws Exception {
         TextSubmission storedSubmission = request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", notSubmittedTextSubmission,
                 TextSubmission.class, HttpStatus.OK);
@@ -444,7 +453,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void saveExercise_afterDueDateWithParticipationStartAfterDueDate() throws Exception {
         exerciseUtilService.updateExerciseDueDate(releasedTextExercise.getId(), ZonedDateTime.now().minusHours(1));
         lateParticipation.setInitializationDate(ZonedDateTime.now());
@@ -463,24 +472,24 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_submissionIsAlreadyCreated_badRequest() throws Exception {
         textSubmission = testSubmissionTestRepository.save(textSubmission);
         request.post("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_noExercise_badRequest() throws Exception {
         var fakeExerciseId = releasedTextExercise.getId() + 100L;
         request.post("/api/text/exercises/" + fakeExerciseId + "/text-submissions", textSubmission, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = SeedData.INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void deleteTextSubmissionWithTextBlocks() throws Exception {
         textSubmission.setText("Lorem Ipsum dolor sit amet");
-        textSubmission = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        textSubmission = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, SeedData.STUDENT_1_LOGIN);
         final var blocks = Set.of(TextExerciseFactory.generateTextBlock(0, 11), TextExerciseFactory.generateTextBlock(12, 21), TextExerciseFactory.generateTextBlock(22, 26));
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(blocks, textSubmission);
 
