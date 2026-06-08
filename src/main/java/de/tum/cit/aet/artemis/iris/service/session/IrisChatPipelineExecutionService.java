@@ -119,6 +119,7 @@ public class IrisChatPipelineExecutionService {
      * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
      * @param latestSubmission optional programming submission already resolved by the caller
      * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
+     * @param context          list of context information (e.g. current page, video timestamp) sent to Pyris for contextual responses
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
