@@ -1,6 +1,6 @@
 import { Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCircleXmark, faClock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -8,6 +8,7 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -37,11 +38,11 @@ export enum DateTimePickerType {
         NgTemplateOutlet,
         TranslateDirective,
         ArtemisTranslatePipe,
+        TimeZoneWarningComponent,
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCalendarAlt = faCalendarAlt;
-    protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faCircleXmark = faCircleXmark;
@@ -133,13 +134,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this.value.set(newValue);
         this.onChange?.(dayjs(this.value()));
         this.valueChanged();
-    }
-
-    /**
-     * Get the current time zone of the user / browser
-     */
-    get currentTimeZone(): string {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
     startDate = computed(() => {

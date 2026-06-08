@@ -107,9 +107,7 @@ describe('FormDateTimePickerComponent', () => {
         fixture.componentRef.setInput('min', expectedMinDate);
         fixture.componentRef.setInput('max', expectedMaxDate);
         fixture.componentRef.setInput('startAt', expectedStartDate);
-        const timeZone = component.currentTimeZone;
 
-        expect(timeZone).toBeDefined();
         expect(dayjs(component.minDate())).toEqual(expectedMinDate);
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
