@@ -109,7 +109,7 @@ describe('RepositoryViewComponent', () => {
                 // child template node, whose ngOnInit reads
                 // `participation.id` before bindings settle and throws an
                 // unhandled TypeError under Vitest (which exits non-zero on
-                // unhandled async errors, unlike Jest).
+                // unhandled async errors).
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);

@@ -390,7 +390,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
             featureToggleService.enableFeature(Feature.AtlasML);
 
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
             var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
@@ -404,11 +404,23 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldForbidAtlasMLSuggestWhenNotEditorInTargetCourse() throws Exception {
+            // instructor42 is deliberately not a member of the course, so even with the general editor role the request
+            // for this specific course must be rejected (the feature is enabled so the 403 comes from the course check).
+            featureToggleService.enableFeature(Feature.AtlasML);
+
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
+                    .content(JsonObjectMapper.get().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+        }
+
+        @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldBlockAtlasMLSuggestWhenFeatureDisabled() throws Exception {
             featureToggleService.disableFeature(Feature.AtlasML);
 
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
             request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
                     .content(JsonObjectMapper.get().writeValueAsString(requestBody))).andExpect(status().isForbidden());
         }

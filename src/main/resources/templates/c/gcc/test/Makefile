@@ -22,6 +22,10 @@ endif
 # -g					Generates debug information to be used by GDB debugger
 WFLAGS = -Wall -Wextra -Wpedantic -g
 
+# Disable malloc shadowing when building sanitizer binaries to avoid
+# conflicts with sanitizer allocator/runtime interception.
+SANITIZER_FLAGS = -DGBS_DISABLE_MALLOC_SHADOW
+
 # Compile without sanitizers and disable optimisation
 # $(SOURCE): 	        Input file(s)
 # $(INCLUDEDIRS:%=-I%)  Include directories
@@ -45,7 +49,7 @@ helloWorld: FORCE
 # -fsanitize=address:	Address sanitizer
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 asan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=address
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=address
 
 # Compile with undefined behavior sanitizer enabled
 # $(SOURCE): 			Input file(s)
@@ -59,7 +63,7 @@ asan: FORCE
 # -fsanitize=undefined:	Fast undefined behavior check
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 ubsan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=undefined
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=undefined
 
 # Compile with leak sanitizer enabled
 # $(SOURCE): 		    Input file(s)
@@ -73,7 +77,7 @@ ubsan: FORCE
 # -fsanitize=leak	    Basic memory leak sanitizer
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 lsan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=leak
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=leak
 
 # Compile with GCC static analysis enabled
 # $(SOURCE): 			Input file(s)

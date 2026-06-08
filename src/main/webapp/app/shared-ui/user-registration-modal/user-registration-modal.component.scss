@@ -1,0 +1,60 @@
+.user-registration-dialog {
+    .p-dialog-header {
+        padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+    }
+
+    .jhi-table-view-container .p-datatable {
+        tr th {
+            padding: 6px 8px !important;
+        }
+
+        tr td {
+            padding: 6px 8px !important;
+        }
+    }
+
+    .selection-info-message .p-message-content .p-message-text {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .placeholder-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+        color: var(--bs-secondary-color, #6c757d);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        padding: 2rem;
+
+        .placeholder-icon {
+            font-size: 2.5rem;
+            opacity: 0.4;
+        }
+    }
+
+    .name-login-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        overflow: hidden;
+
+        .user-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-login {
+            font-size: 0.8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}

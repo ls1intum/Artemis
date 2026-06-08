@@ -39,14 +39,14 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 

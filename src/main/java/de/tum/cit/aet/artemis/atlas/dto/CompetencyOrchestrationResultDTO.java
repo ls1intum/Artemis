@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyOrchestrationResultDTO(Status status, String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
 
     public CompetencyOrchestrationResultDTO {

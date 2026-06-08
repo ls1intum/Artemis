@@ -29,10 +29,6 @@ enablePrePostScripts: true
 # peer range, this block (and the matching overrides) can be removed.
 peerDependencyRules:
     allowedVersions:
-        # eslint-plugin-jest-extended still declares "^7 || ^8 || ^9"; the plugin works fine on
-        # ESLint 10. Scoped to that one package so we don't silence legitimate ESLint-version
-        # warnings from other plugins. Drop this entry once upstream lists ESLint 10.
-        'eslint-plugin-jest-extended>eslint': '10'
         '@angular/animations': '21'
         '@angular/cdk': '21'
         '@angular/common': '21'
@@ -85,17 +81,17 @@ overrides:
     cookie: '1.1.1'
     debug: '4.4.3'
     diff: '9.0.0'
-    dompurify: '3.4.5'
+    dompurify: '3.4.8'
     esbuild: '0.28.0'
     express: '5.2.1'
     fast-uri: '3.1.2'
     globals: '17.6.0'
-    hono: '4.12.18'
+    hono: '4.12.23'
     '@hono/node-server': '1.19.13'
     ip-address: '10.2.0'
     js-yaml: '4.1.1'
     jsdom: '29.1.1'
-    katex: '0.16.47'
+    katex: '0.17.0'
     minimatch: '10.2.5'
     postcss: '8.5.14'
     punycode: '2.3.1'
@@ -117,7 +113,7 @@ overrides:
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
     '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
-    'eslint@10.4.0': 'patches/eslint+10.4.0.patch'
+    'eslint@10.4.1': 'patches/eslint+10.4.1.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings

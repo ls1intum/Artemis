@@ -45,10 +45,10 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     // Repositories
     @Autowired

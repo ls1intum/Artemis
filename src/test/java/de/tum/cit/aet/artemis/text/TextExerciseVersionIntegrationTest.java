@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 /**
  * Integration tests for exercise versioning on TextExercise operations.
  */
-class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "textexerciseversion";
 

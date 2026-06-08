@@ -5,7 +5,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -57,6 +57,7 @@ import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/he
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 /**
  * Typed view onto the component's private members and methods the spec needs to reach,
@@ -887,5 +888,52 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.feedbackSuggestions = [];
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).not.toHaveBeenCalled();
+    });
+
+    it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
+        comp['automaticFeedback'] = [{ type: FeedbackType.AUTOMATIC, credits: 1 }];
+        expect(comp.hasAutomaticFeedback).toBe(true);
+    });
+
+    it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
+        comp['automaticFeedback'] = [];
+        expect(comp.hasAutomaticFeedback).toBe(false);
+    });
+
+    it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
+        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise;
+        expect(comp.isFeedbackSuggestionsEnabled).toBe(true);
+    });
+
+    it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
+        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise;
+        expect(comp.isFeedbackSuggestionsEnabled).toBe(false);
+    });
+
+    it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {
+        const subject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
+        comp['submission'] = { id: 42 } as ProgrammingSubmission;
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        expect(comp.loadingFeedbackSuggestions).toBe(true);
+
+        subject.next([]);
+        subject.complete();
+        await loadPromise;
+
+        expect(comp.loadingFeedbackSuggestions).toBe(false);
+    });
+
+    it('should render the feedback suggestions banner when submission is set', async () => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
+
+        fixture.detectChanges();
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+        expect(banner).not.toBeNull();
     });
 });

@@ -23,33 +23,21 @@ describe('IncludedInScoreBadge', () => {
     });
 
     it('should show no badge if no information about score inclusion is known', () => {
-        component.ngOnChanges();
-        component.ngOnInit();
-
-        expect(component.badgeClass).toBeUndefined();
+        expect(component.badgeClass()).toBeUndefined();
     });
 
     it('should show a warning badge if the score is included as bonus', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_AS_BONUS);
-        component.ngOnChanges();
-        component.ngOnInit();
-
-        expect(component.badgeClass).toBe('bg-warning');
+        expect(component.badgeClass()).toBe('bg-warning');
     });
 
     it('should show a success badge if the score is fully included', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.INCLUDED_COMPLETELY);
-        component.ngOnChanges();
-        component.ngOnInit();
-
-        expect(component.badgeClass).toBe('bg-success');
+        expect(component.badgeClass()).toBe('bg-success');
     });
 
     it('should show a danger badge if the score is not included', () => {
         fixture.componentRef.setInput('includedInOverallScore', IncludedInOverallScore.NOT_INCLUDED);
-        component.ngOnChanges();
-        component.ngOnInit();
-
-        expect(component.badgeClass).toBe('bg-secondary');
+        expect(component.badgeClass()).toBe('bg-secondary');
     });
 });
