@@ -36,7 +36,7 @@ import org.springframework.ai.chat.model.Generation;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
@@ -81,7 +81,7 @@ class CompetencyOrchestrationServiceTest {
     private LLMTokenUsageService llmTokenUsageService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private AtlasOrchestratorProperties properties;
 
