@@ -49,6 +49,12 @@ describe('IrisContextText', () => {
 
             expect(result).toBeUndefined();
         });
+
+        it('should return undefined for context block in middle of text', () => {
+            const result = parseContext('Why does [context:123:4:5] look this way?');
+
+            expect(result).toBeUndefined();
+        });
     });
 
     describe('removeContextBlock', () => {
@@ -64,10 +70,10 @@ describe('IrisContextText', () => {
             expect(result).toBe('How does this work?');
         });
 
-        it('should remove multiple context blocks', () => {
-            const result = removeContextBlock('[context:123:7:125.5]First [context:456:8:200.0]Second');
+        it('should NOT remove context block in middle of text', () => {
+            const result = removeContextBlock('Why does [context:123:4:5] look this way?');
 
-            expect(result).toBe('First Second');
+            expect(result).toBe('Why does [context:123:4:5] look this way?');
         });
 
         it('should handle empty string', () => {
@@ -80,6 +86,12 @@ describe('IrisContextText', () => {
             const result = removeContextBlock('[context:123:7:125.5]  Message with spaces  ');
 
             expect(result).toBe('Message with spaces');
+        });
+
+        it('should only remove context block at start, not in body', () => {
+            const result = removeContextBlock('[context:123:7:125.5]First message mentioning [context:456:8:200.0] in text');
+
+            expect(result).toBe('First message mentioning [context:456:8:200.0] in text');
         });
     });
 });

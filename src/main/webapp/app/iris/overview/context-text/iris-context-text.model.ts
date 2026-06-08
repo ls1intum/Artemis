@@ -1,4 +1,4 @@
-export const CONTEXT_REGEX = /\[context:(\d+):(\d*):([0-9.]*)\]/g;
+export const CONTEXT_REGEX = /^\[context:(\d+):(\d*):(\d+(?:\.\d+)?)?]/;
 
 export interface IrisContextParsed {
     lectureUnitId: string;
@@ -7,7 +7,7 @@ export interface IrisContextParsed {
 }
 
 export function parseContext(raw: string): IrisContextParsed | undefined {
-    const match = raw.match(/\[context:(\d+):(\d*):([0-9.]*)\]/);
+    const match = raw.match(CONTEXT_REGEX);
     if (!match) {
         return undefined;
     }

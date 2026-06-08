@@ -17,9 +17,14 @@ describe('RemoveContextPipe', () => {
         expect(result).toBe('How does this work?');
     });
 
-    it('should remove multiple context blocks', () => {
-        const result = pipe.transform('[context:123:7:125.5]First [context:456:8:200.0]Second');
-        expect(result).toBe('First Second');
+    it('should NOT remove context block in middle of message', () => {
+        const result = pipe.transform('Why does [context:123:4:5] look this way?');
+        expect(result).toBe('Why does [context:123:4:5] look this way?');
+    });
+
+    it('should only remove leading context block, preserve body text', () => {
+        const result = pipe.transform('[context:123:7:125.5]First message mentioning [context:456:8:200.0] in text');
+        expect(result).toBe('First message mentioning [context:456:8:200.0] in text');
     });
 
     it('should handle null', () => {
