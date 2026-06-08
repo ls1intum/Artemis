@@ -153,7 +153,7 @@ describe('ResultComponent', () => {
 
         fixture.componentRef.setInput('isBuilding', false);
         comp.ngOnInit();
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.NO_RESULT);
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.NO_RESULT);
 
         const newParticipation = {
             results: [],
@@ -166,22 +166,22 @@ describe('ResultComponent', () => {
             participation: { currentValue: newParticipation } as any as SimpleChange,
         });
 
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.IS_BUILDING);
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.IS_BUILDING);
     });
 
     describe('should display HAS_RESULT status properly', () => {
         const RESULT_SCORE_SELECTOR = '#result-score';
 
         it('should not display if result is not present', () => {
-            comp.resultIconClass = faTimesCircle;
+            comp.resultIconClass.set(faTimesCircle);
             const button = fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR);
             expect(button).not.toBeTruthy();
         });
 
         it('should display result if present', () => {
-            comp.resultIconClass = faTimesCircle;
+            comp.resultIconClass.set(faTimesCircle);
             comp.result.set(mockResult);
-            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+            comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -196,8 +196,8 @@ describe('ResultComponent', () => {
 
             comp.exercise.set(preparedFeedback.exercise);
             comp.result.set(mockResult);
-            comp.resultIconClass = faTimesCircle;
-            comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+            comp.resultIconClass.set(faTimesCircle);
+            comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -285,11 +285,11 @@ describe('ResultComponent', () => {
         const detailsSpy = vi.spyOn(comp, 'showDetails');
 
         fixture.componentRef.setInput('isInSidebarCard', false);
-        comp.resultIconClass = faTimesCircle;
+        comp.resultIconClass.set(faTimesCircle);
         comp.exercise.set({ type: ExerciseType.PROGRAMMING, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false });
         comp.result.set(mockResult);
-        comp.resultIconClass = faTimesCircle;
-        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+        comp.resultIconClass.set(faTimesCircle);
+        comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
         fixture.changeDetectorRef.detectChanges();
         const resultElement = fixture.debugElement.query(By.css('#result-score'));
         resultElement.triggerEventHandler('click', null);
@@ -303,7 +303,7 @@ describe('ResultComponent', () => {
     });
 
     it('should display building message for IS_BUILDING status', () => {
-        comp.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        comp.templateStatus.set(ResultTemplateStatus.IS_BUILDING);
         fixture.changeDetectorRef.detectChanges();
         const compiled = fixture.debugElement.query(By.css('[jhiTranslate$=building]'));
         expect(compiled).toBeTruthy();
@@ -311,9 +311,9 @@ describe('ResultComponent', () => {
 
     it('should display badge when showBadge is true', () => {
         fixture.componentRef.setInput('showBadge', true);
-        comp.templateStatus = ResultTemplateStatus.HAS_RESULT;
+        comp.templateStatus.set(ResultTemplateStatus.HAS_RESULT);
         comp.result.set(mockResult);
-        comp.resultIconClass = faTimesCircle;
+        comp.resultIconClass.set(faTimesCircle);
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.nativeElement.querySelector('#result-score-badge');
         expect(badge).toBeTruthy();
@@ -324,7 +324,7 @@ describe('ResultComponent', () => {
         // so we set MISSING after the input change and force re-render.
         fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
         fixture.changeDetectorRef.detectChanges();
-        comp.templateStatus = ResultTemplateStatus.MISSING;
+        comp.templateStatus.set(ResultTemplateStatus.MISSING);
         fixture.changeDetectorRef.detectChanges();
         let compiled = fixture.nativeElement;
         let spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -334,7 +334,7 @@ describe('ResultComponent', () => {
         // Test for FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE
         fixture.componentRef.setInput('missingResultInfo', MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
         fixture.changeDetectorRef.detectChanges();
-        comp.templateStatus = ResultTemplateStatus.MISSING;
+        comp.templateStatus.set(ResultTemplateStatus.MISSING);
         fixture.changeDetectorRef.detectChanges();
         compiled = fixture.nativeElement;
         spanElement = compiled.querySelector('span[jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"]');
@@ -343,28 +343,28 @@ describe('ResultComponent', () => {
     });
 
     it('should display the submitted text for SUBMITTED template status', () => {
-        comp.templateStatus = ResultTemplateStatus.SUBMITTED;
+        comp.templateStatus.set(ResultTemplateStatus.SUBMITTED);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for SUBMITTED_WAITING_FOR_GRADING template status', () => {
-        comp.templateStatus = ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+        comp.templateStatus.set(ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-submitted-waiting-grading');
         expect(submittedSpan).toBeTruthy();
     });
 
     it('should display the submitted text for LATE_NO_FEEDBACK template status', () => {
-        comp.templateStatus = ResultTemplateStatus.LATE_NO_FEEDBACK;
+        comp.templateStatus.set(ResultTemplateStatus.LATE_NO_FEEDBACK);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late-no-feedback');
         expect(submittedSpan).toBeTruthy();
     });
     it('should display the submitted text for LATE template status', () => {
-        comp.resultIconClass = faTimesCircle;
-        comp.templateStatus = ResultTemplateStatus.LATE;
+        comp.resultIconClass.set(faTimesCircle);
+        comp.templateStatus.set(ResultTemplateStatus.LATE);
         fixture.changeDetectorRef.detectChanges();
         const submittedSpan = fixture.nativeElement.querySelector('#test-late');
         expect(submittedSpan).toBeTruthy();
@@ -414,22 +414,27 @@ describe('ResultComponent', () => {
 
         it('should call evaluate again after the specified due time', () => {
             comp.result.set({ ...comp.result()!, completionDate: dayjs().add(2, 'seconds') });
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            comp.templateStatus.set(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
             comp.evaluate();
 
             comp.result()!.completionDate = dayjs().subtract(2, 'seconds');
             vi.runOnlyPendingTimers();
 
-            expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
+            expect(comp.templateStatus()).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
         });
 
         it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
-            comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+            // Note: we assert on the component's own feedback-recheck timeout rather than vi.getTimerCount(),
+            // because under zoneless the signal writes in evaluate() also schedule the change-detection scheduler's
+            // internal timers, which would otherwise pollute a global timer count.
+            const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+            comp.templateStatus.set(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
             comp.evaluate();
-            expect(vi.getTimerCount()).toBe(1);
+            const timeoutId = (comp as unknown as { resultUpdateSubscription?: ReturnType<typeof setTimeout> }).resultUpdateSubscription;
+            expect(timeoutId).toBeDefined();
 
             comp.ngOnDestroy();
-            expect(vi.getTimerCount()).toBe(0);
+            expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutId);
         });
     });
 
@@ -438,8 +443,8 @@ describe('ResultComponent', () => {
 
         comp.evaluate();
 
-        expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
-        expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+        expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(comp.resultTooltip()).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
 
     it('should trigger Interval creation on estimatedCompletionDate change', () => {
@@ -450,9 +455,9 @@ describe('ResultComponent', () => {
 
         vi.advanceTimersByTime(1200);
         expect(comp.estimatedDurationInterval).toBeDefined();
-        expect(comp.estimatedRemaining).toBeGreaterThan(0);
-        expect(comp.estimatedRemaining).toBeLessThan(40);
-        expect(comp.estimatedDuration).toBe(40);
+        expect(comp.estimatedRemaining()).toBeGreaterThan(0);
+        expect(comp.estimatedRemaining()).toBeLessThan(40);
+        expect(comp.estimatedDuration()).toBe(40);
 
         vi.clearAllTimers();
         vi.useRealTimers();
