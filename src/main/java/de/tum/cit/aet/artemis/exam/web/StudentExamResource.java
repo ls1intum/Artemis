@@ -66,10 +66,10 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
-import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -113,9 +113,9 @@ public class StudentExamResource {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    private final ExamLiveEventsService examLiveEventsService;
-
     private final ExamLiveEventRepository examLiveEventRepository;
+
+    private final StudentExamLiveEventService studentExamLiveEventService;
 
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
@@ -129,7 +129,7 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -144,8 +144,8 @@ public class StudentExamResource {
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.examLiveEventsService = examLiveEventsService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.studentExamLiveEventService = studentExamLiveEventService;
     }
 
     /**
@@ -203,23 +203,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        var now = now();
-        if (workingTime <= 0) {
-            throw new BadRequestException();
-        }
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        var originalWorkingTime = studentExam.getWorkingTime();
-        studentExam.setWorkingTime(workingTime);
-        var savedStudentExam = studentExamRepository.save(studentExam);
-
-        if (!savedStudentExam.isTestRun()) {
-            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
-            if (now.isAfter(exam.getVisibleDate())) {
-                examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
-            }
-        }
-
-        return ResponseEntity.ok(savedStudentExam);
+        return ResponseEntity.ok(studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime));
     }
 
     /**
@@ -239,19 +223,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
 
-        var student = userRepository.getUserByLoginElseThrow(studentLogin);
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, false).orElseThrow();
-
-        examAccessService.checkStudentExamExistsAndBelongsToExamElseThrow(studentExam.getId(), examId);
-
-        var exam = studentExam.getExam();
-        if (!exam.isVisibleToStudents()) {
-            throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
-        }
-
-        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message);
-
-        return ResponseEntity.ok(event.asDTO());
+        return ResponseEntity.ok(studentExamLiveEventService.createAttendanceCheckEvent(examId, studentLogin, message));
     }
 
     /**

@@ -1,7 +1,5 @@
 - name: setup_the_build_environment
   script: |-
-    #!/usr/bin/env bash
-
     # ------------------------------
     # Task Description:
     # Setup the build environment
@@ -19,27 +17,36 @@
     else
         echo "$REQ_FILE does not exist"
     fi
-- name: build_and_run_all_tests
+- name: compile
   script: |-
-    #!/usr/bin/env bash
-
     # ------------------------------
     # Task Description:
-    # Build and run all tests
+    # Configure and compile tests
     # ------------------------------
 
     if [ -d /venv ]; then
         . /venv/bin/activate
     fi
 
-    # Run tests as unprivileged user
-    runuser -u artemis_user python3 Tests.py
+    # Run compile checks as unprivileged user
+    runuser -u artemis_user -- python3 Tests.py --only compile
+- name: test
+  script: |-
+    # ------------------------------
+    # Task Description:
+    # Run tests
+    # ------------------------------
+
+    if [ -d /venv ]; then
+        . /venv/bin/activate
+    fi
+
+    # Run functional tests as unprivileged user
+    runuser -u artemis_user -- python3 Tests.py --only test
   resultPaths:
     - 'test-reports/*.xml'
 - name: static_code_analysis
   script: |-
-    #!/usr/bin/env bash
-
     # ------------------------------
     # Task Description:
     # Check the student code for common issues

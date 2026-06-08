@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { signal } from '@angular/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
@@ -29,11 +29,38 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         dockerImage: 'gradle:8',
     };
 
+    const buildPlanSignal = signal<BuildPlanPhases | undefined>(undefined);
     const buildPhasesTemplateServiceMock = {
-        getTemplate: vi.fn(),
+        fetchTemplate: vi.fn(),
+        buildPlan: buildPlanSignal,
+        resetToDefault: vi.fn(),
     };
 
     beforeEach(async () => {
+        buildPlanSignal.set({
+            phases: [
+                {
+                    name: '',
+                    script: '# enter the script of this phase',
+                    condition: 'ALWAYS',
+                    forceRun: false,
+                    resultPaths: [],
+                },
+            ],
+        } as BuildPlanPhases);
+        buildPhasesTemplateServiceMock.resetToDefault.mockImplementation(() => {
+            buildPlanSignal.set({
+                phases: [
+                    {
+                        name: '',
+                        script: '# enter the script of this phase',
+                        condition: 'ALWAYS',
+                        forceRun: false,
+                        resultPaths: [],
+                    },
+                ],
+            } as BuildPlanPhases);
+        });
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseCustomBuildPlanComponent],
             providers: [{ provide: BuildPhasesTemplateService, useValue: buildPhasesTemplateServiceMock }],
@@ -54,6 +81,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlan = true;
         creationConfig = {
+            isExamMode: false,
             buildPlanLoaded: false,
             isImportFromFile: false,
             customBuildPlansSupported: '',
@@ -103,16 +131,25 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.loadBuildPhasesTemplate();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).not.toHaveBeenCalled();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).not.toHaveBeenCalled();
     });
 
     it('should load build phases template and update component state', () => {
-        buildPhasesTemplateServiceMock.getTemplate.mockReturnValue(of(templatePhases));
+        buildPhasesTemplateServiceMock.fetchTemplate.mockImplementation(() => {
+            buildPlanSignal.set(templatePhases);
+        });
 
+        fixture.detectChanges();
         comp.loadBuildPhasesTemplate();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalled();
-        expect(comp.buildPlanPhases).toEqual(templatePhases);
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
+            false,
+            programmingExercise.programmingLanguage,
+            programmingExercise.projectType,
+            programmingExercise.staticCodeAnalysisEnabled,
+            programmingExercise.buildConfig?.sequentialTestRuns,
+        );
+        expect(buildPlanSignal()).toEqual(templatePhases);
         expect(comp.programmingExerciseCreationConfig().buildPlanLoaded).toBe(true);
         expect(comp.programmingExercise().buildConfig?.timeoutSeconds).toBe(0);
     });
@@ -122,14 +159,15 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         comp.projectType = programmingExercise.projectType;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
         comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
-        buildPhasesTemplateServiceMock.getTemplate.mockClear();
+        buildPhasesTemplateServiceMock.fetchTemplate.mockClear();
 
         programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
 
         fixture.detectChanges();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledOnce();
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledOnce();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
+            false,
             ProgrammingLanguage.KOTLIN,
             programmingExercise.projectType,
             programmingExercise.staticCodeAnalysisEnabled,
@@ -142,14 +180,15 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         comp.projectType = programmingExercise.projectType;
         comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
         comp.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
-        buildPhasesTemplateServiceMock.getTemplate.mockClear();
+        buildPhasesTemplateServiceMock.fetchTemplate.mockClear();
 
         programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
 
         fixture.detectChanges();
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledOnce();
-        expect(buildPhasesTemplateServiceMock.getTemplate).toHaveBeenCalledWith(
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledOnce();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).toHaveBeenCalledWith(
+            false,
             programmingExercise.programmingLanguage,
             ProjectType.PLAIN_MAVEN,
             programmingExercise.staticCodeAnalysisEnabled,
@@ -160,10 +199,13 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     it('should reset custom build plan when template loading fails', () => {
         programmingExercise.buildConfig!.buildPlanConfiguration = 'x';
         programmingExercise.buildConfig!.buildScript = 'y';
-        buildPhasesTemplateServiceMock.getTemplate.mockReturnValue(throwError(() => new Error('error')));
+        buildPhasesTemplateServiceMock.fetchTemplate.mockImplementation(() => {
+            buildPlanSignal.set(undefined);
+        });
 
         comp.loadBuildPhasesTemplate();
 
+        fixture.detectChanges();
         expect(programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
         expect(programmingExercise.buildConfig?.buildScript).toBeUndefined();
     });
@@ -173,7 +215,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.loadBuildPhasesTemplate(true);
 
-        expect(buildPhasesTemplateServiceMock.getTemplate).not.toHaveBeenCalled();
+        expect(buildPhasesTemplateServiceMock.fetchTemplate).not.toHaveBeenCalled();
     });
 
     it('should parse existing build plan configuration on init', () => {
@@ -181,7 +223,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.buildPlanPhases).toEqual(templatePhases);
+        expect(buildPlanSignal()).toEqual(templatePhases);
     });
 
     it('should keep default phases on invalid configuration json', () => {
@@ -189,8 +231,8 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.buildPlanPhases.phases).toHaveLength(1);
-        expect(comp.buildPlanPhases.phases[0].script).toBe('# enter the script of this phase');
+        expect(buildPlanSignal()?.phases).toHaveLength(1);
+        expect(buildPlanSignal()?.phases[0].script).toBe('# enter the script of this phase');
     });
 
     it('should update phases when phases editor changes', () => {
@@ -198,16 +240,16 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
 
         comp.onPhasesChange(phases);
 
-        expect(comp.buildPlanPhases.phases).toEqual(phases);
+        expect(buildPlanSignal()?.phases).toEqual(phases);
     });
 
     it('should update docker image with trimmed value', () => {
         comp.setDockerImage('  node:20  ');
-        expect(comp.buildPlanPhases.dockerImage).toBe('node:20');
+        expect(buildPlanSignal()?.dockerImage).toBe('node:20');
     });
 
     it('should serialize build plan phases to json', () => {
-        comp.buildPlanPhases = templatePhases;
+        buildPlanSignal.set(templatePhases);
 
         const serialized = comp.getBuildPlanPhasesJSON();
 
@@ -227,7 +269,7 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
         const legacyService = TestBed.inject(LegacyBuildPlanConverterService);
         vi.spyOn(legacyService, 'convertLegacyBuildPlanConfiguration').mockReturnValue(legacyPhases);
         comp.ngOnInit();
-        expect(comp.buildPlanPhases).toEqual(legacyPhases);
+        expect(buildPlanSignal()).toEqual(legacyPhases);
     });
 
     it('should reset when legacy conversion fails', () => {
@@ -256,31 +298,31 @@ describe('ProgrammingExerciseCustomBuildPlanComponent', () => {
     });
 
     it('should return undefined from getBuildPlanPhasesJSON when names are invalid', () => {
-        comp.buildPlanPhases = {
+        buildPlanSignal.set({
             phases: [{ name: 'bad name', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
-        };
+        });
         expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
     });
 
     it('should return undefined from getBuildPlanPhasesJSON for reserved phase names', () => {
-        comp.buildPlanPhases = {
+        buildPlanSignal.set({
             phases: [{ name: 'main', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
-        };
+        });
         expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
     });
 
     it('should return undefined from getBuildPlanPhasesJSON for duplicate names', () => {
-        comp.buildPlanPhases = {
+        buildPlanSignal.set({
             phases: [
                 { name: 'Build', script: 'a', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
                 { name: 'build', script: 'b', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
             ],
-        };
+        });
         expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
     });
 
     it('should return undefined from getBuildPlanPhasesJSON when phases are empty', () => {
-        comp.buildPlanPhases = { phases: [] };
+        buildPlanSignal.set({ phases: [] });
         expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
     });
 });
