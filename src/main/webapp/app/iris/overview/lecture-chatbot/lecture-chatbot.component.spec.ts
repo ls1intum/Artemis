@@ -63,4 +63,79 @@ describe('LectureChatbotComponent', () => {
         expect(baseChatbot.isChatHistoryOpen).toHaveBeenCalled();
         expect(setChatHistoryVisibility).toHaveBeenCalledWith(false);
     });
+
+    describe('buildContextBlock', () => {
+        it('should return empty string when lectureUnitId is not provided', () => {
+            fixture.componentRef.setInput('contextProvider', {
+                getCurrentPdfPage: () => 5,
+                getCurrentVideoTimestamp: () => 42.5,
+            });
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('');
+        });
+
+        it('should return empty string when contextProvider is not provided', () => {
+            fixture.componentRef.setInput('lectureUnitId', 123);
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('');
+        });
+
+        it('should build context block with PDF page and video timestamp', () => {
+            fixture.componentRef.setInput('lectureUnitId', 123);
+            fixture.componentRef.setInput('contextProvider', {
+                getCurrentPdfPage: () => 5,
+                getCurrentVideoTimestamp: () => 42.5,
+            });
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('[context:123:5:42.5]');
+        });
+
+        it('should build context block with only PDF page', () => {
+            fixture.componentRef.setInput('lectureUnitId', 456);
+            fixture.componentRef.setInput('contextProvider', {
+                getCurrentPdfPage: () => 7,
+                getCurrentVideoTimestamp: () => undefined,
+            });
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('[context:456:7:]');
+        });
+
+        it('should build context block with only video timestamp', () => {
+            fixture.componentRef.setInput('lectureUnitId', 789);
+            fixture.componentRef.setInput('contextProvider', {
+                getCurrentPdfPage: () => undefined,
+                getCurrentVideoTimestamp: () => 125.5,
+            });
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('[context:789::125.5]');
+        });
+
+        it('should build context block with neither page nor timestamp', () => {
+            fixture.componentRef.setInput('lectureUnitId', 999);
+            fixture.componentRef.setInput('contextProvider', {
+                getCurrentPdfPage: () => undefined,
+                getCurrentVideoTimestamp: () => undefined,
+            });
+            fixture.detectChanges();
+
+            const result = component.buildContextBlock();
+
+            expect(result).toBe('[context:999::]');
+        });
+    });
 });
