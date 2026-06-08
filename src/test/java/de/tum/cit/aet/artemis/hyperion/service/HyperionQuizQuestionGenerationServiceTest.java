@@ -20,8 +20,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;

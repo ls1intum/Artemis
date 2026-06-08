@@ -4,17 +4,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { Exercise, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { downloadFile } from 'app/shared/util/download.util';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { downloadFile } from 'app/foundation/util/download.util';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { GroupedPlagiarismCases } from 'app/plagiarism/shared/entities/GroupedPlagiarismCase';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',

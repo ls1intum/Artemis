@@ -72,12 +72,20 @@ realpath saml-key-pkcs8.pem saml-cert.crt
 
 ## Step 3: Configure Artemis
 
-### Add the `saml2` Spring Profile
+### Enable the SAML2 module feature
 
-Add `saml2` to the active Spring profiles in your IntelliJ run configuration or as an environment variable:
+SAML2 is now controlled by the `artemis.user-management.saml2.enabled` module-feature flag (the legacy `saml2` Spring profile has been removed).
+Add it to your `application-local.yml` and ensure your run configuration uses the standard Artemis profile set:
 
 ```bash
-SPRING_PROFILES_ACTIVE=artemis,scheduling,core,dev,local,saml2
+SPRING_PROFILES_ACTIVE=artemis,scheduling,core,dev,local
+```
+
+```yaml
+artemis:
+    user-management:
+        saml2:
+            enabled: true
 ```
 
 <Callout variant={CalloutVariant.warning}>
@@ -160,7 +168,7 @@ artemis-app:
         - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
 ```
 
-You also need to add `saml2` to the `SPRING_PROFILES_ACTIVE` environment variable in your Artemis compose configuration.
+You also need to set `ARTEMIS_USER_MANAGEMENT_SAML2_ENABLED=true` (or the equivalent `artemis.user-management.saml2.enabled: true` YAML key) in your Artemis compose configuration.
 
 <Callout variant={CalloutVariant.warning}>
     The containerized setup still requires signing credentials. Generate them as described in [Step 2](#step-2-generate-saml2-signing-credentials),
@@ -178,7 +186,7 @@ You also need to add `saml2` to the `SPRING_PROFILES_ACTIVE` environment variabl
 ## Step 4: Test the SAML2 Login
 
 1. Start Keycloak: `docker compose -f docker/saml-test.yml up -d`
-2. Start Artemis with the `saml2` profile and the configuration above
+2. Start Artemis with `artemis.user-management.saml2.enabled=true` and the configuration above
 3. Open Artemis in your browser
 4. Click **"SAML2 Login"** on the login page
 5. Authenticate with a test user:

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.job;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * A Pyris job for the autonomous tutor pipeline that responds to student posts.

@@ -5,7 +5,7 @@ import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingL
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
@@ -56,6 +56,26 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 export function dayjsToString(day: dayjs.Dayjs) {
     // We need to add the Z at the end. Otherwise, the server can't parse it.
     return day.utc().format(TIME_FORMAT) + 'Z';
+}
+
+export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
+
+export function getExamBuildAndTestAfterDueDate(exam: Exam) {
+    return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
+}
+
+export function getExamEndDateWithGrace(exam: Exam) {
+    const gracePeriodSeconds = exam.gracePeriod ?? 0;
+    return dayjs(exam.endDate as any).add(gracePeriodSeconds, 'seconds');
+}
+
+export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
+    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
+    if (afterDueDate.isAfter(dayjs())) {
+        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
+        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
+        await page.waitForTimeout(timeToWait);
+    }
 }
 
 /**
@@ -387,6 +407,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
                 submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
                 programmingLanguage: ProgrammingLanguage.C,
+                skipBuildResultCheck: true,
             };
             break;
         case ExerciseType.TEXT:

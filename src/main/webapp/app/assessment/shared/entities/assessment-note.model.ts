@@ -1,5 +1,5 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/core/user/user.model';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { User } from 'app/account/user/user.model';
 
 export class AssessmentNote implements BaseEntity {
     public id?: number;

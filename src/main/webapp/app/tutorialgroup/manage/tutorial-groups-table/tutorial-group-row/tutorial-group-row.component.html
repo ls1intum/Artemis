@@ -15,10 +15,14 @@
     <td>{{ (tutorialGroup().numberOfRegisteredUsers ?? '') + ' / ' + (tutorialGroup().capacity ?? '') }}</td>
     <td>{{ tutorialGroup().isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup().teachingAssistantName }}</td>
     <td>
-        @if (tutorialGroup().tutorialGroupSchedule) {
+        @let schedule = tutorialGroup().tutorialGroupSchedule;
+        @if (schedule) {
+            @if (schedule.location) {
+                <span class="d-block text-truncate long-text">{{ schedule.location }}</span>
+            }
             <span>
                 <!-- Only include repetition frequency if not the default of once per week -->
-                {{ tutorialGroup().tutorialGroupSchedule | meetingPattern: tutorialGroup().tutorialGroupSchedule?.repetitionFrequency !== 1 }}
+                {{ schedule | meetingPattern: schedule.repetitionFrequency !== 1 }}
             </span>
         } @else {}
     </td>
@@ -36,12 +40,16 @@
         </td>
     }
     <td>
-        @if (tutorialGroup().nextSession) {
+        @let nextSession = tutorialGroup().nextSession;
+        @if (nextSession) {
             <span>
-                {{ tutorialGroup().nextSession?.start | artemisDate: 'short-date' : false : timeZone()! : true }}
-                {{ tutorialGroup().nextSession?.start | artemisDate: 'time' : false : timeZone()! }} -
-                {{ tutorialGroup().nextSession?.end | artemisDate: 'time' : false : timeZone()! }}
+                {{ nextSession.start | artemisDate: 'short-date' : false : timeZone()! : true }}
+                {{ nextSession.start | artemisDate: 'time' : false : timeZone()! }} -
+                {{ nextSession.end | artemisDate: 'time' : false : timeZone()! }}
             </span>
+            @if (nextSession.location) {
+                <span class="d-block text-truncate long-text">{{ nextSession.location }}</span>
+            }
         } @else {}
     </td>
     @if (showChannelColumn() && tutorialGroup().channel) {

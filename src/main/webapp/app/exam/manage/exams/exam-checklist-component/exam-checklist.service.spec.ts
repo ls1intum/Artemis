@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';

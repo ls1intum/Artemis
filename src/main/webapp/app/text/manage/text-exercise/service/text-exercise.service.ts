@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
@@ -46,7 +46,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
+            .post<TextExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

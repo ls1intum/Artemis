@@ -55,6 +55,12 @@ public final class SearchableEntitySchema {
 
         public static final String CHANNEL = "channel";
 
+        public static final String COURSE = "course";
+
+        public static final String POST = "post";
+
+        public static final String ANSWER_POST = "answer_post";
+
         private TypeValues() {
         }
     }
@@ -126,6 +132,8 @@ public final class SearchableEntitySchema {
 
         public static final String FILE_PATTERN = "file_pattern";
 
+        public static final String ASSESSMENT_TYPE = "assessment_type";
+
         public static final String START_DATE = "start_date";
 
         public static final String END_DATE = "end_date";
@@ -135,6 +143,12 @@ public final class SearchableEntitySchema {
         public static final String LECTURE_ID = "lecture_id";
 
         public static final String UNIT_TYPE = "unit_type";
+
+        // Post-specific properties
+        public static final String CHANNEL_ID = "channel_id";
+
+        // Answer-post-specific properties
+        public static final String POST_ID = "post_id";
 
         private Properties() {
         }
@@ -179,8 +193,15 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.QUIZ_MODE, TEXT, "The quiz mode: SYNCHRONIZED, BATCHED, INDIVIDUAL (quiz exercises only)"),
             nonSearchable(Properties.QUIZ_DURATION, INT, "The quiz duration in seconds (quiz exercises only)"),
             nonSearchable(Properties.FILE_PATTERN, TEXT, "The accepted file pattern (file upload exercises only)"),
+            filterable(Properties.ASSESSMENT_TYPE, TEXT, "The assessment type: AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA (exercises only)"),
             nonSearchable(Properties.START_DATE, DATE, "The start date (exercises, lectures, exams)"), nonSearchable(Properties.END_DATE, DATE, "The end date (lectures, exams)"),
             nonSearchable(Properties.DUE_DATE, DATE, "The due date (exercises only)"),
             filterable(Properties.LECTURE_ID, INT, "The ID of the parent lecture (lecture_unit rows only, used for bulk delete on lecture deletion)"),
-            nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)")));
+            nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
+
+            // Post-specific properties
+            filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post' and 'answer_post', null for all other types)"),
+
+            // Answer-post-specific properties
+            filterable(Properties.POST_ID, INT, "The ID of the parent post (only set for type 'answer_post', null for all other types)")));
 }

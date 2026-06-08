@@ -31,8 +31,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.domain.review.ReviewThreadSyncAction;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;

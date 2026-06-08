@@ -33,7 +33,7 @@ import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest
 import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
 import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {
     Competency,
@@ -49,9 +49,9 @@ import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'r
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * Type-safe section identifier used for stale tracking and section-level re-analysis.

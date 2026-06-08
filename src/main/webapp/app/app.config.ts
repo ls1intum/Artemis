@@ -1,19 +1,16 @@
 import './polyfills';
-import 'app/shared/util/array.extension';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
+import 'app/foundation/util/array.extension';
+import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
-import { BrowserModule, Title } from '@angular/platform-browser';
-import { Router, provideRouter, withRouterConfig } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
-import { TraceService } from '@sentry/angular';
 import routes from 'app/app.routes';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
@@ -25,12 +22,15 @@ import { NotificationInterceptor } from 'app/core/interceptor/notification.inter
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { TranslateService } from '@ngx-translate/core';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -40,12 +40,10 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         DialogService,
-        importProvidersFrom(
-            // TODO: we should exclude modules here in the future
-            BrowserModule,
-            ScrollingModule,
-            OwlNativeDateTimeModule,
-        ),
+        // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
+        // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
+        // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
+        importProvidersFrom(ScrollingModule, OwlNativeDateTimeModule),
         provideTranslateService({
             loader: translateHttpLoaderProviders,
             missingTranslationHandler: {
@@ -66,7 +64,10 @@ export const appConfig: ApplicationConfig = {
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
-        { provide: Sentry.TraceService, deps: [Router] },
+        // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
+        // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
+        // is known, so production traffic keeps full Sentry performance coverage while the
+        // initial JS bundle avoids the router-instrumentation overhead.
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
@@ -74,7 +75,9 @@ export const appConfig: ApplicationConfig = {
             const profileService = inject(ProfileService);
             const accountService = inject(AccountService);
             const authServerProvider = inject(AuthServerProvider);
-            inject(TraceService);
+            const translateService = inject(TranslateService);
+            const sessionStorageService = inject(SessionStorageService);
+            const languageHelper = inject(JhiLanguageHelper);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
             // If the IdP just redirected the user back to Artemis, complete the SAML2 second-step
@@ -100,9 +103,26 @@ export const appConfig: ApplicationConfig = {
                           document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
                       })
                 : Promise.resolve();
-            // Load profile info and resolve user identity in parallel to minimize startup time.
+            // Block bootstrap on translation loading so the first render never shows raw
+            // `translation-not-found[...]` keys. `artemisTranslate` and `translate` pipes
+            // resolve synchronously via `instant()`, which falls back to the missing handler
+            // until the i18n JSON is in the store. Doing this in APP_INITIALIZER gates
+            // AppComponent rendering on the HTTP load instead of racing against it.
+            translateService.setFallbackLang('en');
+            const languageKey: string = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
+            // The .catch is load-bearing: Promise.all below short-circuits on the first rejection,
+            // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
+            // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
+            const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
+                // eslint-disable-next-line no-undef
+                console.warn('Translation load failed during app initialization', error);
+                return undefined;
+            });
+            // Load profile info, resolve user identity, and fetch translations in parallel to minimize startup time.
             // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
-            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined))]).then(() => undefined);
+            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined)), translationsLoaded]).then(
+                () => undefined,
+            );
         }),
         /**
          * @description Interceptor declarations:

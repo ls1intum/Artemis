@@ -17,7 +17,7 @@ The SAML2 feature is intended for use with Artemis' internal user management and
 With the help of this feature it is possible to store not only the login, name and email, but also the **student's matriculation number** directly in the database.
 For each user who registers in the system for the first time, a "normal" artemis user is created and the data is taken from the attributes of the Shibboleth request.
 
-- The feature is activated by the *saml2* profile.
+- The feature is activated by setting `artemis.user-management.saml2.enabled: true` in your active configuration.
 - If you use a **reverse proxy**, you have to redirect the following endpoints to the artemis server: **/login** and **/saml2**.
 - For testing you can use a <a href="https://github.com/kit-sdq/Artemis-SAML2-Test-Docker">preconfigured environment</a>.
 

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,18 +18,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -37,6 +35,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 
 /**
  * REST controller for retrieving information about programming exercises.
@@ -94,13 +95,16 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final RepositoryParticipationService repositoryParticipationService;
+
     public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
+            RepositoryParticipationService repositoryParticipationService) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.courseRepository = courseRepository;
@@ -115,6 +119,7 @@ public class ProgrammingExerciseRetrievalResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.repositoryCheckoutService = repositoryCheckoutService;
+        this.repositoryParticipationService = repositoryParticipationService;
     }
 
     /**
@@ -322,55 +327,49 @@ public class ProgrammingExerciseRetrievalResource {
     }
 
     /**
-     * GET programming-exercises/:exerciseId/solution-files-content
-     * <p>
-     * Returns the solution repository files with content for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
-     * the solution participation id is not known for the client.
+     * GET programming-exercises/:exerciseId/solution-files-content : Returns the solution repository files with content
+     * for a given programming exercise. This convenience endpoint resolves the solution participation from the exercise
+     * id (which the client may not know) and returns the same payload as
+     * {@code participations/{participationId}/repository/files-content}.
      *
      * @param exerciseId   the exercise for which the solution repository files should be retrieved
      * @param omitBinaries do not send binaries to reduce payload size
-     * @return a redirect to the endpoint returning the files with content
+     * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId,
+    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId,
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
     }
 
     /**
-     * GET programming-exercises/:exerciseId/template-files-content
-     * <p>
-     * Returns the template repository files with content for a given programming exercise.
-     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
-     * the template participation id is not known for the client.
+     * GET programming-exercises/:exerciseId/template-files-content : Returns the template repository files with content
+     * for a given programming exercise. This convenience endpoint resolves the template participation from the exercise
+     * id (which the client may not know) and returns the same payload as
+     * {@code participations/{participationId}/repository/files-content}.
      *
      * @param exerciseId   the exercise for which the template repository files should be retrieved
      * @param omitBinaries do not send binaries to reduce payload size
-     * @return a redirect to the endpoint returning the files with content
+     * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId,
+    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId,
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-
-        // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
     }
 
     /**

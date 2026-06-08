@@ -4,10 +4,10 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation/confirm-feedback-channel-creation-modal.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-detail-channel-modal',
@@ -56,7 +56,9 @@ export class FeedbackDetailChannelModalComponent {
     async handleModal(): Promise<boolean> {
         try {
             const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
-            modalRef.componentInstance.affectedStudentsCount = this.feedbackDetail().count;
+            // affectedStudentsCount is a signal input(); when the modal is opened imperatively via NgbModal it must
+            // be assigned a signal (not a plain number) so that calling affectedStudentsCount() in the template works.
+            modalRef.componentInstance.affectedStudentsCount = signal(this.feedbackDetail().count);
             return await modalRef.result;
         } catch (error) {
             this.alertService.error(error);

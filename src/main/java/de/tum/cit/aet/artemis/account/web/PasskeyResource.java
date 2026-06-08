@@ -1,0 +1,203 @@
+package de.tum.cit.aet.artemis.account.web;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.webauthn.api.Bytes;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
+import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
+import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.PasskeyAdminDTO;
+import de.tum.cit.aet.artemis.account.dto.PasskeyDTO;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.repository.passkey.ArtemisUserCredentialRepository;
+import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
+
+/**
+ * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
+ * Provides endpoints for retrieving and deleting passkeys associated with a user.
+ * <p>
+ * This controller is only active when the "core" profile is enabled.
+ */
+@Conditional(PasskeyEnabled.class)
+@Lazy
+@RestController
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/passkeys/", "api/account/passkey/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
+public class PasskeyResource {
+
+    private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
+
+    private final Optional<String> artemisInternalAdminUsername;
+
+    private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
+
+    private final UserRepository userRepository;
+
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
+
+    /**
+     * @param userRepository                  for accessing user data
+     * @param artemisUserCredentialRepository for managing user credentials
+     */
+    public PasskeyResource(ArtemisUserCredentialRepository artemisUserCredentialRepository, UserRepository userRepository,
+            PasskeyCredentialsRepository passkeyCredentialsRepository,
+            @Value("${artemis.user-management.internal-admin.username:#{null}}") Optional<String> artemisInternalAdminUsername) {
+        this.artemisUserCredentialRepository = artemisUserCredentialRepository;
+        this.userRepository = userRepository;
+        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.artemisInternalAdminUsername = artemisInternalAdminUsername;
+    }
+
+    /**
+     * GET /passkey/user : retrieve all passkeys for the current user
+     *
+     * @return list of {@link PasskeyDTO} that contains the passkeys of the current user
+     */
+    @GetMapping("user")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<PasskeyDTO>> getPasskeys() {
+        User user = userRepository.getUser();
+        log.debug("Retrieving passkeys for user with id: {}", user.getId());
+
+        List<PasskeyDTO> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(BytesConverter.longToBytes(user.getId()));
+
+        return ResponseEntity.ok(passkeys);
+    }
+
+    /**
+     * GET /passkey/admin : retrieve all passkeys for admin users for super admin management
+     *
+     * @return list of {@link PasskeyAdminDTO} that contains all passkeys of admin users with user information
+     */
+    @GetMapping("admin")
+    @EnforceSuperAdmin
+    public ResponseEntity<List<PasskeyAdminDTO>> getAllPasskeysForAdmin() {
+        log.debug("Retrieving all passkeys for admin users for super admin management");
+
+        List<PasskeyAdminDTO> passkeys = passkeyCredentialsRepository.findPasskeysForAdminUsers();
+
+        return ResponseEntity.ok(passkeys);
+    }
+
+    private <T> ResponseEntity<T> logAndReturnNotFound(String credentialId) {
+        log.warn("Credential with id {} not found in the repository", credentialId);
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * PUT /passkey/:credentialId : update the label of a passkey for the current user
+     *
+     * @param credentialId            of the passkey to be updated
+     * @param passkeyWithUpdatedLabel containing the new label for the passkey
+     * @return {@link ResponseEntity} with HTTP status 200 (OK) if the update is successful
+     */
+    @PutMapping("{passkeyId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<PasskeyDTO> updatePasskeyLabel(@PathVariable("passkeyId") @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
+        log.debug("Updating label for passkey with id: {}", credentialId);
+
+        User currentUser = userRepository.getUser();
+        Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
+
+        if (credentialToBeUpdated.isEmpty()) {
+            return logAndReturnNotFound(credentialId);
+        }
+
+        PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
+        boolean isUserAllowedToUpdatePasskey = passkeyCredential.getUser().getId().equals(currentUser.getId());
+        if (!isUserAllowedToUpdatePasskey) {
+            log.warn("User with id {} tried to update credential with id {} of another user", currentUser.getId(), credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        passkeyCredential.setLabel(passkeyWithUpdatedLabel.label());
+        PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
+
+        log.debug("Successfully updated label for passkey with id: {}", credentialId);
+        return ResponseEntity.ok(updatedPasskey.toDto());
+    }
+
+    /**
+     * DELETE /passkey/:credentialId : delete passkey with matching id for the current user
+     *
+     * @param credentialId of the passkey to be deleted
+     * @return {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
+     */
+    @DeleteMapping("{passkeyId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> deletePasskey(@PathVariable("passkeyId") @Base64Url String credentialId) {
+        log.debug("Deleting passkey with id: {}", credentialId);
+
+        User currentUser = userRepository.getUser();
+        Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
+
+        if (credentialToBeDeleted.isEmpty()) {
+            return logAndReturnNotFound(credentialId);
+        }
+
+        boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
+        if (!isUserAllowedToDeletePasskey) {
+            log.warn("User with id {} tried to delete credential with id {} of other user", currentUser.getId(), credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        artemisUserCredentialRepository.delete(Bytes.fromBase64(credentialId));
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * PUT /passkey/:credentialId/approval : update the super admin approval status of a passkey
+     *
+     * @param credentialId         of the passkey to be updated
+     * @param isSuperAdminApproved the new approval status for the passkey
+     * @return {@link ResponseEntity} with HTTP status 200 (OK) and the updated passkey if successful
+     */
+    @PutMapping("{passkeyId}/approval")
+    @EnforceSuperAdmin
+    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable("passkeyId") @Base64Url String credentialId, @RequestBody boolean isSuperAdminApproved) {
+        log.debug("Updating approval status for passkey with id: {}", credentialId);
+
+        Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
+
+        if (credentialToBeUpdated.isEmpty()) {
+            return logAndReturnNotFound(credentialId);
+        }
+
+        PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
+        String userLogin = passkeyCredential.getUser().getLogin();
+
+        boolean isTryingToRevokeInternalAdminUserApproval = artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin)
+                && !isSuperAdminApproved;
+        if (isTryingToRevokeInternalAdminUserApproval) {
+            throw new BadRequestAlertException("Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead.",
+                    "PasskeyCredential", "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
+        }
+
+        passkeyCredential.setSuperAdminApproved(isSuperAdminApproved);
+        PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
+
+        log.debug("Successfully updated approval status for passkey with id: {}", credentialId);
+        return ResponseEntity.ok(updatedPasskey.toDto());
+    }
+}

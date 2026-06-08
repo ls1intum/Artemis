@@ -3,13 +3,13 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { PageType } from 'app/communication/metis.util';
 
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -40,8 +40,8 @@ import {
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Directive, input, output } from '@angular/core';
@@ -52,7 +52,7 @@ import { PostingThreadComponent } from 'app/communication/posting-thread/posting
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Directive({

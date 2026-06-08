@@ -36,24 +36,27 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
      * @return the unified search result DTO, or {@code null} if the type discriminator is missing or unknown
      */
     public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
-            Set<Long> staffCourseIds) {
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds, Map<Long, String> channelNameById) {
         String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
         if (type == null) {
             return null;
         }
         return switch (type) {
-            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
+            case SearchableEntitySchema.TypeValues.EXERCISE -> fromExerciseRow(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds);
             case SearchableEntitySchema.TypeValues.LECTURE -> fromLectureRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> fromLectureUnitRow(properties, courseNameById);
-            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds);
+            case SearchableEntitySchema.TypeValues.EXAM -> fromExamRow(properties, courseNameById, staffCourseIds, editorCourseIds);
             case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
+            case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
+            case SearchableEntitySchema.TypeValues.POST -> fromPostRow(properties, courseNameById, channelNameById);
+            case SearchableEntitySchema.TypeValues.ANSWER_POST -> fromAnswerPostRow(properties, courseNameById, channelNameById);
             default -> null;
         };
     }
 
     private static GlobalSearchResultDTO fromExerciseRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
-            Set<Long> staffCourseIds) {
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         String exerciseType = getString(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE);
         String badge = formatExerciseTypeBadge(exerciseType);
         String title = getString(properties, SearchableEntitySchema.Properties.TITLE);
@@ -66,16 +69,22 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
         putIfNotNull(metadata, "points", getDouble(properties, SearchableEntitySchema.Properties.MAX_POINTS));
         putIfNotNull(metadata, "difficulty", getString(properties, SearchableEntitySchema.Properties.DIFFICULTY));
 
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
         Long examId = getLong(properties, SearchableEntitySchema.Properties.EXAM_ID);
         if (examId != null) {
             metadata.put("examId", examId);
             Long exerciseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
             Long exerciseGroupId = exerciseId != null ? exerciseGroupIdByExerciseId.get(exerciseId) : null;
             putIfNotNull(metadata, "exerciseGroupId", exerciseGroupId);
-            Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
-            if (courseId != null && staffCourseIds.contains(courseId)) {
-                metadata.put("isAtLeastTutor", true);
-            }
+        }
+
+        // Role metadata: used by the frontend to route tutors to the assessment dashboard
+        // and editors to the exercise details page
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastTutor", true);
         }
 
         if (ExerciseType.PROGRAMMING.getValue().equals(exerciseType)) {
@@ -115,7 +124,7 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Lecture Unit", metadata);
     }
 
-    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds) {
+    private static GlobalSearchResultDTO fromExamRow(Map<String, Object> properties, Map<Long, String> courseNameById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         Map<String, Object> metadata = new HashMap<>();
         addCourseContext(properties, metadata, courseNameById);
         putIfNotNull(metadata, "visibleDate", getString(properties, SearchableEntitySchema.Properties.VISIBLE_DATE));
@@ -126,7 +135,10 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             metadata.put("testExam", testExam);
         }
         Long courseId = getLong(properties, SearchableEntitySchema.Properties.COURSE_ID);
-        if (courseId != null && staffCourseIds.contains(courseId)) {
+        if (courseId != null && editorCourseIds != null && editorCourseIds.contains(courseId)) {
+            metadata.put("isAtLeastEditor", true);
+        }
+        else if (courseId != null && staffCourseIds.contains(courseId)) {
             metadata.put("isAtLeastTutor", true);
         }
 
@@ -158,6 +170,56 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.CHANNEL, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Channel", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromCourseRow(Map<String, Object> properties) {
+        Map<String, Object> metadata = new HashMap<>();
+        // For courses, courseId equals entityId — no course context needed since the result IS a course
+        Long courseId = getLong(properties, SearchableEntitySchema.Properties.ENTITY_ID);
+        if (courseId != null) {
+            metadata.put("courseId", courseId);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.COURSE, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Course", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
+        if (channelId != null) {
+            metadata.put("channelId", channelId);
+            addChannelName(channelId, metadata, channelNameById);
+        }
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.POST, getString(properties, SearchableEntitySchema.Properties.TITLE),
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
+    }
+
+    private static GlobalSearchResultDTO fromAnswerPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
+        Map<String, Object> metadata = new HashMap<>();
+        addCourseContext(properties, metadata, courseNameById);
+        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
+        if (channelId != null) {
+            metadata.put("channelId", channelId);
+            addChannelName(channelId, metadata, channelNameById);
+        }
+        Long postId = getLong(properties, SearchableEntitySchema.Properties.POST_ID);
+        if (postId != null) {
+            metadata.put("postId", postId);
+        }
+        metadata.put("isReply", true);
+
+        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.ANSWER_POST, null,
+                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", metadata);
+    }
+
+    private static void addChannelName(Long channelId, Map<String, Object> metadata, Map<Long, String> channelNameById) {
+        String channelName = channelNameById.get(channelId);
+        if (channelName != null) {
+            metadata.put("channelName", channelName);
+        }
     }
 
     private static void addCourseContext(Map<String, Object> properties, Map<String, Object> metadata, Map<Long, String> courseNameById) {

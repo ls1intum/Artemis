@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -10,8 +8,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -33,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
  */
 @Lazy
 @Service
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 public class AthenaSubmissionSendingService {
 
     private static final int SUBMISSIONS_PER_REQUEST = 100;

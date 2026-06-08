@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 

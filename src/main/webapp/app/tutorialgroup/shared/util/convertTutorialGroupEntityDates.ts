@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';

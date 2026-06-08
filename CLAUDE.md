@@ -11,16 +11,19 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 - **Server**: Spring Boot 3.5 (Java 25), MySQL, Hibernate, Hazelcast
 - **Client**: Angular 21, TypeScript, SCSS
 - **Build**: Gradle 9.3, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
-- **Testing**: JUnit 6, Vitest (preferred; Jest is deprecated and being migrated to Vitest), Playwright
+- **Testing**: JUnit 6, Vitest, Playwright
 
 ## Build & Development Commands
 
 ### Server
 ```bash
-./gradlew bootRun                    # Start dev server (includes Angular build)
-./gradlew bootRun -x webapp          # Server only (use with pnpm start)
-./gradlew -Pprod -Pwar clean bootWar # Production WAR artifact
+./gradlew bootRun                          # Start dev server (includes Angular build)
+./gradlew bootRun -x webapp                # Server only (use with pnpm start)
+./gradlew -Pprod -Pwar clean bootWar       # Production WAR (no SBOM, fast)
+./gradlew -Pprod -Pwar -Psbom clean bootWar # Production WAR including server + client SBOM
 ```
+
+SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
 
 ### Client
 ```bash
@@ -63,13 +66,6 @@ pnpm run vitest:run                  # Single run
 pnpm run vitest:coverage             # With coverage
 pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 
-# Client (Jest - deprecated, being migrated to Vitest)
-pnpm test                            # Jest with coverage
-pnpm run test-diff                   # Test changed files vs origin/develop
-pnpm run test:ci                     # Full CI with module coverage check
-# Single test:
-pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
-
 # E2E Tests (Playwright) — preferred way to run locally
 # The script auto-kills processes on ports 8080/9000/7921, starts Postgres, server, and client.
 ./run-e2e-tests-local-fast.sh                              # Run all E2E tests
@@ -105,23 +101,34 @@ pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 
 ### Server (`src/main/java/de/tum/cit/aet/artemis/`)
 Organized by feature module:
-- `core/` - Configuration, security, utilities, base entities
+- `core/` - Configuration, security base, utilities, base entities
+- `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
-- `programming/` - Programming exercises with CI/CD
+- `programming/` - Programming exercises (lifecycle, grading, repositories)
+- `jenkins/` - Jenkins CI backend connector
+- `localvc/` - Embedded git server (HTTP + SSH), repo URI handling, VCS access tokens
+- `localci/` - Local CI orchestration: build job queue, dispatch, result processing
 - `quiz/` - Quiz exercises
 - `modeling/` - UML diagram exercises
 - `text/` - Text exercises
 - `fileupload/` - File upload exercises
 - `exam/` - Exam mode
 - `assessment/` - Grading and assessment
-- `communication/` - Channels, messaging, notifications
+- `communication/` - Channels, messaging, conversations, FAQs, saved posts
+- `notification/` - Course / global / system / push notifications, mail service
 - `lecture/` - Lecture management
+- `calendar/` - Calendar events and iCal subscriptions
 - `atlas/` - Competency-based learning, learning analytics
 - `iris/` - LLM-based virtual tutor
 - `athena/` - ML-based assessment
+- `hyperion/` - LLM-based exercise creation assistant
 - `plagiarism/` - Plagiarism detection (JPlag)
 - `lti/` - LTI integration
 - `tutorialgroup/` - Tutorial group management
+- `globalsearch/` - Cross-entity search via Weaviate
+- `videosource/` - External video source integration (TUM Live)
+- `course/` - Course management, registration, archive, dashboard, statistics
+- `admin/` - Admin operations: data export, vulnerability scan, cleanup, telemetry, organization management, legal documents
 
 ### Client Web App (`src/main/webapp/app/`)
 - `core/` - Core services (HTTP, auth, guards)
@@ -177,6 +184,7 @@ Organized by feature module:
   - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
   - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
   - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
+  - **Prefer `computed()`/`effect()` over `ngOnChanges` for signal-based components.** Note: in Angular 21 `ngOnChanges` *does* fire for signal inputs (it is NOT dead code — that was only true in v17–18), so do not treat it as a bug or auto-convert it. But `computed` (derived state) / `effect` (side effects, used sparingly) are the idiomatic, consistent choice. `ngOnChanges` is still valid when you need `SimpleChanges.previousValue`/`isFirstChange()` or logic that must run before child init. A warn-level rule (`prefer-signal-reactivity-over-ngonchanges`) warns on `ngOnChanges` in clean-baseline Angular client files; known migration-backlog files are temporarily excluded in `eslint.config.mjs`. The goal is to remove it entirely (migrate to `computed`/`effect`); rare genuinely-unavoidable cases need a detailed comment and a justified line-level disable. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
 - Avoid spread operator for objects
@@ -199,8 +207,7 @@ Organized by feature module:
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
 - Use `pnpm run test-diff` for incremental client work
-- **Client tests: Prefer Vitest over Jest for new tests**
-  - Jest is deprecated and being migrated to Vitest
+- **Client tests: Vitest**
   - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
   - Run Vitest: `pnpm run vitest` (watch), `pnpm run vitest:run` (single run), `pnpm run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present

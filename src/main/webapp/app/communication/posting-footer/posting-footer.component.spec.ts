@@ -14,7 +14,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-cr
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { signal } from '@angular/core';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';

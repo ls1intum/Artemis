@@ -19,7 +19,7 @@ export class UserManagementAPIRequests {
      * @param role the role of the new user
      */
     async createUser(username: string, password: string, role: UserRole): Promise<APIResponse> {
-        return await this.page.request.post(`api/core/admin/users`, {
+        return await this.page.request.post(`api/account/admin/users`, {
             data: {
                 login: username,
                 password,
@@ -32,6 +32,6 @@ export class UserManagementAPIRequests {
     }
 
     async getUser(username: string): Promise<APIResponse> {
-        return await this.page.request.get(`api/core/admin/users/${username}`);
+        return await this.page.request.get(`api/account/admin/users/${username}`);
     }
 }

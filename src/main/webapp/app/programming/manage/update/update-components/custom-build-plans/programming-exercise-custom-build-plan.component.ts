@@ -1,11 +1,11 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, DoCheck, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
@@ -16,14 +16,15 @@ import { LegacyBuildPlanConverterService } from 'app/programming/shared/services
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
+export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnInit {
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    readonly isExamMode = input(false);
 
-    @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
+    readonly programmingExerciseDockerImageComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;
@@ -31,61 +32,53 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     sequentialTestRuns?: boolean;
     isImportFromFile = false;
 
-    buildPlanPhases: BuildPlanPhases = {
-        phases: [
-            {
-                name: '',
-                script: '# enter the script of this phase',
-                condition: 'ALWAYS',
-                forceRun: false,
-                resultPaths: [],
-            },
-        ],
-    } as BuildPlanPhases;
+    readonly phases = computed(() => this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
+    readonly dockerImage = computed(() => this.buildPhasesTemplateService.buildPlan()?.dockerImage ?? '');
 
     ngOnInit() {
-        const buildConfig = this.programmingExercise.buildConfig;
+        const buildConfig = this.programmingExercise().buildConfig;
         const configJson = buildConfig?.buildPlanConfiguration;
         if (configJson) {
             const parsed = parseBuildPlanPhases(configJson);
             if (parsed?.phases?.length) {
-                this.buildPlanPhases = parsed as BuildPlanPhases;
+                this.buildPhasesTemplateService.buildPlan.set(parsed as BuildPlanPhases);
                 return;
             }
         }
 
         const legacyBuildScript = buildConfig?.buildScript;
-        if (!legacyBuildScript?.trim() || !this.programmingExercise.programmingLanguage) {
+        if (!legacyBuildScript?.trim() || !this.programmingExercise().programmingLanguage) {
             this.resetCustomBuildPlan();
+            this.buildPhasesTemplateService.resetToDefault();
             return;
         }
 
         // convert legacy format to the new phases
         const convertedBuildPlanPhases = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(legacyBuildScript, configJson);
         if (convertedBuildPlanPhases) {
-            this.buildPlanPhases = convertedBuildPlanPhases;
+            this.buildPhasesTemplateService.buildPlan.set(convertedBuildPlanPhases);
             return;
         }
 
         this.resetCustomBuildPlan();
+        this.buildPhasesTemplateService.resetToDefault();
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
-            if (this.shouldReloadTemplate()) {
-                const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
-                this.loadBuildPhasesTemplate(isImportFromFile);
-            }
+    ngDoCheck() {
+        // the parent form mutates the exercise object in-place
+        if (this.shouldReloadTemplate()) {
+            this.loadBuildPhasesTemplate(this.programmingExerciseCreationConfig().isImportFromFile);
         }
     }
 
     shouldReloadTemplate(): boolean {
+        const programmingExercise = this.programmingExercise();
         return (
-            !this.programmingExercise.id &&
-            (this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
-                this.programmingExercise.projectType !== this.projectType ||
-                this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-                this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
+            !programmingExercise.id &&
+            (programmingExercise.programmingLanguage !== this.programmingLanguage ||
+                programmingExercise.projectType !== this.projectType ||
+                programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
+                programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
         );
     }
 
@@ -94,8 +87,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-        this.programmingExercise.buildConfig!.buildScript = undefined;
+        this.programmingExercise().buildConfig!.buildPlanConfiguration = undefined;
+        this.programmingExercise().buildConfig!.buildScript = undefined;
     }
 
     /**
@@ -105,33 +98,30 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @private
      */
     loadBuildPhasesTemplate(isImportFromFile: boolean = false) {
-        if (!this.programmingExercise.programmingLanguage) {
+        const programmingExercise = this.programmingExercise();
+        if (!programmingExercise.programmingLanguage) {
             return;
         }
-        this.programmingLanguage = this.programmingExercise.programmingLanguage;
-        this.projectType = this.programmingExercise.projectType;
-        this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
-        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.programmingLanguage = programmingExercise.programmingLanguage;
+        this.projectType = programmingExercise.projectType;
+        this.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
+        this.sequentialTestRuns = programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-            this.buildPhasesTemplateService.getTemplate(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (buildPlanPhases) => {
-                    if (!buildPlanPhases?.phases?.length) {
-                        return;
-                    }
-                    this.buildPlanPhases = buildPlanPhases;
-                },
-                error: () => {
-                    this.resetCustomBuildPlan();
-                },
-            });
+        if (!isImportFromFile || !programmingExercise.buildConfig?.buildPlanConfiguration) {
+            this.buildPhasesTemplateService.fetchTemplate(
+                this.programmingExerciseCreationConfig().isExamMode,
+                this.programmingLanguage,
+                this.projectType,
+                this.staticCodeAnalysisEnabled,
+                this.sequentialTestRuns,
+            );
         }
-        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+        this.programmingExerciseCreationConfig().buildPlanLoaded = true;
+        if (!programmingExercise.buildConfig?.buildPlanConfiguration) {
             this.resetCustomBuildPlan();
         }
-        if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
-            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        if (!programmingExercise.buildConfig?.timeoutSeconds) {
+            programmingExercise.buildConfig!.timeoutSeconds = 0;
         }
     }
 
@@ -139,7 +129,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * Called when the build phases editor emits a change.
      */
     onPhasesChange(phases: BuildPhase[]) {
-        this.buildPlanPhases = { ...this.buildPlanPhases, phases };
+        this.buildPhasesTemplateService.buildPlan.update((state) => (state ? { ...state, phases } : ({ phases } as BuildPlanPhases)));
     }
 
     /**
@@ -148,7 +138,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @param dockerImage the selected Docker image
      */
     setDockerImage(dockerImage: string) {
-        this.buildPlanPhases = { ...this.buildPlanPhases, dockerImage: dockerImage.trim() };
+        this.buildPhasesTemplateService.buildPlan.update((state) =>
+            state ? { ...state, dockerImage: dockerImage.trim() } : ({ dockerImage: dockerImage.trim(), phases: [] } as BuildPlanPhases),
+        );
     }
 
     /**
@@ -157,10 +149,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
      */
     getBuildPlanPhasesJSON(): string | undefined {
-        if (!this.buildPlanPhases?.phases?.length || !this.arePhaseNamesValid(this.buildPlanPhases.phases)) {
+        const buildPlan = this.buildPhasesTemplateService.buildPlan();
+        if (!buildPlan?.phases?.length || !this.arePhaseNamesValid(buildPlan.phases)) {
             return undefined;
         }
-        return JSON.stringify(this.buildPlanPhases);
+        return JSON.stringify(buildPlan);
     }
 
     arePhaseNamesValid(phases: BuildPhase[]): boolean {
@@ -172,6 +165,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     }
 
     setTimeout(timeout: number) {
-        this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
+        this.programmingExercise().buildConfig!.timeoutSeconds = timeout;
     }
 }

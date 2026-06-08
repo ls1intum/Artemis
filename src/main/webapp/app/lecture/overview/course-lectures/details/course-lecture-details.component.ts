@@ -3,26 +3,26 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
-import { downloadStream } from 'app/shared/util/download.util';
+import { downloadStream } from 'app/foundation/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
@@ -30,13 +30,13 @@ import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { FileService } from 'app/shared/service/file.service';
-import { ScienceService } from 'app/shared/science/science.service';
-import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
+import { FileService } from 'app/foundation/service/file.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -46,7 +46,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
     imports: [
         TranslateDirective,
         ExerciseUnitComponent,

@@ -8,9 +8,9 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
 
 @Component({
     selector: 'jhi-lecture-series-draft-edit-modal',

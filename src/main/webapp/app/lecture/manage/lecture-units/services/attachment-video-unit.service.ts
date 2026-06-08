@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
@@ -79,7 +79,7 @@ export class AttachmentVideoUnitService {
      * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
      */
     getAttachmentFile(courseId: number, attachmentVideoUnitId: number): Observable<Blob> {
-        return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`, { responseType: 'blob' });
+        return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-video-units/${attachmentVideoUnitId}`, { responseType: 'blob' });
     }
 
     /**

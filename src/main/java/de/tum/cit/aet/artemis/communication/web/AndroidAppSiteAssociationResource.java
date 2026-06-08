@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
 
 /**
  * REST controller for the android assetlink.json

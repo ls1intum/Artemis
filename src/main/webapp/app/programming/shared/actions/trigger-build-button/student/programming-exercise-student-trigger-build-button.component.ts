@@ -1,11 +1,11 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -14,7 +14,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private alertService = inject(AlertService);
-    @Input() triggerLastGraded = false;
+    readonly triggerLastGraded = input(false);
 
     // Icons
     faRedo = faRedo;
@@ -24,10 +24,10 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
         this.personalParticipation = true;
     }
 
-    triggerBuild = (event: any) => {
+    triggerBuild = (event: MouseEvent) => {
         // The button might be placed in other elements that have a click listener, so catch the click here.
         event.stopPropagation();
-        const triggerAction = this.participationHasLatestSubmissionWithoutResult ? super.triggerFailed(this.triggerLastGraded) : super.triggerWithType(SubmissionType.MANUAL);
+        const triggerAction = this.participationHasLatestSubmissionWithoutResult() ? super.triggerFailed(this.triggerLastGraded()) : super.triggerWithType(SubmissionType.MANUAL);
         triggerAction
             .pipe(
                 catchError(() => {

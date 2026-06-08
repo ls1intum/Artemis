@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input,
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -11,15 +11,15 @@ import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversatio
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
 
 import { MetisService } from 'app/communication/service/metis.service';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';

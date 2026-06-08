@@ -5,10 +5,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -29,11 +30,11 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/shared/service/alert.service';
-import { of, throwError } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -41,7 +42,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
@@ -153,7 +154,7 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = async (testRoute?: ActivatedRoute) => {
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
@@ -1860,14 +1861,14 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('validateItemLimit', () => {
-            let modalService: NgbModal;
+            let dialogService: DialogService;
             let saveSpy: any;
-            let modalOpenSpy: any;
+            let dialogOpenSpy: any;
 
             beforeEach(() => {
-                modalService = TestBed.inject(NgbModal);
+                dialogService = TestBed.inject(DialogService);
                 saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
-                modalOpenSpy = vi.spyOn(modalService, 'open');
+                dialogOpenSpy = vi.spyOn(dialogService, 'open');
                 comp.quizExercise = quizExercise;
             });
 
@@ -1877,44 +1878,45 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 comp.validateItemLimit();
 
-                expect(modalOpenSpy).not.toHaveBeenCalled();
+                expect(dialogOpenSpy).not.toHaveBeenCalled();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open modal and save if confirmed when limit is exceeded', async () => {
+            it('should open dialog and save if confirmed when limit is exceeded', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
-                const mockModalRef = {
-                    componentInstance: { initialize: vi.fn() } as any,
-                    result: Promise.resolve(),
-                };
-                modalOpenSpy.mockReturnValue(mockModalRef as any);
+                const onClose = new Subject<boolean | undefined>();
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+
                 comp.validateItemLimit();
 
-                await new Promise(process.nextTick);
+                expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
+                    GenericConfirmationDialogComponent,
+                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                    expect.objectContaining({
+                        width: '40rem',
+                        breakpoints: { '768px': '95vw' },
+                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                    }),
+                );
 
-                expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
-
-                expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
-                expect(mockModalRef.componentInstance.canBeUndone).toBeTruthy();
-
+                // confirm
+                onClose.next(true);
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open modal and NOT save if cancelled', async () => {
+            it('should open dialog and NOT save if cancelled', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
 
-                const mockModalRef = {
-                    componentInstance: { initialize: vi.fn() },
-                    result: Promise.reject(),
-                };
-                modalOpenSpy.mockReturnValue(mockModalRef as any);
+                const onClose = new Subject<boolean | undefined>();
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
-                await new Promise(process.nextTick);
+                expect(dialogOpenSpy).toHaveBeenCalled();
 
-                expect(modalOpenSpy).toHaveBeenCalled();
+                // dismiss
+                onClose.next(undefined);
                 expect(saveSpy).not.toHaveBeenCalled();
             });
         });

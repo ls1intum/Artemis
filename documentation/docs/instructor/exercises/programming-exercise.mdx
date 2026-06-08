@@ -84,6 +84,14 @@ import hyperionChecklistQuality from './assets/programming/hyperion-checklist-qu
 import hyperionDifficultyAssessment from './assets/programming/hyperion-difficulty-assessment.png';
 import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
 import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
+import hyperionGenerateWithAi from './assets/programming/hyperion-generate-with-ai.png';
+import hyperionGenerateCode from './assets/programming/hyperion-generate-code.png';
+import hyperionGeneratingCode from './assets/programming/hyperion-generating-code.png';
+import hyperionGenerationSettings from './assets/programming/hyperion-generation-settings.png';
+import hyperionGenerationStatus from './assets/programming/hyperion-generation-status.png';
+import hyperionApplyWithAi from './assets/programming/hyperion-apply-with-ai.png';
+import hyperionRemoveSelection from './assets/programming/hyperion-remove-selection.png';
+import hyperionSelectionTag from './assets/programming/hyperion-selection-tag.png';
 import reviewAddButton from './assets/programming/review-add-button.png';
 import reviewAddThreadWidget from './assets/programming/review-add-thread-widget.png';
 import reviewConsistencyThreadWidget from './assets/programming/review-consistency-thread-widget.png';
@@ -680,6 +688,67 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 <Image src={hyperionLearningGoals} alt="Learning goal estimation panel with knowledge area badges" size={ImageSize.large} caption="Estimated learning goals with knowledge area badges, taxonomy levels, evidence, and competency linking controls" />
 
 <Image src={hyperionLinkedCompetencies} alt="Linked Competencies section populated from estimated goals" size={ImageSize.large} caption="Linked Competencies section showing course competencies created from the estimated learning goals" />
+
+### AI-Assisted Code Generation
+
+<Callout variant={CalloutVariant.info}>
+
+    This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). Code generation requires at least the <strong>Editor</strong> role within the course.
+
+</Callout>
+
+Artemis can use Hyperion to generate templates, solutions, and tests for Java programming exercises. Code generation is currently only available for Java. The generated files are written to the exercise repositories, committed, and built through the configured CI setup. Treat the generated result as a draft: review the changed files, inspect the build result, and adapt the exercise before releasing it to students.
+
+There are two ways to start code generation:
+
+**During exercise creation:** For new Java programming exercises, click **Generate with AI** instead of the regular generate action. Artemis creates the exercise with prepared repositories, opens the online editor, and starts code generation for the template, solution, and test repositories.
+
+<Image src={hyperionGenerateWithAi} alt="Generate with AI button during programming exercise creation" size={ImageSize.large} caption="Generate with AI action during programming exercise creation" />
+
+**From the online editor:** Open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and use **Artemis Intelligence** → **Generate Code**. The settings button next to the action lets you choose which repositories to generate. Code generation supports the **Template**, **Solution**, and **Test** repositories; assignment and auxiliary repositories are not supported.
+
+<Image src={hyperionGenerateCode} alt="Artemis Intelligence menu with Generate Code action" size={ImageSize.small} caption="Generate Code action in the Artemis Intelligence menu" />
+
+Before starting, make sure the problem statement describes the expected behavior clearly and that the programming language and build configuration are already selected. Hyperion uses the problem statement, the current repository structure, build environment context, and known consistency issues as generation context.
+
+#### Human Feedback Support
+
+Instructors and editors can mark active repository review threads with **Apply with AI** before starting generation. Selected review threads give Hyperion targeted human feedback for the next generation run.
+
+<Image src={hyperionApplyWithAi} alt="Apply with AI button in a review thread" size={ImageSize.large} caption="Apply with AI action in a review thread" />
+
+After selecting a thread, the thread header shows that it is selected for code generation and the action changes to **Remove Selection**.
+
+<Image src={hyperionSelectionTag} alt="Review thread marked as selected for code generation" size={ImageSize.large} caption="Selected review thread indicator" />
+
+<Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
+
+Selected feedback is shown in the code generation settings, grouped by repository. When code generation starts, Artemis sends the selected active thread IDs for the currently generated repository to Hyperion. Hyperion then uses the selected thread comments as targeted human feedback for the template, solution, or test generation prompts.
+
+<Image src={hyperionGenerationSettings} alt="Generation settings with repository selection and selected feedback threads" size={ImageSize.medium} caption="Generation settings with selected feedback grouped by repository" />
+
+Only valid feedback is forwarded: resolved and outdated threads are excluded, thread IDs are validated, and feedback is filtered to the current exercise and repository. Feedback that is irrelevant, conflicts with the exercise context, or would introduce inconsistencies should be ignored during generation. The selected feedback flow is intended for targeted follow-up generation after instructors have reviewed existing generated or manually written code.
+
+After confirmation, Artemis starts an asynchronous generation job. While the job is running:
+
+- Selected repositories are processed one after another
+- The status popover shows queued, running, completed, warning, failed, and skipped states
+- File activity lists newly created or updated files
+- The currently open repository is refreshed as generated files are committed
+- Build feedback can be used for an additional improvement attempt
+
+<Image src={hyperionGenerationStatus} alt="Generation status popover with repository states and file activity" size={ImageSize.large} caption="Live generation status with repository states and file activity" />
+
+Generation can finish with a warning even when files were committed, for example if the build failed, timed out, or the CI build could not be triggered. In that case, inspect the status details, open the generated repository, and check the latest build result before continuing manually.
+
+<Callout variant={CalloutVariant.warning}>
+
+    Avoid editing the same repositories manually while code generation is running. If another generation job is already active for the exercise, Artemis blocks the new request until the active job has finished.
+
+</Callout>
+
+<Image src={hyperionGeneratingCode} alt="Code generation in progress dialog" size={ImageSize.small} caption="Dialog shown when code generation is already running for the exercise" />
+
 ### Review Comments
 
 During exercise creation, instructors and editors can use review comments to discuss specific lines directly in the online editor. Review comments are meant for coordinating exercise authors before releasing or updating an exercise. They are not student feedback and are only visible to users who can edit the exercise.

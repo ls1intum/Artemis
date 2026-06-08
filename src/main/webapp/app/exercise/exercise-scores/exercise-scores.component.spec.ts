@@ -2,9 +2,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -14,7 +14,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { Range } from 'app/shared/util/utils';
+import { Range } from 'app/foundation/util/utils';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { Subscription, of } from 'rxjs';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
@@ -128,10 +128,8 @@ describe('Exercise Scores Component', () => {
 
             component.ngOnInit();
 
-            expect(findCourseSpy).toHaveBeenCalledOnce();
-            expect(findCourseSpy).toHaveBeenCalledWith(1);
-            expect(findExerciseSpy).toHaveBeenCalledOnce();
-            expect(findExerciseSpy).toHaveBeenCalledWith(2);
+            expect(findCourseSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(findExerciseSpy).toHaveBeenCalledExactlyOnceWith(2);
         });
     });
 
@@ -357,8 +355,7 @@ describe('Exercise Scores Component', () => {
 
             component.exportNames();
 
-            expect(resultServiceStub).toHaveBeenCalledOnce();
-            expect(resultServiceStub).toHaveBeenCalledWith(['participantName'], 'results-names.csv');
+            expect(resultServiceStub).toHaveBeenCalledExactlyOnceWith(['participantName'], 'results-names.csv');
         });
 
         it('should export names with team students format', () => {

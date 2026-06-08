@@ -81,9 +81,9 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -191,6 +191,11 @@ describe('ModelingAssessmentComponent', () => {
         reference: 'reference',
         credits: 30,
         gradingInstruction: new GradingInstruction(),
+    };
+
+    const waitForApollonInitialization = async () => {
+        await fixture.whenStable();
+        await new Promise((resolve) => setTimeout(resolve, 0));
     };
 
     beforeEach(() => {
@@ -353,8 +358,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('elementCounts', elementCounts);
         fixture.detectChanges();
 
-        await comp.ngAfterViewInit();
-        await fixture.whenStable();
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).toBeDefined();
 
@@ -400,8 +404,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
-        await comp.ngAfterViewInit();
-        await fixture.whenStable();
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).not.toBeNull();
 
@@ -425,8 +428,7 @@ describe('ModelingAssessmentComponent', () => {
         const initialModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
-        await comp.ngAfterViewInit();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
         expect(comp.apollonEditor).not.toBeNull();
 
         // Verify initial model was set
@@ -460,8 +462,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightedElements', initialHighlights);
 
         fixture.detectChanges();
-        await comp.ngAfterViewInit();
-        await fixture.whenStable();
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).not.toBeNull();
 
@@ -496,8 +497,7 @@ describe('ModelingAssessmentComponent', () => {
         vi.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         fixture.detectChanges();
-        await comp.ngAfterViewInit();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).toBeDefined();
 

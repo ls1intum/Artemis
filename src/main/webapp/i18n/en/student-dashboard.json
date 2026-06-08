@@ -309,6 +309,7 @@
                 "fileUploadEditor": "File Upload",
                 "quizEditor": "Quiz",
                 "iris": "Iris",
+                "collapsePanel": "Collapse panel",
                 "noResults": "You have no results yet",
                 "instructorActions": {
                     "title": "Instructor actions",

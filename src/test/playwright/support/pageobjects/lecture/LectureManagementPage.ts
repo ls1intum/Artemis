@@ -4,6 +4,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
 import { setMonacoEditorContentByLocator } from '../../utils';
+import { Commands } from '../../commands';
 
 /**
  * A class which encapsulates UI selectors and actions for the Lecture Management Page.
@@ -28,7 +29,9 @@ export class LectureManagementPage {
      * @returns A promise that resolves with the response of the delete action.
      */
     async deleteLecture(lecture: Lecture) {
-        await this.getLecture(lecture.id!).locator('#delete-lecture').click();
+        const lectureRow = this.getLecture(lecture.id!);
+        await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
+        await lectureRow.locator('#delete-lecture').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
@@ -64,18 +67,46 @@ export class LectureManagementPage {
 
     /**
      * Navigates to the units page of a specified lecture by its identifier.
-     * @param lectureId - The identifier of the lecture to navigate to its units page.
+     *
+     * Navigates directly via URL rather than clicking through the lectures list.
+     * Under heavy parallel multi-node load the lectures-list page occasionally fails
+     * to fully hydrate (only the app shell renders, the lectures table never appears),
+     * which made the previous click-through approach race the SPA bootstrap. Direct
+     * URL navigation removes the dependency on the list page entirely; we additionally
+     * wait for the unit-creation card to confirm the target page is hydrated before
+     * the caller starts interacting with it.
      */
     async openUnitsPage(lectureId: number) {
-        await this.getLecture(lectureId).locator('#units').click();
+        await this.gotoLectureSubPage(lectureId, 'unit-management');
+        await this.getUnitCreationCard().waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
      * Navigates to the attachments page of a specified lecture by its identifier.
-     * @param lectureId - The identifier of the lecture to navigate to its attachments page.
+     * Waits for the create-attachment button to confirm the page is hydrated before
+     * returning, matching the pattern used by `openUnitsPage` so callers (e.g.
+     * `openAttachmentUnitCreationPage`) do not race the SPA bootstrap.
      */
     async openAttachmentsPage(lectureId: number) {
-        await this.getLecture(lectureId).locator('#attachments').click();
+        await this.gotoLectureSubPage(lectureId, 'attachments');
+        await this.page.locator('#add-attachment').waitFor({ state: 'visible', timeout: 30_000 });
+    }
+
+    /**
+     * Navigates to a lecture sub-page (unit-management, attachments, …) directly via URL
+     * instead of clicking through the lectures list. The caller is expected to be on a
+     * page whose URL contains `/course-management/<courseId>/…` so we can extract the
+     * course id; otherwise we fall back to the legacy click-through path.
+     */
+    private async gotoLectureSubPage(lectureId: number, subPath: string) {
+        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
+        if (courseIdMatch) {
+            await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseIdMatch[1]}/lectures/${lectureId}/${subPath}`);
+            return;
+        }
+        const lectureRow = this.getLecture(lectureId);
+        await lectureRow.waitFor({ state: 'visible', timeout: 30_000 });
+        await lectureRow.locator(subPath === 'unit-management' ? '#units' : '#attachments').click();
     }
 
     async openAttachmentUnitCreationPage(lectureId: number) {

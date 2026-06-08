@@ -102,10 +102,15 @@ test.describe('Import exercises', () => {
                 quizExerciseCreation,
                 quizExerciseShortAnswerQuiz,
                 exerciseResult,
-                navigationBar,
-                courseManagement,
                 quizExerciseParticipation,
+                exerciseAPIRequests,
             }) => {
+                // The instructor → student → end-quiz → student round trip used to require a
+                // third instructor UI login (openCourseManagement → openExercises → endQuiz
+                // with a confirmation dialog) which routinely overran even test.slow()'s 180s
+                // budget under multi-node CI load. We end the quiz directly via API instead,
+                // which keeps the student session in place and removes one full login cycle.
+                test.slow();
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
                 await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
@@ -133,10 +138,9 @@ test.describe('Import exercises', () => {
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
 
-                await login(instructor, '/');
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExercisesOfCourse(secondCourse.id!);
-                await courseManagementExercises.endQuiz(exercise);
+                // End the quiz via API (admin auth) so the student's result can be evaluated.
+                await login(admin);
+                await exerciseAPIRequests.endQuizNow(exercise.id!);
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await exerciseResult.shouldShowScore(100);

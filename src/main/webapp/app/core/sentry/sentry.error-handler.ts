@@ -3,7 +3,7 @@ import { browserTracingIntegration, captureException, dedupeIntegration, init } 
 import type { Integration } from '@sentry/core';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {

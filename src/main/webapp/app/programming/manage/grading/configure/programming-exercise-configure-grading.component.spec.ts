@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -5,7 +7,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -28,15 +30,15 @@ import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } f
 import { ProgrammingExerciseWebsocketService } from 'app/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
-import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evalulate-button/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evaluate-button/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
@@ -58,8 +60,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseConfigureGradingComponent;
     let fixture: ComponentFixture<ProgrammingExerciseConfigureGradingComponent>;
     let debugElement: DebugElement;
@@ -69,13 +74,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let dialogService: DialogService;
 
-    let updateCategoriesStub: jest.SpyInstance;
-    let resetCategoriesStub: jest.SpyInstance;
-    let testCasesChangedStub: jest.SpyInstance;
-    let getExerciseTestCaseStateStub: jest.SpyInstance;
-    let loadExerciseStub: jest.SpyInstance;
-    let loadStatisticsStub: jest.SpyInstance;
-    let importCategoriesFromExerciseStub: jest.SpyInstance;
+    let updateCategoriesStub: ReturnType<typeof vi.spyOn>;
+    let resetCategoriesStub: ReturnType<typeof vi.spyOn>;
+    let testCasesChangedStub: ReturnType<typeof vi.spyOn>;
+    let getExerciseTestCaseStateStub: ReturnType<typeof vi.spyOn>;
+    let loadExerciseStub: ReturnType<typeof vi.spyOn>;
+    let loadStatisticsStub: ReturnType<typeof vi.spyOn>;
+    let importCategoriesFromExerciseStub: ReturnType<typeof vi.spyOn>;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -188,8 +193,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                NgxDatatableModule,
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
                 ProgrammingExerciseGradingTableActionsComponent,
@@ -224,6 +231,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
@@ -238,10 +246,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         dialogService = fixture.debugElement.injector.get(DialogService);
 
-        updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-        resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
-        loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
-        importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
+        updateCategoriesStub = vi.spyOn(gradingService, 'updateCodeAnalysisCategories');
+        resetCategoriesStub = vi.spyOn(gradingService, 'resetCategories');
+        loadStatisticsStub = vi.spyOn(gradingService, 'getGradingStatistics');
+        importCategoriesFromExerciseStub = vi.spyOn(gradingService, 'importCategoriesFromExercise');
 
         // @ts-ignore
         (router as MockRouter).setUrl('/');
@@ -249,9 +257,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
-        testCasesChangedStub = jest.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
-        getExerciseTestCaseStateStub = jest.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
-        loadExerciseStub = jest.spyOn(programmingExerciseService, 'find');
+        testCasesChangedStub = vi.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
+        getExerciseTestCaseStateStub = vi.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
+        loadExerciseStub = vi.spyOn(programmingExerciseService, 'find');
 
         getExerciseTestCaseStateSubject = new Subject();
 
@@ -264,7 +272,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         testCases.forEach((testCase) => {
             testCase.weight = 1;
             testCase.bonusMultiplier = 1;
@@ -361,7 +369,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the categories were saved.
-        expect(comp.hasUpdatedGradingConfig).toBeTrue();
+        expect(comp.hasUpdatedGradingConfig).toBe(true);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -388,9 +396,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const onCloseSubject = new Subject<ProgrammingExercise | undefined>();
         const mockDialogRef = {
             onClose: onCloseSubject.asObservable(),
-            close: jest.fn(),
+            close: vi.fn(),
         };
-        const dialogOpenSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
+        const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
 
         initGradingComponent({ tab: 'code-analysis' });
         // Reset default sorts to avoid ngx-datatable compareFn issues in tests
@@ -454,7 +462,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBeTrue();
+        expect(comp.hasUpdatedGradingConfig).toBe(true);
     });
 
     it('should load the grading statistics correctly', () => {
@@ -495,7 +503,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not require confirmation if there are no unsaved changes', () => {
         initGradingComponent();
 
-        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBe(true);
     });
 
     it('should require confirmation if there are unsaved changes', () => {
@@ -507,7 +515,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             return false;
         };
 
-        expect(comp.canDeactivate()).toBeFalse();
+        expect(comp.canDeactivate()).toBe(false);
     });
 
     describe('test chart interaction', () => {

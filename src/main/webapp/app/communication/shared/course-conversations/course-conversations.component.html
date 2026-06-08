@@ -82,7 +82,7 @@
                             [activeConversation]="activeConversation ?? postInThread.conversation!"
                             [readOnlyMode]="!!getAsChannel(postInThread.conversation)?.isArchived"
                             [activePost]="postInThread"
-                            (closePostThread)="postInThread = undefined"
+                            (closePostThread)="closeThread()"
                             [course]="course()"
                         />
                     }

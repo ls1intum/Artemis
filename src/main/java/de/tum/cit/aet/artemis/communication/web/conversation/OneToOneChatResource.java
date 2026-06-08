@@ -19,17 +19,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -60,56 +61,57 @@ public class OneToOneChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
+     * POST courses/:courseId/one-to-one-chats : Starts a new one to one chat in a course with exactly one other participant.
+     * <p>
+     * The partner is identified in the request body by either {@code userId} or {@code login} (see {@link OneToOneChatCreationDTO}). The body also tolerates the deprecated
+     * single-login array form for backwards compatibility. The canonical path is {@code courses/{courseId}/one-to-one-chats}; the legacy {@code .../one-to-one-chats/{userId}} path
+     * (partner id in the URL) is kept as a deprecated alias and resolved here.
      *
-     * @param courseId                   the id of the course
-     * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
-     *
+     * @param courseId    the id of the course
+     * @param userId      the id of the other participant, only set when the deprecated {@code .../one-to-one-chats/{userId}} path is used
+     * @param chatPartner the other participant (by {@code userId} or {@code login}), set when the canonical path with a request body is used
      * @return ResponseEntity according to createOneToOneChat function
      */
-    @PostMapping("{courseId}/one-to-one-chats")
+    @PostMapping({ "{courseId}/one-to-one-chats", "{courseId}/one-to-one-chats/{userId}" })
     @EnforceAtLeastStudent
-    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
+    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @PathVariable(name = "userId", required = false) Long userId,
+            @RequestBody(required = false) OneToOneChatCreationDTO chatPartner) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
-
         validateInputElseThrow(requestingUser, course);
 
-        var loginsToSearchFor = new HashSet<>(otherChatParticipantLogins);
-        loginsToSearchFor.add(requestingUser.getLogin());
-        var chatMembers = new ArrayList<>(conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList()));
-
-        if (chatMembers.size() != 2) {
-            throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
+        // Resolve the single other participant. Precedence: deprecated path id, then body userId, then body login.
+        Long partnerId = userId != null ? userId : (chatPartner != null ? chatPartner.userId() : null);
+        User otherUser;
+        if (partnerId != null) {
+            otherUser = userRepository.findByIdElseThrow(partnerId);
         }
-
-        var userA = chatMembers.getFirst();
-        var userB = chatMembers.get(1);
-
-        var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
-        return createOneToOneChat(requestingUser, userToBeNotified, course);
+        else if (chatPartner != null && chatPartner.login() != null) {
+            otherUser = findSingleOtherChatParticipantElseThrow(requestingUser, chatPartner.login());
+        }
+        else {
+            throw new BadRequestAlertException("A one-to-one chat must specify the other participant by userId or login", "oneToOneChat", "missingPartner");
+        }
+        log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherUser.getLogin());
+        return createOneToOneChat(requestingUser, otherUser, course);
     }
 
     /**
-     * POST courses/:courseId/one-to-one-chats/:userId: Starts a new one to one chat in a course
+     * Resolves the single other participant of a one-to-one chat from a login, ensuring exactly two distinct users (the requesting user and the partner) are involved.
      *
-     * @param courseId the id of the course
-     * @param userId   the id of the participating user
-     *
-     * @return ResponseEntity according to createOneToOneChat function
+     * @param requestingUser the user creating the chat
+     * @param partnerLogin   the login of the other participant
+     * @return the other participant
      */
-    @PostMapping("{courseId}/one-to-one-chats/{userId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @PathVariable Long userId) throws URISyntaxException {
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var otherUser = userRepository.findByIdElseThrow(userId);
-        log.debug("REST request to create one to one chat by id in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherUser.getLogin());
-        var course = courseRepository.findByIdElseThrow(courseId);
-
-        validateInputElseThrow(requestingUser, course);
-
-        return createOneToOneChat(requestingUser, otherUser, course);
+    private User findSingleOtherChatParticipantElseThrow(User requestingUser, String partnerLogin) {
+        var loginsToSearchFor = new HashSet<>(List.of(partnerLogin, requestingUser.getLogin()));
+        var chatMembers = new ArrayList<>(conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList()));
+        if (chatMembers.size() != 2) {
+            throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
+        }
+        var userA = chatMembers.getFirst();
+        var userB = chatMembers.get(1);
+        return userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
     }
 
     /**

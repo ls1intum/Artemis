@@ -6,8 +6,8 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.NonNull;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 

@@ -16,8 +16,8 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
 @Table(name = "tutorial_groups_configuration")

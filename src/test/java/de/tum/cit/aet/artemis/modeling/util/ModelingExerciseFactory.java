@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.modeling.util;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;

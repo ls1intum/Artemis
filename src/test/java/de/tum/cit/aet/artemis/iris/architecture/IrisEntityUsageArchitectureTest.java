@@ -16,18 +16,18 @@ class IrisEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     }
 
     @Override
-    protected int getMaxEntityReturnViolations() {
+    protected int getExpectedEntityReturnViolations() {
         return 0;
     }
 
     // This module is already compliant for input violations
     @Override
-    protected int getMaxEntityInputViolations() {
+    protected int getExpectedEntityInputViolations() {
         return 0;
     }
 
     @Override
-    protected int getMaxDtoEntityFieldViolations() {
+    protected int getExpectedDtoEntityFieldViolations() {
         return 0;
     }
 }

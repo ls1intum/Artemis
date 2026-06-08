@@ -25,11 +25,11 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -103,6 +103,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
@@ -382,9 +385,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.categories
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -1124,5 +1128,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, including its build config, and throw an Exception if it cannot be found.
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise with the associated build config related to the given id.
+     * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
+     */
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithBuildConfigById(exerciseId), exerciseId);
     }
 }

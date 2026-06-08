@@ -8,6 +8,7 @@ import {
     BUILD_PHASE_RESERVED_NAMES,
     BuildPhase,
     BuildPhaseCondition,
+    hasExpectedTestsBeforeDueDate,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
@@ -15,15 +16,15 @@ import { InputText } from 'primeng/inputtext';
 import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
-import { Card } from 'primeng/card';
 import { Badge } from 'primeng/badge';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { Tooltip } from 'primeng/tooltip';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { Checkbox } from 'primeng/checkbox';
 import { Message } from 'primeng/message';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -36,7 +37,6 @@ import { Message } from 'primeng/message';
         FaIconComponent,
         MonacoEditorFitTextComponent,
         ButtonLabel,
-        Card,
         Badge,
         HelpIconComponent,
         Tooltip,
@@ -46,6 +46,13 @@ import { Message } from 'primeng/message';
         Message,
     ],
     templateUrl: './build-phase-editor.component.html',
+    styles: `
+        :host ::ng-deep .markdown-preview pre {
+            border: none;
+            padding: 0;
+            margin-bottom: 0;
+        }
+    `,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 /**
@@ -53,6 +60,7 @@ import { Message } from 'primeng/message';
  */
 export class BuildPhaseEditorComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly artemisMarkdownService = inject(ArtemisMarkdownService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faPlus = faPlus;
@@ -68,6 +76,8 @@ export class BuildPhaseEditorComponent {
     readonly index = input.required<number>();
     readonly phaseNames = input.required<string[]>();
     readonly isLast = input.required<boolean>();
+    readonly readonly = input(false);
+    readonly isExamMode = input(false);
 
     readonly displayedNumber = computed(() => this.index() + 1);
     readonly isFirst = computed(() => this.index() === 0);
@@ -94,6 +104,8 @@ export class BuildPhaseEditorComponent {
     );
 
     readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
+    readonly shouldShowExamModeWarning = computed(() => this.isExamMode() && hasExpectedTestsBeforeDueDate(this.phase()));
+    readonly readonlyScriptHtml = computed(() => this.artemisMarkdownService.safeHtmlForMarkdown(`\`\`\`bash\n${this.phase().script}\n\`\`\``));
 
     readonly conditionOptions = computed(() => {
         this.currentLocale();

@@ -1,5 +1,5 @@
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { Post } from 'app/communication/shared/entities/post.model';

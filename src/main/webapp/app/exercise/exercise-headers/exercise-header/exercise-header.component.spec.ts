@@ -15,16 +15,16 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
 
@@ -187,6 +187,55 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
 
             expect(fixture.componentInstance.hasPracticeSubmission()).toBe(true);
+        });
+    });
+
+    describe('activeParticipation', () => {
+        it('should not fall back to the graded participation in practice mode (so the badge does not show the graded score)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBeUndefined();
+        });
+
+        it('should use the practice participation in practice mode when one exists', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(practiceParticipation);
+        });
+
+        it('should use the graded participation in graded mode', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(gradedParticipation);
         });
     });
 });

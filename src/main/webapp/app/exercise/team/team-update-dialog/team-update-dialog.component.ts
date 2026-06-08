@@ -1,24 +1,24 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { cloneDeep, isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamOwnerSearchComponent } from '../team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from '../team-student-search/team-student-search.component';
 import { KeyValuePipe } from '@angular/common';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -31,14 +31,15 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 })
 export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
-    @ViewChild('editForm', { static: false }) editForm: NgForm;
+    readonly editForm = viewChild.required<NgForm>('editForm');
 
-    @Input() team: Team;
-    @Input() exercise: Exercise;
+    team = signal<Team>(this.dialogConfig.data.team);
+    exercise = signal<Exercise>(this.dialogConfig.data.exercise);
 
-    pendingTeam: Team;
+    pendingTeam: Team = cloneDeep(this.team());
     isSaving = false;
 
     searchingStudents = false;
@@ -69,12 +70,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit(): void {
-        this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
-    }
-
-    private initPendingTeam() {
-        this.pendingTeam = cloneDeep(this.team);
     }
 
     /**
@@ -107,11 +103,11 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     get shortNameControl(): AbstractControl {
-        return this.editForm.control.get('shortName')!;
+        return this.editForm().control.get('shortName')!;
     }
 
     get config(): TeamAssignmentConfig {
-        return this.exercise.teamAssignmentConfig!;
+        return this.exercise().teamAssignmentConfig!;
     }
 
     get showIgnoreTeamSizeRecommendationOption(): boolean {
@@ -162,10 +158,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
-            if (!this.pendingTeam.students) {
-                this.pendingTeam.students = [];
-            }
-            this.pendingTeam.students!.push(student);
+            this.pendingTeam.students = [...(this.pendingTeam.students ?? []), student];
         }
     }
 
@@ -190,7 +183,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Cancel the update-dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close(undefined);
     }
 
     /**
@@ -201,12 +194,12 @@ export class TeamUpdateDialogComponent implements OnInit {
             return;
         }
 
-        this.team = cloneDeep(this.pendingTeam);
+        const teamToSave = cloneDeep(this.pendingTeam);
 
-        if (this.team.id !== undefined) {
-            this.subscribeToSaveResponse(this.teamService.update(this.exercise, this.team));
+        if (teamToSave.id !== undefined) {
+            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), teamToSave));
         } else {
-            this.subscribeToSaveResponse(this.teamService.create(this.exercise, this.team));
+            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), teamToSave));
         }
     }
 
@@ -223,7 +216,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {HttpResponse<Team>}team - The successful updated team
      */
     onSaveSuccess(team: HttpResponse<Team>) {
-        this.activeModal.close(team.body);
+        this.dialogRef.close(team.body);
         this.isSaving = false;
     }
 
@@ -250,7 +243,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
+                switchMap((shortName) => this.teamService.existsByShortName(this.exercise().course!, shortName)),
             )
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;

@@ -3,14 +3,14 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 
 describe('Lecture Service', () => {
@@ -193,7 +193,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/import/${lectureId}?courseId=${courseId}`,
+                url: `${resourceUrl}/import?courseId=${courseId}&sourceLectureId=${lectureId}`,
                 method: 'POST',
             });
 

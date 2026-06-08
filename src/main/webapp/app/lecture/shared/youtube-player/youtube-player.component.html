@@ -1,4 +1,4 @@
-<div class="video-wrapper" #videoWrapper>
+<div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
     <div class="video-column" #videoColumn>
         <youtube-player
             [videoId]="videoId()"

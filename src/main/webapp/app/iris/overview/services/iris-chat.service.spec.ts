@@ -6,7 +6,7 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iri
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,15 +26,15 @@ import {
     mockWebsocketStatusMessageWithInteralStage,
 } from 'test/helpers/sample/iris-sample-data';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 
 describe('IrisChatService', () => {
@@ -112,6 +112,48 @@ describe('IrisChatService', () => {
 
         expect(httpStub).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, id);
         expect(wsStub).toHaveBeenCalledWith(id);
+    });
+
+    describe('initialLoadComplete$', () => {
+        const collectInitialLoadValues = (): boolean[] => {
+            const values: boolean[] = [];
+            service.initialLoadComplete$.subscribe((value) => values.push(value));
+            return values;
+        };
+
+        it('should start false, flip to true after a successful session load, and reset on close-induced switch', async () => {
+            const values = collectInitialLoadValues();
+            expect(values).toEqual([false]);
+
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists')
+                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation))
+                .mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            service.switchTo(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            expect(values.at(-1)).toBe(true);
+
+            // Switching to a different context closes the previous session and rearms the gate.
+            service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
+
+            expect(values).toContain(false);
+            // The new load completes synchronously via the mocked observable, so the latest value
+            // should be true again by the time we observe.
+            expect(values.at(-1)).toBe(true);
+        });
+
+        it('should still flip to true when the session load fails so consumers do not deadlock', async () => {
+            const values = collectInitialLoadValues();
+            expect(values).toEqual([false]);
+
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            service.switchTo(ChatServiceMode.COURSE, id);
+
+            expect(values.at(-1)).toBe(true);
+        });
     });
 
     it('should initialize current chat context from newly loaded session', async () => {

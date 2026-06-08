@@ -1,7 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, ViewEncapsulation, input } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 @Component({

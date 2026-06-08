@@ -11,26 +11,26 @@ import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-sv
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
-import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 
 @Component({
     selector: 'jhi-exam-update',

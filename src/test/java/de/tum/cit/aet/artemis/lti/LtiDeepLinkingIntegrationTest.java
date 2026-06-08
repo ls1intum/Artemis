@@ -27,7 +27,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;

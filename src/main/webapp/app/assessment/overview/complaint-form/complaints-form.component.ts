@@ -1,16 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, input, output } from '@angular/core';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
 
 @Component({
     selector: 'jhi-complaint-form',

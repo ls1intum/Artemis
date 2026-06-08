@@ -1,37 +1,39 @@
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { FormsModule } from '@angular/forms';
-import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
+import { MockComponent } from 'ng-mocks';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseImportTabsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExerciseImportTabsComponent>;
     let comp: ExerciseImportTabsComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockComponent(ExerciseImportFromFileComponent), MockComponent(HelpIconComponent), MockComponent(ExerciseImportComponent), FormsModule],
-            declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseImportTabsComponent);
-                comp = fixture.componentInstance;
-            });
-    });
+            .overrideComponent(ExerciseImportTabsComponent, {
+                remove: { imports: [ExerciseImportComponent, ExerciseImportFromFileComponent] },
+                add: { imports: [MockComponent(ExerciseImportComponent), MockComponent(ExerciseImportFromFileComponent)] },
+            })
+            .compileComponents();
 
-    afterEach(() => {
-        jest.restoreAllMocks();
+        fixture = TestBed.createComponent(ExerciseImportTabsComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
     });
 
     it('should show first tab when opened', () => {
-        // WHEN
         fixture.detectChanges();
-        // THEN
+
         expect(comp.activeTab).toBe(1);
     });
 });

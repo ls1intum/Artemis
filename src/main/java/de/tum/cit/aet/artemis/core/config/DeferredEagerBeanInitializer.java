@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.PlaceholderResolutionException;
 
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
-import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateAuthenticationFailureAnalyzer;
-import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateAuthenticationFailureAnalyzer;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
 
 /**
  * This component initializes all lazy singleton beans after the application is ready.

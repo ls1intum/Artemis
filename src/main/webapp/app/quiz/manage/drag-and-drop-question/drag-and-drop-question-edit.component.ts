@@ -9,15 +9,17 @@ import {
     OutputRefSubscription,
     SimpleChanges,
     ViewEncapsulation,
+    computed,
     inject,
     input,
     output,
     viewChild,
 } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -25,22 +27,28 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { cloneDeep } from 'lodash-es';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
-import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
+import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import {
     faAngleDown,
     faAngleRight,
@@ -60,7 +68,7 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -87,6 +95,10 @@ import { FileService } from 'app/shared/service/file.service';
         CdkDragPlaceholder,
         DragAndDropQuestionComponent,
         ArtemisTranslatePipe,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
@@ -110,8 +122,18 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
+    private translateService = inject(TranslateService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
-    private modalService = inject(NgbModal);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly scoringTypeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
+        ];
+    });
     private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);
 
@@ -270,13 +292,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
         this.backgroundReady = true;
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * This function opens the modal for the help dialog.
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
     }
 
     /**

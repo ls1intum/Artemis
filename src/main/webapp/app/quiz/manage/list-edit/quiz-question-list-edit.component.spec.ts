@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from 'app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component';
@@ -38,7 +39,7 @@ describe('QuizQuestionListEditComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DialogService), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -55,6 +56,21 @@ describe('QuizQuestionListEditComponent', () => {
         component.addMultipleChoiceQuestion();
         expect(component.quizQuestions()).toHaveLength(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
+    });
+
+    it('should open the Apollon import dialog with responsive breakpoints that keep it within the viewport', async () => {
+        const dialogService = TestBed.inject(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
+
+        await component.importApollonDragAndDropQuestion();
+
+        expect(openSpy).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+                width: '80rem',
+                breakpoints: { '1400px': '75vw', '1200px': '85vw', '992px': '95vw' },
+            }),
+        );
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {

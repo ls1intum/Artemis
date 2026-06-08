@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';

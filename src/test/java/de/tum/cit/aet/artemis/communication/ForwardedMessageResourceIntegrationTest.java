@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -26,8 +27,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ForwardedMessageTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 

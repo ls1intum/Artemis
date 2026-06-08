@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {

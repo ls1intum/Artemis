@@ -3,8 +3,8 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';

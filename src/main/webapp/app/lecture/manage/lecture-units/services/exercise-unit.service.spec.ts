@@ -10,7 +10,7 @@ import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUni
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('ExerciseUnitService', () => {
