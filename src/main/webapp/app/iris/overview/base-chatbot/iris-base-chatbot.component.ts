@@ -41,6 +41,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -73,7 +74,6 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/foundation/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { RemoveContextPipe } from 'app/iris/overview/context-text/remove-context.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
@@ -131,7 +131,6 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ArtemisTranslatePipe,
         AsPipe,
         HtmlForMarkdownPipe,
-        RemoveContextPipe,
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
@@ -347,8 +346,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
-    /** Optional function to generate message prefix (e.g., context block) - called when sending messages */
-    readonly messagePrefixProvider = input<(() => string) | undefined>(undefined);
+    /** Optional lecture unit ID for context awareness */
+    readonly contextLectureUnitId = input<number | undefined>(undefined);
+    /** Optional function to get current PDF page number */
+    readonly contextPdfPageProvider = input<(() => number | undefined) | undefined>(undefined);
+    /** Optional function to get current video timestamp in seconds */
+    readonly contextVideoTimestampProvider = input<(() => number | undefined) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -809,11 +812,39 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
-            const prefixProvider = this.messagePrefixProvider();
-            const prefix = prefixProvider ? prefixProvider() : '';
-            const messageWithContext = prefix ? `${prefix}${content}` : content;
+            // Gather context data and build context list
+            const contextLectureUnitId = this.contextLectureUnitId();
+            const pdfPageProvider = this.contextPdfPageProvider();
+            const videoTimestampProvider = this.contextVideoTimestampProvider();
+            const contextPdfPage = pdfPageProvider ? pdfPageProvider() : undefined;
+            const contextVideoTimestamp = videoTimestampProvider ? videoTimestampProvider() : undefined;
+
+            // Build context list - add either video or slides context (not both)
+            let context: IrisMessageContextDTO[] | undefined = undefined;
+            if (contextLectureUnitId) {
+                if (contextVideoTimestamp !== undefined) {
+                    // Video context
+                    context = [
+                        {
+                            type: 'video' as const,
+                            lectureUnitId: contextLectureUnitId,
+                            timestamp: contextVideoTimestamp,
+                        },
+                    ];
+                } else if (contextPdfPage !== undefined) {
+                    // Slides context
+                    context = [
+                        {
+                            type: 'slides' as const,
+                            lectureUnitId: contextLectureUnitId,
+                            page: contextPdfPage,
+                        },
+                    ];
+                }
+            }
+
             this.chatService
-                .sendMessage(messageWithContext)
+                .sendMessage(content, {}, context)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {

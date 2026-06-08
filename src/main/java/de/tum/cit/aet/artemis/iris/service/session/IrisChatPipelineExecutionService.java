@@ -120,7 +120,7 @@ public class IrisChatPipelineExecutionService {
      * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles) {
+            Map<String, String> uncommittedFiles, List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context) {
         IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (loadedSession == null) {
             throw new EntityNotFoundException("IrisSession", session.getId());
@@ -143,15 +143,18 @@ public class IrisChatPipelineExecutionService {
         }
 
         pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event, (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(),
-                chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser, latestSubmission, uncommittedFiles));
+                chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser, latestSubmission, uncommittedFiles, context));
     }
 
     /**
      * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
      * Loads mode-specific data (exercise, lecture, submission) on top of the shared course and metrics base.
+     *
+     * @param context Optional list of context objects providing information about what the user is viewing (not persisted, only sent to Pyris)
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
-            Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
+            Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
+            List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
         // Base data shared across all chat modes (course chat is the baseline)
@@ -203,7 +206,7 @@ public class IrisChatPipelineExecutionService {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics);
+                courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics, context.isEmpty() ? null : context);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

@@ -124,7 +124,9 @@ public class IrisMessageResource {
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+        // Extract context information from request (not persisted, only passed to Pyris)
+        var context = requestDTO.context() != null ? requestDTO.context() : List.of();
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context);
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));

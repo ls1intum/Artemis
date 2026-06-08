@@ -127,18 +127,19 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     @Override
     public void requestAndHandleResponse(IrisChatSession session) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of(), List.of());
     }
 
     /**
-     * Sends all messages of the session to the LLM with optional uncommitted file changes.
-     * Only applicable for programming exercise sessions.
+     * Sends all messages of the session to the LLM with optional uncommitted file changes and context information.
      *
      * @param session          The chat session
      * @param uncommittedFiles The uncommitted files from the client
+     * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      */
-    public void requestAndHandleResponseWithUncommittedChanges(IrisChatSession session, Map<String, String> uncommittedFiles) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
+    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles,
+            List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context) {
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context);
     }
 
     // -------------------------------------------------------------------------

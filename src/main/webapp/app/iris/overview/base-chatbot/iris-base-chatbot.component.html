@@ -242,9 +242,7 @@
                                                 @if (content.type === IrisMessageContentType.TEXT) {
                                                     <span
                                                         class="bubble-content"
-                                                        [innerHTML]="
-                                                            (content | as: IrisTextMessageContent).textContent! | removeContext | htmlForMarkdown: [] : undefined : undefined : true
-                                                        "
+                                                        [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
                                                     ></span>
                                                 }
                                             }
