@@ -383,7 +383,9 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.consistencySuggestedInlineFix()).toEqual(suggestedFix);
     });
 
-    it('should hide malformed suggested inline fix with null replacement code', () => {
+    it('should keep deletion suggested inline fix with absent replacement code', () => {
+        // The server omits an empty replacementCode (@JsonInclude(NON_EMPTY)), so an absent value is a valid
+        // deletion and must be normalized to an empty string rather than treated as a malformed fix.
         fixture.componentRef.setInput('thread', {
             id: 1,
             resolved: false,
@@ -403,6 +405,43 @@ describe('ReviewCommentThreadWidgetComponent', () => {
                             expectedCode: 'foo',
                             replacementCode: null,
                             applied: false,
+                        },
+                    },
+                },
+            ],
+        } as any);
+
+        expect(comp.consistencySuggestedInlineFix()).toEqual({
+            startLine: 5,
+            endLine: 5,
+            expectedCode: 'foo',
+            replacementCode: '',
+            applied: false,
+        });
+    });
+
+    it('should hide malformed suggested inline fix with missing applied flag', () => {
+        // applied is never omitted by @JsonInclude(NON_EMPTY) (a boolean is not "empty"), so an absent value here
+        // genuinely indicates a malformed fix that must be hidden.
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                        suggestedFix: {
+                            startLine: 5,
+                            endLine: 5,
+                            expectedCode: 'foo',
+                            replacementCode: 'bar',
+                            applied: null,
                         },
                     },
                 },

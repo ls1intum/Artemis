@@ -5,6 +5,7 @@
     "license": "MIT",
     "packageManager": "pnpm@11.1.1",
     "devDependencies": {
+        "@eslint/js": "10.0.1",
         "@playwright/test": "1.60.0",
         "@typescript-eslint/eslint-plugin": "8.60.1",
         "@typescript-eslint/parser": "8.60.1",

@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -443,7 +444,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         }
         finally {
             if (targetRepositoryPath.get() != null) {
-                Files.deleteIfExists(targetRepositoryPath.get());
+                FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
             }
         }
     }

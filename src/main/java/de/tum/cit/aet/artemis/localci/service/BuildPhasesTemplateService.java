@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 /**
@@ -178,6 +179,26 @@ public class BuildPhasesTemplateService {
             log.info("No build phases for the settings of exercise {}", exercise.getId(), e);
         }
         return null;
+    }
+
+    /**
+     * For exam exercises, default result-producing phases should only publish results after the due date.
+     *
+     * @param phases build phases to transform
+     * @return transformed phases for exam defaults, otherwise the original list
+     */
+    public List<BuildPhaseDTO> applyExamDefaults(List<BuildPhaseDTO> phases) {
+        if (phases == null) {
+            return null;
+        }
+        return phases.stream().map(this::setAfterDueDateForResultPhases).toList();
+    }
+
+    private BuildPhaseDTO setAfterDueDateForResultPhases(BuildPhaseDTO phase) {
+        if (phase.resultPaths() == null || phase.resultPaths().isEmpty() || phase.condition() == BuildPhaseCondition.AFTER_DUE_DATE) {
+            return phase;
+        }
+        return new BuildPhaseDTO(phase.name(), phase.script(), BuildPhaseCondition.AFTER_DUE_DATE, phase.forceRun(), phase.resultPaths());
     }
 
     /**
