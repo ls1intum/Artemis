@@ -28,7 +28,11 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.lti.enabled=true", "artemis.atlas.enabled=true",
         "artemis.atlas.atlasml.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
-        "artemis.continuous-integration.build-job.retention-period=30" })
+        "artemis.continuous-integration.build-job.retention-period=30",
+        // Increment 1: load the shared read-only CSV seed (see config/liquibase/e2e/*.csv) into this bucket's database so
+        // tests can reference seeded users/courses instead of creating them. Seeded ids live in the 9000+ range and the
+        // changelog resets sequences, so runtime-created data does not collide.
+        "spring.liquibase.contexts=tests,seed" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
 
     protected static final WeaviateContainer weaviateContainer;

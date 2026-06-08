@@ -9,7 +9,7 @@
     <!-- ============================================================ -->
 
     <!-- ==================== USERS ==================== -->
-    <changeSet id="e2e-seed-users" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-users" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM jhi_user WHERE login = 'artemis_admin'</sqlCheck>
         </preConditions>
@@ -21,7 +21,7 @@
         </loadData>
     </changeSet>
 
-    <changeSet id="e2e-seed-user-authorities" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-user-authorities" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM jhi_user_authority WHERE user_id = 100</sqlCheck>
         </preConditions>
@@ -31,7 +31,7 @@
     </changeSet>
 
     <!-- ==================== COURSES ==================== -->
-    <changeSet id="e2e-seed-courses" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-courses" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM course WHERE short_name = 'e2echannel1'</sqlCheck>
         </preConditions>
@@ -56,7 +56,7 @@
     </changeSet>
 
     <!-- ==================== USER GROUPS (course enrollment) ==================== -->
-    <changeSet id="e2e-seed-user-groups" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-user-groups" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM user_groups WHERE user_groups = 'artemis-e2echannel1-students'</sqlCheck>
         </preConditions>
@@ -66,7 +66,7 @@
     </changeSet>
 
     <!-- ==================== CONVERSATIONS (default channels) ==================== -->
-    <changeSet id="e2e-seed-conversations" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-conversations" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation WHERE course_id = 9001 AND name = 'announcement'</sqlCheck>
         </preConditions>
@@ -82,7 +82,7 @@
     </changeSet>
 
     <!-- ==================== CONVERSATION PARTICIPANTS ==================== -->
-    <changeSet id="e2e-seed-conversation-participants" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-conversation-participants" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE conversation_id = 90001</sqlCheck>
         </preConditions>
@@ -99,7 +99,7 @@
     </changeSet>
 
     <!-- ==================== CONDUCT AGREEMENTS ==================== -->
-    <changeSet id="e2e-seed-conduct-agreements" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-conduct-agreements" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conduct_agreement WHERE course_id = 9001</sqlCheck>
         </preConditions>
@@ -110,7 +110,7 @@
     </changeSet>
 
     <!-- ==================== POSTS (messages in channels) ==================== -->
-    <changeSet id="e2e-seed-posts" author="e2e" context="e2e">
+    <changeSet id="e2e-seed-posts" author="e2e" context="e2e,seed">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE conversation_id = 90001</sqlCheck>
         </preConditions>
@@ -125,7 +125,7 @@
     </changeSet>
 
     <!-- ==================== RESET SEQUENCES (PostgreSQL) ==================== -->
-    <changeSet id="e2e-seed-reset-sequences" author="e2e" context="e2e" dbms="postgresql">
+    <changeSet id="e2e-seed-reset-sequences" author="e2e" context="e2e,seed" dbms="postgresql">
         <sql>
             SELECT setval('jhi_user_id_seq', GREATEST((SELECT MAX(id) FROM jhi_user), 1));
             SELECT setval('course_id_seq', GREATEST((SELECT MAX(id) FROM course), 1));
