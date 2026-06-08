@@ -52,6 +52,7 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 
 // Mock ResizeObserver globally
 class MockResizeObserverClass {
@@ -246,6 +247,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
+                        ModelingExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
                     ],
