@@ -120,6 +120,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
     readonly binaryFileSelected = signal<boolean>(false);
+    readonly imagePreviewUrl = signal<string | undefined>(undefined);
+    readonly imagePreviewError = signal<boolean>(false);
     readonly fileSession = signal<FileSession>({});
     readonly selectedFileAwaitingInitialSync = signal<boolean>(false);
     readonly editorLocked = computed<boolean>(
@@ -317,6 +319,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.reviewCommentManager?.disposeAll();
         this.fileSyncReadySubscription?.unsubscribe();
         this.fileSyncStateReplacedSubscription?.unsubscribe();
+        this.revokeImagePreview();
         if (this.renderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.renderAnimationFrameId);
         }
@@ -326,11 +329,18 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
+        this.revokeImagePreview();
         if (!fileName) {
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
         try {
+            // Images are fetched as binary blobs and rendered directly; the text-based code path would corrupt them on UTF-8 decoding.
+            if (this.fileTypeService.isImageFile(fileName)) {
+                await this.loadImagePreview(fileName);
+                return;
+            }
+
             if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
                 let fileContent = '';
                 let loadingError = false;
@@ -366,6 +376,47 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         } finally {
             this.loadingCount.set(this.loadingCount() - 1);
         }
+    }
+
+    private async loadImagePreview(fileName: string): Promise<void> {
+        this.binaryFileSelected.set(false);
+        this.imagePreviewError.set(false);
+        try {
+            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
+            // The user may have switched files while the request was in flight.
+            if (this.selectedFile() !== fileName) {
+                return;
+            }
+            const mimeType = this.fileTypeService.getImageMimeType(fileName);
+            const typedBlob = mimeType ? new Blob([blob], { type: mimeType }) : blob;
+            // If two fetches for the same file resolve back-to-back (e.g. ngOnChanges re-entering via editorWasRefreshed),
+            // both pass the stale check above. Revoke the previous URL before replacing it so we do not orphan a blob handle.
+            const previousUrl = this.imagePreviewUrl();
+            if (previousUrl) {
+                URL.revokeObjectURL(previousUrl);
+            }
+            this.imagePreviewUrl.set(URL.createObjectURL(typedBlob));
+        } catch (error) {
+            // The user may have switched files while the request was in flight; don't clobber the new file's state.
+            if (this.selectedFile() !== fileName) {
+                return;
+            }
+            this.imagePreviewError.set(true);
+            if (error.message === ConnectionError.message) {
+                this.onError.emit('loadingFailed' + error.message);
+            } else {
+                this.onError.emit('loadingFailed');
+            }
+        }
+    }
+
+    private revokeImagePreview(): void {
+        const previousUrl = this.imagePreviewUrl();
+        if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+        }
+        this.imagePreviewUrl.set(undefined);
+        this.imagePreviewError.set(false);
     }
 
     switchToSelectedFile(selectedFileName: string, code: string): void {

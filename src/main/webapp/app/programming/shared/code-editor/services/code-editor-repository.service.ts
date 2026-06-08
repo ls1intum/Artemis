@@ -21,6 +21,7 @@ import { PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
+    getFileAsBlob: (fileName: string) => Observable<Blob>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
     updateFileContent: (fileName: string, fileContent: string) => Observable<any>;
@@ -204,6 +205,13 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             map((data) => ({ fileContent: data })),
             handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
+    };
+
+    getFileAsBlob = (fileName: string, domain?: DomainChange): Observable<Blob> => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http
+            .get(`${restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'blob' })
+            .pipe(handleErrorResponse<Blob>(this.conflictService));
     };
 
     /**

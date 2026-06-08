@@ -4,7 +4,7 @@
  *
  * Provides the global mocks/polyfills for the Vitest client test suite (Vitest is the sole client test runner).
  * The triple-slash reference above makes Vitest's global test APIs (describe/it/expect/vi) ambient for every
- * spec without each file having to import them (replacing the global types previously supplied by @types/jest).
+ * spec without each file having to import them
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
  * NOTE: All tests run in zoneless mode - do not import zone.js
  */
