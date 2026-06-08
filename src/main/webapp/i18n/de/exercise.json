@@ -135,6 +135,7 @@
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
             "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+            "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
             "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "timelineOtherRequiredDateTooltip": "{{ otherInputName }} muss gesetzt sein, bevor dieses Datum gesetzt werden kann.",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",

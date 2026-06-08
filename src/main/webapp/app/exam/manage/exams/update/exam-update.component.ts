@@ -34,6 +34,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline/exam-timeline.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -57,6 +58,7 @@ import { TranslateService } from '@ngx-translate/core';
         Dialog,
         MessageModule,
         SelectButtonModule,
+        ExamTimelineComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {

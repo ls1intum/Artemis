@@ -13,7 +13,11 @@ export enum ExamType {
 }
 
 export function isTestExam(exam?: { examType?: ExamType }): boolean {
-    return exam?.examType !== undefined && exam.examType !== ExamType.REAL;
+    return isTestExamType(exam?.examType);
+}
+
+export function isTestExamType(examType?: ExamType): boolean {
+    return examType !== undefined && examType !== ExamType.REAL;
 }
 
 export class Exam implements BaseEntity {

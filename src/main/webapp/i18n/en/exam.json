@@ -559,7 +559,8 @@
                     "practice": "Students can start repeatable practice attempts during the configured working window.",
                     "simulationAndPractice": "Students can start one live attempt first. Repeatable practice attempts open at the configured practice start time."
                 },
-                "practiceStartDate": "Start of practice window",
+                "simulationEndDate": "End of the simulation time",
+                "practiceStartDate": "Start of practice time",
                 "practiceStartDateTooltip": "The date and time when repeatable practice attempts become available after the simulation phase.",
                 "practiceStartDateInvalid": "The start of the practice window must be set at or after the simulation phase ends.",
                 "startDate": "Start of working window",

@@ -559,7 +559,8 @@
                     "practice": "Studierende können während des konfigurierten Bearbeitungsfensters wiederholt üben.",
                     "simulationAndPractice": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden zum konfigurierten Beginn der Übungsphase freigeschaltet."
                 },
-                "practiceStartDate": "Beginn der Übungsphase",
+                "simulationEndDate": "Ende der Simulationszeit",
+                "practiceStartDate": "Beginn der Übungszeit",
                 "practiceStartDateTooltip": "Datum und Uhrzeit, ab wann wiederholbare Übungsversuche nach der Simulationsphase verfügbar sind.",
                 "practiceStartDateInvalid": "Der Beginn der Übungsphase muss zum oder nach Ende der Simulationsphase liegen.",
                 "startDate": "Beginn Bearbeitungsfenster",

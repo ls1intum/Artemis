@@ -1,13 +1,14 @@
 <div class="frame">
+    @let showInvalidBeforeTouchedValue = showInvalidBeforeTouched();
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
-            @let isInvalid = internalItem.isBeforePreviousDate || internalItem.isOtherRequiredItemDateUndefined || (dateModel.touched && internalItem.isInputRequiredButUndefined);
+            @let isInvalid = (!!dateModel.touched || showInvalidBeforeTouchedValue) && !!internalItem.violationKey;
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div
                     class="timeline-graphic-circle"
                     [class.required]="internalItem.kind === 'required'"
-                    [class.optional]="internalItem.kind === 'optional'"
+                    [class.optional]="internalItem.kind !== 'required'"
                     [class.valid]="!isInvalid"
                     [class.invalid]="isInvalid"
                 >
@@ -45,10 +46,10 @@
                         showOnFocus="false"
                         [baseZIndex]="1050"
                         [invalid]="isInvalid"
-                        [disabled]="readonly()"
+                        [disabled]="readonly() || internalItem.kind === 'derived'"
                     />
                     @if (isInvalid) {
-                        <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.tooltip" tooltipPosition="right"></i>
+                        <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.violationKey" tooltipPosition="right"></i>
                     }
                 </div>
             </div>

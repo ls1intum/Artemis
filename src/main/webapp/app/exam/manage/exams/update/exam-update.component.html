@@ -132,6 +132,15 @@
                     </ng-template>
                 </p-dialog>
             }
+            <jhi-exam-timeline
+                [examType]="exam.examType!"
+                [(visibleFrom)]="exam.visibleDate"
+                [(startOfWorkingTime)]="exam.startDate"
+                [(startOfPracticeTime)]="exam.testExamPracticeStartDate"
+                [(endOfWorkingTime)]="exam.endDate"
+                [(workingTime)]="exam.workingTime"
+                [(gracePeriod)]="exam.gracePeriod"
+            />
             <div class="row mb-3 position-relative">
                 <div [class.col-sm-3]="exam.examType === ExamType.SIMULATION_AND_PRACTICE" [class.col-sm-4]="exam.examType !== ExamType.SIMULATION_AND_PRACTICE">
                     <jhi-date-time-picker
