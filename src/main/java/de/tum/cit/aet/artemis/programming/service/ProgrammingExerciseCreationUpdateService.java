@@ -139,32 +139,6 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Setups the context of a new programming exercise. This includes:
-     * <ul>
-     * <li>The VCS project</li>
-     * <li>All repositories (test, exercise, solution)</li>
-     * <li>The template and solution participation</li>
-     * <li>VCS webhooks</li>
-     * </ul>
-     * The exercise gets set up in the following order:
-     * <ol>
-     * <li>Create all repositories for the new exercise</li>
-     * <li>Setup template and push it to the repositories</li>
-     * <li>Setup new build plans for exercise</li>
-     * <li>Add all webhooks</li>
-     * <li>Init scheduled jobs for exercise maintenance</li>
-     * </ol>
-     *
-     * @param programmingExercise The programmingExercise that should be setup
-     * @return The new setup exercise
-     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException     If the template files couldn't be read
-     */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
-        return createProgrammingExercise(programmingExercise, false);
-    }
-
-    /**
      * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
      *
      * @param programmingExercise The programmingExercise that should be setup
@@ -174,6 +148,21 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, emptyRepositories, false);
+    }
+
+    /**
+     * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
+     *
+     * @param programmingExercise              The programmingExercise that should be setup
+     * @param clearRepositorySourcesAfterSetup if true, clear sources in template, solution, and test repositories after setup
+     * @param skipRepositoryAndBuildTrigger    if true, skip repository setups, initial submissions, and build plan setup
+     * @return The new setup exercise
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException     If the template files couldn't be read
+     */
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean clearRepositorySourcesAfterSetup, boolean skipRepositoryAndBuildTrigger)
+            throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
@@ -181,7 +170,7 @@ public class ProgrammingExerciseCreationUpdateService {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
         validateProblemStatementLength(programmingExercise.getProblemStatement());
-        if (emptyRepositories) {
+        if (clearRepositorySourcesAfterSetup) {
             validateAiGenerationPreconditions(programmingExercise);
         }
         final User exerciseCreator = userRepository.getUser();
@@ -220,10 +209,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
-
-        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
-
         // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
@@ -231,8 +216,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(savedProgrammingExercise);
-        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
+        if (!skipRepositoryAndBuildTrigger) {
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, clearRepositorySourcesAfterSetup);
+            savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
+        }
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
@@ -253,6 +240,18 @@ public class ProgrammingExerciseCreationUpdateService {
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+    }
+
+    /**
+     * Creates initial submissions and build plans for an exercise whose repositories were initialized outside the regular creation flow.
+     *
+     * @param programmingExercise the programming exercise with initialized repositories
+     * @return the programming exercise with build plans created
+     */
+    public ProgrammingExercise setupBuildPlansAndTriggerInitialBuilds(ProgrammingExercise programmingExercise) {
+        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(programmingExercise);
+        return programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {

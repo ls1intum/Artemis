@@ -130,8 +130,7 @@ public class ProgrammingExerciseImportFromFileService {
             checkRepositoriesExist(importExerciseDir);
 
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
-            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
+            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, false, true);
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
@@ -151,7 +150,7 @@ public class ProgrammingExerciseImportFromFileService {
             if (profileService.isJenkinsActive()) {
                 importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
             }
-            // TODO: we need to create the build configuration
+            newProgrammingExercise = programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(newProgrammingExercise);
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
