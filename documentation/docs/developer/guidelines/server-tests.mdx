@@ -162,6 +162,11 @@ Follow these tips to write performant tests:
 * Use the [Awaitility](https://github.com/awaitility) library for asserting async code.
 * Limit object creation in tests and the test setup.
 
+After a server test run, Artemis prints a `Test Bucket Timing Summary` for the integration-test buckets.
+Use the `Wall time` column to find the bucket that dominates the parallel run, `Class time` to see the accumulated time spent in test classes,
+and `Gap` to estimate waiting time where no class in the bucket was active.
+The slowest-class list below the table identifies candidates for local setup optimizations or for rebalancing into a compatible bucket.
+
 
 ## Spring Boot Server Starts and Context Configuration
 
