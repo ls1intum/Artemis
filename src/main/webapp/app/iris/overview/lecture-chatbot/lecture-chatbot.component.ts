@@ -43,7 +43,7 @@ export class LectureChatbotComponent {
     readonly contextsProvider = input<LectureContextsProvider | undefined>(undefined);
 
     /** Computed context provider function for the base chatbot */
-    protected readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => {
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => {
         const provider = this.contextsProvider();
         return provider ? () => provider.getVisibleContexts() : undefined;
     });
