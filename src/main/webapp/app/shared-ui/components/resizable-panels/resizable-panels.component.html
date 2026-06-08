@@ -1,52 +1,35 @@
-@if (renderSplit()) {
+@if (!isNarrow() && splitOnWide() && rightPanels().length > 0) {
     <!-- Wide mode: resizable split -->
     <div class="d-flex w-100 h-100 overflow-hidden">
-        @if (leftPanels().length > 0) {
-            <div
-                class="d-flex flex-column overflow-hidden rounded-3 module-bg panel-drop-target"
-                [class.flex-grow-1]="isRightPanelCollapsed()"
-                (dragover)="allowPanelDrop($event)"
-                (drop)="dropPanelOnSide($event, 'left')"
-                jhiSplitPane
-            >
-                <p-tabs [value]="activeLeftIndex()" (valueChange)="setActiveLeft($event)" class="flex-shrink-0">
+        @if (leftPanel()) {
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" [class.flex-grow-1]="isRightPanelCollapsed()" jhiSplitPane>
+                <p-tabs [value]="0" class="flex-shrink-0">
                     <p-tablist>
-                        @for (panel of leftPanels(); track panel; let i = $index) {
-                            <p-tab [value]="i" draggable="true" (dragstart)="onPanelDragStart($event, panels().indexOf(panel))" (dragend)="onPanelDragEnd()">
-                                @if (panel.iconTemplate()) {
-                                    <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                                } @else if (panel.icon()) {
-                                    <fa-icon [icon]="panel.icon()!" />
-                                }
-                                <span [jhiTranslate]="panel.label()"></span>
-                            </p-tab>
-                        }
+                        <p-tab [value]="0">
+                            @if (leftPanel()!.iconTemplate()) {
+                                <ng-container [ngTemplateOutlet]="leftPanel()!.iconTemplate()!" />
+                            } @else if (leftPanel()!.icon()) {
+                                <fa-icon [icon]="leftPanel()!.icon()!" />
+                            }
+                            <span [jhiTranslate]="leftPanel()!.label()"></span>
+                        </p-tab>
                     </p-tablist>
                 </p-tabs>
                 <div class="flex-grow-1 overflow-y-auto p-2">
-                    @if (leftPanels()[activeLeftIndex()]) {
-                        <ng-container [ngTemplateOutlet]="leftPanels()[activeLeftIndex()].templateRef" />
-                    }
+                    <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                 </div>
             </div>
         }
 
         @if (rightPanels().length > 0) {
             @if (isRightPanelCollapsed()) {
-                <div
-                    class="collapsed-right-panel d-flex flex-column align-items-center overflow-hidden rounded-3 module-bg panel-drop-target"
-                    (dragover)="allowPanelDrop($event)"
-                    (drop)="dropPanelOnSide($event, 'right')"
-                >
+                <div class="collapsed-right-panel d-flex flex-column align-items-center overflow-hidden rounded-3 module-bg">
                     @for (panel of rightPanels(); track panel; let i = $index) {
                         <button
                             type="button"
                             class="collapsed-right-panel-tab"
-                            draggable="true"
                             [class.active]="activeRightIndex() === i"
                             (click)="expandRightPanel(i)"
-                            (dragstart)="onPanelDragStart($event, panels().indexOf(panel))"
-                            (dragend)="onPanelDragEnd()"
                             [attr.aria-label]="panel.label() | artemisTranslate"
                         >
                             @if (panel.iconTemplate()) {
@@ -58,17 +41,12 @@
                     }
                 </div>
             } @else {
-                <div
-                    class="d-flex flex-column overflow-hidden rounded-3 module-bg panel-drop-target"
-                    (dragover)="allowPanelDrop($event)"
-                    (drop)="dropPanelOnSide($event, 'right')"
-                    jhiSplitPane
-                >
+                <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
                     <div class="right-panel-header d-flex align-items-center">
                         <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
                             <p-tablist>
                                 @for (panel of rightPanels(); track panel; let i = $index) {
-                                    <p-tab [value]="i" draggable="true" (dragstart)="onPanelDragStart($event, panels().indexOf(panel))" (dragend)="onPanelDragEnd()">
+                                    <p-tab [value]="i">
                                         @if (panel.iconTemplate()) {
                                             <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                                         } @else if (panel.icon()) {
@@ -99,31 +77,25 @@
     </div>
 } @else {
     <!-- Narrow mode: single tabbed panel, no resize -->
-    <div class="single-panel-split-drop-wrapper h-100 w-100">
-        @if (!isNarrow() && panels().length > 1 && isDraggingPanel()) {
-            <div class="single-panel-side-drop single-panel-side-drop-left" (dragover)="allowPanelDrop($event)" (drop)="dropPanelToCreateSplit($event, 'left')"></div>
-            <div class="single-panel-side-drop single-panel-side-drop-right" (dragover)="allowPanelDrop($event)" (drop)="dropPanelToCreateSplit($event, 'right')"></div>
-        }
-        <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
-            <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
-                <p-tablist>
-                    @for (panel of panels(); track panel; let i = $index) {
-                        <p-tab [value]="i" draggable="true" (dragstart)="onPanelDragStart($event, i)" (dragend)="onPanelDragEnd()">
-                            @if (panel.iconTemplate()) {
-                                <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                            } @else if (panel.icon()) {
-                                <fa-icon [icon]="panel.icon()!" />
-                            }
-                            <span [jhiTranslate]="panel.label()"></span>
-                        </p-tab>
-                    }
-                </p-tablist>
-            </p-tabs>
-            <div class="flex-grow-1 overflow-y-auto p-2">
-                @if (panels()[activeSingleIndex()]) {
-                    <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
+    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
+        <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
+            <p-tablist>
+                @for (panel of panels(); track panel; let i = $index) {
+                    <p-tab [value]="i">
+                        @if (panel.iconTemplate()) {
+                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                        } @else if (panel.icon()) {
+                            <fa-icon [icon]="panel.icon()!" />
+                        }
+                        <span [jhiTranslate]="panel.label()"></span>
+                    </p-tab>
                 }
-            </div>
+            </p-tablist>
+        </p-tabs>
+        <div class="flex-grow-1 overflow-y-auto p-2">
+            @if (panels()[activeSingleIndex()]) {
+                <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
+            }
         </div>
     </div>
 }
