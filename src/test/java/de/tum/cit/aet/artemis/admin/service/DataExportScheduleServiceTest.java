@@ -31,10 +31,10 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
 import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 @ExtendWith(MockitoExtension.class)
-class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependentTest {
+class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "dataexportscheduleservice";
 

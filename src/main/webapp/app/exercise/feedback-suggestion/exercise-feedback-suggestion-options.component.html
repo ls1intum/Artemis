@@ -1,4 +1,4 @@
-@if (isAthenaEnabled && modulesAvailable) {
+@if (isAthenaEnabled() && modulesAvailable()) {
     <div class="form-group">
         <div class="form-check">
             <input
@@ -38,11 +38,11 @@
                 <select
                     id="athenaModuleSelect"
                     class="form-select"
-                    [value]="exercise().feedbackSuggestionModule"
-                    [(ngModel)]="exercise().feedbackSuggestionModule"
+                    [ngModel]="exercise().feedbackSuggestionModule"
+                    (ngModelChange)="setFeedbackModule($event)"
                     [disabled]="inputControlsDisabled()"
                 >
-                    @for (athenaModule of availableAthenaModules; track athenaModule) {
+                    @for (athenaModule of availableAthenaModules(); track athenaModule) {
                         <option [value]="athenaModule">{{ athenaModule }}</option>
                     }
                 </select>

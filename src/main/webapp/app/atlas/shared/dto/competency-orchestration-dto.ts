@@ -31,7 +31,9 @@ export interface AppliedActionDTO {
 
 export interface CompetencyOrchestrationResultDTO {
     status: CompetencyOrchestrationStatus;
-    summary: string;
-    appliedActions: AppliedActionDTO[];
+    // summary and appliedActions may be absent: the server serializes this DTO with @JsonInclude(NON_EMPTY),
+    // which omits a blank summary and an empty appliedActions list. Consumers must default them ('' / []).
+    summary?: string;
+    appliedActions?: AppliedActionDTO[];
     failureReason?: CompetencyOrchestrationFailureReason;
 }

@@ -38,6 +38,8 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "tooShortQueryHint": "Please enter a longer search term.",
+            "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
             "toNavigate": "to navigate",
             "toSelect": "to select",
@@ -85,6 +87,7 @@
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
+            "courseFallbackLabel": "Course {{ id }}",
             "searchFailed": "Search failed. Please try again.",
             "irisAnswerShowMore": "Show more",
             "irisAnswerShowLess": "Show less",
@@ -319,7 +322,7 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} - {{second}} of {{total}} items."
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
     },
     "entity": {
         "actions": "Actions",

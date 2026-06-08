@@ -14,6 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
@@ -61,6 +62,7 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
@@ -78,7 +80,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         vi.spyOn(courseExerciseService, 'findAllProgrammingExercisesForCourse').mockReturnValue(of(programmingExerciseResponse()));
 
-        comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
+        comp.programmingExercises.set([programmingExercise, programmingExercise2, programmingExercise3]);
     });
 
     afterEach(() => {
@@ -97,7 +99,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         // THEN
         expect(courseExerciseService.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
-        expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+        expect(comp.programmingExercises()[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
@@ -168,7 +170,7 @@ describe('ProgrammingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(3);
         });
 
@@ -178,7 +180,7 @@ describe('ProgrammingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(0);
         });
 
@@ -188,7 +190,7 @@ describe('ProgrammingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(1);
         });
 
@@ -198,7 +200,7 @@ describe('ProgrammingExercise Management Component', () => {
             fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(2);
         });
     });
@@ -223,16 +225,16 @@ describe('ProgrammingExercise Management Component', () => {
 
         it('should select all', () => {
             // WHEN
-            comp.toggleMultipleExercises(comp.programmingExercises);
+            comp.toggleMultipleExercises(comp.programmingExercises());
 
             // THEN
-            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises.length);
+            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises().length);
         });
 
         it('should deselect all', () => {
             // WHEN
-            comp.toggleMultipleExercises(comp.programmingExercises); // Select all
-            comp.toggleMultipleExercises(comp.programmingExercises); // Deselect all
+            comp.toggleMultipleExercises(comp.programmingExercises()); // Select all
+            comp.toggleMultipleExercises(comp.programmingExercises()); // Deselect all
 
             // THEN
             expect(comp.selectedExercises).toHaveLength(0);

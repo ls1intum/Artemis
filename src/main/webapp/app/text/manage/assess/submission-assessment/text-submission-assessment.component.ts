@@ -44,6 +44,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -59,6 +60,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -85,6 +87,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     totalScore: number;
     isTestRun = false;
     isLoading = signal(true);
+    loadingFeedbackSuggestions = false;
     saveBusy: boolean;
     submitBusy: boolean;
     cancelBusy: boolean;
@@ -92,6 +95,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     isAssessor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number = 0;
     resultId: number;
@@ -148,6 +152,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = 0;
 
         this.isLoading.set(true);
+        this.loadingFeedbackSuggestions = false;
         this.saveBusy = false;
         this.submitBusy = false;
         this.cancelBusy = false;
@@ -155,6 +160,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAssessor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.hasAutomaticFeedback = false;
         this.highlightDifferences = false;
     }
 
@@ -249,6 +255,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private get isNewAssessmentRoute(): boolean {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
+    }
+
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
     }
 
     private checkPermissions(result?: Result): void {
@@ -347,20 +357,27 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
-            feedbackSuggestions.forEach((suggestion) => {
-                if (suggestion instanceof TextBlockRef) {
-                    // referenced feedback suggestion - add to existing text blocks but avoid conflicts
-                    this.addAutomaticTextBlockRef(suggestion);
-                } else {
-                    // unreferenced feedback suggestion - we can just add it
-                    this.result!.feedbacks ??= [];
-                    this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
-                    // the unreferencedFeedback variable does not auto-update and needs to be updated manually
-                    this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
-                }
-            });
-            this.validateFeedback();
+        this.loadingFeedbackSuggestions = true;
+
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
+            next: (feedbackSuggestions) => {
+                feedbackSuggestions.forEach((suggestion) => {
+                    if (suggestion instanceof TextBlockRef) {
+                        // referenced feedback suggestion - add to existing text blocks but avoid conflicts
+                        this.addAutomaticTextBlockRef(suggestion);
+                    } else {
+                        // unreferenced feedback suggestion - we can just add it
+                        this.result!.feedbacks ??= [];
+                        this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
+                        // the unreferencedFeedback variable does not auto-update and needs to be updated manually
+                        this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
+                    }
+                });
+                this.validateFeedback();
+                this.hasAutomaticFeedback = feedbackSuggestions.length > 0;
+                this.loadingFeedbackSuggestions = false;
+            },
+            error: () => (this.loadingFeedbackSuggestions = false),
         });
     }
 

@@ -211,8 +211,6 @@ describe('HeaderExercisePageWithDetails', () => {
         submissionPolicy.active = true;
         fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
-        component.ngOnChanges();
-
-        expect(component.numberOfSubmissions).toBe(expectedNumber);
+        expect(component.numberOfSubmissions()).toBe(expectedNumber);
     });
 });
