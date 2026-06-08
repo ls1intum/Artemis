@@ -160,6 +160,17 @@ public final class TestBucketTiming {
         return Optional.empty();
     }
 
+    /**
+     * Resolves the bucket a test class belongs to (by its integration-test base class). Used by
+     * {@link BucketWaveClassOrderer} to group classes into bucket waves.
+     *
+     * @param testClass the test class to resolve
+     * @return the bucket name, or empty if the class does not belong to a known bucket
+     */
+    static Optional<String> bucketForClass(Class<?> testClass) {
+        return findBucketName(testClass);
+    }
+
     private static Optional<Class<?>> getJavaClass(TestIdentifier testIdentifier) {
         return testIdentifier.getSource().flatMap(TestBucketTiming::getJavaClass);
     }
