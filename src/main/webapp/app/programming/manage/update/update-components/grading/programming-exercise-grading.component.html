@@ -12,10 +12,10 @@
     <div class="row">
         @if (isEditFieldDisplayedRecord().points) {
             <div class="col">
-                <div class="form-group">
+                <div class="form-group" [hidden]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <input
-                        required
+                        [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"
                         class="form-control"
                         min="1"
@@ -26,7 +26,11 @@
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
+                        <div
+                            class="alert alert-danger"
+                            [hidden]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED"
+                            jhiTranslate="artemisApp.exercise.pointsError"
+                        ></div>
                     }
                 </div>
             </div>

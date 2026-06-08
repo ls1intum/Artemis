@@ -1366,6 +1366,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            return;
+        }
+
         if (this.programmingExercise.maxPoints === undefined) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',

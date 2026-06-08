@@ -5,6 +5,7 @@ import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
+import { NgModel } from '@angular/forms';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -32,6 +33,7 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 type GradingInternals = ProgrammingExerciseGradingComponent & {
     submissionPolicyUpdateComponent: Signal<SubmissionPolicyUpdateComponent | undefined>;
     lifecycleComponent: Signal<ProgrammingExerciseUpdateTimelineComponent | undefined>;
+    maxScoreField: Signal<NgModel | undefined>;
 };
 const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
 
@@ -187,6 +189,26 @@ describe('ProgrammingExerciseGradingComponent', () => {
         lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not require points when exercise is not included in the course score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        exercise.maxPoints = undefined;
+        exercise.staticCodeAnalysisEnabled = false;
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+        expect(pointsInput.required).toBe(false);
+        expect(pointsInput.closest('.form-group')?.hidden).toBe(true);
+
+        vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
+        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+
+        comp.calculateFormStatus();
+
+        expect(comp.formValid).toBe(true);
     });
 
     const generateFieldVisibilityTests = (
