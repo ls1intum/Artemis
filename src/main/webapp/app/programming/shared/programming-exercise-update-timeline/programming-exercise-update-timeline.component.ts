@@ -133,7 +133,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (this.assessmentType() === AssessmentType.SEMI_AUTOMATIC) {
                 this.allowComplaintsForAutomaticAssessments.set(false);
-                this.allowFeedbackRequests.set(false);
+                // allowFeedbackRequests is instructor-controlled per-exercise for manual tutor feedback; preserve the saved value
             } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);

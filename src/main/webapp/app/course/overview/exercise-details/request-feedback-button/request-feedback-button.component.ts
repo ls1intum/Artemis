@@ -58,6 +58,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     protected readonly ExerciseType = ExerciseType;
 
     athenaEnabled = false;
+    athenaFormativeFeedbackEnabled = false;
+    manualFeedbackEnabled = false;
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
@@ -87,9 +89,16 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isExamExercise || !this.exercise().id) {
             return;
         }
-        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
+        this.computeFeedbackEnabledState(this.exercise());
         this.updateParticipation();
         this.setUserAcceptedLLMUsage();
+    }
+
+    private computeFeedbackEnabledState(exercise: Exercise): void {
+        const athenaFormativeEnabled = exercise.course?.athenaFormativeEnabled ?? false;
+        this.manualFeedbackEnabled = exercise.allowFeedbackRequests ?? false;
+        this.athenaFormativeFeedbackEnabled = this.athenaEnabled && athenaFormativeEnabled && !this.manualFeedbackEnabled;
+        this.requestFeedbackEnabled = this.athenaFormativeFeedbackEnabled || this.manualFeedbackEnabled;
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
@@ -100,7 +109,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.exercise().id) {
             this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                    const participations = exerciseResponse.body!.exercise.studentParticipations ?? [];
+                    const detailedExercise = exerciseResponse.body!.exercise;
+                    // Re-compute with stamped course.athenaFormativeEnabled from the details response
+                    this.computeFeedbackEnabledState(detailedExercise);
+                    const participations = detailedExercise.studentParticipations ?? [];
                     const practiceParticipation = this.participationService.getSpecificStudentParticipation(participations, true);
                     const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
                     // Prefer practice participation when it exists (student is working in practice mode)

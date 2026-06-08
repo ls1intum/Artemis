@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -106,11 +107,13 @@ public class ExerciseResource {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
+    private final Optional<AthenaApi> athenaApi;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<AthenaApi> athenaApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -126,6 +129,7 @@ public class ExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
+        this.athenaApi = athenaApi;
     }
 
     /**
@@ -383,6 +387,11 @@ public class ExerciseResource {
         }
 
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
+
+        var exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (!exercise.isExamExercise() && exerciseCourse != null) {
+            athenaApi.ifPresent(api -> api.stampCourseAthenaConfig(exerciseCourse));
+        }
 
         return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, plagiarismCaseInfo));
     }

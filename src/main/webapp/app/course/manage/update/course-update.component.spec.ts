@@ -218,7 +218,6 @@ describe('Course Management Update Component', () => {
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -253,7 +252,6 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -577,23 +575,6 @@ describe('Course Management Update Component', () => {
             expect(comp.course.testCourse).toBe(false);
             comp.changeTestCourseEnabled();
             expect(comp.course.testCourse).toBe(true);
-        });
-    });
-
-    describe('changeRestrictedAthenaModulesEnabled', () => {
-        it('should toggle restricted athena modules access', () => {
-            comp.course = new Course();
-            comp.course.restrictedAthenaModulesAccess = true;
-            comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
-
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(false);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
         });
     });
 

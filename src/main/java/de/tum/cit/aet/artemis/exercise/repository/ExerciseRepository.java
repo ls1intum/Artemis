@@ -650,23 +650,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
         return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
     }
 
-    /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
-     *
-     * @param courseId                           The course for which the access should be revoked
-     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
-            """)
-    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
-
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""

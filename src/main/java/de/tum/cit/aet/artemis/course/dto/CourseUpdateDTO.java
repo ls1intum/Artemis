@@ -59,8 +59,8 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, boolean athenaFormativeEnabled, boolean athenaGradingEnabled, String timeZone,
-        CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean athenaFormativeEnabled, boolean athenaGradingEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+        boolean onboardingDone) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -119,7 +119,6 @@ public record CourseUpdateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -145,7 +144,7 @@ public record CourseUpdateDTO(
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.isAthenaFormativeEnabled(), course.isAthenaGradingEnabled(), course.getTimeZone(),
+                course.getAccuracyOfScores(), course.isAthenaFormativeEnabled(), course.isAthenaGradingEnabled(), course.getTimeZone(),
                 course.getCourseInformationSharingConfiguration(), course.isOnboardingDone());
     }
 }

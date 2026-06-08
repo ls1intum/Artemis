@@ -257,7 +257,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
                 athenaFormativeEnabled: new FormControl(this.course.athenaFormativeEnabled),
                 athenaGradingEnabled: new FormControl(this.course.athenaGradingEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
@@ -573,11 +572,6 @@ export class CourseUpdateComponent implements OnInit {
      */
     changeTestCourseEnabled() {
         this.course.testCourse = !this.course.testCourse;
-    }
-
-    changeRestrictedAthenaModulesEnabled(): void {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
     }
 
     toggleAthenaEnabled(): void {

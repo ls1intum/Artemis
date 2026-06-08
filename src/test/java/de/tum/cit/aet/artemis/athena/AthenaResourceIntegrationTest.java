@@ -222,10 +222,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAvailableTextModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
         List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/text-exercises/available-modules", HttpStatus.OK, String.class);
@@ -235,10 +232,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAvailableProgrammingModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
         List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/programming-exercises/available-modules", HttpStatus.OK, String.class);
@@ -248,10 +242,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAvailableModelingModulesSuccess_RestrictedModuleAccess() throws Exception {
-        // give the course access to the restricted Athena modules
         var course = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setRestrictedAthenaModulesAccess(true);
-        courseRepository.save(course);
 
         athenaRequestMockProvider.mockGetAvailableModulesSuccess();
         List<String> response = request.getList("/api/athena/courses/" + course.getId() + "/modeling-exercises/available-modules", HttpStatus.OK, String.class);

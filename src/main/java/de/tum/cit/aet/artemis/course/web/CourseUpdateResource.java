@@ -140,8 +140,6 @@ public class CourseUpdateResource {
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
 
-        var athenaModuleAccessChanged = existingCourse.getRestrictedAthenaModulesAccess() != courseUpdateDTO.restrictedAthenaModulesAccess();
-
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -156,11 +154,6 @@ public class CourseUpdateResource {
             final var changedGroupNames = getChangedGroupNames(courseUpdateDTO, existingCourse);
             if (!changedGroupNames.isEmpty()) {
                 throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
-            }
-            // instructors are not allowed to change the access to restricted Athena modules
-            if (athenaModuleAccessChanged) {
-                throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
-                        "restrictedAthenaModulesAccessCannotChange", true);
             }
             // instructors are not allowed to change the dashboard settings
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
@@ -234,11 +227,6 @@ public class CourseUpdateResource {
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }
 
-        // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
-        if (athenaModuleAccessChanged && !courseUpdateDTO.restrictedAthenaModulesAccess()) {
-            athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
-        }
-
         // if global Athena grading flag transitioned from enabled to disabled, bulk-clear feedbackSuggestionModule for all exercise types
         if (wasGradingEnabled && !courseUpdateDTO.athenaGradingEnabled()) {
             athenaApi.ifPresent(api -> {
@@ -255,20 +243,19 @@ public class CourseUpdateResource {
                 api.applyFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING);
             });
         }
-        // if global Athena formative flag transitioned from enabled to disabled, bulk-clear allowFeedbackRequests for all exercise types
+        // if global Athena formative flag transitioned from enabled to disabled, bulk-clear allowFeedbackRequests for text/modeling
+        // (programming exercises control allowFeedbackRequests per-exercise for manual tutor feedback; not touched here)
         if (wasFormativeEnabled && !courseUpdateDTO.athenaFormativeEnabled()) {
             athenaApi.ifPresent(api -> {
                 api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT);
                 api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING);
-                api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING);
             });
         }
-        // if global Athena formative flag transitioned from disabled to enabled, bulk-apply allowFeedbackRequests for all exercise types
+        // if global Athena formative flag transitioned from disabled to enabled, bulk-apply allowFeedbackRequests for text/modeling
         if (!wasFormativeEnabled && courseUpdateDTO.athenaFormativeEnabled()) {
             athenaApi.ifPresent(api -> {
                 api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT);
                 api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING);
-                api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING);
             });
         }
 

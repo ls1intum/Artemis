@@ -40,10 +40,6 @@ public class AthenaModuleService {
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    // If value is present, split the provided modules by comma; default to empty list
-    @Value("#{'${artemis.athena.restricted-modules:}'}")
-    private List<String> restrictedModules;
-
     @Value("${artemis.athena.default-text-module:}")
     private String defaultTextModule;
 
@@ -112,10 +108,6 @@ public class AthenaModuleService {
 
         Stream<String> availableModules = getAthenaModules().stream().filter(module -> exerciseTypeName.equals(module.type)).map(module -> module.name);
 
-        if (!course.getRestrictedAthenaModulesAccess()) {
-            // filter out restricted modules
-            availableModules = availableModules.filter(moduleName -> !restrictedModules.contains(moduleName));
-        }
         return availableModules.toList();
     }
 
@@ -166,10 +158,6 @@ public class AthenaModuleService {
         if (exercise.isExamExercise() && !exercise.isTestExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
-        if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
-            // Course does not have access to the restricted Athena modules
-            throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");
-        }
     }
 
     /**
@@ -187,15 +175,6 @@ public class AthenaModuleService {
                 && dueDate.isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }
-    }
-
-    /**
-     * Revokes the access to restricted Athena modules for all exercises of a course.
-     *
-     * @param course The course for which the access to restricted modules should be revoked
-     */
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
     }
 
     /**
@@ -231,6 +210,23 @@ public class AthenaModuleService {
     }
 
     /**
+     * Stamps the transient {@code athenaFormativeEnabled} and {@code athenaGradingEnabled} fields on the course
+     * from the stored {@link CourseAthenaConfig}. Call this before serializing a course to JSON so that
+     * student-facing responses include the current Athena flags.
+     *
+     * @param course the course whose transient Athena fields should be populated
+     */
+    public void stampCourseAthenaConfig(Course course) {
+        courseAthenaConfigRepository.findByCourseId(course.getId()).ifPresentOrElse(config -> {
+            course.setAthenaFormativeEnabled(config.isFormativeEnabled());
+            course.setAthenaGradingEnabled(config.isGradingEnabled());
+        }, () -> {
+            course.setAthenaFormativeEnabled(false);
+            course.setAthenaGradingEnabled(false);
+        });
+    }
+
+    /**
      * Applies the course's Athena settings to a newly created exercise.
      * Sets feedbackSuggestionModule and allowFeedbackRequests based on course-level flags.
      *
@@ -249,7 +245,11 @@ public class AthenaModuleService {
         boolean formativeEnabled = config.map(CourseAthenaConfig::isFormativeEnabled).orElse(false);
 
         exercise.setFeedbackSuggestionModule(gradingEnabled ? getDefaultModule(exercise.getExerciseType()) : null);
-        exercise.setAllowFeedbackRequests(formativeEnabled);
+        // Programming exercises: allowFeedbackRequests is exclusively for SEMI_AUTOMATIC manual tutor feedback,
+        // controlled per-exercise by the instructor. AI formative is driven by course.athenaFormativeEnabled.
+        if (exercise.getExerciseType() != ExerciseType.PROGRAMMING) {
+            exercise.setAllowFeedbackRequests(formativeEnabled);
+        }
     }
 
     /**

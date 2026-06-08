@@ -221,16 +221,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     getAthenaDetails(): Detail[] {
-        const currentCourse = this.course();
-        const athenaDetails: Detail[] = [];
-        if (this.isAthenaEnabled()) {
-            athenaDetails.push({
-                type: DetailType.Boolean,
-                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
-            });
-        }
-        return athenaDetails;
+        return [];
     }
 
     getModeDetailSection(): DetailOverviewSection {

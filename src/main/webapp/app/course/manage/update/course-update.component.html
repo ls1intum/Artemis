@@ -386,20 +386,6 @@
                         </div>
                     </div>
                 }
-                @if (isAdmin && isAthenaEnabled) {
-                    <div class="form-group form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            name="restrictedAthenaModulesEnabled"
-                            id="field_restrictedAthenaModulesEnabled"
-                            [checked]="course.restrictedAthenaModulesAccess"
-                            (change)="changeRestrictedAthenaModulesEnabled()"
-                        />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label" for="field_restrictedAthenaModulesEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}" />
-                    </div>
-                }
                 @if (isAthenaEnabled) {
                     <div class="nested-form-group-head form-check">
                         <input

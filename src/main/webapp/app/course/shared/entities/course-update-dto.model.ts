@@ -53,7 +53,6 @@ export interface CourseCreateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
     athenaFormativeEnabled: boolean;
     athenaGradingEnabled: boolean;
     timeZone?: string;
@@ -113,7 +112,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         athenaFormativeEnabled: course.athenaFormativeEnabled ?? false,
         athenaGradingEnabled: course.athenaGradingEnabled ?? false,
         timeZone: course.timeZone,
@@ -176,7 +174,6 @@ export interface CourseUpdateDTO {
     presentationScore?: number;
     maxPoints?: number;
     accuracyOfScores?: number;
-    restrictedAthenaModulesAccess: boolean;
     athenaFormativeEnabled: boolean;
     athenaGradingEnabled: boolean;
     timeZone?: string;
@@ -242,7 +239,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         athenaFormativeEnabled: course.athenaFormativeEnabled ?? false,
         athenaGradingEnabled: course.athenaGradingEnabled ?? false,
         timeZone: course.timeZone,

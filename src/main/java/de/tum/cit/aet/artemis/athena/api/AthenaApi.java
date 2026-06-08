@@ -54,8 +54,8 @@ public class AthenaApi extends AbstractAthenaApi {
         athenaModuleService.checkValidAthenaModuleChange(originalExercise, updatedExercise, entityName);
     }
 
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        athenaModuleService.revokeAccessToRestrictedFeedbackSuggestionModules(course);
+    public void stampCourseAthenaConfig(Course course) {
+        athenaModuleService.stampCourseAthenaConfig(course);
     }
 
     public void applyAthenaCourseSettings(Exercise exercise, Course course) {
