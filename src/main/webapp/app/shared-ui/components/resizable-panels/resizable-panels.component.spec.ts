@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { faAlignLeft, faComment } from '@fortawesome/free-solid-svg-icons';
@@ -44,7 +43,7 @@ describe('ResizablePanelsComponent', () => {
         vi.stubGlobal('ResizeObserver', ResizeObserverMock);
         await TestBed.configureTestingModule({
             imports: [ResizablePanelsTestComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimations()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
     });
 

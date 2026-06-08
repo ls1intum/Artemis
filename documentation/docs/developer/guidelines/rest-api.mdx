@@ -537,6 +537,12 @@ These conventions follow widely adopted industry REST guidelines:
 * Verify consistency of user input (e.g., check if IDs in body and path match, compare course in `@RequestBody` with the one referenced by ID in the path)
 * Check for user input consistency first, then check authorization (mismatched course IDs could lead to unauthorized access)
 * Handle exceptions and errors with a standard response
+* Express the HTTP verb with the dedicated shortcut annotations (`@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping`); `@RequestMapping` is reserved for the class-level path prefix and must not annotate an endpoint method at all. Enforced by `AbstractModuleResourceArchitectureTest#endpointsShouldUseHttpMethodShortcutAnnotations`.
+* Endpoint methods must be `public`. Enforced by `AbstractModuleResourceArchitectureTest#endpointsMustBePublic`.
+* The handler method name must match its HTTP verb: a `@GetMapping` must read (`get*`/`list*`/`find*`/…) and must not be named like a mutation; a `@DeleteMapping` must delete (`delete*`/`remove*`/…) and must not be named like a read or a create. Enforced by `AbstractModuleResourceArchitectureTest#endpointMethodNamesShouldMatchTheirHttpVerb`.
+* `GET` and `DELETE` endpoints must not declare a `@RequestBody` — a GET request body has no defined semantics (RFC 9110) and a DELETE body is widely ignored; pass data via path or query parameters instead. Enforced by `AbstractModuleResourceArchitectureTest#getEndpointsShouldNotDeclareRequestBody` and `#deleteEndpointsShouldNotDeclareRequestBody`.
+  * **Migrating an existing body off a GET/DELETE without breaking clients:** accept the data as query parameters *and* keep the old `@RequestBody` as an optional, deprecated parameter (`@RequestBody(required = false)`), preferring the query parameters and logging a deprecation warning when the body is used. Add the endpoint to `DELETE_REQUEST_BODY_BASELINE` with a documented removal plan, and drop the body parameter (and the baseline entry) once all clients — including the mobile apps — have migrated. See `PushNotificationResource#unregister` for the reference pattern.
+* Endpoints must return `ResponseEntity`; `ModelAndView` is forbidden. Enforced by `AbstractModuleResourceArchitectureTest#allPublicMethodsShouldReturnResponseEntity` and `#restEndpointsShouldNotReturnModelAndView`.
 
 ### Request Validation
 
@@ -638,6 +644,10 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
 
 <Callout variant={CalloutVariant.info}>
   Because implicit pre- and post-authorization increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding <code>@EnforceRoleInResource</code> annotation. Always use the annotation for the minimum role that has access.
+</Callout>
+
+<Callout variant={CalloutVariant.danger}>
+  **Every REST endpoint must carry an authorization annotation.** A mapping method (<code>@GetMapping</code>/<code>@PostMapping</code>/…) on a <code>@RestController</code> must declare one of the <code>@EnforceAtLeast*</code> / <code>@EnforceRoleIn*</code> annotations, <code>@EnforceAdmin</code>, <code>@EnforceNothing</code> (for genuinely public endpoints, which then live in a <code>…web.open</code> package), or — only when authorization is unavoidably handled in the method body — <code>@ManualConfig</code>. A class-level annotation (e.g. a class-level <code>@EnforceAdmin</code>) covers all of that controller's methods. This is enforced by <code>AuthorizationArchitectureTest#everyRestEndpointMustBeAuthorized</code>, so an endpoint can never be shipped without authorization; the few endpoints that handle authorization differently (e.g. via a shared-secret token or API key) are listed in that test's baseline.
 </Callout>
 
 ### Role Hierarchy

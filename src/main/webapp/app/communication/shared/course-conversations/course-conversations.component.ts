@@ -1,7 +1,7 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
-import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
+import { outputToObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -63,8 +63,9 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -164,9 +165,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
-        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
-    });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
