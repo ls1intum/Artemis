@@ -107,7 +107,9 @@ public class IrisSessionService {
             List<de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO> context) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            if ((!uncommittedFiles.isEmpty() || !context.isEmpty()) && session instanceof IrisChatSession chatSession) {
+            // Always pass context through for chat sessions (even if empty)
+            // This enables context-aware features like lecture page/timestamp tracking
+            if (session instanceof IrisChatSession chatSession) {
                 irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
             }
             else {

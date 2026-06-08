@@ -808,7 +808,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
-            // Get context from provider (if available)
             const provider = this.contextProvider();
             const context = provider ? provider() : undefined;
 

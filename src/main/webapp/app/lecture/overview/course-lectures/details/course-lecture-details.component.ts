@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, afterNextRender, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, afterNextRender, effect, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -105,6 +105,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
+    // Signal to track when lecture units change (used in effect below)
+
+    private readonly lectureUnitsSignal = signal<LectureUnit[]>([]);
+
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
 
@@ -165,6 +169,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         afterNextRender(() => {
             this.setupIntersectionObserver();
         });
+
+        // Reactively setup observer when lecture units change
+        effect(() => {
+            const units = this.lectureUnitsSignal();
+            if (units.length > 0) {
+                // Use setTimeout to ensure DOM is updated
+                setTimeout(() => this.setupIntersectionObserver(), 0);
+            }
+        });
     }
 
     loadData() {
@@ -187,6 +200,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
+                        this.lectureUnitsSignal.set(this.lectureUnits); // Trigger effect
                         this.ensureValidDeepLinkTargets();
                         this.hasPdfLectureUnit = this.lectureUnits.some(
                             (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
@@ -310,6 +324,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
      * This is used to collect context from visible, expanded units for the chatbot.
      */
     private setupIntersectionObserver(): void {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
+
         this.intersectionObserver = new IntersectionObserver(
             (entries) => {
                 const currentVisible = new Set(this.visibleUnitIds());
@@ -333,7 +351,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             },
         );
 
-        // Observe all lecture unit elements
         const unitElements = document.querySelectorAll('[data-unit-id]');
         unitElements.forEach((element) => this.intersectionObserver!.observe(element));
     }
@@ -355,12 +372,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             const unit = unitComponent.lectureUnit();
             const unitId = unit?.id;
 
-            // Skip if unit is not visible or is collapsed
             if (!unitId || !visibleIds.has(unitId) || unitComponent.isCollapsed()) {
                 return;
             }
 
-            // Get context from the unit's context provider
             const provider = unitComponent.contextProvider();
             if (!provider) {
                 return;
@@ -369,7 +384,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
 
-            // Add video context if available
             if (videoTimestamp !== undefined) {
                 const videoContext: IrisVideoContextDTO = {
                     type: 'video',
@@ -379,7 +393,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 contexts.push(videoContext);
             }
 
-            // Add slides context if available
             if (pdfPage !== undefined) {
                 const slidesContext: IrisSlidesContextDTO = {
                     type: 'slides',

@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -67,19 +66,15 @@ public class PyrisConnectorService {
 
     private final ObjectMapper objectMapper;
 
-    private final PyrisJobService pyrisJobService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            PyrisJobService pyrisJobService) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.pyrisJobService = pyrisJobService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -257,6 +252,29 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/pipelines/" + feature + "/run";
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
+
+        // Log context information if this is a chat pipeline execution
+        if (executionDTO instanceof de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO chatDTO) {
+            var context = chatDTO.context();
+            if (context == null || context.isEmpty()) {
+                log.info("Sending {} pipeline request to Pyris: No context DTOs attached", feature);
+            }
+            else {
+                log.info("Sending {} pipeline request to Pyris with {} context DTO(s)", feature, context.size());
+                context.forEach(ctx -> {
+                    if (ctx instanceof de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO videoCtx) {
+                        log.info("  → Video Context: lectureUnitId={}, timestamp={}", videoCtx.lectureUnitId(), videoCtx.timestamp());
+                    }
+                    else if (ctx instanceof de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO slidesCtx) {
+                        log.info("  → Slides Context: lectureUnitId={}, page={}", slidesCtx.lectureUnitId(), slidesCtx.page());
+                    }
+                    else {
+                        log.info("  → Unknown Context DTO: class={}, content={}", ctx.getClass().getSimpleName(), ctx);
+                    }
+                });
+            }
+        }
+
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
@@ -380,6 +398,9 @@ public class PyrisConnectorService {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
             String url = pyrisUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
             IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
+            if (response == null) {
+                throw new PyrisConnectorException("No response from Pyris for FAQ ingestion state");
+            }
             return response.state();
         }
         catch (RestClientException | IllegalArgumentException e) {

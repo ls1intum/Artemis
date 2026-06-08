@@ -54,6 +54,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent, LectureContextsProvider } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -208,11 +209,49 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     });
 
     readonly contextProvider = computed(() => ({
-        getCurrentPdfPage: () => this.pdfViewer()?.currentPageSignal(),
+        getCurrentPdfPage: () => {
+            const viewer = this.pdfViewer();
+            return viewer ? viewer.currentPageSignal() : undefined;
+        },
         getCurrentVideoTimestamp: () => {
             const videoPlayer = this.videoPlayer();
             const youtubePlayer = this.youtubePlayer();
             return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
+        },
+    }));
+
+    readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
+        getVisibleContexts: () => {
+            const unitId = this.lectureUnit()?.id;
+            if (!unitId) {
+                return [];
+            }
+
+            const contexts: IrisMessageContextDTO[] = [];
+            const provider = this.contextProvider();
+
+            const pdfPage = provider.getCurrentPdfPage?.();
+            const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+
+            if (videoTimestamp !== undefined && videoTimestamp !== null) {
+                const videoContext: IrisVideoContextDTO = {
+                    type: 'video',
+                    lectureUnitId: unitId,
+                    timestamp: videoTimestamp,
+                };
+                contexts.push(videoContext);
+            }
+
+            if (pdfPage !== undefined && pdfPage !== null) {
+                const slidesContext: IrisSlidesContextDTO = {
+                    type: 'slides',
+                    lectureUnitId: unitId,
+                    page: pdfPage,
+                };
+                contexts.push(slidesContext);
+            }
+
+            return contexts;
         },
     }));
 

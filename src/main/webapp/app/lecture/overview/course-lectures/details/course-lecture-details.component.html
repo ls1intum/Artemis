@@ -78,6 +78,7 @@
                                             [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
                                             [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
                                             [irisSettings]="irisSettings"
+                                            [contextsProvider]="contextsProvider"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }
