@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { LectureChatbotComponent } from './lecture-chatbot.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { of } from 'rxjs';
 
 describe('LectureChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -15,7 +16,12 @@ describe('LectureChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureChatbotComponent],
-            providers: [MockProvider(IrisChatService, { switchTo: vi.fn() })],
+            providers: [
+                MockProvider(IrisChatService, {
+                    switchTo: vi.fn(),
+                    currentChatMode: vi.fn(() => of(ChatServiceMode.LECTURE)),
+                }),
+            ],
         })
             .overrideComponent(LectureChatbotComponent, {
                 set: {
