@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, afterNextRender, effect, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, effect, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -75,6 +75,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -162,15 +163,18 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
 
         // Setup intersection observer reactively when units are loaded
-        afterNextRender(() => {
-            effect(() => {
-                const units = this.lectureUnitsSignal();
-                if (units.length > 0) {
-                    // queueMicrotask ensures this runs after Angular's change detection
-                    window.queueMicrotask(() => this.setupIntersectionObserver());
-                }
-            });
-        });
+        afterNextRender(
+            () => {
+                effect(() => {
+                    const units = this.lectureUnitsSignal();
+                    if (units.length > 0) {
+                        // queueMicrotask ensures this runs after Angular's change detection
+                        window.queueMicrotask(() => this.setupIntersectionObserver());
+                    }
+                });
+            },
+            { injector: this.injector },
+        );
     }
 
     loadData() {
