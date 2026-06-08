@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.shared;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * References to the shared, read-only CSV seed data (see {@code config/liquibase/e2e/*.csv}). The seed is loaded once per
@@ -77,6 +78,33 @@ public final class SeedData {
      * and its participations/submissions/results/feedback live in the {@code 9_000_000+} range.
      */
     public static final long TEXT_EXERCISE_ID = 9_000_001L;
+
+    /**
+     * Pool of empty text exercises on {@link #COURSE_CHANNEL_1_ID} that tests can claim one-by-one and mutate freely
+     * (add submissions, change the mode, delete) without colliding — replacing a per-test {@code addCourseWith...Exercise}
+     * call. {@code FINISHED} exercises have a due date in the past, {@code RELEASED} exercises a due date far in the
+     * future. Each pool has {@link #TEXT_EXERCISE_POOL_SIZE} exercises; claims are not reset, so the pool only supports a
+     * single test class per JVM run (sized to comfortably cover that class's tests).
+     */
+    public static final int TEXT_EXERCISE_POOL_SIZE = 40;
+
+    private static final AtomicLong FINISHED_TEXT_EXERCISE_POOL = new AtomicLong(9_100_001L);
+
+    private static final AtomicLong RELEASED_TEXT_EXERCISE_POOL = new AtomicLong(9_200_001L);
+
+    /**
+     * @return the id of the next unused empty, finished (past due date) text exercise from the seed pool
+     */
+    public static long claimFinishedTextExerciseId() {
+        return FINISHED_TEXT_EXERCISE_POOL.getAndIncrement();
+    }
+
+    /**
+     * @return the id of the next unused empty, released (future due date) text exercise from the seed pool
+     */
+    public static long claimReleasedTextExerciseId() {
+        return RELEASED_TEXT_EXERCISE_POOL.getAndIncrement();
+    }
 
     /**
      * The raw password of a seed user equals its login (e.g. {@code artemis_test_user_1} has password

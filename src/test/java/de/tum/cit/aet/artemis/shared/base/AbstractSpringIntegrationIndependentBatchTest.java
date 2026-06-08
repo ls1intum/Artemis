@@ -33,6 +33,9 @@ import org.springframework.test.context.TestPropertySource;
         "artemis.checked-out-repos-path=./local/server-integration-test-independent-batch/checked-out-repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-independent-batch/local-vcs-repos",
         "artemis.version-control.ssh-private-key-folder-path=./local/server-integration-test-independent-batch/ssh-keys",
-        "artemis.temp-path=./local/server-integration-test-independent-batch/temp" })
+        "artemis.temp-path=./local/server-integration-test-independent-batch/temp",
+        // Load the shared read-only CSV seed (config/liquibase/e2e/*.csv) so tests in this bucket can reference seeded
+        // users/courses/exercises instead of creating them. See de.tum.cit.aet.artemis.shared.SeedData.
+        "spring.liquibase.contexts=tests,seed" })
 public abstract class AbstractSpringIntegrationIndependentBatchTest extends AbstractSpringIntegrationIndependentTestBase {
 }
