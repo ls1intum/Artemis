@@ -5,6 +5,23 @@
                 <fa-icon [icon]="facArtemisIntelligence" />
                 <span class="fw-semibold" jhiTranslate="artemisApp.programmingExercise.generateExercise.cardTitle"></span>
                 <span class="text-color-secondary small" jhiTranslate="artemisApp.programmingExercise.generateExercise.brand"></span>
+                @if (!running()) {
+                    <!-- Dismiss a finished run from view; only offered once the run is terminal so it never interrupts an in-flight generation. -->
+                    <button
+                        pButton
+                        type="button"
+                        class="hyperion-card-dismiss"
+                        severity="secondary"
+                        [text]="true"
+                        rounded
+                        size="small"
+                        (click)="dismiss()"
+                        [pTooltip]="'artemisApp.programmingExercise.generateExercise.dismiss' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.programmingExercise.generateExercise.dismiss' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
             </div>
         </ng-template>
 

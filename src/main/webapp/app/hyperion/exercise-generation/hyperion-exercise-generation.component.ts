@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { CardModule } from 'primeng/card';
@@ -24,6 +25,7 @@ import {
     faMagnifyingGlass,
     faTerminal,
     faTriangleExclamation,
+    faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -63,6 +65,7 @@ const REPO_ORDER: GenerationRepo[] = ['solution', 'template', 'tests', 'other'];
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ButtonModule,
+        TooltipModule,
         TagModule,
         ProgressBarModule,
         CardModule,
@@ -86,6 +89,7 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faBan = faBan;
+    protected readonly faXmark = faXmark;
 
     readonly exerciseId = input.required<number>();
 
@@ -265,6 +269,11 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                     );
                 },
             });
+    }
+
+    /** Clears a finished run from view; the docked panel self-hides once there is no active or recent run. Only reachable on a terminal run (the header button is hidden while running). */
+    dismiss(): void {
+        this.reset();
     }
 
     cancel(): void {

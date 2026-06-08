@@ -993,7 +993,8 @@
                 "confirmTitle": "Gesamte Aufgabe generieren?",
                 "confirmMessage": "Artemis Intelligence speichert diese Aufgabe mit leeren Repositories, verlässt den Einrichtungsassistenten und generiert die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert alles, bevor du es behältst. Dies dauert einige Minuten und verbraucht KI-Credits.",
                 "confirmAccept": "Aufgabe generieren",
-                "confirmReject": "Abbrechen"
+                "confirmReject": "Abbrechen",
+                "dismiss": "Schließen"
             }
         },
         "error": {

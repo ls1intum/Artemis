@@ -993,7 +993,8 @@
                 "confirmTitle": "Generate the entire exercise?",
                 "confirmMessage": "Artemis Intelligence will save this exercise with empty repositories, leave the setup wizard, and generate the solution, a failing template, tests, and the problem statement — verifying everything before you keep it. This runs for a few minutes and uses AI credits.",
                 "confirmAccept": "Generate exercise",
-                "confirmReject": "Cancel"
+                "confirmReject": "Cancel",
+                "dismiss": "Dismiss"
             }
         },
         "error": {
