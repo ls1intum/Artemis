@@ -1,0 +1,4 @@
+id;repository_url;build_plan_id;student_id;team_id;exercise_id;initialization_date;presentation_score;test_run;individual_due_date;branch;attempt;initialization_state;discriminator
+9000001;;;101;;9000001;2026-06-08T13:34:32.338;;false;;;0;;SP
+9000002;;;102;;9000001;2026-06-08T13:34:32.484;;false;;;0;;SP
+9000003;;;103;;9000001;2026-06-08T13:34:32.551;;false;;;0;;SP

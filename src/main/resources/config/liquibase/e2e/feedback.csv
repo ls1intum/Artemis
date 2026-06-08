@@ -1,0 +1,10 @@
+id;detail_text;text;result_id;positive;feedbacks_order;credits;reference;grading_instruction_id;has_long_feedback_text;visibility;type;test_case_id
+9000001;;good;9000001;;;2.0;;;false;;0;
+9000002;;bad;9000001;;;-1.0;;;false;;0;
+9000003;;no reference;9000001;;;-1.0;;;false;;1;
+9000004;;good;9000002;;;2.0;;;false;;0;
+9000005;;bad;9000002;;;-1.0;;;false;;0;
+9000006;;no reference;9000002;;;-1.0;;;false;;1;
+9000007;;good;9000003;;;2.0;;;false;;0;
+9000008;;bad;9000003;;;-1.0;;;false;;0;
+9000009;;no reference;9000003;;;-1.0;;;false;;1;

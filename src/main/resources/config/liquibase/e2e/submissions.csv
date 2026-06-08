@@ -1,0 +1,4 @@
+id;submitted;score_in_points;commit_hash;participation_id;submission_date;file_path;text;explanation_text;example_submission;model;language;build_failed;quiz_batch;jhi_type;discriminator
+9000001;true;;;9000001;2026-06-07T13:34:32.328;;Seed submission for student 1;;;;ENGLISH;false;;;T
+9000002;true;;;9000002;2026-06-07T13:34:32.480;;Seed submission for student 2;;;;ENGLISH;false;;;T
+9000003;true;;;9000003;2026-06-07T13:34:32.548;;Seed submission for student 3;;;;ENGLISH;false;;;T
