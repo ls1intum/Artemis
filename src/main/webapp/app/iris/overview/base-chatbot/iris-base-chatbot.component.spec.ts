@@ -126,7 +126,6 @@ describe('IrisBaseChatbotComponent', () => {
             .compileComponents()
             .then(() => {
                 vi.spyOn(console, 'error').mockImplementation(() => {});
-                global.window ??= window;
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
 
@@ -221,7 +220,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // then
         expect(component.messages()).toContainEqual(createdMessage);
-        expect(stub).toHaveBeenCalledWith(content);
+        expect(stub).toHaveBeenCalledWith(content, {}, undefined);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
@@ -753,7 +752,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         component.onSuggestionClick(suggestion);
 
-        expect(chatService.sendMessage).toHaveBeenCalledWith(suggestion);
+        expect(chatService.sendMessage).toHaveBeenCalledWith(suggestion, {}, undefined);
         expect(component.onSend).toHaveBeenCalled();
     });
 
