@@ -52,9 +52,9 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
-import { LectureChatbotComponent, LectureContextsProvider } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
+import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -233,7 +233,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
 
-            if (videoTimestamp !== undefined && videoTimestamp !== null) {
+            if (videoTimestamp != null) {
                 const videoContext: IrisVideoContextDTO = {
                     type: 'video',
                     lectureUnitId: unitId,
@@ -242,7 +242,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 contexts.push(videoContext);
             }
 
-            if (pdfPage !== undefined && pdfPage !== null) {
+            if (pdfPage != null) {
                 const slidesContext: IrisSlidesContextDTO = {
                     type: 'slides',
                     lectureUnitId: unitId,

@@ -253,28 +253,6 @@ public class PyrisConnectorService {
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
 
-        // Log context information if this is a chat pipeline execution
-        if (executionDTO instanceof de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO chatDTO) {
-            var context = chatDTO.context();
-            if (context == null || context.isEmpty()) {
-                log.info("Sending {} pipeline request to Pyris: No context DTOs attached", feature);
-            }
-            else {
-                log.info("Sending {} pipeline request to Pyris with {} context DTO(s)", feature, context.size());
-                context.forEach(ctx -> {
-                    if (ctx instanceof de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO videoCtx) {
-                        log.info("  → Video Context: lectureUnitId={}, timestamp={}", videoCtx.lectureUnitId(), videoCtx.timestamp());
-                    }
-                    else if (ctx instanceof de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO slidesCtx) {
-                        log.info("  → Slides Context: lectureUnitId={}, page={}", slidesCtx.lectureUnitId(), slidesCtx.page());
-                    }
-                    else {
-                        log.info("  → Unknown Context DTO: class={}, content={}", ctx.getClass().getSimpleName(), ctx);
-                    }
-                });
-            }
-        }
-
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }

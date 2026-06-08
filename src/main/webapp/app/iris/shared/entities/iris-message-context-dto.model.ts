@@ -10,6 +10,14 @@ export interface IrisMessageContextDTO {
 }
 
 /**
+ * Provider interface for collecting context from visible lecture materials.
+ * Returns a list of context objects (video and/or slides) from currently visible lecture units.
+ */
+export interface LectureContextsProvider {
+    getVisibleContexts(): IrisMessageContextDTO[];
+}
+
+/**
  * Context information for video content in lectures.
  * Provides information about which lecture unit video the user is watching and the current timestamp.
  */
@@ -27,26 +35,4 @@ export interface IrisSlidesContextDTO extends IrisMessageContextDTO {
     type: 'slides';
     lectureUnitId: number;
     page: number;
-}
-
-/**
- * Factory function to create a video context object.
- */
-export function createVideoContext(lectureUnitId: number, timestamp: number): IrisVideoContextDTO {
-    return {
-        type: 'video',
-        lectureUnitId,
-        timestamp,
-    };
-}
-
-/**
- * Factory function to create a slides context object.
- */
-export function createSlidesContext(lectureUnitId: number, page: number): IrisSlidesContextDTO {
-    return {
-        type: 'slides',
-        lectureUnitId,
-        page,
-    };
 }

@@ -37,11 +37,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-
-export interface LectureContextsProvider {
-    getVisibleContexts(): IrisMessageContextDTO[];
-}
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -165,18 +161,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // Setup intersection observer after view is rendered
+        // Setup intersection observer reactively when units are loaded
         afterNextRender(() => {
-            this.setupIntersectionObserver();
-        });
-
-        // Reactively setup observer when lecture units change
-        effect(() => {
-            const units = this.lectureUnitsSignal();
-            if (units.length > 0) {
-                // Use setTimeout to ensure DOM is updated
-                setTimeout(() => this.setupIntersectionObserver(), 0);
-            }
+            effect(() => {
+                const units = this.lectureUnitsSignal();
+                if (units.length > 0) {
+                    // queueMicrotask ensures this runs after Angular's change detection
+                    window.queueMicrotask(() => this.setupIntersectionObserver());
+                }
+            });
         });
     }
 
@@ -352,7 +345,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         );
 
         const unitElements = document.querySelectorAll('[data-unit-id]');
-        unitElements.forEach((element) => this.intersectionObserver!.observe(element));
+        if (this.intersectionObserver) {
+            unitElements.forEach((element) => this.intersectionObserver!.observe(element));
+        }
     }
 
     /**
@@ -384,7 +379,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
 
-            if (videoTimestamp !== undefined) {
+            if (videoTimestamp != null) {
                 const videoContext: IrisVideoContextDTO = {
                     type: 'video',
                     lectureUnitId: unitId,
@@ -393,7 +388,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 contexts.push(videoContext);
             }
 
-            if (pdfPage !== undefined) {
+            if (pdfPage != null) {
                 const slidesContext: IrisSlidesContextDTO = {
                     type: 'slides',
                     lectureUnitId: unitId,

@@ -1,15 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
-import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-
-/**
- * Provider interface for collecting context from visible lecture materials.
- * Returns a list of context objects (video and/or slides) from currently visible lecture units.
- */
-export interface LectureContextsProvider {
-    getVisibleContexts(): IrisMessageContextDTO[];
-}
+import { IrisMessageContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 @Component({
     selector: 'jhi-lecture-chatbot',
