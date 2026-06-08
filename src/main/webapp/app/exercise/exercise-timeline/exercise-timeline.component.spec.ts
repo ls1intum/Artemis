@@ -85,6 +85,31 @@ describe('ExerciseTimeline', () => {
         expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
     });
 
+    it('should require another timeline item only when the dependent date is set', () => {
+        const dueDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(undefined) };
+        const assessmentDateItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'assessment',
+            date: signal(undefined),
+            otherRequiredItem: dueDateItem,
+        };
+        fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            isOtherRequiredItemDateUndefined: false,
+            tooltip: undefined,
+        });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
+
+        assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            isOtherRequiredItemDateUndefined: true,
+            tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
+        });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+    });
+
     it('should update timeline item date', () => {
         const initialDate = dayjs('2026-01-01T10:00:00Z');
         const newDate = new Date('2026-01-02T10:00:00Z');
@@ -134,5 +159,48 @@ describe('ExerciseTimeline', () => {
 
         expect(item.date()).toBeUndefined();
         expect(component.internalTimelineItems()[0].internalDate).toBeUndefined();
+    });
+
+    it('should restore current date value on blur for incomplete manual input', () => {
+        const initialDate = dayjs('2026-06-06T16:23:00');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('06.06.2026 16:23');
+        expect(item.date()).toBe(initialDate);
+    });
+
+    it('should restore current date value on blur for complete invalid manual input', () => {
+        const initialDate = dayjs('2026-06-06T16:23:00');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const input = { value: '00.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('06.06.2026 16:23');
+        expect(item.date()).toBe(initialDate);
+    });
+
+    it('should clear input on blur for invalid manual input without a current date value', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
+        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('');
+        expect(item.date()).toBeUndefined();
+    });
+
+    it('should keep valid manual input unchanged on blur', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-06-06T16:23:00')) };
+        const input = { value: '07.06.2026 17:24' } as HTMLInputElement;
+
+        component.handleManualInput(item, { target: input } as unknown as Event);
+        component.handleBlur(item, { target: input } as unknown as Event);
+
+        expect(input.value).toBe('07.06.2026 17:24');
+        expect(item.date()?.isSame(dayjs('2026-06-07T17:24:00'))).toBe(true);
     });
 });
