@@ -21,7 +21,7 @@ import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
-import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEdits;
+import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -45,9 +45,9 @@ class ContentExtractionServiceFlavorStripTest {
         service = new ContentExtractionService(chatClient, templateService, "gpt-5.4-mini", "low", 1.0);
     }
 
-    private void stubLlm(FlavorStripEdits edits) {
+    private void stubLlm(FlavorStripEditsDTO edits) {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEdits.class))).thenReturn(edits);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class))).thenReturn(edits);
     }
 
     @Test
@@ -81,7 +81,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_applySearchReplace_keepsNonFlavorByteIdentical() {
-        stubLlm(new FlavorStripEdits(List.of(new FlavorStripEdits.Edit("Narrative setup, not pedagogical.", "Alice dreams of socks. ", ""))));
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("Narrative setup, not pedagogical.", "Alice dreams of socks. ", ""))));
 
         String result = service.stripFlavorText("Alice dreams of socks. The sum of 2 and 3 equals 5.");
 
@@ -90,14 +90,14 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_emptyEdits_returnsRaw() {
-        stubLlm(new FlavorStripEdits(List.of()));
+        stubLlm(new FlavorStripEditsDTO(List.of()));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
     }
 
     @Test
     void stripFlavorText_nullEditsList_returnsRaw() {
-        stubLlm(new FlavorStripEdits(null));
+        stubLlm(new FlavorStripEditsDTO(null));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
     }
@@ -105,7 +105,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void stripFlavorText_llmThrows_returnsRaw() {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEdits.class)))
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(AzureOpenAiChatOptions.class)).call().entity(eq(FlavorStripEditsDTO.class)))
                 .thenThrow(new RuntimeException("LLM unreachable"));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
@@ -113,14 +113,14 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_searchSpanNotFound_skipsEditAndReturnsRaw() {
-        stubLlm(new FlavorStripEdits(List.of(new FlavorStripEdits.Edit("off-target", "this does not appear", ""))));
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("off-target", "this does not appear", ""))));
 
         assertThat(service.stripFlavorText("Real content stays intact.")).isEqualTo("Real content stays intact.");
     }
 
     @Test
     void stripFlavorText_normalizesWhitespaceAfterActualEdit() {
-        stubLlm(new FlavorStripEdits(List.of(new FlavorStripEdits.Edit("remove Alice", "Alice.", ""))));
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove Alice", "Alice.", ""))));
 
         String result = service.stripFlavorText("Alice.  \n\n\nKeep me.");
 

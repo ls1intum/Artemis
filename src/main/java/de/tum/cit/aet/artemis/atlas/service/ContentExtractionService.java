@@ -19,8 +19,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
-import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEdits;
-import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEdits.Edit;
+import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -60,7 +60,7 @@ public class ContentExtractionService {
 
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService,
             @Value("${artemis.atlas.flavor-strip-model:gpt-5.4-mini}") String flavorStripModel,
-            @Value("${artemis.atlas.flavor-strip-reasoning-effort:low}") String flavorStripReasoningEffort,
+            @Value("${artemis.atlas.flavor-strip-reasoning-effort:medium}") String flavorStripReasoningEffort,
             @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -101,7 +101,7 @@ public class ContentExtractionService {
     /**
      * Remove narrative scaffolding from the given raw text via a small/fast LLM, keeping only
      * pedagogically relevant content. The LLM returns a list of SEARCH/REPLACE edits
-     * ({@link FlavorStripEdits}) which are applied locally to the raw text. This minimizes
+     * ({@link FlavorStripEditsDTO}) which are applied locally to the raw text. This minimizes
      * output tokens (only the flavor spans are emitted) and structurally guarantees that
      * kept technical content is byte-identical to the input.
      * <p>
@@ -129,12 +129,14 @@ public class ContentExtractionService {
                 optionsBuilder.reasoningEffort(flavorStripReasoningEffort);
             }
             AzureOpenAiChatOptions options = optionsBuilder.build();
-            FlavorStripEdits parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEdits.class);
+            FlavorStripEditsDTO parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEditsDTO.class);
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
             }
             String edited = applyEdits(rawText, parsedEdits.edits());
-            return normalizeWhitespace(edited);
+            // If no edit span actually matched, the text is unchanged: return it byte-identical rather than
+            // running whitespace normalization over content the model never targeted.
+            return edited.equals(rawText) ? rawText : normalizeWhitespace(edited);
         }
         catch (Exception e) {
             log.warn("Flavor-text stripping failed; falling back to raw text", e);
@@ -148,9 +150,9 @@ public class ContentExtractionService {
      * Edits whose {@code search} cannot be found in the working text are skipped (logged at
      * DEBUG) so a single off-target span does not poison the whole strip.
      */
-    private String applyEdits(String rawText, List<Edit> edits) {
+    private String applyEdits(String rawText, List<EditDTO> edits) {
         String working = rawText;
-        for (Edit edit : edits) {
+        for (EditDTO edit : edits) {
             if (edit == null || edit.search() == null || edit.search().isEmpty()) {
                 continue;
             }

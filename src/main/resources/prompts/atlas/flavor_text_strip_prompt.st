@@ -104,6 +104,9 @@ narrative over a missing specification byte.
 </metacognitive_gate>
 
 <examples>
+Each answer below is a complete response in the strict JSON schema from <output_contract>:
+a single object with one `edits` array. A no-op answer is `{"edits": []}`.
+
 <example index="1" description="Flavor removal around task markup (good)">
 INPUT:
 In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
@@ -117,90 +120,74 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 1. [task][Implement Bubble Sort](testBubbleSort)
 Implement the method `performSort(List<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-EDIT:
-reasoning: "Opening sentence is meta-framing about the exercise; task markup and spec below must stay."
-search: "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n"
-replace: ""
+OUTPUT:
+{"edits": [{"reasoning": "Opening sentence is meta-framing about the exercise; task markup and spec below must stay.", "search": "In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n", "replace": ""}]}
 </example>
 
-<example index="2" description="Never delete task markup (bad → good)">
+<example index="2" description="Never delete task markup (bad -> good)">
 INPUT:
 Die Pinguine bitten dich um Hilfe bei ihrem Fischmarkt-Programm.
 
 1. [task][Implement Bubble Sort](<testid>1</testid>)
 Implement the method `performSort(List<Date>)` in the class `BubbleSort`.
 
-BAD — swallows the task markup:
-reasoning: "Removing narrative and structural noise."
-search: "1. [task][Implement Bubble Sort](<testid>1</testid>)\n"
-replace: ""
+BAD - swallows the task markup:
+{"edits": [{"reasoning": "Removing narrative and structural noise.", "search": "1. [task][Implement Bubble Sort](<testid>1</testid>)\n", "replace": ""}]}
 
-GOOD — only the backstory sentence is removed; task markup is untouched:
-reasoning: "Penguin backstory is pure flavor; task markup and spec paragraph stay."
-search: "Die Pinguine bitten dich um Hilfe bei ihrem Fischmarkt-Programm.\n\n"
-replace: ""
+GOOD - only the backstory sentence is removed; task markup is untouched:
+{"edits": [{"reasoning": "Penguin backstory is pure flavor; task markup and spec paragraph stay.", "search": "Die Pinguine bitten dich um Hilfe bei ihrem Fischmarkt-Programm.\n\n", "replace": ""}]}
 </example>
 
-<example index="3" description="Never delete a method spec paragraph under a 'No results' heading (bad → good)">
+<example index="3" description="Never delete a method spec paragraph under a 'No results' heading (bad -> good)">
 INPUT:
     toString No results
     Die Methode toString soll den Inhalt des Einkaufszettels wie folgt zurückgeben: "<amount>⎵Krustentiere".
 
-BAD — swallows the heading and spec (NEVER do this):
-reasoning: "Looks like narrative introduction."
-search: "    toString No results\n    Die Methode toString soll den Inhalt des Einkaufszettels wie folgt zurückgeben: \"<amount>⎵Krustentiere\"."
-replace: ""
+BAD - swallows the heading and spec (NEVER do this):
+{"edits": [{"reasoning": "Looks like narrative introduction.", "search": "    toString No results\n    Die Methode toString soll den Inhalt des Einkaufszettels wie folgt zurückgeben: \"<amount>⎵Krustentiere\".", "replace": ""}]}
 
-GOOD — emit NO edit at all for this block. The heading_paragraph_rule protects both the
-heading and the spec paragraph, which contains the graded format string `"<amount>⎵Krustentiere"`.
+GOOD - emit NO edit at all for this block. The heading_paragraph_rule protects both the
+heading and the spec paragraph, which contains the graded format string `"<amount>⎵Krustentiere"`:
+{"edits": []}
 </example>
 
-<example index="4" description="Never delete a spec paragraph under an 'Implementiere die Methode' heading (bad → good)">
+<example index="4" description="Never delete a spec paragraph under an 'Implementiere die Methode' heading (bad -> good)">
 INPUT:
 Teil 1: Standardtypen dechiffrieren
 
     decryptInteger(int): String No results
     Implementiere die Methode decryptInteger(int): String. Sie erzeugt aus einem gegebenen int einen Teil des Lösungsstrings. Dazu wird der int quadriert und anschließend mit dem int-Hint der Box multipliziert.
 
-BAD — deletes the whole paragraph as "narrative":
-reasoning: "Describes what the method does in narrative form."
-search: "Implementiere die Methode decryptInteger(int): String. Sie erzeugt aus einem gegebenen int einen Teil des Lösungsstrings. Dazu wird der int quadriert und anschließend mit dem int-Hint der Box multipliziert."
-replace: ""
+BAD - deletes the whole paragraph as "narrative":
+{"edits": [{"reasoning": "Describes what the method does in narrative form.", "search": "Implementiere die Methode decryptInteger(int): String. Sie erzeugt aus einem gegebenen int einen Teil des Lösungsstrings. Dazu wird der int quadriert und anschließend mit dem int-Hint der Box multipliziert.", "replace": ""}]}
 
-GOOD — emit NO edit for this paragraph. `Implementiere die Methode` is a section heading in
+GOOD - emit NO edit for this paragraph. `Implementiere die Methode` is a section heading in
 this corpus; the paragraph under it IS the spec. Even conversational prose ("Sie erzeugt...",
-"Dazu wird...") is the spec here.
+"Dazu wird...") is the spec here:
+{"edits": []}
 </example>
 
-<example index="5" description="Never paraphrase in REPLACE (bad → good)">
+<example index="5" description="Never paraphrase in REPLACE (bad -> good)">
 INPUT:
 Zuletzt möchten wir dazu in der Lage sein, eine String-Repräsentation eines Vektors erstellen zu können. Dies wird in der Methode toString umgesetzt.
 
-BAD — rewrites the kept sentence inside REPLACE:
-reasoning: "Shortens the sentence."
-search: "Zuletzt möchten wir dazu in der Lage sein, eine String-Repräsentation eines Vektors erstellen zu können. Dies wird in der Methode toString umgesetzt."
-replace: "Die String-Repräsentation eines Vektors wird in der Methode toString umgesetzt."
+BAD - rewrites the kept sentence inside replace:
+{"edits": [{"reasoning": "Shortens the sentence.", "search": "Zuletzt möchten wir dazu in der Lage sein, eine String-Repräsentation eines Vektors erstellen zu können. Dies wird in der Methode toString umgesetzt.", "replace": "Die String-Repräsentation eines Vektors wird in der Methode toString umgesetzt."}]}
 
-GOOD — delete only the leading flavor clause, leave the spec sentence verbatim:
-reasoning: "Only the opening clause is meta-framing; the second sentence names the method and stays byte-identical."
-search: "Zuletzt möchten wir dazu in der Lage sein, eine String-Repräsentation eines Vektors erstellen zu können. "
-replace: ""
+GOOD - delete only the leading flavor clause, leave the spec sentence verbatim:
+{"edits": [{"reasoning": "Only the opening clause is meta-framing; the second sentence names the method and stays byte-identical.", "search": "Zuletzt möchten wir dazu in der Lage sein, eine String-Repräsentation eines Vektors erstellen zu können. ", "replace": ""}]}
 </example>
 
-<example index="6" description="Format string with ⎵ must survive verbatim (bad → good)">
+<example index="6" description="Format string with ⎵ must survive verbatim (bad -> good)">
 INPUT:
 Der String soll dabei wie folgt formatiert sein: "[<x-Wert>,⎵<y-Wert>]". Um zu testen ob deine Formatierung den Anforderungen entspricht kannst du die main-Methode ausführen.
 
-BAD — SEARCH span includes the graded format string:
-reasoning: "Trims redundant prose."
-search: "Der String soll dabei wie folgt formatiert sein: \"[<x-Wert>,⎵<y-Wert>]\". Um zu testen"
-replace: ""
+BAD - SEARCH span includes the graded format string:
+{"edits": [{"reasoning": "Trims redundant prose.", "search": "Der String soll dabei wie folgt formatiert sein: \"[<x-Wert>,⎵<y-Wert>]\". Um zu testen", "replace": ""}]}
 
-GOOD — only the trailing testing-tip flavor is removed; the quoted format string and its
+GOOD - only the trailing testing-tip flavor is removed; the quoted format string and its
 introducing sentence stay untouched:
-reasoning: "The testing tip is pure narrative; format string and its introduction stay."
-search: " Um zu testen ob deine Formatierung den Anforderungen entspricht kannst du die main-Methode ausführen."
-replace: ""
+{"edits": [{"reasoning": "The testing tip is pure narrative; format string and its introduction stay.", "search": " Um zu testen ob deine Formatierung den Anforderungen entspricht kannst du die main-Methode ausführen.", "replace": ""}]}
 </example>
 </examples>
 

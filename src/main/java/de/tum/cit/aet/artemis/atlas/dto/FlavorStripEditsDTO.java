@@ -2,15 +2,18 @@ package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
- * Edits returned by the flavor-stripping LLM. Each {@link Edit} is a literal
+ * Edits returned by the flavor-stripping LLM. Each {@link EditDTO} is a literal
  * SEARCH/REPLACE pair applied to the raw input on the server: the first occurrence
  * of {@code search} is replaced with {@code replace}. Edits are applied in order.
  *
  * @param edits the ordered list of edits; an empty list means the input contained
  *                  no narrative scaffolding to remove
  */
-public record FlavorStripEdits(List<Edit> edits) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record FlavorStripEditsDTO(List<EditDTO> edits) {
 
     /**
      * A single SEARCH/REPLACE edit.
@@ -27,6 +30,7 @@ public record FlavorStripEdits(List<Edit> edits) {
      * @param replace   the replacement text; empty string for a clean deletion, otherwise
      *                      a minimal grammatical joiner (e.g. capitalization fix)
      */
-    public record Edit(String reasoning, String search, String replace) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record EditDTO(String reasoning, String search, String replace) {
     }
 }
