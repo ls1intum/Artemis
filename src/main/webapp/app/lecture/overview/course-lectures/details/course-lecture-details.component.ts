@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, afterNextRender, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -33,10 +33,15 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+
+export interface LectureContextsProvider {
+    getVisibleContexts(): IrisMessageContextDTO[];
+}
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -100,6 +105,23 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
+    // ViewChildren to access all attachment/video unit components
+    private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
+
+    // Track which units are currently visible in the viewport
+    private readonly visibleUnitIds = signal<Set<number>>(new Set());
+    private intersectionObserver?: IntersectionObserver;
+
+    // Context provider for the chatbot
+    readonly contextsProvider: LectureContextsProvider = {
+        getVisibleContexts: () => this.collectVisibleContexts(),
+    };
+
+    /** Builds the context provider function for the chatbot button */
+    protected getContextProvider(): (() => IrisMessageContextDTO[]) | undefined {
+        return () => this.collectVisibleContexts();
+    }
+
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
@@ -137,6 +159,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             if (this.lectureUnits.length > 0) {
                 this.ensureValidDeepLinkTargets();
             }
+        });
+
+        // Setup intersection observer after view is rendered
+        afterNextRender(() => {
+            this.setupIntersectionObserver();
         });
     }
 
@@ -275,5 +302,94 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
         this.courseParamsSubscription?.unsubscribe();
+        this.intersectionObserver?.disconnect();
+    }
+
+    /**
+     * Sets up IntersectionObserver to track which lecture units are visible in the viewport.
+     * This is used to collect context from visible, expanded units for the chatbot.
+     */
+    private setupIntersectionObserver(): void {
+        this.intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                const currentVisible = new Set(this.visibleUnitIds());
+                entries.forEach((entry) => {
+                    const unitElement = entry.target as HTMLElement;
+                    const unitId = Number(unitElement.dataset['unitId']);
+                    if (!isNaN(unitId)) {
+                        if (entry.isIntersecting) {
+                            currentVisible.add(unitId);
+                        } else {
+                            currentVisible.delete(unitId);
+                        }
+                    }
+                });
+                this.visibleUnitIds.set(currentVisible);
+            },
+            {
+                root: null, // viewport
+                rootMargin: '0px',
+                threshold: 0.1, // Consider visible if at least 10% is in viewport
+            },
+        );
+
+        // Observe all lecture unit elements
+        const unitElements = document.querySelectorAll('[data-unit-id]');
+        unitElements.forEach((element) => this.intersectionObserver!.observe(element));
+    }
+
+    /**
+     * Collects context from all visible and expanded attachment/video units.
+     * Returns a list of video and/or slides context objects.
+     */
+    private collectVisibleContexts(): IrisMessageContextDTO[] {
+        const units = this.attachmentVideoUnits();
+        if (!units || units.length === 0) {
+            return [];
+        }
+
+        const contexts: IrisMessageContextDTO[] = [];
+        const visibleIds = this.visibleUnitIds();
+
+        units.forEach((unitComponent) => {
+            const unit = unitComponent.lectureUnit();
+            const unitId = unit?.id;
+
+            // Skip if unit is not visible or is collapsed
+            if (!unitId || !visibleIds.has(unitId) || unitComponent.isCollapsed()) {
+                return;
+            }
+
+            // Get context from the unit's context provider
+            const provider = unitComponent.contextProvider();
+            if (!provider) {
+                return;
+            }
+
+            const pdfPage = provider.getCurrentPdfPage?.();
+            const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+
+            // Add video context if available
+            if (videoTimestamp !== undefined) {
+                const videoContext: IrisVideoContextDTO = {
+                    type: 'video',
+                    lectureUnitId: unitId,
+                    timestamp: videoTimestamp,
+                };
+                contexts.push(videoContext);
+            }
+
+            // Add slides context if available
+            if (pdfPage !== undefined) {
+                const slidesContext: IrisSlidesContextDTO = {
+                    type: 'slides',
+                    lectureUnitId: unitId,
+                    page: pdfPage,
+                };
+                contexts.push(slidesContext);
+            }
+        });
+
+        return contexts;
     }
 }

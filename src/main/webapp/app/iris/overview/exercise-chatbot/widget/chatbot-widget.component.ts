@@ -4,12 +4,17 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import interact from 'interactjs';
 import { Interactable } from '@interactjs/core/Interactable';
 import { DOCUMENT } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+
+export interface ChatbotWidgetData {
+    contextProvider?: (() => IrisMessageContextDTO[]) | undefined;
+}
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -24,6 +29,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private router = inject(Router);
     private dialog = inject(MatDialog);
     private chatService = inject(IrisChatService);
+    protected readonly data = inject<ChatbotWidgetData>(MAT_DIALOG_DATA, { optional: true });
 
     readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
         initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),

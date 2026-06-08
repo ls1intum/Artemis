@@ -346,12 +346,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
-    /** Optional lecture unit ID for context awareness */
-    readonly contextLectureUnitId = input<number | undefined>(undefined);
-    /** Optional function to get current PDF page number */
-    readonly contextPdfPageProvider = input<(() => number | undefined) | undefined>(undefined);
-    /** Optional function to get current video timestamp in seconds */
-    readonly contextVideoTimestampProvider = input<(() => number | undefined) | undefined>(undefined);
+    /** Optional function provider that returns a list of context objects for the current message */
+    readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -812,39 +808,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
-            // Gather context data and build context list
-            const contextLectureUnitId = this.contextLectureUnitId();
-            const pdfPageProvider = this.contextPdfPageProvider();
-            const videoTimestampProvider = this.contextVideoTimestampProvider();
-            const contextPdfPage = pdfPageProvider ? pdfPageProvider() : undefined;
-            const contextVideoTimestamp = videoTimestampProvider ? videoTimestampProvider() : undefined;
-
-            // Build context list - add either video or slides context (not both)
-            let context: IrisMessageContextDTO[] | undefined = undefined;
-            if (contextLectureUnitId) {
-                if (contextVideoTimestamp !== undefined) {
-                    // Video context
-                    context = [
-                        {
-                            type: 'video' as const,
-                            lectureUnitId: contextLectureUnitId,
-                            timestamp: contextVideoTimestamp,
-                        },
-                    ];
-                } else if (contextPdfPage !== undefined) {
-                    // Slides context
-                    context = [
-                        {
-                            type: 'slides' as const,
-                            lectureUnitId: contextLectureUnitId,
-                            page: contextPdfPage,
-                        },
-                    ];
-                }
-            }
+            // Get context from provider (if available)
+            const provider = this.contextProvider();
+            const context = provider ? provider() : undefined;
 
             this.chatService
-                .sendMessage(content, {}, context)
+                .sendMessage(content, {}, context && context.length > 0 ? context : undefined)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {

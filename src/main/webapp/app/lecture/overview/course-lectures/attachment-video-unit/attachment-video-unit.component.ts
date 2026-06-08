@@ -52,7 +52,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
-import { LectureChatbotComponent, LectureContextProvider } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
+import { LectureChatbotComponent, LectureContextsProvider } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -97,6 +97,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
+    contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
@@ -206,7 +207,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return this.isFullscreen() ? this.translateService.instant('artemisApp.lectureUnit.closeFullscreen') : undefined;
     });
 
-    readonly contextProvider = computed<LectureContextProvider>(() => ({
+    readonly contextProvider = computed(() => ({
         getCurrentPdfPage: () => this.pdfViewer()?.currentPageSignal(),
         getCurrentVideoTimestamp: () => {
             const videoPlayer = this.videoPlayer();

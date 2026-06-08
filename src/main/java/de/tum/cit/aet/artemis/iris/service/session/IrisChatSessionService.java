@@ -259,7 +259,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
         CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings),
-                Optional.of(submission), Map.of())).exceptionally(e -> {
+                Optional.of(submission), Map.of(), List.of())).exceptionally(e -> {
                     log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
                     return null;
                 });
@@ -290,7 +290,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
-                        Optional.of(settings), Optional.of(latestSubmission), Map.of())).exceptionally(e -> {
+                        Optional.of(settings), Optional.of(latestSubmission), Map.of(), List.of())).exceptionally(e -> {
                             log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
                             return null;
                         });

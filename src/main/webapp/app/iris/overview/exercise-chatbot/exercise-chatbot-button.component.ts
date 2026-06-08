@@ -16,6 +16,7 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { createStageRotation } from 'app/iris/overview/iris-stage-rotation.util';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -41,6 +42,8 @@ export class IrisExerciseChatbotButtonComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     readonly mode = input.required<ChatServiceMode>();
+    /** Optional context provider function for lecture context awareness */
+    readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
 
@@ -200,6 +203,7 @@ export class IrisExerciseChatbotButtonComponent {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
+            data: { contextProvider: this.contextProvider() },
         });
         this.dialogRef
             .afterClosed()

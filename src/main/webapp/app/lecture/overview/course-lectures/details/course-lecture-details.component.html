@@ -64,7 +64,7 @@
                         </div>
                     }
                     @for (lectureUnit of lectureUnits; track lectureUnit.id) {
-                        <div class="row m-0 mt-3">
+                        <div class="row m-0 mt-3" [attr.data-unit-id]="lectureUnit.id">
                             <div class="col p-0">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
@@ -152,7 +152,7 @@
             </div>
         </div>
         @if (irisSettings?.settings?.enabled && !lecture.isTutorialLecture) {
-            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" [contextProvider]="getContextProvider()" />
         }
     </div>
 }
