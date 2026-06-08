@@ -1,10 +1,16 @@
 :host {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     height: 1rem;
     width: 1rem;
+    line-height: 1rem;
+    vertical-align: middle;
 }
 
 .icon-full-size {
     height: 1rem;
+    line-height: 1rem;
     width: 1rem;
+    vertical-align: middle;
 }

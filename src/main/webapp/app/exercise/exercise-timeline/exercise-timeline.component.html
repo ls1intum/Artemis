@@ -22,7 +22,13 @@
                 @if (index > 0) {
                     <div class="spacer"></div>
                 }
-                <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
+                <div class="label-grouper">
+                    <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
+                    @if (!!internalItem.helpKey) {
+                        <jhi-help-icon [text]="internalItem.helpKey" />
+                    }
+                    <jhi-time-zone-warning />
+                </div>
                 <div class="datepicker-and-info">
                     <p-datepicker
                         styleClass="timeline-datepicker"

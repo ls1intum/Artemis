@@ -42,6 +42,7 @@ export class ExamTimelineComponent {
                           labelStringKey: 'artemisApp.examManagement.testExam.practiceStartDate',
                           date: this.startOfPracticeTime,
                           mustBeStrictlyAfterPrevious: true,
+                          helpKey: 'artemisApp.examManagement.testExam.practiceStartDateTooltip',
                       },
                   ]
                 : [];
@@ -51,12 +52,14 @@ export class ExamTimelineComponent {
                 kind: 'required',
                 labelStringKey: 'artemisApp.examManagement.visibleDate',
                 date: this.visibleFrom,
+                helpKey: 'artemisApp.examManagement.visibleDateTooltip',
             },
             {
                 kind: 'required',
                 labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.examManagement.startDate',
                 date: this.startOfWorkingTime,
                 mustBeStrictlyAfterPrevious: true,
+                helpKey: 'artemisApp.examManagement.startDateTooltip',
             },
             ...simulationEndAndPracticeStart,
             {
@@ -64,6 +67,7 @@ export class ExamTimelineComponent {
                 labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.examManagement.endDate',
                 date: this.endOfWorkingTime,
                 mustBeStrictlyAfterPrevious: true,
+                helpKey: 'artemisApp.examManagement.endDateTooltip',
             },
         ];
         return items;

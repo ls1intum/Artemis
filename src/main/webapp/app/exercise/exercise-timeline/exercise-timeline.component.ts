@@ -6,11 +6,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 type BaseTimelineItem = {
     labelStringKey: string;
     otherRequiredItem?: TimelineItem;
     mustBeStrictlyAfterPrevious?: boolean;
+    helpKey?: string;
 };
 
 export type TimelineItem =
@@ -35,7 +38,7 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-exercise-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective, TimeZoneWarningComponent, HelpIconComponent],
     templateUrl: './exercise-timeline.component.html',
     styleUrl: './exercise-timeline.component.scss',
 })
