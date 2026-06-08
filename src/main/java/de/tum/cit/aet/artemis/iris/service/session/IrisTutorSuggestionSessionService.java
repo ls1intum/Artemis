@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -136,7 +135,6 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
-        var postDTO = new PostDTO(post, null);
 
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
@@ -188,7 +186,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 }
             }
             pyrisPipelineService.executeTutorSuggestionPipeline(variant, supportLevel, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
-                    programmingExerciseDTOOptional, postDTO);
+                    programmingExerciseDTOOptional, post);
         }
     }
 
