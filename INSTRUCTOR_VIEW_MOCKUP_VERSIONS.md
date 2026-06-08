@@ -9,8 +9,7 @@ with shared properties. Below are the design alternatives we explored, by decisi
 
 The list can be organized as a plain list, by exercise type, by week, or by group. Organized
 by group, an instructor can rename a group, drag exercises in and out, reorder them, and set
-shared properties (schedule, points cap, hand-in limit, competencies) that override the
-individual exercises.
+shared properties (schedule, points cap, hand-in limit, competencies)
 
 ---
 
