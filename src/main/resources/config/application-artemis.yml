@@ -105,7 +105,7 @@ artemis:
       # Automatic competency orchestration (Feature.AtlasAgent). Disabled by default;
       # admins flip the toggle to opt the instance in. The scheduler ticks at scheduler-rate-ms and only
       # claims a course's bucket once debounce-window-seconds have elapsed since the last content edit.
-      debounce-window-seconds: 300
+      debounce-window-seconds: 1800
       max-daily-orchestrations: 10
       scheduler-rate-ms: 30000
     atlasml:
