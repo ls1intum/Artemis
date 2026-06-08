@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -17,7 +19,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 class AgentSystemPromptServiceTest {
 
-    private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService();
+    // No LocalCI services -> describeBuildContext resolves the generic build fallback, which is all this prompt test needs (it asserts the spec-mode and per-language profile text,
+    // not the build-context section).
+    private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
 
     /** Marker phrase only present in the spec-mode default instruction. */
     private static final String SPEC_MODE_MARKER = "authoritative specification";

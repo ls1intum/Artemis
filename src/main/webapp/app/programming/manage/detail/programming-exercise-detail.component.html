@@ -184,20 +184,6 @@
                         />
                     </div>
                 }
-                @if (hyperionModuleActive && programmingExercise.isAtLeastEditor && programmingExercise.id) {
-                    <div class="mt-3">
-                        <jhi-hyperion-exercise-generation
-                            [exerciseId]="programmingExercise.id"
-                            [autoStart]="autoStartGeneration()"
-                            [reviewCommentsLink]="
-                                programmingExercise.templateParticipation?.id
-                                    ? [baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation!.id!]
-                                    : undefined
-                            "
-                            (generationCompleted)="onExerciseGenerated($event)"
-                        />
-                    </div>
-                }
                 @if (exerciseDetailSections) {
                     <jhi-detail-overview-list [sections]="exerciseDetailSections" />
                 }

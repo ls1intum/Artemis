@@ -279,6 +279,32 @@ public class SandboxBuildCommandService {
     }
 
     /**
+     * A tight, human-readable summary of the resolved build recipe, for the agent's system prompt. It is derived from the SAME {@link #resolveBuildRecipe} that renders
+     * {@code verify.sh}, so the facts shown to the agent ("the grader runs exactly this") can never drift from the script the grader actually runs.
+     *
+     * @param phaseScripts         the per-phase build commands (placeholder-substituted), run in order from the build root — exactly what the grader executes
+     * @param reportGlobs          the locations (relative to the build root) the grader collects test-report XML from
+     * @param testCheckoutDir      where the tests are checked out ({@code ""} = the build root itself, not a {@code tests/} subdirectory)
+     * @param materializesSolution whether a sibling {@code solution/} checkout is materialized (only the Haskell/OCaml harnesses reference one)
+     * @param scaReportFiles       the canonical SCA report file names the grader parses ({@code empty} = static code analysis disabled)
+     */
+    public record BuildContextSummary(List<String> phaseScripts, List<String> reportGlobs, String testCheckoutDir, boolean materializesSolution, List<String> scaReportFiles) {
+    }
+
+    /**
+     * Resolves the build context — the exact phase commands the grader runs, where it reads reports, and the checkout layout — for injection into the agent's system prompt. Reuses
+     * the build recipe behind {@code verify.sh} so the prompt and the grader stay in lock-step.
+     *
+     * @param exercise the exercise being generated or adapted
+     * @return the resolved build-context summary
+     */
+    public BuildContextSummary describeBuildContext(ProgrammingExercise exercise) {
+        BuildRecipe recipe = resolveBuildRecipe(exercise);
+        boolean materializeSolution = !recipe.solutionDir().isEmpty() && recipe.checkoutSolution();
+        return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir(), materializeSolution, recipe.scaReportFiles());
+    }
+
+    /**
      * Resolves the per-language build recipe. Uses the exact LocalCI build phases when available so the verification toolchain matches real CI for every supported language, and
      * applies the same placeholder substitution real CI does ({@code ${testWorkingDirectory}}, {@code ${studentParentWorkingDirectoryName}}, …) mapped to the language's real
      * checkout layout: the assignment is checked out into {@code assignment/} and the tests into the language's test checkout path (the build root for Java/Python, a

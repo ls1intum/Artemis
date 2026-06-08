@@ -47,6 +47,8 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
 import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
+import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
+import { Router } from '@angular/router';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -121,6 +123,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
     /** The embedded Artemis Intelligence run card; reattached after an adapt start so its progress shows on the same surface that triggered it. */
     readonly generationCard = viewChild(HyperionExerciseGenerationComponent);
+
+    /**
+     * Whether the embedded run card should auto-start a generation run on load. Set from router state by the create flow's "Generate entire exercise", which navigates here (not to
+     * the read-only detail page) so the instructor watches the run stream live in the editor where they will review and refine the result.
+     */
+    protected readonly autoStartGeneration = signal(false);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -201,6 +209,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     constructor() {
         super();
+        // Capture the navigation state now (only available during the current navigation): the create flow's "Generate entire exercise" routes here with this flag so the embedded
+        // run card auto-starts and the instructor sees the run stream live in the editor.
+        const navigationState = inject(Router).currentNavigation()?.extras.state;
+        if (navigationState?.[AUTO_START_EXERCISE_GENERATION_STATE] === true) {
+            this.autoStartGeneration.set(true);
+        }
         this.aiOps.setChangeHandler({
             onContentChanged: (content, exercise) => {
                 if (this.exercise?.id && exercise?.id && this.exercise.id !== exercise.id) {

@@ -413,7 +413,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(alertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.exercise.form.title.undefined' }));
         });
 
-        it('should call automatic setup with empty repositories and navigate to the detail page with auto-start state', () => {
+        it('should call automatic setup with empty repositories and navigate to the instructor code editor with auto-start state', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
             entity.course = course;
@@ -438,13 +438,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id], {
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
                 state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
             });
             expect(comp.isGeneratingWithAi()).toBe(false);
         });
 
-        it('should navigate to the exam detail page with auto-start state after AI exercise creation in exam mode', () => {
+        it('should navigate to the instructor code editor with auto-start state after AI exercise creation in exam mode', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs();
             const exerciseGroup = new ExerciseGroup();
@@ -468,7 +468,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id], {
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
                 state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
             });
         });

@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: it coalesces chatty progress pushes {@value GenerationProgressEmitter#FLUSH_EVERY}:1,
- * flushes the buffer BEFORE a milestone/terminal event (ordering invariant), and records every line to the transcript individually.
+ * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: with {@code FLUSH_EVERY == 1} it streams every progress line to the live client
+ * immediately
+ * (per-turn feedback, no buffering lag), still flushes any pending progress BEFORE a milestone/terminal event (the ordering invariant), and records every line to the transcript
+ * individually.
  */
 class GenerationProgressEmitterTest {
 
@@ -28,49 +30,31 @@ class GenerationProgressEmitterTest {
     }
 
     @Test
-    void progressBelowThreshold_buffersWithoutSending() {
+    void eachProgressLine_isPushedImmediatelyAndVerbatim() {
         GenerationProgressEmitter emitter = newEmitter();
 
-        for (int i = 0; i < GenerationProgressEmitter.FLUSH_EVERY - 1; i++) {
-            emitter.progress("line " + i);
-        }
+        emitter.progress("line 0");
+        emitter.progress("line 1");
 
-        // Below the flush threshold: nothing is pushed to the live client yet, but every line is already in the transcript.
-        assertThat(sent).isEmpty();
-        assertThat(recorded).hasSize(GenerationProgressEmitter.FLUSH_EVERY - 1);
+        // FLUSH_EVERY == 1: each line is pushed to the live client immediately, verbatim (no coalescing), so the user sees per-turn progress without lag.
+        assertThat(sent).hasSize(2);
+        assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
+        assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
     }
 
     @Test
-    void thresholdLine_sendsOneCoalescedPush() {
+    void milestone_sendsPendingProgressBeforeTheMilestone_inOrder() {
         GenerationProgressEmitter emitter = newEmitter();
 
-        for (int i = 0; i < GenerationProgressEmitter.FLUSH_EVERY; i++) {
-            emitter.progress("line " + i);
-        }
-
-        // The threshold-th line triggers exactly one coalesced push containing all buffered lines joined by newlines.
-        assertThat(sent).hasSize(1);
-        ExerciseGenerationEventDTO push = sent.getFirst();
-        assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
-        assertThat(push.message()).isEqualTo("line 0\nline 1\nline 2\nline 3");
-    }
-
-    @Test
-    void milestone_flushesBufferFirstThenSendsMilestone_inOrder() {
-        GenerationProgressEmitter emitter = newEmitter();
-
-        emitter.progress("buffered a");
-        emitter.progress("buffered b");
-        assertThat(sent).isEmpty();
-
+        emitter.progress("progress a");
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "milestone"));
 
-        // The buffered progress flush must be sent FIRST, then the milestone — order matters for a faithful live stream.
+        // The progress line is streamed first, then the milestone — order matters for a faithful live stream.
         assertThat(sent).hasSize(2);
-        ExerciseGenerationEventDTO flushed = sent.get(0);
+        ExerciseGenerationEventDTO progress = sent.get(0);
         ExerciseGenerationEventDTO milestone = sent.get(1);
-        assertThat(flushed.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
-        assertThat(flushed.message()).isEqualTo("buffered a\nbuffered b");
+        assertThat(progress.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+        assertThat(progress.message()).isEqualTo("progress a");
         assertThat(milestone.type()).isEqualTo(ExerciseGenerationEventDTO.Type.STARTED);
         assertThat(milestone.message()).isEqualTo("milestone");
     }
@@ -83,7 +67,7 @@ class GenerationProgressEmitterTest {
         emitter.progress("two");
         emitter.progress("three");
 
-        // Coalescing only affects the live pushes; the transcript still records each line individually and non-terminally.
+        // The transcript records each line individually and non-terminally (the source of truth on reconnect).
         assertThat(recorded).hasSize(3);
         assertThat(recorded).allSatisfy(r -> {
             assertThat(r.event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);

@@ -223,18 +223,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         vi.restoreAllMocks();
     });
 
-    describe('autoStartGeneration from navigation state', () => {
-        it('should not request auto-start by default', () => {
-            expect((comp as any).autoStartGeneration()).toBe(false);
-        });
-
-        it('should request auto-start when the navigation state flags it', () => {
-            (router as unknown as MockRouter).currentNavigation.mockReturnValue({ extras: { state: { autoStartExerciseGeneration: true } } } as any);
-            const autoStartFixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
-            expect((autoStartFixture.componentInstance as any).autoStartGeneration()).toBe(true);
-        });
-    });
-
     it('should reload on participation change', async () => {
         const fetchRepositoryFilesSpy = vi.spyOn(comp, 'fetchRepositoryFiles');
         vi.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
@@ -364,35 +352,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.isExamExercise).toBe(true);
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
-        });
-    });
-
-    describe('onExerciseGenerated', () => {
-        it('should refetch and re-render the exercise when a run completed', async () => {
-            const exercise = new ProgrammingExercise(new Course(), undefined);
-            exercise.id = 321;
-            comp.programmingExercise = exercise;
-            const reloaded = new ProgrammingExercise(new Course(), undefined);
-            reloaded.id = 321;
-            const findStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: reloaded })));
-            const handleRouteDataSpy = vi.spyOn(comp as any, 'handleRouteData');
-
-            comp.onExerciseGenerated(true);
-            await new Promise((r) => setTimeout(r, 0));
-
-            expect(findStub).toHaveBeenCalledExactlyOnceWith(321);
-            expect(handleRouteDataSpy).toHaveBeenCalledWith(reloaded);
-        });
-
-        it('should not refetch the exercise when a run did not complete', () => {
-            const exercise = new ProgrammingExercise(new Course(), undefined);
-            exercise.id = 321;
-            comp.programmingExercise = exercise;
-            const findStub = vi.spyOn(exerciseService, 'find');
-
-            comp.onExerciseGenerated(false);
-
-            expect(findStub).not.toHaveBeenCalled();
         });
     });
 

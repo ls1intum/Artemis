@@ -367,7 +367,12 @@
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
                 <!-- Artemis Intelligence run card: self-hides when idle, reattaches to a live generation/adaptation run via /status so progress shows in-context. -->
                 @if (hyperionEnabled && exercise.isAtLeastEditor && exercise.id) {
-                    <jhi-hyperion-exercise-generation [exerciseId]="exercise.id" (generationCompleted)="onProblemStatementSaved()" class="d-block mb-1" />
+                    <jhi-hyperion-exercise-generation
+                        [exerciseId]="exercise.id"
+                        [autoStart]="autoStartGeneration()"
+                        (generationCompleted)="onProblemStatementSaved()"
+                        class="d-block mb-1"
+                    />
                 }
                 @if (showDiff()) {
                     <!-- Diff review banner -->

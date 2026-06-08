@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
@@ -24,6 +25,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 @Service
 @Conditional(HyperionEnabled.class)
 public class AgentSystemPromptService {
+
+    private final SandboxBuildCommandService sandboxBuildCommandService;
+
+    public AgentSystemPromptService(SandboxBuildCommandService sandboxBuildCommandService) {
+        this.sandboxBuildCommandService = sandboxBuildCommandService;
+    }
 
     /**
      * @param exercise the exercise being generated or adapted
@@ -51,7 +58,7 @@ public class AgentSystemPromptService {
                 (how a test file is structured, the assertion/annotation style, how it plugs into the build and emits its report). It is READ-ONLY background: do NOT edit it, do NOT \
                 copy its topic, and do NOT add it to the exercise — author the exercise the brief asks for, in your own design, using reference/ only as a conventions guide.
 
-                Programming language: %s
+                Programming language: %s%s
 
                 THE CONTRACT (the out-of-band verifier enforces all of this; nothing else counts) — produce a complete, correct, coherent exercise where:
                 1. The solution compiles and passes every test.
@@ -146,7 +153,63 @@ public class AgentSystemPromptService {
                 Use edit_file for small changes and write_file only for new files or full rewrites. Never fabricate test output — only the `verify` tool decides.
                 - Be concise; do not narrate routine steps.
                 """
-                .formatted(problemStatementGuidance, languageName, staticCodeAnalysisGuidance(exercise), LanguageGenerationProfile.guidanceFor(exercise));
+                .formatted(problemStatementGuidance, languageName, buildContextSection(exercise), staticCodeAnalysisGuidance(exercise),
+                        LanguageGenerationProfile.guidanceFor(exercise));
+    }
+
+    /**
+     * A tight, exercise-specific BUILD CONTEXT block: the resolved project type, package/module name, checkout layout, the EXACT build phase commands the grader runs, and the
+     * report locations it parses. These are facts the agent would otherwise have to infer from the manifests; surfacing them up front (derived from the same recipe behind
+     * {@code verify.sh}, so they cannot drift from what the grader actually runs) closes the "verify.sh passed but real CI scored zero" class. Kept deliberately short — it lists
+     * the
+     * commands and paths, not full manifests. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
+     *
+     * @param exercise the exercise being generated or adapted
+     * @return the build-context section (prefixed with a blank line), or {@code ""} when it cannot be resolved
+     */
+    private String buildContextSection(ProgrammingExercise exercise) {
+        SandboxBuildCommandService.BuildContextSummary context;
+        try {
+            context = sandboxBuildCommandService.describeBuildContext(exercise);
+        }
+        catch (RuntimeException e) {
+            return "";
+        }
+        StringBuilder section = new StringBuilder(
+                "\n\nTHIS EXERCISE'S BUILD CONTEXT (resolved by Artemis — the grader runs exactly this; do NOT change how it builds or where reports are written):");
+        if (exercise.getProjectType() != null) {
+            section.append("\n- Project type: ").append(exercise.getProjectType());
+        }
+        String packageName = exercise.getPackageName();
+        if (packageName != null && !packageName.isBlank()) {
+            section.append("\n- Module / package name: ").append(packageName).append("  (use this EXACT name across solution, template, and tests so the shared tests resolve)");
+        }
+        String testLocation = context.testCheckoutDir().isBlank() ? "the build root, next to assignment/" : context.testCheckoutDir() + "/";
+        section.append("\n- Layout: your assignment is checked out into assignment/; the tests into ").append(testLocation);
+        if (context.materializesSolution()) {
+            section.append("; a sibling solution/ is also checked out because this harness references it");
+        }
+        if (!context.phaseScripts().isEmpty()) {
+            section.append("\n- Build phases (run in order from the build root, verbatim):");
+            int index = 1;
+            for (String phase : context.phaseScripts()) {
+                section.append("\n    ").append(index++).append(". ").append(capCommand(phase));
+            }
+        }
+        String reports = context.reportGlobs().stream().distinct().limit(8).collect(Collectors.joining(", "));
+        if (!reports.isBlank()) {
+            section.append("\n- Test reports the grader reads (keep the reporter writing here, unchanged): ").append(reports);
+        }
+        if (!context.scaReportFiles().isEmpty()) {
+            section.append("\n- Static code analysis is ON; the grader parses these report files: ").append(String.join(", ", context.scaReportFiles()));
+        }
+        return section.toString();
+    }
+
+    /** Collapses a (possibly multi-line) build-phase command to a single trimmed line and caps its length, so the prompt lists the command without dumping a long script. */
+    private static String capCommand(String command) {
+        String oneLine = command.replaceAll("\\s+", " ").trim();
+        return oneLine.length() > 200 ? oneLine.substring(0, 200) + " …" : oneLine;
     }
 
     /**

@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -26,9 +25,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
-import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
-import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -101,7 +98,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ProgrammingExerciseInstructorExerciseSharingComponent,
         OrchestrationResultDialogComponent,
         TooltipModule,
-        HyperionExerciseGenerationComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -122,17 +118,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
     private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
-    private destroyRef = inject(DestroyRef);
-
-    /** Whether the agentic generation panel should auto-start, requested via router state by the create flow's "Generate with AI". */
-    protected readonly autoStartGeneration = signal(false);
 
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-    protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -223,14 +214,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private lastUpdateTime = 0;
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
-    constructor() {
-        // Capture the navigation state now: it is only available during the current navigation and is lost once Angular finishes routing.
-        const navigationState = this.router.currentNavigation()?.extras.state;
-        if (navigationState?.[AUTO_START_EXERCISE_GENERATION_STATE] === true) {
-            this.autoStartGeneration.set(true);
-        }
-    }
-
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
@@ -241,24 +224,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
 
         this.subscribeToSharingStatus();
-    }
-
-    /**
-     * Reloads the exercise after an agentic generation run has saved changes, so the detail view reflects the new repositories and problem statement.
-     *
-     * @param completed whether the run saved an exercise (true for a verified success and for a recovered needs-review draft)
-     */
-    onExerciseGenerated(completed: boolean): void {
-        if (completed && this.programmingExercise?.id) {
-            this.programmingExerciseService
-                .find(this.programmingExercise.id)
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((response) => {
-                    if (response.body) {
-                        this.handleRouteData(response.body);
-                    }
-                });
-        }
     }
 
     /**

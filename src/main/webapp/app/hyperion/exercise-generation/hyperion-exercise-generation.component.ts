@@ -13,7 +13,18 @@ import { MenuItem } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subscription, forkJoin } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faBan,
+    faCircleCheck,
+    faCircleInfo,
+    faFileCirclePlus,
+    faFilePen,
+    faFlagCheckered,
+    faMagnifyingGlass,
+    faTerminal,
+    faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,7 +34,14 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
-import { GENERATION_PHASE_ORDER, GenerationFileChange, GenerationRepo, parseGenerationProgress } from 'app/hyperion/exercise-generation/generation-progress.model';
+import {
+    GENERATION_PHASE_ORDER,
+    GenerationFileChange,
+    GenerationRepo,
+    TranscriptEntry,
+    parseGenerationProgress,
+    parseTranscript,
+} from 'app/hyperion/exercise-generation/generation-progress.model';
 import {
     ExerciseGenerationEvent,
     ExerciseGenerationVerdict,
@@ -107,6 +125,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
     readonly phaseKey = computed(() => this.progress().phase);
+
+    /** The structured, renderable transcript derived from the raw progress lines (turn badge, tool chip, monospace target). */
+    readonly transcriptEntries = computed<TranscriptEntry[]>(() => parseTranscript(this.progressEvents()));
 
     /** The four working phases rendered as stepper steps, labels resolved from i18n. The {@code done} phase reuses the last step (all complete). */
     readonly phaseSteps = computed<MenuItem[]>(() =>
@@ -298,6 +319,53 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.programmingExercise.generateExercise.diffError');
                 },
             });
+    }
+
+    /** The icon for a transcript entry: by tool for tool calls, by category otherwise. */
+    protected iconForEntry(entry: TranscriptEntry): IconDefinition {
+        if (entry.kind === 'error') {
+            return faTriangleExclamation;
+        }
+        if (entry.kind === 'verify') {
+            return faCircleCheck;
+        }
+        if (entry.kind === 'milestone') {
+            return faFlagCheckered;
+        }
+        switch (entry.tool) {
+            case 'write_file':
+                return faFileCirclePlus;
+            case 'edit_file':
+                return faFilePen;
+            case 'read_file':
+                return faMagnifyingGlass;
+            case 'bash':
+                return faTerminal;
+            case 'submit':
+                return faFlagCheckered;
+            default:
+                return faCircleInfo;
+        }
+    }
+
+    /** Maps an agent tool name to the i18n key suffix for its short, human-readable action label (e.g. {@code write_file} → {@code create}). */
+    protected toolKey(tool: string | undefined): string {
+        switch (tool) {
+            case 'write_file':
+                return 'create';
+            case 'edit_file':
+                return 'edit';
+            case 'read_file':
+                return 'read';
+            case 'bash':
+                return 'run';
+            case 'verify':
+                return 'verify';
+            case 'submit':
+                return 'submit';
+            default:
+                return 'tool';
+        }
     }
 
     private subscribeToJob(id: string): void {

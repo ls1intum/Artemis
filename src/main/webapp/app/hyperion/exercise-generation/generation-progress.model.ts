@@ -23,7 +23,8 @@ export interface GenerationProgress {
 }
 
 // Transcript tool-call line "Turn <n>: <tool> <arg>"; for write_file/edit_file the arg is the full path (see AgentLoopRunner#describeToolCall).
-const TOOL_LINE = /^Turn\s+\d+:\s+(\w+)\s*(.*)$/;
+// Group 1 = turn number, group 2 = tool name, group 3 = the argument (a path for file tools, the command for bash).
+const TOOL_LINE = /^Turn\s+(\d+):\s+(\w+)\s*(.*)$/;
 const ATTEMPT = /attempt\s+(\d+)\s+of\s+(\d+)/i;
 
 /**
@@ -69,7 +70,7 @@ export function parseGenerationProgress(events: ExerciseGenerationEvent[], finis
             const tool = TOOL_LINE.exec(line);
             if (tool) {
                 phase = 'authoring';
-                recordFileChange(files, tool[1], tool[2] ?? '');
+                recordFileChange(files, tool[2], tool[3] ?? '');
                 currentStep = line;
                 continue;
             }
@@ -108,4 +109,83 @@ function repoOf(path: string): GenerationRepo {
         return segment;
     }
     return 'other';
+}
+
+/** The visual category of a transcript line, driving its icon and colour. */
+export type TranscriptKind = 'tool' | 'verify' | 'milestone' | 'notice' | 'error';
+
+/**
+ * One rendered line of the agent transcript. Derived from the raw progress strings so the transcript can be shown as a structured, readable log (turn badge, tool chip, monospace
+ * file/command target) instead of undifferentiated text. {@code text} is always the full original line, used for non-tool entries and as a hover title.
+ */
+export interface TranscriptEntry {
+    kind: TranscriptKind;
+    turn?: number;
+    /** The agent tool that produced the line (e.g. {@code write_file}, {@code bash}, {@code verify}), when the line is a tool call. */
+    tool?: string;
+    /** The most informative argument of a tool call: a file path for file tools, the command for bash. */
+    target?: string;
+    /** The full original progress line. */
+    text: string;
+    /** For file tools, which repository the target file belongs to. */
+    repo?: GenerationRepo;
+}
+
+/**
+ * Parses the streamed event transcript into structured, renderable entries. One entry per non-empty progress line (a coalesced event may still carry several newline-joined lines)
+ * plus one per terminal event. Purely presentational — the raw {@code text} is preserved on every entry, so nothing is hidden.
+ *
+ * @param events the events received so far (oldest first)
+ */
+export function parseTranscript(events: ExerciseGenerationEvent[]): TranscriptEntry[] {
+    const entries: TranscriptEntry[] = [];
+    for (const event of events) {
+        if (event.type === 'ERROR') {
+            entries.push({ kind: 'error', text: event.message ?? '' });
+            continue;
+        }
+        if (event.type === 'CANCELLED') {
+            entries.push({ kind: 'notice', text: event.message ?? '' });
+            continue;
+        }
+        if (event.type === 'DONE') {
+            entries.push({ kind: 'milestone', text: event.message ?? '' });
+            continue;
+        }
+        for (const rawLine of (event.message ?? '').split('\n')) {
+            const line = rawLine.trim();
+            if (line) {
+                entries.push(classifyTranscriptLine(line));
+            }
+        }
+    }
+    return entries;
+}
+
+function classifyTranscriptLine(line: string): TranscriptEntry {
+    const tool = TOOL_LINE.exec(line);
+    if (tool) {
+        const turn = Number(tool[1]);
+        const name = tool[2];
+        const target = (tool[3] ?? '').trim() || undefined;
+        const isFileTool = name === 'write_file' || name === 'edit_file' || name === 'read_file';
+        return {
+            kind: name === 'verify' ? 'verify' : 'tool',
+            turn: Number.isNaN(turn) ? undefined : turn,
+            tool: name,
+            target,
+            text: line,
+            repo: isFileTool && target ? repoOf(target) : undefined,
+        };
+    }
+    if (/^Verifying the generated exercise/i.test(line)) {
+        return { kind: 'verify', text: line };
+    }
+    if (/^Verification passed/i.test(line) || /^Creating sandbox session/i.test(line) || /^Seeding workspace/i.test(line) || /^Agent (finished|submitted)/i.test(line)) {
+        return { kind: 'milestone', text: line };
+    }
+    if (/could not be executed|Model call failed|Reached the step budget/i.test(line)) {
+        return { kind: 'error', text: line };
+    }
+    return { kind: 'notice', text: line };
 }

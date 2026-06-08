@@ -1061,7 +1061,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * Handles successful save and navigates to the detail page, requesting the agentic exercise-generation panel to auto-start.
+     * Handles a successful save of an AI-generated exercise and navigates to the instructor code editor (not the read-only detail page), requesting the embedded run card to
+     * auto-start so the instructor watches the generation stream live in the editor where they will review and refine the result.
      *
      * @param exercise the created exercise
      */
@@ -1074,7 +1075,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise, { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } });
+        this.navigationUtilService.navigateToExerciseCodeEditor(exercise, { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } });
         this.calendarService.reloadEvents();
     }
 

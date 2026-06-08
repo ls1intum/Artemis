@@ -72,21 +72,100 @@
     border: 1px solid var(--surface-border);
     border-radius: var(--bs-border-radius, 0.375rem);
     background: var(--surface-100);
-    font-family: var(--bs-font-monospace, monospace);
     font-size: 0.85rem;
-    line-height: 1.4;
+    line-height: 1.5;
 
-    .transcript-line {
-        white-space: pre-wrap;
-        word-break: break-word;
+    .transcript-entry {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        padding: 0.1rem 0;
 
-        &.terminal {
-            font-weight: 600;
+        // A subtle leading rule colour-codes the line category at a glance without shouting.
+        .transcript-icon {
+            flex: 0 0 auto;
+            font-size: 0.75rem;
+            color: var(--text-color-secondary);
         }
 
-        &.error {
+        // A small, monospace turn number badge so the reader can follow the agent turn by turn.
+        .transcript-turn {
+            flex: 0 0 auto;
+            min-width: 1.4rem;
+            text-align: center;
+            font-family: var(--bs-font-monospace, monospace);
+            font-size: 0.7rem;
+            color: var(--text-color-secondary);
+            background: var(--surface-200);
+            border-radius: 0.25rem;
+            padding: 0 0.25rem;
+        }
+
+        // The action chip (Create / Edit / Run / Verify …): compact, uppercase, neutral by default.
+        .transcript-tool {
+            flex: 0 0 auto;
+            text-transform: uppercase;
+            font-size: 0.65rem;
             font-weight: 600;
-            color: var(--bs-danger, #dc3545);
+            letter-spacing: 0.02em;
+            color: var(--text-color-secondary);
+            background: var(--surface-200);
+            border-radius: 0.25rem;
+            padding: 0.05rem 0.35rem;
+
+            // Tint the chip by the repository the file belongs to, so solution/template/tests reads at a glance.
+            &[data-repo='solution'] {
+                color: var(--green-700, #2e7d32);
+                background: var(--green-100, #e8f5e9);
+            }
+
+            &[data-repo='template'] {
+                color: var(--blue-700, #1565c0);
+                background: var(--blue-100, #e3f2fd);
+            }
+
+            &[data-repo='tests'] {
+                color: var(--purple-700, #6a1b9a);
+                background: var(--purple-100, #f3e5f5);
+            }
+        }
+
+        // The file path or shell command, monospace and ellipsised so a long command never wraps the row to many lines.
+        .transcript-target {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-family: var(--bs-font-monospace, monospace);
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        // Free-text lines (milestones, notices) wrap normally.
+        .transcript-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        &[data-kind='milestone'] {
+            .transcript-icon,
+            .transcript-text {
+                color: var(--primary);
+                font-weight: 600;
+            }
+        }
+
+        &[data-kind='verify'] .transcript-icon {
+            color: var(--primary);
+        }
+
+        &[data-kind='error'] {
+            .transcript-icon,
+            .transcript-text {
+                color: var(--bs-danger, #dc3545);
+                font-weight: 600;
+            }
         }
     }
 }

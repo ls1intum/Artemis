@@ -384,6 +384,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         vi.clearAllMocks();
     });
 
+    describe('auto-start generation from navigation state', () => {
+        it('does not request auto-start by default', () => {
+            expect((comp as any).autoStartGeneration()).toBe(false);
+        });
+
+        it('requests auto-start when the create flow routes here with the flag, so the run streams live in the editor', () => {
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+            (router.currentNavigation as any).mockReturnValue({ extras: { state: { autoStartExerciseGeneration: true } } });
+            const freshFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+            expect((freshFixture.componentInstance as any).autoStartGeneration()).toBe(true);
+        });
+    });
+
     describe('Review Comments', () => {
         it('loadExercise sets review context and reloads threads when returned exercise has an id', () => {
             const superLoadSpy = vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({ id: 55 } as any));

@@ -8,14 +8,20 @@ import java.util.function.Consumer;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Records every event into the replayable transcript (the source of truth on reconnect) but coalesces the live websocket pushes for chatty progress lines so a long run does not
- * flood the client. Milestone and terminal events flush any buffered progress first, preserving order, then send immediately. Only ever used from the single generation thread, so
- * it needs no synchronisation.
+ * Records every event into the replayable transcript (the source of truth on reconnect) AND pushes it to the live client immediately, so the user sees per-turn progress with no
+ * buffering lag. A generation run is bounded (~15–90 turns, roughly one progress line per agent turn), so pushing each line is not a flood; the immediate feedback is worth far
+ * more
+ * than coalescing. Milestone and terminal events still flush any pending progress first, preserving order, then send. Only ever used from the single generation thread, so it needs
+ * no synchronisation. The buffer/flush machinery is retained so a future change can re-introduce coalescing by raising {@link #FLUSH_EVERY} without touching call sites.
  */
 class GenerationProgressEmitter {
 
-    /** Send the live websocket push after this many buffered progress lines; the transcript still records each line individually. */
-    static final int FLUSH_EVERY = 4;
+    /**
+     * Send the live websocket push after this many buffered progress lines. {@code 1} = stream every line immediately (no coalescing) for real-time per-turn feedback; the
+     * transcript
+     * still records each line individually either way.
+     */
+    static final int FLUSH_EVERY = 1;
 
     private final BiConsumer<ExerciseGenerationEventDTO, Boolean> recordEvent;
 

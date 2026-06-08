@@ -80,6 +80,23 @@ export class ArtemisNavigationUtilService {
     }
 
     /**
+     * Navigate to the instructor code editor for a programming exercise. Used by the AI "Generate entire exercise" create flow so the generation run streams live in the editor —
+     * the surface where the instructor reviews and refines the result — rather than on the read-only detail page. The editor route is keyed by the exercise's course id (the exam's
+     * course in exam mode) and the exercise id; it loads the exercise regardless of exam grouping. Falls back to the detail navigation when no course id is known.
+     *
+     * @param exercise the created programming exercise
+     * @param extras optional navigation extras (e.g. the auto-start router state)
+     */
+    navigateToExerciseCodeEditor(exercise?: Exercise, extras?: NavigationExtras) {
+        const courseId = exercise?.exerciseGroup?.exam?.course?.id ?? exercise?.course?.id;
+        if (courseId && exercise?.id) {
+            this.router.navigate(['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', 'ide', 'test'], extras);
+        } else {
+            this.navigateForwardFromExerciseUpdateOrCreation(exercise, extras);
+        }
+    }
+
+    /**
      * Navigate to exercise detail page if cancelling the update or creation
      * Either
      * - move back in the history
