@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewContainerRef, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { Component, ViewContainerRef, ViewEncapsulation, input, output, signal } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,8 +15,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
-
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
     readonly isInputOpen = signal(false);
@@ -59,7 +57,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     createPosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -67,14 +65,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.onCreate.emit(answerPost);
                 this.createEditAnswerPostContainerRef()?.clear();
-                this.changeDetectorRef.markForCheck();
             },
             error: () => {
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
         });
     }
@@ -86,7 +82,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = deepClone(posting);
@@ -94,15 +90,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.isInputOpen.set(false);
                 this.createEditAnswerPostContainerRef()?.clear();
-                // markForCheck is still required to flush the non-signal, template-bound isLoading field (inherited from PostingCreateEditDirective)
-                this.changeDetectorRef.markForCheck();
             },
             error: () => {
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
         });
     }
