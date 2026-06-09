@@ -55,9 +55,16 @@ test.describe('Passkey', () => {
         // this overrides both by removing the suppression key and re-enabling the dialog.
         await page.addInitScript(() => {
             localStorage.removeItem('earliestSetupPasskeyReminderDate');
-            const style = document.createElement('style');
-            style.textContent = '.p-dialog-mask:has(.passkey-setup-dialog) { display: flex !important; }';
-            document.head.appendChild(style);
+            const injectOverride = () => {
+                const style = document.createElement('style');
+                style.textContent = '.p-dialog-mask:has(.passkey-setup-dialog) { display: flex !important; }';
+                document.head.appendChild(style);
+            };
+            if (document.head) {
+                injectOverride();
+            }
+            // Also register for DOMContentLoaded to override any deferred CSS from the context init script
+            document.addEventListener('DOMContentLoaded', injectOverride);
         });
         // Clear the admin session from beforeEach so we land on the sign-in page
         await page.context().clearCookies();
