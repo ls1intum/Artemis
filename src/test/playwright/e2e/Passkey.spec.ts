@@ -3,28 +3,6 @@ import { test } from '../support/fixtures';
 import { admin } from '../support/users';
 import { BASE_API } from '../support/constants';
 
-/**
- * JSON-serialized WebAuthn credential descriptor, as returned by the server.
- * See https://w3c.github.io/webauthn/#dictdef-publickeycredentialdescriptorjson
- * Type definitions based on @simplewebauthn/types (https://jsr.io/@simplewebauthn/types).
- */
-interface PublicKeyCredentialDescriptorJSON {
-    id: string;
-    type: string;
-    transports?: string[];
-}
-
-/**
- * JSON-serialized PublicKeyCredentialCreationOptions, as returned by the server's
- * /webauthn/register/options endpoint.
- * See https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson
- */
-interface PublicKeyCredentialCreationOptionsJSON {
-    challenge: string;
-    excludeCredentials?: PublicKeyCredentialDescriptorJSON[];
-    [key: string]: unknown;
-}
-
 function passkeyTestUser(testTitle: string) {
     const id = testTitle.split(' ')[0].toLowerCase();
     return { username: `passkey_e2e_${id}`, password: `passkey_e2e_${id}`, email: `passkey_e2e_${id}@example.com` };
@@ -219,13 +197,6 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
     // Perform the full WebAuthn registration inside the browser context
     const error = await page.evaluate(
         async ({ userId, email }: { userId: number; email: string }) => {
-            function base64urlToBuffer(base64url: string): ArrayBuffer {
-                const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-                const padding = '='.repeat((4 - (base64.length % 4)) % 4);
-                const binary = atob(base64 + padding);
-                return Uint8Array.from(binary, (c) => c.charCodeAt(0)).buffer;
-            }
-
             // 1. Get registration options from the server
             const optionsResponse = await fetch('/webauthn/register/options', {
                 method: 'POST',
@@ -235,26 +206,20 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
                 const body = await optionsResponse.text().catch(() => '');
                 return `Getting registration options failed: ${optionsResponse.status} ${body}`;
             }
-            const options: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
+            const optionsJSON: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
 
             // 2. Create credential via the virtual authenticator
-            // The server returns JSON-serialized options; we convert base64url strings to ArrayBuffers and override user info.
-            const credential = (await navigator.credentials.create({
-                publicKey: {
-                    ...options,
-                    challenge: base64urlToBuffer(options.challenge),
-                    user: {
-                        id: new TextEncoder().encode(userId.toString()),
-                        name: email,
-                        displayName: email,
-                    },
-                    excludeCredentials: options.excludeCredentials?.map((c: PublicKeyCredentialDescriptorJSON) => ({
-                        id: base64urlToBuffer(c.id),
-                        type: c.type,
-                        transports: c.transports,
-                    })),
-                } as unknown as PublicKeyCredentialCreationOptions,
-            })) as PublicKeyCredential | null;
+            // parseCreationOptionsFromJSON converts base64url strings to ArrayBuffers natively.
+            const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON({
+                ...optionsJSON,
+                user: {
+                    id: userId.toString(),
+                    name: email,
+                    displayName: email,
+                },
+            });
+
+            const credential = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential | null;
 
             if (!credential) {
                 return 'navigator.credentials.create() returned null';
