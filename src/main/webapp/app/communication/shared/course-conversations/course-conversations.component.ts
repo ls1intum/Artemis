@@ -1,6 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -173,36 +173,36 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private toggleSidebarEventSubscription: Subscription;
     private reloadSidebarEventSubscription: Subscription;
     course = signal<Course | undefined>(undefined);
-    isLoading = false;
-    isServiceSetUp = false;
+    readonly isLoading = signal(false);
+    readonly isServiceSetUp = signal(false);
     messagingEnabled = false;
-    postInThread?: Post;
+    readonly postInThread = signal<Post | undefined>(undefined);
     private pendingThreadPostId: number | undefined;
-    activeConversation?: ConversationDTO = undefined;
-    conversationsOfUser: ConversationDTO[] = [];
+    readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
+    readonly conversationsOfUser = signal<ConversationDTO[]>([]);
     previousConversationBeforeSearch?: ConversationDTO;
     lastKnownConversationId?: number;
 
     conversationSelected = true;
     sidebarData: SidebarData;
-    accordionConversationGroups: AccordionGroups;
-    sidebarConversations: SidebarCardElement[] = [];
-    isCollapsed = false;
-    focusPostId: number | undefined = undefined;
+    readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
+    readonly sidebarConversations = signal<SidebarCardElement[]>([]);
+    readonly isCollapsed = signal(false);
+    readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
-    openThreadOnFocus = false;
-    selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
-    showOnlyPinned = false;
-    pinnedCount: number = 0;
-    isManagementView = false;
+    readonly openThreadOnFocus = signal(false);
+    readonly selectedSavedPostStatus = signal<undefined | SavedPostStatus>(undefined);
+    readonly showOnlyPinned = signal(false);
+    readonly pinnedCount = signal(0);
+    readonly isManagementView = signal(false);
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
-    isCodeOfConductAccepted?: boolean;
-    isCodeOfConductPresented = false;
+    readonly isCodeOfConductAccepted = signal<boolean | undefined>(undefined);
+    readonly isCodeOfConductPresented = signal(false);
 
     courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
     globalSearchComponent = viewChild<ConversationGlobalSearchComponent>(ConversationGlobalSearchComponent);
@@ -218,7 +218,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly channelActions$ = output<ChannelAction>();
 
     private courseSidebarService = inject(CourseSidebarService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     getAsChannel = getAsChannelDTO;
 
@@ -227,26 +226,24 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (this.pendingThreadPostId && posts) {
                 const found = posts.find((post) => post.id === this.pendingThreadPostId);
                 if (found) {
-                    this.postInThread = found;
+                    this.postInThread.set(found);
                     this.pendingThreadPostId = undefined;
                 }
-            } else if (this.postInThread?.id && posts) {
-                this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
+            } else if (this.postInThread()?.id && posts) {
+                this.postInThread.set(posts.find((post) => post.id === this.postInThread()?.id));
             }
-            this.changeDetector.markForCheck();
         });
     }
 
     togglePinnedView(): void {
-        this.showOnlyPinned = !this.showOnlyPinned;
+        this.showOnlyPinned.set(!this.showOnlyPinned());
     }
 
     onPinnedCountChanged(newCount: number): void {
-        this.pinnedCount = newCount;
-        if (this.pinnedCount == 0 && this.showOnlyPinned) {
-            this.showOnlyPinned = false;
+        this.pinnedCount.set(newCount);
+        if (this.pinnedCount() == 0 && this.showOnlyPinned()) {
+            this.showOnlyPinned.set(false);
         }
-        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {
@@ -268,21 +265,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.course.set(this.getParentCourse());
-        this.isManagementView = this.router.url.includes('course-management');
+        this.isManagementView.set(this.router.url.includes('course-management'));
 
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.setIsCollapsed(true);
-            this.changeDetector.markForCheck();
         });
 
         this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
             this.setIsCollapsed(false);
-            this.changeDetector.markForCheck();
         });
 
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.toggleSidebar();
-            this.changeDetector.markForCheck();
         });
 
         this.reloadSidebarEventSubscription = this.courseSidebarService.reloadSidebar$.subscribe(() => {
@@ -299,7 +293,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.courseSidebarService.openSidebar();
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course.set(this.metisConversationService.course!);
@@ -316,7 +310,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.updateQueryParameters();
                 this.prepareSidebarData();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
-                if (!this.isServiceSetUp) {
+                if (!this.isServiceSetUp()) {
                     outputToObservable(this.channelActions$)
                         .pipe(
                             debounceTime(500),
@@ -330,12 +324,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                             this.performChannelAction(channelAction);
                         });
                 }
-                this.isServiceSetUp = true;
-                this.isLoading = false;
+                this.isServiceSetUp.set(true);
+                this.isLoading.set(false);
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
-            this.changeDetector.markForCheck();
         });
     }
 
@@ -357,11 +350,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.focusPostId) {
-                this.focusPostId = Number(queryParams.focusPostId);
-                this.scrollToAndHighlightPost(this.focusPostId);
+                this.focusPostId.set(Number(queryParams.focusPostId));
+                this.scrollToAndHighlightPost(this.focusPostId()!);
             }
             if (queryParams.openThreadOnFocus) {
-                this.openThreadOnFocus = queryParams.openThreadOnFocus;
+                this.openThreadOnFocus.set(queryParams.openThreadOnFocus);
             }
 
             // Process messageId BEFORE setting the active conversation.
@@ -373,18 +366,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 // Only create a bare post skeleton if we don't already have this post loaded.
                 // Re-setting postInThread to a bare object discards the full post data and
                 // causes updateQueryParameters to strip messageId from the URL.
-                if (this.postInThread?.id !== messageId) {
+                if (this.postInThread()?.id !== messageId) {
                     const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
                     this.pendingThreadPostId = messageId;
-                    this.postInThread = { id: messageId, conversation: { id: conversationId } } as Post;
+                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } } as Post);
                     // Immediately try to resolve the full post from already-loaded posts
                     this.metisService.posts.pipe(take(1)).subscribe((posts) => {
                         if (posts) {
                             const found = posts.find((post) => post.id === messageId);
                             if (found) {
-                                this.postInThread = found;
+                                this.postInThread.set(found);
                                 this.pendingThreadPostId = undefined;
-                                this.changeDetector.markForCheck();
                             }
                         }
                     });
@@ -395,7 +387,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 }
                 this.closeSidebarOnMobile();
             } else {
-                this.postInThread = undefined;
+                this.postInThread.set(undefined);
             }
 
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
@@ -406,13 +398,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         .map((status) => status.toString().toLowerCase())
                         .includes(queryParams.conversationId)
                 ) {
-                    this.selectedSavedPostStatus = toSavedPostStatus(queryParams.conversationId);
+                    this.selectedSavedPostStatus.set(toSavedPostStatus(queryParams.conversationId));
                 } else {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
                 }
             }
-            this.changeDetector.markForCheck();
         });
     }
 
@@ -421,19 +412,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.focusPostId = post.referencePostId;
-        this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
+        this.focusPostId.set(post.referencePostId);
+        this.openThreadOnFocus.set((post.postingType as PostingType) === PostingType.ANSWER);
         this.metisConversationService.setActiveConversation(post.conversation!.id!);
-        this.changeDetector.detectChanges();
     }
 
     updateQueryParameters() {
         const queryParams: Record<string, string | number | undefined> = {
-            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+            conversationId: this.activeConversation()?.id ?? this.selectedSavedPostStatus()?.toLowerCase(),
         };
-        const threadBelongsToActiveConversation = this.postInThread?.id && this.postInThread.conversation?.id === this.activeConversation?.id;
+        const threadBelongsToActiveConversation = this.postInThread()?.id && this.postInThread()?.conversation?.id === this.activeConversation()?.id;
         if (threadBelongsToActiveConversation) {
-            queryParams.messageId = this.postInThread!.id;
+            queryParams.messageId = this.postInThread()!.id;
         }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
@@ -453,8 +443,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
-            const previousConversation = this.activeConversation;
-            this.activeConversation = conversation;
+            const previousConversation = this.activeConversation();
+            this.activeConversation.set(conversation);
 
             if (conversation?.id) {
                 this.lastKnownConversationId = conversation.id;
@@ -464,28 +454,24 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.courseSidebarService.closeSidebar();
             }
             this.updateQueryParameters();
-            this.changeDetector.markForCheck();
         });
     }
 
     private subscribeToIsCodeOfConductAccepted() {
         this.metisConversationService.isCodeOfConductAccepted$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductAccepted: boolean) => {
-            this.isCodeOfConductAccepted = isCodeOfConductAccepted;
-            this.changeDetector.markForCheck();
+            this.isCodeOfConductAccepted.set(isCodeOfConductAccepted);
         });
     }
 
     private subscribeToIsCodeOfConductPresented() {
         this.metisConversationService.isCodeOfConductPresented$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductPresented: boolean) => {
-            this.isCodeOfConductPresented = isCodeOfConductPresented;
-            this.changeDetector.markForCheck();
+            this.isCodeOfConductPresented.set(isCodeOfConductPresented);
         });
     }
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.conversationsOfUser = conversations ?? [];
-            this.changeDetector.markForCheck();
+            this.conversationsOfUser.set(conversations ?? []);
         });
     }
 
@@ -508,9 +494,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
-        this.accordionConversationGroups = this.messagingEnabled
-            ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } }
-            : DEFAULT_CHANNEL_GROUPS;
+        this.accordionConversationGroups.set(
+            this.messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS,
+        );
     }
 
     onSearch(searchInfo: ConversationGlobalSearchConfig) {
@@ -523,9 +509,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.selectedSavedPostStatus = undefined;
+        this.selectedSavedPostStatus.set(undefined);
         this.metisConversationService.setActiveConversation(undefined);
-        this.activeConversation = undefined;
+        this.activeConversation.set(undefined);
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
@@ -534,8 +520,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
-        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation && !this.previousConversationBeforeSearch) {
-            this.previousConversationBeforeSearch = this.activeConversation;
+        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation() && !this.previousConversationBeforeSearch) {
+            this.previousConversationBeforeSearch = this.activeConversation();
         }
 
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
@@ -553,9 +539,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         } else if (this.lastKnownConversationId) {
             this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
         } else {
-            this.selectedSavedPostStatus = undefined;
+            this.selectedSavedPostStatus.set(undefined);
             this.metisConversationService.setActiveConversation(undefined);
-            this.activeConversation = undefined;
+            this.activeConversation.set(undefined);
             this.updateQueryParameters();
             this.courseWideSearch()?.onSearch();
         }
@@ -576,11 +562,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser, this.messagingEnabled);
-                this.accordionConversationGroups.recents.entityData = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
+                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser()));
+                this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser(), this.messagingEnabled));
+                this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
-                this.changeDetector.markForCheck();
             },
         });
     }
@@ -590,8 +575,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             groupByCategory: true,
             sidebarType: 'conversation',
             storageId: 'conversation',
-            groupedData: this.accordionConversationGroups,
-            ungroupedData: this.sidebarConversations,
+            groupedData: this.accordionConversationGroups(),
+            ungroupedData: this.sidebarConversations(),
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course()),
             canCreateChannel: canCreateChannel(this.course()!),
@@ -601,31 +586,30 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // NOTE: conversationId can either be a number or a string according to SavedPostStatus (for saved post status)
     onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
-        this.focusPostId = undefined;
-        this.openThreadOnFocus = false;
+        this.focusPostId.set(undefined);
+        this.openThreadOnFocus.set(false);
         if (typeof conversationId === 'string') {
             if (
                 Object.values(SavedPostStatus)
                     .map((status) => status.toString().toLowerCase())
                     .includes(conversationId)
             ) {
-                this.selectedSavedPostStatus = conversationId.toUpperCase() as SavedPostStatus;
-                this.postInThread = undefined;
+                this.selectedSavedPostStatus.set(conversationId.toUpperCase() as SavedPostStatus);
+                this.postInThread.set(undefined);
                 this.metisConversationService.setActiveConversation(undefined);
-                this.activeConversation = undefined;
+                this.activeConversation.set(undefined);
                 this.updateQueryParameters();
                 this.metisService.resetCachedPosts();
-                this.changeDetector.detectChanges();
             }
         } else {
             conversationId = +conversationId;
-            this.selectedSavedPostStatus = undefined;
+            this.selectedSavedPostStatus.set(undefined);
             this.metisConversationService.setActiveConversation(conversationId);
         }
     }
 
     toggleSidebar() {
-        this.setIsCollapsed(!this.isCollapsed);
+        this.setIsCollapsed(!this.isCollapsed());
     }
 
     closeSidebarOnMobile() {
@@ -635,8 +619,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     setIsCollapsed(value: boolean) {
-        this.isCollapsed = value;
-        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
+        this.isCollapsed.set(value);
+        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed());
     }
 
     openCreateGroupChatDialog() {
@@ -748,19 +732,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     triggerSearchInConversation() {
-        if (this.globalSearchComponent() && this.activeConversation) {
-            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation);
+        if (this.globalSearchComponent() && this.activeConversation()) {
+            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation());
         }
     }
 
     openThread(postToOpen: Post | undefined) {
         this.selectionState.setOpenPostId(postToOpen?.id);
-        this.postInThread = postToOpen;
+        this.postInThread.set(postToOpen);
         this.pendingThreadPostId = undefined;
     }
 
     closeThread() {
-        this.postInThread = undefined;
+        this.postInThread.set(undefined);
         this.pendingThreadPostId = undefined;
         this.updateQueryParameters();
     }
@@ -834,18 +818,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      */
     onTriggerNavigateToPost(post: Posting) {
         let id = (post as Post)?.conversation?.id;
-        this.focusPostId = post.id;
-        this.openThreadOnFocus = false;
+        this.focusPostId.set(post.id);
+        this.openThreadOnFocus.set(false);
         if (post.id === undefined) {
             return;
         } else if ((post as Post)?.conversation?.id === undefined) {
-            this.openThreadOnFocus = true;
+            this.openThreadOnFocus.set(true);
             id = (post as AnswerPost)?.post?.conversation?.id;
-            this.focusPostId = (post as AnswerPost)?.post?.id;
+            this.focusPostId.set((post as AnswerPost)?.post?.id);
         }
 
         this.metisConversationService.setActiveConversation(id);
-        this.changeDetector.detectChanges();
     }
     async enableCommunication(withMessaging = true) {
         const id = this.course()?.id;
