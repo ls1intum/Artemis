@@ -23,7 +23,7 @@ ci.yml                                                            (single entry 
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
-├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_java; boots the app, checks startup bean metrics)
+├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
