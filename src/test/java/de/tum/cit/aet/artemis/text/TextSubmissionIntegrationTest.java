@@ -55,6 +55,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static final String TEST_PREFIX = "textsubmissionintegration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private TextSubmissionTestRepository testSubmissionTestRepository;
 
@@ -111,12 +113,12 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         notSubmittedTextSubmission = ParticipationFactory.generateTextSubmission("example text 2", Language.ENGLISH, false);
 
         // Add users that are not in exercise/course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
+    @WithMockUser(username = OTHER_PREFIX + "student42")
     void testRepositoryMethods() {
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> testSubmissionTestRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
@@ -218,7 +220,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor42", roles = "TA")
     void getAllTextSubmission_notTutorInExercise() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.getList("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
@@ -282,7 +284,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor42", roles = "TA")
     void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
@@ -457,7 +459,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void submitExercise_notStudentInCourse() throws Exception {
         request.post("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
     }

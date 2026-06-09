@@ -343,8 +343,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_questionFromOtherCourse_returns404() throws Exception {
-        Course courseA = quizExerciseUtilService.addCourseWithOneQuizExercise("Course A Quiz");
-        Course courseB = quizExerciseUtilService.addCourseWithOneQuizExercise("Course B Quiz");
+        Course courseA = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course A Quiz", TEST_PREFIX);
+        Course courseB = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course B Quiz", TEST_PREFIX);
         QuizExercise quizExerciseA = (QuizExercise) courseA.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestionInCourseA = (MultipleChoiceQuestion) quizExerciseA.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();

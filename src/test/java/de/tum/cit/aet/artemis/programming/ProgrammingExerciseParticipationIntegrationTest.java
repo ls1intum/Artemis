@@ -768,8 +768,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoNameExam() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
-                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000);
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
+                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000, TEST_PREFIX);
         programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -1180,8 +1180,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var visibilityDate = startDate.minusHours(1);
         var publishResultsDate = startDate.plusHours(10);
         var workingTime = 120 * 60;
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
-                userLogin, workingTime);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate,
+                publishResultsDate, userLogin, workingTime, TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
     }

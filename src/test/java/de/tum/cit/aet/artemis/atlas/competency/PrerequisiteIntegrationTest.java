@@ -21,14 +21,14 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
-    private static final String TEST_PREFIX = "prerequisiteintegrationtest";
+    private static final String TEST_PREFIX = "prerequisite";
 
     /** Student/instructor not enrolled in either test course; exercises the wrong-course branches. */
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @BeforeEach
     void setupTestScenario() {
-        super.setupTestScenario(TEST_PREFIX, prerequisiteUtilService::createPrerequisite);
+        super.setupTestScenario(TEST_PREFIX, OTHER_PREFIX, prerequisiteUtilService::createPrerequisite);
     }
 
     @Nested
@@ -85,7 +85,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -113,7 +113,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void shouldReturnCompetenciesForStudentNotInCourse() throws Exception {
         super.shouldReturnCompetenciesForCourse(new Prerequisite());
     }
@@ -135,7 +135,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForDelete() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForDelete();
     }
@@ -210,7 +210,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreate() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Prerequisite());
     }
@@ -232,7 +232,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForImport();
     }
@@ -266,7 +266,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
@@ -300,7 +300,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
@@ -333,7 +333,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport() throws Exception {
         super.shouldReturnForbiddenForInstructorOfOtherCourseForBulkImport();
     }

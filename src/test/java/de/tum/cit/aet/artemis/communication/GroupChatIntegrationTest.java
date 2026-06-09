@@ -31,6 +31,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "grtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     private static final int NUMBER_OF_STUDENTS = 11;
 
     @Autowired
@@ -44,8 +46,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 0);
-        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "student42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "student42"));
         }
         userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
@@ -90,7 +92,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void startGroupChat_notAllowedAsNotStudentInCourse_shouldReturnBadRequest() throws Exception {
         // then
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
@@ -186,7 +188,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         chat.setName("updated");
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId(), chat, GroupChatDTO.class, HttpStatus.FORBIDDEN);
         // then
         var groupChat = groupChatRepository.findById(chat.getId()).orElseThrow();
@@ -252,7 +254,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register",
                 List.of(testPrefix + "student1", testPrefix + "student2", testPrefix + "student4", testPrefix + "student5"), HttpStatus.FORBIDDEN);
 
@@ -328,7 +330,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
-        userUtilService.changeUser(testPrefix + "student42");
+        userUtilService.changeUser(OTHER_PREFIX + "student42");
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"),
                 HttpStatus.FORBIDDEN);
         // then

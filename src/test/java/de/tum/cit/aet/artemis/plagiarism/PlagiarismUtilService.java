@@ -81,6 +81,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }
 
@@ -90,6 +91,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return exerciseRepository.save(exercise);
     }
 

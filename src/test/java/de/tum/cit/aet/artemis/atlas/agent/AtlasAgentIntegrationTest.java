@@ -54,8 +54,8 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void setupTestScenario() {
-        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Set up chatClient.mutate() to return a real builder backed by the mock ChatModel
         when(chatClient.mutate()).thenAnswer(inv -> ChatClient.builder(chatModel));

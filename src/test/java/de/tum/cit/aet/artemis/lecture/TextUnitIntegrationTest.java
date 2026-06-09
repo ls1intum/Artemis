@@ -32,6 +32,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private LectureTestRepository lectureRepository;
 
@@ -50,16 +52,16 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        this.lecture = lectureUtilService.createCourseWithLecture(true);
+        this.lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.textUnit = new TextUnit();
         this.textUnit.setName("LoremIpsum");
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "editor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "editor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         competency = competencyUtilService.createCompetency(lecture.getCourse());
     }
@@ -101,7 +103,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
+    @WithMockUser(username = OTHER_PREFIX + "editor42", roles = "EDITOR")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.FORBIDDEN);

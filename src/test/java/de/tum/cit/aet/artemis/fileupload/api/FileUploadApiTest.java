@@ -42,7 +42,7 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
-        fileUploadExercise = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse().getFirst();
+        fileUploadExercise = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX).getFirst();
         Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         competency = competencyUtilService.createCompetency(course);
     }

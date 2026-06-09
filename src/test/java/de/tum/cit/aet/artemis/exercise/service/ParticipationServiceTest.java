@@ -162,7 +162,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfExamParticipation() throws Exception {
         User student = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(examExercise);
         StudentParticipation participation = setupParticipation(examExercise, student, SubmissionType.INSTRUCTOR);
 

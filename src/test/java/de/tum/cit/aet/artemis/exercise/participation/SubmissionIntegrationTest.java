@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -185,6 +186,8 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
         request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
                 pageableSearchUtilService.searchMapping(search));
     }
@@ -197,6 +200,8 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = submissionRepository.save(submission);
         participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
         request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
     }
 

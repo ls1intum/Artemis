@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -111,10 +110,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // Exam programming exercises are explicitly out of scope: the orchestrator's course
         // resolution would walk to the underlying course and silently mutate course-wide
         // competencies, which is never what the instructor wants.
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        Course examCourse = examExercise.getExerciseGroup().getExam().getCourse();
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, examCourse, CourseRole.INSTRUCTOR);
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));

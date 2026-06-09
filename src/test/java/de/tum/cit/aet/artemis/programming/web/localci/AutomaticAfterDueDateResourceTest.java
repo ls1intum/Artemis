@@ -56,11 +56,11 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
         // so checkHasAtLeastRoleForExerciseElseThrow will deny them for every exercise here.
         userUtilService.addEditor(OTHER_EDITOR_LOGIN);
 
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         courseExercise.setDueDate(BASE_TIME.plusDays(3));
 
-        examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @Test

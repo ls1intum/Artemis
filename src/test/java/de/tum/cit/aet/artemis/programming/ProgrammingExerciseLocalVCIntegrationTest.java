@@ -16,9 +16,14 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     private static final String TEST_PREFIX = "programmingexerciselocalvc";
 
+    /** A user with INSTRUCTOR authority that is intentionally NOT enrolled in the test course (different prefix). */
+    private static final String OTHER_PREFIX = "other";
+
     @BeforeEach
     void initTestCase() throws Exception {
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
+        // Pre-create an instructor who is not enrolled in any course — used by *_instructorNotInCourse_forbidden tests.
+        userUtilService.addInstructor(OTHER_PREFIX + "instructor42");
     }
 
     @AfterEach
@@ -167,9 +172,9 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(TEST_PREFIX);
+        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test

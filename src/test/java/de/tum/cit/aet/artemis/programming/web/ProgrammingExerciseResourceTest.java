@@ -101,11 +101,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
-        userUtilService.enrollUserInCourse(student1, course, CourseRole.STUDENT);
 
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -125,10 +124,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
-
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
@@ -158,10 +153,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportRepositoryWithFullHistory() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
-
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
@@ -249,11 +240,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportedExerciseJsonWithCategories() throws Exception {
-        // GIVEN
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
-
         /*
          * The factory method populateUnreleasedProgrammingExercise() will call
          * programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2"))).
@@ -355,8 +341,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProblemStatement_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         String tooLongProblemStatement = "a".repeat(100_001);
 
         request.patchWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement", tooLongProblemStatement, String.class,
@@ -366,8 +350,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testCreateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
@@ -382,8 +364,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         programmingExercise.setProblemStatement("a".repeat(100_001));
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
@@ -393,8 +373,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
-        addInstructorToCourse();
-
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Setup exercise with an AFTER_DUE_DATE phase
@@ -430,9 +408,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        course = programmingExercise.getExerciseGroup().getExam().getCourse();
-        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -472,9 +448,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExerciseTimeline_preservesExamBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        course = programmingExercise.getExerciseGroup().getExam().getCourse();
-        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -523,11 +497,5 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
-    }
-
-    private void addInstructorToCourse() {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 }

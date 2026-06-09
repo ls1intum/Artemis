@@ -44,10 +44,9 @@ public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIn
      * Creates a course and 4 users (one per role) for the course and 4 users (one per role) for another course.
      */
     void defaultSetup() {
-        course = courseUtilService.createEnrolledCourse(getTestPrefix());
-
         // create users of course
         userUtilService.addUsers(getTestPrefix(), 1, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(getTestPrefix());
 
         // create users of other course
         // Users of the "other" course â€” not enrolled in the main course by design (tests 403 paths)

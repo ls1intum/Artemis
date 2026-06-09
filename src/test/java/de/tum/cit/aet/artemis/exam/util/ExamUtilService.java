@@ -1356,6 +1356,19 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
+     * Enrolls users with the given prefix in the course.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "assessmentcomplaint")
+     * @return The created TextExercise
+     */
+    public TextExercise addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(String userPrefix) {
+        ExerciseGroup exerciseGroup = addEnrolledExerciseGroupWithExamWithReviewDatesAndCourse(true, userPrefix);
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        return exerciseRepository.save(textExercise);
+    }
+
+    /**
      * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
      *
      * @return The created TextExercise

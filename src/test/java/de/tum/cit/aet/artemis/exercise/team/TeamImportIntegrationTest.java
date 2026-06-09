@@ -312,15 +312,17 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportTeamsFromExerciseForbiddenWhenNotInstructorInCourse() throws Exception {
-        // instructor1 has no UCR entry for this course, so access is denied
+    void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.unenrollUserFromCourse(instructor1, course);
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportTeamsFromListForbiddenWhenNotInstructorInCourse() throws Exception {
-        // instructor1 has no UCR entry for this course, so access is denied
+    void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
+        User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        userUtilService.unenrollUserFromCourse(instructor1, course);
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 

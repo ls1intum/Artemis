@@ -107,7 +107,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_examExercise() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true);
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM", true, TEST_PREFIX);
         var exam = programmingExercise.getExam();
         StudentExam studentExam = examUtilService.addStudentExam(exam);
         examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);

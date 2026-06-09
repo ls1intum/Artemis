@@ -213,13 +213,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_verifyNoGroupMembership() throws Exception {
-        // ManagedUserVM no longer carries groups; verifies user is created with empty user_groups
-        userTestService.createUser_verifyNoGroupMembership();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_alreadyExists() throws Exception {
         User newUser = userTestService.student;
         newUser.setId(null);

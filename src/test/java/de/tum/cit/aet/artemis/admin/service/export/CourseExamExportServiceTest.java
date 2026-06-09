@@ -48,7 +48,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseForArchiveExams() throws IOException {
-        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
         List<String> exportErrors = new ArrayList<>();
         assertThatNoException().isThrownBy(() -> courseExamExportService.exportExam(exam, submissionExportPath, exportErrors));
@@ -62,8 +62,8 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
         // Add tutor for complaint response — created before course so prefix enrollment picks them up
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor5");
 
-        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
-        var courseWithExercises = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 1, 1, true, 1, "");
+        var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        var courseWithExercises = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 1, 1, true, 1, "");
         var exercises = courseWithExercises.getExercises();
         exercises.forEach(exercise -> {
             exercise.setCourse(course);

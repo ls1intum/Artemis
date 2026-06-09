@@ -80,7 +80,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -119,6 +118,14 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "participationintegration";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    private static final String OTHER_STUDENT_LOGIN = OTHER_PREFIX + "student42";
+
+    private static final String OTHER_TUTOR_LOGIN = OTHER_PREFIX + "tutor42";
+
+    private static final String OTHER_INSTRUCTOR_LOGIN = OTHER_PREFIX + "instructor42";
 
     @Autowired
     private StudentParticipationTestRepository participationRepo;
@@ -213,17 +220,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, 4, 1, 1, 1);
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
-        // Create the course first so that tutor2/instructor2 (added below) are NOT enrolled.
-        // Their logins share the TEST_PREFIX so enrollPrefixedUsersInCourse would pick them up
-        // if they already existed when the course is created.
         course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
 
-        // Add users that are not in the course/exercise (created AFTER enrollment so they are excluded)
-        // student3 is created by addUsers above and IS enrolled in course; tests that need an unenrolled
-        // student should use a locally created unenrolled course instead.
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student3");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
+        // Add users that are not in the course/exercise
+        userUtilService.createAndSaveUser(OTHER_STUDENT_LOGIN);
+        userUtilService.createAndSaveUser(OTHER_TUTOR_LOGIN);
+        userUtilService.createAndSaveUser(OTHER_INSTRUCTOR_LOGIN);
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
@@ -348,13 +350,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student3")
+    @WithMockUser(username = OTHER_STUDENT_LOGIN)
     void participateInTextExercise_notStudentInCourse() throws Exception {
-        // student3 IS enrolled in the shared course (created by addUsers); use a course with no
-        // enrollment (empty prefix) so student3's prefixed login is not picked up.
-        Course unenrolledCourse = courseUtilService.addCourseWithModelingAndTextExercise();
-        TextExercise unenrolledTextExercise = ExerciseUtilService.getFirstExerciseWithType(unenrolledCourse, TextExercise.class);
-        request.post("/api/exercise/exercises/" + unenrolledTextExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+        request.post("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -643,7 +641,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void practiceFileUploadExercise_notImplemented() throws Exception {
-        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse();
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = exerciseRepository.save(fileUploadExercises.getFirst());
         fileUploadExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepository.save(fileUploadExercise);
@@ -1398,7 +1396,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_TUTOR_LOGIN, roles = "TA")
     void updateParticipation_notTutorInCourse() throws Exception {
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -2049,7 +2047,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedForFileUploadExercise_thenFail() throws Exception {
-        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse();
+        List<FileUploadExercise> fileUploadExercises = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX);
         FileUploadExercise fileUploadExercise = exerciseRepository.save(fileUploadExercises.getFirst());
 
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, fileUploadExercise,

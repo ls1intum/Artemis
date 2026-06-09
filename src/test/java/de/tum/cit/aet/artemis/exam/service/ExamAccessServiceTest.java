@@ -109,17 +109,16 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void init() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
-        User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
-        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        User editor1 = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
+        userUtilService.removeUserFromAllCourses(instructor1);
+        userUtilService.removeUserFromAllCourses(instructor2);
         userUtilService.enrollUserInCourse(instructor1, course1, CourseRole.INSTRUCTOR);
         userUtilService.enrollUserInCourse(instructor2, course2, CourseRole.INSTRUCTOR);
-        userUtilService.enrollUserInCourse(tutor1, course1, CourseRole.TEACHING_ASSISTANT);
-        userUtilService.enrollUserInCourse(editor1, course1, CourseRole.EDITOR);
+
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course2, true);
         testExam1 = examUtilService.addTestExamWithExerciseGroup(course1, true);
@@ -415,7 +414,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCreateStudentExamAccess() {
-        // student1 has no UCR row in course1 → access is denied
+        userUtilService.unenrollUserFromCourse(student1, course1);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 

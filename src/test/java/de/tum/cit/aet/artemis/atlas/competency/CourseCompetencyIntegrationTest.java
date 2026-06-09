@@ -48,14 +48,14 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
-    private static final String TEST_PREFIX = "coursecompetencyintegrationtest";
+    private static final String TEST_PREFIX = "coursecompetency";
 
     /** Student/instructor not enrolled in either test course; exercises the wrong-course branches. */
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @BeforeEach
     void setupTestScenario() {
-        super.setupTestScenario(TEST_PREFIX, course -> competencyUtilService.createCompetency(course, "penguin"));
+        super.setupTestScenario(TEST_PREFIX, OTHER_PREFIX, course -> competencyUtilService.createCompetency(course, "penguin"));
     }
 
     private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, double pointsOfExercise,
@@ -134,7 +134,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForUserNotInCourse() throws Exception {
         super.shouldReturnForbiddenForUserNotInCourse();
     }
@@ -168,7 +168,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
         super.testShouldReturnForbiddenForStudentNotInCourse();
     }
@@ -229,7 +229,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void shouldReturnForbiddenForInstructorNotInCourse() throws Exception {
         super.shouldReturnForbiddenForInstructorNotInCourse();
     }
@@ -377,7 +377,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     class GetCompetenciesForImport {
 
         @Test
-        @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
         void shouldNotGetCompetenciesForInstructorOfOtherCourse() throws Exception {
             // configure search so all competencies would get returned
             final var search = pageableSearchUtilService.configureCompetencySearch("", "", "", "");

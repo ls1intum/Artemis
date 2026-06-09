@@ -148,7 +148,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetUnreleasedAttachmentVideoUnitAsTutor() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
@@ -300,7 +300,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -354,7 +354,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAttachmentFileAsEditor() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
         Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
         attachment.setLecture(lecture);
@@ -371,7 +371,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
 
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
@@ -413,7 +413,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
         tempFile.toFile().deleteOnExit();
 
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
@@ -614,7 +614,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private AttachmentVideoUnit createAttachmentVideoUnitWithTempFile(Path tempFile) {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
@@ -627,7 +627,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Attachment createLectureAttachmentWithTempFile(Path tempFile) {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lectureRepo.save(lecture);
 
         Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now().minusDays(1));

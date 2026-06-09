@@ -146,6 +146,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private static final String TEST_PREFIX = "studexam";
 
+    private static final String OTHER_STUDENT = TEST_PREFIX + "other" + "student42";
+
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
@@ -279,7 +281,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_STUDENT);
         studentRepos.clear();
         programmingInitialCommitHashes.clear();
         programmingUpdatedCommitHashes.clear();
@@ -2703,9 +2705,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     // StudentExamResource - getStudentExamsForCoursePerUser
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamsForCoursePerUser_NoCourseAccess() throws Exception {
-        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
@@ -2735,18 +2737,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoCourseAccess() throws Exception {
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoExamAccess() throws Exception {
         Exam exam99 = examUtilService.addTestExam(course1);
-        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam99.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2787,7 +2789,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     // StudentExamRessource - GetStudentExamForConduction
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForConduction_notRegisteredInCourse() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);

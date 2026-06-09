@@ -57,6 +57,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -65,7 +66,6 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
             quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
         }
 
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         quizSubmission.submitted(isSubmitted);
 
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);

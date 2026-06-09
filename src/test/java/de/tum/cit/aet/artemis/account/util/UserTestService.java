@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -480,32 +478,6 @@ public class UserTestService {
         var createdUser = userTestRepository.findOneByEmailIgnoreCase(newUser.getEmail());
         assertThat(createdUser).isPresent();
         assertThat(createdUser.get().getId()).isNotNull();
-    }
-
-    // Test
-    public void createUser_verifyNoGroupMembership() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
-
-        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
-
-        var newUser = student;
-        newUser.setId(null);
-        newUser.setLogin("batman");
-        newUser.setEmail("foobar@tum.com");
-        // Note: ManagedUserVM no longer carries group strings (UserDTO dropped groups in Phase 6).
-        // The admin create API always creates users with empty groups; course membership is via UCR.
-
-        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-
-        var createdUserOrEmpty = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin(newUser.getLogin());
-        assertThat(createdUserOrEmpty).isPresent();
-
-        var createdUser = createdUserOrEmpty.get();
-        assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getGroups()).as("Admin-created user always starts with empty user_groups").isEmpty();
     }
 
     // Test

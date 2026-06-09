@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -94,6 +95,9 @@ public class LectureUtilService {
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     /**
      * Creates and saves a Course with a Lecture. The Lecture is only saved optionally. The Lecture is empty as it does not contain any LectureUnits.
      *
@@ -110,6 +114,22 @@ public class LectureUtilService {
         if (saveLecture) {
             lectureRepo.save(lecture);
         }
+        return lecture;
+    }
+
+    /**
+     * Creates and saves a Course with a Lecture, enrolling all test users identified by the given prefix.
+     * <p>
+     * This is the enrollment-aware counterpart of {@link #createCourseWithLecture(boolean)}.
+     * Use this whenever the acting test user must pass the course-membership access check.
+     *
+     * @param userPrefix  The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param saveLecture True, if the Lecture should be saved
+     * @return The created Lecture
+     */
+    public Lecture createEnrolledCourseWithLecture(String userPrefix, boolean saveLecture) {
+        Lecture lecture = createCourseWithLecture(saveLecture);
+        userUtilService.enrollPrefixedUsersInCourse(lecture.getCourse(), userPrefix);
         return lecture;
     }
 

@@ -753,7 +753,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateScoresWithSCAAndLongFeedbackText(boolean templateParticipation) {
-        programmingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA, TEST_PREFIX);
         Result result;
 
         if (templateParticipation) {

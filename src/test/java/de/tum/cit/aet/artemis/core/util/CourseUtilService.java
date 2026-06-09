@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -356,9 +355,9 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
+    public List<Course> createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
             int numberOfTutorParticipations) throws IOException {
-        List<Course> courses = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+        List<Course> courses = createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             var competency = competencyUtilService.orElseThrow().createCompetency(course);
@@ -377,9 +376,9 @@ public class CourseUtilService {
      * @return A List of the created Courses
      * @throws IOException If a file cannot be loaded from resources
      */
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
-        List<Course> courses = createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
+    public List<Course> createEnrolledCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles,
+            int numberOfTutorParticipations) throws IOException {
+        List<Course> courses = createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -402,8 +401,8 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
-        return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
+    public List<Course> createEnrolledCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
+        return createEnrolledCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
     /**
@@ -416,7 +415,7 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+    public List<Course> createEnrolledCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
             throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -1121,9 +1120,9 @@ public class CourseUtilService {
      * @param validModel                    Model for the modeling submission
      * @return The generated course
      */
-    public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
+    public Course addEnrolledCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
             int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) throws IOException {
-        return addCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
+        return addEnrolledCourseWithExercisesAndSubmissions("short", userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
                 typeComplaint, numberComplaintResponses, validModel, true);
     }
 
@@ -1147,11 +1146,11 @@ public class CourseUtilService {
      * @param validModel                    Model for the modeling submission.
      * @return The generated course.
      */
-    public Course addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
+    public Course addEnrolledCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(String shortName, String userPrefix, String suffix, int numberOfExercises,
             int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel)
             throws IOException {
-        return addCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments, numberOfComplaints,
-                typeComplaint, numberComplaintResponses, validModel, false);
+        return addEnrolledCourseWithExercisesAndSubmissions(shortName, userPrefix, suffix, numberOfExercises, numberOfSubmissionPerExercise, numberOfAssessments,
+                numberOfComplaints, typeComplaint, numberComplaintResponses, validModel, false);
     }
 
     /**
@@ -1175,7 +1174,7 @@ public class CourseUtilService {
      * @param assessmentDueDateInThePast    If the assessment due date of all exercises is in the past (true) or not (false).
      * @return The generated course.
      */
-    public Course addCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
+    public Course addEnrolledCourseWithExercisesAndSubmissions(String courseShortName, String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise,
             int numberOfAssessments, int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel, boolean assessmentDueDateInThePast)
             throws IOException {
         Course course = CourseFactory.generateCourse(null, courseShortName, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
@@ -1189,9 +1188,11 @@ public class CourseUtilService {
             assessmentDueDate = FUTURE_TIMESTAMP.plusHours(2);
 
         }
-        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course = courseRepo.save(course);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        // getTutors must be called AFTER the course is saved AND users are enrolled so that
+        // the UCR table has entries and the query returns the expected tutors.
+        var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course.setExercises(new HashSet<>()); // avoid lazy init issue
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
@@ -1299,7 +1300,7 @@ public class CourseUtilService {
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public Course createCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
+    public Course createEnrolledCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
         var course = addEnrolledEmptyCourse(userPrefix);
 
         // Create a file upload exercise with a dummy submission file
@@ -1356,12 +1357,13 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves a course with text exercise and a tutor (no prefix users enrolled).
+     * Creates and saves a course with text exercise and a tutor, enrolling users by login prefix.
      *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
      * @param tutorLogin The login of the tutor to be created.
      * @return The created course.
      */
-    public Course createCourseWithTextExerciseAndTutor(String tutorLogin) {
+    public Course createEnrolledCourseWithTextExercise(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         StudentParticipation participation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
@@ -1370,28 +1372,12 @@ public class CourseUtilService {
         textSubmission.setParticipation(participation);
         textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
-        User user = userUtilService.createAndSaveUser(tutorLogin);
-        // Enroll as TA via UCR (the authoritative source for role checks)
-        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.TEACHING_ASSISTANT)) {
-            userUtilService.enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
-        }
-        return course;
-    }
 
-    /**
-     * Creates and saves a course with text exercise and a tutor, enrolling users by login prefix.
-     *
-     * @param tutorLogin The login of the tutor to be created.
-     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
-     * @return The created course.
-     */
-    public Course createEnrolledCourseWithTextExerciseAndTutor(String tutorLogin, String userPrefix) {
-        Course course = createCourseWithTextExerciseAndTutor(tutorLogin);
         userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 
-    public Course createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor() {
+    public Course createEnrolledCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();
@@ -1401,6 +1387,7 @@ public class CourseUtilService {
         course.addExercises(programmingExercise1);
         course.addExercises(programmingExercise2);
 
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
         return course;
     }
 

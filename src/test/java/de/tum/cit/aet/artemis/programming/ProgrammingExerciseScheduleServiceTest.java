@@ -551,7 +551,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testStudentExamIndividualWorkingTimeChangeDuringConduction() {
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         Exam exam = examExercise.getExam();
         exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
@@ -566,7 +566,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRescheduleExamDuringConduction() {
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         Exam exam = examExercise.getExam();
         exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);

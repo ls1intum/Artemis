@@ -18,6 +18,8 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     private static final String TEST_PREFIX = "courselocalvcjenkins";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
@@ -149,12 +151,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourse_persistsGroupNameFields() throws Exception {
-        courseTestService.testUpdateCourse_persistsGroupNameFields();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithCourseImage() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithCourseImage();
     }
@@ -184,7 +180,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "TA")
     void testGetCourse_tutorNotInCourse() throws Exception {
         courseTestService.testGetCourse_tutorNotInCourse();
     }
@@ -234,7 +230,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
+    @WithMockUser(username = OTHER_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
     @ValueSource(booleans = { true, false })
     void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
         courseTestService.testGetAllCoursesForDashboardExams(userRefresh);
@@ -301,13 +297,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
         courseTestService.testGetCourseForInstructorDashboardWithStats_instructorNotInCourse();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor6", roles = "TA")
     void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
         courseTestService.testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse();
     }
@@ -367,7 +363,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
         courseTestService.testGetCategoriesInCourse_instructorNotInCourse();
     }
@@ -401,7 +397,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testUpdateCourse_instructorNotInCourse() throws Exception {
         courseTestService.testUpdateCourse_instructorNotInCourse();
     }

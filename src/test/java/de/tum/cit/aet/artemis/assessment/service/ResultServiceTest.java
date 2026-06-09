@@ -104,7 +104,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         this.programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(this.programmingExerciseStudentParticipation, new ProgrammingSubmission());
 
-        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         this.examStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(examStudentParticipation, new ProgrammingSubmission());
     }

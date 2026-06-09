@@ -50,6 +50,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     /** Stored in {@link #setupTestScenario} so that helper methods can create prefix-matched courses. */
     protected String testPrefix;
 
+    protected String otherPrefix;
+
     protected Course course;
 
     protected Course course2;
@@ -67,9 +69,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     protected TextExercise textExercise;
 
     // BeforeEach
-    void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+    void setupTestScenario(String TEST_PREFIX, String OTHER_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
         // Store prefix so that helper test methods can create prefix-matched courses.
         testPrefix = TEST_PREFIX;
+        otherPrefix = OTHER_PREFIX;
 
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
         atlasMLRequestMockProvider.ifPresent(provider -> {
@@ -78,10 +81,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         });
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 1); // outsider student, instructor — never enrolled in either course
-
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+
+        // Add users that are not in the course
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);

@@ -151,7 +151,7 @@ public class UserUtilService {
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
             user.setAuthorities(authorities);
-            user = userTestRepository.save(user);
+            user = userTestRepository.saveOrUpdate(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -195,7 +195,7 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        return userTestRepository.save(user);
+        return userTestRepository.saveOrUpdate(user);
     }
 
     /**
@@ -209,7 +209,7 @@ public class UserUtilService {
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
         user.setVcsAccessToken(vcsAccessToken);
         user.setVcsAccessTokenExpiryDate(expiryDate);
-        return userTestRepository.save(user);
+        return userTestRepository.saveOrUpdate(user);
     }
 
     /**
@@ -234,7 +234,7 @@ public class UserUtilService {
     public void deleteUserVcsAccessToken(User userWithUserToken) {
         userWithUserToken.setVcsAccessTokenExpiryDate(null);
         userWithUserToken.setVcsAccessToken(null);
-        userTestRepository.save(userWithUserToken);
+        userTestRepository.saveOrUpdate(userWithUserToken);
     }
 
     /**
@@ -285,7 +285,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return userTestRepository.saveOrUpdate(user);
     }
 
     /**
@@ -316,7 +316,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return userTestRepository.saveOrUpdate(user);
     }
 
     /**
@@ -410,7 +410,9 @@ public class UserUtilService {
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
-        userTestRepository.saveAll(students);
+        // Use saveOrUpdate instead of saveAll: saveAll uses JPA merge() which leaves the legacy `groups`
+        // PersistentSet with sn=null, causing NPE in PersistentSet.hasDeletes() at flush time.
+        students.stream().map(userTestRepository::saveOrUpdate).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -426,7 +428,7 @@ public class UserUtilService {
         var existingUserWithRegistrationNumber = userTestRepository.findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
         if (existingUserWithRegistrationNumber.isPresent()) {
             existingUserWithRegistrationNumber.get().setRegistrationNumber(null);
-            userTestRepository.save(existingUserWithRegistrationNumber.get());
+            userTestRepository.saveOrUpdate(existingUserWithRegistrationNumber.get());
         }
     }
 
@@ -441,7 +443,7 @@ public class UserUtilService {
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
         instructor.setAuthorities(instructorAuthorities);
-        instructor = userTestRepository.save(instructor);
+        instructor = userTestRepository.saveOrUpdate(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
@@ -456,7 +458,7 @@ public class UserUtilService {
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
         editor.setAuthorities(editorAuthorities);
-        editor = userTestRepository.save(editor);
+        editor = userTestRepository.saveOrUpdate(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
@@ -471,7 +473,7 @@ public class UserUtilService {
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
         ta.setAuthorities(tutorAuthorities);
-        ta = userTestRepository.save(ta);
+        ta = userTestRepository.saveOrUpdate(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
@@ -486,7 +488,7 @@ public class UserUtilService {
     public void addStudent(final String studentName) {
         User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
         student.setAuthorities(studentAuthorities);
-        student = userTestRepository.save(student);
+        student = userTestRepository.saveOrUpdate(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
@@ -589,7 +591,7 @@ public class UserUtilService {
         String superAdminLogin = prefix + "superadmin";
         User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
         superAdmin.setAuthorities(superAdminAuthorities);
-        superAdmin = userTestRepository.save(superAdmin);
+        superAdmin = userTestRepository.saveOrUpdate(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
     }
 
@@ -602,7 +604,7 @@ public class UserUtilService {
         String adminLogin = prefix + "admin";
         User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
         admin.setAuthorities(adminAuthorities);
-        admin = userTestRepository.save(admin);
+        admin = userTestRepository.saveOrUpdate(admin);
         assertThat(admin.getId()).as("Admin has been created").isNotNull();
     }
 
@@ -646,8 +648,7 @@ public class UserUtilService {
      *
      * @param login The login of the User
      */
-    public void removeUserFromAllCourses(String login) {
-        User user = getUserByLogin(login);
+    public void removeUserFromAllCourses(User user) {
         userCourseRoleRepository.deleteByUser_Id(user.getId());
     }
 

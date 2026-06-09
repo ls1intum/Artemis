@@ -310,7 +310,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource
     void testQuizStartParticipationCorrectDataWhileActive_asStudent(QuizMode quizMode) throws Exception {
-        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(20), ZonedDateTime.now().plusHours(1), quizMode);
+        var quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(20), ZonedDateTime.now().plusHours(1), quizMode);
         quizExercise.setDuration(500);
         quizExercise = exerciseRepository.save(quizExercise);
 
@@ -370,7 +370,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -443,7 +443,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_badRequest() throws Exception {
-        QuizExercise quizExerciseServer = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExerciseServer = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2),
+                QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDuration(2);
         quizExerciseService.save(quizExerciseServer);
 
@@ -538,7 +539,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        quizExercise = quizExerciseService.save(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -548,7 +550,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
@@ -596,7 +598,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -615,7 +617,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -633,7 +635,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExerciseService.save(quizExercise);
 
@@ -653,7 +655,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -978,7 +980,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, quizMode);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1012,7 +1014,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
             quizExercise.setDuration(10);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1039,7 +1041,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleAnswerOptionIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1072,7 +1074,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_dropsAnswerWithStaleQuizQuestionId() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1102,7 +1104,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_dropsAnswerWithMismatchedType() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1135,7 +1137,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleDragItemIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1173,7 +1175,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleDropLocationIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1209,7 +1211,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testQuizSubmitLiveMode_ignoresStaleSpotIds() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -1248,7 +1250,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode_persistsAllAnswerTypesCorrectly(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, quizMode);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 

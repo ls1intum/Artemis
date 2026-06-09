@@ -77,7 +77,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
-        userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
         // Make exercise team-based and already released to students
         exercise = course.getExercises().iterator().next();
@@ -488,7 +487,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.getFirst();
 
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

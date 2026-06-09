@@ -583,7 +583,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
@@ -715,7 +714,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
         request.delete(path, HttpStatus.FORBIDDEN);
     }
@@ -745,7 +743,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -790,7 +787,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -809,7 +805,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -900,7 +895,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.FORBIDDEN);
     }
 
@@ -1019,7 +1013,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         final var endpoint = "/api/programming/programming-exercises/timeline";
         MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
@@ -1042,7 +1035,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
@@ -1069,7 +1061,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         programmingExercise.setId(null);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.FORBIDDEN);
     }
@@ -1291,14 +1282,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(0.0);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
@@ -1307,7 +1296,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
@@ -1337,7 +1325,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1461,7 +1448,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt1");
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
 
@@ -1480,7 +1466,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
-        userUtilService.addInstructor(userPrefix + "instructoralt");
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1664,7 +1649,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarism() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1", userPrefix);
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
 
@@ -1688,7 +1673,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismForTeamExercise() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2", userPrefix);
 
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
@@ -1706,7 +1691,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismJplagReport() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3", userPrefix);
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         // Clean up any stale LocalVC project folder BEFORE creating participations
@@ -2192,8 +2177,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
-        userUtilService.addInstructor(testPrefix + "instructoralt1");
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),

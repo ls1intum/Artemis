@@ -43,6 +43,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "eqservicetest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private StudentExamService studentExamService;
 
@@ -101,7 +103,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseGroup.addExercise(quizExercise);
 
         // Add an instructor who is not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor6");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor6");
 
     }
 
@@ -118,7 +120,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor6", roles = "INSTRUCTOR")
     void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }

@@ -82,7 +82,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportWithMissingRepositories() throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0);
         Optional<ProgrammingExercise> progrO = courses.getFirst().getExercises().stream().filter(e -> e instanceof ProgrammingExercise).map(e -> (ProgrammingExercise) e)
                 .findFirst();
         assertThat(progrO).isPresent();
