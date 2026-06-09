@@ -141,7 +141,7 @@ describe('GradingKeyTableComponent', () => {
             fixture.detectChanges();
 
             expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
-            expect(component.title).toBe('Test Exam');
+            expect(component.title()).toBe('Test Exam');
             expect(component.gradeSteps()).toHaveLength(2);
             expect(component.isBonus()).toBe(false);
             expect(component.plagiarismGrade()).toBe('5.0');
@@ -397,7 +397,7 @@ describe('GradingKeyTableComponent', () => {
             fixture.detectChanges();
 
             expect(component.gradeSteps()).toHaveLength(0);
-            expect(component.title).toBeUndefined();
+            expect(component.title()).toBeUndefined();
         });
     });
 });

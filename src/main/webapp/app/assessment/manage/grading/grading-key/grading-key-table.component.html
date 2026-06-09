@@ -5,7 +5,7 @@
                 <tr>
                     <th jhiTranslate="{{ isBonus() ? 'artemisApp.exam.examSummary.bonus' : 'artemisApp.exam.examSummary.grade' }}"></th>
                     <th jhiTranslate="artemisApp.exam.examSummary.interval"></th>
-                    @if (hasPointsSet) {
+                    @if (hasPointsSet()) {
                         <th jhiTranslate="artemisApp.exam.examSummary.intervalPoints"></th>
                     }
                 </tr>
@@ -20,7 +20,7 @@
                         </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>&mdash;</td>
                         }
                     </tr>
@@ -33,7 +33,7 @@
                         </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>&mdash;</td>
                         }
                     </tr>
@@ -44,7 +44,7 @@
                         <td>
                             <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                         </td>
-                        @if (hasPointsSet) {
+                        @if (hasPointsSet()) {
                             <td>
                                 <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
                             </td>

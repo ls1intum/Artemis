@@ -44,11 +44,11 @@ export class GradingKeyTableComponent implements OnInit {
     courseId?: number;
     examId?: number;
 
-    title?: string;
+    readonly title = signal<string | undefined>(undefined);
     readonly gradeSteps = signal<GradeStep[]>([]);
     readonly isBonus = signal(false);
 
-    hasPointsSet = false;
+    readonly hasPointsSet = signal(false);
 
     ngOnInit(): void {
         const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
@@ -60,7 +60,7 @@ export class GradingKeyTableComponent implements OnInit {
 
         this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
             if (gradeSteps) {
-                this.title = gradeSteps.title;
+                this.title.set(gradeSteps.title);
                 this.isBonus.set(gradeSteps.gradeType === GradeType.BONUS);
                 this.gradeSteps.set(this.gradingService.sortGradeSteps(gradeSteps.gradeSteps));
                 this.plagiarismGrade.set(gradeSteps.plagiarismGrade);
@@ -78,9 +78,9 @@ export class GradingKeyTableComponent implements OnInit {
                         this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints!);
                     }
                 }
-                this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps());
+                this.hasPointsSet.set(this.gradingService.hasPointsSet(this.gradeSteps()));
             } else {
-                this.hasPointsSet = false;
+                this.hasPointsSet.set(false);
             }
         });
     }
