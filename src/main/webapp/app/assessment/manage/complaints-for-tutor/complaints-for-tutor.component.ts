@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnInit, inject, input, model, output, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
@@ -31,7 +31,6 @@ export class ComplaintsForTutorComponent implements OnInit {
     private complaintResponseService = inject(ComplaintResponseService);
     private router = inject(Router);
     private location = inject(Location);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly complaint = model.required<Complaint>();
     readonly isTestRun = input(false);
@@ -103,7 +102,6 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.complaint.set(this.complaintResponse.complaint!);
                     this.lockedByCurrentUser.set(true);
                     this.showLockDuration.set(true);
-                    this.changeDetectorRef.markForCheck();
                     this.alertService.success('artemisApp.locks.acquired');
                 },
                 error: (err: HttpErrorResponse) => {
@@ -134,7 +132,6 @@ export class ComplaintsForTutorComponent implements OnInit {
                         this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint!);
                         this.lockedByCurrentUser.set(true);
-                        this.changeDetectorRef.markForCheck();
                         this.alertService.success('artemisApp.locks.acquired');
                     },
                     error: (err: HttpErrorResponse) => {

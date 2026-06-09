@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -60,7 +60,6 @@ export class BonusComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly CALCULATION_PLUS = 1;
     readonly CALCULATION_MINUS = -1;
@@ -172,7 +171,6 @@ export class BonusComponent implements OnInit {
             )
             .subscribe(() => {
                 this.setSourceGradingScale();
-                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -291,7 +289,6 @@ export class BonusComponent implements OnInit {
             )
             .subscribe((bonusResponse) => {
                 this.bonus.id = bonusResponse.body?.id;
-                this.changeDetectorRef.markForCheck();
             });
     }
 
@@ -311,7 +308,6 @@ export class BonusComponent implements OnInit {
                 next: (bonusResponse) => {
                     this.setBonus(bonusResponse.body || new Bonus());
                     this.dialogErrorSource.next('');
-                    this.changeDetectorRef.markForCheck();
                 },
                 error: (error) => this.dialogErrorSource.next(error.message),
             });
