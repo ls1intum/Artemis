@@ -568,6 +568,24 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(emitted).toBe(expected);
     });
 
+    it('should show the remaining time box in practice mode even though the official quiz has ended', () => {
+        // Regression: in practice mode the official quiz has always ended (that is what makes practice available),
+        // but the practice run has its own running countdown that must still be displayed in the header.
+        component.mode = 'practice';
+        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.waitingForQuizStart = false;
+        component.showingResult = false;
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = 300;
+        component.remainingTimeText = '5 min';
+
+        component.syncSubmitState();
+
+        const info = component.liveHeaderInfo();
+        expect(info?.showRemainingTime).toBe(true);
+        expect(info?.remainingTimeText).toBe('5 min');
+    });
+
     it('should not emit a live quiz status before the quiz has loaded', () => {
         component.mode = 'live';
         component.quizExercise = undefined as unknown as QuizExercise;
