@@ -104,6 +104,15 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         this.settings.stepSize = this.initialStepSize();
     }
 
+    // NOTE (signal migration): intentionally NOT migrated to computed()/effect() yet. This hook is a side-effect
+    // orchestrator, not derived state, and a faithful effect() rewrite would change behavior:
+    //   1. It writes the NON-signal `this.settings` via `settings.setOptionsFromChanges(changes)`, which is keyed on
+    //      WHICH inputs changed this cycle (and remaps the `cropper` alias). Reproducing that "apply only the changed
+    //      inputs" granularity needs manual per-input previous-value tracking.
+    //   2. doAutoCrop()/crop() emit the `startCropImage`/`imageCropped` outputs synchronously during the change cycle;
+    //      an effect() runs after change detection (and after ngOnInit), shifting that emission timing for parents.
+    // Tracked for future removal once a signal-friendly approach exists.
+    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges input-change granularity and synchronous crop output timing.
     ngOnChanges(changes: SimpleChanges): void {
         // Keep the internal mutable cropper in sync with the input.
         if (changes.cropperInput) {

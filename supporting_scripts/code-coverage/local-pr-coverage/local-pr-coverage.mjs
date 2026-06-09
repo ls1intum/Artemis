@@ -37,7 +37,6 @@ const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 // Configuration
 const CLIENT_SRC_PREFIX = 'src/main/webapp/app/';
 const SERVER_SRC_PREFIX = 'src/main/java/de/tum/cit/aet/artemis/';
-const CLIENT_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/jest/coverage-summary.json');
 const VITEST_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 const SERVER_COVERAGE_DIR = path.join(PROJECT_ROOT, 'build/reports/jacoco');
 
@@ -387,16 +386,12 @@ async function runClientTests(modules, options) {
         return true;
     }
 
-    // Separate Jest and Vitest modules
-    const jestModules = modules.filter((m) => !VITEST_MODULES.has(m));
+    // The entire client runs on Vitest
     const vitestModules = modules.filter((m) => VITEST_MODULES.has(m));
 
     info(`Running client tests for modules: ${modules.join(', ')}`);
     if (vitestModules.length > 0) {
         log(`  Vitest modules: ${vitestModules.join(', ')}`, options);
-    }
-    if (jestModules.length > 0) {
-        log(`  Jest modules: ${jestModules.join(', ')}`, options);
     }
 
     log(`Running prebuild...`, options);
@@ -458,7 +453,7 @@ async function runClientTests(modules, options) {
 
                 // Extract and display failed tests summary
                 const allOutput = (vitestResult.stdout || '') + (vitestResult.stderr || '');
-                const failedTests = extractJestFailedTests(allOutput); // Vitest uses similar output format
+                const failedTests = extractVitestFailedTests(allOutput);
                 if (failedTests.length > 0) {
                     printFailedTestsSummary(failedTests);
                 } else if (!options.verbose) {
@@ -476,59 +471,6 @@ async function runClientTests(modules, options) {
             }
         } catch (err) {
             warn(`Vitest failed: ${err.message}`);
-            allSuccess = false;
-        }
-    }
-
-    // Run Jest for non-Vitest modules
-    if (jestModules.length > 0) {
-        // Build test pattern to match files in the specified modules
-        // Escape module names for regex safety (modules are already validated)
-        const testPattern = jestModules.map((m) => `^${escapeRegex(PROJECT_ROOT)}/src/main/webapp/app/${escapeRegex(m)}/`).join('|');
-
-        log(`Running ng test with pattern: ${testPattern}`, options);
-
-        // Run ng test with arguments array (no shell interpolation)
-        // Disable coverage threshold since we're only running a subset of tests
-        try {
-            const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-            const testResult = spawnSync(pnpmCmd, [
-                'exec',
-                'ng', 'test',
-                '--coverage',
-                '--log-heap-usage',
-                '-w=4',
-                `--test-path-pattern=${testPattern}`,
-                '--coverage-threshold={}'
-            ], {
-                cwd: PROJECT_ROOT,
-                stdio: options.verbose ? 'inherit' : 'pipe',
-                encoding: 'utf-8',
-                maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
-            });
-            if (testResult.status !== 0) {
-                warn(`Jest tests exited with code ${testResult.status || 1}`);
-
-                // Extract and display failed tests summary
-                const allOutput = (testResult.stdout || '') + (testResult.stderr || '');
-                const failedTests = extractJestFailedTests(allOutput);
-                if (failedTests.length > 0) {
-                    printFailedTestsSummary(failedTests);
-                } else if (!options.verbose) {
-                    // If no failed tests found in output, show raw output
-                    if (testResult.stdout) {
-                        console.log(testResult.stdout);
-                    }
-                    if (testResult.stderr) {
-                        console.error(testResult.stderr);
-                    }
-                }
-                allSuccess = false;
-            } else {
-                success('Jest tests completed');
-            }
-        } catch (err) {
-            warn(`Jest tests failed: ${err.message}`);
             allSuccess = false;
         }
     }
@@ -554,9 +496,9 @@ function extractFailedTests(output) {
 }
 
 /**
- * Extract failed test names from Jest/Vitest output
+ * Extract failed test names from Vitest output
  */
-function extractJestFailedTests(output) {
+function extractVitestFailedTests(output) {
     if (!output) return [];
     const failedTests = [];
     const lines = output.split('\n');
@@ -570,7 +512,7 @@ function extractJestFailedTests(output) {
             continue;
         }
 
-        // Match "✕ test name" or "× test name" lines (Jest failure indicators)
+        // Match "✕ test name" or "× test name" lines (Vitest failure indicators)
         const testMatch = line.match(/^\s*[✕×]\s+(.+?)(?:\s+\(\d+\s*m?s\))?$/);
         if (testMatch && currentFile) {
             failedTests.push(`${currentFile} > ${testMatch[1]}`);
@@ -676,35 +618,12 @@ function lookupCoverageInSummary(fullPath, coverageSummary) {
 }
 
 /**
- * Get client coverage for a specific file from coverage-summary.json
- * For files in Vitest modules (e.g., fileupload), prefers Vitest coverage data.
- * Falls back to the other coverage source if not found in the primary source.
+ * Get client coverage for a specific file from the Vitest coverage-summary.json.
  */
-function getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSummary = null) {
+function getClientFileCoverage(filePath, vitestCoverageSummary = null) {
     // The coverage summary uses full paths from src/main/webapp/
     const fullPath = `src/main/webapp/app/${filePath}`;
-
-    // Check if file is in a Vitest module
-    const moduleName = filePath.split('/')[0];
-    const isVitestModule = VITEST_MODULES.has(moduleName);
-
-    // For Vitest modules, check Vitest coverage first, then fall back to Jest
-    // For Jest modules, check Jest coverage first, then fall back to Vitest
-    if (isVitestModule) {
-        const vitestCoverage = lookupCoverageInSummary(fullPath, vitestCoverageSummary);
-        if (vitestCoverage !== null) {
-            return vitestCoverage;
-        }
-        // Fall back to Jest coverage (in case vitest coverage is unavailable)
-        return lookupCoverageInSummary(fullPath, jestCoverageSummary);
-    } else {
-        const jestCoverage = lookupCoverageInSummary(fullPath, jestCoverageSummary);
-        if (jestCoverage !== null) {
-            return jestCoverage;
-        }
-        // Fall back to Vitest coverage (in case file is covered transitively by vitest tests)
-        return lookupCoverageInSummary(fullPath, vitestCoverageSummary);
-    }
+    return lookupCoverageInSummary(fullPath, vitestCoverageSummary);
 }
 
 /**
@@ -857,7 +776,7 @@ function countClientExpects(sourceFilePath) {
             return null;
         }
         const content = fs.readFileSync(absolutePath, 'utf-8');
-        // Count expect( calls - the standard Jest/Jasmine assertion
+        // Count expect( calls - the standard Vitest assertion
         const matches = content.match(/expect\s*\(/g);
         return matches ? matches.length : 0;
     } catch {
@@ -1056,20 +975,6 @@ function buildClientCoverageTable(clientFiles, options) {
         return null;
     }
 
-    // Always try to load both coverage files for robustness
-    // The getClientFileCoverage function will check both sources with appropriate fallbacks
-    let jestCoverageSummary = null;
-    if (fs.existsSync(CLIENT_COVERAGE_SUMMARY)) {
-        try {
-            jestCoverageSummary = JSON.parse(fs.readFileSync(CLIENT_COVERAGE_SUMMARY, 'utf-8'));
-            log('Loaded Jest coverage-summary.json', options);
-        } catch (err) {
-            log(`Failed to parse Jest coverage data: ${err.message}`, options);
-        }
-    } else {
-        log('Jest coverage-summary.json not found', options);
-    }
-
     let vitestCoverageSummary = null;
     if (fs.existsSync(VITEST_COVERAGE_SUMMARY)) {
         try {
@@ -1082,7 +987,7 @@ function buildClientCoverageTable(clientFiles, options) {
         log('Vitest coverage-summary.json not found', options);
     }
 
-    if (!jestCoverageSummary && !vitestCoverageSummary) {
+    if (!vitestCoverageSummary) {
         return 'Coverage data not found. Run tests first or check if coverage-summary.json exists.';
     }
 
@@ -1095,7 +1000,7 @@ function buildClientCoverageTable(clientFiles, options) {
             continue;
         }
 
-        const coverage = getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSummary);
+        const coverage = getClientFileCoverage(filePath, vitestCoverageSummary);
         const absoluteSourcePath = path.join(PROJECT_ROOT, 'src/main/webapp/app', filePath);
         const lineCount = getSourceFileLineCount(absoluteSourcePath);
         const expectCount = countClientExpects(filePath);

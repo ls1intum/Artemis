@@ -55,9 +55,15 @@ export class ExamParticipationActions {
 
     async getResultScore(exerciseID?: number) {
         const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
-        const resultScoreLocator = parentComponent.getByTestId('achieved-percentage');
-        await Commands.reloadUntilFound(this.page, resultScoreLocator, 10000, 60000);
-        return resultScoreLocator;
+        const summaryScoreLocator = parentComponent.getByTestId('achieved-percentage');
+        const resultComponentScoreLocator = parentComponent.locator('#result-score');
+        try {
+            await Commands.reloadUntilFound(this.page, summaryScoreLocator, 10000, 60000);
+            return summaryScoreLocator;
+        } catch {
+            await Commands.reloadUntilFound(this.page, resultComponentScoreLocator, 10000, 60000);
+            return resultComponentScoreLocator;
+        }
     }
 
     async checkResultScore(scoreText: string, exerciseID?: number) {

@@ -21,8 +21,9 @@ import {
     faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -108,7 +109,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -205,6 +206,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    private consistencyCheckDialogRef?: DynamicDialogRef;
+
     exerciseDetailSections: DetailOverviewSection[];
 
     private diffRunId = 0;
@@ -247,6 +250,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.consistencyCheckDialogRef?.close();
     }
 
     /**
@@ -609,18 +613,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!exercise.buildConfig?.buildScript &&
-                    !!buildPlanPhases?.dockerImage && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: buildPlanPhases?.dockerImage },
-                    },
+                !!buildPlanPhases?.dockerImage && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.dockerImage',
+                    data: { text: buildPlanPhases?.dockerImage },
+                },
                 !!exercise.buildConfig?.buildScript &&
                     !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
+                    },
+                this.localCIEnabled &&
+                    !!buildPlanPhases?.phases?.length && {
+                        type: DetailType.ProgrammingBuildPhases,
+                        title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
+                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise },
                     },
                 {
                     type: DetailType.Text,
@@ -787,8 +796,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+        this.consistencyCheckDialogRef =
+            this.dialogService.open(ConsistencyCheckComponent, {
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+                data: { exercisesToCheck: Array.of(exercise) },
+            }) ?? undefined;
     }
 
     async triggerAtlasOrchestrator() {
@@ -802,9 +817,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
-            const summary = result.summary.trim();
+            // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
+            const summary = result.summary?.trim() ?? '';
             this.orchestrationDialogMessage.set(summary);
-            this.orchestrationDialogActions.set(result.appliedActions);
+            this.orchestrationDialogActions.set(result.appliedActions ?? []);
             this.orchestrationDialogVisible.set(true);
             if (result.status === CompetencyOrchestrationStatus.Partial) {
                 this.alertService.addAlert({
