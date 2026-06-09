@@ -101,10 +101,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
-    // Signal to track when lecture units change (used in effect below)
-
-    private readonly lectureUnitsSignal = signal<LectureUnit[]>([]);
-
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
 
@@ -178,7 +174,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
-                        this.lectureUnitsSignal.set(this.lectureUnits); // Trigger effect
                         this.ensureValidDeepLinkTargets();
                         this.hasPdfLectureUnit = this.lectureUnits.some(
                             (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),

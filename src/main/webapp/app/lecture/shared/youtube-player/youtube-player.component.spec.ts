@@ -231,4 +231,71 @@ describe('YouTubePlayerComponent', () => {
         expect(emitSpy).not.toHaveBeenCalled();
         vi.useRealTimers();
     });
+
+    describe('Context provider methods', () => {
+        it('getCurrentTime: returns current time from YouTube player', () => {
+            const mockPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(125.5),
+                seekTo: vi.fn(),
+            };
+            (component as any).youtubePlayer = mockPlayer;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBe(125.5);
+            expect(mockPlayer.getCurrentTime).toHaveBeenCalledTimes(1);
+        });
+
+        it('getCurrentTime: returns undefined when player is not ready', () => {
+            (component as any).youtubePlayer = null;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBeUndefined();
+        });
+
+        it('hasBeenPlayed: returns false initially', () => {
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
+        });
+
+        it('hasBeenPlayed: returns true after video has been played', () => {
+            // Simulate onPlayerReady
+            const mockPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer } as any);
+
+            // Simulate onStateChange with PLAYING state
+            component.onStateChange({ data: 1 } as any); // YT_STATE_PLAYING = 1
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(true);
+        });
+
+        it('hasBeenPlayed: resets when new video is loaded', () => {
+            // First video plays
+            const mockPlayer1 = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer1 } as any);
+            component.onStateChange({ data: 1 } as any); // PLAYING
+
+            expect(component.hasBeenPlayed()).toBe(true);
+
+            // New video loads
+            const mockPlayer2 = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer2 } as any);
+
+            // Should be reset to false
+            expect(component.hasBeenPlayed()).toBe(false);
+        });
+    });
 });
