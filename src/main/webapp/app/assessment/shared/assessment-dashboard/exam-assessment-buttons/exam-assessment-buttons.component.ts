@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription, forkJoin } from 'rxjs';
@@ -35,16 +35,17 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     courseId: number;
     examId: number;
     studentExams: StudentExam[];
-    course: Course;
-    exam: Exam;
+    // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
+    readonly course = signal<Course>(undefined!);
+    readonly exam = signal<Exam>(undefined!);
 
     paramSub: Subscription;
-    isLoading: boolean;
-    isEvaluatingQuizExercises: boolean;
-    isAssessingUnsubmittedExams: boolean;
-    isExamOver = false;
-    longestWorkingTime?: number;
-    isAdmin = false;
+    readonly isLoading = signal(false);
+    readonly isEvaluatingQuizExercises = signal(false);
+    readonly isAssessingUnsubmittedExams = signal(false);
+    readonly isExamOver = signal(false);
+    readonly longestWorkingTime = signal<number | undefined>(undefined);
+    readonly isAdmin = signal(false);
 
     // icons
     faClipboard = faClipboard;
@@ -59,11 +60,11 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     }
 
     private loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.paramSub = this.route.params.subscribe(() => {
-            this.isAdmin = this.accountService.isAdmin();
+            this.isAdmin.set(this.accountService.isAdmin());
             this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
+                this.course.set(courseResponse.body!);
             });
 
             /*
@@ -73,7 +74,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
              */
             const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId, this.examId).pipe(
                 tap((value) => {
-                    this.longestWorkingTime = value;
+                    this.longestWorkingTime.set(value);
                     this.calculateIsExamOver();
                 }),
             );
@@ -85,14 +86,14 @@ export class ExamAssessmentButtonsComponent implements OnInit {
              */
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
-                    this.exam = examResponse.body!;
+                    this.exam.set(examResponse.body!);
                     this.calculateIsExamOver();
                 }),
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
             forkJoin([workingTimeObservable, examObservable]).subscribe(() => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
         });
     }
@@ -101,29 +102,29 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Evaluates all the quiz exercises that belong to the exam
      */
     evaluateQuizExercises() {
-        this.isEvaluatingQuizExercises = true;
+        this.isEvaluatingQuizExercises.set(true);
         this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                this.isEvaluatingQuizExercises = false;
+                this.isEvaluatingQuizExercises.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
-                this.isEvaluatingQuizExercises = false;
+                this.isEvaluatingQuizExercises.set(false);
             },
         });
     }
 
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isAssessingUnsubmittedExams = true;
+        this.isAssessingUnsubmittedExams.set(true);
         this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isAssessingUnsubmittedExams = false;
+                this.isAssessingUnsubmittedExams.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
-                this.isAssessingUnsubmittedExams = false;
+                this.isAssessingUnsubmittedExams.set(false);
             },
         });
     }
@@ -149,13 +150,15 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     }
 
     calculateIsExamOver() {
-        if (this.longestWorkingTime && this.exam) {
-            const startDate = dayjs(this.exam.startDate);
-            let endDate = startDate.add(this.longestWorkingTime, 'seconds');
-            if (this.exam.gracePeriod) {
-                endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
+        const longestWorkingTime = this.longestWorkingTime();
+        const exam = this.exam();
+        if (longestWorkingTime && exam) {
+            const startDate = dayjs(exam.startDate);
+            let endDate = startDate.add(longestWorkingTime, 'seconds');
+            if (exam.gracePeriod) {
+                endDate = endDate.add(exam.gracePeriod, 'seconds');
             }
-            this.isExamOver = endDate.isBefore(dayjs());
+            this.isExamOver.set(endDate.isBefore(dayjs()));
         }
     }
 }
