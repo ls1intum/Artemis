@@ -144,15 +144,20 @@ class ProgrammingExerciseAccessPoliciesTest {
     @Test
     void testPolicyHasDocumentedRoles() {
         List<PolicyRule<ProgrammingExercise>> rules = policy.getRules();
-        assertThat(rules).hasSize(2);
+        assertThat(rules).hasSize(3);
 
-        // First rule: staff + admins
-        PolicyRule<ProgrammingExercise> staffRule = rules.get(0);
-        assertThat(staffRule.documentedRoles()).containsExactlyInAnyOrder(Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT);
+        // First rule: admins (no course membership required)
+        PolicyRule<ProgrammingExercise> adminRule = rules.get(0);
+        assertThat(adminRule.documentedRoles()).containsExactlyInAnyOrder(Role.SUPER_ADMIN, Role.ADMIN);
+        assertThat(adminRule.note()).isNull();
+
+        // Second rule: staff (must be in course)
+        PolicyRule<ProgrammingExercise> staffRule = rules.get(1);
+        assertThat(staffRule.documentedRoles()).containsExactlyInAnyOrder(Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT);
         assertThat(staffRule.note()).isEqualTo("if in course");
 
-        // Second rule: students with note
-        PolicyRule<ProgrammingExercise> studentRule = rules.get(1);
+        // Third rule: students with note
+        PolicyRule<ProgrammingExercise> studentRule = rules.get(2);
         assertThat(studentRule.documentedRoles()).containsExactly(Role.STUDENT);
         assertThat(studentRule.note()).isEqualTo("if enrolled + released");
     }

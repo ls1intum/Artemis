@@ -289,7 +289,6 @@ public class CourseOverviewResource {
 
     @GetMapping("courses/{courseId}/title")
     @EnforceAtLeastStudent
-    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
         final var title = courseRepository.getCourseTitle(courseId);
