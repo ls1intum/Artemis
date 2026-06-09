@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,10 +41,11 @@ export class AssessmentLocksComponent implements OnInit {
     courseId: number;
     tutorId: number;
     examId?: number;
-    showAll = false;
+    readonly showAll = signal(false);
     exercises: Exercise[] = [];
 
-    submissions: Submission[] = [];
+    // Locked submissions load asynchronously and the exam branch flips showAll — signals so they render under zoneless.
+    readonly submissions = signal<Submission[]>([]);
 
     private cancelConfirmationText: string;
 
@@ -77,13 +78,13 @@ export class AssessmentLocksComponent implements OnInit {
         let lockedSubmissionsObservable;
         if (this.examId) {
             lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
-            this.showAll = true;
+            this.showAll.set(true);
         } else {
             lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
         }
         lockedSubmissionsObservable.subscribe({
             next: (response: HttpResponse<Submission[]>) => {
-                this.submissions.push(...(response.body ?? []));
+                this.submissions.update((submissions) => [...submissions, ...(response.body ?? [])]);
             },
             error: (response: string) => this.onError(response),
         });
@@ -114,7 +115,7 @@ export class AssessmentLocksComponent implements OnInit {
                 default:
                     break;
             }
-            this.submissions = this.submissions.filter((submission) => submission !== canceledSubmission);
+            this.submissions.set(this.submissions().filter((submission) => submission !== canceledSubmission));
         }
     }
 
