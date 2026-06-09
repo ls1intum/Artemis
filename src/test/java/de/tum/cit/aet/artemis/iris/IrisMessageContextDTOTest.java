@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.dto;
+package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 
 class IrisMessageContextDTOTest {
 
