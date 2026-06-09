@@ -87,7 +87,7 @@
                             </th>
                             <th class="text-center">
                                 @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
-                                    <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
+                                    <span [class]="hasPassed() ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
                                 } @else {
                                     <jhi-no-data />
                                 }
@@ -152,7 +152,7 @@
             </div>
         </jhi-collapsible-card>
 
-        @if (gradingScaleExists) {
+        @if (gradingScaleExists()) {
             <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
                 <div class="header h5">
                     <fa-icon [icon]="faClipboard" /> &nbsp;
@@ -160,7 +160,7 @@
                 </div>
 
                 <div class="collapsible-content">
-                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
+                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade()" />
                 </div>
             </jhi-collapsible-card>
 

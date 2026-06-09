@@ -198,7 +198,6 @@ describe('ExamResultOverviewComponent', () => {
         fixture = TestBed.createComponent(ExamResultOverviewComponent);
         component = fixture.componentInstance;
         exam.course = course;
-        component.gradingScaleExists = false;
         fixture.componentRef.setInput('studentExamWithGrade', studentExamWithGrade);
         fixture.componentRef.setInput('exerciseInfos', {});
     });
@@ -213,18 +212,18 @@ describe('ExamResultOverviewComponent', () => {
 
         expect(fixture).not.toBeNull();
         expect(component.studentExamWithGrade().studentExam).toBeUndefined();
-        expect(component.gradingScaleExists).toBe(false);
+        expect(component.gradingScaleExists()).toBe(false);
     });
 
     it('should retrieve exam grade correctly', () => {
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(component.gradingScaleExists).toBe(true);
-        expect(component.isBonus).toBe(false);
-        expect(component.grade).toEqual(studentExamWithGrade.studentResult.overallGrade);
-        expect(component.isBonus).toEqual(studentExamWithGrade.gradeType === GradeType.BONUS);
-        expect(component.hasPassed).toEqual(studentExamWithGrade.studentResult.hasPassed);
+        expect(component.gradingScaleExists()).toBe(true);
+        expect(component.isBonus()).toBe(false);
+        expect(component.grade()).toEqual(studentExamWithGrade.studentResult.overallGrade);
+        expect(component.isBonus()).toEqual(studentExamWithGrade.gradeType === GradeType.BONUS);
+        expect(component.hasPassed()).toEqual(studentExamWithGrade.studentResult.hasPassed);
     });
 
     it('should initialize and calculate scores correctly', () => {

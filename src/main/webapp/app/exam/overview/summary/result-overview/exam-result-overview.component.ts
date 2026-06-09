@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -37,7 +37,6 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
 export class ExamResultOverviewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     exerciseService = inject(ExerciseService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
@@ -48,10 +47,12 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
     readonly isTestRun = input(false);
 
-    gradingScaleExists = false;
-    isBonus = false;
-    hasPassed = false;
-    grade?: string;
+    // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
+    // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
+    readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && this.studentExamWithGrade()?.studentResult?.overallGrade != undefined);
+    readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
+    readonly hasPassed = computed(() => !!this.studentExamWithGrade()?.studentResult?.hasPassed);
 
     // Icons
     faClipboard = faClipboard;
@@ -93,10 +94,6 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.areResultsPublished()) {
-            this.setExamGrade();
-        }
-
         this.updateLocalVariables();
     }
 
@@ -173,20 +170,6 @@ export class ExamResultOverviewComponent implements OnInit {
         }
 
         return false;
-    }
-
-    /**
-     * Sets the student's exam grade if a grading scale exists for the exam
-     */
-    setExamGrade() {
-        const studentExamWithGrade = this.studentExamWithGrade();
-        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
-            this.gradingScaleExists = true;
-            this.grade = studentExamWithGrade.studentResult.overallGrade;
-            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
-            this.hasPassed = !!studentExamWithGrade.studentResult.hasPassed;
-            this.changeDetector.detectChanges();
-        }
     }
 
     /**
