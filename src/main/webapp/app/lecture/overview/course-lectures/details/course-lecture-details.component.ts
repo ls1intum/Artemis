@@ -372,14 +372,18 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 const isVideoVisible = this.isElementVisible(videoPlayer);
 
                 if (isVideoVisible) {
-                    const videoTimestamp = provider.getCurrentVideoTimestamp?.();
-                    if (videoTimestamp != null) {
-                        const videoContext: IrisVideoContextDTO = {
-                            type: 'video',
-                            lectureUnitId: unitId,
-                            timestamp: videoTimestamp,
-                        };
-                        contexts.push(videoContext);
+                    // Only include video context if it has been played (not just showing thumbnail)
+                    const hasBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
+                    if (hasBeenPlayed) {
+                        const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+                        if (videoTimestamp != null) {
+                            const videoContext: IrisVideoContextDTO = {
+                                type: 'video',
+                                lectureUnitId: unitId,
+                                timestamp: videoTimestamp,
+                            };
+                            contexts.push(videoContext);
+                        }
                     }
                 }
             }

@@ -60,6 +60,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver: ResizeObserver | undefined;
     private lastInitialTimestamp: number | undefined;
     protected readonly isResizing = signal<boolean>(false);
+    private readonly hasEverPlayed = signal<boolean>(false);
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -195,6 +196,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
 
     onPlayerReady(event: any): void {
         this.clearReadiness();
+        this.hasEverPlayed.set(false); // Reset for new video
         // Use the Angular wrapper when available so seek calls can be queued reliably.
         this.youtubePlayer = this.playerComponent() ?? this.youtubePlayer ?? event?.target ?? null;
         const initial = this.startSeconds();
@@ -212,6 +214,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     onStateChange(event: { data: number }): void {
         if (!this.youtubePlayer) return;
         if (event.data === YT_STATE_PLAYING) {
+            this.hasEverPlayed.set(true);
             this.startPolling();
         } else if (event.data === YT_STATE_PAUSED || event.data === YT_STATE_ENDED || event.data === YT_STATE_BUFFERING) {
             this.clearPolling();
@@ -257,6 +260,13 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
      */
     getCurrentTime(): number | undefined {
         return this.youtubePlayer?.getCurrentTime();
+    }
+
+    /**
+     * Returns whether the video has been played at least once (not just showing thumbnail).
+     */
+    hasBeenPlayed(): boolean {
+        return this.hasEverPlayed();
     }
 
     private updateCurrentSegment(currentTime: number): void {

@@ -218,6 +218,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const youtubePlayer = this.youtubePlayer();
             return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
         },
+        hasVideoBeenPlayed: () => {
+            const videoPlayer = this.videoPlayer();
+            const youtubePlayer = this.youtubePlayer();
+            return videoPlayer?.hasBeenPlayed() ?? youtubePlayer?.hasBeenPlayed() ?? false;
+        },
     }));
 
     readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
@@ -236,8 +241,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+            const hasVideoBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
 
-            if (videoTimestamp != null) {
+            // Only include video context if it has been played (not just showing thumbnail)
+            if (videoTimestamp != null && hasVideoBeenPlayed) {
                 const videoContext: IrisVideoContextDTO = {
                     type: 'video',
                     lectureUnitId: unitId,
