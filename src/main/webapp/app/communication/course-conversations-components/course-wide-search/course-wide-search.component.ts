@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -58,7 +58,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private ngUnsubscribe = new Subject<void>();
     public isFetchingPosts = true;
     totalNumberOfPosts = 0;
-    posts: Post[] = [];
+    readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
     previousScrollDistanceFromTop: number;
     page = 1;
@@ -71,12 +71,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private metisService = inject(MetisService);
     private metisConversationService = inject(MetisConversationService);
     private formBuilder = inject(FormBuilder);
-    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {
         this.subscribeToMetis();
         this.resetFormGroup();
-        this.cdr.detectChanges();
         this.commandMetisToFetchPosts(true);
     }
 
@@ -110,12 +108,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         if (this.content()) {
             this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
         }
-        this.posts = posts.slice().reverse();
+        this.posts.set(posts.slice().reverse());
     }
 
     handleScrollOnNewMessage = () => {
         if (
-            (this.posts.length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
+            (this.posts().length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
             this.previousScrollDistanceFromTop === this.messagesContainerHeight
         ) {
             this.scrollToBottomOfMessages();
@@ -128,7 +126,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
+        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
         if (morePostsAvailable) {
             this.page += 1;
             this.commandMetisToFetchPosts();

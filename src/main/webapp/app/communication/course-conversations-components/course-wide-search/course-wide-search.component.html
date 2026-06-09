@@ -90,7 +90,7 @@
                         </div>
                     } @else {
                         <!-- no message exist -->
-                        @if (!isFetchingPosts && posts.length === 0) {
+                        @if (!isFetchingPosts && posts().length === 0) {
                             <div class="envelope">
                                 <fa-icon size="5x" [icon]="faEnvelope" />
                                 <div class="text-center mt-2" jhiTranslate="artemisApp.metis.noPosts"></div>
@@ -100,14 +100,14 @@
                         <div
                             id="scrollableDiv"
                             #container
-                            [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
+                            [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0 }"
                             infinite-scroll
                             [scrollWindow]="false"
                             (scrolledUp)="fetchNextPage()"
                         >
                             <!-- list of all top level posts -->
                             <!-- answers are opened in the thread sidebar -->
-                            @for (post of posts; track postsTrackByFn($index, post)) {
+                            @for (post of posts(); track postsTrackByFn($index, post)) {
                                 <div class="pt-2" style="cursor: pointer">
                                     <jhi-posting-thread
                                         #postingThread
