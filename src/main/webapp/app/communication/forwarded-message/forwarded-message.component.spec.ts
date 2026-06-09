@@ -274,7 +274,7 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBe(true);
+        expect(component.isContentLong()).toBe(true);
     });
 
     it('should set isContentLong to false if content does not overflow', () => {
@@ -290,7 +290,7 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBe(false);
+        expect(component.isContentLong()).toBe(false);
     });
 
     it('should call checkIfContentOverflows in ngAfterViewInit', () => {

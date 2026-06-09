@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, input, output, signal, untracked, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -31,7 +31,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
     /** the forwarded post (can be a Post or AnswerPost) */
     originalPostDetails = input<Posting | undefined>();
     messageContent = viewChild<ElementRef>('messageContent');
-    isContentLong = false;
+    readonly isContentLong = signal(false);
     showFullForwardedMessage = false;
     postingIsOfToday = false;
 
@@ -39,7 +39,6 @@ export class ForwardedMessageComponent implements AfterViewInit {
     protected viewButtonVisible = false;
     hasOriginalPostBeenDeleted = input<boolean | undefined>();
 
-    private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
     private isAnswerPost = false;
 
@@ -89,8 +88,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
     checkIfContentOverflows(): void {
         if (this.messageContent()) {
             const nativeElement = this.messageContent()?.nativeElement;
-            this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
-            this.cdr.detectChanges();
+            this.isContentLong.set(nativeElement.scrollHeight > nativeElement.clientHeight);
         }
     }
 
