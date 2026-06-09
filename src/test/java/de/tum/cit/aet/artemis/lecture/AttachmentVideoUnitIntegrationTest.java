@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
-    private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
+    private static final String TEST_PREFIX = "attachmentunit"; // only lower case is supported
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 

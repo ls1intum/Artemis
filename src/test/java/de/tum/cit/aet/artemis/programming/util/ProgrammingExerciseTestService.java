@@ -357,7 +357,7 @@ public class ProgrammingExerciseTestService {
         this.versionControlService = versionControlService;
 
         course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, userPrefix);
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
@@ -2135,7 +2135,7 @@ public class ProgrammingExerciseTestService {
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
             Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
 
-        final var course = courseUtilService.addEnrolledEmptyCourse(userPrefix);
+        final var course = courseUtilService.addEnrolledEmptyCourse(testPrefix);
         var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 

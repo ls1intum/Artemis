@@ -159,7 +159,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         }
 
         private ProgrammingExercise newExamProgrammingExercise() {
-            ExerciseGroup group = super.examUtilService.addExerciseGroupWithExamAndCourse(true);
+            ExerciseGroup group = super.examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
             ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(group);
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);

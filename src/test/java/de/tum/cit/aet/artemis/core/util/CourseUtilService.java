@@ -1272,7 +1272,7 @@ public class CourseUtilService {
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public Course createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
+    public Course createEnrolledCourseWithTextModelingAndFileUploadExercisesAndSubmissions(String userPrefix) throws IOException {
         Course course = addEnrolledCourseWithModelingAndTextAndFileUploadExercise(userPrefix);
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);

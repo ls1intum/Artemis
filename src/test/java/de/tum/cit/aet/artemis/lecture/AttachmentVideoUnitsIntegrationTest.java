@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 
 class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
-    private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
+    private static final String TEST_PREFIX = "attachmentunits";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 

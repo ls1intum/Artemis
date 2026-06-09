@@ -151,7 +151,7 @@ public class UserUtilService {
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
             user.setAuthorities(authorities);
-            user = userTestRepository.saveOrUpdate(user);
+            user = userTestRepository.save(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -195,7 +195,7 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        return userTestRepository.saveOrUpdate(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -209,7 +209,7 @@ public class UserUtilService {
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
         user.setVcsAccessToken(vcsAccessToken);
         user.setVcsAccessTokenExpiryDate(expiryDate);
-        return userTestRepository.saveOrUpdate(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -234,7 +234,7 @@ public class UserUtilService {
     public void deleteUserVcsAccessToken(User userWithUserToken) {
         userWithUserToken.setVcsAccessTokenExpiryDate(null);
         userWithUserToken.setVcsAccessToken(null);
-        userTestRepository.saveOrUpdate(userWithUserToken);
+        userTestRepository.save(userWithUserToken);
     }
 
     /**
@@ -285,7 +285,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.saveOrUpdate(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -316,7 +316,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.saveOrUpdate(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -428,7 +428,7 @@ public class UserUtilService {
         var existingUserWithRegistrationNumber = userTestRepository.findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
         if (existingUserWithRegistrationNumber.isPresent()) {
             existingUserWithRegistrationNumber.get().setRegistrationNumber(null);
-            userTestRepository.saveOrUpdate(existingUserWithRegistrationNumber.get());
+            userTestRepository.save(existingUserWithRegistrationNumber.get());
         }
     }
 
@@ -443,7 +443,7 @@ public class UserUtilService {
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
         instructor.setAuthorities(instructorAuthorities);
-        instructor = userTestRepository.saveOrUpdate(instructor);
+        instructor = userTestRepository.save(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
@@ -458,7 +458,7 @@ public class UserUtilService {
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
         editor.setAuthorities(editorAuthorities);
-        editor = userTestRepository.saveOrUpdate(editor);
+        editor = userTestRepository.save(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
@@ -473,7 +473,7 @@ public class UserUtilService {
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
         ta.setAuthorities(tutorAuthorities);
-        ta = userTestRepository.saveOrUpdate(ta);
+        ta = userTestRepository.save(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
@@ -488,7 +488,7 @@ public class UserUtilService {
     public void addStudent(final String studentName) {
         User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
         student.setAuthorities(studentAuthorities);
-        student = userTestRepository.saveOrUpdate(student);
+        student = userTestRepository.save(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
@@ -591,7 +591,7 @@ public class UserUtilService {
         String superAdminLogin = prefix + "superadmin";
         User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
         superAdmin.setAuthorities(superAdminAuthorities);
-        superAdmin = userTestRepository.saveOrUpdate(superAdmin);
+        superAdmin = userTestRepository.save(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
     }
 
@@ -604,7 +604,7 @@ public class UserUtilService {
         String adminLogin = prefix + "admin";
         User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
         admin.setAuthorities(adminAuthorities);
-        admin = userTestRepository.saveOrUpdate(admin);
+        admin = userTestRepository.save(admin);
         assertThat(admin.getId()).as("Admin has been created").isNotNull();
     }
 
