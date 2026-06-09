@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input, signal } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -44,13 +44,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly testRun = input(false);
 
     submission: Submission;
-    complaint: Complaint;
+    // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
+    readonly complaint = signal<Complaint>(undefined!);
     course?: Course;
     // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     formComplaintType?: ComplaintType;
     // The number of complaints that the student is still allowed to submit in the course.
-    remainingNumberOfComplaints = 0;
-    isCorrectUserToFileAction = false;
+    readonly remainingNumberOfComplaints = signal(0);
+    readonly isCorrectUserToFileAction = signal(false);
     isExamMode: boolean;
     showSection = false;
     timeOfFeedbackRequestValid = false;
@@ -73,7 +74,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             // for course exercises we track the number of allowed complaints
             if (this.course?.complaintsEnabled) {
                 this.courseService.getNumberOfAllowedComplaintsInCourse(this.course!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
-                    this.remainingNumberOfComplaints = allowedComplaints;
+                    this.remainingNumberOfComplaints.set(allowedComplaints);
                 });
             }
             this.loadPotentialComplaint();
@@ -81,9 +82,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 if (user?.id) {
                     const participationValue = this.participation();
                     if (participationValue?.student) {
-                        this.isCorrectUserToFileAction = participationValue.student.id === user.id;
+                        this.isCorrectUserToFileAction.set(participationValue.student.id === user.id);
                     } else if (participationValue.team?.students) {
-                        this.isCorrectUserToFileAction = !!participationValue.team.students.find((student) => student.id === user.id);
+                        this.isCorrectUserToFileAction.set(!!participationValue.team.students.find((student) => student.id === user.id));
                     }
                 }
             });
@@ -102,7 +103,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body!, this.result()!);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()!));
             });
     }
 

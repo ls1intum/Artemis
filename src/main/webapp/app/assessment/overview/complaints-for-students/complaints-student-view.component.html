@@ -1,11 +1,11 @@
-@if (complaint || showSection) {
+@if (complaint() || showSection) {
     <div>
         @if (course?.complaintsEnabled ?? false) {
             <p>
-                @if (!isExamMode && remainingNumberOfComplaints >= 0) {
+                @if (!isExamMode && remainingNumberOfComplaints() >= 0) {
                     <span
                         [jhiTranslate]="'artemisApp.complaint.' + (exercise().teamMode ? 'descriptionTeamExtended' : 'descriptionExtended')"
-                        [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints }"
+                        [translateValues]="{ maxComplaintNumber: course?.maxComplaints ?? 0, allowedComplaints: remainingNumberOfComplaints() }"
                     ></span>
                 }
                 @if (isExamMode) {
@@ -17,17 +17,17 @@
             </p>
         }
 
-        @if (isCorrectUserToFileAction && !complaint) {
+        @if (isCorrectUserToFileAction() && !complaint()) {
             <div class="mt-4">
                 @if (isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)) {
                     <button
                         id="complain"
                         class="btn btn-primary"
-                        [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
+                        [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid"
                         (click)="openComplaintForm(ComplaintType.COMPLAINT)"
-                        [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
+                        [disabled]="(!isExamMode && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid"
                         title="{{
-                            (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
+                            (!isExamMode && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid
                                 ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate)
                                 : ''
                         }}"
@@ -47,7 +47,7 @@
                 }
             </div>
         }
-        @if (!complaint && formComplaintType) {
+        @if (!complaint() && formComplaintType) {
             <div class="row">
                 <jhi-complaint-form
                     class="flex-grow-1"
@@ -55,16 +55,16 @@
                     [resultId]="result()!.id!"
                     [examId]="exam()?.id!"
                     [complaintType]="formComplaintType"
-                    [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction"
+                    [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction()"
                     (onSubmit)="loadPotentialComplaint()"
                 />
             </div>
         }
         <div id="complaintScrollpoint"></div>
-        @if (complaint) {
+        @if (complaint()) {
             <div class="row">
-                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
-                <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint" [maxComplaintResponseTextLimit]="course?.maxComplaintResponseTextLimit!" />
+                <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint()" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
+                <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint()" [maxComplaintResponseTextLimit]="course?.maxComplaintResponseTextLimit!" />
             </div>
         }
     </div>

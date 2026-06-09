@@ -151,7 +151,7 @@ describe('ComplaintsStudentViewComponent', () => {
             await fixture.whenStable();
 
             expectExamDefault();
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint()).toBeUndefined();
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
             expect(userMock).toHaveBeenCalledTimes(1);
@@ -170,7 +170,7 @@ describe('ComplaintsStudentViewComponent', () => {
             await fixture.whenStable();
 
             expectExamDefault();
-            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
+            expect(component.complaint()).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
             expect(userMock).toHaveBeenCalledTimes(1);
@@ -181,13 +181,13 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
             component.showSection = true;
-            component.isCorrectUserToFileAction = true;
+            component.isCorrectUserToFileAction.set(true);
             const complaintBySubmissionMock = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
             fixture.changeDetectorRef.detectChanges();
 
             //Check if button is available
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint()).toBeUndefined();
             expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
 
             // Mock complaint scrollpoint
@@ -253,12 +253,12 @@ describe('ComplaintsStudentViewComponent', () => {
     describe('Course mode', () => {
         it('should initialize', async () => {
             await testInitWithResultStub(of());
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint()).toBeUndefined();
         });
 
         it('should initialize with complaint', async () => {
             await testInitWithResultStub(of({ body: complaint } as EntityResponseType));
-            expect(component.complaint).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
+            expect(component.complaint()).toStrictEqual(complaintService.convertComplaintFromServer(complaint, component.result()!));
         });
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {
@@ -275,8 +275,8 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.componentRef.setInput('exercise', exerciseWithMaxComplaints);
 
             component.showSection = true;
-            component.isCorrectUserToFileAction = true;
-            component.remainingNumberOfComplaints = 1;
+            component.isCorrectUserToFileAction.set(true);
+            component.remainingNumberOfComplaints.set(1);
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -297,12 +297,12 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', async () => {
             await testInitWithResultStub(of());
             component.showSection = true;
-            component.isCorrectUserToFileAction = true;
+            component.isCorrectUserToFileAction.set(true);
 
             fixture.changeDetectorRef.detectChanges();
 
             //Check if button is available
-            expect(component.complaint).toBeUndefined();
+            expect(component.complaint()).toBeUndefined();
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = vi.fn();
@@ -466,8 +466,8 @@ describe('ComplaintsStudentViewComponent', () => {
         expect(component.course).toStrictEqual(course);
         expect(component.showSection).toBe(true);
         expect(component.formComplaintType).toBeUndefined();
-        expect(component.remainingNumberOfComplaints).toStrictEqual(numberOfComplaints);
-        expect(component.isCorrectUserToFileAction).toBe(true);
+        expect(component.remainingNumberOfComplaints()).toStrictEqual(numberOfComplaints);
+        expect(component.isCorrectUserToFileAction()).toBe(true);
         expect(result.submission?.participation).toStrictEqual(participation);
     }
 
