@@ -3,6 +3,28 @@ import { test } from '../support/fixtures';
 import { admin } from '../support/users';
 import { BASE_API } from '../support/constants';
 
+/**
+ * JSON-serialized WebAuthn credential descriptor, as returned by the server.
+ * See https://w3c.github.io/webauthn/#dictdef-publickeycredentialdescriptorjson
+ * Type definitions based on @simplewebauthn/types (https://jsr.io/@simplewebauthn/types).
+ */
+interface PublicKeyCredentialDescriptorJSON {
+    id: string;
+    type: string;
+    transports?: string[];
+}
+
+/**
+ * JSON-serialized PublicKeyCredentialCreationOptions, as returned by the server's
+ * /webauthn/register/options endpoint.
+ * See https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson
+ */
+interface PublicKeyCredentialCreationOptionsJSON {
+    challenge: string;
+    excludeCredentials?: PublicKeyCredentialDescriptorJSON[];
+    [key: string]: unknown;
+}
+
 function passkeyTestUser(testTitle: string) {
     const id = testTitle.split(' ')[0].toLowerCase();
     return { username: `passkey_e2e_${id}`, password: `passkey_e2e_${id}`, email: `passkey_e2e_${id}@example.com` };
@@ -12,9 +34,6 @@ function passkeyTestUser(testTitle: string) {
  * Disables WebAuthn conditional mediation so it cannot auto-complete login before an
  * explicit button click — with automaticPresenceSimulation:true the virtual authenticator
  * would otherwise resolve the background credentials.get() immediately.
- *
- * TODO: Consider using @simplewebauthn/types (https://jsr.io/@simplewebauthn/types) for
- * proper WebAuthn type definitions instead of manual casts.
  */
 async function disableConditionalMediation(page: import('@playwright/test').Page) {
     await page.addInitScript(() => {
@@ -216,9 +235,10 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
                 const body = await optionsResponse.text().catch(() => '');
                 return `Getting registration options failed: ${optionsResponse.status} ${body}`;
             }
-            const options = await optionsResponse.json();
+            const options: PublicKeyCredentialCreationOptionsJSON = await optionsResponse.json();
 
             // 2. Create credential via the virtual authenticator
+            // The server returns JSON-serialized options; we convert base64url strings to ArrayBuffers and override user info.
             const credential = (await navigator.credentials.create({
                 publicKey: {
                     ...options,
@@ -228,11 +248,12 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
                         name: email,
                         displayName: email,
                     },
-                    excludeCredentials: options.excludeCredentials?.map((c: { id: string; type: string }) => ({
-                        ...c,
+                    excludeCredentials: options.excludeCredentials?.map((c: PublicKeyCredentialDescriptorJSON) => ({
                         id: base64urlToBuffer(c.id),
+                        type: c.type,
+                        transports: c.transports,
                     })),
-                },
+                } as unknown as PublicKeyCredentialCreationOptions,
             })) as PublicKeyCredential | null;
 
             if (!credential) {
