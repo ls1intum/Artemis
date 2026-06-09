@@ -47,7 +47,7 @@ export class CategorySelectorComponent {
     protected readonly faTimes = faTimes;
     protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
     private readonly COLOR_SELECTOR_HEIGHT = 150;
-    protected readonly MAX_CATEGORIES = 10;
+    protected readonly MAX_CATEGORIES = 3;
 
     /** the selected categories passed in by the parent */
     readonly categories = input<ExerciseCategory[] | FaqCategory[]>();
