@@ -7,6 +7,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +37,8 @@ import de.tum.cit.aet.artemis.core.security.policy.Conditions;
  * for documentation generation.
  */
 public final class AnnotationBasedPolicyCollector {
+
+    private static final Logger log = LoggerFactory.getLogger(AnnotationBasedPolicyCollector.class);
 
     private AnnotationBasedPolicyCollector() {
     }
@@ -100,13 +104,13 @@ public final class AnnotationBasedPolicyCollector {
             URL resource = classLoader.getResource(packagePath);
 
             if (resource == null) {
-                System.err.println("Warning: Package not found: " + packageName);
+                log.warn("Package not found: {}", packageName);
                 return;
             }
 
             File packageDir = new File(resource.getFile());
             if (!packageDir.exists() || !packageDir.isDirectory()) {
-                System.err.println("Warning: Not a directory: " + packageDir);
+                log.warn("Not a directory: {}", packageDir);
                 return;
             }
 
@@ -114,7 +118,7 @@ public final class AnnotationBasedPolicyCollector {
             scanDirectory(packageDir, packageName, endpoints);
         }
         catch (Exception e) {
-            System.err.println("Warning: Error scanning package " + packageName + ": " + e.getMessage());
+            log.warn("Error scanning package {}: {}", packageName, e.getMessage());
         }
     }
 
@@ -169,15 +173,15 @@ public final class AnnotationBasedPolicyCollector {
         }
         catch (ClassNotFoundException e) {
             // Skip classes that cannot be loaded
-            System.err.println("Warning: Could not load class " + className);
+            log.warn("Could not load class {}", className);
         }
         catch (NoClassDefFoundError e) {
             // Skip classes with missing dependencies
-            System.err.println("Warning: Missing dependency for class " + className);
+            log.warn("Missing dependency for class {}", className);
         }
         catch (Exception e) {
             // Skip classes that cause other errors
-            System.err.println("Warning: Error processing class " + className + ": " + e.getMessage());
+            log.warn("Error processing class {}: {}", className, e.getMessage());
         }
     }
 

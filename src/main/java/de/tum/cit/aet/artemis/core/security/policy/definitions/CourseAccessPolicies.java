@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.course.domain.Course_;
  */
 @Configuration
 @Profile(PROFILE_CORE)
+@Lazy
 public class CourseAccessPolicies {
 
     /**

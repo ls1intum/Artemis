@@ -21,13 +21,12 @@ import org.springframework.context.ApplicationContext;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.Conditions;
-import de.tum.cit.aet.artemis.core.security.policy.EntityManagerPolicyResourceResolver;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyProvider;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyResourceResolver;
@@ -39,10 +38,7 @@ class EnforceAccessPolicyAspectTest {
     private ApplicationContext applicationContext;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private EntityManagerPolicyResourceResolver defaultResolver;
+    private UserTestRepository userRepository;
 
     @Mock
     private ProceedingJoinPoint joinPoint;
@@ -121,7 +117,7 @@ class EnforceAccessPolicyAspectTest {
     }
 
     private void setupAspect(List<PolicyResourceResolver<?>> resolvers) {
-        aspect = new EnforceAccessPolicyAspect(applicationContext, policyEngine, userRepository, defaultResolver, resolvers);
+        aspect = new EnforceAccessPolicyAspect(applicationContext, policyEngine, userRepository, resolvers);
     }
 
     private void setupJoinPoint(String paramName, Long paramValue) {
@@ -189,34 +185,25 @@ class EnforceAccessPolicyAspectTest {
     }
 
     @Test
-    void testFallsBackToDefaultResolver_WhenNoSpecificResolverRegistered() throws Throwable {
-        setupAspect(List.of()); // no specific resolvers
-
-        TestResource resource = new TestResource(42L, true);
+    void testNoResolverRegistered_ThrowsIllegalStateException() {
+        setupAspect(List.of()); // no resolvers
 
         // Policy: allow everyone
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").allowByDefault();
         TestPolicyProvider policyProvider = new TestPolicyProvider();
         policyProvider.setPolicy(policy);
         when(applicationContext.getBean(TestPolicyProvider.class)).thenReturn(policyProvider);
-        when(defaultResolver.loadById(TestResource.class, 42L)).thenReturn(resource);
-
-        User user = createUser(Set.of(), Set.of());
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
 
         setupJoinPoint("resourceId", 42L);
-        when(joinPoint.proceed()).thenReturn("ok");
 
         EnforceAccessPolicy annotation = createAnnotation(TestPolicyProvider.class, "resourceId");
-        Object result = aspect.enforce(joinPoint, annotation);
-
-        assertThat(result).isEqualTo("ok");
-        verify(defaultResolver).loadById(TestResource.class, 42L);
+        assertThatThrownBy(() -> aspect.enforce(joinPoint, annotation)).isInstanceOf(IllegalStateException.class).hasMessageContaining("No PolicyResourceResolver registered");
     }
 
     @Test
     void testMissingResourceIdParameter_ThrowsIllegalArgumentException() {
-        setupAspect(List.of());
+        TestResourceResolver resolver = new TestResourceResolver(new TestResource(42L, true));
+        setupAspect(List.of(resolver));
 
         AccessPolicy<TestResource> policy = AccessPolicy.forResource(TestResource.class).named("test-policy").allowByDefault();
         TestPolicyProvider policyProvider = new TestPolicyProvider();

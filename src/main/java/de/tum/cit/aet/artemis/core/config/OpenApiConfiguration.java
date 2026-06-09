@@ -11,6 +11,7 @@ import java.util.List;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +39,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
  */
 @Configuration
 @Profile(PROFILE_CORE)
+@Lazy
 @SecurityScheme(name = "bearer-jwt", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
 public class OpenApiConfiguration {
 

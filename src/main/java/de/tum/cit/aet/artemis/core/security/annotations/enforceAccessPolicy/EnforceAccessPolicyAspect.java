@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
-import de.tum.cit.aet.artemis.core.security.policy.EntityManagerPolicyResourceResolver;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyResourceResolver;
 
@@ -29,7 +28,7 @@ import de.tum.cit.aet.artemis.core.security.policy.PolicyResourceResolver;
  * <ol>
  * <li>Looks up the named {@link AccessPolicy} bean from the application context</li>
  * <li>Extracts the resource ID from the method parameters</li>
- * <li>Loads the resource entity using a {@link PolicyResourceResolver} (or the default {@link EntityManagerPolicyResourceResolver})</li>
+ * <li>Loads the resource entity using a registered {@link PolicyResourceResolver}</li>
  * <li>Loads the current user with groups and authorities</li>
  * <li>Evaluates the policy via the {@link PolicyEngine}</li>
  * </ol>
@@ -47,16 +46,13 @@ public class EnforceAccessPolicyAspect {
 
     private final UserRepository userRepository;
 
-    private final EntityManagerPolicyResourceResolver defaultResolver;
-
     private final Map<Class<?>, PolicyResourceResolver<?>> resolvers;
 
     public EnforceAccessPolicyAspect(ApplicationContext applicationContext, PolicyEngine policyEngine, UserRepository userRepository,
-            EntityManagerPolicyResourceResolver defaultResolver, List<PolicyResourceResolver<?>> resolverList) {
+            List<PolicyResourceResolver<?>> resolverList) {
         this.applicationContext = applicationContext;
         this.policyEngine = policyEngine;
         this.userRepository = userRepository;
-        this.defaultResolver = defaultResolver;
         this.resolvers = resolverList.stream().collect(Collectors.toMap(PolicyResourceResolver::getResourceType, r -> r));
     }
 
@@ -91,9 +87,10 @@ public class EnforceAccessPolicyAspect {
 
     private Object loadResource(Class<?> resourceType, long resourceId) {
         PolicyResourceResolver<?> resolver = resolvers.get(resourceType);
-        if (resolver != null) {
-            return resolver.loadById(resourceId);
+        if (resolver == null) {
+            throw new IllegalStateException("No PolicyResourceResolver registered for type " + resourceType.getSimpleName() + ". Register a PolicyResourceResolver<"
+                    + resourceType.getSimpleName() + "> bean.");
         }
-        return defaultResolver.loadById(resourceType, resourceId);
+        return resolver.loadById(resourceId);
     }
 }

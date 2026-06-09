@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.core.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +55,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @see de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions
  */
 @Component
+@Profile(PROFILE_CORE)
+@Lazy
 public class PolicyBasedCourseSpecs {
 
     private final AccessPolicy<Course> courseVisibilityPolicy;

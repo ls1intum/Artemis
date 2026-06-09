@@ -2,17 +2,19 @@ package de.tum.cit.aet.artemis.core.security.policy;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
- * Spring service for evaluating access policies.
+ * Spring component for evaluating access policies.
  */
-@Service
+@Component
 @Profile(PROFILE_CORE)
+@Lazy
 public class PolicyEngine {
 
     /**

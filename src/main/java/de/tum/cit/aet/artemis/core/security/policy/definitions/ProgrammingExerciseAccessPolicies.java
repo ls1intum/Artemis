@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @Configuration
 @Profile(PROFILE_CORE)
+@Lazy
 public class ProgrammingExerciseAccessPolicies {
 
     /**

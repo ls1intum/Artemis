@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.policy.docs;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,6 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
@@ -32,6 +37,8 @@ import de.tum.cit.aet.artemis.core.security.policy.definitions.ProgrammingExerci
  * </pre>
  */
 public final class PolicyDocGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(PolicyDocGenerator.class);
 
     /**
      * The columns in the generated table, in order.
@@ -306,7 +313,7 @@ public final class PolicyDocGenerator {
      */
     public static void main(String[] args) throws IOException {
         if (args.length < 1) {
-            System.err.println("Usage: PolicyDocGenerator <path-to-access-rights.mdx> [--check]");
+            log.error("Usage: PolicyDocGenerator <path-to-access-rights.mdx> [--check]");
             System.exit(1);
         }
 
@@ -327,16 +334,16 @@ public final class PolicyDocGenerator {
 
         if (checkMode) {
             if (!originalContent.equals(updatedContent)) {
-                System.err.println("access-rights.mdx is out of date. Run './gradlew generateAccessDocs' to update.");
+                log.error("access-rights.mdx is out of date. Run './gradlew generateAccessDocs' to update.");
                 System.exit(1);
             }
             else {
-                System.out.println("access-rights.mdx is up to date.");
+                log.info("access-rights.mdx is up to date.");
             }
         }
         else {
-            Files.writeString(mdxPath, updatedContent);
-            System.out.println("Updated " + mdxPath);
+            FileUtils.writeStringToFile(mdxPath.toFile(), updatedContent, StandardCharsets.UTF_8);
+            log.info("Updated {}", mdxPath);
         }
     }
 }

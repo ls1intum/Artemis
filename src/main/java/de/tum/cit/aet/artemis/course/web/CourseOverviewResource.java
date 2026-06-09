@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -151,7 +150,7 @@ public class CourseOverviewResource {
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
@@ -266,7 +265,7 @@ public class CourseOverviewResource {
     // TODO: this method is invoked quite often as part of course management resolve. However, it might not be necessary to fetch tutorial group configuration and online course
     // configuration in such cases.
     @GetMapping("courses/{courseId}")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for students", courseId);
@@ -289,7 +288,7 @@ public class CourseOverviewResource {
     }
 
     @GetMapping("courses/{courseId}/title")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
@@ -308,7 +307,7 @@ public class CourseOverviewResource {
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
     @GetMapping("courses/{courseId}/allowed-complaints")
-    @PreAuthorize("hasRole('USER')")
+    @EnforceAtLeastStudent
     @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);
