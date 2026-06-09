@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -250,7 +251,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, resolveTemplateRepositoryUri(exercise), participation);
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
 
         return startProgrammingParticipation(participation);
     }
@@ -328,10 +329,10 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-            participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUri(), participation);
+            participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri, participation);
         }
         else {
-            participation = copyRepository(exercise, resolveTemplateRepositoryUri(exercise), participation);
+            participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -463,7 +464,7 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
-            programmingParticipation = copyRepository(programmingExercise, resolveTemplateRepositoryUri(programmingExercise), programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise), programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -517,15 +518,26 @@ public class ParticipationService {
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, LocalVCRepositoryUri sourceUri,
+    /**
+     * Copies the repository behind the source URI to create the repository of the given participation, unless the participation already has a repository.
+     * The source URI is provided as a supplier so that its resolution (which might involve repairing a broken template repository URI, see
+     * {@link #resolveTemplateRepositoryUri}) only happens when the repository actually needs to be copied.
+     *
+     * @param programmingExercise the programming exercise the participation belongs to
+     * @param sourceUriSupplier   supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
+     * @param participation       the participation for which the repository should be created
+     * @return the updated participation
+     */
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, Supplier<LocalVCRepositoryUri> sourceUriSupplier,
             ProgrammingExerciseStudentParticipation participation) {
-        if (sourceUri == null) {
-            // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
-            throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
-                    + programmingExercise.getId() + " is missing");
-        }
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
+            LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
+            if (sourceUri == null) {
+                // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
+                throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
+                        + programmingExercise.getId() + " is missing");
+            }
             final var projectKey = programmingExercise.getProjectKey();
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
