@@ -73,12 +73,14 @@ jobs:
               "has_java": {
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-quality.yml",
+                  ".github/workflows/ci-bean-instantiations.yml",
                   "supporting_scripts/analyze_java_files.py",
                   "supporting_scripts/find_slow_queries.py",
               },
               "has_docs": {".github/workflows/ci.yml", ".github/workflows/ci-docs.yml"},
               "has_i18n": {".github/workflows/ci.yml", ".github/workflows/ci-translation.yml", ".ci/translation-file-checker/**"},
               "has_gradle": {".github/workflows/ci.yml", ".github/workflows/ci-gradle-wrapper.yml"},
+              "has_version": {".github/workflows/ci.yml", ".github/workflows/ci-version-consistency.yml", "supporting_scripts/update_version.sh"},
           }
 
           failed = False

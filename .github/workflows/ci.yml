@@ -47,6 +47,7 @@ jobs:
       has_i18n: ${{ steps.decide.outputs.has_i18n }}
       has_gradle: ${{ steps.decide.outputs.has_gradle }}
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
+      has_version: ${{ steps.decide.outputs.has_version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -81,6 +82,7 @@ jobs:
             has_java:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
+              - '.github/workflows/ci-bean-instantiations.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
               - 'build.gradle'
@@ -106,6 +108,13 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
+            has_version:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-version-consistency.yml'
+              - 'build.gradle'
+              - 'openapi/openapi.yaml'
+              - 'README.md'
+              - 'supporting_scripts/update_version.sh'
 
       - id: decide
         env:
@@ -121,10 +130,11 @@ jobs:
           F_I18N: ${{ steps.area.outputs.has_i18n }}
           F_GRADLE: ${{ steps.area.outputs.has_gradle }}
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
+          F_VERSION: ${{ steps.area.outputs.has_version }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -135,6 +145,7 @@ jobs:
               echo "has_i18n=${F_I18N:-false}"
               echo "has_gradle=${F_GRADLE:-false}"
               echo "has_workflows=${F_WORKFLOWS:-false}"
+              echo "has_version=${F_VERSION:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -250,6 +261,26 @@ jobs:
     permissions:
       contents: read
 
+  version-consistency:
+    name: Version Consistency
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_version == 'true'
+    uses: ./.github/workflows/ci-version-consistency.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  bean-instantiations:
+    name: Bean Instantiations
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_java == 'true'
+    uses: ./.github/workflows/ci-bean-instantiations.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Advisory — not in the required gate. Depends on `build` for the Docker image, not on
   # `test`, so a flaky unit-test run never blocks it; runs only when `build` succeeded
   # (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they cannot
@@ -325,6 +356,8 @@ jobs:
       - translation
       - docs
       - workflows
+      - version-consistency
+      - bean-instantiations
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5
@@ -360,6 +393,8 @@ jobs:
       - workflows
       - docs
       - translation
+      - version-consistency
+      - bean-instantiations
       - e2e
       - codeql
     runs-on: ubuntu-latest

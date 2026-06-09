@@ -22,6 +22,8 @@ ci.yml                                                            (single entry 
 ├── docs            ── uses ci-docs.yml           (if has_docs)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
+├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
+├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_java; boots the app, checks startup bean metrics)
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
@@ -45,8 +47,9 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 The single required check is `CI / All required CI Passed`. It gates on every job that is
 **fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
-`docs`, `workflows`. They run in parallel and finish within `test`'s window (the lightweight
-area checks in a minute or two; `quality`'s slowest job, the ArchUnit run, still under `test`),
+`docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
+within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
+the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
 so requiring them adds no merge latency. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
@@ -139,8 +142,6 @@ These workflows are intentionally NOT folded into the umbrella:
 | `codeql-analysis.yml` | Holds only the weekly `schedule:` cron (cron cannot live in a `workflow_call` child). The PR/push CodeQL signal is folded into the umbrella as the advisory `codeql` job (→ `ci-codeql.yml`), which the scheduled remnant also reuses. |
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
-| `bean-instantiations.yml` | Java-source-only; independent, niche path filter. |
-| `version-consistency.yml` | Trivial, fires on a tiny path set. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
