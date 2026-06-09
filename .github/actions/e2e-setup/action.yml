@@ -42,7 +42,16 @@ runs:
       run: |
         if [ -f "docker-tag.txt" ]; then
           ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+          # Defense-in-depth: the tag is a machine-generated docker/metadata-action slug, but it
+          # flows into $GITHUB_ENV and a later `docker pull`, so reject anything outside the Docker
+          # tag charset before trusting it — matching the release-tag validation in ci-build.yml.
+          case "$ARTEMIS_DOCKER_TAG" in
+            ""|*[!A-Za-z0-9._-]*)
+              echo "::error::Refusing invalid Docker tag from build artifact: '${ARTEMIS_DOCKER_TAG}'"
+              exit 1
+              ;;
+          esac
+          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> "$GITHUB_ENV"
           echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
         else
           echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."

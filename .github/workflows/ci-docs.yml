@@ -5,6 +5,7 @@ on:
 
 permissions: {}
 
+# Workflow-level node pin is drift-checked by ci-workflows.yml.
 env:
   node: 24
 

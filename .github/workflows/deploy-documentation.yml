@@ -16,6 +16,11 @@ concurrency:
   group: 'pages'
   cancel-in-progress: false
 
+# Workflow-level node pin is drift-checked by ci-workflows.yml (keep it in this `env:` form,
+# not inline at `node-version:`, so the check can see it). Keep in sync with ci-docs.yml.
+env:
+  node: 24
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '${{ env.node }}'
           cache: 'pnpm'
           cache-dependency-path: documentation/pnpm-lock.yaml
 

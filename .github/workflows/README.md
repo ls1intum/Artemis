@@ -27,7 +27,7 @@ ci.yml                                                            (single entry 
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 │
-├── all-required-ci-passed       (jq gate over all of the above except e2e — the required check)
+├── all-required-ci-passed       (jq gate over the required jobs — excludes advisory e2e + codeql — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 

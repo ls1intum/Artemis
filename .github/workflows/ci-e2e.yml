@@ -760,7 +760,9 @@ jobs:
           # Pick the first non-skipped result across the four E2E variants. Any
           # `failure` wins; otherwise the first `success`. Anything else (cancelled,
           # null) maps to `error` so the commit-status API accepts the state —
-          # GitHub only allows error|failure|pending|success.
+          # GitHub only allows error|failure|pending|success. The `error` initial value
+          # also covers the all-phases-skipped case (only reachable via an upstream
+          # determine-tests failure, i.e. a genuine infra error worth surfacing).
           status=error
           for r in "$ALL_NON_PR_RESULT" "$ALL_PR_RESULT" "$RELEVANT_RESULT" "$REMAINING_RESULT"; do
             case "$r" in
