@@ -301,6 +301,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
      * Uses a snapshot-based approach: calculates visibility at the moment this method is called
      * (when the user sends a message) rather than continuously tracking visibility.
      * Returns a list of video and/or slides context objects.
+     *
+     * Visibility: Any part of the element visible in the viewport counts.
      */
     private collectVisibleContexts(): IrisMessageContextDTO[] {
         const units = this.attachmentVideoUnits();
@@ -329,38 +331,55 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
             const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
 
-            // Check if element is in viewport
-            const isVisible = rect.top < viewportHeight && rect.bottom > 0 && rect.left < viewportWidth && rect.right > 0;
+            // Check if any part of unit is in viewport
+            const isUnitVisible = rect.top < viewportHeight && rect.bottom > 0 && rect.left < viewportWidth && rect.right > 0;
 
-            if (!isVisible) {
-                return; // Not visible → skip
+            if (!isUnitVisible) {
+                return; // Unit not visible → skip
             }
 
-            // Unit is visible → collect context
+            // Unit is visible → check individual materials (PDF viewer, video player)
             const provider = unitComponent.contextProvider();
             if (!provider) {
                 return;
             }
 
-            const pdfPage = provider.getCurrentPdfPage?.();
-            const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+            // Check if PDF viewer is visible
+            const pdfViewer = element.querySelector('jhi-pdf-viewer');
+            if (pdfViewer) {
+                const pdfRect = pdfViewer.getBoundingClientRect();
+                const isPdfVisible = pdfRect.top < viewportHeight && pdfRect.bottom > 0;
 
-            if (videoTimestamp != null) {
-                const videoContext: IrisVideoContextDTO = {
-                    type: 'video',
-                    lectureUnitId: unitId,
-                    timestamp: videoTimestamp,
-                };
-                contexts.push(videoContext);
+                if (isPdfVisible) {
+                    const pdfPage = provider.getCurrentPdfPage?.();
+                    if (pdfPage != null) {
+                        const slidesContext: IrisSlidesContextDTO = {
+                            type: 'slides',
+                            lectureUnitId: unitId,
+                            page: pdfPage,
+                        };
+                        contexts.push(slidesContext);
+                    }
+                }
             }
 
-            if (pdfPage != null) {
-                const slidesContext: IrisSlidesContextDTO = {
-                    type: 'slides',
-                    lectureUnitId: unitId,
-                    page: pdfPage,
-                };
-                contexts.push(slidesContext);
+            // Check if video player is visible
+            const videoPlayer = element.querySelector('jhi-video-player, jhi-youtube-player');
+            if (videoPlayer) {
+                const videoRect = videoPlayer.getBoundingClientRect();
+                const isVideoVisible = videoRect.top < viewportHeight && videoRect.bottom > 0;
+
+                if (isVideoVisible) {
+                    const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+                    if (videoTimestamp != null) {
+                        const videoContext: IrisVideoContextDTO = {
+                            type: 'video',
+                            lectureUnitId: unitId,
+                            timestamp: videoTimestamp,
+                        };
+                        contexts.push(videoContext);
+                    }
+                }
             }
         });
 
