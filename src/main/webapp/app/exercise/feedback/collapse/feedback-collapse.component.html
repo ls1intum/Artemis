@@ -2,7 +2,7 @@
     @if (!previewText) {
         <p>{{ feedback().text }}</p>
     } @else {
-        @if (isCollapsed) {
+        @if (isCollapsed()) {
             <div>
                 <div class="d-inline fa-angle" (click)="toggleCollapse()">
                     <fa-icon [icon]="faAngleRight" />

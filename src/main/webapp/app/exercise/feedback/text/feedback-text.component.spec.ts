@@ -41,7 +41,7 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        expect(comp.text).toBe('');
+        expect(comp.text()).toBe('');
     });
 
     it('should set the text to the feedback text', () => {
@@ -49,7 +49,7 @@ describe('FeedbackTextComponent', () => {
         fixture.componentRef.setInput('feedback', getFeedbackItem(text, getFeedbackReference(1, 2, false)));
         fixture.detectChanges();
 
-        expect(comp.text).toBe(text);
+        expect(comp.text()).toBe(text);
     });
 
     it('should not fetch long feedback if it does not exist', async () => {
@@ -70,7 +70,7 @@ describe('FeedbackTextComponent', () => {
 
         expect(getLongFeedbackStub).toHaveBeenCalledOnce();
         expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
-        expect(comp.text).toBe(longFeedbackText);
+        expect(comp.text()).toBe(longFeedbackText);
         expect(comp.downloadText).toBeDefined();
         expect(comp.downloadFilename).toBeDefined();
     });
@@ -83,7 +83,7 @@ describe('FeedbackTextComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(comp.text).toBe(longFeedbackText);
+        expect(comp.text()).toBe(longFeedbackText);
         expect(comp.downloadFilename).toBe('feedback_2.txt');
         expect(comp.downloadText).toContain('data:text/plain;charset=utf-8,');
         expect(comp.downloadText).toContain(longFeedbackText);

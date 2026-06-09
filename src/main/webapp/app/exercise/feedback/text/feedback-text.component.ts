@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,22 +12,19 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class FeedbackTextComponent implements OnInit {
     private longFeedbackService = inject(LongFeedbackTextService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     feedback = input.required<FeedbackItem>();
 
-    text?: string;
+    readonly text = signal<string | undefined>(undefined);
 
     downloadText?: string;
     downloadFilename?: string;
 
     ngOnInit(): void {
-        this.text = this.feedback().text ?? '';
+        this.text.set(this.feedback().text ?? '');
 
         if (this.feedback().feedbackReference.hasLongFeedbackText) {
             this.loadLongFeedback();
-        } else {
-            this.changeDetectorRef.markForCheck();
         }
     }
 
@@ -36,9 +33,8 @@ export class FeedbackTextComponent implements OnInit {
         if (feedbackId) {
             this.longFeedbackService.find(feedbackId).subscribe((longFeedbackResponse) => {
                 const longFeedback = longFeedbackResponse.body!;
-                this.text = longFeedback;
+                this.text.set(longFeedback);
                 this.setDownloadInfo(longFeedback);
-                this.changeDetectorRef.markForCheck();
             });
         }
     }

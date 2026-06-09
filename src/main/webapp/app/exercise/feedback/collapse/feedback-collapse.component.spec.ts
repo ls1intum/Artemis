@@ -72,9 +72,9 @@ describe('FeedbackCollapseComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.toggleCollapse();
-        expect(component.isCollapsed).toBe(false);
+        expect(component.isCollapsed()).toBe(false);
         component.toggleCollapse();
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(true);
     });
 
     const getFeedbackItem = (text: string, hasLongFeedbackText = false): FeedbackItem => {
