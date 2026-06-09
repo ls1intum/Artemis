@@ -153,7 +153,6 @@ public class CourseOverviewResource {
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     @AllowedTools(ToolTokenType.SCORPIO)
-    @EnforceAccessPolicy(value = CourseVisibilityPolicy.class, resourceIdFieldName = "courseId")
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
