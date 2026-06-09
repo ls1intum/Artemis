@@ -12,6 +12,9 @@ function passkeyTestUser(testTitle: string) {
  * Disables WebAuthn conditional mediation so it cannot auto-complete login before an
  * explicit button click — with automaticPresenceSimulation:true the virtual authenticator
  * would otherwise resolve the background credentials.get() immediately.
+ *
+ * TODO: Consider using @simplewebauthn/types (https://jsr.io/@simplewebauthn/types) for
+ * proper WebAuthn type definitions instead of manual casts.
  */
 async function disableConditionalMediation(page: import('@playwright/test').Page) {
     await page.addInitScript(() => {
