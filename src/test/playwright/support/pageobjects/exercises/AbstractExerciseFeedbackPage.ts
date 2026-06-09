@@ -17,11 +17,8 @@ export abstract class AbstractExerciseFeedback {
 
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         const additionalFeedbackElement = this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR);
-        if (Math.abs(points) === 1) {
-            await expect(additionalFeedbackElement.getByText(`${points} Point: ${feedbackText}`)).toBeVisible();
-        } else {
-            await expect(additionalFeedbackElement.getByText(`${points} Points: ${feedbackText}`)).toBeVisible();
-        }
+        await expect(additionalFeedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
+        await expect(additionalFeedbackElement.locator('.unified-feedback-text', { hasText: feedbackText })).toBeVisible();
     }
 
     async shouldShowScore(percentage: number) {

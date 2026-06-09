@@ -14,10 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;
