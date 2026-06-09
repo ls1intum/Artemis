@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.

@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 
 /**
  * Implementation of StatelessCIService for local CI. Contains methods for communication with the local CI system.

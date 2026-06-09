@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.RepositoryDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.RepositoryDTO;
 
 /**
  * Implementation of ContinuousIntegrationTriggerService for Hades.

@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildStepDTO;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
  * Implementation of StatelessCIService for Hades. Contains methods to communicate with Hades.
