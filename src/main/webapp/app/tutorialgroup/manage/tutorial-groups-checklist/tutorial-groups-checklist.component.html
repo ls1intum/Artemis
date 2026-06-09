@@ -19,9 +19,9 @@
             <div class="col-12">
                 <p jhiTranslate="artemisApp.pages.checklist.configurationExplanation"></p>
                 <table>
-                    <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated" />
+                    <jhi-checklist-check id="configuration" [checkAttribute]="isTutorialGroupConfigurationCreated()" />
                     <label class="form-check-label pe-4" for="configuration" jhiTranslate="artemisApp.pages.checklist.configuration"></label>
-                    @if (isTutorialGroupConfigurationCreated) {
+                    @if (isTutorialGroupConfigurationCreated()) {
                         <a
                             [routerLink]="['/course-management', course.id!, 'tutorial-groups', 'configuration', course.tutorialGroupsConfiguration!.id!, 'edit']"
                             class="btn btn-primary btn-md my-2"
@@ -30,7 +30,7 @@
                             <fa-icon [icon]="faPlus" />&nbsp;<span jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
                         </a>
                     }
-                    @if (!isTutorialGroupConfigurationCreated) {
+                    @if (!isTutorialGroupConfigurationCreated()) {
                         <a
                             [routerLink]="['/course-management', course.id!, 'create-tutorial-groups-configuration']"
                             class="btn btn-primary btn-md my-2"

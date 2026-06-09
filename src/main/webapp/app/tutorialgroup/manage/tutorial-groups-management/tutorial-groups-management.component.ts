@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -58,7 +58,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
 
@@ -67,7 +66,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     isAtLeastInstructor = false;
     isAtLeastEditor = false;
 
-    configuration: TutorialGroupsConfiguration;
+    readonly configuration = signal<TutorialGroupsConfiguration>(undefined!);
 
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
@@ -76,7 +75,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    readonly tutorialGroupFreeDays = signal<TutorialGroupFreePeriod[]>([]);
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
@@ -124,13 +123,13 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                     });
                     this.tutorialGroups = tutorialGroups;
 
-                    this.configuration = tutorialGroupsConfigurationEntityFromDto(configurationRes.body!);
-                    if (this.configuration.tutorialGroupFreePeriods) {
-                        this.tutorialGroupFreeDays = this.configuration.tutorialGroupFreePeriods;
+                    this.configuration.set(tutorialGroupsConfigurationEntityFromDto(configurationRes.body!));
+                    const freePeriods = this.configuration().tutorialGroupFreePeriods;
+                    if (freePeriods) {
+                        this.tutorialGroupFreeDays.set(freePeriods);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 }

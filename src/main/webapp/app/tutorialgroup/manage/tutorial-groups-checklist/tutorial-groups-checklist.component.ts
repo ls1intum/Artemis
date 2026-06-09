@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -26,12 +26,11 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private cdr = inject(ChangeDetectorRef);
 
     isLoading = false;
     course: Course;
     isTimeZoneConfigured = false;
-    isTutorialGroupConfigurationCreated = false;
+    readonly isTutorialGroupConfigurationCreated = signal(false);
 
     protected readonly faCog = faCog;
     protected readonly faPlus = faPlus;
@@ -39,7 +38,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
 
     get isFullyConfigured(): boolean {
-        return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;
+        return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated();
     }
 
     ngOnInit(): void {
@@ -62,12 +61,11 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                     }
                     if (configurationResult.body) {
                         this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResult.body);
-                        this.isTutorialGroupConfigurationCreated = !!this.course.tutorialGroupsConfiguration;
+                        this.isTutorialGroupConfigurationCreated.set(!!this.course.tutorialGroupsConfiguration);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     ngOnDestroy(): void {
