@@ -222,6 +222,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
         getVisibleContexts: () => {
+            if (this.isCollapsed()) {
+                return [];
+            }
+
             const unitId = this.lectureUnit()?.id;
             if (!unitId) {
                 return [];

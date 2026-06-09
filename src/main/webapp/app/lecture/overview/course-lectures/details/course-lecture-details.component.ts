@@ -296,6 +296,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.courseParamsSubscription?.unsubscribe();
     }
 
+    private isElementVisible(element: Element | null): boolean {
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const vw = window.innerWidth || document.documentElement.clientWidth;
+        return rect.top < vh && rect.bottom > 0 && rect.left < vw && rect.right > 0;
+    }
+
     /**
      * Collects context from all visible and expanded attachment/video units.
      * Uses a snapshot-based approach: calculates visibility at the moment this method is called
@@ -327,12 +335,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            const rect = element.getBoundingClientRect();
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-
             // Check if any part of unit is in viewport
-            const isUnitVisible = rect.top < viewportHeight && rect.bottom > 0 && rect.left < viewportWidth && rect.right > 0;
+            const isUnitVisible = this.isElementVisible(element);
 
             if (!isUnitVisible) {
                 return; // Unit not visible → skip
@@ -347,8 +351,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             // Check if PDF viewer is visible
             const pdfViewer = element.querySelector('jhi-pdf-viewer');
             if (pdfViewer) {
-                const pdfRect = pdfViewer.getBoundingClientRect();
-                const isPdfVisible = pdfRect.top < viewportHeight && pdfRect.bottom > 0;
+                const isPdfVisible = this.isElementVisible(pdfViewer);
 
                 if (isPdfVisible) {
                     const pdfPage = provider.getCurrentPdfPage?.();
@@ -366,8 +369,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             // Check if video player is visible
             const videoPlayer = element.querySelector('jhi-video-player, jhi-youtube-player');
             if (videoPlayer) {
-                const videoRect = videoPlayer.getBoundingClientRect();
-                const isVideoVisible = videoRect.top < viewportHeight && videoRect.bottom > 0;
+                const isVideoVisible = this.isElementVisible(videoPlayer);
 
                 if (isVideoVisible) {
                     const videoTimestamp = provider.getCurrentVideoTimestamp?.();
