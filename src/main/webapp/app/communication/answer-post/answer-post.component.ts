@@ -1,6 +1,5 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     HostListener,
     OnDestroy,
@@ -56,7 +55,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
-    changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -130,7 +128,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -194,7 +192,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
                 y: event.clientY,
             };
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -218,9 +216,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
             AnswerPostComponent.activeDropdownPost = undefined;
         }
     }

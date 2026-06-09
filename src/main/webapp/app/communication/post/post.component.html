@@ -72,7 +72,7 @@
                 <div
                     class="message-container post-content-padding"
                     [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }"
-                    [class.force-hover]="showDropdown"
+                    [class.force-hover]="showDropdown()"
                     (contextmenu)="onRightClick($event)"
                 >
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar() }">
@@ -84,16 +84,16 @@
                             [posting]="posting()"
                             [isReply]="false"
                             [isDeleted]="isDeleted"
-                            [deleteTimerInSeconds]="deleteTimerInSeconds"
+                            [deleteTimerInSeconds]="deleteTimerInSeconds()"
                             (onUndoDeleteEvent)="onDeleteEvent(false)"
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
-                        @if (originalPostDetails !== null) {
+                        @if (originalPostDetails() !== null) {
                             <jhi-forwarded-message
-                                [originalPostDetails]="originalPostDetails"
+                                [originalPostDetails]="originalPostDetails()"
                                 [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted"
-                                (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)"
+                                (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails())"
                             />
                         }
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }" (click)="$event.stopPropagation()">
@@ -116,7 +116,7 @@
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
                                     (canMarkAsUnreadOutput)="onCanMarkAsUnread($event)"
-                                    [originalPostDetails]="originalPostDetails"
+                                    [originalPostDetails]="originalPostDetails()"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
                                     (reactionsUpdated)="onReactionsUpdated($event)"
@@ -182,7 +182,7 @@
 />
 
 <!-- Right-Click Dropdown -->
-@if (showDropdown) {
+@if (showDropdown()) {
     <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
         <button class="dropdown-item d-flex" (click)="addReaction($event)">
             <fa-icon [icon]="faSmile" class="item-icon" />

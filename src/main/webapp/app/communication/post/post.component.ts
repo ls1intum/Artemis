@@ -1,20 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    HostListener,
-    OnDestroy,
-    OnInit,
-    Renderer2,
-    effect,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-    untracked,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, Renderer2, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -74,7 +58,6 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnDestroy {
     metisService = inject(MetisService);
-    changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -112,7 +95,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     mayDelete = false;
     canPin = false;
     canMarkAsUnread = false;
-    originalPostDetails: Post | AnswerPost | undefined;
+    readonly originalPostDetails = signal<Post | AnswerPost | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -224,9 +207,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
             event.preventDefault();
 
             if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
-                PostComponent.activeDropdownPost.showDropdown = false;
+                PostComponent.activeDropdownPost.showDropdown.set(false);
                 PostComponent.activeDropdownPost.enableBodyScroll();
-                PostComponent.activeDropdownPost.changeDetector.detectChanges();
             }
 
             PostComponent.activeDropdownPost = this;
@@ -236,7 +218,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 y: event.clientY,
             };
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -279,7 +261,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -290,7 +272,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
             PostComponent.activeDropdownPost = undefined;
         }
         // Restore scroll in case the component is destroyed while the dropdown is open
-        if (this.showDropdown) {
+        if (this.showDropdown()) {
             this.enableBodyScroll();
         }
     }
@@ -345,12 +327,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     fetchForwardedMessages(): void {
         try {
             if (this.forwardedPosts().length > 0) {
-                this.originalPostDetails = this.forwardedPosts()[0];
-                this.changeDetector.markForCheck();
+                this.originalPostDetails.set(this.forwardedPosts()[0]);
             }
             if (this.forwardedAnswerPosts().length > 0) {
-                this.originalPostDetails = this.forwardedAnswerPosts()[0];
-                this.changeDetector.markForCheck();
+                this.originalPostDetails.set(this.forwardedAnswerPosts()[0]);
             }
         } catch (error) {
             throw new Error(error.toString(), { cause: error });
