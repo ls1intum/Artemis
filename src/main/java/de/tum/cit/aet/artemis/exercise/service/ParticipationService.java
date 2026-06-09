@@ -269,12 +269,12 @@ public class ParticipationService {
      * @throws VersionControlException if the template repository URI cannot be repaired, i.e. the exercise is misconfigured and an instructor or admin needs to fix it
      */
     private LocalVCRepositoryUri resolveTemplateRepositoryUri(ProgrammingExercise exercise) {
+        VersionControlService versionControl = versionControlService.orElseThrow();
         var templateRepositoryUri = exercise.getVcsTemplateRepositoryUri();
-        if (templateRepositoryUri != null) {
+        if (templateRepositoryUri != null && versionControl.isValidGitRepository(templateRepositoryUri)) {
             return templateRepositoryUri;
         }
         String storedUri = exercise.getTemplateRepositoryUri();
-        VersionControlService versionControl = versionControlService.orElseThrow();
         for (String repositorySlug : candidateTemplateRepositorySlugs(exercise, storedUri)) {
             LocalVCRepositoryUri repairedUri = versionControl.getCloneRepositoryUri(exercise.getProjectKey(), repositorySlug);
             if (versionControl.isValidGitRepository(repairedUri)) {
