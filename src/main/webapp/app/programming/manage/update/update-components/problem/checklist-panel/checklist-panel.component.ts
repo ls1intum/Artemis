@@ -523,7 +523,7 @@ export class ChecklistPanelComponent {
     /**
      * Checks if problem statement does not exceed maximum length.
      */
-    private validateProblemStatementLength(problemStatement = this.effectiveProblemStatement()): boolean {
+    private validateProblemStatementLength(problemStatement: string = this.effectiveProblemStatement()): boolean {
         if (problemStatement.length <= MAX_PROBLEM_STATEMENT_LENGTH) {
             return true;
         }

@@ -134,6 +134,19 @@ describe('ChecklistPanelComponent', () => {
         expect(component.isLoading()).toBeFalsy();
     });
 
+    it('should show a friendly error and not re-analyze a section when the problem statement is too long', () => {
+        fixture.componentRef.setInput('problemStatement', 'x'.repeat(MAX_PROBLEM_STATEMENT_LENGTH + 1));
+        fixture.detectChanges();
+        const sectionSpy = vi.spyOn(apiService, 'analyzeChecklistSection');
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.reanalyzeSection('quality');
+
+        expect(sectionSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
+        expect(component.isSectionLoading('quality')).toBeFalsy();
+    });
+
     it('should display results when available', () => {
         component.analysisResult.set(mockResponse);
         fixture.detectChanges();
