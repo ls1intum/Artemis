@@ -459,7 +459,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      */
     @Test
     void testFetch_tooShortPassword_reportsLengthPolicy() {
-        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, "short");
+        String tooShortPassword = "a".repeat(PASSWORD_MIN_LENGTH - 1);
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, tooShortPassword);
 
         assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
                 .withMessageContaining("at least " + PASSWORD_MIN_LENGTH + " characters long");

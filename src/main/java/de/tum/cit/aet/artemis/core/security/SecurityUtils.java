@@ -41,8 +41,9 @@ public final class SecurityUtils {
      * <p>
      * The empty/missing case is reported separately from the too-short case on purpose: a credential that is simply absent (e.g. a git client sending a username with no
      * password) is a very different situation from one that violates the length policy, and conflating them produces misleading "password too short" log entries for what are
-     * actually empty requests. Length policy is the responsibility of the credential's own provider (e.g. an external LDAP/SSO); this method only guards against null/blank and
-     * the platform's own min/max bounds. Never include the credential value itself in these messages, as they are logged.
+     * actually empty requests. Length policy is the responsibility of the credential's own provider (e.g. an external LDAP/SSO); this method only guards against null/empty
+     * (via {@link StringUtils#hasLength}, so a whitespace-only value still falls through to the length check) and the platform's own min/max bounds. Never include the credential
+     * value itself in these messages, as they are logged.
      *
      * @param username the username which should be validated
      * @param password the password which should be validated
