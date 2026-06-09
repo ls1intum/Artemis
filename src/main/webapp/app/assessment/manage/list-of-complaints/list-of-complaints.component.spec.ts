@@ -163,19 +163,19 @@ describe('ListOfComplaintsComponent', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3]);
+            expect(comp.complaintsToShow()).toEqual([complaint3]);
         });
 
         it('process complaints with student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3, complaint4]);
+            expect(comp.complaintsToShow()).toEqual([complaint3, complaint4]);
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3]);
+            expect(comp.complaintsToShow()).toEqual([complaint3]);
         });
     });
 
@@ -184,18 +184,18 @@ describe('ListOfComplaintsComponent', () => {
         const freeComplaints = [complaint3, complaint4];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
-        expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(freeComplaints);
+        expect(comp.showAddressedComplaints()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual(freeComplaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(true);
-        expect(comp.complaintsToShow).toEqual(complaints);
+        expect(comp.showAddressedComplaints()).toBe(true);
+        expect(comp.complaintsToShow()).toEqual(complaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(freeComplaints);
+        expect(comp.showAddressedComplaints()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual(freeComplaints);
     });
 
     describe('calculateComplaintLockStatus', () => {
@@ -330,20 +330,20 @@ describe('ListOfComplaintsComponent', () => {
             case 4:
                 // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
                 // -> Only addressed complaints should be shown
-                expect(comp.complaintsToShow).toEqual(addressedComplaints);
-                expect(comp.showAddressedComplaints).toBe(true);
+                expect(comp.complaintsToShow()).toEqual(addressedComplaints);
+                expect(comp.showAddressedComplaints()).toBe(true);
                 break;
             case 5:
                 // This filter option indicates that the user selected the part of the pie representing the number of open complaints
                 // -> Only open complaints should be shown
-                expect(comp.complaintsToShow).toEqual(openComplaints);
-                expect(comp.showAddressedComplaints).toBe(false);
+                expect(comp.complaintsToShow()).toEqual(openComplaints);
+                expect(comp.showAddressedComplaints()).toBe(false);
                 break;
         }
 
         comp.resetFilterOptions();
 
-        expect(comp.complaintsToShow).toEqual(openComplaints);
+        expect(comp.complaintsToShow()).toEqual(openComplaints);
         expect(comp.filterOption).toBeUndefined();
     });
 

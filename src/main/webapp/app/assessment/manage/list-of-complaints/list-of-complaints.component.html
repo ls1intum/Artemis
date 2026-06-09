@@ -1,4 +1,4 @@
-<div class="mt-n1 me-n1 course-info-bar">
+<div class="mt-n1 me-n1 course()-info-bar">
     <div class="row justify-content-between">
         <div class="col-md-8">
             <h2>
@@ -13,28 +13,28 @@
     </div>
 </div>
 <div class="col-12 mt-4">
-    <div class="alert alert-info" [hidden]="!course || course.isAtLeastInstructor">
-        @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
+    <div class="alert alert-info" [hidden]="!course() || course().isAtLeastInstructor">
+        @if (!allComplaintsForTutorLoaded() && complaintType === ComplaintType.COMPLAINT) {
             <span jhiTranslate="artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation"></span>
         }
-        @if (!allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
+        @if (!allComplaintsForTutorLoaded() && complaintType === ComplaintType.MORE_FEEDBACK) {
             <span jhiTranslate="artemisApp.moreFeedback.list.loadAllRequestsExplanation"></span>
         }
-        @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT) {
+        @if (allComplaintsForTutorLoaded() && complaintType === ComplaintType.COMPLAINT) {
             <span jhiTranslate="artemisApp.complaint.listOfComplaints.allComplaintsLoaded"></span>
         }
-        @if (allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK) {
+        @if (allComplaintsForTutorLoaded() && complaintType === ComplaintType.MORE_FEEDBACK) {
             <span jhiTranslate="artemisApp.moreFeedback.list.allRequestsLoaded"></span>
         }
-        @if (!allComplaintsForTutorLoaded) {
+        @if (!allComplaintsForTutorLoaded()) {
             <button
                 class="btn btn-outline-info m-1"
                 (click)="triggerShowAllComplaints()"
-                [disabled]="allComplaintsForTutorLoaded"
+                [disabled]="allComplaintsForTutorLoaded()"
                 name="loadAllComplaintsForTutor"
                 id="button_loadAllComplaintsForTutor"
             >
-                @if (isLoadingAllComplaints) {
+                @if (isLoadingAllComplaints()) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
                 @if (complaintType === ComplaintType.COMPLAINT) {
@@ -47,14 +47,14 @@
         }
     </div>
     <div class="row table-responsive">
-        @if (!loading) {
+        @if (!loading()) {
             <div class="form-check col-6 align-baseline">
                 <input
                     type="checkbox"
                     class="form-check-input"
                     name="showAddressedComplaint"
                     id="field_showAddressedComplaint"
-                    [ngModel]="showAddressedComplaints"
+                    [ngModel]="showAddressedComplaints()"
                     (ngModelChange)="triggerAddressedComplaints()"
                 />
                 <label class="form-check-label" for="field_showAddressedComplaint">
@@ -71,7 +71,7 @@
         }
     </div>
     <div class="row table-responsive pt-3">
-        <table class="table" [hidden]="complaintsToShow.length === 0">
+        <table class="table" [hidden]="complaintsToShow().length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
@@ -90,7 +90,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    @if (course?.isAtLeastInstructor) {
+                    @if (course()?.isAtLeastInstructor) {
                         <th jhiSortBy="student.login">
                             <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.studentLogin"></a>
                             <fa-icon [icon]="faSort" />
@@ -124,7 +124,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (complaint of complaintsToShow; track complaint) {
+                @for (complaint of complaintsToShow(); track complaint) {
                     <tr>
                         <td>
                             {{ complaint.id }}
@@ -138,7 +138,7 @@
                         <td>
                             <span>{{ complaint.result?.assessor?.name }}</span>
                         </td>
-                        @if (course?.isAtLeastInstructor) {
+                        @if (course()?.isAtLeastInstructor) {
                             <td>
                                 <span>{{ complaint.student?.login }}</span>
                             </td>
@@ -196,7 +196,7 @@
             </tbody>
         </table>
     </div>
-    <div class="alert alert-info" [hidden]="complaints.length !== 0">
+    <div class="alert alert-info" [hidden]="complaints().length !== 0">
         @if (complaintType === ComplaintType.COMPLAINT) {
             <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span>
         }
