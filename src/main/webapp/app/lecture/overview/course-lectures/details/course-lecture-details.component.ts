@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, afterNextRender, effect, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -75,7 +75,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly injector = inject(Injector);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -108,10 +107,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
-
-    // Track which units are currently visible in the viewport
-    private readonly visibleUnitIds = signal<Set<number>>(new Set());
-    private intersectionObserver?: IntersectionObserver;
 
     // Context provider for the chatbot
     readonly contextsProvider: LectureContextsProvider = {
@@ -161,20 +156,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 this.ensureValidDeepLinkTargets();
             }
         });
-
-        // Setup intersection observer reactively when units are loaded
-        afterNextRender(
-            () => {
-                effect(() => {
-                    const units = this.lectureUnitsSignal();
-                    if (units.length > 0) {
-                        // queueMicrotask ensures this runs after Angular's change detection
-                        window.queueMicrotask(() => this.setupIntersectionObserver());
-                    }
-                });
-            },
-            { injector: this.injector },
-        );
     }
 
     loadData() {
@@ -313,49 +294,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
         this.courseParamsSubscription?.unsubscribe();
-        this.intersectionObserver?.disconnect();
-    }
-
-    /**
-     * Sets up IntersectionObserver to track which lecture units are visible in the viewport.
-     * This is used to collect context from visible, expanded units for the chatbot.
-     */
-    private setupIntersectionObserver(): void {
-        if (this.intersectionObserver) {
-            this.intersectionObserver.disconnect();
-        }
-
-        this.intersectionObserver = new IntersectionObserver(
-            (entries) => {
-                const currentVisible = new Set(this.visibleUnitIds());
-                entries.forEach((entry) => {
-                    const unitElement = entry.target as HTMLElement;
-                    const unitId = Number(unitElement.dataset['unitId']);
-                    if (!isNaN(unitId)) {
-                        if (entry.isIntersecting) {
-                            currentVisible.add(unitId);
-                        } else {
-                            currentVisible.delete(unitId);
-                        }
-                    }
-                });
-                this.visibleUnitIds.set(currentVisible);
-            },
-            {
-                root: null, // viewport
-                rootMargin: '0px',
-                threshold: 0.1, // Consider visible if at least 10% is in viewport
-            },
-        );
-
-        const unitElements = document.querySelectorAll('[data-unit-id]');
-        if (this.intersectionObserver) {
-            unitElements.forEach((element) => this.intersectionObserver!.observe(element));
-        }
     }
 
     /**
      * Collects context from all visible and expanded attachment/video units.
+     * Uses a snapshot-based approach: calculates visibility at the moment this method is called
+     * (when the user sends a message) rather than continuously tracking visibility.
      * Returns a list of video and/or slides context objects.
      */
     private collectVisibleContexts(): IrisMessageContextDTO[] {
@@ -365,16 +309,34 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         const contexts: IrisMessageContextDTO[] = [];
-        const visibleIds = this.visibleUnitIds();
 
         units.forEach((unitComponent) => {
             const unit = unitComponent.lectureUnit();
             const unitId = unit?.id;
 
-            if (!unitId || !visibleIds.has(unitId) || unitComponent.isCollapsed()) {
+            // Skip if no ID or unit is collapsed
+            if (!unitId || unitComponent.isCollapsed()) {
                 return;
             }
 
+            // Snapshot: Calculate visibility NOW (when message is sent)
+            const element = document.querySelector(`[data-unit-id="${unitId}"]`);
+            if (!element) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            // Check if element is in viewport
+            const isVisible = rect.top < viewportHeight && rect.bottom > 0 && rect.left < viewportWidth && rect.right > 0;
+
+            if (!isVisible) {
+                return; // Not visible → skip
+            }
+
+            // Unit is visible → collect context
             const provider = unitComponent.contextProvider();
             if (!provider) {
                 return;
