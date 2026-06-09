@@ -1,4 +1,4 @@
-@if (isLoading || competencyLinks?.length) {
+@if (isLoading() || competencyLinks?.length) {
     <div>
         <div class="d-flex align-items-center mb-1">
             @if (labelName()) {
@@ -14,18 +14,18 @@
             @if (competencyLinks && competencyLinks.length > 0) {
                 <jhi-button
                     [btnType]="ButtonType.WARNING"
-                    [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
+                    [disabled]="isSuggesting() || disabled || !exerciseDescription()?.trim()"
                     (onClick)="suggestCompetencies()"
                     [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
                     [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
                     [btnSize]="ButtonSize.SMALL"
                     [icon]="faLightbulb"
-                    [isLoading]="isSuggesting"
+                    [isLoading]="isSuggesting()"
                     class="ms-2"
                 />
             }
         </div>
-        @if (isLoading) {
+        @if (isLoading()) {
             <div>
                 <div class="spinner-border" role="status">
                     <span class="visually-hidden" jhiTranslate="loading"></span>

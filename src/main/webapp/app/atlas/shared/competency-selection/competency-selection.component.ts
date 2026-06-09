@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, forwardRef, inject, input, output } from '@angular/core';
+import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
 import { HttpClient } from '@angular/common/http';
@@ -56,7 +56,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
-    private changeDetector = inject(ChangeDetectorRef);
     private profileService = inject(ProfileService);
     private http = inject(HttpClient);
 
@@ -72,8 +71,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // all course competencies
     competencyLinks?: CompetencyLearningObjectLink[];
 
-    isLoading = false;
-    isSuggesting = false;
+    readonly isLoading = signal(false);
+    readonly isSuggesting = signal(false);
     checkboxStates: Record<number, boolean>;
     suggestedCompetencyIds = new Set<number>();
     /** Pending links received via refreshWithLinks before competency loading finished. */
@@ -113,16 +112,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading = true;
+                this.isLoading.set(true);
                 this.courseCompetencyService
                     .getAllForCourse(courseId)
                     .pipe(
                         finalize(() => {
-                            this.isLoading = false;
-
-                            // trigger change detection manually
-                            // necessary because quiz exercises use ChangeDetectionStrategy.OnPush
-                            this.changeDetector.detectChanges();
+                            this.isLoading.set(false);
                         }),
                     )
                     .subscribe({
@@ -260,7 +255,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             return;
         }
 
-        this.isSuggesting = true;
+        this.isSuggesting.set(true);
         this.suggestedCompetencyIds.clear();
 
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -270,8 +265,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
             .pipe(
                 finalize(() => {
-                    this.isSuggesting = false;
-                    this.changeDetector.detectChanges();
+                    this.isSuggesting.set(false);
                 }),
             )
             .subscribe({

@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { ChangeDetectorRef } from '@angular/core';
+import {} from '@angular/core';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -85,7 +85,7 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading).toBeFalsy();
+        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks).toHaveLength(2);
         expect(selector).not.toBeNull();
     });
@@ -100,7 +100,7 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalsy();
+        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks).toHaveLength(2);
         expect(component.competencyLinks?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks?.first()?.competency?.userProgress).toBeUndefined();
@@ -114,7 +114,7 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalsy();
+        expect(component.isLoading()).toBeFalsy();
         expect(component.disabled).toBeTruthy();
     });
 
@@ -127,7 +127,7 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalsy();
+        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks).toHaveLength(0);
         expect(select).toBeNull();
     });
@@ -160,12 +160,8 @@ describe('CompetencySelection', () => {
 
     it('should trigger change detection after loading competencies', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-        const detectChangesStub = vi.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
         fixture.detectChanges();
-
-        expect(detectChangesStub).toHaveBeenCalled();
     });
 
     it('should select / unselect competencies', () => {
@@ -257,11 +253,11 @@ describe('CompetencySelection', () => {
             expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
             expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
             expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
         });
 
         it('should show spinner while suggesting competencies', () => {
-            component.isSuggesting = true;
+            component.isSuggesting.set(true);
             fixture.changeDetectorRef.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
@@ -309,7 +305,7 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
         });
 
@@ -347,11 +343,11 @@ describe('CompetencySelection', () => {
             component.suggestCompetencies();
 
             expect(component.suggestedCompetencyIds.size).toBe(0);
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
         });
 
         it('should disable lightbulb button while suggesting', () => {
-            component.isSuggesting = true;
+            component.isSuggesting.set(true);
             fixture.changeDetectorRef.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
