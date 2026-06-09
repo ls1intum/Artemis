@@ -43,7 +43,6 @@ import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -68,7 +67,6 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         FormFooterComponent,
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

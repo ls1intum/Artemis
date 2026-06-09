@@ -97,7 +97,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      */
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
-        if (this.athenaFeedbackApi.isPresent()) {
+        if (this.athenaFeedbackApi.isPresent() && !programmingExercise.getAllowFeedbackRequests()) {
             this.athenaFeedbackApi.get().checkRateLimitOrThrow(participation);
             User requestingUser = userRepository.getUser();
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise, requestingUser));
@@ -208,15 +208,19 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(now());
 
+        // Collect results before save — submissions is @OneToMany(LAZY) and the collection becomes
+        // an uninitialized proxy on the merged entity after session close.
+        Set<Result> previousResults = invalidatePreviousResults
+                ? participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).collect(Collectors.toSet())
+                : Set.of();
+
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         // Circumvent lazy loading after save
         participation.setParticipant(participation.getParticipant());
 
         if (invalidatePreviousResults) {
-            Set<Result> participationResults = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
-                    .collect(Collectors.toSet());
-            participationResults.forEach(participationResult -> participationResult.setRated(false));
-            this.resultRepository.saveAll(participationResults);
+            previousResults.forEach(participationResult -> participationResult.setRated(false));
+            this.resultRepository.saveAll(previousResults);
         }
 
         return participation;
