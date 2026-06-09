@@ -129,3 +129,14 @@
         }
     </ng-container>
 </jhi-code-editor-grid>
+
+@if (!showEditorBottomArea() && buildable()) {
+    <jhi-code-editor-build-output
+        class="d-none"
+        aria-hidden="true"
+        [participation]="participation()"
+        [secondaryHeader]="!showNavbar()"
+        (onAnnotations)="onAnnotations($event)"
+        (onError)="onError($event)"
+    />
+}
