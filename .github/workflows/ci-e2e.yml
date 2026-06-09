@@ -443,7 +443,9 @@ jobs:
                 comment_id: existingCommentId,
               })).data.body;
 
-              body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
+              // Function replacer: a `$` in a test name (via `details`) must stay literal, not be
+              // read as a `$&`/`$1` replacement pattern.
+              body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, () => phase2Row);
 
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
                 const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase2`;
@@ -855,7 +857,8 @@ jobs:
                 );
               }
 
-              body = body.replace('<!-- OVERALL -->', phase2Notes + overallLine);
+              // Function replacer: phase2Notes carries failed-test names that may contain `$`.
+              body = body.replace('<!-- OVERALL -->', () => phase2Notes + overallLine);
 
               await github.rest.issues.updateComment({
                 owner: context.repo.owner, repo: context.repo.repo,

@@ -161,14 +161,20 @@ parent's concurrency lock applies transitively. **Never** add a `concurrency:` b
 ## Adding a new CI check
 
 1. Create a new reusable `ci-<name>.yml` with `on: workflow_call:` (no concurrency block).
-2. Add a job in `ci.yml`:
+2. Add a job in `ci.yml` (the `permissions:` block is mandatory — the workflow defaults to
+   `{}`, so a job without it cannot even `checkout`):
    ```yaml
    <name>:
      name: <Human-readable name>
      needs: detect-changes
      if: needs.detect-changes.outputs.<flag> == 'true'
      uses: ./.github/workflows/ci-<name>.yml
+     permissions:
+       contents: read  # widen to whatever the reusable's jobs actually need
    ```
-3. Add `<name>` to the `needs:` list of `all-required-ci-passed`. The gate accepts `success`
-   and `skipped`, so path-filtered skips pass naturally. No branch-protection change
-   is needed — the gate's `name:` field is what's required.
+3. Wire it into the two terminal jobs:
+   - Add `<name>` to the `needs:` list of `all-required-ci-passed` (for a **required** check) —
+     the gate accepts `success` and `skipped`, so path-filtered skips pass naturally. No
+     branch-protection change is needed; the gate's `name:` field is what's required.
+   - Add `<name>` to `ci-summary`'s `needs:` so it appears in the Summary table. For an
+     **advisory** check, add it to `ci-summary`'s `ADVISORY` env **instead of** the gate's `needs:`.

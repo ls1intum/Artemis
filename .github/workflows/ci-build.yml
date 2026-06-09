@@ -47,8 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      # `contents: write` is for `gh release upload` in the release path.
-      contents: write
+      # Read-only: the release-asset upload (which needs `contents: write`) is the separate
+      # `upload-release` job below, so the write token never sits on this every-PR build.
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -95,9 +96,25 @@ jobs:
           name: Artemis.war
           path: build/libs/Artemis-*.war
           if-no-files-found: error
-      - name: Upload Release Artifact
+
+  # Release-asset upload, split out so it is the ONLY job holding `contents: write` (mirrors the
+  # save-docker-tag split). Downloads the WAR `build-war` produced and attaches it to the release.
+  upload-release:
+    name: Upload Release Artifact
+    needs: build-war
+    if: ${{ inputs.is_release }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write  # `gh release upload`
+    steps:
+      - name: Download .war artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: Artemis.war
+          path: build/libs
+      - name: Upload to the GitHub release
         # Route the tag through env to keep it out of shell-injection paths.
-        if: ${{ inputs.is_release }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.release_tag }}

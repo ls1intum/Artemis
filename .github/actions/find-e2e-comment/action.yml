@@ -20,6 +20,9 @@ runs:
     - name: Find existing E2E comment
       id: find-comment
       if: inputs.pr-number != '0'
+      # A transient listComments API blip must not fail the (advisory) E2E job over a cosmetic
+      # lookup; on error the comment-id output is empty and the caller posts a fresh comment.
+      continue-on-error: true
       uses: actions/github-script@v9
       env:
         PR_NUMBER: ${{ inputs.pr-number }}

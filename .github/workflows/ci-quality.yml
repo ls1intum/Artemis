@@ -129,6 +129,9 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
+        # No `ref: commit_sha` (unlike the style jobs): analyze_java_files.py diffs against the
+        # base via `git diff origin/<base>...HEAD`, so this job keeps the default checkout +
+        # full history rather than a detached PR-head checkout.
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -162,6 +165,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # find_slow_queries.py is a pure source scan (no git diff), so pin the PR head to
+          # match the style jobs and exercise exactly the tree Build/Test do.
+          ref: ${{ inputs.commit_sha }}
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

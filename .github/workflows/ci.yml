@@ -144,7 +144,8 @@ jobs:
     if: needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
-      # `contents: write` required by `gh release upload` in build-war's release path.
+      # `contents: write` is the ceiling for ci-build.yml's `upload-release` job (`gh release
+      # upload`); `build-war` itself runs read-only. `packages: write` is for the GHCR push.
       contents: write
       packages: write
     with:
@@ -355,13 +356,15 @@ jobs:
               failure)   printf '❌' ;;
               skipped)   printf '⏭️' ;;
               cancelled) printf '🚫' ;;
+              error)     printf '⚠️' ;;  # e2e_result aggregate (advisory infra error)
               *)         printf '❔' ;;
             esac
           }
-          # Only a REQUIRED job's failure is locally fixable + merge-blocking; an advisory
-          # (e2e) failure is not, so it must not trigger the fix hints.
+          # Only a REQUIRED check's failure is locally fixable + merge-blocking; advisory
+          # (e2e/codeql) failures are not, and detect-changes has no table row, so none of them
+          # should trigger the local-fix hints.
           required_failure=$(jq -r --arg adv "$ADVISORY" '
-            ($adv | split(" ")) as $a
+            ($adv | split(" ") + ["detect-changes"]) as $a
             | any(to_entries[]; .value.result == "failure" and (.key as $k | $a | index($k) | not))
           ' <<< "$NEEDS")
           {
