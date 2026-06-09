@@ -262,9 +262,9 @@ describe('ModelingExamSubmissionComponent', () => {
         await comp.setSubmissionVersion(submissionVersion);
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
-        expect(comp.umlModel).toBeDefined();
-        expect(comp.umlModel!.version).toBe('4.0.0');
-        expect(comp.umlModel!.type).toBe('ClassDiagram');
+        expect(comp.umlModel()).toBeDefined();
+        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.type).toBe('ClassDiagram');
         expect(comp.explanationText).toBe('explanation');
     });
 });

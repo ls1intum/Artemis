@@ -51,7 +51,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     exercise = input.required<ModelingExercise>();
-    umlModel: UMLModel; // input model for Apollon+
+    readonly umlModel = signal<UMLModel>(undefined!); // input model for Apollon
 
     // explicitly needed to track if submission.isSynced is changed, otherwise component
     // does not update the state due to onPush strategy
@@ -77,7 +77,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml.set(newProblemStatementHtml);
-        this.changeDetectorReference.detectChanges();
     }
 
     getSubmission(): Submission {
@@ -96,7 +95,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         if (this.studentSubmission()) {
             if (this.studentSubmission()!.model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = importDiagram(JSON.parse(this.studentSubmission()!.model!));
+                this.umlModel.set(importDiagram(JSON.parse(this.studentSubmission()!.model!)));
             }
             // Updates explanation text with the latest submission
             this.explanationText = this.studentSubmission()!.explanationText ?? '';
@@ -163,13 +162,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // if we do not wait here for apollon, the redux store might be undefined
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = importDiagram(JSON.parse(model));
+            this.umlModel.set(importDiagram(JSON.parse(model)));
             // same as above regarding the string operations
             const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
             this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';
-
-            // if we do not call this, apollon doesn't show the updated model
-            this.changeDetectorReference.detectChanges();
         }
     }
 

@@ -26,7 +26,7 @@
                     @if (studentSubmission() && isActive) {
                         <div class="col-12 editor-large">
                             <jhi-modeling-editor
-                                [umlModel]="umlModel"
+                                [umlModel]="umlModel()"
                                 [diagramType]="exercise().diagramType!"
                                 (onModelChanged)="modelChanged($event)"
                                 [readOnly]="readonly()"

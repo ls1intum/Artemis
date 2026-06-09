@@ -84,7 +84,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml.set(newProblemStatementHtml);
-        this.changeDetectorReference.detectChanges();
     }
 
     /**

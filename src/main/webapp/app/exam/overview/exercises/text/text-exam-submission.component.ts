@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -54,8 +54,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     // answer represents the view state
-    answer: string;
-    problemStatementHtml: SafeHtml;
+    readonly answer = signal('');
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -66,7 +66,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -79,8 +79,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
-        this.changeDetectorReference.detectChanges();
+        this.problemStatementHtml.set(newProblemStatementHtml);
     }
 
     getSubmission(): Submission {
@@ -88,7 +87,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmission(): void {
-        this.answer = this.studentSubmission().text ?? '';
+        this.answer.set(this.studentSubmission().text ?? '');
     }
 
     public hasUnsavedChanges(): boolean {
@@ -96,16 +95,16 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     public updateSubmissionFromView(): void {
-        this.studentSubmission().text = this.answer;
-        this.studentSubmission().language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission().text = this.answer();
+        this.studentSubmission().language = this.textService.predictLanguage(this.answer());
     }
 
     get wordCount(): number {
-        return this.stringCountService.countWords(this.answer);
+        return this.stringCountService.countWords(this.answer());
     }
 
     get characterCount(): number {
-        return this.stringCountService.countCharacters(this.answer);
+        return this.stringCountService.countCharacters(this.answer());
     }
 
     onTextEditorInput(event: Event) {
@@ -115,14 +114,11 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     private updateViewFromSubmissionVersion() {
         if (this.submissionVersion?.content) {
-            this.answer = this.submissionVersion.content;
+            this.answer.set(this.submissionVersion.content);
         } else {
             // the content of the submission version can be undefined if an empty submission was saved
-            this.answer = '';
+            this.answer.set('');
         }
-        // setSubmissionVersion is invoked from an async subscribe callback in the parent timeline component;
-        // under zoneless change detection the ngModel-bound answer write would otherwise not refresh the view.
-        this.changeDetectorReference.markForCheck();
     }
 
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
