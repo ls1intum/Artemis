@@ -194,7 +194,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should show the repository locked badge and disable the editor actions when due date has passed', () => {
         container.ngOnInit();
-        const exercise = { id: 99, dueDate: dayjs().subtract(2, 'hours') } as ProgrammingExercise;
+        const exercise = { id: 99, dueDate: dayjs().subtract(2, 'hours'), allowOnlineEditor: true } as ProgrammingExercise;
         const participation = {
             id: 1,
             submissions: [{ id: 1, results: [result] }],
