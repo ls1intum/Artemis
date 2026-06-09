@@ -283,7 +283,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
     export SERVER_URL="http://localhost:8080"
-    export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONAL_ALLOWED_ORIGINS="http://localhost:9000"
+    export ARTEMIS_USER_MANAGEMENT_PASSKEY_ADDITIONAL_ALLOWED_ORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
 
