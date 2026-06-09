@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
+import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -66,7 +66,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     readonly dialogRef = inject(DynamicDialogRef, { optional: true });
     private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
@@ -95,7 +94,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private resultValue?: Result;
     private participationValue?: Participation;
     private feedbackFilterValue?: number[];
-    private showScoreChartValue?: boolean;
+    private readonly showScoreChartValue = signal<boolean | undefined>(undefined);
     private exerciseTypeValue?: ExerciseType;
     private messageKeyValue?: string;
     private showMissingAutomaticFeedbackInformationValue?: boolean;
@@ -140,11 +139,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
     }
 
     get showScoreChart(): boolean {
-        return this.showScoreChartValue ?? this.showScoreChartInput();
+        return this.showScoreChartValue() ?? this.showScoreChartInput();
     }
 
     set showScoreChart(showScoreChart: boolean) {
-        this.showScoreChartValue = showScoreChart;
+        this.showScoreChartValue.set(showScoreChart);
     }
 
     get exerciseType(): ExerciseType {
@@ -410,9 +409,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private updateChart(feedbackItemNodes: FeedbackNode[]) {
         if (!this.exercise || feedbackItemNodes.length === 0) {
-            // showScoreChart is a getter/setter backed by an input fallback, so it cannot be a signal; schedule CD explicitly.
             this.showScoreChart = false;
-            this.changeDetectorRef.markForCheck();
             return;
         }
 

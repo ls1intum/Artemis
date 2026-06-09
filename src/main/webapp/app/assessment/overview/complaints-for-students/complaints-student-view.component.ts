@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, Renderer2, inject, input, signal } from '@angular/core';
+import { Component, Injector, OnInit, Renderer2, afterNextRender, inject, input, signal } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -29,7 +29,7 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
     imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
-    private cdr = inject(ChangeDetectorRef);
+    private injector = inject(Injector);
     private complaintService = inject(ComplaintService);
     private serverDateService = inject(ArtemisServerDateService);
     private accountService = inject(AccountService);
@@ -48,7 +48,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly complaint = signal<Complaint>(undefined!);
     course?: Course;
     // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
-    formComplaintType?: ComplaintType;
+    readonly formComplaintType = signal<ComplaintType | undefined>(undefined);
     // The number of complaints that the student is still allowed to submit in the course.
     readonly remainingNumberOfComplaints = signal(0);
     readonly isCorrectUserToFileAction = signal(false);
@@ -160,9 +160,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
      */
     openComplaintForm(complainType: ComplaintType): void {
-        this.formComplaintType = complainType;
-        this.cdr.detectChanges(); // Wait for the view to update
-        this.scrollToComplaint();
+        this.formComplaintType.set(complainType);
+        // Scroll once the complaint form has rendered (signal write schedules CD; afterNextRender runs after that render).
+        afterNextRender(() => this.scrollToComplaint(), { injector: this.injector });
     }
 
     /**

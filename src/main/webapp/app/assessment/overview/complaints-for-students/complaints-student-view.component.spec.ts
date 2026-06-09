@@ -176,7 +176,7 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(userMock).toHaveBeenCalledTimes(1);
         });
 
-        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', () => {
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', async () => {
             fixture.componentRef.setInput('exercise', examExercise);
             fixture.componentRef.setInput('result', result);
             fixture.componentRef.setInput('exam', defaultExam);
@@ -197,9 +197,9 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
 
-            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
 
-            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            expect(component.formComplaintType()).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
 
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
@@ -287,9 +287,9 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
 
-            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
 
-            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            expect(component.formComplaintType()).toBe(ComplaintType.COMPLAINT);
             // setTimeout executes synchronously with mocked timers removed
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         });
@@ -311,9 +311,9 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
 
-            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
 
-            expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
+            expect(component.formComplaintType()).toBe(ComplaintType.MORE_FEEDBACK);
             // setTimeout executes synchronously with mocked timers removed
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         });
@@ -465,7 +465,7 @@ describe('ComplaintsStudentViewComponent', () => {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
         expect(component.showSection).toBe(true);
-        expect(component.formComplaintType).toBeUndefined();
+        expect(component.formComplaintType()).toBeUndefined();
         expect(component.remainingNumberOfComplaints()).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction()).toBe(true);
         expect(result.submission?.participation).toStrictEqual(participation);

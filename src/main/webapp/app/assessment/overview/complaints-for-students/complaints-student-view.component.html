@@ -47,14 +47,14 @@
                 }
             </div>
         }
-        @if (!complaint() && formComplaintType) {
+        @if (!complaint() && formComplaintType()) {
             <div class="row">
                 <jhi-complaint-form
                     class="flex-grow-1"
                     [exercise]="exercise()"
                     [resultId]="result()!.id!"
                     [examId]="exam()?.id!"
-                    [complaintType]="formComplaintType"
+                    [complaintType]="formComplaintType()!"
                     [isCurrentUserSubmissionAuthor]="isCorrectUserToFileAction()"
                     (onSubmit)="loadPotentialComplaint()"
                 />
