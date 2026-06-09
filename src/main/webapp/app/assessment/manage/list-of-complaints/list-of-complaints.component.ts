@@ -51,7 +51,7 @@ export class ListOfComplaintsComponent implements OnInit {
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
-    readonly course = signal<Course | undefined>(undefined);
+    readonly course = signal<Course>(undefined!);
     correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
