@@ -133,7 +133,7 @@ public class ContentChangeAccumulatorService {
     public Optional<BatchClaim> claimDueBatch(long courseId) {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(now, Duration.ofSeconds(debounceWindowSeconds), dailyCap, today, true));
+        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(now, Duration.ofSeconds(debounceWindowSeconds), dailyCap, today, true, false));
         return Optional.ofNullable(claim);
     }
 
@@ -148,8 +148,9 @@ public class ContentChangeAccumulatorService {
      * @return the drained batch, or {@link Optional#empty()} when the accumulator is empty
      */
     public Optional<BatchClaim> claimBatchNow(long courseId) {
+        Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(null, null, Integer.MAX_VALUE, today, false));
+        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(now, Duration.ofSeconds(debounceWindowSeconds), Integer.MAX_VALUE, today, false, true));
         return Optional.ofNullable(claim);
     }
 
@@ -261,10 +262,8 @@ public class ContentChangeAccumulatorService {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        @Nullable
         private final Instant now;
 
-        @Nullable
         private final Duration debounceWindow;
 
         private final int dailyCap;
@@ -273,12 +272,15 @@ public class ContentChangeAccumulatorService {
 
         private final boolean countQuota;
 
-        ClaimEntryProcessor(@Nullable Instant now, @Nullable Duration debounceWindow, int dailyCap, LocalDate today, boolean countQuota) {
+        private final boolean skipDebounce;
+
+        ClaimEntryProcessor(Instant now, Duration debounceWindow, int dailyCap, LocalDate today, boolean countQuota, boolean skipDebounce) {
             this.now = now;
             this.debounceWindow = debounceWindow;
             this.dailyCap = dailyCap;
             this.today = today;
             this.countQuota = countQuota;
+            this.skipDebounce = skipDebounce;
         }
 
         @Override
@@ -287,7 +289,7 @@ public class ContentChangeAccumulatorService {
             if (current == null || !current.hasContent()) {
                 return null;
             }
-            if (now != null && debounceWindow != null && current.lastEventTime().plus(debounceWindow).isAfter(now)) {
+            if (!skipDebounce && current.lastEventTime().plus(debounceWindow).isAfter(now)) {
                 return null;
             }
             int effectiveDailyCount = today.equals(current.dailyRunCountDate()) ? current.dailyRunCount() : 0;

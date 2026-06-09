@@ -159,8 +159,7 @@ class CompetencyOrchestrationServiceTest {
         foreignQueued.setCourse(otherCourse);
 
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
-        when(programmingExerciseRepository.findById(20L)).thenReturn(Optional.of(clicked));
-        when(programmingExerciseRepository.findById(77L)).thenReturn(Optional.of(foreignQueued));
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(foreignQueued, clicked));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L))));
@@ -171,7 +170,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
         // Wrong-course queued exercise was inspected but never orchestrated (no content extraction).
-        verify(programmingExerciseRepository).findById(77L);
+        verify(programmingExerciseRepository).findAllById(any());
         verify(contentExtractionService, never()).extractContent(foreignQueued);
         verify(runMap).remove(eq(COURSE_ID), any(RunInfo.class));
     }
@@ -182,8 +181,7 @@ class CompetencyOrchestrationServiceTest {
         ProgrammingExercise queued = courseExercise(33L);
 
         when(programmingExerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
-        when(programmingExerciseRepository.findById(33L)).thenReturn(Optional.of(queued));
-        when(programmingExerciseRepository.findById(20L)).thenReturn(Optional.of(clicked));
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(queued, clicked));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
@@ -247,14 +245,13 @@ class CompetencyOrchestrationServiceTest {
 
         assertThat(result.status()).isEqualTo(FAILED);
         assertThat(result.failureReason()).isEqualTo(NO_CHAT_CLIENT);
-        verify(programmingExerciseRepository, never()).findById(anyLong());
+        verify(programmingExerciseRepository, never()).findAllById(any());
         verify(runMap, never()).putIfAbsent(anyLong(), any());
     }
 
     @Test
     void runBatch_onlyNonApplicableExercises_returnsSuccessWithoutClaimingLock() {
-        when(programmingExerciseRepository.findById(12L)).thenReturn(Optional.of(examExercise(12L)));
-        when(programmingExerciseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(examExercise(12L)));
 
         CompetencyOrchestrationResultDTO result = createService(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(12L, 99L));
 
@@ -266,7 +263,7 @@ class CompetencyOrchestrationServiceTest {
 
     @Test
     void runBatch_alreadyInProgress_returnsInProgress() {
-        when(programmingExerciseRepository.findById(10L)).thenReturn(Optional.of(courseExercise(10L)));
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(courseExercise(10L)));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(new RunInfo("other-run", 99L, Instant.now()));
 
@@ -280,8 +277,7 @@ class CompetencyOrchestrationServiceTest {
     void runBatch_extractsAllExercisesInOneRun_thenReleasesLock() {
         ProgrammingExercise first = courseExercise(10L);
         ProgrammingExercise second = courseExercise(11L);
-        when(programmingExerciseRepository.findById(10L)).thenReturn(Optional.of(first));
-        when(programmingExerciseRepository.findById(11L)).thenReturn(Optional.of(second));
+        when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(first, second));
         stubRunMap();
         when(runMap.putIfAbsent(eq(COURSE_ID), any(RunInfo.class))).thenReturn(null);
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));

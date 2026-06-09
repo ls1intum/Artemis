@@ -263,9 +263,13 @@ public class CompetencyOrchestrationService {
      * never correct). Order of {@code exerciseIds} is preserved.
      */
     private List<ProgrammingExercise> resolveBatchExercises(long courseId, Collection<Long> exerciseIds) {
+        Map<Long, ProgrammingExercise> byId = new HashMap<>();
+        for (ProgrammingExercise exercise : programmingExerciseRepository.findAllById(exerciseIds)) {
+            byId.put(exercise.getId(), exercise);
+        }
         List<ProgrammingExercise> exercises = new ArrayList<>();
         for (Long id : exerciseIds) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findById(id).orElse(null);
+            ProgrammingExercise exercise = byId.get(id);
             if (exercise == null) {
                 log.info("Atlas orchestrator (batch) skipping exercise {}: not found", id);
                 continue;
