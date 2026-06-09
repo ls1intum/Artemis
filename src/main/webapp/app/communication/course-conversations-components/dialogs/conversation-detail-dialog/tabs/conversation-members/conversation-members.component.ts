@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -49,7 +49,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     getAsChannel = getAsChannelDTO;
     isChannel = isChannelDTO;
 
-    members: ConversationUserDTO[] = [];
+    readonly members = signal<ConversationUserDTO[]>([]);
     // page information
     page = 1;
     itemsPerPage = 10;
@@ -74,7 +74,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     public conversationService = inject(ConversationService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
-    private cdr = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
 
     filterOptions = computed(() => {
@@ -135,7 +134,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                         return prev === curr;
                     }
                 }),
-                tap(() => (this.members = [])),
+                tap(() => this.members.set([])),
                 map((query) => {
                     const searchTerm = query.searchTerm !== null && query.searchTerm !== undefined ? query.searchTerm : '';
                     return searchTerm.trim().toLowerCase();
@@ -225,7 +224,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                 return current;
             });
         }
-        this.members = members || [];
-        this.cdr.detectChanges();
+        this.members.set(members || []);
     }
 }

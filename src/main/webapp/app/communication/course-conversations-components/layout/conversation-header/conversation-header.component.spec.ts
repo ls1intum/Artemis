@@ -148,14 +148,14 @@ examples.forEach((activeConversation) => {
         it('should toggle pinned messages visibility', () => {
             const togglePinnedMessagesSpy = vi.spyOn(component, 'togglePinnedMessages');
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
 
             component.togglePinnedMessages();
             expect(togglePinnedMessagesSpy).toHaveBeenCalled();
-            expect(component.showPinnedMessages).toBe(true);
+            expect(component.showPinnedMessages()).toBe(true);
 
             component.togglePinnedMessages();
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         it('should emit togglePinnedMessage event', () => {
@@ -166,33 +166,33 @@ examples.forEach((activeConversation) => {
         });
 
         it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
-            component.showPinnedMessages = true;
+            component.showPinnedMessages.set(true);
             fixture.componentRef.setInput('pinnedMessageCount', 3);
             fixture.detectChanges();
 
             fixture.componentRef.setInput('pinnedMessageCount', 0);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
-            component.showPinnedMessages = true;
+            component.showPinnedMessages.set(true);
             fixture.componentRef.setInput('pinnedMessageCount', 3);
             fixture.detectChanges();
 
             fixture.componentRef.setInput('pinnedMessageCount', 5);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(true);
+            expect(component.showPinnedMessages()).toBe(true);
         });
 
         it('should correctly handle first change of pinnedMessageCount', () => {
-            component.showPinnedMessages = false;
+            component.showPinnedMessages.set(false);
             fixture.componentRef.setInput('pinnedMessageCount', 2);
             fixture.detectChanges();
 
-            expect(component.showPinnedMessages).toBe(false);
+            expect(component.showPinnedMessages()).toBe(false);
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {

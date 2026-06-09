@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -42,7 +42,6 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
-    private cdr = inject(ChangeDetectorRef);
 
     @HostBinding('class.course-users-selector') hostClass = true;
 
@@ -69,7 +68,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     // icons
     faX = faX;
 
-    selectedUsers: UserPublicInfoDTO[] = [];
+    readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
     isSearching = false;
     searchFailed = false;
 
@@ -118,8 +117,8 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     onDelete(index: number) {
-        this.selectedUsers.splice(index, 1);
-        this.onChange(this.selectedUsers);
+        this.selectedUsers().splice(index, 1);
+        this.onChange(this.selectedUsers());
     }
 
     onInputChange(event: Event): void {
@@ -160,7 +159,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
                     this.isSearching = true;
                     return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
                         map((users) => users.body!),
-                        map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
+                        map((users) => users.filter((user) => !this.selectedUsers().find((selectedUser) => selectedUser.id === user.id))),
                         tap(() => {
                             this.isSearching = false;
                             this.searchFailed = false;
@@ -196,29 +195,27 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     writeValue(selectedUsers: UserPublicInfoDTO[]): void {
         if (!selectedUsers) {
-            this.selectedUsers = [];
-            this.cdr.detectChanges();
+            this.selectedUsers.set([]);
             return;
         }
 
         if (this.multiSelect()) {
-            this.selectedUsers = selectedUsers ?? [];
+            this.selectedUsers.set(selectedUsers ?? []);
         } else {
-            this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
+            this.selectedUsers.set(selectedUsers?.length ? [selectedUsers[0]] : []);
         }
-        this.cdr.detectChanges();
     }
     // === END CONTROL VALUE ACCESSOR ===
 
     private onUserSelected(selectedUser: UserPublicInfoDTO) {
         if (selectedUser) {
-            if (!this.selectedUsers.find((user) => user.id === selectedUser.id)) {
+            if (!this.selectedUsers().find((user) => user.id === selectedUser.id)) {
                 if (this.multiSelect()) {
-                    this.selectedUsers = [...this.selectedUsers, selectedUser];
+                    this.selectedUsers.set([...this.selectedUsers(), selectedUser]);
                 } else {
-                    this.selectedUsers = [selectedUser];
+                    this.selectedUsers.set([selectedUser]);
                 }
-                this.onChange(this.selectedUsers);
+                this.onChange(this.selectedUsers());
             }
         }
     }

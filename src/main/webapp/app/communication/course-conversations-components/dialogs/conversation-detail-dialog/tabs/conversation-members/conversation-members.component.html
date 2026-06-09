@@ -45,10 +45,10 @@
                 }
             </div>
         </div>
-        @if (members && members.length > 0) {
+        @if (members().length > 0) {
             <div class="members-list">
                 <ul class="list-group">
-                    @for (user of members; track trackIdentity(i, user); let i = $index) {
+                    @for (user of members(); track trackIdentity(i, user); let i = $index) {
                         <li
                             class="list-group-item"
                             [id]="'user-' + user.id"

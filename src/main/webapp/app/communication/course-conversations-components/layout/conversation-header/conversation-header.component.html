@@ -49,14 +49,14 @@
                         @if (pinnedMessageCount() > 0) {
                             <div class="pinned-messages-button">
                                 <button type="button" (click)="togglePinnedMessages()" class="btn btn-sm btn-outline-secondary">
-                                    @if (showPinnedMessages) {
+                                    @if (showPinnedMessages()) {
                                         <jhi-emoji class="fs-x-small" emoji="x" />
                                     } @else {
                                         <jhi-emoji emoji="pushpin" />
                                     }
                                     <span>
                                         {{
-                                            showPinnedMessages
+                                            showPinnedMessages()
                                                 ? ('artemisApp.metis.showing' | artemisTranslate) +
                                                   (pinnedMessageCount() === 1
                                                       ? ('artemisApp.metis.singlePinned' | artemisTranslate)

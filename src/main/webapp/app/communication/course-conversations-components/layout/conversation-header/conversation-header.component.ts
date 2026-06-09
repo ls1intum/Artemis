@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -42,9 +42,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             // Track pinnedMessageCount signal input (replaces ngOnChanges)
             const currentCount = this.pinnedMessageCount();
             untracked(() => {
-                if (this.showPinnedMessages && currentCount === 0) {
-                    this.showPinnedMessages = false;
-                    this.cdr.detectChanges();
+                if (this.showPinnedMessages() && currentCount === 0) {
+                    this.showPinnedMessages.set(false);
                 }
             });
         });
@@ -78,10 +77,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
     faChevronLeft = faChevronLeft;
     readonly faPeopleGroup = faPeopleGroup;
-    showPinnedMessages: boolean = false;
+    readonly showPinnedMessages = signal(false);
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-    private cdr = inject(ChangeDetectorRef);
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;
@@ -98,8 +96,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
      */
     togglePinnedMessages(): void {
         this.togglePinnedMessage.emit();
-        this.showPinnedMessages = !this.showPinnedMessages;
-        this.cdr.detectChanges();
+        this.showPinnedMessages.update((value) => !value);
     }
 
     /**
