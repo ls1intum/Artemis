@@ -48,6 +48,7 @@ jobs:
       has_gradle: ${{ steps.decide.outputs.has_gradle }}
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
+      has_beans: ${{ steps.decide.outputs.has_beans }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -82,13 +83,22 @@ jobs:
             has_java:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
-              - '.github/workflows/ci-bean-instantiations.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
               - 'build.gradle'
               - 'gradle/**'
               - 'supporting_scripts/analyze_java_files.py'
               - 'supporting_scripts/find_slow_queries.py'
+            # bean-instantiations boots the *production* context (gradle test is skipped), so it
+            # only cares about main sources + the build graph — not test sources or the analysis
+            # helpers that has_java carries for the quality jobs.
+            has_beans:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-bean-instantiations.yml'
+              - 'src/main/java/**'
+              - 'src/main/resources/**'
+              - 'build.gradle'
+              - 'gradle/**'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -131,10 +141,11 @@ jobs:
           F_GRADLE: ${{ steps.area.outputs.has_gradle }}
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
+          F_BEANS: ${{ steps.area.outputs.has_beans }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -146,6 +157,7 @@ jobs:
               echo "has_gradle=${F_GRADLE:-false}"
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
+              echo "has_beans=${F_BEANS:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -274,7 +286,7 @@ jobs:
   bean-instantiations:
     name: Bean Instantiations
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_java == 'true'
+    if: needs.detect-changes.outputs.has_beans == 'true'
     uses: ./.github/workflows/ci-bean-instantiations.yml
     permissions:
       contents: read

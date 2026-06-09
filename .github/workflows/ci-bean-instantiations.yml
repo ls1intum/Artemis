@@ -105,6 +105,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '${{ env.java }}'
+          cache: 'gradle'  # without this the cold `clean bootJar` re-downloads all deps every run
 
       - name: Build application
         shell: bash

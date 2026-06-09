@@ -121,6 +121,26 @@ jobs:
             core.setOutput('changed_files', changed.join(','));
             console.log(`Client: ${hasClient} (${[...clientModules].join(',')}); Server: ${hasServer} (${[...serverModules].join(',')}); ${changed.length} coverage-relevant files`);
 
+      - name: Overlay PR source for accurate line/expect counts (data only)
+        if: steps.find-pr.outputs.result != ''
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+        run: |
+          set -uo pipefail
+          # The coverage table's per-file Lines/Expects columns are counted by reading source and
+          # spec files. To count the PR's code (not the trusted default branch we checked out)
+          # WITHOUT re-introducing the pwn-request, overlay ONLY the source trees from the PR head
+          # as DATA. The coverage tooling under supporting_scripts/ is NOT overlaid and is what
+          # actually executes; the overlaid files are only read as text (no install, nothing run
+          # from the PR tree). Best-effort: on any failure the counts fall back to default-branch
+          # values, which is no worse than skipping this step.
+          if git fetch --depth=1 origin "pull/${PR_NUMBER}/head" 2>/dev/null \
+             && git checkout FETCH_HEAD -- src/main/webapp src/main/java 2>/dev/null; then
+            echo "Overlaid PR source for accurate line/expect counts."
+          else
+            echo "::warning::Could not overlay PR source; line/expect counts may be default-branch-relative."
+          fi
+
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
         uses: actions/download-artifact@v8
