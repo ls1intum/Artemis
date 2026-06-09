@@ -13,6 +13,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.util.FS;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,6 +124,16 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     protected boolean repositoryExists(LocalVCRepositoryUri repositoryUri) {
         return Files.exists(repositoryUri.getLocalRepositoryPath(localVCBasePath));
+    }
+
+    @Override
+    public boolean isValidGitRepository(LocalVCRepositoryUri repositoryUri) {
+        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        if (!Files.exists(repositoryPath)) {
+            return false;
+        }
+        // A directory alone is not enough: verify that it actually contains a (bare) git repository with an object database, refs and a valid HEAD
+        return RepositoryCache.FileKey.isGitRepository(repositoryPath.toFile(), FS.DETECTED);
     }
 
     /**

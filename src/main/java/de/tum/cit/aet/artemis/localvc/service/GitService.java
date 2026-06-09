@@ -352,10 +352,11 @@ public class GitService extends AbstractGitService {
      * @param targetPath target directory
      * @param targetUrl  url of the repository
      * @return path of the local file system
+     * @throws EntityNotFoundException if targetUrl is null, i.e. the repository does not exist (e.g. because it was never created for the participation)
      */
     public Path getLocalPathOfRepo(Path targetPath, LocalVCRepositoryUri targetUrl) {
         if (targetUrl == null) {
-            return null;
+            throw new EntityNotFoundException("Cannot resolve the local repository path because the repository URI is null. The repository most likely does not exist.");
         }
         Path resolvedPath = (targetPath.normalize()).resolve(targetUrl.folderNameForRepositoryUri()).normalize();
         if (!resolvedPath.startsWith(targetPath.normalize())) {

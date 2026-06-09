@@ -3,13 +3,17 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -58,6 +62,9 @@ public class ConsistencyCheckTestService {
 
     @Autowired
     private CourseUtilService courseUtil;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     public Course course1;
 
@@ -154,6 +161,55 @@ public class ConsistencyCheckTestService {
 
         var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(5).containsAll(expectedErrors);
+    }
+
+    /**
+     * Test consistencyCheck feature with programming exercise whose template repository URI is stored correctly in the database,
+     * but whose repository does not exist (anymore) in the local VC. The check must report the template repository as missing
+     * instead of only validating the URI syntax (see issue #12840).
+     *
+     * @throws Exception if an error occurs
+     */
+    public void testCheckConsistencyOfProgrammingExercise_templateRepositoryMissingOnDisk() throws Exception {
+        mockDelegate.mockConnectorRequestsForSetup(exercise1, false, false, false);
+        mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
+
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise1.getId());
+
+        // Delete the template repository from disk while keeping the (syntactically valid) URI in the database
+        Path templateRepositoryPath = exercise1.getVcsTemplateRepositoryUri().getLocalRepositoryPath(localVCBasePath);
+        FileUtils.deleteDirectory(templateRepositoryPath.toFile());
+
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        assertThat(consistencyErrors).hasSize(1);
+        assertThat(consistencyErrors.getFirst().type()).isEqualTo(ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING);
+    }
+
+    /**
+     * Test consistencyCheck feature with programming exercise whose template repository path exists on disk,
+     * but does not contain a valid git repository (e.g. because of data corruption or a partially deleted repository).
+     * The check must report the template repository as missing.
+     *
+     * @throws Exception if an error occurs
+     */
+    public void testCheckConsistencyOfProgrammingExercise_templateRepositoryCorruptOnDisk() throws Exception {
+        mockDelegate.mockConnectorRequestsForSetup(exercise1, false, false, false);
+        mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
+        mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
+
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
+        exercise1 = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise1.getId());
+
+        // Replace the template repository on disk with an empty directory: the path still exists, but it is no longer a valid git repository
+        Path templateRepositoryPath = exercise1.getVcsTemplateRepositoryUri().getLocalRepositoryPath(localVCBasePath);
+        FileUtils.deleteDirectory(templateRepositoryPath.toFile());
+        Files.createDirectories(templateRepositoryPath);
+
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        assertThat(consistencyErrors).hasSize(1);
+        assertThat(consistencyErrors.getFirst().type()).isEqualTo(ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING);
     }
 
     @NonNull

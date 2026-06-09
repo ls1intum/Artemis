@@ -96,7 +96,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     /**
-     * Checks if a repository already exists before a copy operation starts.
+     * Checks if a repository already exists before a copy operation starts. In contrast to {@link #isValidGitRepository}, this is a pure existence check:
+     * a corrupt pre-existing repository must still count as existing here, so that the cleanup after a failed copy does not delete it.
      *
      * @param repositoryUri the repository URI to check
      * @return true if the repository exists, false otherwise
