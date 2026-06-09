@@ -131,6 +131,7 @@ public class ProgrammingExerciseImportFromFileService {
             checkRepositoriesExist(importExerciseDir);
 
             originalProgrammingExercise.setCourse(course);
+            originalProgrammingExercise.setTestCasesChanged(false);
 
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, false, true);
