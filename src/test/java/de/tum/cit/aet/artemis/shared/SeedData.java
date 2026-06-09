@@ -46,6 +46,10 @@ public final class SeedData {
 
     public static final String TUTOR_LOGIN = "artemis_test_user_6";
 
+    public static final long TUTOR_2_ID = 121L;
+
+    public static final String TUTOR_2_LOGIN = "artemis_test_user_21";
+
     public static final long INSTRUCTOR_ID = 116L;
 
     public static final String INSTRUCTOR_LOGIN = "artemis_test_user_16";
@@ -86,7 +90,7 @@ public final class SeedData {
      * future. Each pool has {@link #TEXT_EXERCISE_POOL_SIZE} exercises; claims are not reset, so the pool only supports a
      * single test class per JVM run (sized to comfortably cover that class's tests).
      */
-    public static final int TEXT_EXERCISE_POOL_SIZE = 40;
+    public static final int TEXT_EXERCISE_POOL_SIZE = 150;
 
     private static final AtomicLong FINISHED_TEXT_EXERCISE_POOL = new AtomicLong(9_100_001L);
 

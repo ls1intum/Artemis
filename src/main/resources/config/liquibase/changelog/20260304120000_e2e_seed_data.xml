@@ -224,6 +224,15 @@
         </loadData>
     </changeSet>
 
+    <!-- ==================== FIX NULLABLE DEFAULTS ON SEED COURSES ==================== -->
+    <!-- The seeded courses leave presentation_score null; several code paths dereference it as an int, so default it. -->
+    <changeSet id="seed-course-presentation-score" author="seed" context="e2e,seed">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM course WHERE id = 9001 AND presentation_score IS NULL</sqlCheck>
+        </preConditions>
+        <sql>UPDATE course SET presentation_score = 0 WHERE presentation_score IS NULL;</sql>
+    </changeSet>
+
     <!-- ==================== RESET SEQUENCES (PostgreSQL) ==================== -->
     <changeSet id="e2e-seed-reset-sequences" author="e2e" context="e2e,seed" dbms="postgresql">
         <sql>

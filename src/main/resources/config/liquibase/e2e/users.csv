@@ -20,3 +20,4 @@ id;login;password_hash;first_name;last_name;email;activated;lang_key;created_by;
 118;artemis_test_user_18;$2y$04$ny5zqT3yCYkbPjTjoylV.OMtcenKv43YRw9inYLA0rbzntHy8NdFO;Student;18;artemis_test_user_18@localhost;true;en;system;true;false
 119;artemis_test_user_19;$2y$04$dt5pt/kejemxlC1SMvfUCeiFx8WO0uTE5hCyuZwuV435b/.qgPajm;Student;19;artemis_test_user_19@localhost;true;en;system;true;false
 120;artemis_test_user_20;$2y$04$JgyIfctTXeR3VhrXb4hpF.aegHLXn6Yt.zy/kK72Tt.tDVJPUcAAe;Student;20;artemis_test_user_20@localhost;true;en;system;true;false
+121;artemis_test_user_21;$2y$04$Mws5sZs3TNDLUlw4vPbK4.0TAeh4JZ86yG8RACCxJ8nscGxPWAfyS;Tutor;21;artemis_test_user_21@localhost;true;en;system;true;false

@@ -481,7 +481,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = SeedData.STUDENT_1_LOGIN, roles = "USER")
     void submitExercise_noExercise_badRequest() throws Exception {
-        var fakeExerciseId = releasedTextExercise.getId() + 100L;
+        // Use an id far outside the seed exercise pool so it is guaranteed not to exist (the pool occupies the 9.x M range).
+        var fakeExerciseId = releasedTextExercise.getId() + 1_000_000L;
         request.post("/api/text/exercises/" + fakeExerciseId + "/text-submissions", textSubmission, HttpStatus.NOT_FOUND);
     }
 
