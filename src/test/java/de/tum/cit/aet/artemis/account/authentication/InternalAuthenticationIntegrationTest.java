@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
@@ -63,9 +61,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private AuthorityRepository authorityRepository;
 
     @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
     private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
 
     private User student;
@@ -77,8 +72,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.enableMockingOfRequests();
 
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        courseUtilService.addOnlineCourseConfigurationToCourse(course);
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
