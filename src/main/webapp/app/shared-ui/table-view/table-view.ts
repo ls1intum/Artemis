@@ -1,11 +1,11 @@
 import { NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, Type, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Tooltip } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { Table, TableLazyLoadEvent, TableModule, TablePageEvent } from 'primeng/table';
-import { TooltipModule } from 'primeng/tooltip';
 
 export interface ColumnDef<T> {
     field?: keyof T;
@@ -19,6 +19,10 @@ export interface ColumnDef<T> {
     sort?: boolean;
     filter?: boolean;
     filterType?: string;
+    /** Pin this column so it stays visible while the table scrolls horizontally. Requires `scrollable: true` in the table options. */
+    frozen?: boolean;
+    /** Which side the frozen column sticks to. Only used when `frozen` is true. Default: 'left'. */
+    alignFrozen?: 'left' | 'right';
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
     templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
@@ -44,7 +48,7 @@ export interface TableConfig {
     paginated: boolean;
     /** Show striped rows. Default: false */
     striped: boolean;
-    /** Row selection mode. Default: undefined (no selection) */
+    /** Row selection mode. Default: undefined (no selection). 'multiple' renders a leading checkbox column; 'single' uses row-click selection. */
     selectionMode: 'single' | 'multiple' | undefined;
     /** Field used as the unique row key for selection and virtual scroll. Default: 'id' */
     dataKey: string;
@@ -66,8 +70,8 @@ export interface TableConfig {
     scrollable: boolean;
     /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
     scrollHeight: string | undefined;
-    /** Alignment of the row actions column. Default: 'end' */
-    rowActionsAlignment: 'start' | 'end';
+    /** Freeze the implicit row-actions column to the right edge. Requires `scrollable: true`. Default: false. */
+    rowActionsFrozen: boolean;
 }
 
 /**
@@ -93,12 +97,12 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
     scrollable: false,
     scrollHeight: undefined,
-    rowActionsAlignment: 'end',
+    rowActionsFrozen: false,
 };
 
 @Component({
     selector: 'jhi-table-view',
-    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TooltipModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent],
+    imports: [NgComponentOutlet, NgTemplateOutlet, FormsModule, TableModule, TranslateDirective, ArtemisTranslatePipe, SearchFilterComponent, Tooltip],
     templateUrl: './table-view.html',
     styleUrl: './table-view.scss',
     encapsulation: ViewEncapsulation.None,
@@ -119,17 +123,37 @@ export class TableViewComponent<T> {
     tableActions = input<TemplateRef<unknown> | null>(null);
     loading = input(false);
     options = input<TableViewOptions>({});
-    selectedRow: T | undefined;
+    /** Optional predicate controlling which rows can be selected. Rows returning true are visually disabled and cannot be selected. */
+    isRowDisabled = input<((row: T) => boolean) | null>(null);
+    /** Tooltip text shown on the checkbox cell of disabled rows. Only applies when selectionMode is 'multiple'. */
+    disabledRowTooltip = input<string | undefined>(undefined);
+    /**
+     * The parent's authoritative selection list. Restored into PrimeNG's local binding after each
+     * data reload, because PrimeNG silently clears its selection when [value] changes.
+     * Only used when selectionMode is 'multiple'.
+     */
+    selectionSource = input<T[]>([]);
+    tableSelection: T | T[] | undefined;
 
     onLazyLoad = output<TableLazyLoadEvent>();
     onRowSelect = output<T | T[] | undefined>();
 
     dt = viewChild.required<Table>('dt');
+    private searchFilter = viewChild(SearchFilterComponent);
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
         inject(DestroyRef).onDestroy(() => clearTimeout(this.debounceTimer));
+        // Re-apply the caller-provided selection after each data reload.
+        // PrimeNG silently clears tableSelection when [value] changes and selected items
+        // are no longer present — this effect restores the correct checked state.
+        effect(() => {
+            const sel = this.selectionSource();
+            if (this.resolvedOptions().selectionMode === 'multiple') {
+                this.tableSelection = sel;
+            }
+        });
     }
 
     private readonly currentFirst = signal(0);
@@ -154,7 +178,7 @@ export class TableViewComponent<T> {
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
-            rowActionsAlignment: opts.rowActionsAlignment ?? DEFAULT_TABLE_CONFIG.rowActionsAlignment,
+            rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
         };
         return tableConfig;
     });
@@ -162,14 +186,18 @@ export class TableViewComponent<T> {
     /** Falls back to vals().length in non-lazy mode. */
     protected readonly effectiveTotalRows = computed(() => this.totalRows() ?? this.vals().length);
 
+    protected readonly showCaption = computed(() => this.resolvedOptions().showSearch || !!this.tableActions());
+
+    protected readonly emptyMessageColSpan = computed(() => this.cols().length + (this.rowActions() ? 1 : 0) + (this.resolvedOptions().selectionMode === 'multiple' ? 1 : 0));
+
     /** Uses the caller-set pageSize until the user changes it via the paginator. */
     protected readonly effectivePageSize = computed(() => this.currentPageSizeOverride() ?? this.resolvedOptions().pageSize);
 
-    itemRangeBegin = computed(() => (this.effectiveTotalRows() === 0 ? 0 : Math.min(this.effectiveTotalRows(), this.currentFirst() + 1)));
-    itemRangeEnd = computed(() => Math.min(this.effectiveTotalRows(), this.currentFirst() + this.effectivePageSize()));
+    protected readonly itemRangeBegin = computed(() => (this.effectiveTotalRows() === 0 ? 0 : Math.min(this.effectiveTotalRows(), this.currentFirst() + 1)));
+    protected readonly itemRangeEnd = computed(() => Math.min(this.effectiveTotalRows(), this.currentFirst() + this.effectivePageSize()));
 
     /** Pre-built renderer params for every cell, keyed by row data object. Recomputed only when vals() or cols() change. */
-    renderedRows = computed(() => {
+    protected readonly renderedRows = computed(() => {
         const vals = this.vals();
         const cols = this.cols();
         const map = new Map<T, CellRendererParams<T>[]>();
@@ -181,6 +209,10 @@ export class TableViewComponent<T> {
         }
         return map;
     });
+
+    protected readonly hasSelectableRows = computed(() => this.vals().some((row) => !this.isRowDisabled()?.(row)));
+
+    protected readonly rowSelectable = (event: { data: T; index: number }) => !this.isRowDisabled()?.(event.data);
 
     onGlobalSearch(event: string): void {
         const value = event.trim().toLowerCase();
@@ -207,8 +239,67 @@ export class TableViewComponent<T> {
         this.onLazyLoad.emit(event);
     }
 
+    handleRowSelectChange(): void {
+        this.onRowSelect.emit(this.tableSelection);
+    }
+
     pageChange(event: TablePageEvent): void {
         this.currentPageSizeOverride.set(event.rows);
         this.currentFirst.set(event.first);
+    }
+
+    /**
+     * Clears the search field and all pagination state, then fires an immediate lazy load at page 0.
+     * Use this when the underlying data has changed and you want a clean slate (e.g. after registering a student).
+     * No-op in non-lazy mode.
+     */
+    reset(): void {
+        if (!this.resolvedOptions().lazy) return;
+        this.currentFirst.set(0);
+        this.currentPageSizeOverride.set(undefined);
+        // resetSearchValue() synchronously emits newSearchEvent('') → onGlobalSearch('') → queues a debounce.
+        // We cancel that debounce immediately so only the direct handleLazyLoad below fires.
+        this.searchFilter()?.resetSearchValue();
+        clearTimeout(this.debounceTimer);
+        const dt = this.dt();
+        dt.first = 0;
+        dt.filters = {};
+        this.handleLazyLoad({
+            first: 0,
+            rows: this.effectivePageSize(),
+            sortField: dt.sortField as string | undefined,
+            sortOrder: dt.sortOrder ?? undefined,
+            filters: {},
+            globalFilter: null,
+            multiSortMeta: undefined,
+        });
+    }
+
+    /**
+     * Goes back to page 0 and fires an immediate lazy load, preserving the current search term and sort.
+     * Use this when an external state change requires a fresh page 1 without disturbing the user's search
+     * (e.g. the search term in a parent component changed).
+     * No-op in non-lazy mode.
+     */
+    reload(): void {
+        if (!this.resolvedOptions().lazy) return;
+        this.currentFirst.set(0);
+        this.currentPageSizeOverride.set(undefined);
+        const dt = this.dt();
+        dt.first = 0;
+        this.handleLazyLoad({
+            first: 0,
+            rows: this.effectivePageSize(),
+            sortField: dt.sortField as string | undefined,
+            sortOrder: dt.sortOrder ?? undefined,
+            filters: dt.filters ?? {},
+            globalFilter: (dt.filters?.['global'] as { value?: string } | undefined)?.value ?? null,
+            multiSortMeta: undefined,
+        });
+    }
+
+    /** Clears the current row selection. */
+    clearSelection(): void {
+        this.tableSelection = this.resolvedOptions().selectionMode === 'multiple' ? [] : undefined;
     }
 }
