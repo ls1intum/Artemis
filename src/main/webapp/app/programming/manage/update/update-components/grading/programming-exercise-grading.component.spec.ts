@@ -200,7 +200,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
         expect(pointsInput.required).toBe(false);
-        expect(pointsInput.closest('.form-group')?.hidden).toBe(true);
+        const pointsFormGroup = pointsInput.closest('.form-group') as HTMLElement | null;
+        expect(pointsFormGroup).not.toBeNull();
+        expect(pointsFormGroup?.hidden).toBe(true);
 
         vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
         vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
