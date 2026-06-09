@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
@@ -85,29 +85,31 @@ export class AssessmentDashboardComponent implements OnInit {
 
     plagiarismEnabled = false;
 
-    course: Course;
-    exam: Exam;
+    // Signal-backed reactive state: these are populated from async subscriptions (and recomputed in place previously),
+    // so under zoneless they are signals — each write schedules change detection without markForCheck.
+    readonly course = signal<Course>(undefined!);
+    readonly exam = signal<Exam>(undefined!);
     courseId: number;
     examId: number;
     exerciseGroupId: number;
-    allExercises: Exercise[] = [];
-    currentlyShownExercises: Exercise[] = [];
-    numberOfSubmissions = new DueDateStat();
-    totalNumberOfAssessments = 0;
-    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
-    numberOfCorrectionRounds = 1;
-    numberOfTutorAssessments = 0;
+    readonly allExercises = signal<Exercise[]>([]);
+    readonly currentlyShownExercises = signal<Exercise[]>([]);
+    readonly numberOfSubmissions = signal(new DueDateStat());
+    readonly totalNumberOfAssessments = signal(0);
+    readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
+    readonly numberOfCorrectionRounds = signal(1);
+    readonly numberOfTutorAssessments = signal(0);
 
-    complaints = new AssessmentDashboardInformationEntry(0, 0);
-    moreFeedbackRequests = new AssessmentDashboardInformationEntry(0, 0);
-    assessmentLocks = new AssessmentDashboardInformationEntry(0, 0);
-    ratings = new AssessmentDashboardInformationEntry(0, 0);
+    readonly complaints = signal(new AssessmentDashboardInformationEntry(0, 0));
+    readonly moreFeedbackRequests = signal(new AssessmentDashboardInformationEntry(0, 0));
+    readonly assessmentLocks = signal(new AssessmentDashboardInformationEntry(0, 0));
+    readonly ratings = signal(new AssessmentDashboardInformationEntry(0, 0));
 
-    totalAssessmentPercentage = 0;
+    readonly totalAssessmentPercentage = signal(0);
     hideFinishedExercises = true;
     hideOptional = false;
 
-    stats = new StatsForDashboard();
+    readonly stats = signal(new StatsForDashboard());
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -115,12 +117,12 @@ export class AssessmentDashboardComponent implements OnInit {
     exercisesSortingPredicate = 'assessmentDueDate';
     exercisesReverseOrder = false;
 
-    tutor: User;
+    readonly tutor = signal<User>(undefined!);
 
     isExamMode = false;
     isTestRun = false;
 
-    tutorIssues: TutorIssue[] = [];
+    readonly tutorIssues = signal<TutorIssue[]>([]);
 
     isTogglingSecondCorrection: Map<number, boolean> = new Map<number, boolean>();
 
@@ -142,7 +144,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
-        this.accountService.identity().then((user) => (this.tutor = user!));
+        this.accountService.identity().then((user) => this.tutor.set(user!));
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
@@ -154,63 +156,64 @@ export class AssessmentDashboardComponent implements OnInit {
         if (this.isExamMode) {
             this.hideFinishedExercises = false;
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
-                this.exam = res.body!;
-                this.course = Course.from(this.exam.course!);
-                this.accountService.setAccessRightsForCourse(this.course);
+                const exam = res.body!;
+                this.exam.set(exam);
+                this.course.set(Course.from(exam.course!));
+                this.accountService.setAccessRightsForCourse(this.course());
 
                 // No exercises exist yet
-                if (!this.exam.exerciseGroups) {
-                    return;
+                if (exam.exerciseGroups) {
+                    // get all exercises
+                    const exercises: Exercise[] = [];
+                    exam.exerciseGroups.forEach((exerciseGroup) => {
+                        if (exerciseGroup.exercises) {
+                            exercises.push(...exerciseGroup.exercises);
+
+                            // Set the exercise group since it is undefined by default here
+                            exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                                exercise.exerciseGroup = exerciseGroup;
+                            });
+                        }
+                    });
+
+                    this.extractExercises(exercises);
                 }
-
-                // get all exercises
-                const exercises: Exercise[] = [];
-                this.exam.exerciseGroups!.forEach((exerciseGroup) => {
-                    if (exerciseGroup.exercises) {
-                        exercises.push(...exerciseGroup.exercises);
-
-                        // Set the exercise group since it is undefined by default here
-                        exerciseGroup.exercises.forEach((exercise: Exercise) => {
-                            exercise.exerciseGroup = exerciseGroup;
-                        });
-                    }
-                });
-
-                this.extractExercises(exercises);
             });
             this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
-                    this.stats = StatsForDashboard.from(res.body!);
-                    this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                    this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
+                    const stats = StatsForDashboard.from(res.body!);
+                    this.stats.set(stats);
+                    this.numberOfSubmissions.set(stats.numberOfSubmissions);
+                    this.numberOfAssessmentsOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds);
 
-                    this.totalNumberOfAssessments = 0;
-                    for (const dueDateStat of this.numberOfAssessmentsOfCorrectionRounds) {
-                        this.totalNumberOfAssessments += dueDateStat.inTime;
+                    let totalNumberOfAssessments = 0;
+                    for (const dueDateStat of stats.numberOfAssessmentsOfCorrectionRounds) {
+                        totalNumberOfAssessments += dueDateStat.inTime;
                     }
-                    this.numberOfCorrectionRounds = this.numberOfAssessmentsOfCorrectionRounds.length;
+                    this.totalNumberOfAssessments.set(totalNumberOfAssessments);
+                    this.numberOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds.length);
 
-                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
-                    this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
+                    const tutorLeaderboardEntry = stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()?.id);
+                    this.sortService.sortByProperty(stats.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
-                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                        this.complaints = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfComplaints,
-                            tutorLeaderboardEntry.numberOfTutorComplaints,
-                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        this.numberOfTutorAssessments.set(tutorLeaderboardEntry.numberOfAssessments);
+                        this.complaints.set(
+                            new AssessmentDashboardInformationEntry(
+                                stats.numberOfComplaints,
+                                tutorLeaderboardEntry.numberOfTutorComplaints,
+                                stats.numberOfComplaints - stats.numberOfOpenComplaints,
+                            ),
                         );
                     } else {
-                        this.numberOfTutorAssessments = 0;
-                        this.complaints = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfComplaints,
-                            0,
-                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
-                        );
+                        this.numberOfTutorAssessments.set(0);
+                        this.complaints.set(new AssessmentDashboardInformationEntry(stats.numberOfComplaints, 0, stats.numberOfComplaints - stats.numberOfOpenComplaints));
                     }
-                    this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
+                    this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
 
-                    if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
+                    if (stats.numberOfSubmissions.total > 0) {
+                        this.totalAssessmentPercentage.set(
+                            Math.floor((totalNumberOfAssessments / (stats.numberOfSubmissions.total * stats.numberOfAssessmentsOfCorrectionRounds.length)) * 100),
+                        );
                     }
                     this.computeIssuesWithTutorPerformance();
                 },
@@ -219,52 +222,56 @@ export class AssessmentDashboardComponent implements OnInit {
         } else {
             this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe({
                 next: (res: HttpResponse<Course>) => {
-                    this.course = Course.from(res.body!);
-                    this.extractExercises(this.course.exercises);
+                    const course = Course.from(res.body!);
+                    this.course.set(course);
+                    this.extractExercises(course.exercises);
                 },
                 error: (response: string) => this.onError(response),
             });
 
             this.courseService.getStatsForTutors(this.courseId).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
-                    this.stats = StatsForDashboard.from(res.body!);
-                    this.numberOfSubmissions = this.stats.numberOfSubmissions;
-                    this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
-                    this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
-                    const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor.id);
-                    this.sortService.sortByProperty(this.stats.tutorLeaderboardEntries, 'points', false);
+                    const stats = StatsForDashboard.from(res.body!);
+                    this.stats.set(stats);
+                    this.numberOfSubmissions.set(stats.numberOfSubmissions);
+                    this.totalNumberOfAssessments.set(stats.totalNumberOfAssessments);
+                    this.numberOfAssessmentsOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds);
+                    const tutorLeaderboardEntry = stats.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()?.id);
+                    this.sortService.sortByProperty(stats.tutorLeaderboardEntries, 'points', false);
                     if (tutorLeaderboardEntry) {
-                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
+                        this.numberOfTutorAssessments.set(tutorLeaderboardEntry.numberOfAssessments);
 
-                        this.complaints = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfComplaints,
-                            tutorLeaderboardEntry.numberOfTutorComplaints,
-                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        this.complaints.set(
+                            new AssessmentDashboardInformationEntry(
+                                stats.numberOfComplaints,
+                                tutorLeaderboardEntry.numberOfTutorComplaints,
+                                stats.numberOfComplaints - stats.numberOfOpenComplaints,
+                            ),
                         );
-                        this.moreFeedbackRequests = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfMoreFeedbackRequests,
-                            tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
-                            this.stats.numberOfMoreFeedbackRequests - this.stats.numberOfOpenMoreFeedbackRequests,
+                        this.moreFeedbackRequests.set(
+                            new AssessmentDashboardInformationEntry(
+                                stats.numberOfMoreFeedbackRequests,
+                                tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
+                                stats.numberOfMoreFeedbackRequests - stats.numberOfOpenMoreFeedbackRequests,
+                            ),
                         );
-                        this.ratings = new AssessmentDashboardInformationEntry(this.stats.numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings);
+                        this.ratings.set(new AssessmentDashboardInformationEntry(stats.numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings));
                     } else {
-                        this.numberOfTutorAssessments = 0;
-                        this.complaints = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfComplaints,
-                            0,
-                            this.stats.numberOfComplaints - this.stats.numberOfOpenComplaints,
+                        this.numberOfTutorAssessments.set(0);
+                        this.complaints.set(new AssessmentDashboardInformationEntry(stats.numberOfComplaints, 0, stats.numberOfComplaints - stats.numberOfOpenComplaints));
+                        this.moreFeedbackRequests.set(
+                            new AssessmentDashboardInformationEntry(
+                                stats.numberOfMoreFeedbackRequests,
+                                0,
+                                stats.numberOfMoreFeedbackRequests - stats.numberOfOpenMoreFeedbackRequests,
+                            ),
                         );
-                        this.moreFeedbackRequests = new AssessmentDashboardInformationEntry(
-                            this.stats.numberOfMoreFeedbackRequests,
-                            0,
-                            this.stats.numberOfMoreFeedbackRequests - this.stats.numberOfOpenMoreFeedbackRequests,
-                        );
-                        this.ratings = new AssessmentDashboardInformationEntry(this.stats.numberOfRatings, 0);
+                        this.ratings.set(new AssessmentDashboardInformationEntry(stats.numberOfRatings, 0));
                     }
-                    this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
+                    this.assessmentLocks.set(new AssessmentDashboardInformationEntry(stats.totalNumberOfAssessmentLocks, stats.numberOfAssessmentLocks));
 
-                    if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments / this.numberOfSubmissions.total) * 100);
+                    if (stats.numberOfSubmissions.total > 0) {
+                        this.totalAssessmentPercentage.set(Math.floor((stats.totalNumberOfAssessments / stats.numberOfSubmissions.total) * 100));
                     }
 
                     this.computeIssuesWithTutorPerformance();
@@ -278,8 +285,9 @@ export class AssessmentDashboardComponent implements OnInit {
      * Computes performance issues for every tutor based on its rating, score, and number of complaints when compared to the average tutor stats
      */
     computeIssuesWithTutorPerformance(): void {
-        // clear the tutor issues array
-        this.tutorIssues = [];
+        // collect the tutor issues into a fresh array, then commit it to the signal
+        const tutorIssues: TutorIssue[] = [];
+        const tutorLeaderboardEntries = this.stats().tutorLeaderboardEntries;
 
         const complaintRatio = (entry: TutorLeaderboardElement) => {
             if (entry.numberOfAssessments === 0) {
@@ -288,7 +296,7 @@ export class AssessmentDashboardComponent implements OnInit {
             return (100 * entry.numberOfTutorComplaints) / entry.numberOfAssessments;
         };
 
-        const courseInformation = this.stats.tutorLeaderboardEntries.reduce(
+        const courseInformation = tutorLeaderboardEntries.reduce(
             (accumulator, entry) => {
                 return {
                     summedAverageRatings: accumulator.summedAverageRatings + entry.averageRating,
@@ -299,10 +307,10 @@ export class AssessmentDashboardComponent implements OnInit {
             { summedAverageRatings: 0, summedAverageScore: 0, summedComplaintRatio: 0 },
         );
 
-        const numberOfTutorsWithNonZeroRatings = this.stats.tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
-        const numberOfTutorsWithNonZeroAssessments = this.stats.tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
+        const numberOfTutorsWithNonZeroRatings = tutorLeaderboardEntries.filter((entry) => entry.averageRating > 0).length;
+        const numberOfTutorsWithNonZeroAssessments = tutorLeaderboardEntries.filter((entry) => entry.numberOfAssessments > 0).length;
 
-        this.stats.tutorLeaderboardEntries
+        tutorLeaderboardEntries
             // create the tutor issue checkers for rating, score and complaints
             .flatMap((entry) => [
                 new TutorIssueRatingChecker(
@@ -333,12 +341,13 @@ export class AssessmentDashboardComponent implements OnInit {
             .map((checker) => checker.toIssue())
             .forEach((issue) => {
                 // mark tutor with performance issues
-                const tutorEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === issue.tutorId);
+                const tutorEntry = tutorLeaderboardEntries.find((entry) => entry.userId === issue.tutorId);
                 tutorEntry!.hasIssuesWithPerformance = true;
 
                 // add issue to the issues list
-                this.tutorIssues.push(issue);
+                tutorIssues.push(issue);
             });
+        this.tutorIssues.set(tutorIssues);
     }
 
     /**
@@ -347,10 +356,7 @@ export class AssessmentDashboardComponent implements OnInit {
      */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
-            this.allExercises = exercises;
-            this.currentlyShownExercises = this.getUnfinishedExercises(exercises);
-            // sort exercises by type to get a better overview in the dashboard
-            this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
+            this.allExercises.set(exercises);
             this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }
@@ -360,7 +366,7 @@ export class AssessmentDashboardComponent implements OnInit {
      * Initiates the map that contains the current toggling state (false) for each exercise.
      */
     private initIsTogglingSecondCorrection() {
-        this.allExercises.forEach((exercise) => {
+        this.allExercises().forEach((exercise) => {
             this.isTogglingSecondCorrection.set(exercise.id!, false);
         });
     }
@@ -403,10 +409,11 @@ export class AssessmentDashboardComponent implements OnInit {
      * update the exercise array based on the option show finished exercises
      */
     updateExercises() {
-        this.currentlyShownExercises = this.hideFinishedExercises ? this.getUnfinishedExercises(this.allExercises) : this.allExercises;
+        let shown = this.hideFinishedExercises ? this.getUnfinishedExercises(this.allExercises()) : this.allExercises();
         if (this.hideOptional) {
-            this.currentlyShownExercises = this.currentlyShownExercises.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
+            shown = shown.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
         }
+        this.currentlyShownExercises.set(shown);
     }
 
     /**
@@ -418,18 +425,20 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.currentlyShownExercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        const sorted = [...this.currentlyShownExercises()];
+        this.sortService.sortByProperty(sorted, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        this.currentlyShownExercises.set(sorted);
     }
 
     toggleSecondCorrection(exerciseId: number) {
-        const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
+        const currentExercise = this.currentlyShownExercises().find((exercise) => exercise.id === exerciseId)!;
         this.isTogglingSecondCorrection.set(currentExercise.id!, true);
-        const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
             next: (res: boolean) => {
-                this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
-                currentExercise!.secondCorrectionEnabled = res as boolean;
+                currentExercise.secondCorrectionEnabled = res;
                 this.isTogglingSecondCorrection.set(currentExercise.id!, false);
+                // Commit a new array reference so the signal notifies (the exercise object was mutated in place).
+                this.currentlyShownExercises.set([...this.currentlyShownExercises()]);
             },
             error: (err: string) => {
                 this.onError(err);

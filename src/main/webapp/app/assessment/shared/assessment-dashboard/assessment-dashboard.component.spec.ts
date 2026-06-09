@@ -182,10 +182,10 @@ describe('AssessmentDashboardComponent', () => {
         expect(comp.isTestRun).toBe(false);
         expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledTimes(1);
         expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledTimes(1);
-        expect(comp.exam).toEqual(exam);
+        expect(comp.exam()).toEqual(exam);
         expect(comp.hideFinishedExercises).toBe(false);
-        expect(comp.allExercises).toHaveLength(4);
-        expect(comp.currentlyShownExercises).toHaveLength(4);
+        expect(comp.allExercises()).toHaveLength(4);
+        expect(comp.currentlyShownExercises()).toHaveLength(4);
     });
 
     it('should init component correctly for course', () => {
@@ -205,43 +205,49 @@ describe('AssessmentDashboardComponent', () => {
         expect(comp.examId).toBe(0);
         expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledTimes(1);
         expect(getStatsForTutorsStub).toHaveBeenCalledTimes(1);
-        expect(comp.course).toEqual(Course.from(course));
-        expect(comp.allExercises).toHaveLength(5);
-        expect(comp.currentlyShownExercises).toHaveLength(4);
+        expect(comp.course()).toEqual(Course.from(course));
+        expect(comp.allExercises()).toHaveLength(5);
+        expect(comp.currentlyShownExercises()).toHaveLength(4);
     });
 
     it('should toggle correctionRound for exercises', () => {
-        comp.currentlyShownExercises = exercises;
+        comp.currentlyShownExercises.set(exercises);
         const toggleSecondCorrectionStub = vi.spyOn(exerciseService, 'toggleSecondCorrection');
         toggleSecondCorrectionStub.mockReturnValue(of(true));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
+        expect(comp.currentlyShownExercises().find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+        expect(comp.currentlyShownExercises().find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
     });
 
     it('should update exercises when finished exercises are filtered', () => {
-        comp.allExercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise];
-        comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
+        comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
+        comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);
         comp.triggerFinishedExercises(); // should now show all exercises
-        expect(comp.currentlyShownExercises).toEqual([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
+        expect(comp.currentlyShownExercises()).toEqual([
+            programmingExercise,
+            programmingExerciseComplaintsOnAutomaticAssessment,
+            textExercise,
+            modelingExercise,
+            fileUploadExercise,
+        ]);
         comp.triggerFinishedExercises(); // should no longer show fileUploadExercise
-        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, textExercise, modelingExercise]);
     });
 
     it('should update exercises when optional exercises are filtered', () => {
-        comp.allExercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise];
-        comp.currentlyShownExercises = [programmingExercise, textExercise, modelingExercise];
+        comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
+        comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);
         comp.triggerOptionalExercises();
-        expect(comp.currentlyShownExercises).toEqual([programmingExercise, modelingExercise]);
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, modelingExercise]);
         comp.triggerOptionalExercises();
-        expect(comp.currentlyShownExercises).toEqual([programmingExercise, textExercise, modelingExercise]);
+        expect(comp.currentlyShownExercises()).toEqual([programmingExercise, textExercise, modelingExercise]);
     });
 
     it('should sort rows', () => {
         const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
-        comp.currentlyShownExercises = [textExercise];
+        comp.currentlyShownExercises.set([textExercise]);
         comp.exercisesSortingPredicate = 'assessmentDueDate';
         comp.exercisesReverseOrder = false;
 
@@ -290,7 +296,7 @@ describe('AssessmentDashboardComponent', () => {
                 const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
 
-                comp.tutor = new User(1);
+                comp.tutor.set(new User(1));
 
                 const stats = new StatsForDashboard();
                 stats.numberOfRatings = 2;
@@ -332,10 +338,10 @@ describe('AssessmentDashboardComponent', () => {
                 comp.ngOnInit();
 
                 // then
-                expect(comp.tutorIssues).toHaveLength(4);
-                expect(comp.stats.tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
-                expect(comp.stats.tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints, score
-                expect(comp.stats.tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(true); // score
+                expect(comp.tutorIssues()).toHaveLength(4);
+                expect(comp.stats().tutorLeaderboardEntries[0].hasIssuesWithPerformance).toBe(true); // rating
+                expect(comp.stats().tutorLeaderboardEntries[1].hasIssuesWithPerformance).toBe(true); // complaints, score
+                expect(comp.stats().tutorLeaderboardEntries[2].hasIssuesWithPerformance).toBe(true); // score
             });
         });
 

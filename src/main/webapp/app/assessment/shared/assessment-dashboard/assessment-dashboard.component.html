@@ -12,7 +12,7 @@
                                 ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
                                 : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
                         }}
-                        {{ exam?.title }}
+                        {{ exam()?.title }}
                     </h5>
                 }
                 <jhi-documentation-button [type]="documentationType" />
@@ -21,19 +21,19 @@
         <div *titleBarActions>
             @if (!isExamMode) {
                 <div class="d-flex justify-content-lg-end">
-                    @if (course && course.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-sm btn-info">
+                    @if (course() && course().isAtLeastInstructor) {
+                        <a [routerLink]="['/course-management', course().id, 'scores']" class="tab-item btn btn-sm btn-info">
                             <fa-icon [icon]="faTable" />
                             <span jhiTranslate="entity.action.scores"></span>
                         </a>
                     }
-                    @if (course?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course.id, 'grading']" class="tab-item btn btn-sm btn-info ms-1 me-1">
+                    @if (course()?.isAtLeastInstructor) {
+                        <a [routerLink]="['/course-management', course().id, 'grading']" class="tab-item btn btn-sm btn-info ms-1 me-1">
                             <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                         </a>
 
                         <jhi-feature-overlay [enabled]="plagiarismEnabled">
-                            <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-sm btn-info">
+                            <a [routerLink]="['/course-management', course().id, 'plagiarism-cases']" class="tab-item btn btn-sm btn-info">
                                 <fa-icon [icon]="faHeartBroken" />
                                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                             </a>
@@ -47,42 +47,42 @@
         <div class="row justify-content-between">
             <div class="col-md-8">
                 <h4>
-                    <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam?.endDate | artemisDate }}</span>
+                    <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam()?.endDate | artemisDate }}</span>
                 </h4>
                 <h4>
-                    <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam?.publishResultsDate | artemisDate }}</span>
+                    <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam()?.publishResultsDate | artemisDate }}</span>
                 </h4>
             </div>
-            @if (course?.isAtLeastInstructor) {
+            @if (course()?.isAtLeastInstructor) {
                 <jhi-exam-assessment-buttons class="assessment-button-row" />
             }
         </div>
     }
 </div>
-@if (isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1) {
+@if (isTestRun && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
     <div style="margin-top: 1em" class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"></div>
 }
-@if (course) {
+@if (course()) {
     <div>
         <div id="assessment-statistics">
             <div class="container-fluid">
                 <jhi-assessment-dashboard-information
                     [isExamMode]="isExamMode"
-                    [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
-                    [complaintsEnabled]="course.complaintsEnabled!"
-                    [numberOfTutorAssessments]="numberOfTutorAssessments"
-                    [course]="course"
-                    [tutorId]="tutor.id!"
+                    [feedbackRequestEnabled]="course().requestMoreFeedbackEnabled!"
+                    [complaintsEnabled]="course().complaintsEnabled!"
+                    [numberOfTutorAssessments]="numberOfTutorAssessments()"
+                    [course]="course()"
+                    [tutorId]="tutor().id!"
                     [examId]="examId"
-                    [totalNumberOfAssessments]="totalNumberOfAssessments"
-                    [numberOfSubmissions]="numberOfSubmissions"
-                    [numberOfCorrectionRounds]="numberOfCorrectionRounds"
-                    [totalAssessmentPercentage]="totalAssessmentPercentage"
-                    [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                    [complaints]="complaints"
-                    [moreFeedbackRequests]="moreFeedbackRequests"
-                    [assessmentLocks]="assessmentLocks"
-                    [ratings]="ratings"
+                    [totalNumberOfAssessments]="totalNumberOfAssessments()"
+                    [numberOfSubmissions]="numberOfSubmissions()"
+                    [numberOfCorrectionRounds]="numberOfCorrectionRounds()"
+                    [totalAssessmentPercentage]="totalAssessmentPercentage()"
+                    [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds()"
+                    [complaints]="complaints()"
+                    [moreFeedbackRequests]="moreFeedbackRequests()"
+                    [assessmentLocks]="assessmentLocks()"
+                    [ratings]="ratings()"
                 />
             </div>
         </div>
@@ -149,7 +149,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (exercise of currentlyShownExercises; track exercise) {
+                        @for (exercise of currentlyShownExercises(); track exercise) {
                             <tr>
                                 <td>
                                     <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
@@ -213,7 +213,11 @@
                                         </a>
                                     }
                                     @if (
-                                        course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1
+                                        course()?.isAtLeastInstructor &&
+                                        isExamMode &&
+                                        !isTestRun &&
+                                        exam()?.numberOfCorrectionRoundsInExam &&
+                                        exam()!.numberOfCorrectionRoundsInExam! > 1
                                     ) {
                                         <ng-container class="col-lg-3 col-md-6 col-sm-6">
                                             <jhi-second-correction-enable-button
@@ -232,10 +236,10 @@
                 </table>
             </div>
         </div>
-        @if (course && course.isAtLeastInstructor && tutorIssues.length > 0) {
+        @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
             <div class="container-fluid mt-4">
                 <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorPerformanceIssues.title"></h4>
-                @for (issue of tutorIssues; track issue) {
+                @for (issue of tutorIssues(); track issue) {
                     <ul>
                         @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
                             <li>
@@ -276,7 +280,7 @@
             @if (isExamMode) {
                 <h4 jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.examTitle"></h4>
             }
-            <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course" />
+            <jhi-tutor-leaderboard [exam]="exam()" [tutorsData]="stats().tutorLeaderboardEntries" [course]="course()" />
         </div>
     </div>
 }
