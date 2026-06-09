@@ -154,14 +154,14 @@ public class ProgrammingExerciseCreationUpdateService {
     /**
      * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
      *
-     * @param programmingExercise              The programmingExercise that should be setup
-     * @param clearRepositorySourcesAfterSetup if true, clear sources in template, solution, and test repositories after setup
-     * @param skipRepositoryAndBuildTrigger    if true, skip repository setups, initial submissions, and build plan setup
+     * @param programmingExercise           The programmingExercise that should be setup
+     * @param emptyRepositories             if true, clear sources in template, solution, and test repositories after setup
+     * @param skipRepositoryAndBuildTrigger if true, skip repository setups, initial submissions, and build plan setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean clearRepositorySourcesAfterSetup, boolean skipRepositoryAndBuildTrigger)
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories, boolean skipRepositoryAndBuildTrigger)
             throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
@@ -170,7 +170,7 @@ public class ProgrammingExerciseCreationUpdateService {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
         validateProblemStatementLength(programmingExercise.getProblemStatement());
-        if (clearRepositorySourcesAfterSetup) {
+        if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);
         }
         final User exerciseCreator = userRepository.getUser();
@@ -217,7 +217,7 @@ public class ProgrammingExerciseCreationUpdateService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
-            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, clearRepositorySourcesAfterSetup);
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
