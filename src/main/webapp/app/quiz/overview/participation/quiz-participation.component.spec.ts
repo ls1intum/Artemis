@@ -569,8 +569,7 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should show the remaining time box in practice mode even though the official quiz has ended', () => {
-        // Regression: in practice mode the official quiz has always ended (that is what makes practice available),
-        // but the practice run has its own running countdown that must still be displayed in the header.
+        // In practice the official quiz has already ended, but the practice run has its own countdown that must still show.
         component.mode = 'practice';
         component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
         component.waitingForQuizStart = false;
@@ -584,6 +583,40 @@ describe('QuizParticipationComponent - live mode', () => {
         const info = component.liveHeaderInfo();
         expect(info?.showRemainingTime).toBe(true);
         expect(info?.remainingTimeText).toBe('5 min');
+    });
+
+    it('should keep the same liveHeaderInfo reference across ticks when nothing displayed changes', () => {
+        component.mode = 'practice';
+        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.waitingForQuizStart = false;
+        component.showingResult = false;
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = 300;
+        component.remainingTimeText = '5 min';
+
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).toBe(first);
+    });
+
+    it('should produce a new liveHeaderInfo when a displayed field changes', () => {
+        component.mode = 'practice';
+        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.waitingForQuizStart = false;
+        component.showingResult = false;
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = 300;
+        component.remainingTimeText = '5 min';
+        component.syncSubmitState();
+        const first = component.liveHeaderInfo();
+
+        component.remainingTimeText = '4 min';
+        component.syncSubmitState();
+
+        expect(component.liveHeaderInfo()).not.toBe(first);
+        expect(component.liveHeaderInfo()?.remainingTimeText).toBe('4 min');
     });
 
     it('should not emit a live quiz status before the quiz has loaded', () => {

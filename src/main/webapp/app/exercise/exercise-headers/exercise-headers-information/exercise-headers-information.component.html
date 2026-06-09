@@ -1,6 +1,6 @@
 @if (exercise()) {
     <div id="exercise-headers-information" class="align-self-stretch d-flex flex-row flex-wrap align-items-stretch gap-2 overflow-auto">
-        @for (informationBoxItem of informationBoxItems(); track informationBoxItem.title) {
+        @for (informationBoxItem of informationBoxItems(); track $index) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
                 <div
                     [attr.role]="sortedHistoryResults().length ? 'button' : undefined"

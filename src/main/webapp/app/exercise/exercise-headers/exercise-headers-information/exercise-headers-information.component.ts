@@ -28,9 +28,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 /**
- * Live, quiz-specific information shown in the exercise header during a live or practice quiz participation.
- * This replaces the dedicated quiz header row that used to sit above the questions, so the questions can move up.
- * Computed by the quiz participation component and bridged up through the exercise split panel and header.
+ * Live, quiz-specific information shown in the exercise header during a live or practice quiz participation,
+ * replacing the dedicated quiz header row that used to sit above the questions.
  */
 export interface QuizLiveHeaderInfo {
     /** Whether the live remaining-time countdown should be shown (quiz running, not yet submitted). */
@@ -41,8 +40,24 @@ export interface QuizLiveHeaderInfo {
     remainingTimeColor?: string;
     /** Whether the "results available" date should be shown (after submit / once time is up). */
     showResultsAvailable: boolean;
-    /** Date when the results become available. */
     resultsAvailableDate?: dayjs.Dayjs;
+}
+
+/** Field-wise equality for {@link QuizLiveHeaderInfo}, used as the signal's `equal` so the per-tick rebuild only notifies when a displayed value changes. */
+export function quizLiveHeaderInfoEqual(a: QuizLiveHeaderInfo | undefined, b: QuizLiveHeaderInfo | undefined): boolean {
+    if (a === b) {
+        return true;
+    }
+    if (!a || !b) {
+        return false;
+    }
+    return (
+        a.showRemainingTime === b.showRemainingTime &&
+        a.remainingTimeText === b.remainingTimeText &&
+        a.remainingTimeColor === b.remainingTimeColor &&
+        a.showResultsAvailable === b.showResultsAvailable &&
+        (a.resultsAvailableDate === b.resultsAvailableDate || (!!a.resultsAvailableDate && !!b.resultsAvailableDate && a.resultsAvailableDate.isSame(b.resultsAvailableDate)))
+    );
 }
 
 @Component({
@@ -84,8 +99,6 @@ export class ExerciseHeadersInformationComponent {
     /** Explicitly provided course; falls back to the exercise's own course via {@link resolvedCourse}. */
     readonly course = input<Course>();
     readonly submissionPolicy = input<SubmissionPolicy>();
-    /** Optional override for the result history; falls back to the results derived from the participation's submissions. */
-    readonly sortedHistoryResultsInput = input<Result[] | undefined>();
     readonly isPractice = input<boolean>(false);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
@@ -99,9 +112,12 @@ export class ExerciseHeadersInformationComponent {
 
     readonly dueDate = computed<dayjs.Dayjs | undefined>(() => getExerciseDueDate(this.exercise(), this.studentParticipation()));
 
+    private readonly allResults = computed<Result[]>(() => getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
+
     /** Results across all submissions, sorted by id descending (newest first). The updated participation by the websocket is not guaranteed to be sorted. */
     readonly sortedHistoryResults = computed<Result[]>(() => {
-        const results = Array.from(this.sortedHistoryResultsInput() ?? getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
+        // Copy before sorting: allResults() is a shared memoized array and sortByProperty sorts in place.
+        const results = Array.from(this.allResults());
         this.sortService.sortByProperty(results, 'id', false);
         return results;
     });
@@ -119,10 +135,7 @@ export class ExerciseHeadersInformationComponent {
     });
 
     readonly currentFeedbackRequestCount = computed<number>(
-        () =>
-            getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions)?.filter(
-                (result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true,
-            ).length ?? 0,
+        () => this.allResults().filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true).length,
     );
 
     readonly individualComplaintDueDate = computed<dayjs.Dayjs | undefined>(() => {
@@ -130,18 +143,10 @@ export class ExerciseHeadersInformationComponent {
         if (!course?.maxComplaintTimeDays) {
             return undefined;
         }
-        return ComplaintService.getIndividualComplaintDueDate(
-            this.exercise(),
-            course.maxComplaintTimeDays,
-            getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions).last(),
-            this.studentParticipation(),
-        );
+        return ComplaintService.getIndividualComplaintDueDate(this.exercise(), course.maxComplaintTimeDays, this.allResults().last(), this.studentParticipation());
     });
 
-    /**
-     * All header information boxes, in display order. The generic exercise boxes come first; the live quiz boxes
-     * (remaining time, results available) are appended last so they always render at the end of the header.
-     */
+    /** All header information boxes, in display order: the generic exercise boxes first, then the live quiz boxes last. */
     readonly informationBoxItems = computed<InformationBox[]>(() => {
         const items: InformationBox[] = [...this.getPointsItems(), ...this.getDueDateItems()];
         const startDateItem = this.getStartDateItem();
@@ -401,11 +406,6 @@ export class ExerciseHeadersInformationComponent {
         };
     }
 
-    /**
-     * Builds the live remaining-time box from {@link quizLiveHeaderInfo}. Rendered in the due-date slot (via
-     * {@link getDueDateItems}) so the countdown sits where the due date would otherwise be. Returns undefined
-     * outside a running live/practice quiz participation.
-     */
     getQuizRemainingTimeItem(): InformationBox | undefined {
         const info = this.quizLiveHeaderInfo();
         if (!info?.showRemainingTime) {
@@ -421,11 +421,6 @@ export class ExerciseHeadersInformationComponent {
         };
     }
 
-    /**
-     * Builds the trailing live quiz boxes (currently the "results available" date) from {@link quizLiveHeaderInfo}.
-     * Returns an empty array outside a live/practice quiz participation. These render last, through the same
-     * information-box loop as the generic boxes, using the existing `dateTime` content type.
-     */
     getQuizLiveInfoItems(): InformationBox[] {
         const info = this.quizLiveHeaderInfo();
         if (!info) {

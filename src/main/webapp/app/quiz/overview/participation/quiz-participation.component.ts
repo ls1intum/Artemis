@@ -46,7 +46,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
-import { QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -150,11 +150,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
 
-    /**
-     * Live quiz info (remaining time, results-available date, score) rendered in the exercise header during
-     * live/practice participation instead of in a dedicated quiz header row, so the questions can move up.
-     */
-    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined);
+    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
     quizId: number;
@@ -887,7 +883,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
-            this.updateLiveHeaderInfo();
+            this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
     }
 
@@ -1200,8 +1196,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @returns `true` if the submission should be considered submitted in the UI;
      *          `false` otherwise.
      */
-    private computeShouldTreatAsSubmittedForUi(): boolean {
-        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+    private computeShouldTreatAsSubmittedForUi(hasAnyAnswer: boolean): boolean {
+        const hasSavedOrAnswered = hasAnyAnswer || !!this.submission?.submissionDate || !!this.submission?.id;
         return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 
@@ -1211,13 +1207,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * on a button inside this component.
      */
     syncSubmitState(): void {
-        const submittedForUi = this.computeShouldTreatAsSubmittedForUi();
+        // hasAnyAnswer() materializes the three answer maps; compute it once per tick and share it with both consumers.
+        const hasAnyAnswer = this.hasAnyAnswer();
+        const submittedForUi = this.computeShouldTreatAsSubmittedForUi(hasAnyAnswer);
         this._shouldTreatAsSubmittedForUi.set(submittedForUi);
         const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
         this.emitLiveQuizStatus(submittedForUi);
-        this.updateLiveHeaderInfo();
+        this.updateLiveHeaderInfo(hasAnyAnswer);
     }
 
     /**
@@ -1246,12 +1244,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Recomputes the live header info (remaining time / results-available date / score) consumed by the exercise header.
-     * Mirrors the visibility logic that used to live in the quiz header template. Called whenever the relevant state
-     * changes: every UI tick (via {@link updateDisplayedTimes} → {@link syncSubmitState}) and when results are shown.
-     */
-    private updateLiveHeaderInfo(): void {
+    /** Recomputes the live header info (remaining time / results-available date) for the exercise header; runs on every UI tick via {@link syncSubmitState} and when results are shown. */
+    private updateLiveHeaderInfo(hasAnyAnswer: boolean): void {
         if (!this.quizExercise || (this.mode !== 'live' && this.mode !== 'practice')) {
             this._liveHeaderInfo.set(undefined);
             return;
@@ -1263,7 +1257,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 info.showRemainingTime = true;
                 info.remainingTimeText = this.remainingTimeText;
                 info.remainingTimeColor = this.remainingTimeColor();
-            } else if (this.quizExercise.dueDate && ((!this.quizExercise.quizEnded && this.submission.submitted) || (this.remainingTimeSeconds < 0 && this.hasAnyAnswer()))) {
+            } else if (this.quizExercise.dueDate && ((!this.quizExercise.quizEnded && this.submission.submitted) || (this.remainingTimeSeconds < 0 && hasAnyAnswer))) {
                 info.showResultsAvailable = true;
                 info.resultsAvailableDate = this.quizExercise.dueDate;
             }
@@ -1271,10 +1265,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this._liveHeaderInfo.set(info);
     }
 
-    /**
-     * Maps the remaining seconds to a bootstrap text color, mirroring the time-warning / time-critical thresholds
-     * that were applied in the quiz header template. Returns undefined for the default (non-urgent) color.
-     */
+    /** Maps the remaining seconds to a bootstrap text color (warning / critical thresholds); undefined for the default color. */
     private remainingTimeColor(): string | undefined {
         const duration = this.quizExercise.duration ?? 0;
         if (this.remainingTimeSeconds < 60 || this.remainingTimeSeconds < duration / 4) {
