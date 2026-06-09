@@ -951,6 +951,48 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboard_asStudentCourseNotStarted_forbidden() throws Exception {
+        courseTestService.testGetCourseForDashboard_asStudentCourseNotStarted_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetCourseForDashboard_asTutorCourseNotStarted_ok() throws Exception {
+        courseTestService.testGetCourseForDashboard_asTutorCourseNotStarted_ok();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseForDashboard_asInstructorCourseNotStarted_ok() throws Exception {
+        courseTestService.testGetCourseForDashboard_asInstructorCourseNotStarted_ok();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetCourseForDashboard_asAdmin_ok() throws Exception {
+        courseTestService.testGetCourseForDashboard_asAdmin_ok();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllCoursesForDashboard_asStudentCourseNotStarted_notIncluded() throws Exception {
+        courseTestService.testGetAllCoursesForDashboard_asStudentCourseNotStarted_notIncluded();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAllCoursesForDashboard_asTutorCourseNotStarted_included() throws Exception {
+        courseTestService.testGetAllCoursesForDashboard_asTutorCourseNotStarted_included();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllCoursesForDashboard_asAdmin_ok() throws Exception {
+        courseTestService.testGetAllCoursesForDashboard_asAdmin_ok();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExistingExerciseDetails_asTutor() throws Exception {
         courseTestService.testGetExistingExerciseDetails_asTutor();

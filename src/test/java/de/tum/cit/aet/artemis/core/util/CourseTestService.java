@@ -3543,6 +3543,115 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForDashboard_asStudentCourseNotStarted_forbidden() throws Exception {
+        String suffix = "notstarted";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Create a course that has not started yet (start date in the future)
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        // Student should be denied access to a course that has not started yet
+        request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, CourseForDashboardDTO.class);
+    }
+
+    // Test
+    public void testGetCourseForDashboard_asTutorCourseNotStarted_ok() throws Exception {
+        String suffix = "notstartedta";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Create a course that has not started yet (start date in the future)
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        // TA should still be able to access the course even though it has not started
+        CourseForDashboardDTO result = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(result.course()).isNotNull();
+        assertThat(result.course().getId()).isEqualTo(course.getId());
+    }
+
+    // Test
+    public void testGetCourseForDashboard_asInstructorCourseNotStarted_ok() throws Exception {
+        String suffix = "notstartedins";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        // Instructor should still be able to access the course even though it has not started
+        CourseForDashboardDTO result = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(result.course()).isNotNull();
+        assertThat(result.course().getId()).isEqualTo(course.getId());
+    }
+
+    // Test
+    public void testGetCourseForDashboard_asAdmin_ok() throws Exception {
+        String suffix = "admindash";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Create a course — the admin user is not in any of its groups
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        // Admin should be able to access any course even without group membership
+        CourseForDashboardDTO result = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(result.course()).isNotNull();
+        assertThat(result.course().getId()).isEqualTo(course.getId());
+    }
+
+    // Test
+    public void testGetAllCoursesForDashboard_asStudentCourseNotStarted_notIncluded() throws Exception {
+        String suffix = "notstartedall";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Create one started and one not-yet-started course
+        Course startedCourse = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course notStartedCourse = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        startedCourse = courseRepo.save(startedCourse);
+        notStartedCourse = courseRepo.save(notStartedCourse);
+
+        var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
+
+        long startedId = startedCourse.getId();
+        long notStartedId = notStartedCourse.getId();
+        // Student should see the started course
+        assertThat(courses.stream().anyMatch(c -> c.getId().equals(startedId))).as("Started course is included").isTrue();
+        // Student should NOT see the not-yet-started course
+        assertThat(courses.stream().noneMatch(c -> c.getId().equals(notStartedId))).as("Not-started course is excluded for student").isTrue();
+    }
+
+    // Test
+    public void testGetAllCoursesForDashboard_asTutorCourseNotStarted_included() throws Exception {
+        String suffix = "notstartedallta";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course notStartedCourse = CourseFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        notStartedCourse = courseRepo.save(notStartedCourse);
+
+        var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
+
+        long notStartedId = notStartedCourse.getId();
+        // TA should see the not-yet-started course
+        assertThat(courses.stream().anyMatch(c -> c.getId().equals(notStartedId))).as("Not-started course is included for TA").isTrue();
+    }
+
+    // Test
+    public void testGetAllCoursesForDashboard_asAdmin_ok() throws Exception {
+        String suffix = "adminall";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Create a course — the admin user is not in any of its groups
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(30), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+
+        var coursesForDashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.courses().stream().map(CourseForDashboardDTO::course).toList();
+
+        long courseId = course.getId();
+        // Admin should see the course even without group membership
+        assertThat(courses.stream().anyMatch(c -> c.getId().equals(courseId))).as("Course is visible to admin").isTrue();
+    }
+
+    // Test
     public void testGetExistingExerciseDetails_asTutor() throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         request.getList("/api/course/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN,
