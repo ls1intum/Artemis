@@ -44,9 +44,13 @@ final class CpuUsageMonitor {
 
     private static double maxSystemLoad;
 
+    private static int systemLoadSamples;
+
     private static double sumProcessLoad;
 
     private static double maxProcessLoad;
+
+    private static int processLoadSamples;
 
     private static double sumLoadAverage;
 
@@ -72,13 +76,17 @@ final class CpuUsageMonitor {
 
         synchronized (LOCK) {
             samples++;
+            // getCpuLoad()/getProcessCpuLoad() can return -1 (e.g. for the first call or on unsupported platforms); only valid readings
+            // may contribute to the sums, so each metric needs its own sample count for a correct average
             if (isValidLoad(systemLoad)) {
                 sumSystemLoad += systemLoad;
                 maxSystemLoad = Math.max(maxSystemLoad, systemLoad);
+                systemLoadSamples++;
             }
             if (isValidLoad(processLoad)) {
                 sumProcessLoad += processLoad;
                 maxProcessLoad = Math.max(maxProcessLoad, processLoad);
+                processLoadSamples++;
             }
             if (loadAverage >= 0) {
                 sumLoadAverage += loadAverage;
@@ -97,24 +105,25 @@ final class CpuUsageMonitor {
         }
 
         synchronized (LOCK) {
-            if (samples == 0) {
+            // without any valid system-load reading there is nothing meaningful to report (the headroom hint would be wrong)
+            if (systemLoadSamples == 0) {
                 return Optional.empty();
             }
 
-            double avgSystem = sumSystemLoad / samples;
-            double avgProcess = sumProcessLoad / samples;
+            double avgSystem = sumSystemLoad / systemLoadSamples;
             double avgIdlePercent = Math.max(0, (1.0 - avgSystem) * 100.0);
+            String avgJvm = processLoadSamples > 0 ? String.format(Locale.ROOT, "%.1f%%", sumProcessLoad / processLoadSamples * 100) : "n/a";
+            String peakJvm = processLoadSamples > 0 ? String.format(Locale.ROOT, "%.1f%%", maxProcessLoad * 100) : "n/a";
 
             StringBuilder summary = new StringBuilder();
             summary.append('\n');
             summary.append(String.format(Locale.ROOT, "=== Test CPU Usage Summary (%d cores) ===%n", CORES));
-            summary.append(String.format(Locale.ROOT, "Avg CPU used:    %.1f%% system (~%.1f of %d cores), %.1f%% this JVM%n", avgSystem * 100, avgSystem * CORES, CORES,
-                    avgProcess * 100));
-            summary.append(String.format(Locale.ROOT, "Peak CPU used:   %.1f%% system, %.1f%% this JVM%n", maxSystemLoad * 100, maxProcessLoad * 100));
+            summary.append(String.format(Locale.ROOT, "Avg CPU used:    %.1f%% system (~%.1f of %d cores), %s this JVM%n", avgSystem * 100, avgSystem * CORES, CORES, avgJvm));
+            summary.append(String.format(Locale.ROOT, "Peak CPU used:   %.1f%% system, %s this JVM%n", maxSystemLoad * 100, peakJvm));
             if (loadAverageSamples > 0) {
                 summary.append(String.format(Locale.ROOT, "Avg system load: %.2f (1m, %d cores)%n", sumLoadAverage / loadAverageSamples, CORES));
             }
-            summary.append(String.format(Locale.ROOT, "Samples:         %d (every %ds)%n", samples, SAMPLE_INTERVAL_MS / 1000));
+            summary.append(String.format(Locale.ROOT, "Samples:         %d valid of %d (every %ds)%n", systemLoadSamples, samples, SAMPLE_INTERVAL_MS / 1000));
             summary.append("Parallelization: ").append(headroomHint(avgIdlePercent)).append('\n');
 
             return Optional.of(summary.toString());
