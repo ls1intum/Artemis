@@ -188,6 +188,21 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.sortedHistoryResults().map((result) => result.id)).toEqual([2, 1]);
     });
 
+    it('should count an unrated result towards achievedPoints only in practice mode', () => {
+        fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+        fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [{ id: 1, score: 80, rated: false } as Result] }] } as StudentParticipation);
+
+        // Graded mode ignores the unrated result.
+        fixture.componentRef.setInput('isPractice', false);
+        fixture.detectChanges();
+        expect(component.achievedPoints()).toBe(0);
+
+        // Practice results are unrated, so practice mode still uses the latest result.
+        fixture.componentRef.setInput('isPractice', true);
+        fixture.detectChanges();
+        expect(component.achievedPoints()).toBe(8);
+    });
+
     it('should not make the status clickable when there are no history results', () => {
         const compiled = fixture.nativeElement as HTMLElement;
         expect(compiled.querySelector('[role="button"]')).toBeNull();

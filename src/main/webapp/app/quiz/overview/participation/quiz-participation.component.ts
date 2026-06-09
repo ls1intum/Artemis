@@ -1253,7 +1253,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
         if (!this.showingResult) {
-            if (!this.waitingForQuizStart && !this.submission.submitted && this.remainingTimeSeconds >= 0) {
+            if (!this.waitingForQuizStart && !this.submission.submitted && !!this.endDate && this.remainingTimeSeconds >= 0) {
                 info.showRemainingTime = true;
                 info.remainingTimeText = this.remainingTimeText;
                 info.remainingTimeColor = this.remainingTimeColor();

@@ -125,13 +125,13 @@ export class ExerciseHeadersInformationComponent {
     readonly numberOfSubmissions = computed<number>(() => countSubmissions(this.studentParticipation()));
 
     readonly achievedPoints = computed<number>(() => {
-        const latestRatedResult = this.sortedHistoryResults()
-            .filter((result) => result.rated)
-            .first();
-        if (!latestRatedResult) {
+        const results = this.sortedHistoryResults();
+        // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
+        const latestResult = this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
+        if (!latestResult) {
             return 0;
         }
-        return roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
+        return roundValueSpecifiedByCourseSettings((latestResult.score! * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
     });
 
     readonly currentFeedbackRequestCount = computed<number>(
