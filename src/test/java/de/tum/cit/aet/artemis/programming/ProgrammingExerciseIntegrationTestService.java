@@ -2244,7 +2244,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Use a unique student to avoid repo collisions with other tests in this class
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely

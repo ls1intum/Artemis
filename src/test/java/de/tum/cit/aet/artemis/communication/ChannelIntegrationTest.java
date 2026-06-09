@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -57,7 +57,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ConversationService conversationService;
@@ -642,13 +642,13 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
-        var allStudentLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(ucr -> ucr.getUser().getLogin())
+        var allStudentLogins = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(ucr -> ucr.getUser().getLogin())
                 .collect(Collectors.toSet());
-        var allTutorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(ucr -> ucr.getUser().getLogin())
+        var allTutorLogins = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(ucr -> ucr.getUser().getLogin())
                 .collect(Collectors.toSet());
-        var allEditorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.EDITOR).stream().map(ucr -> ucr.getUser().getLogin())
+        var allEditorLogins = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.EDITOR).stream().map(ucr -> ucr.getUser().getLogin())
                 .collect(Collectors.toSet());
-        var allInstructorLogins = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(ucr -> ucr.getUser().getLogin())
+        var allInstructorLogins = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(ucr -> ucr.getUser().getLogin())
                 .collect(Collectors.toSet());
         var allUserLogins = new HashSet<>(allStudentLogins);
         allUserLogins.addAll(allTutorLogins);

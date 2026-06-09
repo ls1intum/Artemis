@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -96,7 +96,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     static final int NUMBER_OF_TUTORS = 1;
 
@@ -682,7 +682,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
     }
 
     private List<User> findTutors(Course course) {
-        return userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(UserCourseRole::getUser).toList();
+        return userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.TEACHING_ASSISTANT).stream().map(UserCourseRole::getUser).toList();
     }
 
     @Test

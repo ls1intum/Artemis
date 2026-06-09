@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -49,7 +49,7 @@ class LtiServiceTest {
     private UserTestRepository userRepository;
 
     @Mock
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Mock
     private AuthorityService authorityService;
@@ -74,7 +74,7 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
         Course course = new Course();
         course.setId(100L);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -92,7 +92,7 @@ class LtiServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userCreationService, userRepository, userCourseRoleRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
+        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService);
     }
 
     @Test
@@ -137,12 +137,12 @@ class LtiServiceTest {
 
     @Test
     void successFullAuthentication() {
-        when(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
+        when(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
         when(authorityService.buildAuthorities(user)).thenReturn(new HashSet<>());
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);
 
-        verify(userCourseRoleRepository).save(any());
+        verify(userCourseRoleTestRepository).save(any());
         verify(userCreationService).saveUser(user);
     }
 

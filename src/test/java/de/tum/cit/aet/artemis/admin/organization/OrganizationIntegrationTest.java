@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -50,7 +50,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     /**
      * Builds a search DTO with the given search term and page size.
@@ -143,12 +143,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         course3 = courseRepository.save(course3);
 
         request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT)).as("User is enrolled in course1 as student")
-                .isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course1 as student").isTrue();
 
         request.postWithoutLocation("/api/course/courses/" + course2.getId() + "/enroll", null, HttpStatus.OK, null);
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course2.getId(), CourseRole.STUDENT)).as("User is enrolled in course2 as student")
-                .isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course2.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course2 as student").isTrue();
 
         request.postWithoutLocation("/api/course/courses/" + course3.getId() + "/enroll", null, HttpStatus.FORBIDDEN, null);
     }

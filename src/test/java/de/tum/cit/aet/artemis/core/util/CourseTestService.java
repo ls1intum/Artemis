@@ -115,11 +115,11 @@ import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
@@ -221,7 +221,7 @@ public class CourseTestService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ExamTestRepository examRepo;
@@ -681,10 +681,10 @@ public class CourseTestService {
                 ZonedDateTime.now().plusDays(2));
 
         // Verify initial state via UCR (group-string checks removed — auth is via user_course_role)
-        List<UserCourseRole> studentsBefore = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
-        List<UserCourseRole> tutorsBefore = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
-        List<UserCourseRole> editorsBefore = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
-        List<UserCourseRole> instructorsBefore = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
+        List<UserCourseRole> studentsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
+        List<UserCourseRole> tutorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
+        List<UserCourseRole> editorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
+        List<UserCourseRole> instructorsBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
 
         assertThat(studentsBefore).as("Course has students before reset").isNotEmpty();
         assertThat(tutorsBefore).as("Course has tutors before reset").isNotEmpty();
@@ -712,19 +712,19 @@ public class CourseTestService {
         assertThat(exerciseRepo.findAllExercisesByCourseId(courseId)).as("Exercises still exist after reset").isNotEmpty();
 
         // Verify students are unenrolled (UCR entries removed by reset)
-        List<UserCourseRole> studentsAfter = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
+        List<UserCourseRole> studentsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.STUDENT);
         assertThat(studentsAfter).as("Students are unenrolled after reset").isEmpty();
 
         // Verify tutors are removed
-        List<UserCourseRole> tutorsAfter = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
+        List<UserCourseRole> tutorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.TEACHING_ASSISTANT);
         assertThat(tutorsAfter).as("Tutors are removed after reset").isEmpty();
 
         // Verify editors are removed
-        List<UserCourseRole> editorsAfter = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
+        List<UserCourseRole> editorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.EDITOR);
         assertThat(editorsAfter).as("Editors are removed after reset").isEmpty();
 
         // Verify instructors are preserved (reset only removes STUDENT/TA/EDITOR)
-        List<UserCourseRole> instructorsAfter = userCourseRoleRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
+        List<UserCourseRole> instructorsAfter = userCourseRoleTestRepository.findByCourse_IdAndRole(courseId, CourseRole.INSTRUCTOR);
         assertThat(instructorsAfter).as("Instructors are preserved after reset").isNotEmpty();
         assertThat(instructorsAfter).as("Same number of instructors as before reset").hasSameSizeAs(instructorsBefore);
 
@@ -1663,7 +1663,7 @@ public class CourseTestService {
         // enroll endpoint now returns Void; verify enrollment via UCR
         request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
         User enrolledUser = userRepo.findOneByLogin("ab12cde").orElseThrow();
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(enrolledUser.getId(), course1.getId(), CourseRole.STUDENT))
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(enrolledUser.getId(), course1.getId(), CourseRole.STUDENT))
                 .as("User is enrolled in course as STUDENT").isTrue();
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
@@ -1708,7 +1708,8 @@ public class CourseTestService {
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/unenroll", null, HttpStatus.OK, null);
         // Verify student is no longer enrolled in the course via UCR
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)).as("User is not enrolled in course").isFalse();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)).as("User is not enrolled in course")
+                .isFalse();
         List<AuditEvent> auditEvents = auditEventRepo.find(userPrefix + "student1", Instant.now().minusSeconds(20), Constants.UNENROLL_FROM_COURSE);
         assertThat(auditEvents).as("Audit Event for course unenrollment added").hasSize(1);
         AuditEvent auditEvent = auditEvents.getFirst();

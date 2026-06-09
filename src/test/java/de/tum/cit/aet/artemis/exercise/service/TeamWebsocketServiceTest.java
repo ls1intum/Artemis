@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -50,7 +50,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     private TeamUtilService teamUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -85,7 +85,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
         assertThat(modelingExercise).isNotNull();
         assertThat(textExercise).isNotNull();
-        students = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(UserCourseRole::getUser).collect(Collectors.toSet());
+        students = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(UserCourseRole::getUser).collect(Collectors.toSet());
     }
 
     @Test

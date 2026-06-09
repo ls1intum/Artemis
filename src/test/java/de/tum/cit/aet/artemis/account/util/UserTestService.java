@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -113,7 +113,7 @@ public class UserTestService {
     private ExerciseTestRepository exerciseTestRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private String TEST_PREFIX;
 
@@ -854,7 +854,7 @@ public class UserTestService {
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             // Enroll user2 in the course — the filter excludes users that have any UCR entry.
             // user1 has no UCR entry and must appear; user2 is enrolled and must be excluded.
-            userCourseRoleRepository.save(new UserCourseRole(user2, course, CourseRole.STUDENT));
+            userCourseRoleTestRepository.save(new UserCourseRole(user2, course, CourseRole.STUDENT));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }

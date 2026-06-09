@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -43,7 +43,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     private PasswordService passwordService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -107,6 +107,6 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         assertThat(student.get().getFirstName()).isEqualTo("Erika");
         assertThat(student.get().getLastName()).isEqualTo("Musterfrau");
         assertThat(student.get().getEmail()).isEqualTo(userName + "@tum.de");
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student.get().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.get().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
     }
 }

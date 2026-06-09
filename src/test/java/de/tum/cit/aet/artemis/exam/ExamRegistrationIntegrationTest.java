@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -68,7 +68,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private Course course1;
 
@@ -107,9 +107,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
-        int studentCountBefore = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+        int studentCountBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + OTHER_PREFIX + "student1", null, HttpStatus.OK, null);
-        assertThat(userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
+        assertThat(userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
                 .hasSize(studentCountBefore + 1);
     }
 
@@ -174,7 +174,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
         User student99 = userTestRepository.findOneWithCourseRolesAndAuthoritiesByLogin("student99").orElseThrow();
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
 
         // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
@@ -224,7 +224,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(examUser.getUser().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+            assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(examUser.getUser().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
         }
 
         // Make sure delete also works if so many objects have been created before
@@ -300,11 +300,11 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student99 = userUtilService.getUserByLogin(TEST_PREFIX + "student99");
         userUtilService.unenrollUserFromCourse(student99, course1);
 
-        int numberOfStudentsInCourse = userCourseRoleRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+        int numberOfStudentsInCourse = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
 
         userUtilService.enrollUserInCourse(student99, course1, CourseRole.STUDENT);
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
 
         var examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
         assertThat(examUser99).isEmpty();

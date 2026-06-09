@@ -52,7 +52,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
@@ -146,7 +146,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private String registrationId;
 
@@ -359,7 +359,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         var newUser = userTestRepository.findOneByEmailIgnoreCase(email).orElseThrow();
         assertThat(newUser.getLogin()).startsWith(userPrefix + "_");
         createdUserLogin = newUser.getLogin();
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(newUser.getId(), course.getId(), CourseRole.STUDENT)).isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(newUser.getId(), course.getId(), CourseRole.STUDENT)).isTrue();
     }
 
     private void seedCachedAuthorizationRequest(String state, String nonce) {

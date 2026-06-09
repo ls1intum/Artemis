@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
@@ -160,7 +160,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -825,11 +825,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
         var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
-        assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course1.getId(), CourseRole.INSTRUCTOR)).isTrue();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), course1.getId(), CourseRole.INSTRUCTOR)).isTrue();
 
         for (int i = 0; i < exams.size(); i++) {
             Exam exam = exams.get(i);
-            assertThat(userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), exam.getCourse().getId(), CourseRole.INSTRUCTOR))
+            assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), exam.getCourse().getId(), CourseRole.INSTRUCTOR))
                     .as("should be instructor for exam with index %d and id %d", i, exam.getId()).isTrue();
         }
     }
