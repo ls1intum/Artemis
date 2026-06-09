@@ -56,7 +56,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     setTestCaseVisibilityToAfterDueDate = model<boolean>();
     allowComplaintsForAutomaticAssessments = model<boolean>();
     releaseTestsWithExampleSolution = model<boolean>();
-    feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
     isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
@@ -138,7 +137,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);
                 this.allowFeedbackRequests.set(false);
-                this.feedbackSuggestionModule.set(undefined);
             }
         });
         effect(() => {

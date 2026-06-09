@@ -368,7 +368,6 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
