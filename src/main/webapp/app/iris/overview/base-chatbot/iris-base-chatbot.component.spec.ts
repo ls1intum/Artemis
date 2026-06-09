@@ -126,6 +126,7 @@ describe('IrisBaseChatbotComponent', () => {
             .compileComponents()
             .then(() => {
                 vi.spyOn(console, 'error').mockImplementation(() => {});
+                global.window ??= window;
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
 

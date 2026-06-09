@@ -107,8 +107,6 @@ public class IrisSessionService {
     public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            // Always pass context through for chat sessions (even if empty)
-            // This enables context-aware features like lecture page/timestamp tracking
             if (session instanceof IrisChatSession chatSession) {
                 irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
             }
