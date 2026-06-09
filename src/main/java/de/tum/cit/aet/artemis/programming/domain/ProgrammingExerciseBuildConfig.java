@@ -11,8 +11,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,8 +27,6 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 // We dont want to expose the programming exercise in the build config
 @JsonIgnoreProperties(value = { "programmingExercise" })
 public class ProgrammingExerciseBuildConfig extends DomainObject {
-
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);
 
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
@@ -245,7 +241,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             return Optional.of(phases);
         }
         catch (JsonProcessingException e) {
-            log.warn("Could not parse build plan phases for programming exercise {}", getId(), e);
             return Optional.empty();
         }
     }
