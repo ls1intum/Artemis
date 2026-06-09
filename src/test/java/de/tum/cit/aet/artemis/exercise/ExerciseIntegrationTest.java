@@ -56,13 +56,14 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
-class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exerciseintegration";
 
@@ -561,6 +562,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 // submission date only, no answers, no results) so the dashboard can show "Submitted, waiting for due date".
                 assertThat(participation.getSubmissions()).hasSize(1);
                 var submission = participation.getSubmissions().iterator().next();
+                assertThat(submission).isInstanceOf(QuizSubmission.class);
                 assertThat(submission.isSubmitted()).isTrue();
                 assertThat(submission.getResults()).isEmpty();
                 assertThat(results).isEmpty();

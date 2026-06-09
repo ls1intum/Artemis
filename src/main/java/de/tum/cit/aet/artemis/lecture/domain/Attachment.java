@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -60,6 +64,10 @@ public class Attachment extends DomainObject implements Serializable {
     // Student Version holds the version of the file without the pages hidden by the Instructor
     @Column(name = "student_version")
     private String studentVersion;
+
+    @Column(name = "display_page_numbers")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Integer> displayPageNumbers;
 
     public String getName() {
         return name;
@@ -139,6 +147,27 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setStudentVersion(String studentVersion) {
         this.studentVersion = studentVersion;
+    }
+
+    /**
+     * Gets the display page numbers mapping for this attachment's PDF.
+     * The list maps slide numbers to the displayed page numbers detected in the PDF:
+     * Index 0 = displayed page number for slide 1, Index 1 = displayed page number for slide 2, etc.
+     * A value of -1 indicates the slide has no detected displayed page number.
+     *
+     * @return list of displayed page numbers indexed by slide number (0-based), or null if not applicable
+     */
+    public List<Integer> getDisplayPageNumbers() {
+        return displayPageNumbers;
+    }
+
+    /**
+     * Sets the display page numbers mapping for this attachment's PDF.
+     *
+     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based), or null
+     */
+    public void setDisplayPageNumbers(List<Integer> displayPageNumbers) {
+        this.displayPageNumbers = displayPageNumbers;
     }
 
     public Boolean isVisibleToStudents() {
