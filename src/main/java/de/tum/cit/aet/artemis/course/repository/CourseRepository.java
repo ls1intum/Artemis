@@ -334,6 +334,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     /**
      * NOTE: This query mirrors the courseEditorAccessPolicy defined in CourseAccessPolicies.java.
      * If access rules change, update both the policy definition and this query.
+     *
+     * @param userGroups the groups the user belongs to
+     * @return courses with quiz exercises for which the user has at least editor access
      */
     @Query("""
             SELECT DISTINCT c
@@ -669,6 +672,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     /**
      * NOTE: This query mirrors the courseStaffAccessPolicy defined in CourseAccessPolicies.java.
      * If access rules change, update both the policy definition and this query.
+     *
+     * @param userGroups the groups the user belongs to
+     * @param isAdmin    whether the user is an admin
+     * @return courses where the user has at least tutor access
      */
     @Query("""
             SELECT c

@@ -451,16 +451,21 @@ public final class AnnotationBasedPolicyCollector {
      * @return the HTTP method (GET, POST, etc.) or empty string
      */
     private static String extractHttpMethod(Method method) {
-        if (method.isAnnotationPresent(GetMapping.class))
+        if (method.isAnnotationPresent(GetMapping.class)) {
             return "GET";
-        if (method.isAnnotationPresent(PostMapping.class))
+        }
+        if (method.isAnnotationPresent(PostMapping.class)) {
             return "POST";
-        if (method.isAnnotationPresent(PutMapping.class))
+        }
+        if (method.isAnnotationPresent(PutMapping.class)) {
             return "PUT";
-        if (method.isAnnotationPresent(DeleteMapping.class))
+        }
+        if (method.isAnnotationPresent(DeleteMapping.class)) {
             return "DELETE";
-        if (method.isAnnotationPresent(PatchMapping.class))
+        }
+        if (method.isAnnotationPresent(PatchMapping.class)) {
             return "PATCH";
+        }
         return "";
     }
 
