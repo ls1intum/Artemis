@@ -164,7 +164,7 @@ public class LtiService {
 
     /**
      * Enrolls a user as a student in the given course.
-     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until Phase 9 removes it.
+     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
      *
      * @param user   the user to enroll
      * @param course the course to enroll the user in
@@ -173,7 +173,7 @@ public class LtiService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
         }
-        // Dual-write: also write to legacy user_groups table until Phase 9 removes it
+        // Dual-write: also write to legacy user_groups table until the follow-up PR for #12788 removes it
         String groupName = course.getStudentGroupName();
         if (groupName != null && !user.getGroups().contains(groupName)) {
             user.getGroups().add(groupName);

@@ -33,7 +33,7 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
@@ -68,7 +68,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     private MaintenanceEmailRecipientRepository maintenanceEmailRecipientRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private MailSendingService testMailService;
 
@@ -112,7 +112,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // Revoke UCR entries for TEST_PREFIX instructors — courses without UCR entries are
         // invisible to findInstructorRecipientsForMaintenanceEmail, so course deletion is unnecessary
         Stream.of(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor2").flatMap(login -> userTestRepository.findOneWithCourseRolesByLogin(login).stream()).map(User::getId)
-                .forEach(userCourseRoleRepository::deleteByUser_Id);
+                .forEach(userCourseRoleTestRepository::deleteByUser_Id);
     }
 
     // ---- Template rendering tests ----

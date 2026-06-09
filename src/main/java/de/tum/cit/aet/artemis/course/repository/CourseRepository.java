@@ -213,7 +213,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     String getCourseIconById(@Param("courseId") long courseId);
 
-    // TODO (Phase 9): Delete the 8 group-name getters below once the *GroupName columns are dropped from the course table.
+    // TODO (follow-up PR for #12788): Delete the 8 group-name getters below once the *GroupName columns are dropped from the course table.
     // They are still used by CourseDeletionService and CourseResetService to manage legacy external groups.
 
     /**

@@ -489,7 +489,7 @@ public class CourseResetService {
         // Remove from new user_course_role table
         userCourseRoleRepository.deleteByCourse_IdAndRoleIn(courseId, List.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR));
 
-        // Also remove from legacy user_groups table until Phase 9 drops it
+        // Also remove from legacy user_groups table until the follow-up PR for #12788 drops it
         String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
         if (studentGroupName != null) {
             userService.removeGroupFromAllUsers(studentGroupName);

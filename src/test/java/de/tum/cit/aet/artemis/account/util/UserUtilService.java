@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
@@ -85,7 +85,7 @@ public class UserUtilService {
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -386,14 +386,14 @@ public class UserUtilService {
         // session — the entity-loading deleteAll() would leave PersistentSet snapshots (sn=null) on those
         // proxies, causing a NullPointerException in sortCollectionActions when saveOrUpdate() flushes.
         if (!usersToAdd.isEmpty()) {
-            userCourseRoleRepository.deleteAllInBulk();
+            userCourseRoleTestRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
             // Use saveOrUpdate instead of saveAll: for existing users (with ID), saveAll triggers JPA merge(),
             // which loads the managed entity with a lazy PersistentSet(sn=null) for the legacy `groups`
             // ElementCollection, then replaces it with a new PersistentSet(loaded=true, sn=null) built from
             // the detached user's plain HashSet. At flush, PersistentSet.hasDeletes() → NPE (sn is null).
             // saveOrUpdate loads the user WITH groups eagerly (initialising sn) and updates fields in-place,
-            // avoiding the NPE. This workaround is removed in Phase 9 when the groups field is dropped.
+            // avoiding the NPE. This workaround is removed in the follow-up PR for #12788 when the groups field is dropped.
             usersToAdd = usersToAdd.stream().map(userTestRepository::saveOrUpdate).collect(Collectors.toCollection(ArrayList::new));
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
@@ -436,7 +436,7 @@ public class UserUtilService {
      * Creates and saves a User with instructor authorities, if no User with the given username exists.
      * Course membership is managed via {@code user_course_role}; callers should use
      * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
-     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
+     * {@link de.tum.cit.aet.artemis.core.repository.userCourseRoleTestRepository} to enrol this user.
      *
      * @param instructorName The login of the instructor
      */
@@ -451,7 +451,7 @@ public class UserUtilService {
      * Creates and saves a User with editor authorities, if no User with the given username exists.
      * Course membership is managed via {@code user_course_role}; callers should use
      * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
-     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
+     * {@link de.tum.cit.aet.artemis.core.repository.userCourseRoleTestRepository} to enrol this user.
      *
      * @param editorName The login of the editor
      */
@@ -466,7 +466,7 @@ public class UserUtilService {
      * Creates and saves a User with tutor authorities, if no User with the given username exists.
      * Course membership is managed via {@code user_course_role}; callers should use
      * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
-     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
+     * {@link de.tum.cit.aet.artemis.core.repository.userCourseRoleTestRepository} to enrol this user.
      *
      * @param taName The login of the teaching assistant
      */
@@ -481,7 +481,7 @@ public class UserUtilService {
      * Creates and saves a User with student authorities, if no User with the given username exists.
      * Course membership is managed via {@code user_course_role}; callers should use
      * {@link de.tum.cit.aet.artemis.core.util.CourseTestService#enrollPrefixedUsersInCourse} or
-     * {@link de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository} to enrol this user.
+     * {@link de.tum.cit.aet.artemis.core.repository.userCourseRoleTestRepository} to enrol this user.
      *
      * @param studentName The login of the student
      */
@@ -501,7 +501,7 @@ public class UserUtilService {
      * @param role   the role they should have in the course
      */
     public void enrollUserInCourse(final User user, final Course course, final CourseRole role) {
-        userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        userCourseRoleTestRepository.save(new UserCourseRole(user, course, role));
     }
 
     /**
@@ -523,7 +523,7 @@ public class UserUtilService {
     }
 
     private void enrollByLoginPrefix(final Course course, final String loginPrefix, final CourseRole role) {
-        userTestRepository.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleRepository.save(new UserCourseRole(user, course, role)));
+        userTestRepository.findAllByUserPrefix(loginPrefix).forEach(user -> userCourseRoleTestRepository.save(new UserCourseRole(user, course, role)));
     }
 
     /**
@@ -649,7 +649,7 @@ public class UserUtilService {
      * @param login The login of the User
      */
     public void removeUserFromAllCourses(User user) {
-        userCourseRoleRepository.deleteByUser_Id(user.getId());
+        userCourseRoleTestRepository.deleteByUser_Id(user.getId());
     }
 
     /**
@@ -660,7 +660,7 @@ public class UserUtilService {
      * @param course the course from which the user should be unenrolled
      */
     public void unenrollUserFromCourse(User user, Course course) {
-        userCourseRoleRepository.deleteByUser_IdAndCourse_Id(user.getId(), course.getId());
+        userCourseRoleTestRepository.deleteByUser_IdAndCourse_Id(user.getId(), course.getId());
     }
 
     /**
@@ -671,7 +671,7 @@ public class UserUtilService {
      * @param role   the specific role to remove
      */
     public void unenrollUserFromCourseByRole(User user, Course course, CourseRole role) {
-        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        userCourseRoleTestRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
     }
 
     /**
@@ -681,7 +681,7 @@ public class UserUtilService {
      * @param course the course whose enrollments should be cleared
      */
     public void removeAllCourseEnrollments(Course course) {
-        userCourseRoleRepository.deleteByCourse_Id(course.getId());
+        userCourseRoleTestRepository.deleteByCourse_Id(course.getId());
     }
 
     /**

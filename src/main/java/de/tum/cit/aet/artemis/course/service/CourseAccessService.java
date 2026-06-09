@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 /**
  * Service for managing course access, including enrollment and unenrollment of users.
  * Membership is tracked via the {@code user_course_role} table (authoritative) with a dual-write
- * to the legacy {@code user_groups} table until Phase 9 removes it.
+ * to the legacy {@code user_groups} table until the follow-up PR for #12788 removes it.
  */
 @Service
 @Profile(PROFILE_CORE)

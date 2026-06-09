@@ -90,11 +90,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByLogin(String login);
 
-    // TODO (Phase 9): remove once user_groups table is dropped (used by UserTestRepository.saveOrUpdate to prevent Hibernate NPE on merge)
+    // TODO (follow-up PR for #12788): remove once user_groups table is dropped (used by UserTestRepository.saveOrUpdate to prevent Hibernate NPE on merge)
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
-    // TODO (Phase 9): remove once user_groups table is dropped (used by UserService.addUserToCourse/removeUserFromCourse dual-write)
+    // TODO (follow-up PR for #12788): remove once user_groups table is dropped (used by UserService.addUserToCourse/removeUserFromCourse dual-write)
     @EntityGraph(type = LOAD, attributePaths = { "groups", "courseRoles", "authorities" })
     Optional<User> findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(String login);
 
@@ -1549,7 +1549,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupName the name of the group to remove from all users
      * @return the number of rows deleted
      */
-    // TODO (Phase 9): delete once user_groups table is dropped (ON DELETE CASCADE on user_course_role.course_id handles cleanup automatically)
+    // TODO (follow-up PR for #12788): delete once user_groups table is dropped (ON DELETE CASCADE on user_course_role.course_id handles cleanup automatically)
     @Modifying
     @Transactional // ok because of modifying query
     @Query(value = """

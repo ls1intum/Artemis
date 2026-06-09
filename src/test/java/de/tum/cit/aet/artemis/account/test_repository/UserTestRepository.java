@@ -109,7 +109,7 @@ public interface UserTestRepository extends UserRepository {
      * The {@code groups} collection is then cleared in-place to prevent stale legacy strings from
      * accumulating in {@code user_groups}.
      * <p>
-     * <strong>Phase-9 note:</strong> once the {@code groups} field is dropped from {@code User} (and
+     * <strong>Follow-up PR for #12788:</strong> once the {@code groups} field is dropped from {@code User} (and
      * the {@code user_groups} table is deleted), this method can be replaced with plain
      * {@code save()}/{@code saveAll()}.
      *
@@ -132,7 +132,7 @@ public interface UserTestRepository extends UserRepository {
         existing.setLangKey(freshUser.getLangKey());
         existing.setSelectedLLMUsageTimestamp(freshUser.getSelectedLLMUsageTimestamp());
         existing.setSelectedLLMUsage(freshUser.getSelectedLLMUsage());
-        // Clear legacy group strings in-place to keep user_groups clean (Phase 9 drops this table).
+        // Clear legacy group strings in-place to keep user_groups clean (follow-up PR for #12788 drops this table).
         existing.getGroups().clear();
         existing.getAuthorities().clear();
         if (freshUser.getAuthorities() != null) {

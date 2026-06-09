@@ -598,7 +598,7 @@ public class UserService {
 
     /**
      * Add the user to a course with the given role.
-     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until Phase 9 removes it.
+     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
      *
      * @param user   the user to add
      * @param course the course to add the user to
@@ -609,10 +609,10 @@ public class UserService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, role));
         }
-        // Dual-write: also write to legacy user_groups table until Phase 9 removes it.
+        // Dual-write: also write to legacy user_groups table until the follow-up PR for #12788 removes it.
         // If the caller loaded the user without the groups entity graph, re-fetch with groups
         // so the legacy write always happens — silently skipping it would leave user_groups stale.
-        // TODO (Phase 9): remove this block once the user_groups table is dropped
+        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
         // Always ensure groups are initialized before saveUser() to avoid:
         // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
         // and merge() is called on the detached entity.
@@ -631,7 +631,7 @@ public class UserService {
 
     /**
      * Remove the user from a course role.
-     * Removes from user_course_role and also keeps the legacy user_groups table in sync until Phase 9 removes it.
+     * Removes from user_course_role and also keeps the legacy user_groups table in sync until the follow-up PR for #12788 removes it.
      *
      * @param user   the user to remove
      * @param course the course from which the user should be removed
@@ -640,10 +640,10 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        // Dual-write: also remove from legacy user_groups table until Phase 9 removes it.
+        // Dual-write: also remove from legacy user_groups table until the follow-up PR for #12788 removes it.
         // If the caller loaded the user without the groups entity graph, re-fetch with groups
         // so the legacy write always happens — silently skipping it would leave user_groups stale.
-        // TODO (Phase 9): remove this block once the user_groups table is dropped
+        // TODO (follow-up PR for #12788): remove this block once the user_groups table is dropped
         // Always ensure groups are initialized before saveUser() to avoid:
         // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
         // and merge() is called on the detached entity.
