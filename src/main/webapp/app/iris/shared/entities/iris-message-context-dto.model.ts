@@ -36,3 +36,13 @@ export interface IrisSlidesContextDTO extends IrisMessageContextDTO {
     lectureUnitId: number;
     page: number;
 }
+
+/**
+ * Context information for fullscreen mode in lectures.
+ * Indicates that the user is viewing a lecture unit in fullscreen mode and provides the unit ID
+ * for scoping RAG search to that specific unit.
+ */
+export interface IrisFullscreenContextDTO extends IrisMessageContextDTO {
+    type: 'fullscreen';
+    lectureUnitId: number;
+}

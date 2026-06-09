@@ -17,8 +17,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * Context information is NOT persisted in the database - it is only sent to Pyris for enhanced responses.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisVideoContextDTO.class, name = "video"), @JsonSubTypes.Type(value = IrisSlidesContextDTO.class, name = "slides") })
-public sealed interface IrisMessageContextDTO permits IrisVideoContextDTO, IrisSlidesContextDTO {
+@JsonSubTypes({ @JsonSubTypes.Type(value = IrisVideoContextDTO.class, name = "video"), @JsonSubTypes.Type(value = IrisSlidesContextDTO.class, name = "slides"),
+        @JsonSubTypes.Type(value = IrisFullscreenContextDTO.class, name = "fullscreen") })
+public sealed interface IrisMessageContextDTO permits IrisVideoContextDTO, IrisSlidesContextDTO, IrisFullscreenContextDTO {
 
     /**
      * @return the type identifier for this context (e.g., "video", "slides", "exercise")

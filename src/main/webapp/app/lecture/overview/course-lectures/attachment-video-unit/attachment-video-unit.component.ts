@@ -54,7 +54,13 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import {
+    IrisFullscreenContextDTO,
+    IrisMessageContextDTO,
+    IrisSlidesContextDTO,
+    IrisVideoContextDTO,
+    LectureContextsProvider,
+} from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -237,8 +243,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
 
             const contexts: IrisMessageContextDTO[] = [];
-            const provider = this.contextProvider();
 
+            // Always include fullscreen context (indicates user is in fullscreen mode for RAG filtering)
+            const fullscreenContext: IrisFullscreenContextDTO = {
+                type: 'fullscreen',
+                lectureUnitId: unitId,
+            };
+            contexts.push(fullscreenContext);
+
+            // Optionally include video/slides context for additional boosting
+            const provider = this.contextProvider();
             const pdfPage = provider.getCurrentPdfPage?.();
             const videoTimestamp = provider.getCurrentVideoTimestamp?.();
             const hasVideoBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;

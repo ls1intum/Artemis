@@ -266,6 +266,7 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      * @param message to be created
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
+     * @param context optional list of context objects providing information about what the user is viewing
      */
     public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {

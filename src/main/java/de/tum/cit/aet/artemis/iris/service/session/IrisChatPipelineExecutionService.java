@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -119,7 +120,7 @@ public class IrisChatPipelineExecutionService {
      * @param settings         optional pre-resolved course settings; otherwise loaded from the session's course
      * @param latestSubmission optional programming submission already resolved by the caller
      * @param uncommittedFiles uncommitted file changes from the client (empty map when not applicable)
-     * @param context          list of context information (e.g. current page, video timestamp) sent to Pyris for contextual responses
+     * @param context          list of context information (e.g. current page, video timestamp, fullscreen mode) sent to Pyris for contextual responses
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
@@ -207,8 +208,12 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
+        // Extract lectureUnitId from fullscreen context if present (for RAG filtering)
+        Long lectureUnitId = context.stream().filter(IrisFullscreenContextDTO.class::isInstance).map(IrisFullscreenContextDTO.class::cast)
+                .map(IrisFullscreenContextDTO::lectureUnitId).findFirst().orElse(null);
+
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, null, progSubmission, textSubmission, metrics, context.isEmpty() ? null : context);
+                courseDto, programmingExercise, textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, context.isEmpty() ? null : context);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
