@@ -96,7 +96,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
      * Needed when the browser-facing hostname differs from the server hostname,
      * e.g. in E2E tests where nginx terminates TLS on a different hostname.
      */
-    @Value("${artemis.usermanagement.passkey.relying-party-id:}")
+    @Value("${artemis.user-management.passkey.relying-party-id:}")
     private String relyingPartyIdOverride;
 
     /**
@@ -104,7 +104,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
      * Useful when the browser-facing URL differs from {@code server.url},
      * e.g. in E2E tests where an nginx reverse proxy terminates TLS on a different hostname.
      */
-    @Value("${artemis.usermanagement.passkey.additional-allowed-origins:}")
+    @Value("${artemis.user-management.passkey.additional-allowed-origins:}")
     private List<String> additionalAllowedOrigins;
 
     private final Set<String> allowedOrigins = new HashSet<>();
