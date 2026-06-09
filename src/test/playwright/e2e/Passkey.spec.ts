@@ -219,10 +219,10 @@ async function registerPasskeyViaApi(page: import('@playwright/test').Page, user
                 },
             });
 
-            const credential = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential | null;
+            const credential = await navigator.credentials.create({ publicKey });
 
-            if (!credential) {
-                return 'navigator.credentials.create() returned null';
+            if (!(credential instanceof PublicKeyCredential)) {
+                return 'navigator.credentials.create() did not return a PublicKeyCredential';
             }
 
             // 3. Register the credential with the server
