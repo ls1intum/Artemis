@@ -39,6 +39,15 @@ concurrency:
 jobs:
   e2e-tests:
     name: Android E2E Tests
+    # SECURITY: this job runs on a SELF-HOSTED runner and executes the checked-out code
+    # (`gradlew bootRun` from this repo + `gradlew test` from the android repo). GitHub warns
+    # against running fork PRs on self-hosted runners, so skip fork PRs — their code must not run
+    # on our infrastructure. Internal-branch PRs, pushes, and releases still run; fork changes are
+    # covered post-merge by the develop/main push. (The repo's "require approval for fork PRs"
+    # setting is the complementary control for the self-hosted jobs that cannot exclude forks.)
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, ase-large-android-sdk-34]
     timeout-minutes: 60
 
