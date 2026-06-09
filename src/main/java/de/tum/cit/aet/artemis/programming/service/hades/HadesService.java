@@ -185,6 +185,17 @@ public class HadesService implements StatelessCIService {
         var parseResultMetadata = new HashMap<String, String>();
         parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
         parseResultMetadata.put("INGEST_DIR", ingestDir);
+        // Forward the assignment commit hash so the result parser can stamp it on the result body.
+        // Without this, the parser falls back to inspecting the cloned working tree, which is racy
+        // and can produce the branch name instead of the SHA — breaking submission/result matching.
+        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository() != null ? buildTriggerRequestDTO.exerciseRepository().commitHash() : null;
+        if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
+            parseResultMetadata.put("ASSIGNMENT_REPO_COMMIT_HASH", assignmentCommitHash);
+        }
+        String testCommitHash = buildTriggerRequestDTO.testRepository() != null ? buildTriggerRequestDTO.testRepository().commitHash() : null;
+        if (testCommitHash != null && !testCommitHash.isBlank()) {
+            parseResultMetadata.put("TESTS_REPO_COMMIT_HASH", testCommitHash);
+        }
         steps.add(new HadesBuildStepDTO(3, "Parse Result", resultParserImage, volumeMounts, "", parseResultMetadata, "", false));
 
         // Create Hades Job

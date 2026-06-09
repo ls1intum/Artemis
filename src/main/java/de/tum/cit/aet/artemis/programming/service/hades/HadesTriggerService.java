@@ -59,6 +59,17 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
+        triggerBuild(participation, null, null);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
+        log.warn("Triggering builds with a trigger all option is not supported for Hades. Triggering build while ignoring option.");
+        triggerBuild(participation, null, null);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
         try {
             log.debug("Triggering build for participation {} via external CI connector", participation.getId());
 
@@ -70,11 +81,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
-            // ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
-            // String buildScript = buildConfig.getBuildScript();
-
-            // Create the submission repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), null, null, null);
+            // Propagate the commit hash so Hades can stamp it on the result; without it the parser
+            // falls back to the branch name and the result cannot be matched to the submission.
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), commitHash, null, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), null, null, null);
 
             // Choose if script is bash or groovy: Hades should use a Bash script
@@ -95,18 +104,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             log.error("Failed to trigger build for participation {}", participation.getId(), e);
             throw new ContinuousIntegrationException("Failed to trigger build via Hades", e);
         }
-    }
-
-    @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException {
-        log.warn("Triggering builds with a trigger all option is not supported for Hades. Triggering build while ignoring option.");
-        triggerBuild(participation);
-    }
-
-    @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, RepositoryType triggeredByPushTo) throws ContinuousIntegrationException {
-        log.warn("Triggering with of a specific commitHash is not supported. Triggering build while ignoring option.");
-        triggerBuild(participation);
     }
 
     /**
