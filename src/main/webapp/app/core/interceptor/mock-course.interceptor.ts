@@ -12,7 +12,11 @@ import {
     INTRO_JAVA_QUIZ_EXERCISES,
     INTRO_JAVA_TEXT_EXERCISES,
 } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
-import { getMockCompetencyContributions } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
+import {
+    MOCK_COMPETENCY_PROGRESS,
+    MOCK_COURSE_COMPETENCY_RESPONSES,
+    getMockCompetencyContributions,
+} from 'app/core/course/manage/exercises/mock/intro-to-programming-java-competencies';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 
 function toJson<T>(value: T): T {
@@ -107,12 +111,18 @@ const GROUP_MESSAGES = /^\/?api\/communication\/courses\/\d+\/messages$/;
 
 // The /original and /experimental exercise views (both the instructor management view and the
 // student overview) are backed by mock data. The default /exercises route hits the real backend.
-const VERSIONED_VIEW = /\/exercises\/(?:original|experimental)(?:[/?#]|$)/;
+// The competency-management instructor page and the student /competencies tab are also mocked.
+const VERSIONED_VIEW = /\/exercises\/(?:original|experimental)(?:[/?#]|$)|\/competency-management(?:[/?#]|$)|\/competencies(?:[/?#]|$)/;
+
+// Competency endpoints used by both the instructor management page and the student overview/detail.
+const COURSE_COMPETENCIES_LIST = /^api\/atlas\/courses\/\d+\/course-competencies$/;
+const COURSE_COMPETENCIES_PROGRESS = /^api\/atlas\/courses\/\d+\/course-competencies\/course-progress$/;
+const COURSE_COMPETENCY_DETAIL = /^api\/atlas\/courses\/\d+\/course-competencies\/(\d+)$/;
 
 // The student exercise overview reads its exercises from the course returned by /for-dashboard,
 // not from the per-type endpoints the instructor view uses. We let the real request through and
 // graft the mock catalogue onto the course so the student view shows the same exercises.
-const FOR_DASHBOARD = /^api\/core\/courses\/\d+\/for-dashboard$/;
+const FOR_DASHBOARD = /^api\/course\/courses\/\d+\/for-dashboard$/;
 
 // Clicking a mock exercise opens its detail (problem statement etc.) which is loaded from this
 // endpoint. The matching exercise from the mock catalogue is returned instead of hitting the backend.
@@ -142,6 +152,20 @@ export class MockCourseInterceptor implements HttpInterceptor {
 
         if (FOR_DASHBOARD.test(req.url)) {
             return next.handle(req).pipe(map((event) => this.injectMockExercises(event)));
+        }
+
+        if (COURSE_COMPETENCIES_PROGRESS.test(req.url)) {
+            return mockResponse(MOCK_COMPETENCY_PROGRESS);
+        }
+
+        const competencyDetailMatch = COURSE_COMPETENCY_DETAIL.exec(req.url);
+        if (competencyDetailMatch) {
+            const found = MOCK_COURSE_COMPETENCY_RESPONSES.find((c) => c.id === Number(competencyDetailMatch[1]));
+            return mockResponse(found ?? null);
+        }
+
+        if (COURSE_COMPETENCIES_LIST.test(req.url)) {
+            return mockResponse(MOCK_COURSE_COMPETENCY_RESPONSES);
         }
 
         const competencyMatch = COMPETENCY_CONTRIBUTIONS.exec(req.url);
@@ -185,9 +209,10 @@ export class MockCourseInterceptor implements HttpInterceptor {
         if (!(event instanceof HttpResponse) || !event.body) {
             return event;
         }
-        const body = toJson(event.body) as { course?: { exercises?: unknown[] } };
+        const body = toJson(event.body) as { course?: { exercises?: unknown[]; numberOfCompetencies?: number } };
         if (body.course) {
             body.course.exercises = toJson(INTRO_JAVA_ALL_EXERCISES);
+            body.course.numberOfCompetencies = MOCK_COURSE_COMPETENCY_RESPONSES.length;
         }
         return event.clone({ body });
     }

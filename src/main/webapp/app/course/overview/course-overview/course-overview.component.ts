@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject, isDevMode, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -334,6 +334,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
             const insertIndex = dashboardIndex >= 0 ? dashboardIndex + 1 : 0;
             defaultItems.splice(insertIndex, 0, irisItem);
+        }
+        if (isDevMode()) {
+            const exercisesItem = defaultItems.find((item) => item.routerLink === 'exercises');
+            if (exercisesItem) {
+                exercisesItem.routerLink = 'exercises/experimental';
+            }
         }
         sidebarItems.push(...defaultItems);
 

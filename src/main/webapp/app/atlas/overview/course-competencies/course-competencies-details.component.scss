@@ -1,0 +1,80 @@
+.competency-group-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--overview-light-background-color);
+    border-radius: var(--bs-border-radius-lg);
+    cursor: default;
+
+    &:hover {
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+}
+
+// Mirrors the visual structure of jhi-course-exercise-row.
+.competency-group-card-v2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: var(--overview-light-background-color);
+    border-radius: var(--bs-border-radius-lg);
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+
+    // Replicates .exercise-row-icon from course-exercise-row.scss (encapsulated there).
+    .group-card-icon {
+        color: var(--bs-body-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+    }
+
+    // Replicates .max-width from course-exercise-row.scss (encapsulated there).
+    .max-width {
+        @media (min-width: 768px) {
+            max-width: 90%;
+        }
+
+        @media (max-width: 767px) {
+            max-width: 100%;
+        }
+    }
+
+    // Replicates .exercise-title from course-exercise-row.scss (encapsulated there).
+    .exercise-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+}
+
+.competency-exercise-group {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    overflow: hidden;
+
+    .competency-exercise-group-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 1rem;
+        background-color: var(--overview-light-background-color);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    // Remove individual border-radius and shadow from exercise rows inside the group.
+    ::ng-deep jhi-course-exercise-row > div {
+        border-radius: 0 !important;
+    }
+
+    ::ng-deep .exercise-unit .exercise-row .course-exercise-row {
+        box-shadow: none !important;
+    }
+}

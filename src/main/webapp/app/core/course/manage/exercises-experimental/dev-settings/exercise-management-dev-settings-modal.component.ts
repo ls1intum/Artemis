@@ -46,4 +46,9 @@ export class ExerciseManagementDevSettingsModalComponent {
         { label: 'Cards Inline', value: 'cards-inline' },
         { label: 'Cards Wizard', value: 'cards-wizard' },
     ];
+
+    protected readonly groupEditModeOptions = [
+        { label: 'Inline', value: 'inline' },
+        { label: 'Modal', value: 'modal' },
+    ];
 }

@@ -50,6 +50,16 @@
                 [allowEmpty]="false"
             />
         </div>
+        <div>
+            <label class="fw-semibold d-block mb-2">Group Edit</label>
+            <p-selectbutton
+                [options]="groupEditModeOptions"
+                [ngModel]="devSettings.groupEditMode()"
+                (ngModelChange)="devSettings.setGroupEditMode($event)"
+                optionValue="value"
+                [allowEmpty]="false"
+            />
+        </div>
         <div class="d-flex align-items-center gap-2">
             <p-toggleswitch [ngModel]="devSettings.massActionsEnabled()" (ngModelChange)="devSettings.setMassActionsEnabled($event)" inputId="mass-actions-toggle" />
             <label for="mass-actions-toggle" class="fw-semibold mb-0">Mass Actions</label>

@@ -37,6 +37,7 @@ import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage
 import { ExerciseManagementDevSettingsModalComponent } from 'app/core/course/manage/exercises-experimental/dev-settings/exercise-management-dev-settings-modal.component';
 import { ExerciseManagementDevSettingsService } from 'app/core/course/manage/exercises-experimental/dev-settings/exercise-management-dev-settings.service';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
+import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -105,6 +106,7 @@ const DIFFICULTY_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 }
         ExerciseTableComponent,
         ExerciseManagementDevSettingsModalComponent,
         ExerciseAddModalComponent,
+        ExerciseGroupEditModalComponent,
         SearchFilterComponent,
         ArtemisDatePipe,
         CourseTitleBarTitleDirective,
@@ -174,8 +176,11 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
     private readonly newlyCreatedGroupIds = new Set<number>();
     readonly addModalVisible = signal(false);
     readonly addModalMode = signal<AddModalMode>('create');
+    readonly groupEditModalVisible = signal(false);
+    readonly groupEditModalId = signal<number | undefined>(undefined);
 
     readonly isGroup = computed(() => this.view() === 'group');
+    readonly groupEditModalGroup = computed(() => this.groups().find((g) => g.id === this.groupEditModalId()));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly visibleCount = computed(() => this.buckets().reduce((sum, bucket) => sum + bucket.exercises.length, 0));
     readonly courseId = computed(() => this.course()?.id);
@@ -319,9 +324,13 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
         const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
         const newGroup: CourseExerciseGroup = { id: nextId, title: `Group ${nextId}`, order: nextId, exercises: [] };
         this.groups.set([...this.groups(), newGroup]);
-        this.newlyCreatedGroupIds.add(nextId);
         this.buildBuckets();
-        this.startEditGroup(nextId);
+        if (this.devSettings.groupEditMode() === 'modal') {
+            this.openGroupEditModal(nextId);
+        } else {
+            this.newlyCreatedGroupIds.add(nextId);
+            this.startEditGroup(nextId);
+        }
     }
 
     onTableGroupChange(event: TableGroupChange): void {
@@ -558,6 +567,16 @@ export class CourseManagementExercisesExperimentalComponent implements OnInit {
         const next = new Set(this.editingGroupIds());
         next.delete(id);
         this.editingGroupIds.set(next);
+    }
+
+    openGroupEditModal(id: number): void {
+        this.groupEditModalId.set(id);
+        this.groupEditModalVisible.set(true);
+    }
+
+    onGroupEditModalSave(updated: CourseExerciseGroup): void {
+        this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...updated } : g)));
+        this.buildBuckets();
     }
 
     getGroupDateValue(date: dayjs.Dayjs | undefined): string {

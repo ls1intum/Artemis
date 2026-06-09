@@ -136,15 +136,27 @@
                                     } @else {
                                         <span class="fw-semibold">{{ bucket.group.title }}</span>
                                         <span class="text-muted">({{ bucket.exercises.length }})</span>
-                                        <p-button
-                                            [text]="true"
-                                            severity="secondary"
-                                            size="small"
-                                            title="Edit group"
-                                            (onClick)="startEditGroup(bucket.group.id!); $event.stopPropagation()"
-                                        >
-                                            <fa-icon [icon]="faPen" />
-                                        </p-button>
+                                        @if (devSettings.groupEditMode() === 'modal') {
+                                            <p-button
+                                                [text]="true"
+                                                severity="secondary"
+                                                size="small"
+                                                title="Edit group"
+                                                (onClick)="openGroupEditModal(bucket.group.id!); $event.stopPropagation()"
+                                            >
+                                                <fa-icon [icon]="faPen" />
+                                            </p-button>
+                                        } @else {
+                                            <p-button
+                                                [text]="true"
+                                                severity="secondary"
+                                                size="small"
+                                                title="Edit group"
+                                                (onClick)="startEditGroup(bucket.group.id!); $event.stopPropagation()"
+                                            >
+                                                <fa-icon [icon]="faPen" />
+                                            </p-button>
+                                        }
                                     }
 
                                     <div class="ms-auto d-flex align-items-center gap-1" (click)="$event.stopPropagation()">
@@ -245,8 +257,8 @@
                                 }
                             }
 
-                            <!-- Row 2: edit fields (edit mode only) -->
-                            @if (isGroup() && bucket.group && isEditingGroup(bucket.group.id)) {
+                            <!-- Row 2: edit fields (inline edit mode only) -->
+                            @if (isGroup() && bucket.group && isEditingGroup(bucket.group.id) && devSettings.groupEditMode() === 'inline') {
                                 <div class="d-flex flex-column pt-2 mt-1 border-top" (click)="$event.stopPropagation()">
                                     <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
                                         <i class="pi pi-exclamation-triangle"></i>
@@ -457,4 +469,13 @@
         (visibleChange)="addModalVisible.set($event)"
         (groupCreate)="onAddModalGroupCreate()"
     />
+    @if (groupEditModalGroup()) {
+        <jhi-exercise-group-edit-modal
+            [visible]="groupEditModalVisible()"
+            [group]="groupEditModalGroup()!"
+            [allCompetencies]="allMockCompetencies"
+            (visibleChange)="groupEditModalVisible.set($event)"
+            (save)="onGroupEditModalSave($event)"
+        />
+    }
 }

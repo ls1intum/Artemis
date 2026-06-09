@@ -102,6 +102,8 @@ export class CompetencyLearningObjectLink {
 
 export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     exercise?: Exercise;
+    groupId?: number;
+    groupTitle?: string;
 
     constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number) {
         super(competency, weight);

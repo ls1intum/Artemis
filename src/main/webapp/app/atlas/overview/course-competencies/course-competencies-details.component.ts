@@ -1,8 +1,9 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
+    CompetencyExerciseLink,
     CompetencyLectureUnitLink,
     CompetencyProgress,
     ConfidenceReason,
@@ -19,7 +20,7 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faLayerGroup, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, combineLatest } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -41,11 +42,33 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { ButtonModule } from 'primeng/button';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { CompetencyDetailDevSettingsModalComponent } from './competency-detail-dev-settings-modal.component';
+import { CompetencyDetailDevSettingsService } from './competency-detail-dev-settings.service';
+
+interface CompetencyExerciseGroupDisplay {
+    groupId: number;
+    groupTitle: string;
+    exercises: CompetencyExerciseLink[];
+}
+
+interface StandaloneExerciseItem {
+    type: 'standalone';
+    link: CompetencyExerciseLink;
+}
+
+interface GroupExerciseItem {
+    type: 'group';
+    group: CompetencyExerciseGroupDisplay;
+}
+
+type ExerciseDisplayItem = StandaloneExerciseItem | GroupExerciseItem;
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-competencies-details.component.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,
@@ -63,6 +86,9 @@ import { ScienceService } from 'app/foundation/science/science.service';
         ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         HtmlForMarkdownPipe,
+        ButtonModule,
+        CourseExerciseRowComponent,
+        CompetencyDetailDevSettingsModalComponent,
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
@@ -73,6 +99,9 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private lectureUnitService = inject(LectureUnitService);
     private readonly scienceService = inject(ScienceService);
 
+    protected readonly devSettings = inject(CompetencyDetailDevSettingsService);
+    protected readonly settingsVisible = signal(false);
+
     competencyId?: number;
     course?: Course;
     courseId?: number;
@@ -82,10 +111,14 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     showFireworks = false;
     paramsSubscription: Subscription;
 
+    groupedExerciseLinks: ExerciseDisplayItem[] = [];
+
     readonly LectureUnitType = LectureUnitType;
     protected readonly ConfidenceReason = ConfidenceReason;
 
     faPencilAlt = faPencilAlt;
+    faLayerGroup = faLayerGroup;
+    faEye = faEye;
     getIcon = getIcon;
 
     ngOnInit(): void {
@@ -120,6 +153,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                 this.competencyProgress = this.getUserProgress();
 
                 this.handleExerciseLinks();
+                this.computeGroupedExerciseLinks();
 
                 this.isLoading = false;
             },
@@ -128,7 +162,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Add exercises as lecture units for display
+     * Add exercises as lecture units for display in the default view.
      * @private
      */
     private handleExerciseLinks() {
@@ -143,6 +177,34 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                 }),
             );
         }
+    }
+
+    /**
+     * Group exercise links by their groupId for Versions 2 and 3.
+     * Exercises without a groupId are treated as standalone items.
+     * @private
+     */
+    private computeGroupedExerciseLinks() {
+        const links = this.competency.exerciseLinks ?? [];
+        const groupsById = new Map<number, CompetencyExerciseGroupDisplay>();
+        const result: ExerciseDisplayItem[] = [];
+
+        for (const link of links) {
+            if (link.groupId !== undefined && link.groupTitle !== undefined) {
+                const existing = groupsById.get(link.groupId);
+                if (existing) {
+                    existing.exercises.push(link);
+                } else {
+                    const group: CompetencyExerciseGroupDisplay = { groupId: link.groupId, groupTitle: link.groupTitle, exercises: [link] };
+                    groupsById.set(link.groupId, group);
+                    result.push({ type: 'group', group });
+                }
+            } else {
+                result.push({ type: 'standalone', link });
+            }
+        }
+
+        this.groupedExerciseLinks = result;
     }
 
     showFireworksIfMastered() {
@@ -197,5 +259,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
+    }
+
+    protected toExerciseUnit(link: CompetencyExerciseLink): ExerciseUnit {
+        const unit = new ExerciseUnit();
+        unit.id = link.exercise?.id;
+        unit.exercise = link.exercise;
+        return unit;
     }
 }

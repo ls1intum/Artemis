@@ -12,6 +12,7 @@ import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manag
 @Component({
     selector: 'jhi-exercise-detail-experimental-actions',
     templateUrl: './exercise-detail-experimental-actions.component.html',
+    styleUrl: './exercise-detail-experimental-actions.component.scss',
     imports: [
         RouterLink,
         FaIconComponent,

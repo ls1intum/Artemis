@@ -98,6 +98,8 @@ export interface ExerciseForCompetencyDTO {
 export interface CompetencyExerciseLinkResponseDTO {
     weight: number;
     exercise?: ExerciseForCompetencyDTO;
+    groupId?: number;
+    groupTitle?: string;
 }
 
 export interface LectureReferenceDTO {
@@ -325,7 +327,10 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
                 if (!exercise) {
                     return undefined;
                 }
-                return new CompetencyExerciseLink(competency, exercise, linkDto.weight);
+                const link = new CompetencyExerciseLink(competency, exercise, linkDto.weight);
+                link.groupId = linkDto.groupId;
+                link.groupTitle = linkDto.groupTitle;
+                return link;
             })
             .filter((link): link is CompetencyExerciseLink => !!link);
     }
