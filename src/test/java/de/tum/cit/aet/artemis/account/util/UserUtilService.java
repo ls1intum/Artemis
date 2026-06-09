@@ -537,7 +537,7 @@ public class UserUtilService {
         addInstructor(login);
         User user = getUserByLogin(login);
         enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
-        return user;
+        return getUserByLogin(login);
     }
 
     /**
@@ -545,13 +545,13 @@ public class UserUtilService {
      *
      * @param login  The login of the editor
      * @param course The course the editor should be enrolled in
-     * @return the saved User
+     * @return the saved User with up-to-date course roles loaded
      */
     public User addEditorToCourse(final String login, final Course course) {
         addEditor(login);
         User user = getUserByLogin(login);
         enrollUserInCourse(user, course, CourseRole.EDITOR);
-        return user;
+        return getUserByLogin(login);
     }
 
     /**
@@ -559,13 +559,13 @@ public class UserUtilService {
      *
      * @param login  The login of the teaching assistant
      * @param course The course the teaching assistant should be enrolled in
-     * @return the saved User
+     * @return the saved User with up-to-date course roles loaded
      */
     public User addTeachingAssistantToCourse(final String login, final Course course) {
         addTeachingAssistant(login);
         User user = getUserByLogin(login);
         enrollUserInCourse(user, course, CourseRole.TEACHING_ASSISTANT);
-        return user;
+        return getUserByLogin(login);
     }
 
     /**
@@ -573,13 +573,13 @@ public class UserUtilService {
      *
      * @param login  The login of the student
      * @param course The course the student should be enrolled in
-     * @return the saved User
+     * @return the saved User with up-to-date course roles loaded
      */
     public User addStudentToCourse(final String login, final Course course) {
         addStudent(login);
         User user = getUserByLogin(login);
         enrollUserInCourse(user, course, CourseRole.STUDENT);
-        return user;
+        return getUserByLogin(login);
     }
 
     /**

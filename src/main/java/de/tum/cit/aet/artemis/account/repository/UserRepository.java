@@ -94,6 +94,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
+    // TODO (Phase 9): remove once user_groups table is dropped (used by UserService.addUserToCourse/removeUserFromCourse dual-write)
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "courseRoles", "authorities" })
+    Optional<User> findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(String login);
+
     // --- courseRoles variants ---
 
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles" })

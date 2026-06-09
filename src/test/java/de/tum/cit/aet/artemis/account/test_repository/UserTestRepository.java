@@ -128,6 +128,7 @@ public interface UserTestRepository extends UserRepository {
         existing.setLastName(freshUser.getLastName());
         existing.setEmail(freshUser.getEmail());
         existing.setActivated(freshUser.getActivated());
+        existing.setDeleted(freshUser.isDeleted());
         existing.setLangKey(freshUser.getLangKey());
         existing.setSelectedLLMUsageTimestamp(freshUser.getSelectedLLMUsageTimestamp());
         existing.setSelectedLLMUsage(freshUser.getSelectedLLMUsage());

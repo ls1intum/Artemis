@@ -93,9 +93,11 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-
         fileUploadExercise = fileUploadExerciseUtilService.createEnrolledFileUploadExercisesWithCourse(TEST_PREFIX).getFirst();
+        course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         competency = competencyUtilService.createCompetency(course);
+
+        userUtilService.createAndSaveUser(OTHER_INSTRUCTOR);
     }
 
     @Test

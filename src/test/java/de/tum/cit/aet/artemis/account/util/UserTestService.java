@@ -233,7 +233,8 @@ public class UserTestService {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
-            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            final User user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + login)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login));
             user.getGroups().clear();
             return userTestRepository.save(user);
         }).collect(Collectors.toSet());

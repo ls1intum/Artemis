@@ -367,11 +367,15 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             // student2 is a student-role user acting as TA in this course for superadmin tests
             tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
             userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
+            // Re-fetch so that tutor.courseRoles reflects the newly added TA role (stale in-memory object)
+            tutor = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
             // editor is a freshly created user — not covered by the prefix enrollment above
             userUtilService.createAndSaveUser(TEST_PREFIX + "editor");
             editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
             userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
+            // Re-fetch so that editor.courseRoles reflects the newly added EDITOR role
+            editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor");
 
             instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         }

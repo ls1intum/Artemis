@@ -613,14 +613,17 @@ public class UserService {
         // If the caller loaded the user without the groups entity graph, re-fetch with groups
         // so the legacy write always happens — silently skipping it would leave user_groups stale.
         // TODO (Phase 9): remove this block once the user_groups table is dropped
+        // Always ensure groups are initialized before saveUser() to avoid:
+        // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
+        // and merge() is called on the detached entity.
+        // - LazyInitializationException when groupName != null and groups must be mutated
+        // outside the original session.
+        if (!Hibernate.isInitialized(user.getGroups())) {
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+        }
         String groupName = course.getGroupNameForRole(role);
-        if (groupName != null) {
-            if (!Hibernate.isInitialized(user.getGroups())) {
-                user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
-            }
-            if (!user.getGroups().contains(groupName)) {
-                user.getGroups().add(groupName);
-            }
+        if (groupName != null && !user.getGroups().contains(groupName)) {
+            user.getGroups().add(groupName);
         }
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
@@ -641,11 +644,16 @@ public class UserService {
         // If the caller loaded the user without the groups entity graph, re-fetch with groups
         // so the legacy write always happens — silently skipping it would leave user_groups stale.
         // TODO (Phase 9): remove this block once the user_groups table is dropped
+        // Always ensure groups are initialized before saveUser() to avoid:
+        // - Hibernate PersistentSet.hasDeletes() NPE when groups was never loaded (sn=null)
+        // and merge() is called on the detached entity.
+        // - LazyInitializationException when groupName != null and groups must be mutated
+        // outside the original session.
+        if (!Hibernate.isInitialized(user.getGroups())) {
+            user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+        }
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null) {
-            if (!Hibernate.isInitialized(user.getGroups())) {
-                user = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(user.getLogin()).orElse(user);
-            }
             user.getGroups().remove(groupName);
         }
         user.setAuthorities(authorityService.buildAuthorities(user));

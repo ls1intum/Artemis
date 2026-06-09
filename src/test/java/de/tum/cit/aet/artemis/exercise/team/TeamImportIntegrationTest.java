@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -350,6 +351,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
         users.forEach(u -> userUtilService.cleanUpRegistrationNumberForUser(u));
         userTestRepository.saveAll(users);
+        users.forEach(u -> userUtilService.enrollUserInCourse(u, course, CourseRole.STUDENT));
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
         List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();

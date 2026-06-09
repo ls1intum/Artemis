@@ -407,6 +407,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Check whether a student from a team is found but marked as "assignedToTeam"
         Team team = teamUtilService.addTeamForExercise(exercise, tutor, TEST_PREFIX);
+        team.getStudents().forEach(s -> userUtilService.enrollUserInCourse(s, course, CourseRole.STUDENT));
         User teamStudent = team.getStudents().iterator().next();
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);

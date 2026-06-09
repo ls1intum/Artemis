@@ -546,7 +546,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void grantChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
 
         request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
@@ -558,7 +558,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void revokeChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
 
         request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/revoke-channel-moderator",
@@ -967,7 +967,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFeedbackChannel_asInstructor_shouldCreateChannel() throws Exception {
-        long courseId = 1L;
+        long courseId = exampleCourseId;
         long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
         channelDTO.setName("feedback-channel");
