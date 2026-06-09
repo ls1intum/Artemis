@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -21,7 +21,7 @@ interface PostGroup {
     templateUrl: './posting-footer.component.html',
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
-export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked {
+export class PostingFooterComponent implements OnInit, OnDestroy {
     constructor() {
         effect(() => {
             // Track sortedAnswerPosts signal input (replaces ngOnChanges)
@@ -55,10 +55,9 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse = false;
     courseId!: number;
-    groupedAnswerPosts: PostGroup[] = [];
+    readonly groupedAnswerPosts = signal<PostGroup[]>([]);
 
     private metisService = inject(MetisService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
@@ -75,14 +74,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     }
 
     /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the tag-selector
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.changeDetector.detectChanges();
-    }
-
-    /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
      * @return AnswerPost created empty default answer post
      */
@@ -96,7 +87,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
 
     groupAnswerPosts(): void {
         if (!this.sortedAnswerPosts() || this.sortedAnswerPosts().length === 0) {
-            this.groupedAnswerPosts = [];
+            this.groupedAnswerPosts.set([]);
             return;
         }
 
@@ -133,8 +124,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         }
 
         groups.push(currentGroup);
-        this.groupedAnswerPosts = groups;
-        this.changeDetector.detectChanges();
+        this.groupedAnswerPosts.set(groups);
     }
 
     trackGroupByFn(_: number, group: PostGroup): number {

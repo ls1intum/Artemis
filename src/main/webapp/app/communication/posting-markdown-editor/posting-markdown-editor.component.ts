@@ -1,8 +1,6 @@
 import {
-    AfterContentChecked,
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     OnInit,
     ViewContainerRef,
@@ -61,8 +59,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
-    private cdref = inject(ChangeDetectorRef);
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
     private metisService = inject(MetisService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
@@ -167,14 +164,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         } else if (/^\d+\. /.test(lineContent)) {
             this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
         }
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.cdref.detectChanges();
     }
 
     /**
