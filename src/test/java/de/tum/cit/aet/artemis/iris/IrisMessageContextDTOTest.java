@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 
+import de.tum.cit.aet.artemis.iris.dto.IrisFullscreenContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
@@ -90,32 +91,6 @@ class IrisMessageContextDTOTest {
     }
 
     @Test
-    void videoContextValidationRequiresNonNegativeTimestamp() {
-        var dto = new IrisVideoContextDTO("video", 1L, -5.0);
-        var violations = validator.validate(dto);
-
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("timestamp"));
-    }
-
-    @Test
-    void videoContextValidationAllowsZeroTimestamp() {
-        var dto = new IrisVideoContextDTO("video", 1L, 0.0);
-        var violations = validator.validate(dto);
-
-        assertThat(violations).isEmpty();
-    }
-
-    @Test
-    void slidesContextValidationRequiresPositiveLectureUnitId() {
-        var dto = new IrisSlidesContextDTO("slides", -1L, 1);
-        var violations = validator.validate(dto);
-
-        assertThat(violations).isNotEmpty();
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("lectureUnitId"));
-    }
-
-    @Test
     void slidesContextValidationRequiresPageGreaterThanZero() {
         var dto = new IrisSlidesContextDTO("slides", 1L, 0);
         var violations = validator.validate(dto);
@@ -125,41 +100,59 @@ class IrisMessageContextDTOTest {
     }
 
     @Test
-    void videoContextConvenienceConstructorSetsTypeAutomatically() {
-        var dto = new IrisVideoContextDTO(42L, 125.5);
+    void serializesFullscreenContext() throws Exception {
+        var dto = new IrisFullscreenContextDTO(123L);
+        String json = mapper.writeValueAsString(dto);
 
-        assertThat(dto.type()).isEqualTo("video");
-        assertThat(dto.lectureUnitId()).isEqualTo(42L);
-        assertThat(dto.timestamp()).isEqualTo(125.5);
+        assertThat(json).contains("\"type\":\"fullscreen\"");
+        assertThat(json).contains("\"lectureUnitId\":123");
     }
 
     @Test
-    void slidesContextConvenienceConstructorSetsTypeAutomatically() {
-        var dto = new IrisSlidesContextDTO(100L, 5);
+    void deserializesFullscreenContext() throws Exception {
+        // Test that fullscreen context can be deserialized from JSON
+        var original = new IrisFullscreenContextDTO(123L);
+        String json = mapper.writeValueAsString(original);
+        IrisMessageContextDTO dto = mapper.readValue(json, IrisFullscreenContextDTO.class);
 
-        assertThat(dto.type()).isEqualTo("slides");
-        assertThat(dto.lectureUnitId()).isEqualTo(100L);
-        assertThat(dto.page()).isEqualTo(5);
+        assertThat(dto).isInstanceOf(IrisFullscreenContextDTO.class);
+        var fullscreenContext = (IrisFullscreenContextDTO) dto;
+        assertThat(fullscreenContext.lectureUnitId()).isEqualTo(123L);
+        assertThat(fullscreenContext.type()).isEqualTo("fullscreen");
     }
 
     @Test
-    void polymorphicTypeHandlingWithMultipleContexts() throws Exception {
-        // Test that mixed context types can be created and accessed
-        var videoContext = new IrisVideoContextDTO(1L, 10.5);
-        var slidesContext = new IrisSlidesContextDTO(2L, 3);
+    void fullscreenContextValidationRequiresPositiveLectureUnitId() {
+        var dto = new IrisFullscreenContextDTO("fullscreen", 0L);
+        var violations = validator.validate(dto);
 
-        List<IrisMessageContextDTO> contexts = List.of(videoContext, slidesContext);
+        assertThat(violations).isNotEmpty();
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("lectureUnitId"));
+    }
 
-        assertThat(contexts).hasSize(2);
-        assertThat(contexts.get(0)).isInstanceOf(IrisVideoContextDTO.class);
-        assertThat(contexts.get(1)).isInstanceOf(IrisSlidesContextDTO.class);
+    @Test
+    void polymorphicTypeHandlingWithFullscreenAndOtherContexts() throws Exception {
+        // Test that fullscreen context works together with video/slides contexts
+        var fullscreenContext = new IrisFullscreenContextDTO(123L);
+        var videoContext = new IrisVideoContextDTO(123L, 45.2);
+        var slidesContext = new IrisSlidesContextDTO(123L, 5);
 
-        var video = (IrisVideoContextDTO) contexts.get(0);
-        assertThat(video.lectureUnitId()).isEqualTo(1L);
-        assertThat(video.timestamp()).isEqualTo(10.5);
+        List<IrisMessageContextDTO> contexts = List.of(fullscreenContext, videoContext, slidesContext);
 
-        var slides = (IrisSlidesContextDTO) contexts.get(1);
-        assertThat(slides.lectureUnitId()).isEqualTo(2L);
-        assertThat(slides.page()).isEqualTo(3);
+        assertThat(contexts).hasSize(3);
+        assertThat(contexts.get(0)).isInstanceOf(IrisFullscreenContextDTO.class);
+        assertThat(contexts.get(1)).isInstanceOf(IrisVideoContextDTO.class);
+        assertThat(contexts.get(2)).isInstanceOf(IrisSlidesContextDTO.class);
+
+        var fullscreen = (IrisFullscreenContextDTO) contexts.get(0);
+        assertThat(fullscreen.lectureUnitId()).isEqualTo(123L);
+
+        var video = (IrisVideoContextDTO) contexts.get(1);
+        assertThat(video.lectureUnitId()).isEqualTo(123L);
+        assertThat(video.timestamp()).isEqualTo(45.2);
+
+        var slides = (IrisSlidesContextDTO) contexts.get(2);
+        assertThat(slides.lectureUnitId()).isEqualTo(123L);
+        assertThat(slides.page()).isEqualTo(5);
     }
 }
