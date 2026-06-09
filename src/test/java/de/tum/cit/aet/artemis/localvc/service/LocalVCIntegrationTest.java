@@ -439,6 +439,19 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
+     * A git client that sends a valid username but an empty password (e.g. a remote URL with the username baked in and no credential helper / access token supplying a password)
+     * must be reported as a missing credential, not as a password-length violation. This is the most common cause of "Failed login attempt ... password has to be at least ..."
+     * noise in production, where the external identity provider's own policy already rules out genuinely too-short passwords.
+     */
+    @Test
+    void testFetch_emptyPassword_reportsNoPasswordProvided() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, "");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("No password provided");
+    }
+
+    /**
      * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level by sending
      * real HTTP requests to dumb-protocol endpoints (/HEAD, /objects/info/packs).
      * These paths bypass our authentication filters entirely (they are served by JGit's

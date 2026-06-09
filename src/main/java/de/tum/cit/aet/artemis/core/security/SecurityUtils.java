@@ -38,18 +38,29 @@ public final class SecurityUtils {
 
     /**
      * check that the username and password are not null and have the correct length
+     * <p>
+     * The empty/missing case is reported separately from the too-short case on purpose: a credential that is simply absent (e.g. a git client sending a username with no
+     * password) is a very different situation from one that violates the length policy, and conflating them produces misleading "password too short" log entries for what are
+     * actually empty requests. Length policy is the responsibility of the credential's own provider (e.g. an external LDAP/SSO); this method only guards against null/blank and
+     * the platform's own min/max bounds. Never include the credential value itself in these messages, as they are logged.
      *
      * @param username the username which should be validated
      * @param password the password which should be validated
      */
     public static void checkUsernameAndPasswordValidity(String username, String password) {
-        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+        if (!StringUtils.hasLength(username)) {
+            throw new AccessForbiddenException("No username provided");
+        }
+        else if (username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
         else if (username.length() > USERNAME_MAX_LENGTH) {
             throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
         }
-        if (!StringUtils.hasLength(password) || password.length() < PASSWORD_MIN_LENGTH) {
+        if (!StringUtils.hasLength(password)) {
+            throw new AccessForbiddenException("No password provided");
+        }
+        else if (password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
         }
         else if (password.length() > PASSWORD_MAX_LENGTH) {
