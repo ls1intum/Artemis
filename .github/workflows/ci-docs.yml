@@ -1,7 +1,13 @@
 name: Build Documentation
 
 on:
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      upload_pages_artifact:
+        description: 'Also upload the built site as a GitHub Pages artifact (set true by the deploy paths in ci.yml / deploy-documentation.yml). PR validation runs leave it false.'
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -41,3 +47,11 @@ jobs:
       - name: Build Docusaurus site
         working-directory: documentation
         run: pnpm run build
+
+      # Only on the deploy paths (develop push / manual redeploy); the deploy job consumes this.
+      # Uploading the artifact needs no extra permissions — `pages: write` lives on the deploy job.
+      - name: Upload Pages artifact
+        if: ${{ inputs.upload_pages_artifact }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: documentation/build

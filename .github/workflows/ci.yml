@@ -213,6 +213,34 @@ jobs:
     uses: ./.github/workflows/ci-docs.yml
     permissions:
       contents: read
+    with:
+      # On a develop push, also upload the Pages artifact for the deploy-docs job to publish.
+      upload_pages_artifact: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+
+  # Publishes the docs to GitHub Pages on develop — folded in from the old deploy-documentation.yml
+  # so the entire CI/CD trigger surface lives in this one file. It consumes the Pages artifact the
+  # `docs` job uploaded (no second build) and gates on that build passing. Job-level
+  # `concurrency: pages` serializes Pages deploys across runs and against the manual redeploy in
+  # deploy-documentation.yml. PRs skip it, so `pages`/`id-token` write scope is never granted on a PR.
+  deploy-docs:
+    name: Deploy Documentation
+    needs: [detect-changes, docs]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.has_docs == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
 
   translation:
     name: Check Translation Keys

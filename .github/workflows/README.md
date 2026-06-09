@@ -27,6 +27,9 @@ ci.yml                                                            (single entry 
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 │
+│   DEPLOY — develop only, never on a PR:
+├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
+│
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes advisory e2e + codeql — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
@@ -139,7 +142,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `bean-instantiations.yml` | Java-source-only; independent, niche path filter. |
 | `version-consistency.yml` | Trivial, fires on a tiny path set. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
-| `deploy-documentation.yml` | Owns the `pages` concurrency slot. |
+| `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
@@ -157,6 +160,12 @@ Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`,
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
+
+The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-level
+`concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is
+not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group is what
+serializes every GitHub Pages deploy — across umbrella runs and against the manual redeploy in
+`deploy-documentation.yml`.
 
 ## Adding a new CI check
 
