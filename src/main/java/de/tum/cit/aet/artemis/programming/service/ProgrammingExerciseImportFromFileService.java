@@ -173,15 +173,10 @@ public class ProgrammingExerciseImportFromFileService {
      * @param importExerciseDir the directory where the extracted zip file is located
      * @return the build plan content, if present and readable
      */
-    private Optional<String> readBuildPlanIfExisting(Path importExerciseDir) {
+    private Optional<String> readBuildPlanIfExisting(Path importExerciseDir) throws IOException {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
-            try {
-                return Optional.of(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8));
-            }
-            catch (IOException e) {
-                log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
-            }
+            return Optional.of(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8));
         }
         return Optional.empty();
     }
