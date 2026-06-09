@@ -7,6 +7,11 @@ name: PR Coverage Reporter
 # `workflow_run` listens for the umbrella's name. Coverage artifacts are uploaded by
 # ci-test.yml's `server-tests` job under the umbrella's run id, so artifact lookups via
 # `workflow_run.id` continue to work after the migration.
+#
+# SECURITY: a `workflow_run` job runs in the base-repo context with write permissions. To avoid a
+# "pwn request", this workflow NEVER checks out or executes PR/fork code — it checks out the trusted
+# default branch, derives changed files from the GitHub API, and runs the coverage tooling with
+# `node` (no `pnpm install`, whose postinstall hook is fork-editable) against downloaded artifacts.
 on:
   workflow_run:
     # Must match the `name:` field of .github/workflows/ci.yml.
@@ -69,69 +74,52 @@ jobs:
           echo "No matching open PR; skipping coverage report."
           exit 0
 
-      - uses: actions/checkout@v6
+      # SECURITY (workflow_run pwn-request prevention): this job runs in the base-repo context with
+      # `pull-requests: write`, so it must NEVER check out or execute PR/fork-controlled code. We
+      # check out the base repo's DEFAULT branch — the trusted coverage tooling — and run it against
+      # downloaded artifacts only. There is deliberately no `pnpm install` (its `postinstall` hook is
+      # fork-editable) and no `pnpm run` of a PR script. The changed-file list comes from the GitHub
+      # API below, not from a `git diff` of a checked-out PR tree.
+      - name: Checkout coverage tooling (trusted default branch — never the PR head)
+        uses: actions/checkout@v6
         if: steps.find-pr.outputs.result != ''
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
 
-      - name: Detect changed modules
+      - name: Detect changed files (via API — no PR checkout)
         if: steps.find-pr.outputs.result != ''
         id: changes
+        uses: actions/github-script@v9
         env:
-          BASE_BRANCH: ${{ steps.find-pr.outputs.base_ref }}
-        run: |
-          set -euo pipefail
-          # Validate the ref name shape so it's safe to interpolate below.
-          if ! printf '%s' "$BASE_BRANCH" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
-            echo "::error::Unexpected base branch name: $BASE_BRANCH"
-            exit 1
-          fi
-          git fetch origin "$BASE_BRANCH"
-
-          CHANGED_FILES=$(git diff --name-only "origin/$BASE_BRANCH"...HEAD)
-
-          CLIENT_MODULES=""
-          HAS_CLIENT_CHANGES="false"
-          for file in $CHANGED_FILES; do
-            if [[ "$file" == src/main/webapp/app/*.ts ]] && [[ "$file" != *.spec.ts ]] && [[ "$file" != *.module.ts ]]; then
-              HAS_CLIENT_CHANGES="true"
-              MODULE=$(echo "$file" | sed -n 's|^src/main/webapp/app/\([^/]*\)/.*|\1|p')
-              if [ -n "$MODULE" ] && [[ ! "$CLIENT_MODULES" =~ (^|,)$MODULE(,|$) ]]; then
-                if [ -z "$CLIENT_MODULES" ]; then
-                  CLIENT_MODULES="$MODULE"
-                else
-                  CLIENT_MODULES="$CLIENT_MODULES,$MODULE"
-                fi
-              fi
-            fi
-          done
-
-          SERVER_MODULES=""
-          HAS_SERVER_CHANGES="false"
-          for file in $CHANGED_FILES; do
-            if [[ "$file" == src/main/java/de/tum/cit/aet/artemis/*.java ]]; then
-              HAS_SERVER_CHANGES="true"
-              MODULE=$(echo "$file" | sed -n 's|^src/main/java/de/tum/cit/aet/artemis/\([^/]*\)/.*|\1|p')
-              if [ -n "$MODULE" ] && [[ ! "$SERVER_MODULES" =~ (^|,)$MODULE(,|$) ]]; then
-                if [ -z "$SERVER_MODULES" ]; then
-                  SERVER_MODULES="$MODULE"
-                else
-                  SERVER_MODULES="$SERVER_MODULES,$MODULE"
-                fi
-              fi
-            fi
-          done
-
-          {
-            echo "has_client_changes=$HAS_CLIENT_CHANGES"
-            echo "has_server_changes=$HAS_SERVER_CHANGES"
-            echo "client_modules=$CLIENT_MODULES"
-            echo "server_modules=$SERVER_MODULES"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Client changes: $HAS_CLIENT_CHANGES (modules: $CLIENT_MODULES)"
-          echo "Server changes: $HAS_SERVER_CHANGES (modules: $SERVER_MODULES)"
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber, per_page: 100,
+            });
+            const CLIENT = 'src/main/webapp/app/';
+            const SERVER = 'src/main/java/de/tum/cit/aet/artemis/';
+            const changed = [];
+            const clientModules = new Set();
+            const serverModules = new Set();
+            let hasClient = false, hasServer = false;
+            for (const f of files) {
+              if (f.status === 'removed') continue;       // deleted files have no coverage to report
+              const p = f.filename;
+              if (p.startsWith(CLIENT) && p.endsWith('.ts') && !p.endsWith('.spec.ts') && !p.endsWith('.module.ts')) {
+                hasClient = true; changed.push(p);
+                const rel = p.slice(CLIENT.length);
+                if (rel.includes('/')) clientModules.add(rel.split('/')[0]);
+              } else if (p.startsWith(SERVER) && p.endsWith('.java')) {
+                hasServer = true; changed.push(p);
+                serverModules.add(p.slice(SERVER.length).split('/')[0]);
+              }
+            }
+            core.setOutput('has_client_changes', String(hasClient));
+            core.setOutput('has_server_changes', String(hasServer));
+            core.setOutput('client_modules', [...clientModules].join(','));
+            core.setOutput('server_modules', [...serverModules].join(','));
+            core.setOutput('changed_files', changed.join(','));
+            console.log(`Client: ${hasClient} (${[...clientModules].join(',')}); Server: ${hasServer} (${[...serverModules].join(',')}); ${changed.length} coverage-relevant files`);
 
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
@@ -158,34 +146,28 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Setup pnpm
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
-        with:
-          run_install: false
+      # `node` only — the coverage script imports just Node builtins + a local utils.mjs (zero
+      # third-party deps), so there is no `pnpm install` (and thus no fork-editable postinstall).
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
-          cache: 'pnpm'
-
-      - name: Install Dependencies
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        run: pnpm install --frozen-lockfile
 
       - name: Generate coverage table
         id: coverage
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         env:
-          BASE_BRANCH: ${{ steps.find-pr.outputs.base_ref }}
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
           HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
         run: |
           set -o pipefail
-          ARGS=(--skip-tests --print --base-branch "origin/$BASE_BRANCH")
+          # --changed-files (from the API) replaces the git-diff detection, so the trusted script
+          # never needs the PR tree. --skip-tests means it only reads the downloaded coverage data.
+          ARGS=(--skip-tests --print --changed-files "$CHANGED_FILES")
           if [ "$HAS_CLIENT" = "true" ] && [ "$HAS_SERVER" != "true" ]; then
             ARGS+=(--client-only)
           elif [ "$HAS_SERVER" = "true" ] && [ "$HAS_CLIENT" != "true" ]; then
@@ -198,8 +180,8 @@ jobs:
             ARGS+=(--server-modules "$SERVER_MODULES")
           fi
 
-          echo "Running: pnpm run coverage:pr -- ${ARGS[*]}"
-          if ! COVERAGE_OUTPUT=$(pnpm run coverage:pr -- "${ARGS[@]}" 2>&1); then
+          echo "Running: node local-pr-coverage.mjs ${ARGS[*]}"
+          if ! COVERAGE_OUTPUT=$(node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs "${ARGS[@]}" 2>&1); then
             echo "$COVERAGE_OUTPUT"
             echo "success=false" >> "$GITHUB_OUTPUT"
             exit 0
