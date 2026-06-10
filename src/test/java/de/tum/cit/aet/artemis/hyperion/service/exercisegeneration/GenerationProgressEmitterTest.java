@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
@@ -74,23 +76,26 @@ class GenerationProgressEmitterTest {
         assertThat(recorded.stream().map(r -> r.event().message()).toList()).containsExactly("one", "two", "three");
     }
 
-    @Test
-    void terminalEvent_isRecordedWithTerminalTrue() {
+    // Every terminal type (DONE/CANCELLED/ERROR) must be recorded with terminal=true so a reconnecting client knows the run finished; deleting any clause of the three-way OR would
+    // mislabel a finished run as still running.
+    @ParameterizedTest
+    @EnumSource(value = ExerciseGenerationEventDTO.Type.class, names = { "DONE", "CANCELLED", "ERROR" })
+    void terminalEvent_isRecordedWithTerminalTrue(ExerciseGenerationEventDTO.Type type) {
         GenerationProgressEmitter emitter = newEmitter();
 
-        emitter.milestone(ExerciseGenerationEventDTO.done("finished", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null));
+        emitter.milestone(ExerciseGenerationEventDTO.of(type, "finished"));
 
-        // A DONE event terminates the run, so the transcript record must carry terminal=true; a non-terminal milestone (e.g. STARTED) must not.
         assertThat(recorded).hasSize(1);
-        assertThat(recorded.getFirst().event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(recorded.getFirst().event().type()).isEqualTo(type);
         assertThat(recorded.getFirst().terminal()).isTrue();
     }
 
-    @Test
-    void nonTerminalMilestone_isRecordedWithTerminalFalse() {
+    @ParameterizedTest
+    @EnumSource(value = ExerciseGenerationEventDTO.Type.class, names = { "STARTED", "PROGRESS" })
+    void nonTerminalMilestone_isRecordedWithTerminalFalse(ExerciseGenerationEventDTO.Type type) {
         GenerationProgressEmitter emitter = newEmitter();
 
-        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "started"));
+        emitter.milestone(ExerciseGenerationEventDTO.of(type, "ongoing"));
 
         assertThat(recorded).hasSize(1);
         assertThat(recorded.getFirst().terminal()).isFalse();

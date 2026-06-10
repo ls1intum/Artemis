@@ -22,8 +22,9 @@ export interface GenerationProgress {
     files: GenerationFileChange[];
 }
 
-// Transcript tool-call line "Turn <n>: <tool> <arg>"; for write_file/edit_file the arg is the full path (see AgentLoopRunner#describeToolCall).
-// Group 1 = turn number, group 2 = tool name, group 3 = the argument (a path for file tools, the command for bash).
+// Transcript tool-call line "Turn <n>: <tool> <arg>" (see AgentLoopRunner#describeToolCall): for tools whose arguments carry a "path" key (write_file/edit_file/read_file) the arg is
+// that path; for every other tool (e.g. bash, whose key is "command") it is the raw, whitespace-collapsed, truncated JSON arguments — NOT the extracted command value.
+// Group 1 = turn number, group 2 = tool name, group 3 = the argument.
 const TOOL_LINE = /^Turn\s+(\d+):\s+(\w+)\s*(.*)$/;
 const ATTEMPT = /attempt\s+(\d+)\s+of\s+(\d+)/i;
 
@@ -123,7 +124,7 @@ export interface TranscriptEntry {
     turn?: number;
     /** The agent tool that produced the line (e.g. {@code write_file}, {@code bash}, {@code verify}), when the line is a tool call. */
     tool?: string;
-    /** The most informative argument of a tool call: a file path for file tools, the command for bash. */
+    /** The tool call's argument as emitted by the server: a file path for file tools, otherwise the raw JSON arguments (e.g. for bash, whose "command" key is not unwrapped). */
     target?: string;
     /** The full original progress line. */
     text: string;

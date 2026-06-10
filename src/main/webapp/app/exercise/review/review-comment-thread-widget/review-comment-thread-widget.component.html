@@ -10,7 +10,7 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
-            @if (isConsistencyIssueThread() && firstConsistencyIssueContent(); as issueContent) {
+            @if (isConsistencyIssueThread() && firstConsistencyContent(); as issueContent) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency">
                     {{ 'artemisApp.review.threadConsistencyIssue' | artemisTranslate }}
                 </span>

@@ -181,7 +181,9 @@ describe('adapt feedback assembly', () => {
     it('threadLocationLabel includes the repository, file and line; undefined without a line', () => {
         const label = threadLocationLabel(consistencyThread({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/A.java', lineNumber: 12 }), translate);
         expect(label).toBe('artemisApp.review.relatedLocationRepository.solution: src/A.java:12');
+        // No line at all -> undefined; and a line without a file path is equally insufficient for a concrete location (both guard clauses must hold).
         expect(threadLocationLabel(consistencyThread({ lineNumber: undefined }), translate)).toBeUndefined();
+        expect(threadLocationLabel(consistencyThread({ lineNumber: 5, filePath: undefined }), translate)).toBeUndefined();
     });
 
     it('adaptFindingText assembles "category (severity) — location\\ntext" exactly', () => {
@@ -216,10 +218,11 @@ describe('adapt feedback assembly', () => {
         expect(single).not.toMatch(/^1\./);
 
         const multi = selectedThreadsFindingsText([consistencyThread({ id: 1, text: 'first' }), consistencyThread({ id: 2, text: 'second' })], translate);
-        expect(multi).toMatch(/^1\./);
-        expect(multi).toContain('first');
-        expect(multi).toContain('2.');
-        expect(multi).toContain('second');
+        // Pin the exact joined shape: "1. <finding>\n\n2. <finding>", each finding being "category (severity)\ntext" (no location, as these threads have no line).
+        expect(multi).toBe(
+            '1. artemisApp.hyperion.consistencyCheck.category.CAT (artemisApp.review.consistencySeverity.HIGH)\nfirst' +
+                '\n\n2. artemisApp.hyperion.consistencyCheck.category.CAT (artemisApp.review.consistencySeverity.HIGH)\nsecond',
+        );
 
         expect(selectedThreadsFindingsText([userThread], translate)).toBe('');
     });

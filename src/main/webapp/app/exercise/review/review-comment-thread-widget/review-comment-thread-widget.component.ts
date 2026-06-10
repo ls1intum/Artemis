@@ -112,11 +112,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
-    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => firstConsistencyIssueContent(this.thread()));
-    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
+    readonly firstConsistencyContent = computed<ConsistencyIssueCommentContent | undefined>(() => firstConsistencyIssueContent(this.thread()));
+    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyContent() !== undefined);
     /** Whether to offer "Adapt with Artemis Intelligence" on this thread: a consistency/verification finding, host-permitted, and not outdated. */
     readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().outdated);
-    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
+    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
         const groupId = this.thread().groupId;
@@ -279,7 +279,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!this.canAdaptExercise()) {
             return;
         }
-        const issueContent = this.firstConsistencyIssueContent();
+        const issueContent = this.firstConsistencyContent();
         if (!issueContent) {
             return;
         }

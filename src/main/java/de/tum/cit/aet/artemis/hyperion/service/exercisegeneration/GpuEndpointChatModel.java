@@ -88,6 +88,11 @@ public class GpuEndpointChatModel implements ChatModel {
         catch (RuntimeException e) {
             throw e;
         }
+        catch (InterruptedException e) {
+            // http.send blocks up to REQUEST_TIMEOUT; restore the interrupt flag so a cancelling caller (the agent loop) can observe and honour the interruption.
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("GPU endpoint call interrupted", e);
+        }
         catch (Exception e) {
             throw new RuntimeException("GPU endpoint call failed: " + e.getMessage(), e);
         }

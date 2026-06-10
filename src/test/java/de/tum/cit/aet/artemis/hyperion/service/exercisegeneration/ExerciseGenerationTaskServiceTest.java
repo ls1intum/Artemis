@@ -106,6 +106,20 @@ class ExerciseGenerationTaskServiceTest {
     }
 
     @Test
+    void exerciseDeletedBeforeRun_failsClosed_withTerminalErrorAndClearsJob() {
+        // The exercise was deleted between the request and this async run; the re-load must fail closed (not fall back to the detached event entity).
+        when(programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(7L)).thenReturn(Optional.empty());
+
+        run();
+
+        ExerciseGenerationEventDTO terminal = terminalEvent();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(terminal.message()).contains("no longer exists");
+        verify(jobService).clearJob(7L, "job-1");
+        verify(orchestrator, never()).generate(any(), any(), anyString(), anyString(), any(), any());
+    }
+
+    @Test
     void rejectedOutcome_isRecovered_emitsNeedsReview_withIssueCountFromVerificationFindings() {
         VerificationResult rejected = new VerificationResult(false, false, true, 4,
                 List.of("The solution does not pass its own tests.", "The template runs a different number of tests than the solution."));

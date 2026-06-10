@@ -323,7 +323,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any);
 
         expect(comp.isConsistencyIssueThread()).toBe(true);
-        expect(comp.firstConsistencyIssueContent()?.text).toBe('issue');
+        expect(comp.firstConsistencyContent()?.text).toBe('issue');
     });
 
     it('should set edit text when starting editing', () => {

@@ -46,6 +46,17 @@ class GpuEndpointChatModelTest {
         assertThat(toolMessages.get(0).path("content").asText()).isEqualTo("result-a");
         assertThat(toolMessages.get(1).path("tool_call_id").asText()).isEqualTo("call_b");
         assertThat(toolMessages.get(1).path("content").asText()).isEqualTo("result-b");
+        // The configured model and the default token cap are emitted.
+        assertThat(body.path("model").asText()).isEqualTo("model");
+        assertThat(body.path("max_tokens").asInt()).isEqualTo(2500);
+    }
+
+    @Test
+    void buildRequest_overriddenMaxTokens_isEmitted() {
+        GpuEndpointChatModel customModel = new GpuEndpointChatModel("http://localhost", "key", "m2", 9000);
+        JsonNode body = customModel.buildRequest(new Prompt("hi"));
+        assertThat(body.path("max_tokens").asInt()).isEqualTo(9000);
+        assertThat(body.path("model").asText()).isEqualTo("m2");
     }
 
     @Test
@@ -58,5 +69,27 @@ class GpuEndpointChatModelTest {
 
         JsonNode nullContent = mapper.readTree("{\"choices\":[{\"message\":{\"content\":null}}]}");
         assertThat(model.parseResponse(nullContent).getResult().getOutput().getText()).isEmpty();
+    }
+
+    @Test
+    void parseResponse_extractsToolCallsWithDefaults_andEmptyUsageWhenAbsent() throws Exception {
+        JsonNode root = mapper.readTree("""
+                {"choices":[{"message":{"content":null,"tool_calls":[
+                  {"id":"tc1","function":{"name":"write_file","arguments":"{\\"path\\":\\"A.java\\"}"}},
+                  {"function":{}}
+                ]}}]}
+                """);
+        ChatResponse response = model.parseResponse(root);
+
+        List<AssistantMessage.ToolCall> toolCalls = response.getResult().getOutput().getToolCalls();
+        assertThat(toolCalls).hasSize(2);
+        assertThat(toolCalls.get(0).id()).isEqualTo("tc1");
+        assertThat(toolCalls.get(0).name()).isEqualTo("write_file");
+        assertThat(toolCalls.get(0).arguments()).contains("A.java");
+        // A tool call missing id/arguments falls back to a generated non-empty id and "{}" arguments.
+        assertThat(toolCalls.get(1).id()).isNotEmpty();
+        assertThat(toolCalls.get(1).arguments()).isEqualTo("{}");
+        // No usage object in the response -> empty usage (zero tokens), not the parsed-metadata path.
+        assertThat(response.getMetadata().getUsage().getTotalTokens()).isZero();
     }
 }
