@@ -1,4 +1,4 @@
-import { AfterContentInit, ChangeDetectorRef, Component, OnInit, inject, input, viewChild, viewChildren } from '@angular/core';
+import { AfterContentInit, Component, Injector, OnInit, afterNextRender, inject, input, viewChild, viewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -28,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [NgClass, TranslateDirective, FormsModule, FaIconComponent, HelpIconComponent, NgbTooltip, MarkdownEditorMonacoComponent, ArtemisTranslatePipe],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
-    private changeDetector = inject(ChangeDetectorRef);
+    private injector = inject(Injector);
 
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
@@ -88,14 +88,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     initializeMarkdown() {
-        let index = 0;
-        this.changeDetector.detectChanges();
-        this.criteria!.forEach((criterion) => {
-            criterion.structuredGradingInstructions.forEach((instruction) => {
-                this.markdownEditors().at(index)!.setMarkdown(this.generateInstructionText(instruction));
-                index += 1;
-            });
-        });
+        // Defer until after the next render so the markdown editor view children (driven by the criteria @for) exist.
+        afterNextRender(
+            () => {
+                let index = 0;
+                this.criteria!.forEach((criterion) => {
+                    criterion.structuredGradingInstructions.forEach((instruction) => {
+                        this.markdownEditors().at(index)!.setMarkdown(this.generateInstructionText(instruction));
+                        index += 1;
+                    });
+                });
+            },
+            { injector: this.injector },
+        );
     }
 
     generateMarkdown(): string {

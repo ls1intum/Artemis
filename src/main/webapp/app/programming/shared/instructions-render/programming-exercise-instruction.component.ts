@@ -1,7 +1,6 @@
 import {
     ApplicationRef,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ComponentRef,
     EnvironmentInjector,
@@ -13,6 +12,7 @@ import {
     inject,
     input,
     output,
+    signal,
     untracked,
     viewChild,
 } from '@angular/core';
@@ -67,7 +67,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
-    private cdr = inject(ChangeDetectorRef);
 
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
     readonly participation = input<Participation | undefined>(undefined);
@@ -105,7 +104,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    protected renderedMarkdown: SafeHtml | undefined;
+    protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -400,8 +399,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             // Differences between UMLs are ignored, and we only inject the current one (last callback)
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
@@ -409,14 +407,12 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             this.scheduleContentInjection(false);
         } else {
             // Clear the rendered markdown when problem statement is empty or whitespace-only
-            this.renderedMarkdown = undefined;
+            this.renderedMarkdown.set(undefined);
             this.injectableContentForMarkdownCallbacks = [];
-            this.cdr.markForCheck();
         }
     }
 
