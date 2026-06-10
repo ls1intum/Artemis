@@ -773,6 +773,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        // The server omits empty collections during serialization — keep the editor working on a real array.
+        this.quizExercise.quizQuestions ??= [];
         // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
         // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
         // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.

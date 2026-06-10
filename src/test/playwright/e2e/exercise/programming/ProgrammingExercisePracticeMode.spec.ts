@@ -24,7 +24,9 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
 
         test.beforeEach('Create exercise and make a graded submission before the due date', async ({ login, page, exerciseAPIRequests }) => {
             await login(admin);
-            dueDate = dayjs().add(30, 'seconds');
+            // The budget must also cover the exercise creation (template/solution/test repo provisioning)
+            // and the graded submission, which all happen before the due date passes.
+            dueDate = dayjs().add(45, 'seconds');
             exercise = await exerciseAPIRequests.createProgrammingExercise({ course, dueDate });
             await login(studentOne);
             const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);

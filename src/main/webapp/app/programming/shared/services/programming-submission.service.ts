@@ -947,7 +947,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
-     * Unsubscribe from the submission
+     * Unsubscribe from the submission.
+     *
+     * Callers must release their own subscription to the submission state observable before calling this
+     * method — the shared state is only torn down once no observers remain.
+     *
      * @param participationId
      */
     public unsubscribeForLatestSubmissionOfParticipation(participationId: number) {

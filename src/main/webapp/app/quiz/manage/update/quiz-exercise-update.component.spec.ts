@@ -848,6 +848,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise = quizExercise;
                 comp.quizExercise.quizQuestions = undefined;
                 expect(comp.calculateMaxExerciseScore()).toBe(0);
+                resetQuizExercise();
             });
         });
 
