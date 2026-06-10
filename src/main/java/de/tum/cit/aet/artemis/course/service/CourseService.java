@@ -222,7 +222,7 @@ public class CourseService {
      */
     public Set<Course> findAllActiveForUser(User user) {
         // Use policy-based specification to generate SQL query that filters courses at the database level
-        var spec = policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
+        var spec = policyBasedCourseSpecs.withVisibilityAccessAndNotEnded(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
         return Set.copyOf(courseRepository.findAll(spec));
     }
 
@@ -237,7 +237,7 @@ public class CourseService {
         long start = System.nanoTime();
 
         // Use policy-based specification to generate SQL query that filters courses at the database level
-        var spec = policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
+        var spec = policyBasedCourseSpecs.withVisibilityAccessAndNotEnded(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
         var userVisibleCourses = Set.copyOf(courseRepository.findAll(spec));
 
         if (log.isDebugEnabled()) {

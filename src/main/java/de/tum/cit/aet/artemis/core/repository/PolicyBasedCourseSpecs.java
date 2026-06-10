@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -206,47 +205,7 @@ public class PolicyBasedCourseSpecs {
      * @return combined specification for visibility access and active status
      */
     @NonNull
-    public Specification<Course> withVisibilityAccessAndActive(Set<String> userGroups, boolean isAdmin, ZonedDateTime now) {
-        return CourseSpecs.and(withVisibilityAccess(userGroups, isAdmin), CourseSpecs.isActive(now), CourseSpecs.distinct());
-    }
-
-    /**
-     * Helper method to combine staff access policy with non-ended temporal filter.
-     * <p>
-     * <strong>Example:</strong> Find all non-ended courses with staff access:
-     *
-     * <pre>{@code
-     *
-     * var spec = policyBasedCourseSpecs.withStaffAccessAndNotEnded(userGroups, isAdmin, now);
-     * }</pre>
-     *
-     * @param userGroups the groups the user belongs to
-     * @param isAdmin    whether the user is an admin
-     * @param now        the current time
-     * @return combined specification for staff access and non-ended status
-     */
-    @NonNull
-    public Specification<Course> withStaffAccessAndNotEnded(Set<String> userGroups, boolean isAdmin, ZonedDateTime now) {
-        return CourseSpecs.and(withStaffAccess(userGroups, isAdmin), CourseSpecs.isNotEnded(now), CourseSpecs.distinct());
-    }
-
-    /**
-     * Helper method to combine editor access policy with title search.
-     * <p>
-     * <strong>Example:</strong> Search courses by title with editor access:
-     *
-     * <pre>{@code
-     *
-     * var spec = policyBasedCourseSpecs.withEditorAccessAndTitleSearch(userGroups, isAdmin, searchTerm);
-     * }</pre>
-     *
-     * @param userGroups   the groups the user belongs to
-     * @param isAdmin      whether the user is an admin
-     * @param partialTitle optional title search term (can be null)
-     * @return combined specification for editor access and title search
-     */
-    @Nullable
-    public Specification<Course> withEditorAccessAndTitleSearch(Set<String> userGroups, boolean isAdmin, String partialTitle) {
-        return CourseSpecs.and(withEditorAccess(userGroups, isAdmin), CourseSpecs.titleContains(partialTitle), CourseSpecs.distinct());
+    public Specification<Course> withVisibilityAccessAndNotEnded(Set<String> userGroups, boolean isAdmin, ZonedDateTime now) {
+        return CourseSpecs.and(withVisibilityAccess(userGroups, isAdmin), CourseSpecs.isNotEnded(now), CourseSpecs.distinct());
     }
 }
