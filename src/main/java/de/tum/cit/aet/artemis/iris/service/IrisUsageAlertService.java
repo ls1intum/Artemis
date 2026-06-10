@@ -34,8 +34,14 @@ import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
  * Scheduled service that monitors Iris no-response rates and sends alert emails when thresholds are exceeded.
  * <p>
  * Uses a cooldown mechanism to avoid alert storms: after a successful send the service suppresses
- * further alerts for the configured cooldown period. Hazelcast distributed locking prevents
+ * further alerts for the configured cooldown period. Hazelcast distributed locking serializes
  * concurrent executions across cluster nodes.
+ * <p>
+ * Delivery is <em>at-least-once</em>, not exactly-once: the cooldown state is written only after the
+ * email is dispatched, and the Hazelcast {@code IMap} lock is AP (not a CP fenced lock). A node crash
+ * between dispatch and the state write, or a network split-brain, can therefore produce a duplicate
+ * alert. This is an accepted trade-off for an internal admin notification, where a rare duplicate email
+ * is harmless and a durable de-duplication store (DB outbox / CP {@code FencedLock}) would be over-engineering.
  */
 @Service
 @Lazy(false)
@@ -187,7 +193,11 @@ public class IrisUsageAlertService {
 
             var overview = dashboardService.computeOverview(lookbackStart, staleBefore);
 
-            if (overview.activeSessions() < alert.getMinimumEligibleSessions()) {
+            // Gate eligibility on sessions that were ACTIVE in the window (had a user message), not sessions CREATED in the window.
+            // overview.activeSessions() requires creation_date in-window, which would wrongly exclude long-lived sessions whose
+            // recent unanswered messages are exactly what drives the no-response rate this alert reacts to.
+            long eligibleSessions = dashboardRepository.countSessionsWithUserMessages(lookbackStart, staleBefore);
+            if (eligibleSessions < alert.getMinimumEligibleSessions()) {
                 return;
             }
             long userMessageCount = dashboardRepository.countUserMessages(lookbackStart, staleBefore);
@@ -198,7 +208,7 @@ public class IrisUsageAlertService {
                 return;
             }
 
-            var alertDto = new IrisDashboardAlertDTO(lookbackStart, staleBefore, overview.noResponseRate(), alert.getNoResponseRateThreshold(), overview.activeSessions(),
+            var alertDto = new IrisDashboardAlertDTO(lookbackStart, staleBefore, overview.noResponseRate(), alert.getNoResponseRateThreshold(), eligibleSessions,
                     overview.noResponseSessionCount(), userMessageCount, List.of(), "/admin/iris-dashboard");
 
             int sent = emailService.sendAlert(alertDto);

@@ -61,6 +61,7 @@ class IrisUsageAlertServiceTest {
         properties.getAlert().setEnabled(true);
         when(emailService.canSendAlert()).thenReturn(true);
         when(dashboardRepository.countUserMessages(any(), any())).thenReturn(100L);
+        when(dashboardRepository.countSessionsWithUserMessages(any(), any())).thenReturn(50L);
 
         hazelcastInstance = mock(HazelcastInstance.class);
         scheduleStateMap = mock(IMap.class);
@@ -118,6 +119,18 @@ class IrisUsageAlertServiceTest {
         when(emailService.sendAlert(any())).thenReturn(1);
         alertService.checkAlertThresholds();
         verify(emailService).sendAlert(any(IrisDashboardAlertDTO.class));
+    }
+
+    @Test
+    void checkAlertThresholds_belowEligibleSessions_doesNotSend() {
+        // The no-response rate is high and overview.activeSessions() (creation-time based) is well above the minimum,
+        // but the message-time-based eligible-session count is below it. The gate must key off the latter and skip,
+        // so that a high no-response rate driven by too few active sessions does not trigger a noisy alert.
+        mockHighNoResponseRate();
+        when(dashboardRepository.countSessionsWithUserMessages(any(), any())).thenReturn(1L);
+        when(emailService.sendAlert(any())).thenReturn(1);
+        alertService.checkAlertThresholds();
+        verify(emailService, never()).sendAlert(any());
     }
 
     // IrisDashboardOverviewDTO has 20 fields:

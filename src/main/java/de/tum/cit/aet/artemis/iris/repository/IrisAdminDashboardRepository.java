@@ -36,6 +36,27 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             """)
     long countActiveSessions(@Param("from") Instant from, @Param("to") Instant to);
 
+    /**
+     * Counts distinct sessions that have at least one user message within the window, regardless of when the session was created.
+     * <p>
+     * Unlike {@link #countActiveSessions}, this does not require {@code creation_date} to fall inside the window. It is used by the alert
+     * eligibility gate so that long-lived sessions (created before the short lookback window) whose recent messages drive the no-response
+     * rate are still counted as eligible activity. Using the creation-time-based count there would wrongly suppress alerts.
+     *
+     * @param from start of the window (inclusive)
+     * @param to   end of the window (exclusive)
+     * @return the number of distinct sessions with at least one user message in {@code [from, to)}
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(DISTINCT m.session_id)
+            FROM iris_message m
+            JOIN iris_session s ON s.id = m.session_id
+            WHERE m.sender = 'USER'
+              AND m.sent_at >= :from AND m.sent_at < :to
+              AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+            """)
+    long countSessionsWithUserMessages(@Param("from") Instant from, @Param("to") Instant to);
+
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
             FROM iris_message m

@@ -30,7 +30,11 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
  * The digest covers the previous calendar day (UTC midnight to midnight) and is sent
  * each morning. Guards prevent execution in dev, test-server, and scheduling-inactive profiles.
  * <p>
- * In a multi-node cluster, Hazelcast distributed locking ensures exactly one node sends the digest.
+ * In a multi-node cluster a Hazelcast lock plus a per-window {@code containsKey} marker keep this to a
+ * single send under normal operation. Delivery is nonetheless <em>at-least-once</em>: if the lock holder
+ * crashes after sending but before recording the marker, a node still waiting on the lock can resend; and
+ * because the {@code IMap} lock is AP rather than a CP fenced lock, a network split-brain can also duplicate.
+ * Both are accepted trade-offs for an internal admin email (see {@link IrisUsageAlertService} for the rationale).
  */
 @Service
 @Lazy(false)
