@@ -207,7 +207,7 @@ public class PolicyBasedCourseSpecs {
      */
     @NonNull
     public Specification<Course> withVisibilityAccessAndActive(Set<String> userGroups, boolean isAdmin, ZonedDateTime now) {
-        return CourseSpecs.and(withVisibilityAccess(userGroups, isAdmin), CourseSpecs.isNotEnded(now), CourseSpecs.distinct());
+        return CourseSpecs.and(withVisibilityAccess(userGroups, isAdmin), CourseSpecs.isActive(now), CourseSpecs.distinct());
     }
 
     /**
