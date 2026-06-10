@@ -185,6 +185,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 // Step 5: Trigger suggestions via component API to avoid jhi-button internals
                 component.competencySelection().suggestCompetencies();
                 vi.runAllTimers();
+                fixture.detectChanges();
 
                 // Step 6: Verify API was called with correct parameters
                 expect(httpSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
@@ -358,7 +359,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             // No suggestions should be shown, but component should still function
             const competencyComponent = component.competencySelection();
             expect(competencyComponent.suggestedCompetencyIds.size).toBe(0);
-            expect(competencyComponent.isSuggesting).toBeFalsy();
+            expect(competencyComponent.isSuggesting()).toBeFalsy();
 
             // User should still be able to manually select competencies
             const checkboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));

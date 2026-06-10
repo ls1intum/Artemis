@@ -168,12 +168,12 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                 vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse).pipe(delay(100)));
 
                 component.suggestCompetencies();
-                expect(component.isSuggesting).toBeTruthy();
+                expect(component.isSuggesting()).toBeTruthy();
 
                 vi.advanceTimersByTime(100);
                 fixture.detectChanges();
 
-                expect(component.isSuggesting).toBeFalsy();
+                expect(component.isSuggesting()).toBeFalsy();
                 expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
                 expect(component.suggestedCompetencyIds.has(2)).toBeTruthy();
                 expect(component.suggestedCompetencyIds.has(3)).toBeFalsy();
@@ -190,7 +190,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             // After error, isSuggesting should be false due to finalize operator
             fixture.detectChanges();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
             consoleSpy.mockRestore();
         });
@@ -200,7 +200,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
             component.suggestCompetencies();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
         });
     });
@@ -387,7 +387,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             component.suggestCompetencies();
 
             expect(component.suggestedCompetencyIds.size).toBe(0);
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
         });
 
         it('should handle malformed API response', () => {
