@@ -271,9 +271,14 @@ public class GitService extends AbstractGitService {
                 }
                 catch (JGitInternalException | NoHeadException | TransportException e) {
                     // E.g., LockFailedException
+                    // The repository must be closed before deleting its directory: open pack file handles prevent the
+                    // deletion on network file systems (NFS), which would leave a corrupt working copy behind that breaks
+                    // every subsequent access. Same pattern as AbstractGitService.deleteLocalRepository.
+                    repository.closeBeforeDelete();
                     // cleanup the folder to avoid problems in the future.
                     // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                    if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                    // 'deleteQuietly' also returns false when there was nothing to delete, so only report an error if the directory is actually left behind.
+                    if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
                         log.error("Could not delete directory after failed pull: {}", localPath.toAbsolutePath());
                     }
                     throw new GitException(e);
@@ -299,7 +304,9 @@ public class GitService extends AbstractGitService {
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                // 'deleteQuietly' also returns false when there was nothing to delete (JGit's CloneCommand already cleans up
+                // its own directory on failure), so only report an error if the directory is actually left behind.
+                if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
                     log.error("Could not delete directory after failed clone: {}", localPath.toAbsolutePath());
                 }
                 throw new GitException(e);
