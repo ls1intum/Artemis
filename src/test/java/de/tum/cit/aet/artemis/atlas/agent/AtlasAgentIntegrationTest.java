@@ -91,7 +91,10 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.timestamp").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.timestamp").exists())
+                // Assert the actual mocked content (not just existence) so a failure inside the real ChatClient pipeline
+                // cannot be masked by the service's catch-all fallback message
+                .andExpect(jsonPath("$.message").value("Mocked AI response for testing"));
     }
 
     @Test

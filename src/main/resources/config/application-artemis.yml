@@ -149,22 +149,23 @@ spring:
       base-url: https://endpoint.openai.azure.com
       api-key: my-api-key-for-azure-openai
       microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs; set explicitly for custom domains
+      # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
+      # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
+      timeout: 5m
       chat:
         # The Azure deployment name; sent as the request model (on Foundry it usually equals the model name)
         deployment-name: gpt-5-mini
         # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
         temperature: 1.0
-        # Request timeout (default 60s) — LLM tool-calling loops can need several minutes
-        timeout: 5m
       ## Variant 2: local OpenAI-compatible server (LM Studio, Ollama, vLLM, ...) — same tree.
       ## The SDK appends /chat/completions itself, so include the /v1 prefix in the base URL
       ## (the former spring.ai.openai.chat.completions-path property no longer exists).
       # base-url: http://localhost:1234/v1
       # api-key: dummy-key      # most local servers ignore it
+      # timeout: 5m
       # chat:
       #   model: openai/gpt-oss-20b    # or whatever name your local server expects
       #   temperature: 0.7
-      #   timeout: 5m
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI
