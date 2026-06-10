@@ -74,7 +74,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         if (targetRepositoryExistedBeforeCopy && !gitService.isBareRepositoryHealthy(targetRepoUri)) {
             // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
             // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
-            // so delete it and copy as if it never existed.
+            // so delete it and copy as if it never existed. If this deletion fails, it intentionally surfaces as a
+            // LocalVCInternalException (a VersionControlException), since the copy could not have succeeded either way.
             log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
             deleteRepository(targetRepoUri);
             targetRepositoryExistedBeforeCopy = false;
