@@ -71,7 +71,6 @@ jobs:
               console.log(`No open PR found for branch ${headOwner}:${branch}`);
               return '';
             }
-            core.setOutput('base_ref', prs[0].base.ref);
             core.setOutput('author', prs[0].user.login);
             return prs[0].number;
 
@@ -90,6 +89,8 @@ jobs:
       - name: Detect changed files (via API — no PR checkout)
         if: steps.find-pr.outputs.result != ''
         id: changes
+        # A transient listFiles blip must not red this advisory job (skips downstream, retries next run).
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
@@ -153,8 +154,9 @@ jobs:
         run: .github/scripts/generate-coverage-table.sh
 
       - name: Update PR description with coverage
-        if: steps.find-pr.outputs.result != ''
-        # Advisory poster: a transient PR-API blip must not turn this (non-gating) job red.
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
         continue-on-error: true
         uses: actions/github-script@v9
         env:

@@ -234,6 +234,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Detect changed files
         id: changes
+        # Advisory poster: a transient listFiles blip must not red this job. On failure the outputs
+        # are empty, the generate/update steps below skip, and the next push retries.
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -271,7 +274,9 @@ jobs:
         # per-file columns natively (no overlay — that's the fork path's problem, not this one).
         run: .github/scripts/generate-coverage-table.sh
       - name: Update PR description with coverage
-        # Advisory poster: a transient PR-API blip must not turn this (non-gating) job red.
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.changes.outcome == 'success'
         continue-on-error: true
         uses: actions/github-script@v9
         env:

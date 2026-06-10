@@ -33,7 +33,7 @@ ci.yml                                                            (single entry 
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 │
-├── all-required-ci-passed       (jq gate over the required jobs — excludes advisory e2e + codeql — the required check)
+├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory e2e/codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
