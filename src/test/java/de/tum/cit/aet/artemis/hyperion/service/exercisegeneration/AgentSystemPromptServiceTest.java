@@ -186,6 +186,33 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void build_encodesProblemStatementQualityRules() {
+        // Each pinned phrase encodes a rubric-graded problem-statement defect the websearch rubric loop found in the live generations: zero worked examples (capped every exercise
+        // at
+        // B-), meta/internal leakage into student text (the Java [tasks are automatically bound...] leak), binding an internal build-gate aggregate as a task (the C++ defect), an
+        // unbounded input domain, and a missing motivating objective. These are authoring contracts, so a reword that drops them is a real regression and must fail this test.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("WORKED EXAMPLE").contains("STUDENT-FACING ONLY").contains("build-gate").contains("INPUT DOMAIN").contains("motivating context");
+    }
+
+    @Test
+    void build_forbidsAddingOrStrippingParensOnTestNames() {
+        // The binding resolves by exact string match against the framework-reported test name, so "tidying" a bare name to name() (or vice versa) silently grades it 0. This is the
+        // root cause of the user-reported "()" confusion, so pin the explicit do-not-touch-parens instruction.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("do NOT add, remove").contains("grades it 0");
+    }
+
+    @Test
+    void build_specMode_instructsToStripMetaNotesAndMeetQualityBar() {
+        // The Java meta-leak entered through the ADAPT/spec path (a placeholder problem statement carried internal notes the agent kept). Spec mode must now tell the agent to
+        // delete
+        // such notes and lift the statement to the quality bar without changing the task.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "Implement a bounded integer stack with push, pop, peek and a fixed capacity."));
+        assertThat(prompt).contains("DELETE any internal/meta notes").contains("PROBLEM STATEMENT QUALITY");
+    }
+
+    @Test
     void cppProfile_enforcesByteIdenticalHeadersViaDiff() {
         // The shared header is the contract; the C++ profile must make the agent prove identity (diff prints nothing) rather than merely intend it.
         assertThat(profile(ProgrammingLanguage.C_PLUS_PLUS)).contains("diff -r solution/include template/include").contains("byte-identical");
