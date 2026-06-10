@@ -258,6 +258,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_USEEXTERNAL="false"
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ENABLED="true"
     export ARTEMIS_VERSIONCONTROL_URL="http://localhost:8080"
     export ARTEMIS_VERSIONCONTROL_USER="artemis_admin"
     export ARTEMIS_VERSIONCONTROL_PASSWORD="artemis_admin"
@@ -282,6 +283,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
     export SERVER_URL="http://localhost:8080"
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
 
