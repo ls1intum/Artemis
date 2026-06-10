@@ -161,7 +161,7 @@ describe('ExerciseHeaderComponent', () => {
             expect(fixture.componentInstance.showPracticeMode()).toBe(false);
         });
 
-        it('should be true when practice participation has a submitted submission', () => {
+        it('should be true when a practice participation exists, regardless of its submissions', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
             const practiceParticipation = new StudentParticipation();
