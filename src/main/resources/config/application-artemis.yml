@@ -94,10 +94,10 @@ artemis:
       gpt-5-mini:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
-      gpt-5.4:  # Atlas orchestrator model ($2.50 / $15.00 per 1M, USD→EUR ×0.92)
+      "[gpt-5.4]":  # Atlas orchestrator model ($2.50 / $15.00 per 1M, USD→EUR ×0.92); brackets required: dotted map keys are otherwise parsed as nested paths
         input-cost-per-million-eur: 2.30
         output-cost-per-million-eur: 13.80
-      gpt-5.4-mini:  # Atlas chat-agent model ($0.75 / $4.50 per 1M, USD→EUR ×0.92)
+      "[gpt-5.4-mini]":  # Atlas chat-agent model ($0.75 / $4.50 per 1M, USD→EUR ×0.92)
         input-cost-per-million-eur: 0.69
         output-cost-per-million-eur: 4.14
   atlas:
