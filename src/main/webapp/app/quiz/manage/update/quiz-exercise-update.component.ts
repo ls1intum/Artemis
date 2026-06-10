@@ -329,6 +329,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
+                // The server omits empty collections during serialization, so a quiz without questions
+                // arrives without the quizQuestions field — the editor relies on it being an array.
+                this.quizExercise.quizQuestions ??= [];
                 this.init();
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));

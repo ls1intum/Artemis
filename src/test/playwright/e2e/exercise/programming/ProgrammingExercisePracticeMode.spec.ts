@@ -7,6 +7,7 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
+import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
@@ -35,7 +36,7 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             }
         });
 
-        test('Keeps the practice mode selectable when switching back to graded', async ({ login, page }) => {
+        test('Keeps the practice mode selectable when switching back to graded', async ({ login, page, programmingExerciseEditor }) => {
             test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice with template repository');
@@ -59,6 +60,12 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
             await expect(page.locator('#practice-mode-button')).toBeVisible({ timeout: 15000 });
             await expect(page.locator('#graded-mode-button')).toBeVisible();
+
+            // Submitting in practice mode must process the submission and update the shown result
+            await page.locator('#practice-mode-button').click();
+            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
+                await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+            });
         });
     });
 
@@ -98,6 +105,22 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             await expect(page.locator('#practice-mode-button')).toBeVisible({ timeout: 15000 });
             await expect(page.locator('#graded-mode-button')).toBeVisible();
             await expect(page.locator('.code-button')).toBeVisible();
+        });
+
+        test('Shows the submission state when submitting in the practice mode code editor', async ({ login, page, programmingExerciseEditor }) => {
+            test.slow();
+            await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+            await startPracticeFromExercisePage(page, exercise.id!, 'Practice');
+            await expect(page.locator('#practice-mode-button')).toHaveClass(/segmented-control__button--active/);
+
+            // The live submission state is shown in practice mode even though the due date has passed
+            // (instead of a static "currently participating" text that never updates)
+            await expect(page.locator('#exercise-headers-information')).toContainText('No result');
+
+            // Submitting in practice mode must process the submission and show its result
+            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaAllSuccessfulSubmission, async () => {
+                await expect(page.locator('#exercise-headers-information')).toContainText('100%', { timeout: BUILD_RESULT_TIMEOUT });
+            });
         });
     });
 });
