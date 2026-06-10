@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, ElementRef, inject, input, output } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -14,12 +14,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FeedbackSuggestionBadgeComponent, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
-    @Input() codeLine: number; // Needed for the outer editor to handle the DOM node of the component
-    @Input() feedback: Feedback;
-    @Input() course?: Course; // Needed for credit rounding settings
+    // Needed for the outer editor to handle the DOM node of the component (the parent
+    // CodeEditorMonacoComponent matches `comp.codeLine() === line` in getInlineFeedbackNode).
+    readonly codeLine = input.required<number>();
 
-    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
+    readonly feedback = input.required<Feedback>();
+    readonly course = input<Course>(); // Needed for credit rounding settings
+
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
 
     // Expose functions to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;

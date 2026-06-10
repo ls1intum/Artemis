@@ -1,11 +1,14 @@
-- name: maven
-  script: mvn clean test
-- name: static_analysis
-  script: 'mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'
+- name: compile
+  script: 'mvn -B clean compile'
+- name: test
+  script: 'mvn -B test'
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'
+- name: static_code_analysis
+  script: 'mvn -B spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd'
   forceRun: true
   resultPaths:
     - target/spotbugsXml.xml
     - 'target/checkstyle-result.xml'
     - target/pmd.xml
     - target/cpd.xml
-    - '**/target/surefire-reports/*.xml'

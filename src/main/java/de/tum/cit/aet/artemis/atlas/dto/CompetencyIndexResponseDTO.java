@@ -9,10 +9,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * with the list of course exercises that are currently not linked to any competency, so the LLM
  * can reason about global coverage gaps without issuing extra tool calls.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyIndexResponseDTO(List<CompetencyIndexDTO> competencies, List<UnassignedExerciseRefDTO> unassignedExercises) {
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record UnassignedExerciseRefDTO(Long id, String title, String type) {
     }
 }

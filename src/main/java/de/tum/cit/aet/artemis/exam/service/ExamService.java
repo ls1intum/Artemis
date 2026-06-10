@@ -1240,8 +1240,9 @@ public class ExamService {
                 }
             }
 
-            // get number of successfully initialized participations
-            numberOfInitializedParticipationsByExercise.add(studentParticipationRepository.countInitializedParticipationsByExerciseIdIgnoreTestRuns(exercise.getId()));
+            // get number of successfully initialized participations for current exercise and exam
+            numberOfInitializedParticipationsByExercise
+                    .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
             if (log.isDebugEnabled()) {
                 log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             }
@@ -1693,5 +1694,15 @@ public class ExamService {
             }
         }
         return events;
+    }
+
+    /**
+     * Get one exam by an exercise id.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exam
+     */
+    public Optional<Exam> findByExerciseId(final Long exerciseId) {
+        return examRepository.findByExerciseId(exerciseId);
     }
 }

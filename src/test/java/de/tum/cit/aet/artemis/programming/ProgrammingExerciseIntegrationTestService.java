@@ -2214,31 +2214,39 @@ public class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.CONFLICT);
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
-        // Wire base repos via LocalVC
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+    void testGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
+        // Wire base repos and push through the SAME working copy the wiring created. Creating a second working copy for
+        // the same slug intermittently left the endpoint's checkout reading the pre-push base state (flaky).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
-        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
 
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        var queryParams = "?omitBinaries=true";
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content" + queryParams, HttpStatus.OK,
-                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content" + queryParams);
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content?omitBinaries=true", HttpStatus.OK,
+                String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").doesNotContainKey("B.jar");
     }
 
-    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        // Wire base repos via LocalVC
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+    void testGetTemplateRepositoryFilesWithContent() throws Exception {
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
-        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
 
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
-                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content");
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
+    }
+
+    void testGetSolutionRepositoryFilesWithContent() throws Exception {
+        // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.solutionRepository(), Map.of("Solution.java", "solved", "Helper.java", "help"), "seed solution files");
+
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/solution-files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).containsEntry("Solution.java", "solved").containsEntry("Helper.java", "help");
     }
 
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.

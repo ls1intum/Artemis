@@ -194,8 +194,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 const results = participation.submissions?.last()?.results;
                 if (results && results.length) {
-                    // connect result and submission
+                    // connect result, submission, and participation — the result component derives the
+                    // participation (and through it the exercise) from this back-reference when no
+                    // participation input is provided
                     results[0].submission = participation.submissions?.last();
+                    results[0].submission!.participation = participation;
                     this.result = results[0];
                     this.resultHasInlineFeedback = this.result.feedbacks?.some((feedback) => Feedback.getReferenceLine(feedback) !== undefined) ?? false;
                 }

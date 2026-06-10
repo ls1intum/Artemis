@@ -31,7 +31,7 @@ export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
 
 export function countSuccessfulAthenaFeedbackRequests(participation?: StudentParticipation): number {
     return (
-        getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true)
+        getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true)
             .length ?? 0
     );
 }
@@ -106,11 +106,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     // Prefer practice participation when it exists (student is working in practice mode)
                     this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
-                        this.currentFeedbackRequestCount.set(
-                            getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
-                                (result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true,
-                            ).length ?? 0,
-                        );
+                        this.currentFeedbackRequestCount.set(countSuccessfulAthenaFeedbackRequests(this.participation));
                         this.subscribeToResultUpdates();
                     }
                 },

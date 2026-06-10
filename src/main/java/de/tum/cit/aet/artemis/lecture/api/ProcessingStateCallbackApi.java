@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -62,12 +64,14 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      * Called when the processing pipeline completes (terminal Iris callback).
      * Validates the job token and marks the unit as DONE or handles failure.
      *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token from the callback (for validation)
-     * @param success       whether processing succeeded
-     * @param errorCode     machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param lectureUnitId      the ID of the lecture unit
+     * @param jobToken           the job token from the callback (for validation)
+     * @param success            whether processing succeeded
+     * @param errorCode          machine-readable error code (e.g. {@code YOUTUBE_PRIVATE}); {@code null} on success or unknown failure
+     * @param displayPageNumbers list of displayed page numbers indexed by slide number (0-based: index 0 = slide 1);
+     *                               {@code null} if not applicable or unavailable
      */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode) {
-        processingStateCallbackService.handleIngestionComplete(lectureUnitId, jobToken, success, errorCode);
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success, @Nullable String errorCode, @Nullable List<Integer> displayPageNumbers) {
+        processingStateCallbackService.handleIngestionComplete(lectureUnitId, jobToken, success, errorCode, displayPageNumbers);
     }
 }

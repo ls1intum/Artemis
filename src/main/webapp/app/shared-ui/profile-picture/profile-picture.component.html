@@ -1,11 +1,11 @@
-<div [ngClass]="isBoxShadow() ? 'is-box-shadow' : ''" class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize, height: imageSize }">
+<div [ngClass]="isBoxShadow() ? 'is-box-shadow' : ''" class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize(), height: imageSize() }">
     @if (imageUrl() === undefined) {
         <strong
             [id]="defaultPictureId()"
             class="profile-picture rounded-3"
-            [ngStyle]="{ 'background-color': isGray() ? undefined : profilePictureBackgroundColor, 'font-size': fontSize }"
+            [ngStyle]="{ 'background-color': isGray() ? undefined : profilePictureBackgroundColor(), 'font-size': fontSize() }"
             [ngClass]="defaultPictureClass() + (isGray() ? ' is-grayscale' : '')"
-            >{{ userProfilePictureInitials }}</strong
+            >{{ userProfilePictureInitials() }}</strong
         >
     } @else {
         <img
@@ -13,7 +13,7 @@
             [alt]="authorName()"
             class="profile-picture rounded-3"
             [src]="imageUrl()"
-            [ngStyle]="{ 'background-color': imageBackgroundColor() ?? profilePictureBackgroundColor }"
+            [ngStyle]="{ 'background-color': imageBackgroundColor() ?? profilePictureBackgroundColor() }"
             [ngClass]="imageClass() + (isGray() ? ' is-grayscale' : '')"
         />
     }

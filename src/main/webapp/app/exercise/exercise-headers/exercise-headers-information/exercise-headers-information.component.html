@@ -19,6 +19,8 @@
                                     class="text-truncate result"
                                     [exercise]="informationBoxItem.content.value"
                                     [studentParticipation]="studentParticipation()"
+                                    [quizLiveStatusOverride]="quizLiveStatus()"
+                                    [isPractice]="isPractice()"
                                     [triggerLastGraded]="!isPractice()"
                                     [showUngradedResults]="isPractice()"
                                     [showCompletion]="false"
