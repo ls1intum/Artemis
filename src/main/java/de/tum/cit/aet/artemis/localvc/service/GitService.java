@@ -815,7 +815,7 @@ public class GitService extends AbstractGitService {
             RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
             refUpdate.setNewObjectId(newCommitId);
             refUpdate.setForceUpdate(true);
-            refUpdate.update();
+            verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
             return getBareRepository(targetRepoUri, true);
         }
     }
@@ -895,11 +895,30 @@ public class GitService extends AbstractGitService {
                 RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
                 refUpdate.setNewObjectId(headCommitId);
                 refUpdate.setForceUpdate(true);
-                RefUpdate.Result result = refUpdate.update();
-                log.debug("RefUpdate result: {}", result);
+                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
             }
 
             return getBareRepository(targetRepoUri, true);
+        }
+    }
+
+    /**
+     * Verifies that a ref update during a bare-repository copy succeeded. Acceptable results are NEW (fresh repository),
+     * FORCED and FAST_FORWARD (forced update of an existing ref) and NO_CHANGE (idempotent re-copy). Any other result
+     * (e.g. REJECTED, LOCK_FAILURE, IO_FAILURE) does not throw on its own but would leave the target repository unborn
+     * (without any branch), which breaks every subsequent access to it. Failing the copy instead lets the caller clean
+     * up the broken target repository.
+     *
+     * @param result        the result of the ref update
+     * @param refName       the name of the ref that was updated, e.g. "refs/heads/main"
+     * @param targetRepoUri the URI of the repository the ref belongs to
+     * @throws IOException if the ref update failed, so that the caller cleans up the broken target repository instead of returning it
+     */
+    // package-private for testing
+    static void verifyRefUpdateResult(RefUpdate.Result result, String refName, LocalVCRepositoryUri targetRepoUri) throws IOException {
+        switch (result) {
+            case NEW, FORCED, FAST_FORWARD, NO_CHANGE -> log.debug("Updated {} in {} with result {}", refName, targetRepoUri, result);
+            default -> throw new IOException("Could not update " + refName + " in target repository " + targetRepoUri + ": ref update result was " + result);
         }
     }
 
