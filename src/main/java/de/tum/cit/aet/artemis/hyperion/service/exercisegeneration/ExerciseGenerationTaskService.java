@@ -73,14 +73,20 @@ public class ExerciseGenerationTaskService {
         User user = event.user();
         String userPrompt = event.userPrompt();
         long exerciseId = event.exercise().getId();
-        // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
-        // detached from the persistence context, so touching them (e.g. buildConfig.getBranch() during seeding) throws LazyInitializationException. Re-load it here with those
-        // associations eagerly initialized so the whole generation flow runs against a self-contained entity.
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(exerciseId).orElseGet(event::exercise);
         String login = user.getLogin();
         String topic = TOPIC_PREFIX + jobId;
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),
                 progressEvent -> websocket.send(login, topic, progressEvent));
+        // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
+        // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
+        // initialized — and fail CLOSED with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(exerciseId).orElse(null);
+        if (exercise == null) {
+            log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
+            jobService.clearJob(exerciseId, jobId);
+            return;
+        }
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
         try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, () -> jobService.isCancelled(jobId), emitter::progress)) {
             switch (outcome.loopResult().status()) {

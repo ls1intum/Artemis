@@ -165,13 +165,13 @@ export function parseTranscript(events: ExerciseGenerationEvent[]): TranscriptEn
 function classifyTranscriptLine(line: string): TranscriptEntry {
     const tool = TOOL_LINE.exec(line);
     if (tool) {
-        const turn = Number(tool[1]);
         const name = tool[2];
         const target = (tool[3] ?? '').trim() || undefined;
         const isFileTool = name === 'write_file' || name === 'edit_file' || name === 'read_file';
         return {
             kind: name === 'verify' ? 'verify' : 'tool',
-            turn: Number.isNaN(turn) ? undefined : turn,
+            // tool[1] is captured by the mandatory \d+ group, so it is always a finite integer.
+            turn: Number(tool[1]),
             tool: name,
             target,
             text: line,

@@ -45,6 +45,8 @@ public class GpuEndpointChatModel implements ChatModel {
 
     private final String model;
 
+    private final int maxTokens;
+
     /**
      * Per-request timeout. A loaded or cold gpt-oss-120b deployment regularly takes well over a minute for a single tool-calling turn (especially the first few, and large-context
      * turns); a tighter bound makes the agent loop waste its model-call retries on calls that would otherwise have completed. Generous so a slow-but-healthy endpoint is not
@@ -53,14 +55,22 @@ public class GpuEndpointChatModel implements ChatModel {
      */
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(300);
 
+    /** Default completion-token cap: enough for one agentic tool-calling turn (a tool call plus brief reasoning); overridable for deployments that need longer turns. */
+    private static final int DEFAULT_MAX_TOKENS = 2500;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
 
     public GpuEndpointChatModel(String baseUrl, String apiKey, String model) {
+        this(baseUrl, apiKey, model, DEFAULT_MAX_TOKENS);
+    }
+
+    public GpuEndpointChatModel(String baseUrl, String apiKey, String model, int maxTokens) {
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.model = model;
+        this.maxTokens = maxTokens;
     }
 
     @Override
@@ -83,13 +93,26 @@ public class GpuEndpointChatModel implements ChatModel {
         }
     }
 
-    private ObjectNode buildRequest(Prompt prompt) {
+    // Package-private for unit testing of the pure prompt -> OpenAI-request mapping (no HTTP).
+    ObjectNode buildRequest(Prompt prompt) {
         ObjectNode body = mapper.createObjectNode();
         body.put("model", model);
-        body.put("max_tokens", 2500);
+        body.put("max_tokens", maxTokens);
         ArrayNode messages = body.putArray("messages");
         for (Message message : prompt.getInstructions()) {
-            messages.add(toOpenAiMessage(message));
+            if (message.getMessageType() == MessageType.TOOL) {
+                // Spring AI groups the results of parallel tool calls into ONE ToolResponseMessage, but the OpenAI wire format requires one {role:tool, tool_call_id} message PER
+                // result, each pairing with one of the tool_calls on the preceding assistant message — otherwise the endpoint rejects the request (mismatched tool_call_id count).
+                for (ToolResponseMessage.ToolResponse response : ((ToolResponseMessage) message).getResponses()) {
+                    ObjectNode toolNode = messages.addObject();
+                    toolNode.put("role", "tool");
+                    toolNode.put("tool_call_id", response.id());
+                    toolNode.put("content", response.responseData());
+                }
+            }
+            else {
+                messages.add(toOpenAiMessage(message));
+            }
         }
         if (prompt.getOptions() instanceof ToolCallingChatOptions options && options.getToolCallbacks() != null && !options.getToolCallbacks().isEmpty()) {
             ArrayNode tools = body.putArray("tools");
@@ -128,14 +151,7 @@ public class GpuEndpointChatModel implements ChatModel {
                 }
             }
         }
-        else if (type == MessageType.TOOL) {
-            // Spring AI groups tool responses; the OpenAI wire format needs one message per tool result.
-            ToolResponseMessage toolMessage = (ToolResponseMessage) message;
-            ToolResponseMessage.ToolResponse first = toolMessage.getResponses().getFirst();
-            node.put("role", "tool");
-            node.put("tool_call_id", first.id());
-            node.put("content", first.responseData());
-        }
+        // TOOL messages are expanded into one node per response by buildRequest (parallel tool calls), so they never reach this single-node mapping.
         return node;
     }
 
@@ -154,7 +170,8 @@ public class GpuEndpointChatModel implements ChatModel {
         return tool;
     }
 
-    private ChatResponse parseResponse(JsonNode root) {
+    // Package-private for unit testing of the pure response -> ChatResponse mapping (no HTTP).
+    ChatResponse parseResponse(JsonNode root) {
         JsonNode message = root.path("choices").path(0).path("message");
         String content = sanitizeHarmonyTokens(message.path("content").isNull() ? "" : message.path("content").asText(""));
         List<AssistantMessage.ToolCall> toolCalls = new ArrayList<>();

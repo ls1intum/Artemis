@@ -133,7 +133,7 @@ public class SandboxBuildCommandService {
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
         // Materialize a sibling solution/ checkout EXACTLY when real CI would (the language defines a solution checkout path — Haskell/OCaml — AND the exercise checks the solution
         // out), so the harness reference (e.g. the Haskell cabal's `library solution`) is satisfied. The graded target stays assignment/src; other languages get no solution/.
-        boolean materializeSolution = !recipe.solutionDir().isEmpty() && recipe.checkoutSolution();
+        boolean materializeSolution = recipe.materializesSolution();
         String solutionCopySection = materializeSolution
                 ? "mkdir -p \"$BUILD_DIR/" + recipe.solutionDir() + "\"\n                cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/" + recipe.solutionDir()
                         + "\"/ 2>/dev/null || true"
@@ -276,6 +276,13 @@ public class SandboxBuildCommandService {
      */
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, String solutionDir, boolean checkoutSolution,
             List<String> scaReportFiles) {
+
+        /**
+         * Whether a sibling {@code solution/} checkout is materialized — exactly when the language defines a solution checkout path (Haskell/OCaml) AND the exercise checks it out.
+         */
+        boolean materializesSolution() {
+            return !solutionDir.isEmpty() && checkoutSolution;
+        }
     }
 
     /**
@@ -300,7 +307,7 @@ public class SandboxBuildCommandService {
      */
     public BuildContextSummary describeBuildContext(ProgrammingExercise exercise) {
         BuildRecipe recipe = resolveBuildRecipe(exercise);
-        boolean materializeSolution = !recipe.solutionDir().isEmpty() && recipe.checkoutSolution();
+        boolean materializeSolution = recipe.materializesSolution();
         return new BuildContextSummary(recipe.phases(), recipe.reportGlobs(), recipe.testDir(), materializeSolution, recipe.scaReportFiles());
     }
 

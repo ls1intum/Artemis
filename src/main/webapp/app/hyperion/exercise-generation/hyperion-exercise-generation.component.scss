@@ -35,15 +35,11 @@
 
 .hyperion-card-header {
     width: 100%;
+    color: var(--primary);
 }
 
-// A small dismiss control so the instructor can clear a finished run from view.
 .hyperion-card-dismiss {
     margin-left: auto;
-}
-
-.hyperion-card-header {
-    color: var(--primary);
 }
 
 // Keep the read-only phase stepper compact so it fits the card header row alongside the elapsed/attempt text.
@@ -115,14 +111,12 @@
         gap: 0.4rem;
         padding: 0.1rem 0;
 
-        // A subtle leading rule colour-codes the line category at a glance without shouting.
         .transcript-icon {
             flex: 0 0 auto;
             font-size: 0.75rem;
             color: var(--text-color-secondary);
         }
 
-        // A small, monospace turn number badge so the reader can follow the agent turn by turn.
         .transcript-turn {
             flex: 0 0 auto;
             min-width: 1.4rem;
@@ -135,7 +129,6 @@
             padding: 0 0.25rem;
         }
 
-        // The action chip (Create / Edit / Run / Verify …): compact, uppercase, neutral by default.
         .transcript-tool {
             flex: 0 0 auto;
             text-transform: uppercase;
@@ -175,7 +168,6 @@
             text-overflow: ellipsis;
         }
 
-        // Free-text lines (milestones, notices) wrap normally.
         .transcript-text {
             flex: 1 1 auto;
             min-width: 0;

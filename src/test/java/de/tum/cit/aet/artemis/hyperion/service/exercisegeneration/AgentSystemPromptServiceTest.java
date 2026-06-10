@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 class AgentSystemPromptServiceTest {
 
-    // No LocalCI services -> describeBuildContext resolves the generic build fallback, which is all this prompt test needs (it asserts the spec-mode and per-language profile text,
-    // not the build-context section).
+    // No LocalCI services -> describeBuildContext resolves the generic build fallback, which is enough to assert the build-context section renders its phases/reports/SCA
+    // structure.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
 
     /** Marker phrase only present in the spec-mode default instruction. */
@@ -42,6 +42,23 @@ class AgentSystemPromptServiceTest {
 
     private static String profile(ProgrammingLanguage language) {
         return LanguageGenerationProfile.guidanceFor(exerciseWith(language, ""));
+    }
+
+    @Test
+    void build_injectsBuildContext_withPhasesReportsAndScaState() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+
+        String prompt = systemPromptService.build(exercise);
+
+        assertThat(prompt).contains("THIS EXERCISE'S BUILD CONTEXT");
+        assertThat(prompt).contains("Build phases (run in order");
+        assertThat(prompt).contains("Test reports the grader reads");
+        // A default report glob is joined into the section (proves the glob list is actually rendered, not just the header).
+        assertThat(prompt).contains("surefire-reports/*.xml");
+        // SCA is off by default, so its clause is absent; enabling it makes the clause appear.
+        assertThat(prompt).doesNotContain("Static code analysis is ON");
+        exercise.setStaticCodeAnalysisEnabled(true);
+        assertThat(systemPromptService.build(exercise)).contains("Static code analysis is ON");
     }
 
     @Test

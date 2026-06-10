@@ -52,10 +52,8 @@ import { Router } from '@angular/router';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { combineAdaptFeedback, getFirstCommentByCreatedDateThenId, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
+import { combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -167,7 +165,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /** How many of the review comments the instructor has selected for AI ("Apply with AI") are adaptable findings — gates the "Adapt with N selected comments" menu action. */
     protected readonly selectedAdaptableCommentCount = computed(
-        () => this.exerciseReviewCommentService.selectedFeedbackThreads().filter((thread) => this.extractConsistencyIssueContent(thread) !== undefined).length,
+        () => this.exerciseReviewCommentService.selectedFeedbackThreads().filter((thread) => firstConsistencyIssueContent(thread) !== undefined).length,
     );
 
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
@@ -312,7 +310,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const existingConsistencyThreadIds = new Set(
             this.exerciseReviewCommentService
                 .threads()
-                .filter((thread) => this.extractConsistencyIssueContent(thread) !== undefined)
+                .filter((thread) => firstConsistencyIssueContent(thread) !== undefined)
                 .map((thread) => thread.id)
                 .filter((id): id is number => id !== undefined),
         );
@@ -622,7 +620,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private mapConsistencyThreadToNavigationIssue(thread: CommentThread): ConsistencyIssueNavigationIssue | undefined {
-        const content = this.extractConsistencyIssueContent(thread);
+        const content = firstConsistencyIssueContent(thread);
         if (!content) {
             return undefined;
         }
@@ -636,20 +634,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             severity: content.severity,
             category: content.category,
         };
-    }
-
-    private extractConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
-        const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
-        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
-            return undefined;
-        }
-
-        const content = firstComment.content as CommentContent | undefined;
-        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
-            return undefined;
-        }
-
-        return content;
     }
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {

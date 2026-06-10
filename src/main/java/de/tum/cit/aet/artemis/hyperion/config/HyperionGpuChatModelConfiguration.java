@@ -28,15 +28,17 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.GpuEndpointCha
 public class HyperionGpuChatModelConfiguration {
 
     /**
-     * @param baseUrl the endpoint base URL (chat completions are POSTed to {@code <baseUrl>/api/chat/completions}); defaults to the TUM GPU deployment
-     * @param apiKey  the bearer token for the endpoint (its presence activates this configuration)
-     * @param model   the model identifier the endpoint expects; defaults to {@code openai/gpt-oss-120b}
+     * @param baseUrl   the endpoint base URL (chat completions are POSTed to {@code <baseUrl>/api/chat/completions}); defaults to the TUM GPU deployment
+     * @param apiKey    the bearer token for the endpoint (its presence activates this configuration)
+     * @param model     the model identifier the endpoint expects; defaults to {@code openai/gpt-oss-120b}
+     * @param maxTokens the completion-token cap per turn; defaults to 2500
      * @return the GPU-backed chat model used by the Hyperion agent loop
      */
     @Bean
     @Primary
     public ChatModel hyperionGpuChatModel(@Value("${artemis.hyperion.gpu.base-url:https://gpu.ase.cit.tum.de}") String baseUrl,
-            @Value("${artemis.hyperion.gpu.api-key}") String apiKey, @Value("${artemis.hyperion.gpu.model:openai/gpt-oss-120b}") String model) {
-        return new GpuEndpointChatModel(baseUrl, apiKey, model);
+            @Value("${artemis.hyperion.gpu.api-key}") String apiKey, @Value("${artemis.hyperion.gpu.model:openai/gpt-oss-120b}") String model,
+            @Value("${artemis.hyperion.gpu.max-tokens:2500}") int maxTokens) {
+        return new GpuEndpointChatModel(baseUrl, apiKey, model, maxTokens);
     }
 }

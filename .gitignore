@@ -270,3 +270,6 @@ deferredEagerBeanInstantiationViolations.dot
 
 # AI agent working notes
 .ai/
+
+# Stray LocalCI server-integration-test artifacts written to the repo root with path-mangled names
+_root_*.test.exp

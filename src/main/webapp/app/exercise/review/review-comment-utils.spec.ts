@@ -184,12 +184,15 @@ describe('adapt feedback assembly', () => {
         expect(threadLocationLabel(consistencyThread({ lineNumber: undefined }), translate)).toBeUndefined();
     });
 
-    it('adaptFindingText renders category, severity, location and text', () => {
+    it('adaptFindingText assembles "category (severity) — location\\ntext" exactly', () => {
         const text = adaptFindingText({ category: 'C', severity: 'HIGH', text: 'the issue' } as any, 'Solution: A.java:3', translate);
-        expect(text).toContain('artemisApp.hyperion.consistencyCheck.category.C');
-        expect(text).toContain('artemisApp.review.consistencySeverity.HIGH');
-        expect(text).toContain('Solution: A.java:3');
-        expect(text).toContain('the issue');
+        // Pin the exact format (field order, the em-dash separator, the header\ntext join) so a reorder or separator change fails.
+        expect(text).toBe('artemisApp.hyperion.consistencyCheck.category.C (artemisApp.review.consistencySeverity.HIGH) — Solution: A.java:3\nthe issue');
+    });
+
+    it('adaptFindingText omits the location segment when there is none', () => {
+        const text = adaptFindingText({ category: 'C', severity: 'LOW', text: 'no location' } as any, undefined, translate);
+        expect(text).toBe('artemisApp.hyperion.consistencyCheck.category.C (artemisApp.review.consistencySeverity.LOW)\nno location');
     });
 
     it('combineAdaptFeedback appends instructions only when provided', () => {

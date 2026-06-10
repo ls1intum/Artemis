@@ -196,7 +196,7 @@ public class AgentSystemPromptService {
                 section.append("\n    ").append(index++).append(". ").append(capCommand(phase));
             }
         }
-        String reports = context.reportGlobs().stream().distinct().limit(8).collect(Collectors.joining(", "));
+        String reports = context.reportGlobs().stream().distinct().collect(Collectors.joining(", "));
         if (!reports.isBlank()) {
             section.append("\n- Test reports the grader reads (keep the reporter writing here, unchanged): ").append(reports);
         }

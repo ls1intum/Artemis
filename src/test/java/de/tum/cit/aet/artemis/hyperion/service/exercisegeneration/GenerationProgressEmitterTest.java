@@ -10,10 +10,8 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: with {@code FLUSH_EVERY == 1} it streams every progress line to the live client
- * immediately
- * (per-turn feedback, no buffering lag), still flushes any pending progress BEFORE a milestone/terminal event (the ordering invariant), and records every line to the transcript
- * individually.
+ * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: it streams every progress line to the live client immediately (per-turn feedback, no
+ * buffering lag), sends progress before a following milestone (the ordering invariant), and records every event to the transcript with the correct terminal flag.
  */
 class GenerationProgressEmitterTest {
 
@@ -36,14 +34,14 @@ class GenerationProgressEmitterTest {
         emitter.progress("line 0");
         emitter.progress("line 1");
 
-        // FLUSH_EVERY == 1: each line is pushed to the live client immediately, verbatim (no coalescing), so the user sees per-turn progress without lag.
+        // Each line is pushed to the live client immediately and verbatim (no coalescing), so the user sees per-turn progress without lag.
         assertThat(sent).hasSize(2);
         assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
         assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
     }
 
     @Test
-    void milestone_sendsPendingProgressBeforeTheMilestone_inOrder() {
+    void progressThenMilestone_areSentInOrder() {
         GenerationProgressEmitter emitter = newEmitter();
 
         emitter.progress("progress a");

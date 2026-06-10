@@ -77,6 +77,7 @@ type ComponentInternalsOverrides = {
     onFileSyncLoad: (fileName: string) => void;
     createFileBinding: (syncState: any, model: any, editorInstance: any) => void;
     teardownFileBinding: () => void;
+    autoStartGeneration: Signal<boolean>;
 };
 type ComponentInternals = Omit<CodeEditorInstructorAndEditorContainerComponent, keyof ComponentInternalsOverrides> & ComponentInternalsOverrides;
 const internals = (c: CodeEditorInstructorAndEditorContainerComponent): ComponentInternals => c as unknown as ComponentInternals;
@@ -388,14 +389,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
     describe('auto-start generation from navigation state', () => {
         it('does not request auto-start by default', () => {
-            expect((comp as any).autoStartGeneration()).toBe(false);
+            expect(internals(comp).autoStartGeneration()).toBe(false);
         });
 
         it('requests auto-start when the create flow routes here with the flag, so the run streams live in the editor', () => {
             const router = TestBed.inject(Router) as unknown as MockRouter;
             (router.currentNavigation as any).mockReturnValue({ extras: { state: { autoStartExerciseGeneration: true } } });
             const freshFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-            expect((freshFixture.componentInstance as any).autoStartGeneration()).toBe(true);
+            expect(internals(freshFixture.componentInstance).autoStartGeneration()).toBe(true);
         });
     });
 
