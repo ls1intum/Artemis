@@ -2,6 +2,15 @@
 Main page styles
 ========================================================================== */
 
+/* Give the sign-in page some breathing room above the title and below the last
+   element (before the footer). The container carries the module background, so
+   padding (not margin) keeps the background flush to the edges while insetting
+   the content. */
+.module-bg.container-fluid {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
 .login-col {
     min-height: 150px;
     width: 455px;
@@ -88,6 +97,11 @@ Main page styles
 }
 
 @media (max-width: 576px) {
+    .module-bg.container-fluid {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
     h1 {
         font-size: 1.6rem;
     }
