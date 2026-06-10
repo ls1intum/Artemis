@@ -1,6 +1,5 @@
 import {
     AfterViewInit,
-    ChangeDetectorRef,
     Component,
     ElementRef,
     OnChanges,
@@ -13,6 +12,7 @@ import {
     inject,
     input,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -134,7 +134,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
@@ -156,12 +155,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     readonly addNewFile = output<{ fileName: string; path?: string; file: File }>();
     readonly removeFile = output<string>();
 
-    questionEditorText = '';
+    readonly questionEditorText = signal('');
     backupQuestion: DragAndDropQuestion;
-    filePreviewPaths: Map<string, string> = new Map<string, string>();
+    readonly filePreviewPaths = signal<Map<string, string>>(new Map<string, string>());
     dropAllowed = false;
     showPreview = false;
-    backgroundReady = false;
+    readonly backgroundReady = signal(false);
     readonly CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
     isQuestionCollapsed = false;
@@ -200,7 +199,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-        this.questionEditorText = generateExerciseHintExplanation(question);
+        this.questionEditorText.set(generateExerciseHintExplanation(question));
 
         // check if question was generated with an ApollonDiagram
         if (question.importedFiles) {
@@ -238,28 +237,23 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
 
         this.filePool().forEach((value, fileName) => {
-            if (value.path && !this.filePreviewPaths.has(fileName)) {
-                this.filePreviewPaths.set(fileName, value.path);
+            if (value.path && !this.filePreviewPaths().has(fileName)) {
+                this.filePreviewPaths.update((map) => new Map(map).set(fileName, value.path!));
             }
         });
     }
 
     ngAfterViewInit(): void {
         const question = this.question();
-        if (question.backgroundFilePath && !this.filePreviewPaths.has(question.backgroundFilePath)) {
-            this.filePreviewPaths.set(question.backgroundFilePath, question.backgroundFilePath);
-            // Trigger image render with the question background file path in order to adjust the click layer.
-            setTimeout(() => {
-                this.changeDetector.markForCheck();
-                this.changeDetector.detectChanges();
-            }, 0);
+        if (question.backgroundFilePath && !this.filePreviewPaths().has(question.backgroundFilePath)) {
+            this.filePreviewPaths.update((map) => new Map(map).set(question.backgroundFilePath!, question.backgroundFilePath!));
         }
 
         if (question.dragItems) {
             for (const dragItem in question.dragItems) {
                 const path = question.dragItems[dragItem].pictureFilePath;
-                if (path && !this.filePreviewPaths.has(path)) {
-                    this.filePreviewPaths.set(path, path);
+                if (path && !this.filePreviewPaths().has(path)) {
+                    this.filePreviewPaths.update((map) => new Map(map).set(path, path));
                 }
             }
         }
@@ -268,7 +262,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             if (loadingStatus === ImageLoadingStatus.SUCCESS) {
                 setTimeout(() => this.adjustClickLayerWidth(), 300);
             } else if (loadingStatus === ImageLoadingStatus.LOADING || loadingStatus === ImageLoadingStatus.ERROR) {
-                this.backgroundReady = false;
+                this.backgroundReady.set(false);
             }
         });
 
@@ -290,8 +284,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Adjust the click layer to correspond to the area of the background image.
         this.clickLayer().nativeElement.style.width = `${this.backgroundImage().element.nativeElement.offsetWidth}px`;
         this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
-        this.backgroundReady = true;
-        this.changeDetector.detectChanges();
+        this.backgroundReady.set(true);
     }
 
     /**
@@ -315,9 +308,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     makeFileMapPreview() {
         if (this.filePool()) {
             this.filePool().forEach((value, key) => {
-                this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
+                this.filePreviewPaths.update((map) => new Map(map).set(key, URL.createObjectURL(value.file)));
             });
-            this.changeDetector.detectChanges();
         }
     }
 
@@ -334,16 +326,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     setBackgroundFileFromFile(file: File) {
         const question = this.question();
-        this.backgroundReady = false;
+        this.backgroundReady.set(false);
         if (question.backgroundFilePath) {
             this.removeFile.emit(question.backgroundFilePath);
         }
 
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool());
         question.backgroundFilePath = fileName;
-        this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
+        this.filePreviewPaths.update((map) => new Map(map).set(fileName, URL.createObjectURL(file)));
         this.addNewFile.emit({ fileName, file });
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -594,7 +585,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const question = this.question();
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
         this.addNewFile.emit({ fileName, file: dragItemFile });
-        this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
+        this.filePreviewPaths.update((map) => new Map(map).set(fileName, URL.createObjectURL(dragItemFile)));
 
         const dragItem = new DragItem();
         dragItem.pictureFilePath = fileName;
@@ -617,7 +608,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.dragItems = question.dragItems!.filter((dragItem) => dragItem !== dragItemToDelete);
         if (dragItemToDelete.pictureFilePath) {
             this.removeFile.emit(dragItemToDelete.pictureFilePath);
-            this.filePreviewPaths.delete(dragItemToDelete.pictureFilePath);
+            this.filePreviewPaths().delete(dragItemToDelete.pictureFilePath);
         }
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
@@ -777,7 +768,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * Delete this question from the quiz
      */
     deleteQuestion(): void {
-        this.filePreviewPaths.forEach((_, fileName) => this.removeFile.emit(fileName));
+        this.filePreviewPaths().forEach((_, fileName) => this.removeFile.emit(fileName));
         this.questionDeleted.emit();
     }
 
@@ -787,7 +778,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     changeToTextDragItem(dragItem: DragItem): void {
         this.removeFile.emit(dragItem.pictureFilePath!);
-        this.filePreviewPaths.delete(dragItem.pictureFilePath!);
+        this.filePreviewPaths().delete(dragItem.pictureFilePath!);
         dragItem.pictureFilePath = undefined;
         dragItem.text = 'Text';
         this.questionUpdated.emit();
@@ -807,7 +798,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
 
         this.addNewFile.emit({ fileName, file: dragItemFile });
-        this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
+        this.filePreviewPaths.update((map) => new Map(map).set(fileName, URL.createObjectURL(dragItemFile)));
         dragItem.text = undefined;
         dragItem.pictureFilePath = fileName;
         this.questionUpdated.emit();
@@ -837,7 +828,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.text = this.backupQuestion.text;
         question.explanation = this.backupQuestion.explanation;
         question.hint = this.backupQuestion.hint;
-        this.questionEditorText = generateExerciseHintExplanation(question);
+        this.questionEditorText.set(generateExerciseHintExplanation(question));
     }
 
     /**
@@ -896,7 +887,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.dragItems!.splice(dragItemIndex, 0, backupDragItem);
         if (dragItem.pictureFilePath) {
             this.removeFile.emit(dragItem.pictureFilePath);
-            this.filePreviewPaths.delete(dragItem.pictureFilePath);
+            this.filePreviewPaths().delete(dragItem.pictureFilePath);
         }
     }
 
@@ -915,10 +906,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param value the new value of the markdown editor
      */
     changesInMarkdown(value: string): void {
-        this.questionEditorText = value;
+        this.questionEditorText.set(value);
         this.prepareForSave();
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**

@@ -205,7 +205,7 @@
                     >
                         <!-- Preview -->
                         <ng-container id="previewMonaco">
-                            @if (showMultipleChoiceQuestionPreview) {
+                            @if (showMultipleChoiceQuestionPreview()) {
                                 <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
                             }
                             <hr />
@@ -213,7 +213,7 @@
                         <!-- End of Preview-->
                         <!-- Visual -->
                         <ng-container id="visual">
-                            @if (showMultipleChoiceQuestionVisual) {
+                            @if (showMultipleChoiceQuestionVisual()) {
                                 <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
                             }
                         </ng-container>

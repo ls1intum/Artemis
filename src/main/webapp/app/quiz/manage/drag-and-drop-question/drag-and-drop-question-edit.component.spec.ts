@@ -146,7 +146,6 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        vi.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
         createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
             return 'some/client/dependent/path/' + file.name;
         });
@@ -165,7 +164,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should initialize', () => {
         expect(component.backupQuestion).toEqual(question1);
-        expect(component.filePreviewPaths).toEqual(new Map<string, string>());
+        expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
 
@@ -378,7 +377,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
-        expect(component.filePreviewPaths.size).toBe(0);
+        expect(component.filePreviewPaths().size).toBe(0);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
@@ -397,8 +396,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
         expect(newDragItemOfQuestion.pictureFilePath).toMatch(/\.png$/);
         const filePath = newDragItemOfQuestion.pictureFilePath!;
-        expect(component.filePreviewPaths.size).toBe(1);
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().size).toBe(1);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
@@ -509,7 +508,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changeToTextDragItem(component.question().dragItems![1]);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.filePreviewPaths.size).toBe(3);
+        expect(component.filePreviewPaths().size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).toHaveBeenCalledOnce();
         expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
@@ -563,7 +562,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
         expect(component.question().dragItems![1].pictureFilePath).toMatch(/\.png$/);
         const filePath = component.question().dragItems![1].pictureFilePath!;
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
@@ -677,7 +676,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(initialCalls + 1);
         expect(component.question().text).toBeUndefined();
-        expect(component.questionEditorText).toBe(newValue);
+        expect(component.questionEditorText()).toBe(newValue);
     });
 
     it('should detect domain actions', () => {

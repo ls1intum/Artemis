@@ -115,69 +115,69 @@ describe('QuizExercise Re-evaluate Component', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
         expect(comp.isValidQuiz()).toBe(true);
-        expect(comp.quizExercise).toEqual(quizExercise);
+        expect(comp.quizExercise()).toEqual(quizExercise);
         expect(quizServiceFindStub).toHaveBeenCalled();
     });
 
     it('should delete quiz question', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        expect(comp.quizExercise.quizQuestions).toHaveLength(2);
-        comp.deleteQuestion(comp.quizExercise.quizQuestions![0]);
-        expect(comp.quizExercise.quizQuestions).toHaveLength(1);
+        expect(comp.quizExercise().quizQuestions).toHaveLength(2);
+        comp.deleteQuestion(comp.quizExercise().quizQuestions![0]);
+        expect(comp.quizExercise().quizQuestions).toHaveLength(1);
     });
 
     it('should update and reset quiz questions', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        comp.quizExercise.title = 'New Title';
-        comp.quizExercise.quizQuestions![0].points = 5;
+        comp.quizExercise().title = 'New Title';
+        comp.quizExercise().quizQuestions![0].points = 5;
         // update question
         comp.onQuestionUpdated();
-        expect(comp.quizExercise).toEqual(quizExercise);
+        expect(comp.quizExercise()).toEqual(quizExercise);
         // reset title
         comp.resetQuizTitle();
-        expect(comp.quizExercise.title).toBe(comp.savedEntity.title);
+        expect(comp.quizExercise().title).toBe(comp.savedEntity.title);
         // reset all
         comp.resetAll();
-        expect(comp.quizExercise).toEqual(comp.savedEntity);
+        expect(comp.quizExercise()).toEqual(comp.savedEntity);
     });
 
     it('should clear invalid state after deleting and restoring the only question via resetAll', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
         // Delete all questions so the quiz becomes invalid
-        const questions = [...comp.quizExercise.quizQuestions!];
+        const questions = [...comp.quizExercise().quizQuestions!];
         questions.forEach((q) => comp.deleteQuestion(q));
-        expect(comp.quizExercise.quizQuestions).toHaveLength(0);
-        expect(comp.quizIsValid).toBe(false);
+        expect(comp.quizExercise().quizQuestions).toHaveLength(0);
+        expect(comp.quizIsValid()).toBe(false);
         // Restore questions via resetAll
         comp.resetAll();
-        expect(comp.quizExercise.quizQuestions!.length).toBeGreaterThan(0);
-        expect(comp.quizIsValid).toBe(true);
+        expect(comp.quizExercise().quizQuestions!.length).toBeGreaterThan(0);
+        expect(comp.quizIsValid()).toBe(true);
     });
 
     it('should have pending changes', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        comp.quizExercise.quizQuestions![0].points = 5;
+        comp.quizExercise().quizQuestions![0].points = 5;
         expect(comp.pendingChanges()).toBe(true);
     });
 
     it('should move down the quiz question', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        expect(comp.quizExercise.quizQuestions![0].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
-        comp.moveDown(comp.quizExercise.quizQuestions![0]);
-        expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
+        expect(comp.quizExercise().quizQuestions![0].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
+        comp.moveDown(comp.quizExercise().quizQuestions![0]);
+        expect(comp.quizExercise().quizQuestions![1].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
     });
 
     it('should move up the quiz question', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-        comp.moveUp(comp.quizExercise.quizQuestions![1]);
-        expect(comp.quizExercise.quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
+        expect(comp.quizExercise().quizQuestions![1].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
+        comp.moveUp(comp.quizExercise().quizQuestions![1]);
+        expect(comp.quizExercise().quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
     });
 
     it('Updates quiz on changes', () => {
@@ -205,7 +205,7 @@ describe('QuizExercise Re-evaluate Component', () => {
             let mcQuestion: MultipleChoiceQuestion;
             let answerOption1: AnswerOption;
             beforeEach(() => {
-                mcQuestion = comp.quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+                mcQuestion = comp.quizExercise().quizQuestions![0] as MultipleChoiceQuestion;
                 answerOption1 = mcQuestion.answerOptions![0];
             });
 
@@ -215,7 +215,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
 
             it('should be invalid if quiz explanation is too long', () => {
@@ -224,7 +224,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
 
             it('should be invalid if answer option hint is too long', () => {
@@ -232,7 +232,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
 
             it('should be invalid if answer option explanation is too long', () => {
@@ -240,14 +240,14 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
         });
 
         describe('Quiz dnd question validation', () => {
             let dndQuestion: DragAndDropQuestion;
             beforeEach(() => {
-                dndQuestion = comp.quizExercise.quizQuestions![1] as DragAndDropQuestion;
+                dndQuestion = comp.quizExercise().quizQuestions![1] as DragAndDropQuestion;
             });
 
             it('should be invalid if question hint is invalid', () => {
@@ -256,7 +256,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
 
             it('should be invalid if question explanation is invalid', () => {
@@ -265,7 +265,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid()).toBe(false);
             });
         });
     });
@@ -273,9 +273,9 @@ describe('QuizExercise Re-evaluate Component', () => {
     it('should change score calculation type', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
-        expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        expect(comp.quizExercise().includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_COMPLETELY);
         comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        expect(comp.quizExercise().includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_AS_BONUS);
     });
 
     it('should be valid when mc option is marked as invalid', () => {
@@ -293,7 +293,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         question.answerOptions = [answerOption1, answerOption2, answerOption3];
         question.points = 100;
         quizExercise.quizQuestions = [question];
-        comp.quizExercise = quizExercise;
+        comp.quizExercise.set(quizExercise);
         // @ts-ignore
         comp.invalidFlaggedQuestions = [question];
         expect(comp.isValidQuiz()).toBe(true);

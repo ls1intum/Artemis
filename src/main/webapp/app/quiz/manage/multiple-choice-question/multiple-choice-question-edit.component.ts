@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    Injector,
+    OnInit,
+    ViewEncapsulation,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -53,7 +67,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private changeDetector = inject(ChangeDetectorRef);
+    private injector = inject(Injector);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -93,8 +107,8 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         }
         return markdownEditor.inPreviewMode();
     });
-    showMultipleChoiceQuestionPreview = true;
-    showMultipleChoiceQuestionVisual = true;
+    readonly showMultipleChoiceQuestionPreview = signal(true);
+    readonly showMultipleChoiceQuestionVisual = signal(true);
 
     correctAction = new CorrectMultipleChoiceAnswerAction();
     wrongAction = new WrongMultipleChoiceAnswerAction();
@@ -158,7 +172,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     changesInMarkdown(): void {
         this.prepareForSave();
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -168,7 +181,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     changesInVisualMode(): void {
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -259,17 +271,14 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      *        and the check for the question validity is triggered
      */
     private resetMultipleChoicePreview() {
-        this.showMultipleChoiceQuestionPreview = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionPreview = true;
-        this.changeDetector.detectChanges();
+        // Destroy the preview now and recreate it after the next render (signal writes coalesce within one pass).
+        this.showMultipleChoiceQuestionPreview.set(false);
+        afterNextRender(() => this.showMultipleChoiceQuestionPreview.set(true), { injector: this.injector });
     }
 
     private resetMultipleChoiceVisual() {
-        this.showMultipleChoiceQuestionVisual = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionVisual = true;
-        this.changeDetector.detectChanges();
+        this.showMultipleChoiceQuestionVisual.set(false);
+        afterNextRender(() => this.showMultipleChoiceQuestionVisual.set(true), { injector: this.injector });
     }
 
     toggleCollapse(): void {
@@ -340,6 +349,5 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().singleChoice = this.backupQuestion.singleChoice;
         this.question().invalid = this.backupQuestion.invalid;
         this.question().answerOptions = cloneDeep(this.backupQuestion.answerOptions);
-        this.changeDetector.detectChanges();
     }
 }

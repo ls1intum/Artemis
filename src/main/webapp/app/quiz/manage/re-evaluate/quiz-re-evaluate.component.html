@@ -1,12 +1,12 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div>
         <h1>
             <span
                 jhiTranslate="artemisApp.quizExercise.re-evaluate.title"
-                [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"
+                [translateValues]="{ param: quizExercise().course?.title || quizExercise().exerciseGroup?.exam?.title }"
             ></span>
         </h1>
-        @if (!quizExercise.course) {
+        @if (!quizExercise().course) {
             <h5>
                 <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
@@ -25,7 +25,7 @@
                                 id="quiz-title"
                                 type="text"
                                 class="form-control"
-                                [(ngModel)]="quizExercise.title"
+                                [(ngModel)]="quizExercise().title"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
                             />
                         </div>
@@ -50,7 +50,7 @@
                                 <jhi-date-time-picker
                                     class="start-time"
                                     labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
-                                    [(ngModel)]="quizExercise.releaseDate"
+                                    [(ngModel)]="quizExercise().releaseDate"
                                     [disabled]="true"
                                 />
                             </div>
@@ -69,20 +69,20 @@
                     </div>
                     <div class="col-12 col-lg-5">
                         <div class="row form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}Label"></label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}Label"></label>
                             <div>
-                                @if (quizExercise.includedInOverallScore) {
+                                @if (quizExercise().includedInOverallScore) {
                                     <jhi-included-in-overall-score-picker
-                                        [includedInOverallScore]="quizExercise.includedInOverallScore!"
+                                        [includedInOverallScore]="quizExercise().includedInOverallScore!"
                                         (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
-                                        [allowNotIncluded]="!!quizExercise.course"
+                                        [allowNotIncluded]="!!quizExercise().course"
                                     />
                                 }
                             </div>
                         </div>
                         <div class="row">
                             <div class="form-group custom-control custom-checkbox">
-                                <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise.randomizeQuestionOrder" />
+                                <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise().randomizeQuestionOrder" />
                                 <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                             </div>
                         </div>
@@ -94,7 +94,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                 </h4>
             </div>
-            @for (question of quizExercise.quizQuestions; track question.id; let i = $index) {
+            @for (question of quizExercise().quizQuestions; track question.id; let i = $index) {
                 <div class="card mb-3" style="width: 100%">
                     @if (question.type === MULTIPLE_CHOICE) {
                         <div>
@@ -140,17 +140,17 @@
                 <div class="edit-quiz-footer-content">
                     <div></div>
                     <div class="form-group">
-                        @if (!pendingChanges() && !isSaving) {
+                        @if (!pendingChanges() && !isSaving()) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"></span>
                         }
-                        @if (pendingChanges() && isValidQuiz() && !isSaving) {
+                        @if (pendingChanges() && isValidQuiz() && !isSaving()) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-primary"></span>
                         }
-                        @if (isSaving) {
+                        @if (isSaving()) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-primary"></span>
                         }
                         <ng-template #tooltipTranslate>
-                            @for (reason of invalidReasons; track reason) {
+                            @for (reason of invalidReasons(); track reason) {
                                 <div>
                                     @if ((reason.translateValues | json) !== '{}') {
                                         <p
@@ -165,7 +165,7 @@
                             }
                         </ng-template>
                         <ng-template #warningTranslate>
-                            @for (warning of invalidWarnings; track warning) {
+                            @for (warning of invalidWarnings(); track warning) {
                                 <div>
                                     @if ((warning.translateValues | json) !== '{}') {
                                         <p jhiTranslate="{{ warning.translateKey }}" [translateValues]="{ index: warning.translateValues.index }"></p>
@@ -176,27 +176,27 @@
                                 </div>
                             }
                         </ng-template>
-                        @if (!quizIsValid) {
+                        @if (!quizIsValid()) {
                             <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
                                 <fa-icon [icon]="faExclamationCircle" />
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
-                                <span>({{ invalidReasons.length }})</span>
+                                <span>({{ invalidReasons().length }})</span>
                             </span>
                         }
-                        @if (warningQuizCache) {
+                        @if (warningQuizCache()) {
                             <span class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right auto">
                                 <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
-                                <span>({{ invalidWarnings.length }})</span>
+                                <span>({{ invalidWarnings().length }})</span>
                             </span>
                         }
                         <button
                             class="btn btn-warning"
                             (click)="resetAll()"
-                            [disabled]="!pendingChanges() || isSaving"
+                            [disabled]="!pendingChanges() || isSaving()"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                        <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !isValidQuiz() || isSaving" jhiTranslate="entity.action.save"></button>
+                        <button class="btn btn-success" (click)="save()" [disabled]="!pendingChanges() || !isValidQuiz() || isSaving()" jhiTranslate="entity.action.save"></button>
                     </div>
                 </div>
             </div>

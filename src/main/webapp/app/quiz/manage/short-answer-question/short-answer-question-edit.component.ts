@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -69,7 +69,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
-    private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -105,7 +104,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     // Existing quiz validation rejects titles whose length reaches the shared threshold.
     readonly MAX_QUESTION_TITLE_LENGTH = MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1;
 
-    questionEditorText = '';
+    readonly questionEditorText = signal('');
     showVisualMode: boolean;
 
     /** Status boolean for collapse status **/
@@ -118,7 +117,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     optionsWithID: string[] = [];
 
     /** For visual mode **/
-    textParts: (string | undefined)[][];
+    readonly textParts = signal<(string | undefined)[][]>([]);
 
     backupQuestion: ShortAnswerQuestion;
 
@@ -146,8 +145,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
 
             this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
-            this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
-            this.changeDetector.detectChanges();
+            this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
 
             if (!this.firstChange) {
                 this.questionUpdated.emit();
@@ -229,9 +227,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
         this.questionEditor().applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
         // Generate markdown from question and show result in editor
-        this.questionEditorText = this.generateMarkdown();
-        this.changeDetector.detectChanges();
-        this.parseMarkdown(this.questionEditorText);
+        this.questionEditorText.set(this.generateMarkdown());
+        this.parseMarkdown(this.questionEditorText());
         this.questionUpdated.emit();
     }
 
@@ -437,7 +434,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         const startOfRange = markdownForHtml(htmlContent).length - selection.toString().length;
         const endOfRange = startOfRange + selection.toString().length;
 
-        const markedTextHTML = this.textParts[row][column];
+        const markedTextHTML = this.textParts()[row][column];
         const markedText = markdownForHtml(markedTextHTML!).substring(startOfRange, endOfRange);
 
         const currentSpotNumber = this.numberOfSpot;
@@ -450,14 +447,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             .getText()
             .split(/\[-option /g)[0]
             .trim();
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
-        const textOfSelectedRow = this.textParts[row][column];
-        this.textParts[row][column] = textOfSelectedRow?.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow?.substring(endOfRange);
+        this.textParts.set(this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText));
+        const textOfSelectedRow = this.textParts()[row][column];
+        this.textParts()[row][column] = textOfSelectedRow?.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow?.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
-        this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
+        this.shortAnswerQuestion.text = this.textParts()
+            .map((textPart) => textPart.join(' '))
+            .join('\n');
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
         this.parseMarkdown(monaco.getText());
@@ -495,7 +494,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     deleteSolution(solutionToDelete: ShortAnswerSolution): void {
         this.shortAnswerQuestion.solutions = this.shortAnswerQuestion.solutions?.filter((solution) => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -535,7 +534,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             // Notify parent of changes
             this.questionUpdated.emit();
         }
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -607,7 +606,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             this.shortAnswerQuestion.correctMappings = [];
         }
         this.shortAnswerQuestion.correctMappings = this.shortAnswerQuestion.correctMappings.filter((mapping) => mapping !== mappingToDelete);
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -625,7 +624,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     togglePreview(): void {
         this.showVisualMode = !this.showVisualMode;
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        this.textParts.set(this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts));
 
         this.setQuestionEditorValue(this.generateMarkdown());
     }
@@ -668,11 +667,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
 
-        this.textParts = [];
-        this.changeDetector.detectChanges();
-
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
-        this.changeDetector.detectChanges();
+        this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
     }
 
     /**
@@ -688,7 +683,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
         this.resetQuestionText();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -704,7 +698,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         // Remove current spot at given index and insert the backup at the same position
         this.shortAnswerQuestion.spots!.splice(spotIndex, 1);
         this.shortAnswerQuestion.spots!.splice(spotIndex, 0, backupSpot);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -716,11 +709,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.spots = this.shortAnswerQuestion.spots?.filter((spot) => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
 
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+        this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
 
-        this.textParts = this.textParts.map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']')));
+        this.textParts.set(this.textParts().map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']'))));
 
-        this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
+        this.shortAnswerQuestion.text = this.textParts()
+            .map((textPart) => textPart.join(' '))
+            .join('\n');
     }
 
     /**
@@ -742,15 +737,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     setQuestionText(textPartId: string): void {
         const rowColumn: string[] = textPartId.split('-').slice(1);
-        this.textParts[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
-        this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
+        this.textParts()[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
+        this.shortAnswerQuestion.text = this.textParts()
+            .map((textPart) => textPart.join(' '))
+            .join('\n');
 
-        // Force re-render by clearing textParts temporarily
-        this.textParts = [];
-        this.changeDetector.detectChanges();
-
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
-        this.changeDetector.detectChanges();
+        this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text));
     }
 
     /**
@@ -770,7 +762,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     onTextChange(newText: string) {
-        this.parseMarkdown(this.questionEditorText);
+        this.parseMarkdown(this.questionEditorText());
         this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
         this.insertShortAnswerSpotAction.spotNumber = this.numberOfSpot;
         this.questionUpdated.emit();
