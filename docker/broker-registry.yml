@@ -32,7 +32,7 @@ services:
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: docker.io/apache/activemq-artemis:${ACTIVEMQ_VERSION}${ACTIVEMQ_IMAGE_VARIANT}
+        image: docker.io/apache/artemis:${ACTIVEMQ_VERSION}${ACTIVEMQ_IMAGE_VARIANT}
         pull_policy: missing
         environment:
             ARTEMIS_USER: ${BROKER_USER:-guest}

@@ -3,7 +3,7 @@ import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import {
     AggregatedExamResult,
@@ -15,25 +15,25 @@ import {
     TableState,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
-import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
-import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
+import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {
@@ -56,17 +56,17 @@ import {
     PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
-} from 'app/shared/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/average-scores-graph/exam-scores-average-scores-graph.component';
 
-import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
@@ -81,7 +81,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,

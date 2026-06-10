@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -17,13 +17,13 @@ import { ProgrammingExerciseWebsocketService } from 'app/programming/manage/serv
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
 import { Observable, Subscription, of, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseConfigureGradingStatusComponent } from '../configure-status/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from '../configure-actions/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from '../configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
@@ -34,11 +34,11 @@ import { ProgrammingExerciseGradingTableActionsComponent } from '../table-action
 import { NgxDatatableModule, SortPropDir } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Describes the editableField

@@ -4,12 +4,12 @@ import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseSer
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -19,7 +19,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
     styles: ['.table {table-layout: fixed}'],
-    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
+    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);

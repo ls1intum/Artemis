@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
+import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.ParserPolicy;
+import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.ClippyCategorizer;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserPolicy;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
 
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map

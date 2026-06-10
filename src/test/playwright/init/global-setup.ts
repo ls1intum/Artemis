@@ -165,8 +165,8 @@ async function prewarmBackend(adminJwt: string): Promise<void> {
         const exerciseMgmt = SEED_COURSES.exerciseManagement.id;
         const lectureMgmt = SEED_COURSES.lectureManagement.id;
         const endpoints = [
-            'api/core/courses/course-management-overview',
-            `api/core/courses/${atlas}/with-exercises-lectures-competencies`,
+            'api/course/courses/course-management-overview',
+            `api/course/courses/${atlas}/with-exercises-lectures-competencies`,
             `api/atlas/courses/${atlas}/course-competencies`,
             `api/atlas/courses/${atlas}/learning-paths`,
             `api/exam/courses/${examMgmt}/exams`,

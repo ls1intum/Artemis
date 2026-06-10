@@ -28,13 +28,13 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
@@ -90,6 +90,23 @@ public class ArtemisPasskeyWebAuthnConfigurer {
     @Value("${client.port:${server.port}}")
     private String port;
 
+    /**
+     * Optional override for the WebAuthn Relying Party ID.
+     * When set, this value is used instead of deriving the RP ID from {@code server.url}.
+     * Needed when the browser-facing hostname differs from the server hostname,
+     * e.g. in E2E tests where nginx terminates TLS on a different hostname.
+     */
+    @Value("${artemis.user-management.passkey.relying-party-id:}")
+    private String relyingPartyIdOverride;
+
+    /**
+     * Additional allowed origins for WebAuthn passkey authentication.
+     * Useful when the browser-facing URL differs from {@code server.url},
+     * e.g. in E2E tests where an nginx reverse proxy terminates TLS on a different hostname.
+     */
+    @Value("${artemis.user-management.passkey.additional-allowed-origins:}")
+    private List<String> additionalAllowedOrigins;
+
     private final Set<String> allowedOrigins = new HashSet<>();
 
     private String relyingPartyId;
@@ -135,14 +152,19 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
         try {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-            URL clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
 
-            relyingPartyId = clientUrlToRegisterPasskey.getHost();
+            relyingPartyId = (relyingPartyIdOverride != null && !relyingPartyIdOverride.isBlank()) ? relyingPartyIdOverride.strip() : clientUrlToRegisterPasskey.getHost();
 
             allowedOrigins.add(clientUrlToRegisterPasskey.toString());
-            allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
+
+            // Only append the client port if the server URL does not already contain one
+            if (clientUrlToRegisterPasskey.getPort() == -1) {
+                URL clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
+                allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
+            }
 
             addAndroidApkKeyHashesToAllowedOrigins();
+            addAdditionalAllowedOrigins();
 
             log.debug("WebAuthn passkey authentication enabled with RP ID: {}", relyingPartyId);
             log.debug("Allowed origins: {}", allowedOrigins);
@@ -165,6 +187,19 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         List<String> keyHashes = fingerprints.stream().map(AndroidApkKeyHashUtil::getHashFromFingerprint).toList();
 
         allowedOrigins.addAll(keyHashes);
+    }
+
+    /**
+     * Adds explicitly configured additional allowed origins.
+     */
+    private void addAdditionalAllowedOrigins() {
+        if (additionalAllowedOrigins != null) {
+            for (String origin : additionalAllowedOrigins) {
+                if (!origin.isBlank()) {
+                    allowedOrigins.add(origin.strip());
+                }
+            }
+        }
     }
 
     /**

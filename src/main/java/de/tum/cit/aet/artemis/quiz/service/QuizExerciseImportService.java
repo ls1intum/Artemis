@@ -259,7 +259,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyDragAndDropMappings(DragAndDropQuestion source, DragAndDropQuestion target) {
-        List<DragAndDropMapping> newMappings = new ArrayList<>();
+        Set<DragAndDropMapping> newMappings = new HashSet<>();
         for (DragAndDropMapping originalMapping : source.getCorrectMappings()) {
             DragAndDropMapping newMapping = new DragAndDropMapping();
             newMapping.setInvalid(originalMapping.isInvalid());
@@ -301,7 +301,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         copy.setSolutions(new ArrayList<>(solutionMap.values()));
 
         // Copy correct mappings
-        List<ShortAnswerMapping> newMappings = new ArrayList<>();
+        Set<ShortAnswerMapping> newMappings = new HashSet<>();
         for (ShortAnswerMapping oldMapping : original.getCorrectMappings()) {
             ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, copy, spotMap, solutionMap);
             newMappings.add(newMapping);

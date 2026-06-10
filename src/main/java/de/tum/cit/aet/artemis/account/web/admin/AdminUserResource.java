@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -81,7 +83,8 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
 public class AdminUserResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
@@ -151,7 +154,7 @@ public class AdminUserResource {
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
-            return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
+            return ResponseEntity.created(new URI("/api/account/admin/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(new UserDTO(newUser));
         }
     }
@@ -388,6 +391,11 @@ public class AdminUserResource {
 
     /**
      * Delete users: deletes the provided users
+     * <p>
+     * The logins are passed in the request body on purpose: this is an internal admin bulk operation over an
+     * unbounded list of identifiers (e.g. "delete all not-enrolled users"), which would otherwise overflow the
+     * request-line / query-parameter limits if sent as query parameters. This endpoint is therefore intentionally
+     * exempt from the "DELETE must not carry a body" convention.
      *
      * @param logins user logins to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -395,7 +403,7 @@ public class AdminUserResource {
     @DeleteMapping("users")
     public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
-        List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
+        List<String> deletedUsers = Collections.synchronizedList(new ArrayList<>());
 
         // Remove protected users from the list
         logins.remove(IRIS_BOT_LOGIN);

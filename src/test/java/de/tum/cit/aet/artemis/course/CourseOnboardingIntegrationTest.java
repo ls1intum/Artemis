@@ -33,7 +33,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     private Course updateCourse(Course courseToUpdate) throws Exception {
         ObjectMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(courseToUpdate).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + courseToUpdate.getId()).file(coursePart)
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseToUpdate.getId()).file(coursePart)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         return mapper.readValue(result.getResponse().getContentAsString(), Course.class);

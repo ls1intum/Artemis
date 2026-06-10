@@ -1,0 +1,59 @@
+import { Component, computed, input, output } from '@angular/core';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+
+@Component({
+    selector: 'jhi-form-footer',
+    templateUrl: 'form-footer.component.html',
+    styleUrls: ['form-footer.component.scss'],
+    imports: [
+        NgbTooltip,
+        SwitchEditModeButtonComponent,
+        HelpIconComponent,
+        ExerciseUpdateNotificationComponent,
+        TranslateDirective,
+        FaIconComponent,
+        ButtonModule,
+        ArtemisTranslatePipe,
+    ],
+})
+export class FormFooterComponent {
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faExclamationCircle = faExclamationCircle;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
+
+    isSaving = input(false);
+    isDisabled = input(false);
+    invalidReasons = input<ValidationReason[]>([]);
+    showGenerateWithAi = input(false);
+    isGeneratingWithAi = input(false);
+    notificationText = input<string | undefined>();
+    switchEditMode = input<(() => void) | undefined>();
+    isImport = input<boolean>();
+    isCreation = input<boolean>();
+    isSimpleMode = input<boolean>();
+    areAuxiliaryRepositoriesValid = input<boolean>(true);
+
+    notificationTextChange = output<string>();
+    save = output<void>();
+    generateWithAi = output<void>();
+    onCancel = output<void>();
+
+    saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
+
+    onSwitchEditMode() {
+        this.switchEditMode()?.();
+    }
+}

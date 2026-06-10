@@ -1,7 +1,7 @@
 import { MalformedBitwardenRegistrationCredential } from 'app/account/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import { SerializableRegistrationCredential } from 'app/account/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/account/user/settings/passkey-settings/entities/serializable-login-credential';
-import { encodeAsBase64Url } from 'app/shared/util/base64.util';
+import { encodeAsBase64Url } from 'app/foundation/util/base64.util';
 import { MalformedBitwardenLoginCredential } from 'app/account/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
 
 /**

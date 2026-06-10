@@ -5,7 +5,7 @@ import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } f
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -13,9 +13,9 @@ import { isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;

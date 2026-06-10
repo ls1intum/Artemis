@@ -260,8 +260,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<DragAndDropMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<DragAndDropMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : dndDTO.correctMappings()) {
             boolean mappingExists = existingMappings.stream()
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
@@ -273,7 +273,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
-                originalQuestion.getCorrectMappings().add(newMapping);
+                originalQuestion.addCorrectMapping(newMapping);
                 recalculationNecessary = true;
             }
         }
@@ -454,7 +454,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setSpot(spot);
         newMapping.setSolution(solution);
-        originalQuestion.getCorrectMappings().add(newMapping);
+        originalQuestion.addCorrectMapping(newMapping);
         return true;
     }
 
@@ -470,8 +470,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
-        Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
+        Set<ShortAnswerMapping> existingMappings = originalQuestion.getCorrectMappings();
         for (var mappingDTO : saDTO.correctMappings()) {
             if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {
                 recalculationNecessary = true;

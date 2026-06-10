@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { UserManagementDropdownComponent } from 'app/course/manage/user-management-dropdown/user-management-dropdown.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { AddExercisePopoverComponent } from 'app/course/manage/quick-actions/add-exercise-popover/add-exercise-popover.component';
 import { CourseMaterialImportDialogComponent } from 'app/course/manage/course-material-import/course-material-import-dialog.component';

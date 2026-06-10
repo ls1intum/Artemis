@@ -12,7 +12,7 @@ import { expect } from '@playwright/test';
  *
  * Note: the multi-node compose stack is asymmetric — only nodes with the `core` Spring profile are
  * Hazelcast cluster members (i.e. surfaced by `cluster.getMembers()`). Buildagent-only nodes
- * connect as Hazelcast clients and are visible via /api/core/admin/build-agents instead.
+ * connect as Hazelcast clients and are visible via /api/admin/build-agents instead.
  *
  * Tagged @multi-node so the single-node fast pipeline skips it; only the multi-node runner
  * (run-e2e-tests-local-multinode.sh / its CI counterpart) executes this file.
@@ -54,7 +54,7 @@ test.describe('Hazelcast cluster formation', { tag: '@multi-node' }, () => {
         await expect
             .poll(
                 async () => {
-                    const response = await page.request.get('/api/core/admin/websocket/nodes');
+                    const response = await page.request.get('/api/admin/websocket/nodes');
                     if (!response.ok()) {
                         return -1;
                     }
@@ -69,7 +69,7 @@ test.describe('Hazelcast cluster formation', { tag: '@multi-node' }, () => {
             )
             .toBe(EXPECTED_NODE_COUNT);
 
-        const response = await page.request.get('/api/core/admin/websocket/nodes');
+        const response = await page.request.get('/api/admin/websocket/nodes');
         const nodes = (await response.json()) as WebsocketNodeDTO[];
 
         // Every member must report a UUID and a host:port address so we know the endpoint actually
@@ -99,7 +99,7 @@ test.describe('Hazelcast cluster formation', { tag: '@multi-node' }, () => {
         await expect
             .poll(
                 async () => {
-                    const response = await page.request.get('/api/core/admin/build-agents');
+                    const response = await page.request.get('/api/admin/build-agents');
                     if (!response.ok()) {
                         return -1;
                     }
@@ -114,7 +114,7 @@ test.describe('Hazelcast cluster formation', { tag: '@multi-node' }, () => {
             )
             .toBeGreaterThanOrEqual(EXPECTED_MIN_BUILD_AGENTS);
 
-        const response = await page.request.get('/api/core/admin/build-agents');
+        const response = await page.request.get('/api/admin/build-agents');
         const agents = (await response.json()) as BuildAgentInformation[];
 
         for (const agent of agents) {

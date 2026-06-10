@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {

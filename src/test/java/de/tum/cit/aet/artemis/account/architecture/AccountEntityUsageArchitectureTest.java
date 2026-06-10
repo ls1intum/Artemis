@@ -14,9 +14,10 @@ class AccountEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
         return ARTEMIS_PACKAGE + ".account";
     }
 
+    // TODO: Reduce this to 0 by returning DTOs instead of entities (OrganizationResource#getAllOrganizationsByCourse)
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 0;
+        return 1;
     }
 
     @Override

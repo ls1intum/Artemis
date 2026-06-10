@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
@@ -322,7 +322,7 @@ public class ExamImportService {
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(sourceExerciseId);
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(sourceExerciseId);
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         yield Optional.empty();
                     }
@@ -332,9 +332,12 @@ public class ExamImportService {
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
                     Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setGradingCriteria(gradingCriteria);
-                    prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
-                    yield Optional
-                            .of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false, false));
+
+                    ProgrammingExercise newProgrammingExercise = (ProgrammingExercise) exerciseToCopy;
+                    copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
+                    prepareProgrammingExerciseForExamImport(newProgrammingExercise);
+
+                    yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
                 }
 
                 case FILE_UPLOAD -> {
@@ -390,6 +393,35 @@ public class ExamImportService {
         newExercise.setExampleSolutionPublicationDate(null);
 
         newExercise.forceNewProjectKey();
+    }
+
+    /**
+     * Copies programming-specific fields that are not part of {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}.
+     * The DTO intentionally only carries generic exercise fields and possible overrides such as title, short name, and points.
+     *
+     * @param originalExercise the source programming exercise with complete programming settings
+     * @param newExercise      the exam-import skeleton created from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}
+     */
+    static void copyProgrammingExerciseInformationForExamImport(final ProgrammingExercise originalExercise, final ProgrammingExercise newExercise) {
+        newExercise.setProgrammingLanguage(originalExercise.getProgrammingLanguage());
+        newExercise.setProjectType(originalExercise.getProjectType());
+        newExercise.setPackageName(originalExercise.getPackageName());
+        newExercise.setAllowOnlineEditor(originalExercise.isAllowOnlineEditor());
+        newExercise.setAllowOfflineIde(originalExercise.isAllowOfflineIde());
+        newExercise.setAllowOnlineIde(originalExercise.isAllowOnlineIde());
+        newExercise.setStaticCodeAnalysisEnabled(originalExercise.isStaticCodeAnalysisEnabled());
+        newExercise.setMaxStaticCodeAnalysisPenalty(originalExercise.getMaxStaticCodeAnalysisPenalty());
+        newExercise.setShowTestNamesToStudents(originalExercise.getShowTestNamesToStudents());
+        newExercise.setReleaseTestsWithExampleSolution(originalExercise.isReleaseTestsWithExampleSolution());
+        newExercise.setAssessmentType(originalExercise.getAssessmentType());
+        newExercise.setDifficulty(originalExercise.getDifficulty());
+        newExercise.setMode(originalExercise.getMode());
+        newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
+        newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
+        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
+        newExercise.setProblemStatement(originalExercise.getProblemStatement());
+        newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
+        newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));
     }
 
     /**

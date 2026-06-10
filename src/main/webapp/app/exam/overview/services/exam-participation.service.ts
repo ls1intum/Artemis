@@ -11,13 +11,13 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { SidebarCardElement } from 'app/shared/types/sidebar';
+import { SidebarCardElement } from 'app/foundation/types/sidebar';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -149,7 +149,7 @@ export class ExamParticipationService {
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/test-runs/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
@@ -204,6 +204,11 @@ export class ExamParticipationService {
 
     /**
      * Requests Athena AI feedback for all text and modeling exercises in the given submitted test exam.
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the submitted student exam to request feedback for
+     * @returns an observable that completes once the feedback dispatch has been triggered server-side
      */
     public requestAthenaFeedback(courseId: number, examId: number, studentExamId: number): Observable<void> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/request-feedback`;
@@ -211,7 +216,12 @@ export class ExamParticipationService {
     }
 
     /**
-     * Fetches how many Athena AI feedback requests the current user has used for this test exam and the cap.
+     * Fetches how many Athena AI feedback requests the current user has used for this test exam and the configured cap.
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the student exam whose usage should be retrieved
+     * @returns an observable emitting the number of used requests and the configured request limit
      */
     public getAthenaFeedbackUsage(courseId: number, examId: number, studentExamId: number): Observable<{ used: number; limit: number }> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/athena-feedback-usage`;

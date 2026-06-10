@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupSchedul
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
-public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     // Repositories
     @Autowired
@@ -395,7 +395,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration";
+        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configurations";
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {

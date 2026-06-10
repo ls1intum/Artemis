@@ -87,25 +87,25 @@ describe('CourseDashboardService', () => {
                         id: 10,
                         name: 'Attachment',
                         releaseDate: '2024-02-01T00:00:00Z',
-                        type: 'attachment',
+                        type: LectureUnitType.ATTACHMENT_VIDEO,
                     },
                     11: {
                         id: 11,
                         name: 'Exercise',
                         releaseDate: '2024-02-02T00:00:00Z',
-                        type: 'exercise',
+                        type: LectureUnitType.EXERCISE,
                     },
                     12: {
                         id: 12,
                         name: 'Text',
                         releaseDate: '2024-02-03T00:00:00Z',
-                        type: 'text',
+                        type: LectureUnitType.TEXT,
                     },
                     13: {
                         id: 13,
                         name: 'Online',
                         releaseDate: '2024-02-04T00:00:00Z',
-                        type: 'online',
+                        type: LectureUnitType.ONLINE,
                     },
                 },
             },
@@ -161,7 +161,7 @@ describe('CourseDashboardService', () => {
                 expect(competencies?.['6'].softDueDate).toBeUndefined();
             });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/123/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/123/student' });
         req.flush(rawResponse);
     });
 
@@ -173,7 +173,7 @@ describe('CourseDashboardService', () => {
                 expect(response.body).toBeNull();
             });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/321/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/321/student' });
         req.flush(null);
     });
 
@@ -195,7 +195,7 @@ describe('CourseDashboardService', () => {
 
         service.getCourseMetricsForUser(10).subscribe({ error: errorSpy });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/10/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/10/student' });
         req.flush(rawResponse);
 
         expect(errorSpy).toHaveBeenCalledOnce();
@@ -219,7 +219,7 @@ describe('CourseDashboardService', () => {
 
         service.getCourseMetricsForUser(11).subscribe({ error: errorSpy });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/11/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/11/student' });
         req.flush(rawResponse);
 
         expect(errorSpy).toHaveBeenCalledOnce();

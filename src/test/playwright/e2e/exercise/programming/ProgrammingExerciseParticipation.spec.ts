@@ -45,7 +45,8 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: BUILD_RESULT_TIMEOUT * 2 });
+                    const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
+                    await expect(resultScore).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
             });
 

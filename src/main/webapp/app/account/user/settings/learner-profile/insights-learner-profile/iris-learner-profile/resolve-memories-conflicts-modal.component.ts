@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -14,13 +14,14 @@ import { firstValueFrom } from 'rxjs';
     templateUrl: './resolve-memories-conflicts-modal.component.html',
 })
 export class ResolveMemoriesConflictsModalComponent implements OnInit {
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private readonly irisMemoriesHttpService = inject(IrisMemoriesHttpService);
     private readonly alertService = inject(AlertService);
 
-    // Regular properties that can be set from parent
-    conflictGroups: string[][] = [];
-    details: Record<string, MemirisMemoryWithRelationsDTO | undefined> = {};
+    // Inputs provided via the dialog config data
+    conflictGroups = signal<string[][]>([]);
+    details = signal<Record<string, MemirisMemoryWithRelationsDTO | undefined>>({});
 
     // Local state
     groups = signal<string[][]>([]);
@@ -35,17 +36,19 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
     });
 
     /**
-     * Initializes local modal state from the provided conflict groups.
+     * Initializes local modal state from the conflict groups provided via the dialog config data.
      */
     ngOnInit(): void {
-        const inputGroups = this.conflictGroups ?? [];
-        this.groups.set(inputGroups.map((arr) => [...arr]));
+        const data = this.dialogConfig.data;
+        this.conflictGroups.set(data?.conflictGroups ?? []);
+        this.details.set(data?.details ?? {});
+        this.groups.set(this.conflictGroups().map((arr) => [...arr]));
         this.currentIndex.set(0);
     }
 
     /** Closes the modal without applying changes. */
     close(): void {
-        this.activeModal.dismiss();
+        this.dialogRef.close();
     }
 
     /**
@@ -74,7 +77,7 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
             this.groups.set(g);
             // Move to next available group or finish
             if (g.length === 0) {
-                this.activeModal.close(this.deletedIds);
+                this.dialogRef.close(this.deletedIds);
             } else if (this.currentIndex() >= g.length) {
                 this.currentIndex.set(g.length - 1);
             }

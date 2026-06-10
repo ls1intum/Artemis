@@ -1,6 +1,6 @@
 import { Component, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';

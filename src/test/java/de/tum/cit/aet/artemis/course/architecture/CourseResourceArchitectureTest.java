@@ -18,9 +18,9 @@ class CourseResourceArchitectureTest extends AbstractModuleResourceArchitectureT
         return ARTEMIS_PACKAGE + ".course";
     }
 
-    // TODO: The course REST resources still expose their endpoints under "api/core/..." for
-    // backwards compatibility with existing clients. Once the URLs are migrated to "api/course/..."
-    // these exemptions should be removed.
+    // TODO: The course REST resources expose their endpoints under both "api/course/..." (preferred)
+    // and the legacy "api/core/..." prefix kept for backwards compatibility with existing clients.
+    // Once the legacy prefix is removed these exemptions should be removed.
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
         return Set.of(CourseAccessResource.class, CourseArchiveResource.class, CourseManagementResource.class, CourseMaterialImportResource.class, CourseOverviewResource.class,

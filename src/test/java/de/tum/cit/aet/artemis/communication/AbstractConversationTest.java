@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
@@ -204,8 +205,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
 
     GroupChatDTO createGroupChat(String... userLoginsWithoutPrefix) throws Exception {
         var loginsWithPrefix = Arrays.stream(userLoginsWithoutPrefix).map(login -> testPrefix + login).toArray(String[]::new);
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
-                HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(Arrays.stream(loginsWithPrefix).toList()), GroupChatDTO.class, HttpStatus.CREATED);
         this.resetWebsocketMock();
         return chat;
     }

@@ -56,13 +56,13 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
-        request.put("/api/core/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/account/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
-        request.put("/api/core/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/account/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -228,7 +228,7 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor"));
 
-        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
     }
 
     @Test
@@ -261,7 +261,7 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
         user.setLogin("new-login");
         user.setActivated(false);
 
-        request.put("/api/core/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
+        request.put("/api/account/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserTestRepository();
         final var userInDB = userRepository.findById(user.getId());

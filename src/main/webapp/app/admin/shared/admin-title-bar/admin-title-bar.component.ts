@@ -1,7 +1,7 @@
 import { Component, Signal, TemplateRef, computed, inject } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { AdminTitleBarService } from 'app/admin/shared/admin-title-bar.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-admin-title-bar',

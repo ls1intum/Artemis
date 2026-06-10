@@ -3,8 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Component } from '@angular/core';
@@ -19,7 +19,7 @@ import { UserSettingsService } from 'app/account/user/settings/directive/user-se
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
  * needed for testing the abstract UserSettingsDirective

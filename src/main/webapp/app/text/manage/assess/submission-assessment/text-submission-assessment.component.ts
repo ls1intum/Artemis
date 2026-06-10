@@ -12,11 +12,11 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { notUndefined } from 'app/shared/util/string-pure.utils';
-import { onError } from 'app/shared/util/global.utils';
+import { notUndefined } from 'app/foundation/util/string-pure.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import {
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
@@ -25,7 +25,7 @@ import {
     setSubmissionResultByCorrectionRound,
 } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
@@ -38,12 +38,13 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -59,6 +60,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -85,6 +87,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     totalScore: number;
     isTestRun = false;
     isLoading = signal(true);
+    loadingFeedbackSuggestions = false;
     saveBusy: boolean;
     submitBusy: boolean;
     cancelBusy: boolean;
@@ -92,6 +95,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     isAssessor: boolean;
     assessmentsAreValid: boolean;
     noNewSubmissions: boolean;
+    hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number = 0;
     resultId: number;
@@ -148,6 +152,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = 0;
 
         this.isLoading.set(true);
+        this.loadingFeedbackSuggestions = false;
         this.saveBusy = false;
         this.submitBusy = false;
         this.cancelBusy = false;
@@ -155,6 +160,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAssessor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.hasAutomaticFeedback = false;
         this.highlightDifferences = false;
     }
 
@@ -249,6 +255,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     private get isNewAssessmentRoute(): boolean {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
+    }
+
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
     }
 
     private checkPermissions(result?: Result): void {
@@ -347,20 +357,27 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
-            feedbackSuggestions.forEach((suggestion) => {
-                if (suggestion instanceof TextBlockRef) {
-                    // referenced feedback suggestion - add to existing text blocks but avoid conflicts
-                    this.addAutomaticTextBlockRef(suggestion);
-                } else {
-                    // unreferenced feedback suggestion - we can just add it
-                    this.result!.feedbacks ??= [];
-                    this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
-                    // the unreferencedFeedback variable does not auto-update and needs to be updated manually
-                    this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
-                }
-            });
-            this.validateFeedback();
+        this.loadingFeedbackSuggestions = true;
+
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
+            next: (feedbackSuggestions) => {
+                feedbackSuggestions.forEach((suggestion) => {
+                    if (suggestion instanceof TextBlockRef) {
+                        // referenced feedback suggestion - add to existing text blocks but avoid conflicts
+                        this.addAutomaticTextBlockRef(suggestion);
+                    } else {
+                        // unreferenced feedback suggestion - we can just add it
+                        this.result!.feedbacks ??= [];
+                        this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
+                        // the unreferencedFeedback variable does not auto-update and needs to be updated manually
+                        this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
+                    }
+                });
+                this.validateFeedback();
+                this.hasAutomaticFeedback = feedbackSuggestions.length > 0;
+                this.loadingFeedbackSuggestions = false;
+            },
+            error: () => (this.loadingFeedbackSuggestions = false),
         });
     }
 

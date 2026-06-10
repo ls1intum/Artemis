@@ -15,28 +15,29 @@ import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/e
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -129,6 +130,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     });
 
     readonly participationMode = signal<ParticipationMode>('graded');
+
+    // Display-only override for the quiz participation status badge, set from the live quiz view.
+    readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
@@ -247,6 +251,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._exercise.set(newExerciseDetails.exercise);
         this.filterUnfinishedResults(this.exercise?.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
+        this.liveQuizStatus.set(this.computeInitialLiveQuizStatus());
         this._isAfterAssessmentDueDate.set(!this.exercise?.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate));
         this._allowComplaintsForAutomaticAssessments.set(false);
         this._plagiarismCaseInfo.set(newExerciseDetails.plagiarismCaseInfo);
@@ -454,6 +459,52 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (participation.testRun) {
             this.participationMode.set('practice');
         }
+    }
+
+    onLiveQuizStatusChange(status: LiveQuizParticipationStatus | undefined) {
+        this.liveQuizStatus.set(status);
+    }
+
+    /**
+     * Derives the initial live quiz badge status from the loaded exercise data. Returns undefined for non-quiz or
+     * ended quizzes (where the result / data-driven status applies). A started batch means the student is in the
+     * running quiz; otherwise they are still at the waiting/join phase.
+     */
+    private computeInitialLiveQuizStatus(): LiveQuizParticipationStatus | undefined {
+        if (this.exercise?.type !== ExerciseType.QUIZ) {
+            return undefined;
+        }
+        const quizExercise = this.exercise as QuizExercise;
+        const submitted = this.gradedStudentParticipation()?.submissions?.some((submission) => submission.submitted) ?? false;
+        if (quizExercise.quizEnded) {
+            return submitted ? undefined : LiveQuizParticipationStatus.MISSED;
+        }
+        if (submitted) {
+            return LiveQuizParticipationStatus.SUBMITTED;
+        }
+        return quizExercise.quizBatches?.some((batch) => batch.started) ? LiveQuizParticipationStatus.PARTICIPATING : LiveQuizParticipationStatus.NOT_STARTED;
+    }
+
+    /**
+     * Reflects a live quiz submission in the graded participation immediately, so the participation status badge
+     * switches from "Currently participating" to "Submitted, waiting for due date"
+     */
+    onQuizSubmitted(submission: QuizSubmission) {
+        const graded = this.gradedStudentParticipation();
+        if (!graded) {
+            return;
+        }
+        const updatedParticipations = this._studentParticipations().map((participation) => {
+            if (participation.id !== graded.id) {
+                return participation;
+            }
+            const existingSubmissions = participation.submissions ?? [];
+            const submissions = existingSubmissions.some((existing) => existing.id === submission.id)
+                ? existingSubmissions.map((existing) => (existing.id === submission.id ? submission : existing))
+                : [...existingSubmissions, submission];
+            return { ...participation, submissions };
+        });
+        this._studentParticipations.set(updatedParticipations);
     }
 
     exerciseRatedBadge(result: Result): string {

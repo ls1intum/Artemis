@@ -85,7 +85,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
             await lpCheckbox.click();
         }
         const saveResponse = page
-            .waitForResponse((resp) => resp.url().includes(`/api/core/courses/`) && resp.request().method() === 'PUT' && resp.ok(), { timeout: 15000 })
+            .waitForResponse((resp) => resp.url().includes(`/api/course/courses/`) && resp.request().method() === 'PUT' && resp.ok(), { timeout: 15000 })
             .catch(() => undefined);
         await page.locator('#save-entity').click();
         await saveResponse;

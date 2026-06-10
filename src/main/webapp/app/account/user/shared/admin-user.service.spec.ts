@@ -12,7 +12,7 @@ describe('AdminUserService', () => {
 
     let adminService: AdminUserService;
     let httpMock: HttpTestingController;
-    const resourceUrl = 'api/core/admin/users';
+    const resourceUrl = 'api/account/admin/users';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

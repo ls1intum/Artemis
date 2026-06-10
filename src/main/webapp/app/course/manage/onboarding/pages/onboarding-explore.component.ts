@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';

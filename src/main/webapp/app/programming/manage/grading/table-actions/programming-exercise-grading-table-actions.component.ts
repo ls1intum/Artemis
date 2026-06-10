@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { GradingTab } from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * The actions of the test case table:
@@ -24,19 +24,19 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     private translateService = inject(TranslateService);
 
     readonly faCopy = faCopy;
-    @Input() exercise: ProgrammingExercise;
-    @Input() hasUnsavedChanges: boolean;
-    @Input() isSaving: boolean;
-    @Input() activeTab: GradingTab;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly hasUnsavedChanges = input.required<boolean>();
+    readonly isSaving = input.required<boolean>();
+    readonly activeTab = input.required<GradingTab>();
 
-    @Output() onSave = new EventEmitter();
-    @Output() onReset = new EventEmitter();
-    @Output() onCategoryImport = new EventEmitter<number>();
+    readonly onSave = output();
+    readonly onReset = output();
+    readonly onCategoryImport = output<number>();
 
     openImportModal() {
         const dialogData: ExerciseImportDialogData = {
             exerciseType: ExerciseType.PROGRAMMING,
-            programmingLanguage: this.exercise.programmingLanguage,
+            programmingLanguage: this.exercise().programmingLanguage,
         };
         const dialogRef = this.dialogService.open(ExerciseImportComponent, {
             header: this.translateService.instant('artemisApp.programmingExercise.configureGrading.categories.importLabel'),

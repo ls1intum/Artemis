@@ -24,7 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 
 /**
  * This class describes a local repository cloned from an origin repository.

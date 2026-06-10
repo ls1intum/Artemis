@@ -1,14 +1,14 @@
 import { Component, TemplateRef, contentChild, input, model } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-import-competencies-table',

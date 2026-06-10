@@ -1,10 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { faUserShield } from '@fortawesome/free-solid-svg-icons';
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 @Component({
     selector: 'jhi-server-administration',

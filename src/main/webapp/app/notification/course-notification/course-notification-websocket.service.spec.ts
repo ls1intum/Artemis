@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';

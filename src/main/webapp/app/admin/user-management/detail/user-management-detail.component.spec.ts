@@ -10,7 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { UserManagementDetailComponent } from 'app/admin/user-management/detail/user-management-detail.component';
 import { User } from 'app/account/user/user.model';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority } from 'app/foundation/constants/authority.constants';
 
 describe('UserManagementDetailComponent', () => {
     setupTestBed({ zoneless: true });

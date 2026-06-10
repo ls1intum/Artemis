@@ -5,7 +5,7 @@ import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 /**
  * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.

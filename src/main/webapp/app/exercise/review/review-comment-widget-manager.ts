@@ -1,5 +1,5 @@
 import { ComponentRef, OutputRefSubscription, ViewContainerRef } from '@angular/core';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -484,7 +484,8 @@ export class ReviewCommentWidgetManager {
             endLineNumber: endLine,
             endColumn,
         });
-        if (currentCode !== inlineFix.expectedCode) {
+        // expectedCode/replacementCode may be absent when empty (@JsonInclude(NON_EMPTY)); treat absent as empty.
+        if (currentCode !== (inlineFix.expectedCode ?? '')) {
             return InlineFixApplyResult.OUTDATED;
         }
 
@@ -496,7 +497,7 @@ export class ReviewCommentWidgetManager {
                     endLineNumber: endLine,
                     endColumn,
                 },
-                text: inlineFix.replacementCode,
+                text: inlineFix.replacementCode ?? '',
                 forceMoveMarkers: true,
             },
         ]);

@@ -8,7 +8,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import * as blobUtil from 'app/shared/util/blob-util';
+import * as blobUtil from 'app/foundation/util/blob-util';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizReEvaluateService', () => {

@@ -1,7 +1,7 @@
 import { Component, OnInit, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-student-exam-working-time',

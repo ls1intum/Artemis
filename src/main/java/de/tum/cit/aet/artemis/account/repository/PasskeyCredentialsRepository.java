@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
-import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
+import de.tum.cit.aet.artemis.account.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(PasskeyEnabled.class)
@@ -36,7 +36,7 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
     boolean existsByUserId(@Param("userId") long userId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO(
+            SELECT new de.tum.cit.aet.artemis.account.dto.PasskeyAdminDTO(
                 pc.credentialId,
                 pc.label,
                 pc.createdDate,

@@ -1,13 +1,13 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -23,7 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { switchMap, tap } from 'rxjs/operators';
@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
@@ -41,12 +41,13 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -63,6 +64,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -78,10 +80,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
@@ -120,6 +123,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     localRepositoryLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    loadingFeedbackSuggestions = false;
 
     isAtLeastEditor = false;
 
@@ -138,9 +142,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     hasPendingChanges = false;
 
     // listener, will get notified upon loading of feedback
-    @Output() onFeedbackLoaded = new EventEmitter();
+    readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
+    readonly overrideNextSubmission = input<(submissionId: number) => any>();
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -153,11 +157,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    constructor() {
-        const translateService = inject(TranslateService);
+    get hasAutomaticFeedback(): boolean {
+        return this.automaticFeedback.length > 0 || this.feedbackSuggestions.length > 0;
+    }
 
-        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-        translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
+    }
+
+    constructor() {
+        this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
 
     /**
@@ -325,12 +335,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
-        const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
-        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
-            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
-        );
+        this.loadingFeedbackSuggestions = true;
+        try {
+            this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
+            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+            );
+        } finally {
+            this.loadingFeedbackSuggestions = false;
+        }
     }
 
     /**
@@ -339,13 +353,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param selectedFile The file that has been selected in the editor.
      */
     highlightChangedLines(selectedFile: string) {
-        if (selectedFile && this.codeEditorContainer?.selectedFile) {
+        const codeEditorContainer = this.codeEditorContainer();
+        if (selectedFile && codeEditorContainer?.selectedFile) {
             if (!this.templateFileSession[selectedFile]) {
-                const lastLine = this.codeEditorContainer.getNumberOfLines() - 1;
+                const lastLine = codeEditorContainer.getNumberOfLines() - 1;
                 this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
-                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.getText());
+                const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], codeEditorContainer.getText());
                 const lineText1 = diffArray.chars1;
                 const lineText2 = diffArray.chars2;
                 const lineArray = diffArray.lineArray;
@@ -375,7 +390,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private highlightLines(firstLine: number, lastLine: number) {
         // We add 1 to make the lines 1-based.
-        this.codeEditorContainer.highlightLines(firstLine + 1, lastLine + 1);
+        this.codeEditorContainer()!.highlightLines(firstLine + 1, lastLine + 1);
     }
 
     /**
@@ -392,8 +407,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
         if (this.feedbackSuggestions.length > 0) {
-            const modalRef = this.modalService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, { size: 'lg', backdrop: 'static', animation: true });
-            const suggestionsDiscardConfirmed: boolean = await firstValueFrom(modalRef.closed);
+            const dialogRef = this.dialogService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, {
+                showHeader: false,
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+            });
+            const suggestionsDiscardConfirmed: boolean | undefined = await firstValueFrom(dialogRef?.onClose ?? of(undefined));
             if (!suggestionsDiscardConfirmed) {
                 return false;
             }
@@ -457,8 +479,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 }
 
                 // if override set, skip navigation
-                if (this.overrideNextSubmission) {
-                    this.overrideNextSubmission(response.id!);
+                const overrideNextSubmission = this.overrideNextSubmission();
+                if (overrideNextSubmission) {
+                    overrideNextSubmission(response.id!);
                     return;
                 }
 

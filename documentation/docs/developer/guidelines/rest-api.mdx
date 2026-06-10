@@ -467,6 +467,66 @@ These tests run as part of CI and will fail if violations are introduced. Rules 
 * When defining a new route, all subroutes should be addressable (e.g., if your new route is `exercises/{exerciseId}/statistics`, then both `exercises/{exerciseId}` and `exercises` should be addressable)
 * For alternative representations that send extra data (e.g., for assessment), specify the reason at the end of the route: `participations/{participationId}/for-assessment`
 
+### Path Structure: `module / collection / {id}`
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical Rule (enforced by architecture tests):</strong> A path variable that identifies an entity must always be paired with its collection. The canonical shape is <code>api/&lt;module&gt;/&lt;collection&gt;/&#123;&lt;collection&#8209;singular&gt;Id&#125;</code> — for example <code>api/course/courses/&#123;courseId&#125;</code> or <code>api/exam/courses/&#123;courseId&#125;/exams/&#123;examId&#125;</code>.
+</Callout>
+
+Each REST path is built from these kinds of segments, in this order:
+
+1. **Module** — the path always starts with the server module name (the package/folder under `de.tum.cit.aet.artemis`, e.g. `course`, `exam`, `programming`). `api/course/...` *is* the API of the course module. Enforced by `AbstractModuleResourceArchitectureTest#shouldCorrectlyUseRequestMappingAnnotations`.
+2. **Collection (plural) + id (singular)** — after the module there is always a resource collection in **plural** (`courses`, `exercises`, `exams`, `lectures`, …). An id that narrows the collection to a single element must immediately follow its collection and **match its name exactly**: `courses/{courseId}`, `exercises/{exerciseId}`, `exams/{examId}`. Never place a bare id directly after the module (`api/notification/{courseId}` ❌) or after another id — an id must always be preceded by its matching plural collection. Enforced by `AbstractModuleResourceArchitectureTest#restPathVariablesMustBePairedWithTheirCollection`.
+3. **Query parameters (optional)** — use query parameters to further filter, search, or paginate when the value is **not** part of the resource hierarchy (e.g. `.../users/search?loginOrName=foo&roles=students`). Prefer a query parameter over a path segment when the entity is only a filter and not a parent of the addressed resource.
+
+| ❌ Avoid | ✅ Use |
+|---------|--------|
+| `api/notification/{courseId}/settings` (id after module) | `api/notification/courses/{courseId}/settings` |
+| `api/atlas/learning-path/{learningPathId}` (singular collection) | `api/atlas/learning-paths/{learningPathId}` |
+| `api/exercise/{exerciseId}/versions` (id after module) | `api/exercise/exercises/{exerciseId}/versions` |
+| `api/account/account/profile-picture` (module name repeated as resource) | `api/account/profile-picture` |
+
+Subtype collections are allowed when the id is the supertype id, because the collection ends with the matching plural: `api/programming/programming-exercises/{exerciseId}` ✅ (`programming-exercises` ends with `exercises`, the plural of `exerciseId`).
+
+#### Common violations and how to fix each
+
+Every violation falls into one of these patterns. Each example is a real path from the Artemis API; pick the fix that matches your case and keep the old path as a deprecated alias (see below).
+
+| Pattern | ❌ Before | ✅ After | How |
+|---------|-----------|---------|-----|
+| **Singular collection** | `api/programming/auxiliary-repository/{auxiliaryRepositoryId}` | `api/programming/auxiliary-repositories/{auxiliaryRepositoryId}` | Pluralize the collection so it is the plural of the id stem. |
+| **Floating id** (id straight after the module, or after another id) | `api/notification/{courseId}/settings` | `api/notification/courses/{courseId}/settings` | Insert the matching plural collection before the id. |
+| **Key entity not at the end** (operation modeled as a collection) | `api/programming/repository/{participationId}/files` | `api/programming/participations/{participationId}/repository/files` | Reorder so the id pairs with its real collection; the operation/sub-resource (`repository`, `text-editor`) comes after. |
+| **Source / qualified id as a path segment** | `api/programming/programming-exercises/import/{sourceExerciseId}` | `api/programming/programming-exercises/import?sourceExerciseId={id}` *(or)* `api/programming/programming-exercises/{sourceExerciseId}/import` | If the id is only a parameter of the action, make it a query parameter; if it identifies a real parent resource, nest the action under that resource. |
+| **Collection name ≠ id name** | `api/account/passkey/{credentialId}` | `api/account/passkeys/{passkeyId}` *(or)* `api/account/credentials/{credentialId}` | Rename either the collection or the id so they match exactly — an API naming decision; do not leave them divergent. |
+
+The arch rule reports the *first* unpaired id on a path, so fixing one segment can surface a second (e.g. pluralizing `tutorial-groups-configuration` revealed that the nested `tutorial-free-periods/{tutorialGroupFreePeriodId}` collection still mismatches its id). Re-run the test after each fix.
+
+#### Migrating a path without breaking clients
+
+Mobile apps (iOS, Android) and the VS Code extension consume these paths and cannot be updated in lockstep, so **never remove or rename a path outright**. Map the canonical path *and* the old path on the same handler — canonical first, legacy second — so the old one keeps working as a deprecated alias:
+
+```java
+// Class-level: the canonical prefix carries the collection; the legacy prefix stays unchanged.
+@RequestMapping({ "api/notification/courses/", "api/communication/notification/" })
+
+// Method-level (single class prefix): list the canonical path first, the legacy path second.
+@GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
+```
+
+The first entry is the canonical successor; every later entry is a deprecated alias. For class-level dual prefixes, `LegacyApiPathDeprecationInterceptor` automatically tags responses served under a legacy prefix with `Deprecation`, `Sunset`, and `Link: <successor>; rel="successor-version"` headers. Record the deprecated prefix in the module's `*LegacyRestPaths` class (annotated `@Deprecated(forRemoval = true)`) so the eventual cleanup is mechanical.
+
+<Callout variant={CalloutVariant.info}>
+  The exemption set <code>AbstractModuleResourceArchitectureTest#PATH_VARIABLE_COLLECTION_BASELINE</code> is now <strong>empty</strong>: every REST controller path conforms, so the convention is fully enforced and any new violation fails the build. Only add an entry there together with a documented follow-up plan to migrate it (keeping the old path as a deprecated alias).
+</Callout>
+
+#### Further reading
+
+These conventions follow widely adopted industry REST guidelines:
+- [Zalando RESTful API Guidelines — *Pluralize resource names* &amp; *Identify resources and sub-resources via path segments*](https://opensource.zalando.com/restful-api-guidelines/#resources)
+- [Microsoft Azure REST API Guidelines — *Resource paths*](https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md)
+- [Google API Improvement Proposals — AIP-122 *Resource names*](https://google.aip.dev/122)
+
 ### Controller Method Guidelines
 
 * The REST controller's route should end with a trailing "/" and not start with a "/" (e.g., `api/`); individual endpoint routes should not start or end with a "/" (e.g., `exercises/{exerciseId}`)
@@ -477,6 +537,12 @@ These tests run as part of CI and will fail if violations are introduced. Rules 
 * Verify consistency of user input (e.g., check if IDs in body and path match, compare course in `@RequestBody` with the one referenced by ID in the path)
 * Check for user input consistency first, then check authorization (mismatched course IDs could lead to unauthorized access)
 * Handle exceptions and errors with a standard response
+* Express the HTTP verb with the dedicated shortcut annotations (`@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping`); `@RequestMapping` is reserved for the class-level path prefix and must not annotate an endpoint method at all. Enforced by `AbstractModuleResourceArchitectureTest#endpointsShouldUseHttpMethodShortcutAnnotations`.
+* Endpoint methods must be `public`. Enforced by `AbstractModuleResourceArchitectureTest#endpointsMustBePublic`.
+* The handler method name must match its HTTP verb: a `@GetMapping` must read (`get*`/`list*`/`find*`/…) and must not be named like a mutation; a `@DeleteMapping` must delete (`delete*`/`remove*`/…) and must not be named like a read or a create. Enforced by `AbstractModuleResourceArchitectureTest#endpointMethodNamesShouldMatchTheirHttpVerb`.
+* `GET` and `DELETE` endpoints must not declare a `@RequestBody` — a GET request body has no defined semantics (RFC 9110) and a DELETE body is widely ignored; pass data via path or query parameters instead. Enforced by `AbstractModuleResourceArchitectureTest#getEndpointsShouldNotDeclareRequestBody` and `#deleteEndpointsShouldNotDeclareRequestBody`.
+  * **Migrating an existing body off a GET/DELETE without breaking clients:** accept the data as query parameters *and* keep the old `@RequestBody` as an optional, deprecated parameter (`@RequestBody(required = false)`), preferring the query parameters and logging a deprecation warning when the body is used. Add the endpoint to `DELETE_REQUEST_BODY_BASELINE` with a documented removal plan, and drop the body parameter (and the baseline entry) once all clients — including the mobile apps — have migrated. See `PushNotificationResource#unregister` for the reference pattern.
+* Endpoints must return `ResponseEntity`; `ModelAndView` is forbidden. Enforced by `AbstractModuleResourceArchitectureTest#allPublicMethodsShouldReturnResponseEntity` and `#restEndpointsShouldNotReturnModelAndView`.
 
 ### Request Validation
 
@@ -578,6 +644,10 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
 
 <Callout variant={CalloutVariant.info}>
   Because implicit pre- and post-authorization increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding <code>@EnforceRoleInResource</code> annotation. Always use the annotation for the minimum role that has access.
+</Callout>
+
+<Callout variant={CalloutVariant.danger}>
+  **Every REST endpoint must carry an authorization annotation.** A mapping method (<code>@GetMapping</code>/<code>@PostMapping</code>/…) on a <code>@RestController</code> must declare one of the <code>@EnforceAtLeast*</code> / <code>@EnforceRoleIn*</code> annotations, <code>@EnforceAdmin</code>, <code>@EnforceNothing</code> (for genuinely public endpoints, which then live in a <code>…web.open</code> package), or — only when authorization is unavoidably handled in the method body — <code>@ManualConfig</code>. A class-level annotation (e.g. a class-level <code>@EnforceAdmin</code>) covers all of that controller's methods. This is enforced by <code>AuthorizationArchitectureTest#everyRestEndpointMustBeAuthorized</code>, so an endpoint can never be shipped without authorization; the few endpoints that handle authorization differently (e.g. via a shared-secret token or API key) are listed in that test's baseline.
 </Callout>
 
 ### Role Hierarchy

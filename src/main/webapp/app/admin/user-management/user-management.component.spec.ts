@@ -9,6 +9,7 @@ import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PaginatorState } from 'primeng/paginator';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -22,11 +23,11 @@ import {
     UserStorageKey,
 } from 'app/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -100,6 +101,13 @@ describe('UserManagementComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         httpMock.verify();
+    });
+
+    describe('onPageChange (PrimeNG paginator)', () => {
+        it('converts the 0-indexed paginator event to the 1-indexed page', () => {
+            component.onPageChange({ page: 2 } as PaginatorState);
+            expect(component.page()).toBe(3);
+        });
     });
 
     it('should parse user search result into component state', async () => {
@@ -257,7 +265,7 @@ describe('UserManagementComponent', () => {
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
 
-        const request = httpMock.expectOne('api/core/admin/users/test');
+        const request = httpMock.expectOne('api/account/admin/users/test');
         request.flush(null, { status, statusText });
 
         if (status === 200) {

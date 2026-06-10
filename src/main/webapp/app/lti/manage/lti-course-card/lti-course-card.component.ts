@@ -1,12 +1,12 @@
 import { Component, effect, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
-import { getContrastingTextColor } from 'app/shared/util/color.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { getContrastingTextColor } from 'app/foundation/util/color.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',

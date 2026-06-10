@@ -40,14 +40,14 @@ import {
     faFileWord,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { FileService } from 'app/shared/service/file.service';
-import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
+import { FileService } from 'app/foundation/service/file.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';

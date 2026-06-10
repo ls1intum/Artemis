@@ -60,7 +60,14 @@ public abstract class PostingService {
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
+
+    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
+    // Deployed mobile and external clients may still be subscribed here.
+    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
+    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
+    @Deprecated(forRemoval = true, since = "9.3")
+    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -123,6 +130,7 @@ public abstract class PostingService {
      * @param courseId   the id of the course the posting belongs to
      * @param recipients the recipients for this broadcast, can be null
      */
+    @SuppressWarnings("deprecation")
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         Post post = postDTO.post();
         // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
@@ -131,9 +139,11 @@ public abstract class PostingService {
 
         Conversation postConversation = post.getConversation();
         if (postConversation != null) {
-            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
+            String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(courseConversationTopic, broadcastPayload);
+                websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+                // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
+                websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
             }
             else {
                 if (recipients == null) {
@@ -144,8 +154,9 @@ public abstract class PostingService {
             }
         }
         else if (post.getPlagiarismCase() != null) {
-            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + post.getPlagiarismCase().getId();
-            websocketMessagingService.sendMessage(plagiarismCaseTopic, broadcastPayload);
+            String plagiarismCaseSuffix = "plagiarismCase/" + post.getPlagiarismCase().getId();
+            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
+            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
         }
     }
 

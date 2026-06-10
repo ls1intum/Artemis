@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -60,7 +61,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void shouldRegisterTokenWhenCredentialsAreValid() throws Exception {
         PushNotificationRegisterBodyDTO body = new PushNotificationRegisterBodyDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
@@ -76,7 +77,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     void shouldRegisterVersionCodeWhenSupplied() throws Exception {
         PushNotificationRegisterBodyDTO body = new PushNotificationRegisterBodyDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT,
                 "1.1.1");
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
@@ -103,8 +104,10 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     void shouldUnregisterWhenRequestingWithValidToken() throws Exception {
         shouldRegisterTokenWhenCredentialsAreValid();
 
-        PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/communication/push_notification/unregister", HttpStatus.OK, body);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("token", FAKE_FIREBASE_TOKEN);
+        params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, params);
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).isEmpty();
     }
@@ -112,7 +115,31 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = USER_LOGIN, roles = "USER")
     void testUnregisterNonExistentRegistration() throws Exception {
-        PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO("Does not exist", PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/communication/push_notification/unregister", HttpStatus.NOT_FOUND, body);
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("token", "Does not exist");
+        params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.NOT_FOUND, params);
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER")
+    void shouldRejectBlankTokenAsBadRequest() throws Exception {
+        // A blank token (e.g. "...?token=&deviceType=FIREBASE") must be rejected rather than treated as a real token.
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("token", "");
+        params.add("deviceType", PushNotificationDeviceType.FIREBASE.name());
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
+    void shouldUnregisterWhenUsingDeprecatedRequestBody() throws Exception {
+        shouldRegisterTokenWhenCredentialsAreValid();
+
+        // Backwards compatibility: older (mobile) clients still pass the token and device type in the request body.
+        PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, body);
+        var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
+        assertThat(deviceConfigurations).isEmpty();
     }
 }

@@ -47,7 +47,13 @@ public class AutonomousTutorService {
 
     private static final Logger log = LoggerFactory.getLogger(AutonomousTutorService.class);
 
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
+
+    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
+    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
+    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
+    @Deprecated(forRemoval = true, since = "9.3")
+    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     private final IrisBotUserService irisBotUserService;
 
@@ -166,6 +172,7 @@ public class AutonomousTutorService {
                 .collect(Collectors.toSet());
     }
 
+    @SuppressWarnings("deprecation")
     private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId) {
         // Assemble the parent post with the new answer
         Post broadcastPost = originalPost;
@@ -178,10 +185,12 @@ public class AutonomousTutorService {
         // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
         // DeserializerCache race on the receive side.
         PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
-        String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
+        String coursePathSuffix = "courses/" + courseId;
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            websocketMessagingService.sendMessage(courseConversationTopic, broadcastPayload);
+            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+            // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
+            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
         }
         else {
             var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId());

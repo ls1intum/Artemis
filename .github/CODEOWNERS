@@ -24,7 +24,10 @@
 /src/main/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/main/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/main/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/main/java/de/tum/cit/aet/artemis/jenkins        @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
+/src/main/java/de/tum/cit/aet/artemis/localci        @ls1intum/programming-maintainers
+/src/main/java/de/tum/cit/aet/artemis/localvc        @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
 /src/main/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers
 /src/main/java/de/tum/cit/aet/artemis/notification   @krusche
@@ -39,7 +42,8 @@
 /src/main/webapp/app/account        @krusche
 /src/main/webapp/app/admin          @krusche
 /src/main/webapp/app/atlas          @ls1intum/atlas-maintainers
-/src/main/webapp/app/buildagent     @ls1intum/programming-maintainers
+/src/main/webapp/app/localci        @ls1intum/programming-maintainers
+/src/main/webapp/app/localvc        @ls1intum/programming-maintainers
 /src/main/webapp/app/calendar       @krusche
 /src/main/webapp/app/communication  @ls1intum/communication-maintainers
 /src/main/webapp/app/course         @krusche
@@ -65,7 +69,10 @@
 /src/test/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/test/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/test/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/test/java/de/tum/cit/aet/artemis/jenkins        @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
+/src/test/java/de/tum/cit/aet/artemis/localci        @ls1intum/programming-maintainers
+/src/test/java/de/tum/cit/aet/artemis/localvc        @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
 /src/test/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers
 /src/test/java/de/tum/cit/aet/artemis/notification   @krusche

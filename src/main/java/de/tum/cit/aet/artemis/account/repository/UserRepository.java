@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,11 +39,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -628,6 +629,36 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
+
+    /**
+     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
+     * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
+     * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
+     *
+     * @param page       Pageable controlling page index and size
+     * @param searchTerm the search string entered by the user
+     * @return a page of matching users
+     */
+    default Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, String searchTerm) {
+        if (!StringUtils.hasText(searchTerm)) {
+            return Page.empty(page);
+        }
+        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
+    }
+
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND (
+                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                )
+            """)
+    Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
     @Query("""
             SELECT DISTINCT user

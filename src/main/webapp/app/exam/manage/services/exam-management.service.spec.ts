@@ -2,6 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
@@ -147,7 +150,7 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
-    it('should find an exam with no students and no exercise groups', async () => {
+    it('should find an exam without exercise groups', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
@@ -157,10 +160,9 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withStudents=false&withExerciseGroups=false`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withExerciseGroups=false`,
         });
         expect(req.request.url).toBe(`${service.resourceUrl}/${course.id!}/exams/${mockExam.id}`);
-        expect(req.request.params.get('withStudents')).toBe('false');
         expect(req.request.params.get('withExerciseGroups')).toBe('false');
 
         // CLEANUP
@@ -451,7 +453,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-run`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
         req.flush(expected);
         await Promise.resolve();
@@ -468,7 +470,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-run/${mockStudentExam.id}`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-runs/${mockStudentExam.id}`,
         });
         req.flush(expected);
         await Promise.resolve();
@@ -689,6 +691,194 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(true);
-        await Promise.resolve();
+    });
+
+    describe('findExamStudentsPaged', () => {
+        const examId = 1;
+        const baseSearch: ExamStudentSearch = {
+            page: 0,
+            pageSize: 20,
+            sortingOrder: SortingOrder.ASCENDING,
+            sortedColumn: 'name',
+            searchTerm: '',
+        };
+
+        it('should send GET request with correct URL and params', async () => {
+            // GIVEN
+            const mockBody: ExamStudentDTO[] = [{ id: 10, login: 'student1' }];
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('student1');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('pageSize')).toBe('20');
+            expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.ASCENDING);
+            expect(req.request.params.get('sortedColumn')).toBe('name');
+            expect(req.request.params.get('searchTerm')).toBe('');
+            expect(req.request.params.has('filterProp')).toBe(false);
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+        });
+
+        it('should include filterProp in params when provided', async () => {
+            // GIVEN
+            const searchWithFilter: ExamStudentSearch = { ...baseSearch, filterProp: 'Submitted' };
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, searchWithFilter).subscribe();
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+            expect(req.request.params.get('filterProp')).toBe('Submitted');
+
+            // CLEANUP
+            req.flush([]);
+        });
+
+        it('should read totalElements from X-Total-Count header', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '42' } });
+
+            expect(capturedTotal).toBe(42);
+        });
+
+        it('should convert startedDate and submissionDate from server format', async () => {
+            // GIVEN
+            const isoDate = '2024-06-15T10:00:00Z';
+            const mockBody: ExamStudentDTO[] = [{ id: 10, startedDate: isoDate as any, submissionDate: isoDate as any }];
+            let capturedRow: ExamStudentDTO | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedRow = result.content[0];
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush(mockBody, { headers: { 'X-Total-Count': '1' } });
+
+            expect(capturedRow?.startedDate).toBeDefined();
+            expect(capturedRow?.submissionDate).toBeDefined();
+            // convertDateFromServer wraps them in dayjs — verify they are dayjs objects
+            expect(typeof capturedRow?.startedDate?.isValid).toBe('function');
+            expect(typeof capturedRow?.submissionDate?.isValid).toBe('function');
+        });
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.findExamStudentsPaged(course.id!, examId, baseSearch).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/exam-students/paged`);
+
+            // CLEANUP
+            req.flush([]);
+
+            expect(capturedTotal).toBe(0);
+        });
+    });
+
+    describe('searchUsersForExamRegistration', () => {
+        const examId = 1;
+
+        it('should send GET request with correct URL and params', async () => {
+            // GIVEN
+            const mockUsers: UserForRegistration[] = [{ id: 1, login: 'alice', name: 'Alice', isRegistered: false }];
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                expect(result.content).toHaveLength(1);
+                expect(result.content[0].login).toBe('alice');
+                expect(result.totalElements).toBe(1);
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+            expect(req.request.params.get('searchTerm')).toBe('alice');
+            expect(req.request.params.get('page')).toBe('0');
+            expect(req.request.params.get('size')).toBe('10');
+
+            // CLEANUP
+            req.flush(mockUsers, { headers: { 'X-Total-Count': '1' } });
+        });
+
+        it('should read totalElements from X-Total-Count header', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([], { headers: { 'X-Total-Count': '99' } });
+
+            expect(capturedTotal).toBe(99);
+        });
+
+        it('should default totalElements to 0 when X-Total-Count header is absent', async () => {
+            // GIVEN
+            let capturedTotal: number | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedTotal = result.totalElements;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush([]);
+
+            expect(capturedTotal).toBe(0);
+        });
+
+        it('should return empty content array when response body is null', async () => {
+            // GIVEN
+            let capturedContent: UserForRegistration[] | undefined;
+
+            // WHEN
+            service.searchUsersForExamRegistration(course.id!, examId, 'alice', 0, 10).subscribe((result) => {
+                capturedContent = result.content;
+            });
+
+            // THEN
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${service.resourceUrl}/${course.id!}/exams/${examId}/students/search`);
+
+            // CLEANUP
+            req.flush(null, { headers: { 'X-Total-Count': '0' } });
+
+            expect(capturedContent).toEqual([]);
+        });
     });
 });

@@ -16,10 +16,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 

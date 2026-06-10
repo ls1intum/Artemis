@@ -1,7 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CoursePrerequisitesModalComponent } from 'app/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-prerequisites-button',

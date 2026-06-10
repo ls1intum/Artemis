@@ -39,20 +39,20 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
-import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
-import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisChatSessionExportDTO;
+import de.tum.cit.aet.artemis.iris.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 /**
@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
  * - DataExportTutorialGroupService
  * - Enhanced DataExportCommunicationDataService (saved posts, notification settings, conversation participations)
  */
-class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndependentTest {
+class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "dataexportadditional";
 

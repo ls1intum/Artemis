@@ -1,14 +1,28 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ElementRef, Signal } from '@angular/core';
 import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
+ * Typed view onto the `renamingInput` viewChild signal so the spec can read the resolved
+ * ElementRef without a blanket `(comp as any)` cast. The shape mirrors the component declaration.
+ */
+type NodeInternals = CodeEditorFileBrowserFileComponent & {
+    renamingInput: Signal<ElementRef | undefined>;
+};
+const internals = (c: CodeEditorFileBrowserFileComponent): NodeInternals => c as NodeInternals;
+
+/**
  * Tests for CodeEditorFileBrowserNodeComponent abstract class
  * Testing through the concrete CodeEditorFileBrowserFileComponent implementation
  */
 describe('CodeEditorFileBrowserNodeComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorFileBrowserFileComponent>;
     let comp: CodeEditorFileBrowserFileComponent;
 
@@ -22,7 +36,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         TestBed.configureTestingModule({
             imports: [CodeEditorFileBrowserFileComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(CodeEditorFileBrowserFileComponent);
         comp = fixture.componentInstance;
@@ -31,42 +45,60 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
+
     describe('isBeingRenamed', () => {
-        it('should focus input when isBeingRenamed changes to true', async () => {
+        it('should focus input when isBeingRenamed changes to true', () => {
+            vi.useFakeTimers();
             fixture.componentRef.setInput('isBeingRenamed', true);
             fixture.detectChanges();
-            const mockElement = { focus: jest.fn() };
-            comp.renamingInput = { nativeElement: mockElement } as any;
-            await new Promise((resolve) => setTimeout(resolve, 0));
 
-            expect(mockElement.focus).toHaveBeenCalledOnce();
+            // When renaming, the concrete template renders the #renamingInput element which the
+            // viewChild signal resolves to. The effect's setTimeout(0) then focuses it.
+            const renamingInput = internals(comp).renamingInput();
+            expect(renamingInput).toBeDefined();
+            const focusSpy = vi.spyOn(renamingInput!.nativeElement as HTMLElement, 'focus');
+
+            vi.runAllTimers();
+
+            expect(focusSpy).toHaveBeenCalledOnce();
         });
 
-        it('should not focus input when isBeingRenamed changes to false', fakeAsync(() => {
-            const mockElement = { focus: jest.fn() };
-            comp.renamingInput = { nativeElement: mockElement } as any;
+        it('should not focus input when isBeingRenamed changes to false', () => {
+            vi.useFakeTimers();
+            const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus');
             fixture.componentRef.setInput('isBeingRenamed', false);
             fixture.detectChanges();
-            tick(10);
 
-            expect(mockElement.focus).not.toHaveBeenCalled();
-        }));
+            // No #renamingInput is rendered when not renaming, so nothing is focused.
+            expect(internals(comp).renamingInput()).toBeUndefined();
 
-        it('should handle missing renamingInput', fakeAsync(() => {
-            comp.renamingInput = undefined as any;
+            vi.runAllTimers();
 
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
+
+        it('should handle missing renamingInput', () => {
+            vi.useFakeTimers();
+
+            // isBeingRenamed stays false from beforeEach, so the viewChild never resolves; the
+            // effect's guard must short-circuit without throwing.
+            expect(internals(comp).renamingInput()).toBeUndefined();
             expect(() => {
-                fixture.componentRef.setInput('isBeingRenamed', true);
+                fixture.componentRef.setInput('isBeingRenamed', false);
                 fixture.detectChanges();
-                tick(10);
+                vi.runAllTimers();
             }).not.toThrow();
-        }));
+        });
     });
 
     describe('setRenamingNode', () => {
         it('should emit onSetRenamingNode and stop propagation', () => {
-            const emitSpy = jest.spyOn(comp.onSetRenamingNode, 'emit');
-            const event = { stopPropagation: jest.fn() };
+            const emitSpy = vi.spyOn(comp.onSetRenamingNode, 'emit');
+            const event = { stopPropagation: vi.fn() };
 
             comp.setRenamingNode(event);
 
@@ -77,8 +109,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
     describe('clearRenamingNode', () => {
         it('should emit onClearRenamingNode and stop propagation', () => {
-            const emitSpy = jest.spyOn(comp.onClearRenamingNode, 'emit');
-            const event = { stopPropagation: jest.fn() };
+            const emitSpy = vi.spyOn(comp.onClearRenamingNode, 'emit');
+            const event = { stopPropagation: vi.fn() };
 
             comp.clearRenamingNode(event);
 
@@ -89,7 +121,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
     describe('renameNode', () => {
         it('should emit onRenameNode when value is different and isBeingRenamed', () => {
-            const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
+            const emitSpy = vi.spyOn(comp.onRenameNode, 'emit');
             fixture.componentRef.setInput('isBeingRenamed', true);
             fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
@@ -100,7 +132,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         });
 
         it('should not emit when value is empty', () => {
-            const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
+            const emitSpy = vi.spyOn(comp.onRenameNode, 'emit');
             fixture.componentRef.setInput('isBeingRenamed', true);
             fixture.detectChanges();
             const event = { target: { value: '' } };
@@ -111,7 +143,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         });
 
         it('should not emit when isBeingRenamed is false', () => {
-            const emitSpy = jest.spyOn(comp.onRenameNode, 'emit');
+            const emitSpy = vi.spyOn(comp.onRenameNode, 'emit');
             fixture.componentRef.setInput('isBeingRenamed', false);
             fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
@@ -122,8 +154,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
         });
 
         it('should emit onClearRenamingNode when value equals item text', () => {
-            const clearSpy = jest.spyOn(comp.onClearRenamingNode, 'emit');
-            const renameSpy = jest.spyOn(comp.onRenameNode, 'emit');
+            const clearSpy = vi.spyOn(comp.onClearRenamingNode, 'emit');
+            const renameSpy = vi.spyOn(comp.onRenameNode, 'emit');
             fixture.componentRef.setInput('isBeingRenamed', true);
             fixture.detectChanges();
             const event = { target: { value: 'test.ts' } };
@@ -137,8 +169,8 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
     describe('deleteNode', () => {
         it('should emit onDeleteNode and stop propagation', () => {
-            const emitSpy = jest.spyOn(comp.onDeleteNode, 'emit');
-            const event = { stopPropagation: jest.fn() };
+            const emitSpy = vi.spyOn(comp.onDeleteNode, 'emit');
+            const event = { stopPropagation: vi.fn() };
 
             comp.deleteNode(event);
 
@@ -149,9 +181,9 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
 
     describe('inputs', () => {
         it('should have default values for boolean inputs', () => {
-            expect(comp.hasError()).toBeFalse();
-            expect(comp.hasUnsavedChanges()).toBeFalse();
-            expect(comp.isBeingRenamed()).toBeFalse();
+            expect(comp.hasError()).toBe(false);
+            expect(comp.hasUnsavedChanges()).toBe(false);
+            expect(comp.isBeingRenamed()).toBe(false);
         });
 
         it('should accept item input', () => {

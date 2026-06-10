@@ -222,7 +222,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // timeout can fire under multi-node CI load while the request is still in flight,
             // even though the overlay would render seconds later.
             const dashboardResponse = page
-                .waitForResponse((resp) => resp.url().includes(`api/core/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
+                .waitForResponse((resp) => resp.url().includes(`api/course/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
                 .catch(() => undefined);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
             await dashboardResponse;

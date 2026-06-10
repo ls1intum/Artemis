@@ -3,7 +3,7 @@ import { SearchableEntityItemComponent } from './searchable-entity-item.componen
 import { SearchableEntity } from '../../../models/searchable-entity.model';
 import { faCube } from '@fortawesome/free-solid-svg-icons';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
