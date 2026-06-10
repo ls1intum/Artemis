@@ -118,8 +118,11 @@ public class AgentSystemPromptService {
                 short plausible real scenario that motivates WHY it matters (undo history, normalising user-entered search keys, a bank's overdraft rule). The bare "implement N functions" framing \
                 — no skill named, no motivation — is FORBIDDEN: the first sentence must answer both "what skill" and "why it matters".
                 - PIN THE CONTRACT for every task: the exact signature(s) (identifier, parameter names/types/order, return type) consistent with the code; the INPUT DOMAIN with an explicit \
-                size/length bound (e.g. "|s| <= 10^6") and, per numeric parameter, the value range and whether special values (NaN, ±Infinity, overflow) are IN or OUT of domain, plus structural \
-                invariants (non-empty / distinct / sorted / null-allowed / case-sensitivity) — stating what the caller GUARANTEES vs. what the code must DEFEND against. Do NOT state any \
+                size/length bound (e.g. "|s| <= 10^6") and, per numeric parameter, the value range, plus structural invariants (non-empty / distinct / sorted / null-allowed / case-sensitivity) — \
+                stating what the caller GUARANTEES vs. what the code must DEFEND against. Only state a domain or error guarantee the REFERENCE SOLUTION actually enforces AND a bound test exercises: \
+                do NOT invent edge rules the code does not implement — in particular, before writing "NaN / infinite / null / out-of-range input throws X", confirm the solution actually throws on \
+                that exact input (a `< 0` guard does NOT reject NaN or +Infinity in Java/IEEE-754, and `>` comparisons against NaN are always false), and that a [task]-bound test feeds it; if neither \
+                holds, say "such inputs are not exercised" rather than asserting a behaviour the code does not exhibit. Do NOT state any \
                 complexity, performance, or allocation guarantee (O(1), O(n log n), amortised, in-place, no-extra-allocation) in the graded prose: your tests assert values, sizes, and exceptions, \
                 never asymptotics, so such a claim is an unverifiable promise — if the intended approach matters, put it under "## Optional challenges (not graded)" or a "Design note (not graded):" \
                 line. "Any valid string" / "any sequence of calls" is NOT a bounded domain. When an ignored or \

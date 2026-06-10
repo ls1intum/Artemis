@@ -219,6 +219,17 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void build_forbidsStatingDomainGuaranteesTheSolutionDoesNotEnforce() {
+        // Loop-4 regression: the "declare NaN/Infinity in/out of domain" hardening backfired — the model invented a "NaN throws IllegalArgumentException" rule a `< 0` guard
+        // provably
+        // does NOT enforce in IEEE-754, shipping a contract that is both untested and false. The PROMISE->SOLUTION-CODE check must require grounding every domain/error guarantee
+        // in
+        // what the reference solution actually does.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("the REFERENCE SOLUTION actually enforces").contains("does NOT reject NaN");
+    }
+
+    @Test
     void build_forbidsAddingOrStrippingParensOnTestNames() {
         // The binding resolves by exact string match against the framework-reported test name, so "tidying" a bare name to name() (or vice versa) silently grades it 0. This is the
         // root cause of the user-reported "()" confusion, so pin the explicit do-not-touch-parens instruction.
