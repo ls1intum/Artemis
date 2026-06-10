@@ -45,8 +45,13 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
         const [domainType, domainValue] = domain;
         // Release the subscription of the previous domain — this service is a root singleton, so a leftover
         // subscription would keep the previous participation's shared submission state observed forever and
-        // prevent its websocket teardown.
+        // prevent its websocket teardown. Afterwards ask the submission service to release the shared state
+        // of the previous participation, which only happens once no other component observes it anymore.
+        const previousParticipationId = this.participationId;
         this.submissionSubscription?.unsubscribe();
+        if (previousParticipationId) {
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(previousParticipationId);
+        }
         // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
         if (domainType === DomainType.PARTICIPATION) {
             this.participationId = domainValue.id;
