@@ -163,7 +163,9 @@ public class ParticipationDeletionService {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }
                 catch (Exception ex) {
-                    log.error("Could not delete repository: {}", ex.getMessage());
+                    // Keep the deletion best-effort (the participation must still be deleted), but log the full exception:
+                    // a failed repository deletion strands a broken repository on disk that needs to be diagnosed.
+                    log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
                 }
             }
             // delete local repository cache
