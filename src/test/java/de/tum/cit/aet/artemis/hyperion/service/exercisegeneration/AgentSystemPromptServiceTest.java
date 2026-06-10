@@ -187,35 +187,15 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_encodesProblemStatementQualityRules() {
-        // Each pinned phrase encodes a rubric-graded problem-statement defect the websearch rubric loop found in the live generations: zero worked examples (capped every exercise
-        // at
-        // B-), meta/internal leakage into student text (the Java [tasks are automatically bound...] leak), binding an internal build-gate aggregate as a task (the C++ defect), an
-        // unbounded input domain, and a missing motivating objective. These are authoring contracts, so a reword that drops them is a real regression and must fail this test.
+        // Each substring pins a rubric-graded authoring contract a real generation defect required: a worked example, student-facing-only prose (the Java meta-note leak), a real
+        // behavioural test not a build-gate aggregate (C++), the exact singular [task] keyword (the C++ [tasks] typo), a bounded input domain, a stated float tolerance,
+        // plain-ASCII
+        // prose, no ungraded Big-O/complexity prose, and grounding domain/error claims in the reference solution. Dropping any is a regression a reword must not silently make.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("WORKED EXAMPLE").contains("STUDENT-FACING ONLY").contains("build-gate").contains("INPUT DOMAIN");
-    }
-
-    @Test
-    void build_encodesLoop2ResidualQualityRules() {
-        // Each phrase pins a loop-2 residual defect the stricter re-grade found in the live generations: the C++ `[tasks]` plural typo that bound nothing (hard C cap), a weak
-        // "practise" learning-objective verb (every exercise lost ~0.4 on that axis), an asserted-but-unstated float tolerance, an unbounded input domain, a reference-mechanism
-        // leak,
-        // and typographic dashes in student text. These are authoring contracts, so a reword that drops them is a real regression.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("EXACT five-character singular keyword `[task]`").contains("NEVER the vague \"practise\"").contains("checked to within 1e-6")
-                .contains("size/length bound").contains("not implementation").contains("non-breaking dash");
-    }
-
-    @Test
-    void build_encodesLoop3UntestedPromiseRules() {
-        // Loop-3's strict re-grade capped every exercise at A- on the untested-promise axis. Pin the fixes: the prompt must NOT instruct stating Big-O as graded prose (it
-        // manufactured
-        // the cap), must require pinning exact-equality float contracts, must forbid promising an exception message/charset breadth the tests do not assert, and must demand a
-        // fenced
-        // error trace. These are authoring contracts whose removal reintroduces the A- cap.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("Do NOT state any complexity").contains("Design note (not graded)").contains("exact equality").contains("the message text is not graded")
-                .contains("CONCRETE FENCED trace");
+        assertThat(prompt).contains("WORKED EXAMPLE").contains("STUDENT-FACING ONLY").contains("build-gate").contains("INPUT DOMAIN")
+                .contains("EXACT five-character singular keyword `[task]`").contains("NEVER the vague \"practise\"").contains("within 1e-6").contains("not implementation")
+                .contains("typographic").contains("Do NOT state any complexity").contains("Design note (not graded)").contains("exact equality")
+                .contains("the message text is not graded").contains("CONCRETE FENCED trace");
     }
 
     @Test

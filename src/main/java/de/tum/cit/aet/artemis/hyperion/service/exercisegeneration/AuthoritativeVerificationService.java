@@ -80,15 +80,11 @@ public class AuthoritativeVerificationService {
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task\\]\\[[^\\]]*\\]\\((.*)\\)");
 
     /**
-     * Matches a line shaped exactly like a task binding — {@code [keyword][title](names)} — capturing the keyword, so a near-miss such as {@code [tasks]} (plural) or
-     * {@code [Task]}
+     * Matches a line shaped exactly like a task binding {@code [keyword][title](names)}, capturing the keyword, so a near-miss such as {@code [tasks]} (plural) or {@code [Task]}
      * (wrong case) can be caught. The parser only honours the literal lowercase singular {@code [task]}; any other keyword renders as plain student-facing text and binds NO test,
-     * so
-     * a graded requirement is silently dropped (and the raw test name leaks into the prose). The {@code [x][y](z)} shape — two bracketed groups followed by parentheses — is
-     * specific
-     * to the task syntax (a Markdown reference link is {@code [text][id]} with no parens; an inline link is {@code [text](url)} with one bracket group), so a near-miss is
-     * virtually
-     * always a typo'd binding rather than legitimate prose.
+     * silently dropping a graded requirement and leaking the raw test name. The two-bracket-then-parens shape is specific to the task syntax (a Markdown ref link
+     * {@code [text][id]}
+     * has no parens; an inline link {@code [text](url)} has one bracket group), so a near-miss is virtually always a typo, not prose.
      */
     private static final Pattern TASK_LIKE_BINDING = Pattern.compile("\\[(\\w+)\\]\\[[^\\]]*\\]\\([^)]*\\)");
 
@@ -322,8 +318,8 @@ public class AuthoritativeVerificationService {
                     + "appear as a checklist for students.");
         }
 
-        // Near-miss keyword gate: a line shaped like a task binding but using the wrong keyword (e.g. [tasks] plural, [Task]) is silently ignored by the parser, so its tests bind
-        // nothing and the raw test names leak into student text. Reject it explicitly — the recovery loop then surfaces the exact wrong keyword so the agent fixes the typo.
+        // Reject a task-shaped line using the wrong keyword (e.g. [tasks], [Task]); the recovery loop then surfaces the exact keyword so the agent fixes the typo. See
+        // TASK_LIKE_BINDING.
         List<String> malformedTaskKeywords = malformedTaskKeywords(problemStatement);
         boolean taskKeywordsWellFormed = malformedTaskKeywords.isEmpty();
         if (!taskKeywordsWellFormed) {
@@ -497,13 +493,7 @@ public class AuthoritativeVerificationService {
         return taskBindingsResolve;
     }
 
-    /**
-     * The distinct wrong keywords used on lines shaped like a task binding ({@code [keyword][title](names)}) where the keyword is not the literal lowercase singular {@code task} —
-     * a
-     * near-miss such as {@code [tasks]} or {@code [Task]} that the parser ignores, silently binding no test and leaking the raw test names into student prose. Returns an empty
-     * list
-     * when every task-shaped line uses the correct keyword.
-     */
+    /** The distinct non-{@code [task]} keywords used on task-binding-shaped lines; empty when every such line uses {@code [task]}. See {@link #TASK_LIKE_BINDING}. */
     private static List<String> malformedTaskKeywords(String problemStatement) {
         Matcher matcher = TASK_LIKE_BINDING.matcher(problemStatement);
         List<String> wrongKeywords = new ArrayList<>();

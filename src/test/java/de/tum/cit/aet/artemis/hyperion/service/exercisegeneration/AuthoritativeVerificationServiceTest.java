@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
@@ -457,16 +458,18 @@ class AuthoritativeVerificationServiceTest {
         assertThat(result.accepted()).isTrue();
     }
 
-    @Test
-    void shouldRejectWhenATaskLineUsesTheWrongKeyword() {
-        // The live C++ defect: the agent wrote [tasks] (plural) on some lines. The parser only honours the literal lowercase singular [task], so a near-miss silently binds nothing
-        // and leaks the raw test name — even though one well-formed [task] line satisfies the "has at least one binding" gate. The near-miss gate must reject it and name the
-        // keyword.
+    // The live C++ defect: the agent wrote [tasks] (plural) on some lines. The parser only honours the literal lowercase singular [task], so a near-miss silently binds nothing and
+    // leaks the raw test name — even though one well-formed [task] line satisfies the "has at least one binding" gate. Cover the wrong-case variants too ([Task]/[TASK]), so the
+    // gate's
+    // case-sensitive match is pinned (an equals -> equalsIgnoreCase mutant would accept them).
+    @ParameterizedTest
+    @ValueSource(strings = { "tasks", "Task", "TASK" })
+    void shouldRejectWhenATaskLineUsesTheWrongKeyword(String wrongKeyword) {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray)\n[tasks][Sort with duplicates](sortsArrayWithDuplicates)\n";
+        String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray)\n[" + wrongKeyword + "][Sort with duplicates](sortsArrayWithDuplicates)\n";
         VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
-        assertThat(result.accepted()).as("a [tasks]-plural near-miss must be rejected even though a valid [task] line is present").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("wrong keyword") && r.contains("tasks"));
+        assertThat(result.accepted()).as("a [%s] near-miss must be rejected even though a valid [task] line is present", wrongKeyword).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("wrong keyword") && r.contains(wrongKeyword));
     }
 
     @Test
