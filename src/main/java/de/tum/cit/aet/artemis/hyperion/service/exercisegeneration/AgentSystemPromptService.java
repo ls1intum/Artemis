@@ -119,27 +119,36 @@ public class AgentSystemPromptService {
                 — no skill named, no motivation — is FORBIDDEN: the first sentence must answer both "what skill" and "why it matters".
                 - PIN THE CONTRACT for every task: the exact signature(s) (identifier, parameter names/types/order, return type) consistent with the code; the INPUT DOMAIN with an explicit \
                 size/length bound (e.g. "|s| <= 10^6") and, per numeric parameter, the value range and whether special values (NaN, ±Infinity, overflow) are IN or OUT of domain, plus structural \
-                invariants (non-empty / distinct / sorted / null-allowed / case-sensitivity) — stating what the caller GUARANTEES vs. what the code must DEFEND against; and the expected \
-                time/space complexity where the intended approach matters ("push/pop/top are O(1)"). "Any valid string" / "any sequence of calls" is NOT a bounded domain. When an ignored or \
+                invariants (non-empty / distinct / sorted / null-allowed / case-sensitivity) — stating what the caller GUARANTEES vs. what the code must DEFEND against. Do NOT state any \
+                complexity, performance, or allocation guarantee (O(1), O(n log n), amortised, in-place, no-extra-allocation) in the graded prose: your tests assert values, sizes, and exceptions, \
+                never asymptotics, so such a claim is an unverifiable promise — if the intended approach matters, put it under "## Optional challenges (not graded)" or a "Design note (not graded):" \
+                line. "Any valid string" / "any sequence of calls" is NOT a bounded domain. When an ignored or \
                 normalised set follows a named predicate, define it BY NAME ("whitespace = Python str.isspace()") — never an undefined "etc.". State the POSTCONDITION for every boundary and \
                 invalid-input case your tests assert — the exact result for empty/min/max/single/duplicate/negative inputs, and for invalid input either the EXACT exception type or an explicit \
                 "out of domain" note. Where prose could admit more than one answer (ordering, tie-breaks, rounding/tolerance, set-vs-list, canonical form), pin the single form the test checks. \
                 Specify BEHAVIOUR, not implementation: say WHAT the output must be ("comparison is case-insensitive for ASCII letters"); never name an internal reference-solution mechanism or \
-                helper as the requirement ("case folding via `unicode.ToLower`"). Then make a TWO-WAY final pass: (a) PROMISE→TEST — for every postcondition and breadth claim in your prose ("all \
-                Unicode whitespace", "never throws", "does not modify the input"), confirm a bound test asserts it on a representative input; if none does, ADD such a test or NARROW the prose to \
-                exactly what the tests probe — never promise breadth the tests do not check; (b) TEST→PROSE — read every assertion in tests/ and surface in the statement every numeric TOLERANCE, \
-                ordering, and rounding the grader applies (if a test compares a float within a delta, e.g. `assertEquals(expected, actual, 1e-6)`, state "checked to within 1e-6"); never leave an \
-                asserted delta unstated.
+                helper as the requirement ("case folding via `unicode.ToLower`"). Then make a TWO-WAY final pass: (a) PROMISE→TEST — for every postcondition and breadth claim in your prose, \
+                confirm a bound test asserts it on a representative input; if none does, ADD such a test or NARROW/DROP the claim. In particular: never write "with a clear/appropriate message" \
+                unless a test asserts a specific message substring (if it only checks the exception TYPE, write "raises TypeError; the message text is not graded"); never claim "does not modify \
+                the input" or "returns a new object" unless a test asserts input identity/equality after the call; never promise a charset/numeric breadth ("all Unicode whitespace", "the full \
+                32-bit range") wider than the values the tests actually feed. (b) TEST→PROSE — read every assertion in tests/ and surface every numeric TOLERANCE the grader applies: if a test \
+                compares a float within a delta (`assertEquals(expected, actual, 1e-6)`) state "checked to within 1e-6"; if it uses delta 0.0 or no delta on doubles, that is EXACT equality — state \
+                "compared for exact equality; expected values are exactly representable and no rounding tolerance is granted". Never leave a float comparison contract implicit.
                 - SHOW WORKED EXAMPLES in fenced, language-tagged blocks: a concrete literal input mapped to the exact expected output in the real format the test asserts (e.g. \
                 `push(2); push(7); pop() -> 7; peek() -> 2`, or `reverse_string("hello") -> "olleh"`). Place each example NEXT TO the [task] it illustrates (or label which task it covers) — do not \
                 collect them all into one detached section — and provide one for EACH distinct edge/error class the tests assert (e.g. non-positive deposit AND non-positive withdraw AND \
-                overdraw), not just one representative. Every example value must be COMPUTED CORRECTLY and agree with your tests and reference solution — a wrong example is worse than none. For a \
-                non-obvious case append a brief because-clause stating the operative rule ("-> reversal is code-point-wise, so the combining mark detaches"); do not over-explain trivial cases. An \
-                abstract restatement ("returns the reversed string") is NOT an example.
+                overdraw), not just one representative. Every error path a [task] binds must appear as a CONCRETE FENCED trace in the same block (`reverse_string(123)  # raises TypeError`, \
+                `Stack s; s.pop(); // throws std::out_of_range`) — an inline prose "would throw" sentence does NOT count; when the domain names a numeric bound, include a boundary-value example \
+                (INT_MIN/INT_MAX, the empty/min/max case, the exact-boundary success). Every example value must be COMPUTED CORRECTLY and agree with your tests and reference solution — a wrong \
+                example is worse than none. For a non-obvious case append a brief because-clause stating the operative rule ("-> reversal is code-point-wise, so the combining mark detaches"); do \
+                not over-explain trivial cases. An abstract restatement ("returns the reversed string") is NOT an example.
                 - STRUCTURE consistently: a single top-level `#` title, then the intro (objective + context), then the contract/requirements as Markdown lists with every identifier/literal in \
                 inline `code`, then a `## Tasks` section holding the [task] lines; put any non-graded extension under `## Optional challenges (not graded)`. Descend heading levels one at a time \
                 (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code. Use only the plain ASCII hyphen-minus (`-`) in prose and [task] titles — never a \
-                typographic or non-breaking dash (U+2011/U+2013/U+2014); restrict non-ASCII characters to data literals inside example/code blocks where the value itself requires them.
+                typographic or non-breaking dash (U+2011/U+2013/U+2014) — INCLUDING in compound modifiers (`32-bit`, `non-negative`, `1-indexed`, `case-sensitive`, `left-to-right`) and list-item \
+                separators. As the FINAL step before submit, scan the whole statement for any byte outside 0x00–0x7F and replace it (except inside fenced code/example blocks, and except the \
+                parenthesised names inside a [task] line, which stay byte-identical to the verify output where a real test name legitimately contains spaces or punctuation — never quote, trim, or \
+                collapse them); restrict non-ASCII characters to data literals inside example/code blocks where the value itself requires them.
                 - When the exercise targets MULTIPLE classes, an interface, or a design pattern, add EITHER a precise API/signature block OR a syntactically valid @startuml/@enduml class diagram \
                 (bind each member with color:testsColor(exactTestName) using the same verbatim names as your [task] lines). For a single-function exercise do NOT add a diagram — a gratuitous \
                 diagram is itself a defect.

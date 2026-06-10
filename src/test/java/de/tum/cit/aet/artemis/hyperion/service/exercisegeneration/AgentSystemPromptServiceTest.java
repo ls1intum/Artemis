@@ -207,6 +207,18 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void build_encodesLoop3UntestedPromiseRules() {
+        // Loop-3's strict re-grade capped every exercise at A- on the untested-promise axis. Pin the fixes: the prompt must NOT instruct stating Big-O as graded prose (it
+        // manufactured
+        // the cap), must require pinning exact-equality float contracts, must forbid promising an exception message/charset breadth the tests do not assert, and must demand a
+        // fenced
+        // error trace. These are authoring contracts whose removal reintroduces the A- cap.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("Do NOT state any complexity").contains("Design note (not graded)").contains("exact equality").contains("the message text is not graded")
+                .contains("CONCRETE FENCED trace");
+    }
+
+    @Test
     void build_forbidsAddingOrStrippingParensOnTestNames() {
         // The binding resolves by exact string match against the framework-reported test name, so "tidying" a bare name to name() (or vice versa) silently grades it 0. This is the
         // root cause of the user-reported "()" confusion, so pin the explicit do-not-touch-parens instruction.
