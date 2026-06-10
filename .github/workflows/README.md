@@ -28,6 +28,7 @@ ci.yml                                                            (single entry 
 │   ADVISORY — runs for signal, never blocks merge:
 ├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
+├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
@@ -145,7 +146,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
-| `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
+| `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
 
 ## Concurrency model

@@ -241,7 +241,7 @@ jobs:
           script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/download-artifact@v8  # same run: no run-id needed
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: Server JaCoCo XML
@@ -267,33 +267,12 @@ jobs:
           CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
           HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
-        run: |
-          set -o pipefail
-          # PR head is checked out, so the script reads the PR's own source/spec files for accurate
-          # per-file Lines/Expects natively. --changed-files (from the API) selects the rows.
-          ARGS=(--skip-tests --print --changed-files "$CHANGED_FILES")
-          if [ "$HAS_CLIENT" = "true" ] && [ "$HAS_SERVER" != "true" ]; then
-            ARGS+=(--client-only)
-          elif [ "$HAS_SERVER" = "true" ] && [ "$HAS_CLIENT" != "true" ]; then
-            ARGS+=(--server-only)
-          fi
-          if [ -n "$CLIENT_MODULES" ]; then ARGS+=(--client-modules "$CLIENT_MODULES"); fi
-          if [ -n "$SERVER_MODULES" ]; then ARGS+=(--server-modules "$SERVER_MODULES"); fi
-          echo "Running: node local-pr-coverage.mjs ${ARGS[*]}"
-          if ! COVERAGE_OUTPUT=$(node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs "${ARGS[@]}" 2>&1); then
-            echo "$COVERAGE_OUTPUT"
-            echo "success=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "$COVERAGE_OUTPUT"
-          echo "success=true" >> "$GITHUB_OUTPUT"
-          COVERAGE_TABLE=$(echo "$COVERAGE_OUTPUT" | sed -n '/^─/,/^─/p' | sed '1d;$d')
-          {
-            echo 'coverage_table<<COVERAGE_EOF'
-            echo "$COVERAGE_TABLE"
-            echo 'COVERAGE_EOF'
-          } >> "$GITHUB_OUTPUT"
+        # PR head is checked out, so the shared script reads the PR's own source for accurate
+        # per-file columns natively (no overlay — that's the fork path's problem, not this one).
+        run: .github/scripts/generate-coverage-table.sh
       - name: Update PR description with coverage
+        # Advisory poster: a transient PR-API blip must not turn this (non-gating) job red.
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -518,6 +497,7 @@ jobs:
       - bean-instantiations
       - e2e
       - codeql
+      - coverage-report
     runs-on: ubuntu-latest
     permissions:
       actions: read  # actions-timeline reads the run's jobs API
@@ -531,7 +511,7 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           # Everything except these is required (i.e. in all-required-ci-passed's needs).
-          ADVISORY: e2e codeql
+          ADVISORY: e2e codeql coverage-report
         run: |
           set -Eeuo pipefail
           icon() {

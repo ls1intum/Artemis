@@ -81,12 +81,8 @@ jobs:
           echo "No matching open PR; skipping coverage report."
           exit 0
 
-      # SECURITY (workflow_run pwn-request prevention): this job runs in the base-repo context with
-      # `pull-requests: write`, so it must NEVER check out or execute PR/fork-controlled code. We
-      # check out the base repo's DEFAULT branch — the trusted coverage tooling — and run it against
-      # downloaded artifacts only. There is deliberately no `pnpm install` (its `postinstall` hook is
-      # fork-editable) and no `pnpm run` of a PR script. The changed-file list comes from the GitHub
-      # API below, not from a `git diff` of a checked-out PR tree.
+      # Trusted default branch only (never the PR head) — see the SECURITY note at the top of the
+      # file. Changed files come from the API below, not a git diff of a checked-out PR tree.
       - name: Checkout coverage tooling (trusted default branch — never the PR head)
         uses: actions/checkout@v6
         if: steps.find-pr.outputs.result != ''
@@ -106,13 +102,10 @@ jobs:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
         run: |
           set -uo pipefail
-          # The coverage table's per-file Lines/Expects columns are counted by reading source and
-          # spec files. To count the PR's code (not the trusted default branch we checked out)
-          # WITHOUT re-introducing the pwn-request, overlay ONLY the source trees from the PR head
-          # as DATA. The coverage tooling under supporting_scripts/ is NOT overlaid and is what
-          # actually executes; the overlaid files are only read as text (no install, nothing run
-          # from the PR tree). Best-effort: on any failure the counts fall back to default-branch
-          # values, which is no worse than skipping this step.
+          # Overlay ONLY the PR head's source trees as DATA so the per-file Lines/Expects columns
+          # count the PR's code, not the default branch we run. The tooling under supporting_scripts/
+          # is never overlaid and is what executes; these files are read as text only. Best-effort —
+          # on failure the counts fall back to default-branch values.
           if git fetch --depth=1 origin "pull/${PR_NUMBER}/head" 2>/dev/null \
              && git checkout FETCH_HEAD -- src/main/webapp src/main/java 2>/dev/null; then
             echo "Overlaid PR source for accurate line/expect counts."
@@ -136,17 +129,12 @@ jobs:
         continue-on-error: true
         with:
           name: Client Coverage Summaries
-          # upload-artifact@v6 strips the common ancestor of the uploaded paths.
-          # ci-test.yml's uploader ships build/test-results/vitest/coverage/coverage-summary.json
-          # (the whole client now runs on Vitest), so the archive contains
-          # vitest/coverage/coverage-summary.json. Restore the stripped ancestor here so the file
-          # lands where supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs reads it.
+          # Archive holds vitest/coverage/coverage-summary.json; download under build/test-results/
+          # so it lands where the coverage script reads it.
           path: build/test-results/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      # `node` only — the coverage script imports just Node builtins + a local utils.mjs (zero
-      # third-party deps), so there is no `pnpm install` (and thus no fork-editable postinstall).
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         uses: actions/setup-node@v6
@@ -162,42 +150,12 @@ jobs:
           CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
           HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
-        run: |
-          set -o pipefail
-          # --changed-files (from the API) replaces the git-diff detection, so the trusted script
-          # never needs the PR tree. --skip-tests means it only reads the downloaded coverage data.
-          ARGS=(--skip-tests --print --changed-files "$CHANGED_FILES")
-          if [ "$HAS_CLIENT" = "true" ] && [ "$HAS_SERVER" != "true" ]; then
-            ARGS+=(--client-only)
-          elif [ "$HAS_SERVER" = "true" ] && [ "$HAS_CLIENT" != "true" ]; then
-            ARGS+=(--server-only)
-          fi
-          if [ -n "$CLIENT_MODULES" ]; then
-            ARGS+=(--client-modules "$CLIENT_MODULES")
-          fi
-          if [ -n "$SERVER_MODULES" ]; then
-            ARGS+=(--server-modules "$SERVER_MODULES")
-          fi
-
-          echo "Running: node local-pr-coverage.mjs ${ARGS[*]}"
-          if ! COVERAGE_OUTPUT=$(node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs "${ARGS[@]}" 2>&1); then
-            echo "$COVERAGE_OUTPUT"
-            echo "success=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "$COVERAGE_OUTPUT"
-          echo "success=true" >> "$GITHUB_OUTPUT"
-
-          # Extract content between the script's separator lines (rows of ─).
-          COVERAGE_TABLE=$(echo "$COVERAGE_OUTPUT" | sed -n '/^─/,/^─/p' | sed '1d;$d')
-          {
-            echo 'coverage_table<<COVERAGE_EOF'
-            echo "$COVERAGE_TABLE"
-            echo 'COVERAGE_EOF'
-          } >> "$GITHUB_OUTPUT"
+        run: .github/scripts/generate-coverage-table.sh
 
       - name: Update PR description with coverage
         if: steps.find-pr.outputs.result != ''
+        # Advisory poster: a transient PR-API blip must not turn this (non-gating) job red.
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
