@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/foundation/util/global.utils';
@@ -28,13 +28,12 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
-    private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
 
     newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
     isLoading: boolean;
-    course: Course;
+    readonly course = signal<Course>(undefined!);
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -51,13 +50,12 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             .subscribe({
                 next: (courseResult) => {
                     if (courseResult.body) {
-                        this.course = courseResult.body;
+                        this.course.set(courseResult.body);
                         this.newTutorialGroupsConfiguration = {} as TutorialGroupConfigurationDTO;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
@@ -66,7 +64,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
         this.newTutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
         this.newTutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
-            .create(this.newTutorialGroupsConfiguration, this.course.id!, period ?? [])
+            .create(this.newTutorialGroupsConfiguration, this.course().id!, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -75,9 +73,9 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             )
             .subscribe({
                 next: (resp) => {
-                    this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
-                    this.courseStorageService.updateCourse(this.course);
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
+                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
+                    this.courseStorageService.updateCourse(this.course());
+                    this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

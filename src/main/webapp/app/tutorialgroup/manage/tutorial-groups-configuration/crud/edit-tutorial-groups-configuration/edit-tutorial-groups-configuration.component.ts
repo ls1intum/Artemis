@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,14 +26,13 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
-    private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupConfigurationDTO;
     formData: TutorialGroupsConfigurationFormData;
-    course: Course;
+    readonly course = signal<Course>(undefined!);
     tutorialGroupConfigurationId: number;
 
     ngOnInit(): void {
@@ -43,8 +42,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                 take(1),
                 switchMap(([params, { course }]) => {
                     this.tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
-                    this.course = course;
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
+                    this.course.set(course);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
                 }),
                 finalize(() => (this.isLoading = false)),
                 takeUntil(this.ngUnsubscribe),
@@ -64,8 +63,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 
     ngOnDestroy(): void {
@@ -80,21 +78,20 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
         this.tutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
         this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
-            .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
+            .update(this.course().id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
+                    this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (resp) => {
-                    this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
-                    this.courseStorageService.updateCourse(this.course);
+                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
+                    this.courseStorageService.updateCourse(this.course());
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            })
-            .add(() => this.cdr.detectChanges());
+            });
     }
 }
