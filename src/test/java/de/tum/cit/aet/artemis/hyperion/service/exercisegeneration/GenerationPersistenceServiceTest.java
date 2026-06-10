@@ -166,7 +166,8 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void persist_normalizesCheckoutPlaceholders_inEveryCommittedRepository_soNoHarnessShipsRawPlaceholders() throws Exception {
-        // The agent's sandbox harness can carry (or re-introduce) raw ${...} checkout placeholders — most visibly the Haskell run.sh, whose ${studentParentWorkingDirectoryName}/
+        // The agent's sandbox harness can carry (or re-introduce) raw ${...} checkout placeholders \u2014 most visibly the Haskell run.sh, whose
+        // ${studentParentWorkingDirectoryName}/
         // ${solutionWorkingDirectory} expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the build so no test case syncs. The persist must re-run the same
         // production placeholder substitution exercise creation applies, on EACH committed repository's working copy, so the committed harness is byte-identical to an
         // instructor-created one. We assert the normalization happens for all three repositories (template, solution, tests).
@@ -185,7 +186,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // REAL entities (not mocks) so the assertion proves the persisted WEIGHT actually became 0 — not merely that setWeight was invoked. The tests-build synced a C/C++ FACT
+        // REAL entities (not mocks) so the assertion proves the persisted WEIGHT actually became 0 \u2014 not merely that setWeight was invoked. The tests-build synced a C/C++
+        // FACT
         // report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
@@ -197,7 +199,7 @@ class GenerationPersistenceServiceTest {
         // The build gate now grades for zero points (so the untouched compiling template scores 0%); the behaviour test is left graded.
         assertThat(buildGate.getWeight()).as("build gate zero-weighted").isEqualTo(0.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
-        // Exactly the build gate is written back — the unchanged behaviour case is not needlessly re-saved.
+        // Exactly the build gate is written back \u2014 the unchanged behaviour case is not needlessly re-saved.
         ArgumentCaptor<Iterable<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.forClass(Iterable.class);
         verify(testCaseRepository).saveAll(saved.capture());
         assertThat(saved.getValue()).containsExactly(buildGate);
@@ -217,7 +219,8 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        // BOTH gates from the COMPLETE set are zero-weighted — not just the one visible in the partial sync. A regression to "act on the first non-empty set" leaves compileSort at
+        // BOTH gates from the COMPLETE set are zero-weighted \u2014 not just the one visible in the partial sync. A regression to "act on the first non-empty set" leaves
+        // compileSort at
         // 1.0.
         assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
         assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
@@ -237,7 +240,7 @@ class GenerationPersistenceServiceTest {
         // The tests repo is the last committed; return the orphan-bearing tracked set only for it (template/solution have no orphans here).
         when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
 
-        // The sandbox-final tests tree the oracle validated: the agent's test plus the regenerated oracle (test.json kept, same path) — and the harness pom.xml.
+        // The sandbox-final tests tree the oracle validated: the agent's test plus the regenerated oracle (test.json kept, same path) \u2014 and the harness pom.xml.
         Map<String, String> producedTests = Map.of("test/de/test/StringsTest.java", "...", "test/de/test/test.json", "[]", "pom.xml", "<project/>");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), producedTests, "");
 
@@ -246,7 +249,7 @@ class GenerationPersistenceServiceTest {
         // The orphaned canonical sources (a different exercise's behaviour test and a stale structural test class) are deleted so they cannot run in real grading.
         verify(repositoryService).deleteFile(repository, "test/de/test/SortingExampleBehaviorTest.java");
         verify(repositoryService).deleteFile(repository, "test/de/test/OldClassTest.java");
-        // The immutable harness (pom.xml) is NEVER deleted as an orphan even though the sweep saw it — it is in producedFiles and harness-protected besides.
+        // The immutable harness (pom.xml) is NEVER deleted as an orphan even though the sweep saw it \u2014 it is in producedFiles and harness-protected besides.
         verify(repositoryService, never()).deleteFile(repository, "pom.xml");
         // A file the agent DID produce at the same path (test.json regenerated) is overwritten by the write path, not removed by the orphan sweep.
         verify(repositoryService, never()).deleteFile(repository, "test/de/test/test.json");
@@ -256,7 +259,8 @@ class GenerationPersistenceServiceTest {
     void persist_preservesScaffoldedBinary_neverDeletedAsOrphanNorRewritten(@org.junit.jupiter.api.io.TempDir java.nio.file.Path workingTree) throws Exception {
         // Gap 2: a Java PLAIN_GRADLE template/solution ships a binary gradle/wrapper/gradle-wrapper.jar the agent never edits. It cannot survive the UTF-8 String round-trip, so
         // the
-        // read-back EXCLUDES it from producedFiles — which makes it look like an orphan to the sweep. The persist must (a) NOT delete it (it is the byte-exact scaffolded original
+        // read-back EXCLUDES it from producedFiles \u2014 which makes it look like an orphan to the sweep. The persist must (a) NOT delete it (it is the byte-exact scaffolded
+        // original
         // already in the working tree) and (b) NOT rewrite it (it is absent from producedFiles), so it commits intact. A text source the agent produced is still written normally.
         java.nio.file.Path wrapperDir = workingTree.resolve("gradle/wrapper");
         byte[] wrapperBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };
@@ -291,7 +295,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // Defensive: a flaky read-back dropped the harness pom.xml from producedFiles. The orphan sweep must NOT delete it — a build/harness/manifest file is graded verbatim and
+        // Defensive: a flaky read-back dropped the harness pom.xml from producedFiles. The orphan sweep must NOT delete it \u2014 a build/harness/manifest file is graded verbatim
+        // and
         // immutable by contract, so a missing-from-extraction harness can corrupt the build but must never be silently wiped from the repository.
         Map<String, FileType> trackedTestFiles = Map.of("test/de/test/StringsTest.java", FileType.FILE, "pom.xml", FileType.FILE);
         when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
@@ -324,7 +329,7 @@ class GenerationPersistenceServiceTest {
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
-        // The template commit succeeds, but the solution commit then fails — the exact half-written scenario that must be surfaced rather than reported as success.
+        // The template commit succeeds, but the solution commit then fails \u2014 the exact half-written scenario that must be surfaced rather than reported as success.
         Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(repositoryService).commitChanges(any(), any());
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
@@ -335,18 +340,19 @@ class GenerationPersistenceServiceTest {
     }
 
     // ================================================================================================================================================================
-    // W3 — recovery must never regress a working exercise. persistRecoveryDraft routes a from-scratch target to the in-place default-branch persist (nothing to lose) and an adapt
+    // W3 \u2014 recovery must never regress a working exercise. persistRecoveryDraft routes a from-scratch target to the in-place default-branch persist (nothing to lose) and an
+    // adapt
     // target to an ISOLATED branch, leaving the live default branch byte-identical and triggering NO grading build of the broken draft.
     // ================================================================================================================================================================
 
     private final String jobId = "job-42";
 
-    /** All three repositories are empty (no tracked FILE) — a from-scratch target. */
+    /** All three repositories are empty (no tracked FILE) \u2014 a from-scratch target. */
     private void stubEmptyRepositories() {
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
     }
 
-    /** The given repository type already tracks a real source file — an adapt of an already-working exercise. */
+    /** The given repository type already tracks a real source file \u2014 an adapt of an already-working exercise. */
     private void stubAdaptTarget() {
         // The first getFiles() call in persistRecoveryDraft is the adapt probe (template); returning a tracked FILE there is enough to classify the whole run as adapt.
         when(repositoryService.getFiles(any())).thenReturn(Map.of("src/de/test/BankAccount.java", FileType.FILE));
@@ -365,7 +371,7 @@ class GenerationPersistenceServiceTest {
         assertThat(result.liveExerciseUntouched()).isFalse();
         assertThat(result.draftBranch()).isNull();
         verify(repositoryService, times(3)).commitChanges(any(), eq(user));
-        // The canonical tests build IS triggered and a version IS recorded — this is a brand-new exercise being authored, not a working one being protected.
+        // The canonical tests build IS triggered and a version IS recorded \u2014 this is a brand-new exercise being authored, not a working one being protected.
         verify(continuousIntegrationTriggerService).triggerBuild(any(), eq("hash-tests"), eq(RepositoryType.TESTS));
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
         // It must NOT divert to an isolated branch.
@@ -420,16 +426,33 @@ class GenerationPersistenceServiceTest {
     void persistRecoveryDraft_adaptIsolatedPushFailsMidMultiRepo_propagates_andNeverTouchesDefaultBranch() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         stubAdaptTarget();
-        // Template diverts fine, but the next isolated push (solution) blows up — the multi-repo half-write scenario. Because we never touch the default branch in adapt mode, this
+        // Template diverts fine, but the next isolated push (solution) blows up \u2014 the multi-repo half-write scenario. Because we never touch the default branch in adapt mode,
+        // this
         // can only ever half-write the ISOLATED branch (a throwaway draft), never half-regress the live exercise.
         when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-template")
                 .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
         assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class).hasMessageContaining("recovery draft");
-        // The live default branch was NEVER committed to, NEVER graded, NEVER versioned — the working exercise is intact despite the isolated-branch failure.
+        // The live default branch was NEVER committed to, NEVER graded, NEVER versioned \u2014 the working exercise is intact despite the isolated-branch failure.
         verify(repositoryService, never()).commitChanges(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    @Test
+    void normalizeTypography_replacesTypographicDashesAndSpacesWithAscii() {
+        // gpt-oss reliably leaks a non-breaking hyphen (U+2011) in compound modifiers ("non-negative") plus the occasional en/em dash and non-breaking space, which it keeps
+        // emitting
+        // even when the prompt forbids them. The deterministic persist-time pass must leave the student-facing statement pure ASCII regardless of model compliance, untouched
+        // elsewhere.
+        String produced = "Reject a non\u2011negative amount \u2013 see the deposit\u2014withdraw flow.";
+        String normalized = GenerationPersistenceService.normalizeTypography(produced);
+        assertThat(normalized).isEqualTo("Reject a non-negative amount - see the deposit-withdraw flow.");
+        assertThat(normalized.chars().allMatch(c -> c < 0x80)).as("the normalised statement is pure ASCII").isTrue();
+        // A statement already free of typographic punctuation is returned unchanged; null is tolerated.
+        String clean = "# Stack\nImplement push and pop.";
+        assertThat(GenerationPersistenceService.normalizeTypography(clean)).isEqualTo(clean);
+        assertThat(GenerationPersistenceService.normalizeTypography(null)).isNull();
     }
 }

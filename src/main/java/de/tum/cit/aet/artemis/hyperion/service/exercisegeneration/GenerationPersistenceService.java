@@ -240,8 +240,11 @@ public class GenerationPersistenceService {
                     + "partially saved — review it before using it. Cause: " + e.getMessage(), e);
         }
 
-        // 2. Update the problem statement if the agent changed it.
-        String producedProblemStatement = outcome.producedProblemStatement();
+        // 2. Update the problem statement if the agent changed it. Normalise typographic punctuation first: gpt-oss reliably emits a non-breaking hyphen (U+2011) in compound
+        // modifiers
+        // like "non-negative" and the occasional en/em dash, which it keeps producing even when the prompt forbids them — a deterministic post-pass guarantees the student-facing,
+        // accessibility-sensitive document is plain ASCII regardless of model compliance.
+        String producedProblemStatement = normalizeTypography(outcome.producedProblemStatement());
         if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
             try {
                 creationUpdateService.updateProblemStatement(exercise, producedProblemStatement, null);
@@ -445,5 +448,22 @@ public class GenerationPersistenceService {
         catch (RuntimeException e) {
             log.warn("Could not adjust build-gate test-case grading for generated exercise {} (a C/C++ template may grade >0% until reconfigured): {}", exerciseId, e.getMessage());
         }
+    }
+
+    /**
+     * Replaces the typographic punctuation the model leaks into the student-facing problem statement with the plain ASCII equivalents: any Unicode dash in the
+     * {@code U+2010..U+2015}
+     * range (most often the non-breaking hyphen {@code U+2011} in "non-negative") becomes a hyphen-minus, and the non-breaking / narrow-no-break spaces become a normal space.
+     * These
+     * are pure typography in prose; code spans in a problem statement are ASCII, so the substitution never changes a meaningful literal. Leaves all other characters untouched.
+     *
+     * @param problemStatement the produced problem statement (may be {@code null})
+     * @return the statement with typographic dashes/spaces normalised to ASCII, or {@code null} if the input was {@code null}
+     */
+    static String normalizeTypography(String problemStatement) {
+        if (problemStatement == null) {
+            return null;
+        }
+        return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ');
     }
 }
