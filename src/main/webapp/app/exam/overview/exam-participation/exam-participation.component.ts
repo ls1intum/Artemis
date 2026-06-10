@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -105,7 +105,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -186,6 +185,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
     readonly loadingExam = signal<boolean>(undefined!);
+    // Re-read by the time-based isOver()/isGracePeriodOver() getters; bumped when wall-clock state must re-render.
+    private readonly wallClockVersion = signal(0);
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
@@ -507,11 +508,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // update local studentExam for later sync with server
         this.updateLocalStudentExam();
         // The end view is gated by the time-based isOver() getter. The exam timer fires this handler
-        // ~1s before the end and then stops ticking, so under zoneless change detection nothing else
-        // would re-evaluate isOver() once the time has actually elapsed. Schedule change detection now
-        // and again right after the remaining second so the hand-in/end cover reliably appears.
-        this.changeDetectorRef.markForCheck();
-        setTimeout(() => this.changeDetectorRef.markForCheck(), 1500);
+        // ~1s before the end and then stops ticking, so nothing else would re-evaluate isOver() once
+        // the time has actually elapsed. Bump the wall-clock version signal (read by isOver) now and
+        // again right after the remaining second so the hand-in/end cover reliably appears.
+        this.wallClockVersion.update((version) => version + 1);
+        setTimeout(() => this.wallClockVersion.update((version) => version + 1), 1500);
     }
 
     /**
@@ -574,6 +575,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is over
      */
     isOver(): boolean {
+        this.wallClockVersion();
         if (this.studentExam() && this.studentExam().ended) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;

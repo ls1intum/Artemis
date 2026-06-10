@@ -62,6 +62,9 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
                     this.lastText = this.formatFn(dayjs(this.lastValue));
 
                     this.currentTimer = null;
+                    // markForCheck is the canonical mechanism for impure self-updating pipes (Angular's async pipe
+                    // and ngx-translate's pipe do the same): a pipe has no signal/template context of its own, so
+                    // this is the only way to re-render the host when the relative time ticks over. Works under zoneless.
                     this.ngZone.run(() => this.cdRef.markForCheck());
                 }, timeToUpdate);
             } else {

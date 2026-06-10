@@ -491,9 +491,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 this.createTaskComponent(taskHtmlContainer, taskName, testIds);
             }
         });
-        // Batch change detection: trigger once after all task components are created
-        // instead of calling detectChanges() for each component individually
-        this.taskComponentRefs.forEach((ref) => ref.changeDetectorRef.detectChanges());
     };
 
     private createTaskComponent(taskHtmlContainer: Element, taskName: string, testIds: number[]) {
@@ -509,7 +506,6 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);
-        // Note: detectChanges() is called in batch after all components are created
     }
 
     // Effects and problemStatementUpdateSubject clean themselves up via DestroyRef / takeUntilDestroyed;
