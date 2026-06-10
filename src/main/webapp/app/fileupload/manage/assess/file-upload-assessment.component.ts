@@ -1,6 +1,6 @@
 import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,8 +55,7 @@ import { FileService } from 'app/foundation/service/file.service';
         ArtemisTranslatePipe,
     ],
 })
-export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
-    private changeDetectorRef = inject(ChangeDetectorRef);
+export class FileUploadAssessmentComponent implements OnInit {
     private alertService = inject(AlertService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
@@ -70,28 +69,27 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     submissionService = inject(SubmissionService);
 
     text: string;
-    participation: StudentParticipation;
-    submission?: FileUploadSubmission;
+    readonly participation = signal<StudentParticipation>(undefined!);
+    readonly submission = signal<FileUploadSubmission | undefined>(undefined);
     unassessedSubmission?: FileUploadSubmission;
-    result?: Result;
-    unreferencedFeedback: Feedback[] = [];
-    exercise?: FileUploadExercise;
-    course?: Course;
+    readonly result = signal<Result | undefined>(undefined);
+    readonly unreferencedFeedback = signal<Feedback[]>([]);
+    readonly exercise = signal<FileUploadExercise | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
     exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError?: string;
-    isAssessor = true;
-    busy = true;
-    showResult = true;
-    complaint: Complaint;
+    readonly isAssessor = signal(true);
+    readonly busy = signal(true);
+    readonly complaint = signal<Complaint>(undefined!);
     ComplaintType = ComplaintType;
     notFound = false;
     userId: number;
-    isLoading = true;
+    readonly isLoading = signal(true);
     isTestRun = false;
     courseId: number;
-    hasAssessmentDueDatePassed: boolean;
+    readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     correctionRound = 0;
     resultId: number;
     examId = 0;
@@ -113,11 +111,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get assessments(): Feedback[] {
-        return [...this.unreferencedFeedback];
+        return [...this.unreferencedFeedback()];
     }
 
     public ngOnInit(): void {
-        this.busy = true;
+        this.busy.set(true);
 
         // Used to check if the assessor is the current user
         this.accountService.identity().then((user) => {
@@ -178,7 +176,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.initializePropertiesFromSubmission(submission);
                 this.validateAssessment();
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const submissionId = this.submission?.id;
+                const submissionId = this.submission()?.id;
                 if (submissionId) {
                     const newUrl = window.location.hash.replace('#', '').replace('new', `${submissionId}`);
                     this.location.go(newUrl);
@@ -219,9 +217,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.loadingInitialSubmission = false;
-        this.submission = submission;
-        this.participation = this.submission.participation as StudentParticipation;
-        this.exercise = this.participation.exercise as FileUploadExercise;
+        this.submission.set(submission);
+        const participation = submission.participation as StudentParticipation;
+        this.participation.set(participation);
+        const exercise = participation.exercise as FileUploadExercise;
+        this.exercise.set(exercise);
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
          *       The access rights should always be set when loading the exercise/course in the service!
@@ -230,27 +230,28 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
          *       access rights.
          *       This problem reoccurs in {@link CodeEditorTutorAssessmentContainerComponent#handleReceivedSubmission}
          */
-        this.accountService.setAccessRightsForExercise(this.exercise);
-        this.course = getCourseFromExercise(this.exercise);
-        this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
+        this.accountService.setAccessRightsForExercise(exercise);
+        this.course.set(getCourseFromExercise(exercise));
+        this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = this.submission.results?.findIndex((result) => result.id === this.resultId);
+            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
             this.correctionRound = foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0;
-            this.result = getSubmissionResultById(this.submission, this.resultId);
+            this.result.set(getSubmissionResultById(submission, this.resultId));
         } else {
-            this.result = getLatestSubmissionResult(this.submission);
+            this.result.set(getLatestSubmissionResult(submission));
         }
         this.getComplaint();
 
-        if (this.result) {
-            this.submission.results = [this.result];
+        const result = this.result();
+        if (result) {
+            submission.results = [result];
         }
-        if (this.result?.feedbacks) {
-            this.unreferencedFeedback = this.result.feedbacks;
-        } else if (this.result) {
-            this.result.feedbacks = [];
+        if (result?.feedbacks) {
+            this.unreferencedFeedback.set(result.feedbacks);
+        } else if (result) {
+            result.feedbacks = [];
         }
-        if ((!this.result?.assessor || this.result?.assessor.id === this.userId) && !this.result?.completionDate) {
+        if ((!result?.assessor || result?.assessor?.id === this.userId) && !result?.completionDate) {
             this.alertService.closeAll();
             this.alertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }
@@ -258,25 +259,21 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.checkPermissions();
         this.calculateTotalScore();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, submission);
 
-        this.busy = false;
-        this.isLoading = false;
-    }
-
-    public ngOnDestroy(): void {
-        this.changeDetectorRef.detach();
+        this.busy.set(false);
+        this.isLoading.set(false);
     }
 
     public addFeedback(): void {
         const feedback = new Feedback();
-        this.unreferencedFeedback.push(feedback);
+        this.unreferencedFeedback().push(feedback);
         this.validateAssessment();
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
-        this.unreferencedFeedback.splice(indexToDelete, 1);
+        const indexToDelete = this.unreferencedFeedback().indexOf(assessmentToDelete);
+        this.unreferencedFeedback().splice(indexToDelete, 1);
         this.validateAssessment();
     }
 
@@ -286,21 +283,21 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * For the new submission to appear on the same page, the url has to be reloaded.
      */
     assessNext() {
-        const exerciseId = this.exercise?.id;
+        const exerciseId = this.exercise()?.id;
         if (!exerciseId) {
             this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
-        this.isLoading = true;
-        this.unreferencedFeedback = [];
+        this.isLoading.set(true);
+        this.unreferencedFeedback.set([]);
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, false, this.correctionRound).subscribe({
             next: (submission?: FileUploadSubmission) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.unassessedSubmission = submission;
                 if (!submission) {
                     // there are no unassessed submissions
-                    this.submission = undefined;
+                    this.submission.set(undefined);
                     return;
                 }
 
@@ -323,26 +320,26 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.router.navigate(url);
             },
             error: (error: HttpErrorResponse) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 onError(this.alertService, error);
             },
         });
     }
 
     onSaveAssessment() {
-        const submissionId = this.submission?.id;
+        const submissionId = this.submission()?.id;
         if (!submissionId) {
             this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, submissionId, this.result?.assessmentNote?.note)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .saveAssessment(this.assessments, submissionId, this.result()?.assessmentNote?.note)
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (result: Result) => {
-                    this.result = result;
+                    this.result.set(result);
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
@@ -360,19 +357,19 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const submissionId = this.submission?.id;
+        const submissionId = this.submission()?.id;
         if (!submissionId) {
             this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.fileUploadAssessmentService
-            .saveAssessment(this.assessments, submissionId, this.result?.assessmentNote?.note, true)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .saveAssessment(this.assessments, submissionId, this.result()?.assessmentNote?.note, true)
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (result: Result) => {
-                    this.result = result;
+                    this.result.set(result);
                     this.updateParticipationWithResult();
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
@@ -385,17 +382,17 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * Cancel the current assessment and navigate back to the exercise dashboard.
      */
     onCancelAssessment() {
-        const submissionId = this.submission?.id;
+        const submissionId = this.submission()?.id;
         if (!submissionId) {
             return;
         }
 
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.fileUploadAssessmentService
                 .cancelAssessment(submissionId)
-                .pipe(finalize(() => (this.isLoading = false)))
+                .pipe(finalize(() => this.isLoading.set(false)))
                 .subscribe(() => {
                     this.navigateBack();
                 });
@@ -403,18 +400,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private updateParticipationWithResult(): void {
-        if (!this.submission?.results || !this.result) {
+        if (!this.submission()?.results || !this.result()) {
             return;
         }
-        this.showResult = false;
-        this.changeDetectorRef.detectChanges();
-        this.submission.results[0] = this.result;
-        this.showResult = true;
-        this.changeDetectorRef.detectChanges();
+        // Commit a new submission reference so the change propagates under zoneless OnPush.
+        this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
     getComplaint(): void {
-        const submissionId = this.submission?.id;
+        const submissionId = this.submission()?.id;
         if (!submissionId) {
             return;
         }
@@ -424,7 +418,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);
@@ -433,7 +427,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun);
+        assessmentNavigateBack(this.location, this.router, this.exercise(), this.submission(), this.isTestRun);
     }
 
     updateAssessment() {
@@ -450,18 +444,18 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      */
     public validateAssessment(updatedFeedbacks?: Feedback[]): void {
         if (updatedFeedbacks) {
-            this.unreferencedFeedback = updatedFeedbacks;
+            this.unreferencedFeedback.set(updatedFeedbacks);
         }
         this.assessmentsAreValid = true;
         this.invalidError = undefined;
 
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
-        this.assessmentsAreValid = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
+        this.assessmentsAreValid = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
 
         this.calculateTotalScore();
 
-        if (this.submission) {
-            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        if (this.submission()) {
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission()!);
         }
     }
 
@@ -472,7 +466,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * and instead set the score boundaries on the server.
      */
     private calculateTotalScore() {
-        const maxPoints = getTotalMaxPoints(this.exercise);
+        const maxPoints = getTotalMaxPoints(this.exercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.assessments);
         this.totalScore = getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints);
     }
@@ -482,7 +476,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private checkPermissions() {
-        this.isAssessor = this.result?.assessor?.id === this.userId;
+        this.isAssessor.set(this.result()?.assessor?.id === this.userId);
     }
 
     /**
@@ -493,22 +487,23 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
      */
     get canOverride(): boolean {
-        if (this.exercise) {
-            if (this.exercise.isAtLeastInstructor) {
+        if (this.exercise()) {
+            if (this.exercise()?.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
-            if (this.complaint && this.isAssessor) {
+            if (this.complaint() && this.isAssessor()) {
                 // If there is a complaint, the original assessor cannot override the result anymore.
                 return false;
             }
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
-            if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
+            const assessmentDueDate = this.exercise()?.assessmentDueDate;
+            if (assessmentDueDate) {
+                isBeforeAssessmentDueDate = dayjs().isBefore(assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
-            return this.isAssessor && isBeforeAssessmentDueDate;
+            return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
     }
@@ -527,7 +522,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const submissionId = this.submission?.id;
+        const submissionId = this.submission()?.id;
         if (!submissionId) {
             this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             assessmentAfterComplaint.onError();
@@ -537,15 +532,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, this.result?.assessmentNote?.note)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, this.result()?.assessmentNote?.note)
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (response) => {
                     assessmentAfterComplaint.onSuccess();
                     if (response.body) {
-                        this.result = response.body;
+                        this.result.set(response.body);
                         this.updateParticipationWithResult();
                     }
                     this.alertService.closeAll();
@@ -565,7 +560,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.exercise());
     }
 
     private onError(error: string) {

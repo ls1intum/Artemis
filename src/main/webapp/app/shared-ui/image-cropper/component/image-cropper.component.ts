@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnChanges, OnInit, SimpleChanges, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, OnInit, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
 import { OutputFormat } from '../interfaces/cropper-options.interface';
 import { CropperSettings } from '../interfaces/cropper.settings';
@@ -40,19 +40,18 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     private cropperPositionService = inject(CropperPositionService);
     private loadImageService = inject(LoadImageService);
     private sanitizer = inject(DomSanitizer);
-    private changeDetector = inject(ChangeDetectorRef);
 
     settings = new CropperSettings();
     setImageMaxSizeRetries = 0;
     moveStart: MoveStart;
     loadedImage?: LoadedImage;
 
-    safeImgDataUrl: SafeUrl | string;
-    safeTransformStyle: SafeStyle | string;
-    marginLeft: SafeStyle | string = '0px';
+    readonly safeImgDataUrl = signal<SafeUrl | string>('');
+    readonly safeTransformStyle = signal<SafeStyle | string>('');
+    readonly marginLeft = signal<SafeStyle | string>('0px');
     maxSize: Dimensions;
     moveTypes = MoveTypes;
-    imageVisible = false;
+    readonly imageVisible = signal(false);
 
     /** Mutable internal cropper position. Synced from the {@link cropperInput} on each ngOnChanges run. */
     cropper: CropperPosition = defaultCropperPosition();
@@ -138,7 +137,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
                 this.checkCropperPosition(false);
                 this.doAutoCrop();
             }
-            this.changeDetector.markForCheck();
         }
         if (changes.transform) {
             this.setCssTransform();
@@ -203,23 +201,25 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     private setCssTransform() {
         // Defend against parents binding `[transform]="undefined"`, which overrides the input default.
         const transform = this.transform() ?? {};
-        this.safeTransformStyle = this.sanitizer.bypassSecurityTrustStyle(
-            'scaleX(' +
-                (transform.scale || 1) * (transform.flipH ? -1 : 1) +
-                ')' +
-                'scaleY(' +
-                (transform.scale || 1) * (transform.flipV ? -1 : 1) +
-                ')' +
-                'rotate(' +
-                (transform.rotate || 0) +
-                'deg)',
+        this.safeTransformStyle.set(
+            this.sanitizer.bypassSecurityTrustStyle(
+                'scaleX(' +
+                    (transform.scale || 1) * (transform.flipH ? -1 : 1) +
+                    ')' +
+                    'scaleY(' +
+                    (transform.scale || 1) * (transform.flipV ? -1 : 1) +
+                    ')' +
+                    'rotate(' +
+                    (transform.rotate || 0) +
+                    'deg)',
+            ),
         );
     }
 
     private reset(): void {
-        this.imageVisible = false;
+        this.imageVisible.set(false);
         this.loadedImage = undefined;
-        this.safeImgDataUrl = 'data:image/png;base64,iVBORw0KGg' + 'oAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQYV2NgAAIAAAU' + 'AAarVyFEAAAAASUVORK5CYII=';
+        this.safeImgDataUrl.set('data:image/png;base64,iVBORw0KGg' + 'oAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQYV2NgAAIAAAU' + 'AAarVyFEAAAAASUVORK5CYII=');
         this.moveStart = {
             active: false,
             type: undefined,
@@ -261,8 +261,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
 
     private setLoadedImage(loadedImage: LoadedImage): void {
         this.loadedImage = loadedImage;
-        this.safeImgDataUrl = this.sanitizer.bypassSecurityTrustResourceUrl(loadedImage.transformed!.base64);
-        this.changeDetector.markForCheck();
+        this.safeImgDataUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(loadedImage.transformed!.base64));
     }
 
     private loadImageError(error: Error): void {
@@ -287,7 +286,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.setCropperScaledMaxSize();
             this.resetCropperPosition();
             this.cropperReady.emit({ ...this.maxSize });
-            this.changeDetector.markForCheck();
         } else {
             this.setImageMaxSizeRetries++;
             setTimeout(() => this.checkImageMaxSizeRecursively(), 50);
@@ -329,7 +327,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.cropperPositionService.resetCropperPosition(sourceImage, this.cropper, this.settings);
         }
         this.doAutoCrop();
-        this.imageVisible = true;
+        this.imageVisible.set(true);
     }
 
     keyboardAccess(event: KeyboardEvent) {
@@ -393,7 +391,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
                 }
                 this.checkCropperPosition(false);
             }
-            this.changeDetector.detectChanges();
         }
     }
 
@@ -403,7 +400,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             const sourceImageElement = sourceImage.nativeElement;
             this.maxSize.width = sourceImageElement.offsetWidth;
             this.maxSize.height = sourceImageElement.offsetHeight;
-            this.marginLeft = this.sanitizer.bypassSecurityTrustStyle('calc(50% - ' + this.maxSize.width / 2 + 'px)');
+            this.marginLeft.set(this.sanitizer.bypassSecurityTrustStyle('calc(50% - ' + this.maxSize.width / 2 + 'px)'));
         }
     }
 

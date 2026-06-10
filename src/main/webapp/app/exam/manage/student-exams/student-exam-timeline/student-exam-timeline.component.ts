@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,7 +11,7 @@ import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/te
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
+import { Observable, Subscription, forkJoin, map, mergeMap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
@@ -46,7 +46,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private activatedRoute = inject(ActivatedRoute);
     private submissionService = inject(SubmissionService);
     private submissionVersionService = inject(SubmissionVersionService);
-    private cdr = inject(ChangeDetectorRef);
 
     readonly ExerciseType = ExerciseType;
     readonly SubmissionVersion = SubmissionVersion;
@@ -225,7 +224,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             }
         });
 
-        return forkJoin([...submissionObservables]).pipe(tap(() => this.cdr.detectChanges()));
+        return forkJoin([...submissionObservables]);
     }
 
     /**
