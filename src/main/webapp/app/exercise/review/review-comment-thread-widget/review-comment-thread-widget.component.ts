@@ -1,19 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    OnDestroy,
-    OnInit,
-    ViewEncapsulation,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    viewChild,
-    viewChildren,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -81,7 +66,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
     private readonly confirmationService = inject(ConfirmationService);
     readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
@@ -322,7 +306,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => {
             this.updateMenuItems();
             this.languageVersion.update((version) => version + 1);
-            this.changeDetectorRef.detectChanges();
         });
     }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
@@ -35,7 +35,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private dialogService = inject(DialogService);
     private elementRef = inject(ElementRef);
     private ngZone = inject(NgZone);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
@@ -52,7 +51,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     apollonEditor?: ApollonEditor;
     private lastSavedModelJson = '';
 
-    isSaved = true;
+    readonly isSaved = signal(true);
 
     /** Auto-save interval handle and timer counter */
     autoSaveInterval: ReturnType<typeof setInterval> | undefined;
@@ -151,8 +150,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         // leaving template bindings like [disabled]="!hasInteractive" stale.
         this.apollonEditor.subscribeToModelChange((newModel) => {
             this.ngZone.run(() => {
-                this.isSaved = JSON.stringify(newModel) === this.lastSavedModelJson;
-                this.changeDetectorRef.markForCheck();
+                this.isSaved.set(JSON.stringify(newModel) === this.lastSavedModelJson);
             });
         });
     }
@@ -174,7 +172,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram()?.title });
             this.lastSavedModelJson = JSON.stringify(umlModel);
             this.apollonDiagram.set(updatedDiagram);
-            this.isSaved = true;
+            this.isSaved.set(true);
             this.setAutoSaveTimer();
             return true;
         } else {
@@ -189,7 +187,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @param closeModal: If the modal should be closed, or only the editor
      */
     confirmExitDetailView(closeModal: boolean) {
-        if (!this.isSaved) {
+        if (!this.isSaved()) {
             const dialogRef = openConfirmAutofocusDialog(this.dialogService, {
                 title: 'artemisApp.apollonDiagram.detail.exitConfirm.title',
                 text: 'artemisApp.apollonDiagram.detail.exitConfirm.question',

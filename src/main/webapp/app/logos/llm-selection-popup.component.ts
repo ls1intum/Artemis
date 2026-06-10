@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -18,7 +18,6 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
-    private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
@@ -27,18 +26,17 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     readonly choice = output<LLMModalResult>();
 
     isVisible = false;
-    currentSelection?: LLMSelectionDecision;
-    memirisEnabled = true;
+    readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
+    readonly memirisEnabled = signal(true);
     private modalSubscription?: Subscription;
 
     isOnPremiseEnabled: boolean;
 
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
-            this.currentSelection = currentSelection;
-            this.memirisEnabled = this.accountService.userIdentity()?.memirisEnabled ?? true;
+            this.currentSelection.set(currentSelection);
+            this.memirisEnabled.set(this.accountService.userIdentity()?.memirisEnabled ?? true);
             this.open();
-            this.cdr.detectChanges(); // Manually trigger change detection
         });
         this.isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
     }
@@ -74,7 +72,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     onMemirisToggle(): void {
-        this.accountService.setUserEnabledMemiris(this.memirisEnabled);
+        this.accountService.setUserEnabledMemiris(this.memirisEnabled());
     }
 
     onBackdropClick(event: MouseEvent): void {
