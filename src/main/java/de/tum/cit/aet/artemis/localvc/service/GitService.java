@@ -43,6 +43,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -754,21 +755,28 @@ public class GitService extends AbstractGitService {
      * An unhealthy repository is either corrupt (e.g. a half-deleted skeleton without HEAD and config, as left behind by a
      * partially failed deletion) or unborn (created, but it never received its initial branch, e.g. after a failed ref
      * update during a repository copy). In both cases the repository does not contain any commits on any branch, so it can
-     * safely be deleted and recreated without losing data.
+     * safely be deleted and recreated without losing data. False is only returned for these definitive diagnoses; an
+     * unexpected failure during the check (e.g. a transient I/O error) throws instead, so that callers do not mistake a
+     * healthy repository for a corrupt one and delete it.
      *
      * @param repositoryUri the URI of the bare repository to check
-     * @return true if the repository can be opened and has at least one branch (loose or packed), false otherwise
+     * @return true if the repository can be opened and has at least one branch (loose or packed), false if it is definitively unborn or corrupt
+     * @throws GitException if the health of the repository could not be determined
      */
     public boolean isBareRepositoryHealthy(LocalVCRepositoryUri repositoryUri) {
-        var localPath = new LocalVCRepositoryUri(repositoryUri.toString()).getLocalRepositoryPath(localVCBasePath);
+        var localPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         builder.setBare().setGitDir(localPath.toFile()).setMustExist(true);
         try (org.eclipse.jgit.lib.Repository repository = builder.build()) {
             return !repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS).isEmpty();
         }
-        catch (IOException | RuntimeException e) {
-            log.warn("Bare repository at {} cannot be opened, considering it corrupt: {}", localPath, e.getMessage());
+        catch (RepositoryNotFoundException e) {
+            // The directory is definitively not a git repository (e.g. a half-deleted skeleton without HEAD and config)
+            log.warn("Bare repository at {} is not a valid git repository, considering it corrupt: {}", localPath, e.getMessage());
             return false;
+        }
+        catch (IOException | RuntimeException e) {
+            throw new GitException("Could not check the health of the bare repository at " + localPath, e);
         }
     }
 
