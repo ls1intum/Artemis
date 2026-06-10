@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subscription, forkJoin, of } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -19,7 +19,6 @@ import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -96,13 +95,11 @@ export enum MedianType {
         CommonModule,
     ],
 })
-export class ExamScoresComponent implements OnInit, OnDestroy {
+export class ExamScoresComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private examService = inject(ExamManagementService);
     private sortService = inject(SortService);
     private alertService = inject(AlertService);
-    private changeDetector = inject(ChangeDetectorRef);
-    private languageHelper = inject(JhiLanguageHelper);
     private localeConversionService = inject(LocaleConversionService);
     private participantScoresService = inject(ParticipantScoresService);
     private gradingService = inject(GradingService);
@@ -142,7 +139,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     public predicate = 'id';
     public reverse = false;
-    public isLoading = true;
+    readonly isLoading = signal(true);
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
 
@@ -156,7 +153,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasNumericGrades: boolean;
     presentationScoreThreshold?: number;
 
-    course?: Course;
+    readonly course = signal<Course | undefined>(undefined);
 
     // Icons
     faSort = faSort;
@@ -164,8 +161,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    private languageChangeSubscription?: Subscription;
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -179,8 +174,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 .pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
-                this.changeDetector.markForCheck();
+                this.course.set(courseResponse.body!);
             });
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
@@ -213,7 +207,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists = true;
-                        this.gradingScale = toEntity(gradingScaleResponse.body!, this.course);
+                        this.gradingScale = toEntity(gradingScaleResponse.body!, this.course());
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
                         this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
                         this.gradingScale!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale!.gradeSteps);
@@ -243,28 +237,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         }
                         this.determineAndHighlightChartMedian(medianType);
                     }
-                    this.isLoading = false;
-                    this.changeDetector.detectChanges();
+                    this.isLoading.set(false);
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.isLoading = false;
-                    this.changeDetector.detectChanges();
+                    this.isLoading.set(false);
                 },
             });
         });
-
-        // Update the view if the language was changed
-        this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
-            this.changeDetector.detectChanges();
-        });
-    }
-
-    ngOnDestroy() {
-        if (this.languageChangeSubscription) {
-            this.languageChangeSubscription.unsubscribe();
-        }
     }
 
     toggleFilterForSubmittedExam() {
@@ -287,14 +268,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.determineAndHighlightChartMedian(overallMedianType);
         }
         this.updateValuesAccordingToFilter();
-        this.changeDetector.detectChanges();
     }
 
     toggleFilterForNonEmptySubmission() {
         this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
         this.calculateFilterDependentStatistics();
         this.updateValuesAccordingToFilter();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -481,7 +460,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.aggregatedExamResults.noOfExamsNonEmpty = numberNonEmptySubmissions;
         this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty = numberNonEmptySubmittedSubmissions;
         this.updateValuesAccordingToFilter();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -639,7 +617,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -704,7 +681,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Localizes a number, e.g. switching the decimal separator
      */
     localize(numberToLocalize: number): string {
-        return this.localeConversionService.toLocaleString(numberToLocalize, this.course?.accuracyOfScores);
+        return this.localeConversionService.toLocaleString(numberToLocalize, this.course()?.accuracyOfScores);
     }
 
     /**
@@ -751,9 +728,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
         if (csvExportOptions) {
-            return new CsvExportRowBuilder(csvExportOptions.decimalSeparator, this.course?.accuracyOfScores);
+            return new CsvExportRowBuilder(csvExportOptions.decimalSeparator, this.course()?.accuracyOfScores);
         } else {
-            return new ExcelExportRowBuilder(this.course?.accuracyOfScores);
+            return new ExcelExportRowBuilder(this.course()?.accuracyOfScores);
         }
     }
 
@@ -814,7 +791,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @returns localized string representation of the rounded points
      */
     roundAndPerformLocalConversion(points: number | undefined): string {
-        return this.localize(roundValueSpecifiedByCourseSettings(points, this.course));
+        return this.localize(roundValueSpecifiedByCourseSettings(points, this.course()));
     }
 
     /**
@@ -831,8 +808,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
-            const overallScore = roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
+            const overAllPoints = roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course());
+            const overallScore = roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course());
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -846,8 +823,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
-                examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
+                examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course());
+                examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course());
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -923,7 +900,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.lastCalculatedMedianType = medianType;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
-            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
+            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course()) : 0;
             this.showPassedMedian = true;
         } else {
             this.setOverallChartMedianDependingOfExamsIncluded(medianType);
@@ -931,7 +908,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.showOverallMedian = true;
         }
         this.highlightedValue = chartMedian;
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -941,10 +917,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
         if (medianType === MedianType.OVERALL) {
             const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
-            this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course) : 0;
+            this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course()) : 0;
         } else {
             const submittedMedian = this.aggregatedExamResults.medianRelativeSubmitted;
-            this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
+            this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course()) : 0;
         }
         this.overallChartMedianType = medianType;
     }

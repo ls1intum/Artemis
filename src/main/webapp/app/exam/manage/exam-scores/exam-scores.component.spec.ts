@@ -743,7 +743,7 @@ describe('ExamScoresComponent', () => {
         comp.studentResults = examScoreDTO.studentResults;
         comp.examScoreDTO = examScoreDTO;
         comp.aggregatedExamResults = new AggregatedExamResult();
-        comp.course = { accuracyOfScores: 1 };
+        comp.course.set({ accuracyOfScores: 1 });
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
