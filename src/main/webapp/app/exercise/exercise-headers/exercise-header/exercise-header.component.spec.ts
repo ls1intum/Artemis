@@ -14,6 +14,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -146,6 +147,24 @@ describe('ExerciseHeaderComponent', () => {
             fixture.detectChanges();
 
             expect(fixture.componentInstance.hasGradedSubmission()).toBe(true);
+        });
+
+        it('should be false for a quiz submission that was only collected automatically when the quiz ended', () => {
+            // The quiz evaluation marks unsubmitted submissions as submitted with type TIMEOUT —
+            // the student still missed the deadline and must not get a "Graded" badge.
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: true, type: SubmissionType.TIMEOUT }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(false);
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
         });
     });
 
