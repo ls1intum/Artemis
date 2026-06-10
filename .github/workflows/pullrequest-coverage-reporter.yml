@@ -8,6 +8,12 @@ name: PR Coverage Reporter
 # ci-test.yml's `server-tests` job under the umbrella's run id, so artifact lookups via
 # `workflow_run.id` continue to work after the migration.
 #
+# FORK PRs ONLY. Internal (same-repo) PRs get their coverage table from ci.yml's in-run
+# `coverage-report` job, which posts as soon as `test` finishes (~28 min) instead of waiting for the
+# whole CI run (paced by the advisory e2e tail, up to ~120 min). This workflow_run path remains for
+# FORK PRs, where the in-run job's GITHUB_TOKEN is force-read-only and cannot post — fork runs have no
+# e2e, so this path is already timely for them.
+#
 # SECURITY: a `workflow_run` job runs in the base-repo context with write permissions. To avoid a
 # "pwn request", this workflow NEVER checks out or executes PR/fork code — it checks out the trusted
 # default branch, derives changed files from the GitHub API, and runs the coverage tooling with
@@ -33,6 +39,7 @@ jobs:
     name: Report PR Coverage
     if: |
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name != github.repository &&
       github.event.workflow_run.conclusion != 'cancelled' &&
       github.event.workflow_run.conclusion != 'skipped'
     runs-on: ubuntu-latest
@@ -91,35 +98,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
         with:
-          script: |
-            const prNumber = Number(process.env.PR_NUMBER);
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber, per_page: 100,
-            });
-            const CLIENT = 'src/main/webapp/app/';
-            const SERVER = 'src/main/java/de/tum/cit/aet/artemis/';
-            const changed = [];
-            const clientModules = new Set();
-            const serverModules = new Set();
-            let hasClient = false, hasServer = false;
-            for (const f of files) {
-              if (f.status === 'removed') continue;       // deleted files have no coverage to report
-              const p = f.filename;
-              if (p.startsWith(CLIENT) && p.endsWith('.ts') && !p.endsWith('.spec.ts') && !p.endsWith('.module.ts')) {
-                hasClient = true; changed.push(p);
-                const rel = p.slice(CLIENT.length);
-                if (rel.includes('/')) clientModules.add(rel.split('/')[0]);
-              } else if (p.startsWith(SERVER) && p.endsWith('.java')) {
-                hasServer = true; changed.push(p);
-                serverModules.add(p.slice(SERVER.length).split('/')[0]);
-              }
-            }
-            core.setOutput('has_client_changes', String(hasClient));
-            core.setOutput('has_server_changes', String(hasServer));
-            core.setOutput('client_modules', [...clientModules].join(','));
-            core.setOutput('server_modules', [...serverModules].join(','));
-            core.setOutput('changed_files', changed.join(','));
-            console.log(`Client: ${hasClient} (${[...clientModules].join(',')}); Server: ${hasServer} (${[...serverModules].join(',')}); ${changed.length} coverage-relevant files`);
+          script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
 
       - name: Overlay PR source for accurate line/expect counts (data only)
         if: steps.find-pr.outputs.result != ''
@@ -229,82 +208,7 @@ jobs:
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           TEST_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          POST_AUTHOR_COMMENT: 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prNumber = Number(process.env.PR_NUMBER);
-            const author = process.env.PR_AUTHOR;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-
-            const hasClient = process.env.HAS_CLIENT === 'true';
-            const hasServer = process.env.HAS_SERVER === 'true';
-            const coverageTable = (process.env.COVERAGE_TABLE || '').trim();
-            const coverageSuccess = process.env.COVERAGE_SUCCESS === 'true';
-            const testConclusion = process.env.TEST_CONCLUSION;
-            const testRunUrl = process.env.TEST_RUN_URL;
-
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
-
-            let body = pr.body || '';
-            const coverageSection = '### Test Coverage';
-            const coverageIndex = body.indexOf(coverageSection);
-            if (coverageIndex === -1) {
-              console.log('Test Coverage section not found in PR description');
-              return;
-            }
-            const afterCoverage = body.substring(coverageIndex + coverageSection.length);
-            const nextSectionMatch = afterCoverage.match(/\n###\s/);
-            const nextSectionIndex = nextSectionMatch
-              ? coverageIndex + coverageSection.length + nextSectionMatch.index
-              : body.length;
-
-            const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-
-            const lines = [
-              coverageSection,
-              '<!-- Please add the test coverages for all changed files modified in this PR here. You can generate the coverage table using one of these options: -->',
-              '<!-- 1. Run `pnpm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->',
-              '<!-- 2. Use `supporting_scripts/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to generate the table from CI artifacts (requires GitHub token, follow the README for setup) -->',
-              '<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->',
-              '<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->',
-              '<!--       Remove rows with only trivial changes from the table. -->',
-              ''
-            ];
-
-            const noChanges = !hasClient && !hasServer;
-            if (noChanges) {
-              lines.push('**No code changes detected** - test coverage not required for this PR.', '');
-            } else if (!coverageSuccess) {
-              lines.push(
-                `**Warning:** Coverage table could not be generated. The \`Test\` workflow concluded with status \`${testConclusion}\`; coverage artifacts may be missing or incomplete. See [workflow logs](${testRunUrl}).`,
-                ''
-              );
-            } else {
-              if (testConclusion !== 'success') {
-                lines.push(
-                  `**Note:** Some tests in the [Test workflow](${testRunUrl}) did not pass (\`${testConclusion}\`). Coverage below may be partial.`,
-                  ''
-                );
-              }
-              if (coverageTable) {
-                lines.push(coverageTable, '');
-              } else {
-                lines.push('Coverage data was found, but no rows applied to changed files.', '');
-              }
-            }
-            lines.push(`_Last updated: ${timestamp}_`, '', '');
-
-            const newBody = body.substring(0, coverageIndex) + lines.join('\n') + body.substring(nextSectionIndex);
-
-            await github.rest.pulls.update({ owner, repo, pull_number: prNumber, body: newBody });
-            console.log('Updated PR description with coverage results');
-
-            // Notify the author.
-            if (noChanges) return;
-            const commentBody = coverageSuccess
-              ? `@${author} Test coverage has been automatically updated in the PR description.`
-              : `@${author} Coverage table could not be generated. See the [Test workflow run](${testRunUrl}) for details.`;
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: prNumber, body: commentBody
-            });
+          script: await require('./.github/scripts/update-pr-coverage.js')({ github, context, core })
