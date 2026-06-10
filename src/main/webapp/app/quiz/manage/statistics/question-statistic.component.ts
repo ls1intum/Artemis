@@ -208,7 +208,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             this.chartLabels = this.labels;
         }
 
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.pushDataToNgxEntry();
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 }

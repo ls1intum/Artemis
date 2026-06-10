@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
@@ -16,7 +16,7 @@ export abstract class AbstractQuizStatisticComponent {
     rated = true;
     participants: number;
 
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
+    readonly ngxData = signal<NgxChartsSingleSeriesDataEntry[]>([]);
     ngxColor = {
         name: 'quiz statistics',
         selectable: true,
@@ -54,14 +54,13 @@ export abstract class AbstractQuizStatisticComponent {
      * in order to visualize the scores and calculates the maximum value on the y-axis
      * in order to ensure a shapely display.
      */
-    protected pushDataToNgxEntry(changeDetector: ChangeDetectorRef): void {
-        this.ngxData = [];
+    protected pushDataToNgxEntry(): void {
+        const ngxData: NgxChartsSingleSeriesDataEntry[] = [];
         this.data.forEach((score, index) => {
-            this.ngxData.push({ name: this.chartLabels[index], value: score });
+            ngxData.push({ name: this.chartLabels[index], value: score });
         });
         this.maxScale = this.calculateHeightOfChartData(this.data);
-        this.ngxData = [...this.ngxData];
-        changeDetector.detectChanges();
+        this.ngxData.set(ngxData);
     }
 
     /**

@@ -133,8 +133,8 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+            expect(comp.remainingTimeSeconds()).toBe(-1);
+            expect(comp.remainingTimeText()).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
@@ -145,8 +145,8 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(0);
-            expect(comp.remainingTimeText).toBe('?');
+            expect(comp.remainingTimeSeconds()).toBe(0);
+            expect(comp.remainingTimeText()).toBe('?');
         });
     });
 

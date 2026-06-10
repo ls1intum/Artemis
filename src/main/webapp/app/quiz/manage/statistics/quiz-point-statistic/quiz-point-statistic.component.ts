@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -32,7 +32,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
     private serverDateService = inject(ArtemisServerDateService);
 
     readonly round = round;
@@ -64,8 +63,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     // timer
     waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
     interval: any;
 
     // Icons
@@ -109,7 +108,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -122,17 +120,17 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             const endDate = this.quizExercise.dueDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -233,7 +231,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     loadDataInDiagram(): void {
         this.setData(this.quizPointStatistic);
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.pushDataToNgxEntry();
 
         // add Axes-labels based on selected language
         this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');

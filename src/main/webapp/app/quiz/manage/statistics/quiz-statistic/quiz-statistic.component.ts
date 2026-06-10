@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -27,7 +27,6 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     quizExercise: QuizExercise;
 
@@ -46,8 +45,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
-            this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
-            this.ngxData = [...this.ngxData];
+            this.ngxData()[this.ngxData().length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
+            this.ngxData.set([...this.ngxData()]);
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
@@ -69,7 +68,6 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
                 }
             });
         });
-        this.changeDetector.detectChanges();
     }
 
     ngOnDestroy() {
@@ -149,7 +147,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      */
     loadDataInDiagram(): void {
         this.setData(this.quizExercise.quizPointStatistic!);
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.pushDataToNgxEntry();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }
 }
