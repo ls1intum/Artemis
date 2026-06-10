@@ -257,7 +257,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
 
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles()).toBe(false);
         // repositoryFiles now contains only PS
         expect(comp.repositoryFiles).toEqual({
             [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
@@ -305,7 +305,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles()).toBe(false);
         expect(comp.repositoryFiles).toEqual({
             ...repositoryContent,
             [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
@@ -444,7 +444,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles()).toBe(false);
         expect(comp.repositoryFiles).toEqual({
             ...allowedFiles,
             [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
@@ -492,13 +492,13 @@ describe('CodeEditorFileBrowserComponent', () => {
         getStatusStub.mockReturnValue(isCleanSubject);
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(true);
+        expect(comp.isLoadingFiles()).toBe(true);
         expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
         isCleanSubject.error('fatal error');
 
         fixture.detectChanges();
         expect(comp.commitState()).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles()).toBe(false);
 
         // PS is still present
         expect(comp.repositoryFiles).toEqual({
@@ -527,13 +527,13 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
         fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(true);
+        expect(comp.isLoadingFiles()).toBe(true);
         expect(comp.commitState()).toEqual(CommitState.UNDEFINED);
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getRepositoryContentSubject.error('fatal error');
 
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles()).toBe(false);
         expect(comp.repositoryFiles).toEqual({
             [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
         });

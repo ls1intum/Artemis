@@ -127,8 +127,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
-        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(comp.rawBuildLogs()).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        const extractedErrors = comp.rawBuildLogs().extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
         expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
         expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 
@@ -146,7 +146,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.componentRef.setInput('participation', participation);
         fixture.detectChanges();
         expect(getBuildLogsStub).not.toHaveBeenCalled();
-        expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
+        expect(comp.rawBuildLogs()).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBeNull();
@@ -168,7 +168,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
-        expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
+        expect(comp.rawBuildLogs()).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBeNull();
@@ -191,8 +191,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(comp.rawBuildLogs()).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        const extractedErrors = comp.rawBuildLogs().extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
         expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
         expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 
@@ -219,8 +219,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        const extractedErrors = comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
+        expect(comp.rawBuildLogs()).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
+        const extractedErrors = comp.rawBuildLogs().extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN);
         expect(extractedErrors).toHaveLength(expectedBuildLogErrors.length);
         expect(extractedErrors).toEqual(expect.arrayContaining(expectedBuildLogErrors));
 

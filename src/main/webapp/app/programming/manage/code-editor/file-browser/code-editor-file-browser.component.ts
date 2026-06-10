@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -157,14 +157,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     commitStateChange = output<CommitState>();
     onError = output<string>();
 
-    isLoadingFiles: boolean;
+    readonly isLoadingFiles = signal(false);
     isProblemStatementSelected = computed(() => this.selectedFile() === PROBLEM_STATEMENT_IDENTIFIER);
     repositoryFiles: { [fileName: string]: FileType };
-    repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
+    readonly repositoryFilesWithInformationAboutChange = signal<{ [fileName: string]: boolean } | undefined>(undefined);
     filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
-
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     collapsed = false;
 
@@ -273,8 +271,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     initializeComponent = () => {
         let currentCommitState: CommitState;
-        this.isLoadingFiles = true;
-        this.changeDetectorRef.markForCheck();
+        this.isLoadingFiles.set(true);
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked and then load the files.
         this.checkIfRepositoryIsClean()
@@ -305,14 +302,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     }
                 }),
                 tap((filesWithInfoAboutChange) => {
-                    this.repositoryFilesWithInformationAboutChange = filesWithInfoAboutChange;
+                    this.repositoryFilesWithInformationAboutChange.set(filesWithInfoAboutChange);
                     this.setupTreeview();
-                    this.changeDetectorRef.markForCheck();
                 }),
                 finalize(() => {
                     // Guarantee that the loading indicator is cleared even if an upstream error or cancellation happens.
-                    this.isLoadingFiles = false;
-                    this.changeDetectorRef.markForCheck();
+                    this.isLoadingFiles.set(false);
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -321,7 +316,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     this.initializeRepositoryFiles();
                     this.setupTreeview();
                     this.onError.emit(error.message);
-                    this.changeDetectorRef.markForCheck();
                 },
             });
     };

@@ -23,7 +23,7 @@
         <div class="card-second-header">
             <button
                 id="create_file_root"
-                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn"
                 (click)="setCreatingFileInRoot(FileType.FILE)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
@@ -33,7 +33,7 @@
             </button>
             <button
                 id="create_folder_root"
-                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn ms-2"
                 (click)="setCreatingFileInRoot(FileType.FOLDER)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
@@ -43,7 +43,7 @@
             </button>
             <button
                 id="compress_tree"
-                [disabled]="isLoadingFiles"
+                [disabled]="isLoadingFiles()"
                 class="btn ms-auto"
                 (click)="toggleTreeCompress()"
                 title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
@@ -63,11 +63,11 @@
                 (onCreateFile)="onCreateFile($event)"
             />
         }
-        @if (!isLoadingFiles) {
+        @if (!isLoadingFiles()) {
             <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate" />
         }
         <!-- Loading files indicator -->
-        @if (isLoadingFiles) {
+        @if (isLoadingFiles()) {
             <div class="text-center lead text-body-secondary pt-2">
                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                 <span jhiTranslate="artemisApp.editor.loadingFiles"></span>
@@ -107,7 +107,7 @@
     @if (repositoryFiles?.[item.value] === FileType.FILE) {
         <jhi-code-editor-file-browser-file
             [item]="item"
-            [hasChanges]="repositoryFilesWithInformationAboutChange?.[item.value] ?? false"
+            [hasChanges]="repositoryFilesWithInformationAboutChange()?.[item.value] ?? false"
             [badges]="fileBadges()?.[item.value] ?? []"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
