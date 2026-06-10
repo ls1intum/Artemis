@@ -54,15 +54,16 @@ export class ExerciseHeaderComponent {
     // type its existence alone keeps the practice mode selectable — even without a submission (e.g. a
     // programming practice repository before the first push). The mode check additionally covers practice
     // runs whose participation has not been created yet (e.g. quiz practice just started).
-    readonly hasPracticeParticipation = computed(() => {
+    readonly showPracticeMode = computed(() => {
         return !!this.effectivePracticeParticipation() || this.participationMode() === 'practice';
     });
 
-    // Show the graded side of the toggle once a graded submission exists. A graded participation without
-    // any submission only counts while practice is available, so the student can still switch between the
-    // two modes; on its own it must not produce a (misleading) "Graded" badge.
-    readonly hasGradedParticipation = computed(() => {
-        return this.hasGradedSubmission() || (!!this.studentParticipation() && this.hasPracticeParticipation());
+    // The graded side of the toggle is shown once a graded submission exists. While practice is available
+    // it is always shown, so the student can switch back to the graded view — including the case where
+    // the graded mode was missed entirely and the view explains the missed due date. Without practice, a
+    // graded participation without submissions must not produce a (misleading) "Graded" badge.
+    readonly showGradedMode = computed(() => {
+        return this.hasGradedSubmission() || this.showPracticeMode();
     });
 
     readonly activeParticipation = computed(() => {

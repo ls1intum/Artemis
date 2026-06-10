@@ -74,17 +74,29 @@ test.describe('Programming exercise practice mode', { tag: '@slow' }, () => {
             });
         });
 
-        test('Starts the practice mode and keeps it after a page reload', async ({ login, page }) => {
+        test('Starts the practice mode and allows switching to the missed graded mode', async ({ login, page }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             await startPracticeFromExercisePage(page, exercise.id!, 'Practice');
 
-            // Without a graded participation only the practice badge is shown
-            await expect(page.locator('#mode-badge')).toContainText('Practice');
+            const practiceButton = page.locator('#practice-mode-button');
+            const gradedButton = page.locator('#graded-mode-button');
+            await expect(practiceButton).toBeVisible();
+            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
             await expect(page.locator('.code-button')).toBeVisible();
+
+            // The graded mode stays reachable, so the student can recognize that they missed the due date
+            await gradedButton.click();
+            await expect(gradedButton).toHaveClass(/segmented-control__button--active/);
+            await expect(page.locator('#exercise-headers-information')).toContainText('Missed due date');
+
+            // ... and practice can be selected again
+            await practiceButton.click();
+            await expect(practiceButton).toHaveClass(/segmented-control__button--active/);
 
             // The practice mode survives a fresh page load, even though no practice submission exists yet
             await page.goto(`/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(page.locator('#mode-badge')).toContainText('Practice', { timeout: 15000 });
+            await expect(page.locator('#practice-mode-button')).toBeVisible({ timeout: 15000 });
+            await expect(page.locator('#graded-mode-button')).toBeVisible();
             await expect(page.locator('.code-button')).toBeVisible();
         });
     });

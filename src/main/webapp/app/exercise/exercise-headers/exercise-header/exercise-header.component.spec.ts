@@ -149,7 +149,7 @@ describe('ExerciseHeaderComponent', () => {
         });
     });
 
-    describe('hasPracticeParticipation', () => {
+    describe('showPracticeMode', () => {
         it('should be false when there is no practice participation and mode is graded', () => {
             const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             exercise.type = ExerciseType.MODELING;
@@ -158,7 +158,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('courseId', 5);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(false);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
         });
 
         it('should be true when practice participation has a submitted submission', () => {
@@ -172,7 +172,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
         });
 
         it('should be true when a practice participation without submissions exists and mode is graded', () => {
@@ -191,7 +191,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('participationMode', 'graded');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
         });
 
         it('should be true when mode is practice even without a practice participation', () => {
@@ -206,11 +206,11 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
         });
     });
 
-    describe('hasGradedParticipation', () => {
+    describe('showGradedMode', () => {
         it('should be false for a graded participation without submissions when no practice participation exists', () => {
             const exercise = new QuizExercise(undefined, undefined);
             exercise.type = ExerciseType.QUIZ;
@@ -223,7 +223,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('studentParticipation', gradedParticipation);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasGradedParticipation()).toBe(false);
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
         });
 
         it('should be true for a graded participation without submissions when a practice participation exists', () => {
@@ -240,7 +240,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasGradedParticipation()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
         });
 
         it('should be true when the graded participation has a submitted submission', () => {
@@ -255,7 +255,39 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('studentParticipation', gradedParticipation);
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.hasGradedParticipation()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true without any graded participation when a practice participation exists, so the student can see the missed graded mode', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true during a quiz practice run of a missed quiz (no submitted graded submission, practice participation not yet created)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
         });
     });
 
@@ -280,8 +312,8 @@ describe('ExerciseHeaderComponent', () => {
             expect(emitSpy).toHaveBeenCalledWith(practiceParticipation);
             expect(fixture.componentInstance.participationMode()).toBe('practice');
             expect(fixture.componentInstance.effectivePracticeParticipation()).toBe(practiceParticipation);
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(true);
-            expect(fixture.componentInstance.hasGradedParticipation()).toBe(true);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
         });
 
         it('should keep the graded mode for a new graded participation', () => {
@@ -298,7 +330,7 @@ describe('ExerciseHeaderComponent', () => {
 
             expect(emitSpy).toHaveBeenCalledWith(gradedParticipation);
             expect(fixture.componentInstance.participationMode()).toBe('graded');
-            expect(fixture.componentInstance.hasPracticeParticipation()).toBe(false);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
         });
     });
 
