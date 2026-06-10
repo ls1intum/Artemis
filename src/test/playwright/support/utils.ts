@@ -338,7 +338,45 @@ export async function createFileWithContent(filePath: string, content: string) {
 
 export async function newBrowserPage(browser: Browser) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
-    return await context.newPage();
+    const page = await context.newPage();
+    await addE2EInitScript(page);
+    return page;
+}
+
+/**
+ * Adds init scripts that must run on every E2E page to prevent overlays from blocking
+ * test interactions. This is called automatically for the main `page` fixture via
+ * `baseFixtures.ts` and must also be applied to pages created by `newBrowserPage`.
+ */
+export async function addE2EInitScript(page: Page) {
+    // Register on the context so the suppression also applies to pages created later.
+    await page.context().addInitScript(() => {
+        // Hide the notification popup overlay
+        const injectStyle = () => {
+            const style = document.createElement('style');
+            style.textContent = [
+                'jhi-course-notification-popup-overlay { display: none !important; }',
+                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
+                // CSS backup for the localStorage suppression below.
+                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
+            ].join('\n');
+            document.head.appendChild(style);
+        };
+        if (document.head) {
+            injectStyle();
+        } else {
+            document.addEventListener('DOMContentLoaded', injectStyle);
+        }
+
+        // Suppress the passkey setup modal by setting a far-future reminder date.
+        try {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 10);
+            localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
+        } catch {
+            // localStorage may not be available on about:blank — safe to ignore
+        }
+    });
 }
 
 /**
