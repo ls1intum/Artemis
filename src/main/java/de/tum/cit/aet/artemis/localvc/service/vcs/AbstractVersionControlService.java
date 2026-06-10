@@ -70,12 +70,20 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
-        final boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
+        boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
+        if (targetRepositoryExistedBeforeCopy && !gitService.isBareRepositoryHealthy(targetRepoUri)) {
+            // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
+            // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
+            // so delete it and copy as if it never existed.
+            log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
+            deleteRepository(targetRepoUri);
+            targetRepositoryExistedBeforeCopy = false;
+        }
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
-        catch (IOException | LargeObjectException ex) {
+        catch (IOException | RuntimeException ex) {
             // Clean up only repositories created during this copy attempt. If a repository already existed before, it must not be removed.
             if (!targetRepositoryExistedBeforeCopy) {
                 try {

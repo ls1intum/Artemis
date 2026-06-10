@@ -749,6 +749,30 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Checks whether the bare repository at the given URI is healthy, i.e. it can be opened and has at least one branch.
+     * <p>
+     * An unhealthy repository is either corrupt (e.g. a half-deleted skeleton without HEAD and config, as left behind by a
+     * partially failed deletion) or unborn (created, but it never received its initial branch, e.g. after a failed ref
+     * update during a repository copy). In both cases the repository does not contain any commits on any branch, so it can
+     * safely be deleted and recreated without losing data.
+     *
+     * @param repositoryUri the URI of the bare repository to check
+     * @return true if the repository can be opened and has at least one branch (loose or packed), false otherwise
+     */
+    public boolean isBareRepositoryHealthy(LocalVCRepositoryUri repositoryUri) {
+        var localPath = new LocalVCRepositoryUri(repositoryUri.toString()).getLocalRepositoryPath(localVCBasePath);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setBare().setGitDir(localPath.toFile()).setMustExist(true);
+        try (org.eclipse.jgit.lib.Repository repository = builder.build()) {
+            return !repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS).isEmpty();
+        }
+        catch (IOException | RuntimeException e) {
+            log.warn("Bare repository at {} cannot be opened, considering it corrupt: {}", localPath, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Creates a new bare Git repository at the specified target location,
      * containing a single commit that includes all files from the source repository.
      * <p>
