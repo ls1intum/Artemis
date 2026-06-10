@@ -108,7 +108,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * <li><b>Instructors</b> may see exams whose {@code visibleDate} is between
      * {@code fromDate} (typically now - 7 days) and {@code toDate} (typically now + 7 days).</li>
      * <li><b>Editors</b> and <b>teaching assistants</b> may only see exams whose {@code visibleDate}
-     * lies between {@code now} (0 days offset) and {@code toDate} (typically now + 7 days).</li>
+     * lies between {@code fromDate} and {@code nowDate} (typically the current timestamp).</li>
      * </ul>
      *
      * <p>

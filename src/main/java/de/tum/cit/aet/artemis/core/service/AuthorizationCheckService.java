@@ -276,7 +276,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || isAdmin(user) || isSuperAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || isAdmin(user);
     }
 
     /**

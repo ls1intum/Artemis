@@ -22,11 +22,6 @@ public interface UserCourseRoleTestRepository extends UserCourseRoleRepository {
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM UserCourseRole ucr WHERE ucr.user.id = :userId")
-    void deleteByUser_Id(@Param("userId") Long userId);
-
-    @Transactional
-    @Modifying
     @Query("DELETE FROM UserCourseRole ucr WHERE ucr.course.id = :courseId")
     void deleteByCourse_Id(@Param("courseId") Long courseId);
 

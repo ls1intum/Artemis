@@ -185,7 +185,7 @@ public abstract class PostingService {
             return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId()).stream();
         }
 
-        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
+        return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream()
                 .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
                         participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));

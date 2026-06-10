@@ -463,6 +463,7 @@ public class UserService {
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
+            userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);

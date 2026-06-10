@@ -45,7 +45,7 @@ public class OneToOneChatService {
      */
     public OneToOneChat startOneToOneChat(Course course, User userA, User userB) {
         var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
-        var existingChatBetweenUsers = oneToOneChatRepository.findWithParticipantsAndUserGroupsInCourseBetweenUsers(course.getId(), userA.getId(), userB.getId());
+        var existingChatBetweenUsers = oneToOneChatRepository.findWithParticipantsAndUserCourseRolesInCourseBetweenUsers(course.getId(), userA.getId(), userB.getId());
         if (existingChatBetweenUsers.isPresent()) {
             OneToOneChat chat = existingChatBetweenUsers.get();
             if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {

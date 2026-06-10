@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseCookie;
@@ -31,6 +32,8 @@ import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -137,12 +140,21 @@ class LtiServiceTest {
 
     @Test
     void successFullAuthentication() {
+        String courseStudentGroupName = "course100-students";
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setStudentGroupName(courseStudentGroupName);
         when(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
         when(authorityService.buildAuthorities(user)).thenReturn(new HashSet<>());
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);
 
-        verify(userCourseRoleTestRepository).save(any());
+        ArgumentCaptor<UserCourseRole> ucrCaptor = ArgumentCaptor.forClass(UserCourseRole.class);
+        verify(userCourseRoleTestRepository).save(ucrCaptor.capture());
+        UserCourseRole savedUcr = ucrCaptor.getValue();
+        assertThat(savedUcr.getUser()).isEqualTo(user);
+        assertThat(savedUcr.getCourse()).isEqualTo(course);
+        assertThat(savedUcr.getRole()).isEqualTo(CourseRole.STUDENT);
+        assertThat(user.getGroups()).contains(courseStudentGroupName);
         verify(userCreationService).saveUser(user);
     }
 

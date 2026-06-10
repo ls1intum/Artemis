@@ -164,6 +164,7 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
+    @NonNull
     public static Specification<User> getAllUsersWithoutCourseEnrollment() {
         return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.COURSE_ROLES));
     }

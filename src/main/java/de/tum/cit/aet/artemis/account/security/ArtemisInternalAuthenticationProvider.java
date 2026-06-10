@@ -45,11 +45,13 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         Optional<User> optionalUser;
         if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
             // It's an email, try to find the user based on the email
-            optionalUser = userRepository.findOneWithCourseRolesAndAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true);
+            // Load authorities only — courseRoles are not needed to build the authentication token
+            optionalUser = userRepository.findOneWithAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true);
         }
         else {
             // It's a login, try to find the user based on the login
-            optionalUser = userRepository.findOneWithCourseRolesAndAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true);
+            // Load authorities only — courseRoles are not needed to build the authentication token
+            optionalUser = userRepository.findOneWithAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true);
         }
         if (optionalUser.isEmpty()) {
             log.warn("User {} was not found in the database", lowercaseLoginOrEmail);

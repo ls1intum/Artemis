@@ -88,15 +88,14 @@ public class FileUtil {
      * Sanitizes the provided filename string.
      * <ul>
      * <li>Replaces all characters that are not letters (a-z, A-Z), digits (0-9), dots (.), or hyphens (-) with underscores (_).</li>
-     * <li>Collapses multiple consecutive underscores (_) into a single underscore (_) so that multi-byte characters (e.g. en-dash) produce one separator.</li>
      * <li>Collapses multiple consecutive dots (.) into a single dot (.) to avoid issues with file extensions or hidden files.</li>
      * </ul>
      *
      * @param filename the original filename string to sanitize
-     * @return the sanitized filename, with invalid characters replaced and consecutive separators collapsed
+     * @return the sanitized filename, with invalid characters replaced
      */
     public static String sanitizeFilename(String filename) {
-        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("_+", "_").replaceAll("\\.+", ".");
+        return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
     }
 
     /**

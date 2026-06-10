@@ -327,6 +327,9 @@ public class CourseRequestService {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
+        // TODO (follow-up PR for #12788): remove once the *GroupName columns are dropped from the course table and user_groups dual-write is removed
+        courseAccessService.setDefaultGroupsIfNotSet(course);
+
         course.validateShortName();
         course.validateStartAndEndDate();
         course.validateEnrollmentStartAndEndDate();

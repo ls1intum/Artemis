@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
@@ -123,7 +124,9 @@ public class UserResource {
     @PutMapping("users/initialize")
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        // TODO (follow-up PR for #12788): switch back to getUserWithCourseRolesAndAuthorities() once user_groups table is dropped;
+        // groups must be loaded now so userRepository.save(user) does not trigger a PersistentSet merge NPE on the uninitialized groups collection
+        User user = userRepository.findOneWithGroupsAndCourseRolesAndAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

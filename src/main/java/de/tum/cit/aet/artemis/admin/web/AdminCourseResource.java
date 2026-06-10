@@ -182,6 +182,9 @@ public class AdminCourseResource {
             ltiApi.get().createOnlineCourseConfiguration(course);
         }
 
+        // TODO (follow-up PR for #12788): remove once the *GroupName columns are dropped from the course table and user_groups dual-write is removed
+        courseAccessService.setDefaultGroupsIfNotSet(course);
+
         Course createdCourse = courseRepository.save(course);
 
         if (file != null) {
@@ -279,7 +282,7 @@ public class AdminCourseResource {
      * <li>Exercise, exam, and lecture definitions</li>
      * <li>Competency definitions</li>
      * <li>Conversation/channel structure</li>
-     * <li>Tutor, editor, and instructor group memberships</li>
+     * <li>Instructor course memberships</li>
      * </ul>
      * <p>
      * <b>Deleted data:</b>

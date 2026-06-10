@@ -121,11 +121,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesByRegistrationNumber(String registrationNumber);
 
-    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
-    Optional<User> findOneWithCourseRolesAndAuthoritiesByLoginAndInternal(String login, boolean internal);
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLoginAndInternal(String login, boolean internal);
 
-    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
-    Optional<User> findOneWithCourseRolesAndAuthoritiesByEmailAndInternal(String email, boolean internal);
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByEmailAndInternal(String email, boolean internal);
 
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(Long id);
@@ -134,7 +134,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
     @Query("""
-            SELECT u
+            SELECT DISTINCT u
             FROM User u
             LEFT JOIN FETCH u.courseRoles
             LEFT JOIN FETCH u.authorities
@@ -360,6 +360,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
+            ORDER BY user.id ASC
             """)
     List<Long> findUserIdsByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, Pageable pageable);
