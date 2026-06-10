@@ -33,20 +33,20 @@ artemis:
 
 ## Configure Spring AI
 
-Hyperion delegates all model interactions to Spring AI. Configure exactly one provider; Artemis currently ships the Azure OpenAI starter, but classic OpenAI endpoints work as well when configured through Spring AI.
+Hyperion delegates all model interactions to Spring AI. Artemis ships the single OpenAI module (backed by the official OpenAI Java SDK), which serves OpenAI, Azure OpenAI / Microsoft Foundry, and OpenAI-compatible local servers from one configuration tree.
 
 ### OpenAI
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        open-ai-api-key: <openai-api-key> # automatically sets the azure endpoint to https://api.openai.com/v1
-        chat:
-          options:
-            deployment-name: gpt-5-mini # Or another (reasonably capable) model
-            temperature: 1.0 # Required to be 1.0 for gpt-5
+    model:
+      chat: openai
+    openai:
+      api-key: <openai-api-key>
+      chat:
+        model: gpt-5-mini # Or another (reasonably capable) model
+        temperature: 1.0 # Required to be 1.0 for gpt-5
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI
@@ -59,19 +59,20 @@ spring:
         max-interval: 30000ms
 ```
 
-### Azure OpenAI
+### Azure OpenAI / Microsoft Foundry
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        api-key: <azure-openai-api-key>
-        endpoint: https://<your-resource-name>.openai.azure.com
-        chat:
-          options:
-            deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
-            temperature: 1.0 # Required to be 1.0 for gpt-5
+    model:
+      chat: openai
+    openai:
+      api-key: <azure-openai-api-key>
+      base-url: https://<your-resource-name>.openai.azure.com
+      microsoft-foundry: true # auto-detected for *.openai.azure.com base URLs
+      chat:
+        deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
+        temperature: 1.0 # Required to be 1.0 for gpt-5
     # Retry/response handling tuning for AI providers
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI

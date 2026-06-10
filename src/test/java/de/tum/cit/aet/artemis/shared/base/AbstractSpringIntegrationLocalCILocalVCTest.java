@@ -23,6 +23,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -269,6 +270,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @BeforeEach
     void clearBuildJobsBefore() {
         buildJobRepository.deleteAll();
+    }
+
+    @BeforeEach
+    void stubChatModelDefaultOptions() {
+        // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null
+        Mockito.when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
     }
 
     @AfterEach

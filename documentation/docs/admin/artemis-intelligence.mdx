@@ -35,19 +35,21 @@ Artemis Intelligence is the collection of AI-assisted capabilities layered on to
    - Atlas: `artemis.atlas.enabled=true` (defaults to `true` in `application-core.yml`).
    Both flags participate in `SpringAIAutoConfigurationFilter`, so at least one must be true for Spring AI autoconfiguration to load.
 
-2. **Choose exactly one Spring AI provider** (OpenAI or Azure OpenAI are pre-bundled). Example (OpenAI-compatible):
+2. **Configure the Spring AI OpenAI module** — since Spring AI 2.0 the single `spring.ai.openai.*` tree serves OpenAI, Azure OpenAI / Microsoft Foundry, and OpenAI-compatible local servers. Example (OpenAI):
 
 ```yaml
 spring:
   ai:
-    azure:
-      openai:
-        open-ai-api-key: <openai-api-key> # sets endpoint to https://api.openai.com/v1
-        chat:
-          options:
-            deployment-name: gpt-5-mini
-            temperature: 1.0
+    model:
+      chat: openai
+    openai:
+      api-key: <openai-api-key>
+      chat:
+        model: gpt-5-mini
+        temperature: 1.0
 ```
+
+For Azure OpenAI, set `base-url: https://<your-resource>.openai.azure.com` and `chat.deployment-name` instead — see the [Hyperion Admin Setup](/admin/hyperion) for a complete example.
 
 <Callout variant={CalloutVariant.info}>
     For local testing with LM Studio or Ollama, follow the [Spring AI Development Guide](/developer/spring-ai).

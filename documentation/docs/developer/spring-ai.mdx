@@ -82,13 +82,12 @@ spring:
     model:
       chat: openai
     openai:
-      base-url: http://localhost:1234
+      # The official OpenAI SDK appends /chat/completions itself, so the base URL must include the /v1 prefix
+      base-url: http://localhost:1234/v1
       api-key: dummy-key # not required for local LLM service
       chat:
-        completions-path: /v1/chat/completions
-        options:
-          model: openai/gpt-oss-20b    # or whatever name your local server expects
-          temperature: 0.7
+        model: openai/gpt-oss-20b    # or whatever name your local server expects
+        temperature: 0.7
 ```
 
 <Callout variant={CalloutVariant.warning}>
