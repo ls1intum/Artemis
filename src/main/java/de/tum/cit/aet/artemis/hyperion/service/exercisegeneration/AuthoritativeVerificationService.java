@@ -80,6 +80,19 @@ public class AuthoritativeVerificationService {
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task\\]\\[[^\\]]*\\]\\((.*)\\)");
 
     /**
+     * Matches a line shaped exactly like a task binding — {@code [keyword][title](names)} — capturing the keyword, so a near-miss such as {@code [tasks]} (plural) or
+     * {@code [Task]}
+     * (wrong case) can be caught. The parser only honours the literal lowercase singular {@code [task]}; any other keyword renders as plain student-facing text and binds NO test,
+     * so
+     * a graded requirement is silently dropped (and the raw test name leaks into the prose). The {@code [x][y](z)} shape — two bracketed groups followed by parentheses — is
+     * specific
+     * to the task syntax (a Markdown reference link is {@code [text][id]} with no parens; an inline link is {@code [text](url)} with one bracket group), so a near-miss is
+     * virtually
+     * always a typo'd binding rather than legitimate prose.
+     */
+    private static final Pattern TASK_LIKE_BINDING = Pattern.compile("\\[(\\w+)\\]\\[[^\\]]*\\]\\([^)]*\\)");
+
+    /**
      * The shape of an Ares auto-generated structural test-case name ({@code testClass[X]}, {@code testMethods[X]}, …). Used ONLY to relax binding RESOLUTION (a structural-shaped
      * binding need not resolve, since the seeder injects these AFTER the agent submits), never the differential — a real behaviour test named {@code testClass[Evil]} still must
      * fail
@@ -309,6 +322,16 @@ public class AuthoritativeVerificationService {
                     + "appear as a checklist for students.");
         }
 
+        // Near-miss keyword gate: a line shaped like a task binding but using the wrong keyword (e.g. [tasks] plural, [Task]) is silently ignored by the parser, so its tests bind
+        // nothing and the raw test names leak into student text. Reject it explicitly — the recovery loop then surfaces the exact wrong keyword so the agent fixes the typo.
+        List<String> malformedTaskKeywords = malformedTaskKeywords(problemStatement);
+        boolean taskKeywordsWellFormed = malformedTaskKeywords.isEmpty();
+        if (!taskKeywordsWellFormed) {
+            reasons.add(
+                    "These lines look like task bindings but use the wrong keyword " + malformedTaskKeywords + " instead of the exact lowercase singular [task]; they render as "
+                            + "plain text and bind NO test (and leak the raw test names). Rewrite each as [task][Title](testName).");
+        }
+
         // The unresolved bindings are surfaced to the agent verbatim (the C++/Catch2 bare-name trap), so compute the list once and let the gate decide from it.
         List<String> unresolvedTaskBindings = unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
@@ -317,7 +340,7 @@ public class AuthoritativeVerificationService {
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
         boolean actionableGatesPass = solutionPassed && templateFailed && testCount > 0 && emitterSoundness.solutionNamesComplete() && emitterSoundness.templateFailNamesSound()
-                && problemStatementHasTasks && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean;
+                && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
@@ -472,6 +495,25 @@ public class AuthoritativeVerificationService {
                     + solution.testNames() + ". Fix the [task] lines (or rename the tests) so every binding references a real test name.");
         }
         return taskBindingsResolve;
+    }
+
+    /**
+     * The distinct wrong keywords used on lines shaped like a task binding ({@code [keyword][title](names)}) where the keyword is not the literal lowercase singular {@code task} —
+     * a
+     * near-miss such as {@code [tasks]} or {@code [Task]} that the parser ignores, silently binding no test and leaking the raw test names into student prose. Returns an empty
+     * list
+     * when every task-shaped line uses the correct keyword.
+     */
+    private static List<String> malformedTaskKeywords(String problemStatement) {
+        Matcher matcher = TASK_LIKE_BINDING.matcher(problemStatement);
+        List<String> wrongKeywords = new ArrayList<>();
+        while (matcher.find()) {
+            String keyword = matcher.group(1);
+            if (!"task".equals(keyword) && !wrongKeywords.contains(keyword)) {
+                wrongKeywords.add(keyword);
+            }
+        }
+        return wrongKeywords;
     }
 
     /**

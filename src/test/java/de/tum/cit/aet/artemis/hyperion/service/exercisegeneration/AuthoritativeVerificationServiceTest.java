@@ -458,6 +458,30 @@ class AuthoritativeVerificationServiceTest {
     }
 
     @Test
+    void shouldRejectWhenATaskLineUsesTheWrongKeyword() {
+        // The live C++ defect: the agent wrote [tasks] (plural) on some lines. The parser only honours the literal lowercase singular [task], so a near-miss silently binds nothing
+        // and leaks the raw test name — even though one well-formed [task] line satisfies the "has at least one binding" gate. The near-miss gate must reject it and name the
+        // keyword.
+        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray)\n[tasks][Sort with duplicates](sortsArrayWithDuplicates)\n";
+        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        assertThat(result.accepted()).as("a [tasks]-plural near-miss must be rejected even though a valid [task] line is present").isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("wrong keyword") && r.contains("tasks"));
+    }
+
+    @Test
+    void shouldNotFlagAWellFormedTaskListAsMalformedKeyword() {
+        // Guard against a false positive: a statement whose task lines all use the exact [task] keyword (and ordinary Markdown links elsewhere) must not trip the near-miss gate.
+        List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        String problemStatement = "# Sort\nSee [the docs](https://example.com) and the [reference][ref].\n[task][Sort an array](sortsUnsortedArray)\n"
+                + "[task][Sort with duplicates](sortsArrayWithDuplicates)\n";
+        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        assertThat(result.reasons()).as("a well-formed task list with ordinary Markdown links must not trip the near-miss keyword gate")
+                .noneMatch(r -> r.contains("wrong keyword"));
+        assertThat(result.accepted()).isTrue();
+    }
+
+    @Test
     void shouldRejectWhenTaskBindingReferencesDisplayNameInsteadOfMethodName() {
         // The classic defect: the [task] names are @DisplayName / prose text, while the real test method names differ — the task would bind to nothing in Artemis.
         String problemStatement = "# Sort\n[task][Sort an unsorted array](Sort an unsorted array)\n[task][Sort with duplicates](Sort with duplicates)\n";
