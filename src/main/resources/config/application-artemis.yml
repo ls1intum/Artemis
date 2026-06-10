@@ -90,16 +90,13 @@ artemis:
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    model-costs:  # Token costs for usage tracking (EUR per million tokens)
+    # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
+    # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
+    # must be bracket-quoted, e.g. "[gpt-5.4]").
+    model-costs:
       gpt-5-mini:
         input-cost-per-million-eur: 0.23
         output-cost-per-million-eur: 1.84
-      "[gpt-5.4]":  # Atlas orchestrator model ($2.50 / $15.00 per 1M, USD→EUR ×0.92); brackets required: dotted map keys are otherwise parsed as nested paths
-        input-cost-per-million-eur: 2.30
-        output-cost-per-million-eur: 13.80
-      "[gpt-5.4-mini]":  # Atlas chat-agent model ($0.75 / $4.50 per 1M, USD→EUR ×0.92)
-        input-cost-per-million-eur: 0.69
-        output-cost-per-million-eur: 4.14
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
