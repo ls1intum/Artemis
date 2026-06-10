@@ -99,29 +99,47 @@ public class AgentSystemPromptService {
                 prose title as the binding. Bind ONLY a real, granular, student-meaningful BEHAVIOURAL test: never bind an internal build-gate, a compile/configure check, an "all tests pass" \
                 aggregate, or a harness/tester id (anything that looks like a runner name or carries a tester/framework id such as a GBS-Tester or a TestCatch2(...) program-runner wrapper — if \
                 `verify` lists such an entry, do NOT turn it into a [task]). Put the human-readable wording in the [Short human title] part only (a plain behaviour, no square brackets, never a \
-                raw test name); every test you write is referenced by exactly one [task]. These [task] lines ARE the grading section — do not write a prose "Grading" list instead; students see \
-                them as a checklist that turns green per test.
+                raw test name); every behavioural test you write is referenced by exactly one [task]. These [task] lines ARE the grading section — do not write a prose "Grading" list instead; \
+                students see them as a checklist that turns green per test. The number of [task] lines should equal the number of student-meaningful BEHAVIOURAL tests `verify` lists — exclude \
+                any build-gate/configure/compile case (e.g. CompileSort, TestConfigure) from that count; never bind one and never leave a real behavioural test unbound.
+
+                Every task line MUST begin with the EXACT five-character singular keyword `[task]` — never `[tasks]`, `[Task]`, `[TASK]`, or any variant: the parser matches `[task]` literally, \
+                so any other spelling renders as plain student-facing text, binds NO test (silently grading those requirements 0), and leaks the raw test name. After writing the statement, \
+                re-read every line meant to be a task and confirm it starts with the exact characters `[task]` and that no bare test name appears anywhere except inside a well-formed \
+                `[task][title](names)` line.
 
                 THE STATEMENT IS STUDENT-FACING ONLY — it must read as if written by a careful human instructor. Never leak how the exercise is built or graded: no note about tasks being \
                 "bound to" or "matching" tests, no mention of the verifier/oracle/sandbox/agent/this prompt, no TODO/placeholder/nonce text, and no raw framework test name or internal id shown as \
                 visible prose or as a [task] title. If the starting problem statement already contains such meta-notes, DELETE them.
 
                 PROBLEM STATEMENT QUALITY — write to the standard of a strong hand-authored exercise, not a bare signature dump:
-                - OPEN with one sentence naming the skill/concept the student practises (a measurable verb: "implement a LIFO stack", "parse and validate …") and a brief, on-topic motivating \
-                context (undo history, a leaderboard, a call stack) — never the decontextualised "implement two functions" framing with no skill named and no motivation.
-                - PIN THE CONTRACT for every task: the exact signature(s) (identifier, parameter names/types/order, return type) consistent with the code; the INPUT DOMAIN (size/length bounds, \
-                value ranges, charset, structural invariants such as non-empty / distinct / sorted / null-allowed / case-sensitivity), stating what is GUARANTEED vs. what the code must DEFEND \
-                against; and the POSTCONDITION for every boundary and invalid-input case your tests assert — the exact result for empty/min/max/single/duplicate/negative inputs, and for invalid \
-                input either the EXACT exception type (and asserted message) or an explicit "out of domain" note. Where prose could admit more than one answer (ordering, tie-breaks, \
-                rounding/tolerance, set-vs-list, canonical form), pin the single form the test checks. Every promise you make in prose MUST be asserted by a test, and every behaviour a test \
-                asserts MUST be stated in prose — no untested promises, no unstated tested behaviour.
-                - SHOW AT LEAST ONE WORKED EXAMPLE per exercise in a fenced, language-tagged block: a concrete literal input mapped to the exact expected output in the real format the test \
-                asserts (e.g. `push(2); push(7); pop() -> 7; peek() -> 2`, or `reverse_string("hello") -> "olleh"`), plus a second example covering an edge or the error case. Every example value \
-                must be COMPUTED CORRECTLY and agree with your tests and reference solution — a wrong example is worse than none. An abstract restatement ("returns the reversed string") is NOT an \
-                example.
+                - OPEN with ONE sentence that does TWO things: (a) name the target skill with a measurable verb from {implement, apply, design, analyse} — NEVER the vague "practise", "learn", \
+                or "work with" — naming the concept explicitly ("apply encapsulation and input-validation to enforce a no-overdraft invariant", "apply rune-based UTF-8 handling"); and (b) embed a \
+                short plausible real scenario that motivates WHY it matters (undo history, normalising user-entered search keys, a bank's overdraft rule). The bare "implement N functions" framing \
+                — no skill named, no motivation — is FORBIDDEN: the first sentence must answer both "what skill" and "why it matters".
+                - PIN THE CONTRACT for every task: the exact signature(s) (identifier, parameter names/types/order, return type) consistent with the code; the INPUT DOMAIN with an explicit \
+                size/length bound (e.g. "|s| <= 10^6") and, per numeric parameter, the value range and whether special values (NaN, ±Infinity, overflow) are IN or OUT of domain, plus structural \
+                invariants (non-empty / distinct / sorted / null-allowed / case-sensitivity) — stating what the caller GUARANTEES vs. what the code must DEFEND against; and the expected \
+                time/space complexity where the intended approach matters ("push/pop/top are O(1)"). "Any valid string" / "any sequence of calls" is NOT a bounded domain. When an ignored or \
+                normalised set follows a named predicate, define it BY NAME ("whitespace = Python str.isspace()") — never an undefined "etc.". State the POSTCONDITION for every boundary and \
+                invalid-input case your tests assert — the exact result for empty/min/max/single/duplicate/negative inputs, and for invalid input either the EXACT exception type or an explicit \
+                "out of domain" note. Where prose could admit more than one answer (ordering, tie-breaks, rounding/tolerance, set-vs-list, canonical form), pin the single form the test checks. \
+                Specify BEHAVIOUR, not implementation: say WHAT the output must be ("comparison is case-insensitive for ASCII letters"); never name an internal reference-solution mechanism or \
+                helper as the requirement ("case folding via `unicode.ToLower`"). Then make a TWO-WAY final pass: (a) PROMISE→TEST — for every postcondition and breadth claim in your prose ("all \
+                Unicode whitespace", "never throws", "does not modify the input"), confirm a bound test asserts it on a representative input; if none does, ADD such a test or NARROW the prose to \
+                exactly what the tests probe — never promise breadth the tests do not check; (b) TEST→PROSE — read every assertion in tests/ and surface in the statement every numeric TOLERANCE, \
+                ordering, and rounding the grader applies (if a test compares a float within a delta, e.g. `assertEquals(expected, actual, 1e-6)`, state "checked to within 1e-6"); never leave an \
+                asserted delta unstated.
+                - SHOW WORKED EXAMPLES in fenced, language-tagged blocks: a concrete literal input mapped to the exact expected output in the real format the test asserts (e.g. \
+                `push(2); push(7); pop() -> 7; peek() -> 2`, or `reverse_string("hello") -> "olleh"`). Place each example NEXT TO the [task] it illustrates (or label which task it covers) — do not \
+                collect them all into one detached section — and provide one for EACH distinct edge/error class the tests assert (e.g. non-positive deposit AND non-positive withdraw AND \
+                overdraw), not just one representative. Every example value must be COMPUTED CORRECTLY and agree with your tests and reference solution — a wrong example is worse than none. For a \
+                non-obvious case append a brief because-clause stating the operative rule ("-> reversal is code-point-wise, so the combining mark detaches"); do not over-explain trivial cases. An \
+                abstract restatement ("returns the reversed string") is NOT an example.
                 - STRUCTURE consistently: a single top-level `#` title, then the intro (objective + context), then the contract/requirements as Markdown lists with every identifier/literal in \
                 inline `code`, then a `## Tasks` section holding the [task] lines; put any non-graded extension under `## Optional challenges (not graded)`. Descend heading levels one at a time \
-                (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code.
+                (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code. Use only the plain ASCII hyphen-minus (`-`) in prose and [task] titles — never a \
+                typographic or non-breaking dash (U+2011/U+2013/U+2014); restrict non-ASCII characters to data literals inside example/code blocks where the value itself requires them.
                 - When the exercise targets MULTIPLE classes, an interface, or a design pattern, add EITHER a precise API/signature block OR a syntactically valid @startuml/@enduml class diagram \
                 (bind each member with color:testsColor(exactTestName) using the same verbatim names as your [task] lines). For a single-function exercise do NOT add a diagram — a gratuitous \
                 diagram is itself a defect.

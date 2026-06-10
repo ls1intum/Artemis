@@ -192,7 +192,18 @@ class AgentSystemPromptServiceTest {
         // B-), meta/internal leakage into student text (the Java [tasks are automatically bound...] leak), binding an internal build-gate aggregate as a task (the C++ defect), an
         // unbounded input domain, and a missing motivating objective. These are authoring contracts, so a reword that drops them is a real regression and must fail this test.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("WORKED EXAMPLE").contains("STUDENT-FACING ONLY").contains("build-gate").contains("INPUT DOMAIN").contains("motivating context");
+        assertThat(prompt).contains("WORKED EXAMPLE").contains("STUDENT-FACING ONLY").contains("build-gate").contains("INPUT DOMAIN");
+    }
+
+    @Test
+    void build_encodesLoop2ResidualQualityRules() {
+        // Each phrase pins a loop-2 residual defect the stricter re-grade found in the live generations: the C++ `[tasks]` plural typo that bound nothing (hard C cap), a weak
+        // "practise" learning-objective verb (every exercise lost ~0.4 on that axis), an asserted-but-unstated float tolerance, an unbounded input domain, a reference-mechanism
+        // leak,
+        // and typographic dashes in student text. These are authoring contracts, so a reword that drops them is a real regression.
+        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
+        assertThat(prompt).contains("EXACT five-character singular keyword `[task]`").contains("NEVER the vague \"practise\"").contains("checked to within 1e-6")
+                .contains("size/length bound").contains("not implementation").contains("non-breaking dash");
     }
 
     @Test
