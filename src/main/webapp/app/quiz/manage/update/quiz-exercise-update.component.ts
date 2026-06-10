@@ -620,7 +620,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.quizQuestions!.forEach((question) => (scoreSum += question.points!));
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach((question) => (scoreSum += question.points!));
+        }
         return scoreSum;
     }
 
