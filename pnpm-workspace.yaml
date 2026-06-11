@@ -10,8 +10,8 @@
 
 # Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
 # Without this, peer deps such as `@angular/animations` (required by
-# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
-# Angular esbuild bundle fails with "Could not resolve @angular/animations".
+# @swimlane/ngx-charts) are not installed, and the Angular esbuild bundle
+# fails with "Could not resolve @angular/animations".
 autoInstallPeers: true
 
 # Treat the lockfile as authoritative; never silently update it during install.
@@ -54,16 +54,6 @@ overrides:
     '@swimlane/ngx-charts>@angular/platform-browser-dynamic': '^21.2.0'
     '@swimlane/ngx-charts>@angular/router': '^21.2.0'
     '@swimlane/ngx-charts>rxjs': '^7.8.2'
-    '@swimlane/ngx-graph>@angular/animations': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/cdk': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/common': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/compiler': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/core': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/forms': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/platform-browser-dynamic': '^21.2.0'
-    '@swimlane/ngx-graph>@angular/router': '^21.2.0'
-    '@swimlane/ngx-graph>rxjs': '^7.8.2'
     'ng-mocks>@angular/common': '^21.2.0'
     'ng-mocks>@angular/core': '^21.2.0'
     'ng-mocks>@angular/forms': '^21.2.0'
@@ -112,7 +102,6 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
     'eslint@10.4.1': 'patches/eslint+10.4.1.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.

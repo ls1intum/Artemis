@@ -5,46 +5,23 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, Course
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
-import { MockModule } from 'ng-mocks';
-import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
-interface CourseCompetencyStyle {
-    dimension: {
-        height: number;
-        width: number;
-    };
-    meta: {
-        forceDimensions: boolean;
-    };
-    position: {
-        x: number;
-        y: number;
-    };
-}
-type StyledCourseCompetency = CourseCompetency & CourseCompetencyStyle;
 
 describe('CourseCompetenciesRelationGraphComponent', () => {
     setupTestBed({ zoneless: true });
     let component: CourseCompetenciesRelationGraphComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
 
-    const courseCompetencies: StyledCourseCompetency[] = [
-        {
+    const courseCompetencies: CourseCompetency[] = [
+        <CourseCompetency>{
             id: 1,
             type: CourseCompetencyType.COMPETENCY,
             title: 'Competency',
-            dimension: { height: 45.59, width: 0 },
-            meta: { forceDimensions: false },
-            position: { x: 0, y: 0 },
         },
-        {
+        <CourseCompetency>{
             id: 2,
             type: CourseCompetencyType.PREREQUISITE,
             title: 'Prerequisite',
-            dimension: { height: 45.59, width: 0 },
-            meta: { forceDimensions: false },
-            position: { x: 0, y: 0 },
         },
     ];
 
@@ -67,12 +44,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                 },
                 provideNoopAnimationsForTests(),
             ],
-        })
-            .overrideComponent(CourseCompetenciesRelationGraphComponent, {
-                remove: { imports: [NgxGraphModule] },
-                add: { imports: [MockModule(NgxGraphModule)] },
-            })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(CourseCompetenciesRelationGraphComponent);
         component = fixture.componentInstance;
@@ -111,7 +83,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
     it('should map nodes correctly', () => {
         fixture.detectChanges();
 
-        expect(component.nodes()).toEqual(
+        expect(component.nodes()).toMatchObject(
             courseCompetencies.map((cc) => {
                 return {
                     id: cc.id!.toString(),
@@ -123,6 +95,8 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                 };
             }),
         );
+        // the rendered node components measure themselves and report their size back
+        expect(component.nodes().every((node) => node.dimension !== undefined)).toBeTruthy();
     });
 
     it('should update node dimension', () => {

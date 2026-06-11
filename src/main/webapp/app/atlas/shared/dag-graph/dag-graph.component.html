@@ -1,0 +1,56 @@
+<svg
+    class="dag-graph"
+    width="100%"
+    height="100%"
+    (wheel)="onWheel($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp()"
+    (pointercancel)="onPointerUp()"
+>
+    <defs>
+        @if (defsTemplate(); as defs) {
+            <ng-container [ngTemplateOutlet]="defs" />
+        }
+    </defs>
+    <rect class="panning-rect" width="100%" height="100%" [class.pannable]="enablePan()" />
+    <g class="graph-content" [attr.transform]="contentTransform()" [style.visibility]="allMeasured() ? 'visible' : 'hidden'">
+        <g class="edges">
+            @for (layoutEdge of layout().edges; track layoutEdge.edge.id) {
+                <ng-container [ngTemplateOutlet]="edgeTemplate() ?? defaultEdgeTemplate" [ngTemplateOutletContext]="{ $implicit: layoutEdge }" />
+            }
+        </g>
+        <g class="nodes">
+            @for (layoutNode of layout().nodes; track layoutNode.node.id) {
+                <g class="node-group" [attr.transform]="layoutNode.transform">
+                    <ng-container [ngTemplateOutlet]="nodeTemplate()" [ngTemplateOutletContext]="{ $implicit: layoutNode }" />
+                </g>
+            }
+        </g>
+    </g>
+    @if (showMiniMap() && allMeasured() && layout().nodes.length > 0) {
+        <g class="minimap" [attr.transform]="minimapTransform()">
+            <rect class="minimap-background" [attr.width]="layout().width" [attr.height]="layout().height" />
+            <g class="minimap-nodes">
+                @for (layoutNode of layout().nodes; track layoutNode.node.id) {
+                    <rect
+                        [attr.x]="layoutNode.position.x - layoutNode.dimension.width / 2"
+                        [attr.y]="layoutNode.position.y - layoutNode.dimension.height / 2"
+                        [attr.width]="layoutNode.dimension.width"
+                        [attr.height]="layoutNode.dimension.height"
+                    />
+                }
+            </g>
+            <rect
+                class="minimap-viewport"
+                [attr.x]="minimapViewport().x"
+                [attr.y]="minimapViewport().y"
+                [attr.width]="minimapViewport().width"
+                [attr.height]="minimapViewport().height"
+            />
+        </g>
+    }
+    <ng-template #defaultEdgeTemplate let-layoutEdge>
+        <svg:path class="line" stroke-width="1" [attr.d]="layoutEdge.path" marker-end="url(#arrow)" />
+    </ng-template>
+</svg>
