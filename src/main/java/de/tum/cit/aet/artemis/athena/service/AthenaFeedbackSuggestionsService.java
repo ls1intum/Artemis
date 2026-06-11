@@ -201,8 +201,9 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
+            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
 
@@ -237,8 +238,9 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
+            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
 
@@ -263,8 +265,9 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
-            log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course.getAthenaConfig() == null || !course.getAthenaConfig().isGradingFeedbackEnabled()) {
+            log.warn("Athena grading feedback is not enabled for course of exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
 
