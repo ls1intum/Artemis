@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,8 +19,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
     private prerequisiteService = inject(PrerequisiteService);
 
-    prerequisite: Prerequisite;
-    formData: CourseCompetencyFormData;
+    readonly prerequisite = signal<Prerequisite>(undefined!);
+    readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -42,21 +42,21 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
             .subscribe({
                 next: ([prerequisiteResult, courseProgressResult]) => {
                     if (prerequisiteResult.body) {
-                        this.prerequisite = prerequisiteResult.body;
+                        this.prerequisite.set(prerequisiteResult.body);
                         if (courseProgressResult.body) {
-                            this.prerequisite.courseProgress = courseProgressResult.body;
+                            this.prerequisite().courseProgress = courseProgressResult.body;
                         }
                     }
 
-                    this.formData = {
-                        id: this.prerequisite.id,
-                        title: this.prerequisite.title,
-                        description: this.prerequisite.description,
-                        softDueDate: this.prerequisite.softDueDate,
-                        taxonomy: this.prerequisite.taxonomy,
-                        masteryThreshold: this.prerequisite.masteryThreshold,
-                        optional: this.prerequisite.optional,
-                    };
+                    this.formData.set({
+                        id: this.prerequisite().id,
+                        title: this.prerequisite().title,
+                        description: this.prerequisite().description,
+                        softDueDate: this.prerequisite().softDueDate,
+                        taxonomy: this.prerequisite().taxonomy,
+                        masteryThreshold: this.prerequisite().masteryThreshold,
+                        optional: this.prerequisite().optional,
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -65,17 +65,17 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
-        this.prerequisite.title = title;
-        this.prerequisite.description = description;
-        this.prerequisite.softDueDate = softDueDate;
-        this.prerequisite.taxonomy = taxonomy;
-        this.prerequisite.masteryThreshold = masteryThreshold;
-        this.prerequisite.optional = optional;
+        this.prerequisite().title = title;
+        this.prerequisite().description = description;
+        this.prerequisite().softDueDate = softDueDate;
+        this.prerequisite().taxonomy = taxonomy;
+        this.prerequisite().masteryThreshold = masteryThreshold;
+        this.prerequisite().optional = optional;
 
         this.isLoading.set(true);
 
         this.prerequisiteService
-            .update(this.prerequisite, this.courseId)
+            .update(this.prerequisite(), this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);

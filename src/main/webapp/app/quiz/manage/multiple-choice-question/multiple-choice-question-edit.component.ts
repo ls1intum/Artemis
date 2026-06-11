@@ -1,18 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    Injector,
-    OnInit,
-    ViewEncapsulation,
-    afterNextRender,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -67,7 +53,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private injector = inject(Injector);
+    private changeDetectorRef = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -271,14 +257,23 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      *        and the check for the question validity is triggered
      */
     private resetMultipleChoicePreview() {
-        // Destroy the preview now and recreate it after the next render (signal writes coalesce within one pass).
+        // Genuinely-unavoidable synchronous detectChanges: the preview child must be destroyed and recreated
+        // within ONE call so it re-initializes from the in-place-mutated question, and prepareForSave()/the
+        // save flow may run immediately afterwards and require the child to exist again. Signal writes coalesce
+        // within a change-detection pass and afterNextRender would leave a one-render window in which
+        // viewChild.required throws / the save serializes an empty question (caught by E2E).
         this.showMultipleChoiceQuestionPreview.set(false);
-        afterNextRender(() => this.showMultipleChoiceQuestionPreview.set(true), { injector: this.injector });
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionPreview.set(true);
+        this.changeDetectorRef.detectChanges();
     }
 
     private resetMultipleChoiceVisual() {
+        // Synchronous destroy/recreate for the same reason as resetMultipleChoicePreview (see comment above).
         this.showMultipleChoiceQuestionVisual.set(false);
-        afterNextRender(() => this.showMultipleChoiceQuestionVisual.set(true), { injector: this.injector });
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionVisual.set(true);
+        this.changeDetectorRef.detectChanges();
     }
 
     toggleCollapse(): void {

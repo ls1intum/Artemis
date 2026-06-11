@@ -81,11 +81,11 @@
         </div>
     </div>
 
-    @if (lectures) {
+    @if (lectures()) {
         <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
     }
 
-    @if (filteredLectures) {
+    @if (filteredLectures()) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -114,7 +114,7 @@
                     </tr>
                 </thead>
                 <tbody class="markdown-preview" id="lecture-preview">
-                    @for (lecture of filteredLectures; track trackId(i, lecture); let i = $index) {
+                    @for (lecture of filteredLectures(); track trackId(i, lecture); let i = $index) {
                         <tr id="lecture-{{ lecture.id }}">
                             <td>
                                 <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>

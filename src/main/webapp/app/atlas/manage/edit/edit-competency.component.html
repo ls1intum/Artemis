@@ -9,11 +9,11 @@
         <h3 jhiTranslate="artemisApp.competency.edit.title"></h3>
         <jhi-competency-form
             [isEditMode]="true"
-            [formData]="formData"
+            [formData]="formData()"
             (formSubmitted)="updateCompetency($event)"
             [courseId]="courseId"
-            [averageStudentScore]="competency?.courseProgress?.averageStudentScore ?? 0"
-            [competency]="competency"
+            [averageStudentScore]="competency()?.courseProgress?.averageStudentScore ?? 0"
+            [competency]="competency()"
         />
     </div>
 }

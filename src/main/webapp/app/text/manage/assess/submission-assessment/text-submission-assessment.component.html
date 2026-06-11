@@ -1,49 +1,50 @@
 <jhi-assessment-layout
     (navigateBack)="navigateBack()"
     [isLoading]="isLoading()"
-    [saveBusy]="saveBusy"
-    [submitBusy]="submitBusy"
-    [cancelBusy]="cancelBusy"
-    [nextSubmissionBusy]="nextSubmissionBusy"
+    [saveBusy]="saveBusy()"
+    [submitBusy]="submitBusy()"
+    [cancelBusy]="cancelBusy()"
+    [nextSubmissionBusy]="nextSubmissionBusy()"
     [isTeamMode]="!!exercise?.teamMode"
-    [isAssessor]="isAssessor"
+    [isAssessor]="isAssessor()"
     [canOverride]="canOverride"
-    [result]="result"
-    [assessmentsAreValid]="assessmentsAreValid"
-    [complaint]="complaint"
+    [result]="result()"
+    [assessmentsAreValid]="assessmentsAreValid()"
+    [complaint]="complaint()"
     [exercise]="exercise"
     [submission]="submission"
-    [isTestRun]="isTestRun"
-    [exerciseDashboardLink]="exerciseDashboardLink"
-    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed"
-    [correctionRound]="correctionRound"
+    [isTestRun]="isTestRun()"
+    [exerciseDashboardLink]="exerciseDashboardLink()"
+    [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+    [correctionRound]="correctionRound()"
     (save)="save()"
     (onSubmit)="submit()"
     (onCancel)="cancel()"
     (nextSubmission)="nextSubmission()"
-    [(highlightDifferences)]="highlightDifferences"
+    [highlightDifferences]="highlightDifferences()"
+    (highlightDifferencesChange)="highlightDifferences.set($event)"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <jhi-feedback-suggestions-banner
         jhiBannerSlot
-        [isLoading]="loadingFeedbackSuggestions"
-        [hasAutomaticFeedback]="hasAutomaticFeedback"
-        [isAssessor]="isAssessor"
-        [resultCompletionDate]="result?.completionDate"
+        [isLoading]="loadingFeedbackSuggestions()"
+        [hasAutomaticFeedback]="hasAutomaticFeedback()"
+        [isAssessor]="isAssessor()"
+        [resultCompletionDate]="result()?.completionDate"
         [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
     />
     @if (submission) {
         <div class="row">
             <jhi-resizeable-container class="col-12">
                 <!--region Left Panel-->
-                <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore" [course]="course" />
+                <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [maxBonusPoints]="exercise?.bonusPoints || 0" [score]="totalScore()" [course]="course()" />
                 <jhi-text-assessment-area
                     left-body
                     [submission]="submission!"
                     [(textBlockRefs)]="textBlockRefs"
                     [readOnly]="readOnly"
-                    [highlightDifferences]="highlightDifferences"
+                    [highlightDifferences]="highlightDifferences()"
                     (textBlockRefsChange)="validateFeedback()"
                     (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
                     [criteria]="exercise!.gradingCriteria"
@@ -58,29 +59,30 @@
             </jhi-resizeable-container>
         </div>
         <div class="row mt-3">
-            @if (result && result.id) {
+            @if (result() && result().id) {
                 <jhi-unreferenced-feedback
-                    [(feedbacks)]="unreferencedFeedback"
-                    [highlightDifferences]="highlightDifferences"
+                    [feedbacks]="unreferencedFeedback()"
+                    (feedbacksChange)="unreferencedFeedback.set($event)"
+                    [highlightDifferences]="highlightDifferences()"
                     (feedbacksChange)="validateFeedback($event)"
                     [readOnly]="readOnly"
                     [useDefaultFeedbackSuggestionBadgeText]="true"
-                    [resultId]="result.id"
+                    [resultId]="result().id"
                 />
             }
         </div>
     } @else {
-        @if (!loadingInitialSubmission) {
+        @if (!loadingInitialSubmission()) {
             <div>
-                @if (noNewSubmissions) {
+                @if (noNewSubmissions()) {
                     <div class="alert alert-warning text-center mt-4" role="alert">
                         <p jhiTranslate="artemisApp.textAssessment.notFound"></p>
-                        <a [routerLink]="exerciseDashboardLink" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
+                        <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                         </a>
                     </div>
                 }
-                @if (!noNewSubmissions) {
+                @if (!noNewSubmissions()) {
                     <p>No Submission for specified ID</p>
                 }
             </div>

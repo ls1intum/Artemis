@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -19,8 +19,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
     private competencyService = inject(CompetencyService);
 
-    competency: Competency;
-    formData: CourseCompetencyFormData;
+    readonly competency = signal<Competency>(undefined!);
+    readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
     ngOnInit(): void {
         super.ngOnInit();
@@ -41,21 +41,21 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
             .subscribe({
                 next: ([competencyResult, courseProgressResult]) => {
                     if (competencyResult.body) {
-                        this.competency = competencyResult.body;
+                        this.competency.set(competencyResult.body);
                         if (courseProgressResult.body) {
-                            this.competency.courseProgress = courseProgressResult.body;
+                            this.competency().courseProgress = courseProgressResult.body;
                         }
                     }
 
-                    this.formData = {
-                        id: this.competency.id,
-                        title: this.competency.title,
-                        description: this.competency.description,
-                        softDueDate: this.competency.softDueDate,
-                        taxonomy: this.competency.taxonomy,
-                        masteryThreshold: this.competency.masteryThreshold,
-                        optional: this.competency.optional,
-                    };
+                    this.formData.set({
+                        id: this.competency().id,
+                        title: this.competency().title,
+                        description: this.competency().description,
+                        softDueDate: this.competency().softDueDate,
+                        taxonomy: this.competency().taxonomy,
+                        masteryThreshold: this.competency().masteryThreshold,
+                        optional: this.competency().optional,
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -64,17 +64,17 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
-        this.competency.title = title;
-        this.competency.description = description;
-        this.competency.softDueDate = softDueDate;
-        this.competency.taxonomy = taxonomy;
-        this.competency.masteryThreshold = masteryThreshold;
-        this.competency.optional = optional;
+        this.competency().title = title;
+        this.competency().description = description;
+        this.competency().softDueDate = softDueDate;
+        this.competency().taxonomy = taxonomy;
+        this.competency().masteryThreshold = masteryThreshold;
+        this.competency().optional = optional;
 
         this.isLoading.set(true);
 
         this.competencyService
-            .update(this.competency, this.courseId)
+            .update(this.competency(), this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);

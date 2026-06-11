@@ -217,7 +217,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         it('should be in sharing mode', () => {
             // WHEN
             comp.ngOnInit();
-            comp.programmingExercise = mockProgrammingExercise;
+            comp.programmingExercise.set(mockProgrammingExercise);
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
             // THEN
@@ -227,7 +227,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         it('should not be in sharing mode', () => {
             // WHEN
             comp.ngOnInit();
-            comp.programmingExercise = mockProgrammingExercise;
+            comp.programmingExercise.set(mockProgrammingExercise);
 
             // THEN
             expect(comp.isExportToSharingEnabled).toBeFalsy();
@@ -236,7 +236,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         it('should not be in sharing mode because profile enabled but body empty', () => {
             // WHEN
             comp.ngOnInit();
-            comp.programmingExercise = mockProgrammingExercise;
+            comp.programmingExercise.set(mockProgrammingExercise);
             comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
             // THEN
