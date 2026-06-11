@@ -292,8 +292,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should not submit without submission', () => {
-        // @ts-ignore
-        delete comp.submission();
+        comp.submission.set(undefined!);
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
