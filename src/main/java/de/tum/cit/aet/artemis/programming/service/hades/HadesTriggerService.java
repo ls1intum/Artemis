@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -49,12 +50,15 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final GitService gitService;
+
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService) {
         this.hadesService = hadesService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.gitService = gitService;
     }
 
     @Override
@@ -81,8 +85,10 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
-            String assignmentHash = triggeredByPushTo == RepositoryType.USER ? commitHash : null;
-            String testHash = triggeredByPushTo == RepositoryType.TESTS ? commitHash : null;
+            String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) ? gitService.getLastCommitHash(participation.getVcsRepositoryUri())
+                    : commitHash;
+            String testHash = triggeredByPushTo == RepositoryType.TESTS ? commitHash
+                    : gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri());
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, null, null);
 
