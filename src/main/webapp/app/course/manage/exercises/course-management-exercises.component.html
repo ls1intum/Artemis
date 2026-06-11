@@ -2,115 +2,185 @@
     <div *titleBarTitle>
         <div class="d-flex align-items-center">
             <h5 class="mb-0">
-                <span>
-                    {{ 'artemisApp.course.exercises' | artemisTranslate }}
-                    ({{ exerciseCount() }})
-                </span>
+                <span>{{ course()!.title }} — Exercises ({{ exerciseCount() }})</span>
             </h5>
-            <jhi-documentation-button [type]="documentationType" />
         </div>
     </div>
 
-    <div *titleBarActions>
-        <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
-            {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch() | artemisTranslate }}
-        </button>
+    <ng-template titleBarToolbar>
+        <!-- Controls row -->
+        <div class="controls d-flex align-items-center gap-2">
+            <p-selectbutton size="small" [options]="viewOptions" [ngModel]="view()" (ngModelChange)="onViewChange($event)" optionValue="value" [allowEmpty]="false">
+                <ng-template #item let-item>
+                    <fa-icon [icon]="item.icon" />
+                    <span class="ms-1 d-none d-md-inline">{{ item.label }}</span>
+                </ng-template>
+            </p-selectbutton>
+            <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
+            <p-button size="small" severity="secondary" (onClick)="openImportModal()">
+                <fa-icon [icon]="faFileImport" />
+                <span class="ms-1">Import</span>
+            </p-button>
+            <p-button size="small" severity="secondary" (onClick)="openExportModal()">
+                <fa-icon [icon]="faFileExport" />
+                <span class="ms-1">Export</span>
+            </p-button>
+            <p-button size="small" (onClick)="openCreateModal()">
+                <fa-icon [icon]="faPlus" />
+                <span class="ms-1">Create</span>
+            </p-button>
+        </div>
+
+        <!-- Mass actions row -->
+        @if (selectedCount() > 0) {
+            <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
+                <span class="text-muted small">{{ selectedCount() }} selected</span>
+                <p-button size="small" severity="secondary" [outlined]="true" (onClick)="clearSelection()">Deselect all</p-button>
+                @if (allSelectedAreProgramming()) {
+                    <p-button size="small" severity="warn" [outlined]="true" (onClick)="editSelectedExercises()"> <i class="pi pi-wrench me-1"></i>Edit Selected </p-button>
+                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="downloadReposSelected()"> <i class="pi pi-download me-1"></i>Download Repos </p-button>
+                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="consistencyCheckSelected()">
+                        <i class="pi pi-verified me-1"></i>Consistency Check
+                    </p-button>
+                }
+                <p-button size="small" severity="danger" (onClick)="deleteSelected()"> <i class="pi pi-trash me-1"></i>Delete selected </p-button>
+            </div>
+        }
+    </ng-template>
+
+    @if (buckets().length === 0) {
+        <div class="alert alert-secondary" role="alert">No exercises match "{{ search() }}".</div>
+    }
+    <div cdkDropList (cdkDropListDropped)="dropBucket($event)" [cdkDropListDisabled]="!isGroup()" class="d-flex flex-column gap-3">
+        @for (bucket of buckets(); track bucket.id) {
+            <div cdkDrag [cdkDragDisabled]="!isGroup()" style="min-width: 0">
+                <p-panel [toggleable]="true">
+                    <ng-template pTemplate="header">
+                        <div class="d-flex flex-column w-100">
+                            <!-- Row 1: always visible -->
+                            <div class="d-flex align-items-center gap-2">
+                                @if (isGroup()) {
+                                    <span class="drag-handle text-muted pi pi-bars" cdkDragHandle></span>
+                                }
+                                @if (bucket.icon) {
+                                    <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
+                                }
+
+                                @if (isGroup() && bucket.group) {
+                                    <span class="fw-semibold">{{ bucket.group.title }}</span>
+                                    <span class="text-muted">({{ bucket.exercises.length }})</span>
+                                    <p-button
+                                        [text]="true"
+                                        severity="secondary"
+                                        size="small"
+                                        title="Edit group"
+                                        (onClick)="openGroupEditModal(bucket.group.id!); $event.stopPropagation()"
+                                    >
+                                        <fa-icon [icon]="faPen" />
+                                    </p-button>
+                                } @else {
+                                    <span class="fw-semibold">{{ bucket.title }} ({{ bucket.exercises.length }})</span>
+                                }
+                            </div>
+
+                            <!-- Row 1b: non-edit group details (structured, labeled) -->
+                            @if (isGroup() && bucket.group) {
+                                @if (
+                                    bucket.group.releaseDate ||
+                                    bucket.group.startDate ||
+                                    bucket.group.dueDate ||
+                                    bucket.group.assessmentDueDate ||
+                                    bucket.group.maxPoints !== undefined ||
+                                    bucket.group.handInLimit !== undefined ||
+                                    bucket.group.competencyLinks?.length
+                                ) {
+                                    <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
+                                        @if (bucket.group.releaseDate) {
+                                            <span><span class="fw-semibold">Release:</span> {{ bucket.group.releaseDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.startDate) {
+                                            <span><span class="fw-semibold">Start:</span> {{ bucket.group.startDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.dueDate) {
+                                            <span><span class="fw-semibold">Due:</span> {{ bucket.group.dueDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.assessmentDueDate) {
+                                            <span><span class="fw-semibold">Feedback due:</span> {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}</span>
+                                        }
+                                        @if (bucket.group.maxPoints !== undefined) {
+                                            <span class="d-flex align-items-center gap-1">
+                                                <span class="fw-semibold">Max points:</span> {{ bucket.group.maxPoints }}p
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    class="ms-1"
+                                                    pTooltip="Caps the total points this group contributes to the course score."
+                                                    tooltipPosition="top"
+                                                />
+                                            </span>
+                                        }
+                                        @if (bucket.group.handInLimit !== undefined) {
+                                            <span class="d-flex align-items-center gap-1">
+                                                <span class="fw-semibold">Hand-in limit:</span> {{ bucket.group.handInLimit }}
+                                                <fa-icon
+                                                    [icon]="faCircleInfo"
+                                                    class="ms-1"
+                                                    pTooltip="Students may solve all variants and receive AI feedback, but only this many exercises count toward the final grade."
+                                                    tooltipPosition="top"
+                                                />
+                                            </span>
+                                        }
+                                        @if (bucket.group.competencyLinks?.length) {
+                                            <span class="d-flex align-items-center gap-1 overflow-hidden">
+                                                <span class="fw-semibold flex-shrink-0">Competencies:</span>
+                                                <span class="text-truncate" style="max-width: 320px" [title]="getGroupCompetenciesDisplay(bucket.group)">
+                                                    {{ getGroupCompetenciesDisplay(bucket.group) }}
+                                                </span>
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </ng-template>
+
+                    @if (courseId() !== undefined) {
+                        <jhi-exercise-table
+                            [exercises]="bucket.exercises"
+                            [courseId]="courseId()!"
+                            [group]="bucket.group"
+                            [showDragHandle]="isGroup()"
+                            [showTypeIcon]="view() !== 'type'"
+                            [showGroupSelector]="!isGroup() && groups().length > 0"
+                            [showCheckbox]="!isGroup()"
+                            [selectedIds]="selectedIds()"
+                            [groups]="groups()"
+                            (groupChange)="onTableGroupChange($event)"
+                            (groupCreate)="onTableGroupCreate($event)"
+                            (rowsReordered)="onTableRowsReordered(bucket, $event)"
+                            (exerciseUpdated)="onExerciseUpdated($event)"
+                            (selectionToggle)="toggleSelection($event)"
+                            (selectionAllChange)="onTableSelectionAllChange(bucket, $event)"
+                        />
+                    }
+                </p-panel>
+            </div>
+        }
     </div>
-    @if (showSearch()) {
-        <jhi-course-management-exercises-search (exerciseFilter)="exerciseFilter.set($event)" />
-    }
-    @if (showSearch() && filteredExerciseCount() === 0 && !exerciseFilter().isEmpty()) {
-        <div class="alert alert-secondary" role="alert" jhiTranslate="artemisApp.course.exercise.search.noResults"></div>
-    }
-    <jhi-course-exercise-card
-        [headingJhiTranslate]="'artemisApp.course.programmingExercises'"
-        [leadingIcon]="iconMap[ExerciseType.PROGRAMMING]"
-        [exerciseCount]="programmingExercisesCount()"
-        [hidden]="shouldHideExerciseCard('programming')"
-        [course]="course()!"
-    >
-        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
-        <jhi-programming-exercise
-            exercises
-            [embedded]="true"
-            [course]="course()!"
-            [exerciseFilter]="exerciseFilter()"
-            (exerciseCount)="programmingExercisesCount.set($event)"
-            (filteredExerciseCount)="filteredProgrammingExercisesCount.set($event)"
+
+    <jhi-exercise-add-modal
+        [visible]="addModalVisible()"
+        [mode]="addModalMode()"
+        [courseId]="courseId()"
+        (visibleChange)="addModalVisible.set($event)"
+        (groupCreate)="onAddModalGroupCreate()"
+    />
+    @if (groupEditModalGroup()) {
+        <jhi-exercise-group-edit-modal
+            [visible]="groupEditModalVisible()"
+            [group]="groupEditModalGroup()!"
+            [allCompetencies]="allMockCompetencies"
+            (visibleChange)="groupEditModalVisible.set($event)"
+            (save)="onGroupEditModalSave($event)"
         />
-    </jhi-course-exercise-card>
-    <jhi-course-exercise-card
-        [headingJhiTranslate]="'artemisApp.course.quizExercises'"
-        [leadingIcon]="iconMap[ExerciseType.QUIZ]"
-        [exerciseCount]="quizExercisesCount()"
-        [hidden]="shouldHideExerciseCard('quiz')"
-        [course]="course()!"
-    >
-        <jhi-quiz-exercise-create-buttons exerciseCreateButtons [course]="course()!" [quizExercisesCount]="quizExercisesCount()" />
-        <jhi-quiz-exercise
-            exercises
-            [embedded]="true"
-            [course]="course()!"
-            [exerciseFilter]="exerciseFilter()"
-            (exerciseCount)="quizExercisesCount.set($event)"
-            (filteredExerciseCount)="filteredQuizExercisesCount.set($event)"
-        />
-    </jhi-course-exercise-card>
-    @if (modelingExerciseEnabled()) {
-        <jhi-course-exercise-card
-            [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
-            [leadingIcon]="iconMap[ExerciseType.MODELING]"
-            [exerciseCount]="modelingExercisesCount()"
-            [hidden]="shouldHideExerciseCard('modeling')"
-            [course]="course()!"
-        >
-            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.MODELING" />
-            <jhi-modeling-exercise
-                exercises
-                [embedded]="true"
-                [course]="course()!"
-                [exerciseFilter]="exerciseFilter()"
-                (exerciseCount)="modelingExercisesCount.set($event)"
-                (filteredExerciseCount)="filteredModelingExercisesCount.set($event)"
-            />
-        </jhi-course-exercise-card>
-    }
-    @if (textExerciseEnabled()) {
-        <jhi-course-exercise-card
-            [headingJhiTranslate]="'artemisApp.course.textExercises'"
-            [leadingIcon]="iconMap[ExerciseType.TEXT]"
-            [exerciseCount]="textExercisesCount()"
-            [hidden]="shouldHideExerciseCard('text')"
-            [course]="course()!"
-        >
-            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.TEXT" />
-            <jhi-text-exercise
-                exercises
-                [embedded]="true"
-                [course]="course()!"
-                [exerciseFilter]="exerciseFilter()"
-                (exerciseCount)="textExercisesCount.set($event)"
-                (filteredExerciseCount)="filteredTextExercisesCount.set($event)"
-            />
-        </jhi-course-exercise-card>
-    }
-    @if (fileUploadExerciseEnabled()) {
-        <jhi-course-exercise-card
-            [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
-            [leadingIcon]="iconMap[ExerciseType.FILE_UPLOAD]"
-            [exerciseCount]="fileUploadExercisesCount()"
-            [hidden]="shouldHideExerciseCard('file-upload')"
-            [course]="course()!"
-        >
-            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.FILE_UPLOAD" />
-            <jhi-file-upload-exercise
-                exercises
-                [embedded]="true"
-                [course]="course()!"
-                [exerciseFilter]="exerciseFilter()"
-                (exerciseCount)="fileUploadExercisesCount.set($event)"
-                (filteredExerciseCount)="filteredFileUploadExercisesCount.set($event)"
-            />
-        </jhi-course-exercise-card>
     }
 }

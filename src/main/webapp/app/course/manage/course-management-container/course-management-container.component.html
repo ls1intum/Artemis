@@ -29,11 +29,11 @@
                                 <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                             </div>
                         }
-                        <div class="controls">
-                            @if (course()?.isAtLeastInstructor && isSettingsPage()) {
-                                <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                            }
-                            @if (isSettingsPage()) {
+                        @if (isSettingsPage()) {
+                            <div class="controls">
+                                @if (course()?.isAtLeastInstructor) {
+                                    <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                                }
                                 <button
                                     id="reset-course"
                                     *jhiHasAnyAuthority="'ROLE_ADMIN'"
@@ -74,8 +74,8 @@
                                 >
                                     <fa-icon [icon]="faTrash" />
                                 </button>
-                            }
-                        </div>
+                            </div>
+                        }
                     </jhi-course-title-bar>
 
                     <div
