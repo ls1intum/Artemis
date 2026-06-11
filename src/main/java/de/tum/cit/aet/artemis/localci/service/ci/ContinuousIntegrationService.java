@@ -20,8 +20,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      * @param planKey               the key of the plan
      * @param repositoryUri         the URI of the assignment repository (used to separate between exercise and solution)
      * @param testRepositoryUri     the URI of the test repository
-     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with
-     *                                  checkoutSolutionRepository=true. Otherwise, ignored.
+     * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
@@ -36,8 +35,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
     void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
-     * Clones an existing build plan. Illegal characters in the plan key, or name
-     * will be replaced.
+     * Clones an existing build plan. Illegal characters in the plan key, or name will be replaced.
      *
      * @param sourceExercise      The exercise from which the build plan should be copied
      * @param sourcePlanName      The name of the source plan
@@ -52,12 +50,10 @@ public interface ContinuousIntegrationService extends StatelessCIService {
             boolean targetProjectExists);
 
     /**
-     * Configure the build plan with the given participation on the CI system.
-     * Common configurations: - update the repository in the build plan - set appropriate user permissions -
+     * Configure the build plan with the given participation on the CI system. Common configurations: - update the repository in the build plan - set appropriate user permissions -
      * initialize/enable the build plan so that it works
      * <p>
-     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized,
-     * otherwise an org.hibernate.LazyInitializationException can occur
+     * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
@@ -82,9 +78,8 @@ public interface ContinuousIntegrationService extends StatelessCIService {
     void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
-     * Get the plan key of the finished build, the information of the build get passed via the requestBody.
-     * The requestBody must match the information passed from the jenkins-server-notification-plugin,
-     * the body is described here: <a href= "https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
+     * Get the plan key of the finished build, the information of the build get passed via the requestBody. The requestBody must match the information passed from the
+     * jenkins-server-notification-plugin, the body is described here: <a href= "https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build

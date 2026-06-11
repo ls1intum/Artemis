@@ -45,7 +45,9 @@ public interface StatelessCIService {
      * @return the UUID of the triggered build
      * @throws ContinuousIntegrationException if the request to the CI failed.
      */
-    UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException;
+    default UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
+        throw new UnsupportedOperationException("build(BuildTriggerRequestDTO) is not supported by this CI system");
+    }
 
     /**
      * Checks if the underlying CI server is up and running and gives some
