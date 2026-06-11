@@ -462,13 +462,13 @@ examples.forEach((activeConversation) => {
             vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
             vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
 
-            component.allPosts = [{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post];
+            component.allPosts.set([{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post]);
             component.setPosts();
 
             // the message list still renders and the accessible answer source is attached; the inaccessible post source is dropped to undefined
-            expect(component.posts).toHaveLength(1);
-            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
-            expect(component.posts[0].forwardedAnswerPosts?.[0]?.id).toBe(11);
+            expect(component.posts()).toHaveLength(1);
+            expect(component.posts()[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts()[0].forwardedAnswerPosts?.[0]?.id).toBe(11);
         });
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
