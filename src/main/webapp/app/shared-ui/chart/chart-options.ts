@@ -1,4 +1,4 @@
-import { ChartData, ChartOptions, ChartType, LegendItem, Scale, TooltipItem } from 'chart.js';
+import { ChartData, ChartDataset, ChartOptions, ChartType, LegendItem, Scale, TooltipItem } from 'chart.js';
 import { Context } from 'chartjs-plugin-datalabels';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 
@@ -119,12 +119,12 @@ function buildLegend(legend: BaseChartConfig['legend']) {
     };
 }
 
-function buildTooltip(tooltip: BaseChartConfig['tooltip']) {
+function buildTooltip<TType extends ChartType>(tooltip: false | ChartTooltipContent<TType> | undefined) {
     if (tooltip === false) {
         return { enabled: false };
     }
     // reference line datasets are decorative and never part of tooltips
-    const referenceLineFilter = (item: TooltipItem<ChartType>) => !item.dataset.referenceLine;
+    const referenceLineFilter = (item: TooltipItem<TType>) => !(item.dataset as ChartDataset).referenceLine;
     if (!tooltip) {
         return { filter: referenceLineFilter };
     }
