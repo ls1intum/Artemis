@@ -1,5 +1,5 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [splitOnWide]="!showReadOnlyEditorAsFeedbackTab()">
-    @if (showEditorPanel() && !showReadOnlyEditorAsFeedbackTab()) {
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
+    @if (showPrimaryEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
@@ -91,7 +91,7 @@
     }
 
     @if (showReadOnlyEditorAsFeedbackTab()) {
-        <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
+        <ng-template jhiPanel [label]="'artemisApp.feedback.home.title'" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
             }

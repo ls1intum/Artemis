@@ -40,7 +40,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -154,9 +153,14 @@ export class ExerciseSplitPanelComponent {
         return true;
     });
 
+    readonly showPrimaryEditorPanel = computed(() => {
+        const exercise = this.exercise();
+        return this.showEditorPanel() && (exercise.type !== ExerciseType.PROGRAMMING || (exercise as ProgrammingExercise).allowOnlineEditor === true);
+    });
+
     readonly showEditorAsFeedbackTab = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true && this.latestResultNeedsReadOnlyEditor();
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true && this.latestResultHasInlineFeedback();
     });
 
     readonly showReadOnlyEditorAsFeedbackTab = computed(() => this.showEditorPanel() && this.showEditorAsFeedbackTab());
@@ -164,7 +168,7 @@ export class ExerciseSplitPanelComponent {
     readonly editorLabelKey = computed(() => {
         switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING:
-                return this.showEditorAsFeedbackTab() ? 'artemisApp.feedback.home.title' : 'artemisApp.courseOverview.exerciseDetails.codeEditor';
+                return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
             case ExerciseType.TEXT:
                 return 'artemisApp.courseOverview.exerciseDetails.textEditor';
             case ExerciseType.MODELING:
@@ -204,29 +208,9 @@ export class ExerciseSplitPanelComponent {
         );
     });
 
-    private latestResultNeedsReadOnlyEditor(): boolean {
+    private latestResultHasInlineFeedback(): boolean {
         const latestResult = this.latestResultOfActiveParticipation();
-        if (!latestResult) {
-            return false;
-        }
-        if (this.resultBelongsToFailedBuild(latestResult)) {
-            return true;
-        }
-        if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && latestResult.successful) {
-            return true;
-        }
-        return latestResult.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
-    }
-
-    private resultBelongsToFailedBuild(result: Result): boolean {
-        if ((result.submission as ProgrammingSubmission | undefined)?.buildFailed) {
-            return true;
-        }
-        return (
-            this.studentParticipation()?.submissions?.some(
-                (submission) => (submission as ProgrammingSubmission).buildFailed && submission.results?.some((submissionResult) => submissionResult.id === result.id),
-            ) ?? false
-        );
+        return latestResult?.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
     }
 
     private latestResultOfActiveParticipation(): Result | undefined {
@@ -271,7 +255,9 @@ export class ExerciseSplitPanelComponent {
             if (type === ExerciseType.TEXT) {
                 this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
             } else if (type === ExerciseType.PROGRAMMING) {
-                this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                if (this.showPrimaryEditorPanel() || this.showReadOnlyEditorAsFeedbackTab()) {
+                    this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+                }
             } else if (type === ExerciseType.MODELING) {
                 this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
             } else if (type === ExerciseType.FILE_UPLOAD) {
