@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,7 +26,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -98,6 +100,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ProgrammingExerciseInstructorExerciseSharingComponent,
         OrchestrationResultDialogComponent,
         TooltipModule,
+        HyperionExerciseGenerationComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -124,6 +127,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -224,6 +229,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
 
         this.subscribeToSharingStatus();
+    }
+
+    /**
+     * Reloads the exercise after an agentic generation run has saved changes, so the detail view reflects the new repositories and problem statement. The run is started and driven
+     * from the code editor; the detail page only reattaches to a live run (read-only) and refreshes itself when it finishes.
+     *
+     * @param completed whether the run saved an exercise (true for a verified success and for a recovered needs-review draft)
+     */
+    onExerciseGenerated(completed: boolean): void {
+        if (completed && this.programmingExercise?.id) {
+            this.programmingExerciseService
+                .find(this.programmingExercise.id)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((response) => {
+                    if (response.body) {
+                        this.handleRouteData(response.body);
+                    }
+                });
+        }
     }
 
     /**

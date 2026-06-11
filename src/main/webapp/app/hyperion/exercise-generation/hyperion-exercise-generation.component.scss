@@ -1,36 +1,13 @@
-// Dock the run card as a prominent, always-visible progress panel during an active/recent run. It is hosted inside the instructor code editor, whose instructions panel can collapse
-// to zero height — embedding the card inline there made the streaming progress invisible. Fixed-positioning makes it independent of the editor's collapsible panels. When there is
-// no active or recent run the component renders nothing, so :empty removes the panel entirely (no stray fixed box).
+// The run card is a prominent, inline progress panel shown during an active or recent generation run. It renders nothing when idle (the template guards the whole card with @if), so
+// it simply takes no space then. It flows inline with the page — the same visual family as the build-status / consistency info panels — instead of floating over the editor, so it
+// never overlaps the problem statement and reads as part of the surrounding content.
 :host {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    width: min(460px, 42vw);
-    max-width: calc(100vw - 2rem);
-    z-index: 1050;
     display: block;
+    width: 100%;
 }
 
-:host:empty {
-    display: none;
-}
-
-:host ::ng-deep .hyperion-exercise-generation {
-    max-height: min(80vh, 720px);
-    overflow-y: auto;
-    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
-
-    .p-card-header {
-        padding: 0.75rem 1rem 0;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: var(--p-card-background, var(--surface-0, #fff));
-    }
-
-    .p-card-body {
-        padding: 1rem;
-    }
+:host ::ng-deep .hyperion-exercise-generation .p-card-body {
+    padding: 1rem;
 }
 
 .hyperion-card-header {
@@ -42,10 +19,12 @@
     margin-left: auto;
 }
 
-// Keep the read-only phase stepper compact so it fits the card header row alongside the elapsed/attempt text.
+// Lay the read-only phase stepper out full-width: each of the four stages takes an equal share so the labels ("Preparing", "Writing the exercise", "Checking it builds and grades",
+// "Saving") have room and never run together the way they did inside the old narrow floating card.
 .generation-steps ::ng-deep {
-    .p-steps {
-        font-size: 0.85rem;
+    .p-steps-item {
+        flex: 1 1 0;
+        min-width: 0;
     }
 
     .p-steps-item .p-menuitem-link {

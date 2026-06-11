@@ -18,8 +18,8 @@
 }
 @if (exercise) {
     <div class="module-bg p-3 pt-1">
-        <!-- Artemis Intelligence run card: rendered at the editor root (NOT inside the collapsible instructions panel, which can be display:none) so the docked progress panel is
-             always visible during an active/recent generation or adaptation run. Self-hides when idle; reattaches to a live run via /status. -->
+        <!-- Creation Assistance run card: rendered inline at the top of the editor (NOT inside the collapsible instructions panel, which can be display:none) so the streaming
+             progress is always visible during an active/recent generation or adaptation run. Self-hides when idle; reattaches to a live run via /status. -->
         @if (hyperionEnabled && exercise.isAtLeastEditor && exercise.id) {
             <jhi-hyperion-exercise-generation [exerciseId]="exercise.id" [autoStart]="autoStartGeneration()" (generationCompleted)="onProblemStatementSaved()" />
         }
@@ -201,7 +201,7 @@
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->
                                         <button class="ai-menu-item" (click)="toggleRefinementPopover($event, aiDropdownToggle); aiMenuPopover.hide()" [disabled]="isAiApplying()">
-                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                            <fa-icon [icon]="shouldShowGenerateButton() ? faWandMagicSparkles : faPenToSquare" class="me-2" />
                                             <span
                                                 [jhiTranslate]="
                                                     shouldShowGenerateButton()
@@ -238,13 +238,13 @@
                                         <!-- Finding-free "Adapt exercise" path: opens the same adapt dialog without a finding (instructions required). -->
                                         @if (exercise.isAtLeastEditor && exercise.id) {
                                             <button class="ai-menu-item" (click)="openFreeAdaptDialog(); aiMenuPopover.hide()" [disabled]="isAiApplying()">
-                                                <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                                <fa-icon [icon]="faScrewdriverWrench" class="me-2" />
                                                 <span jhiTranslate="artemisApp.review.adaptExercise.menuAction"></span>
                                             </button>
                                             <!-- Adapt from SEVERAL review comments at once: only offered when the instructor has selected adaptable findings via "Apply with AI". -->
                                             @if (selectedAdaptableCommentCount() > 0) {
                                                 <button class="ai-menu-item" (click)="adaptWithSelectedComments(); aiMenuPopover.hide()" [disabled]="isAiApplying()">
-                                                    <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                                    <fa-icon [icon]="faListCheck" class="me-2" />
                                                     <span>{{
                                                         'artemisApp.review.adaptExercise.adaptSelected' | artemisTranslate: { count: selectedAdaptableCommentCount() }
                                                     }}</span>

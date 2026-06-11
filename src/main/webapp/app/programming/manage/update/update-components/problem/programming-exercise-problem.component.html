@@ -49,17 +49,17 @@
                 }
                 @if (shouldShowGenerateButton()) {
                     @if (showGenerateWithAi()) {
-                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.draftStatementOnly"></span>
+                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.draftStatementOnly"></span>
                     } @else {
-                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
                     }
                 } @else {
-                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                    <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                 }
             </button>
             <button pButton type="button" id="cancel-generation" severity="secondary" outlined size="small" (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
                 <fa-icon pButtonIcon [icon]="faBan" />
-                <span jhiTranslate="entity.action.cancel"></span>
+                <span pButtonLabel jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (showGenerateWithAi()) {
                 <!-- "Generate entire exercise" is the single filled primary action of this flow; drafting just the statement above is the secondary, outlined alternative. -->
@@ -89,7 +89,7 @@
                         @if (!isGeneratingWithAi()) {
                             <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
                         }
-                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
+                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
                     </button>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.generateExercise.entireExerciseHelp" />
                 }

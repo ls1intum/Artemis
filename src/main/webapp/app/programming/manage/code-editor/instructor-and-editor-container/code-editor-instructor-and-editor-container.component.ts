@@ -17,14 +17,18 @@ import {
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
+    faListCheck,
     faPaperPlane,
+    faPenToSquare,
     faPlus,
     faSave,
+    faScrewdriverWrench,
     faSpinner,
     faTableColumns,
     faTimes,
     faTimesCircle,
     faTriangleExclamation,
+    faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -206,6 +210,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected readonly faSpinner = faSpinner;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
+
+    // Distinct icons for the Creation Assistance menu items so each action reads at a glance (the sparkle stays on the dropdown trigger only).
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
+    protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faScrewdriverWrench = faScrewdriverWrench;
+    protected readonly faListCheck = faListCheck;
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
