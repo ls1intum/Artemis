@@ -238,9 +238,15 @@
                 "label": "Student Course Analytics Dashboard Enabled",
                 "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
             },
-            "restrictedAthenaModulesAccess": {
-                "label": "Access to Restricted Athena Modules Enabled",
-                "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
+            "athenaConfig": {
+                "gradingFeedbackEnabled": {
+                    "label": "Enable Athena Grading Feedback",
+                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for all exercise types."
+                },
+                "autoFeedbackEnabled": {
+                    "label": "Allow Student Preliminary Feedback Requests",
+                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date."
+                }
             },
             "onlineCourse": {
                 "title": "Online Course",
