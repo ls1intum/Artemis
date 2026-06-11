@@ -19,21 +19,57 @@
         margin-bottom: -0.25rem;
     }
 
-    &__finding {
-        white-space: pre-wrap;
-        max-height: 12rem;
+    // The review comments to address, rendered as one card per finding (severity tag + category + location, description, optional suggested fix) — the same visual language as the
+    // editor's review-comment threads, instead of a single raw text blob.
+    &__findings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-height: 16rem;
         overflow-y: auto;
+    }
+
+    &__finding-card {
         padding: 0.5rem 0.75rem;
         border: 1px solid var(--bs-border-color);
         border-radius: var(--bs-border-radius);
         background-color: var(--bs-tertiary-bg);
+    }
+
+    &__finding-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.3rem;
+    }
+
+    &__finding-category {
+        font-weight: 600;
+    }
+
+    &__finding-location {
+        font-size: 0.8rem;
         color: var(--bs-secondary-color);
     }
 
-    &__presets {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+    &__finding-description {
+        white-space: pre-wrap;
+        color: var(--bs-body-color);
+    }
+
+    &__finding-fix {
+        margin-top: 0.4rem;
+
+        .review-adapt-exercise-dialog__finding-fix-code {
+            margin: 0.15rem 0 0;
+            padding: 0.4rem 0.6rem;
+            border-radius: var(--bs-border-radius);
+            background-color: var(--bs-secondary-bg);
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     }
 
     &__instructions {

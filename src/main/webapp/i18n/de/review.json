@@ -75,7 +75,8 @@
                 "alreadyRunning": "Für diese Aufgabe läuft bereits eine Anpassung.",
                 "startError": "Die Anpassung konnte nicht gestartet werden. Bitte versuche es erneut.",
                 "findingsListLabel": "Zu berücksichtigende Review-Kommentare",
-                "freeHelp": "Es gibt keine offenen Review-Kommentare. Beschreibe die gewünschte Änderung."
+                "freeHelp": "Es gibt keine offenen Review-Kommentare. Beschreibe die gewünschte Änderung.",
+                "suggestedFixLabel": "Lösungsvorschlag"
             },
             "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }

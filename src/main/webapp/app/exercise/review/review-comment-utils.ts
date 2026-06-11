@@ -1,7 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
@@ -169,6 +169,36 @@ export function adaptFindingText(issueContent: ConsistencyIssueCommentContent, l
     const severity = translate.instant('artemisApp.review.consistencySeverity.' + issueContent.severity);
     const header = locationLabel ? `${category} (${severity}) — ${locationLabel}` : `${category} (${severity})`;
     return `${header}\n${issueContent.text}`.trim();
+}
+
+/**
+ * A structured consistency finding for the adapt dialog's display (severity tag, category, location, description, suggested fix), as opposed to the flattened {@link adaptFindingText}
+ * string that goes into the agent prompt. The dialog renders these as cards; the prompt path keeps using the text builders so the agent's input never changes.
+ */
+export interface AdaptFinding {
+    category: ConsistencyIssueCommentContent['category'];
+    severity: ConsistencyIssueCommentContent['severity'];
+    /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
+    locationLabel?: string;
+    /** The finding's description text. */
+    description: string;
+    /** The optional concrete code change the check suggests. */
+    suggestedFix?: InlineCodeChange | null;
+}
+
+/** Builds the structured {@link AdaptFinding} (for display) that mirrors {@link adaptFindingText} (for the prompt). */
+export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined): AdaptFinding {
+    return { category: issueContent.category, severity: issueContent.severity, locationLabel, description: issueContent.text, suggestedFix: issueContent.suggestedFix };
+}
+
+/** The structured findings for a set of threads (only consistency-issue threads contribute); the array mirror of {@link selectedThreadsFindingsText}. */
+export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
+    return threads
+        .map((thread) => {
+            const issue = firstConsistencyIssueContent(thread);
+            return issue ? adaptFinding(issue, threadLocationLabel(thread, translate)) : undefined;
+        })
+        .filter((finding): finding is AdaptFinding => !!finding);
 }
 
 /**

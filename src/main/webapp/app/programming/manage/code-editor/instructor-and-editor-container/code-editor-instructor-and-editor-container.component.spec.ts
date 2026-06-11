@@ -549,11 +549,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.adaptWithSelectedComments();
 
-            // The dialog is opened with the combined, numbered findings as the feedback to address.
+            // The dialog is opened with the structured findings (one per selected thread) shown as the feedback to address.
             const openData = dialogService.open.mock.calls[0][1].data;
-            expect(openData.findingText).toContain('first finding');
-            expect(openData.findingText).toContain('second finding');
-            // The run is started with BOTH findings and the typed instructions.
+            const descriptions = (openData.findings as { description: string }[]).map((f) => f.description).join(' ');
+            expect(openData.findings).toHaveLength(2);
+            expect(descriptions).toContain('first finding');
+            expect(descriptions).toContain('second finding');
+            // The run is started with BOTH findings and the typed instructions (the flattened prompt path is unchanged).
             const feedback = adaptationService.adaptExercise.mock.calls[0][1] as string;
             expect(feedback).toContain('first finding');
             expect(feedback).toContain('second finding');

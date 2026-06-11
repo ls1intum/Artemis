@@ -586,7 +586,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
             expect(open).toHaveBeenCalledOnce();
             const config = open.mock.calls[0][1] as any;
-            expect(config.data.findingText).toContain('The solution signature does not match the template.');
+            expect(config.data.findings).toHaveLength(1);
+            expect(config.data.findings[0].description).toContain('The solution signature does not match the template.');
         });
 
         it('should emit assembled feedback with the optional instructions when confirmed', () => {

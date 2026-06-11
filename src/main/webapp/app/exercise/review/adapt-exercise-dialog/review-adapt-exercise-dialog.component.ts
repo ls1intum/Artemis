@@ -1,17 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 /** Data passed into the adapt-exercise dialog (see {@code isFreeMode}/{@code confirmDisabled} for the two-mode behavior). */
 export interface ReviewAdaptExerciseDialogData {
-    /** The review thread's finding text that Artemis Intelligence will address (shown read-only). Absent in the finding-free "free adapt" mode. */
-    findingText?: string;
+    /** The structured review-comment findings to address, shown read-only as cards. Absent/empty in the finding-free "free adapt" mode. */
+    findings?: AdaptFinding[];
 }
 
 /** The result the dialog hands back when the instructor confirms, or {@code undefined} when cancelled. */
@@ -26,7 +29,7 @@ export interface ReviewAdaptExerciseDialogResult {
     templateUrl: './review-adapt-exercise-dialog.component.html',
     styleUrl: './review-adapt-exercise-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ButtonModule, TextareaModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FormsModule, ButtonModule, TagModule, TextareaModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ReviewAdaptExerciseDialogComponent {
     private readonly dialogRef = inject(DynamicDialogRef);
@@ -34,11 +37,23 @@ export class ReviewAdaptExerciseDialogComponent {
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
-    /** The review comments to address; absent in the finding-free "free adapt" mode (no open review comments). */
-    readonly findingText: string | undefined = (this.dialogConfig.data as ReviewAdaptExerciseDialogData).findingText;
+    /** The structured review-comment findings to address (rendered read-only as cards); empty in the finding-free "free adapt" mode (no open review comments). */
+    readonly findings: AdaptFinding[] = (this.dialogConfig.data as ReviewAdaptExerciseDialogData).findings ?? [];
     /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */
-    readonly isFreeMode = this.findingText === undefined;
+    readonly isFreeMode = this.findings.length === 0;
     readonly instructions = signal('');
+
+    /** Maps a finding severity to its PrimeNG tag severity for the coloured tag (High → danger, Medium → warn, Low → info). */
+    protected severityTag(severity: AdaptFinding['severity']): 'danger' | 'warn' | 'info' {
+        switch (severity) {
+            case ConsistencyIssue.SeverityEnum.High:
+                return 'danger';
+            case ConsistencyIssue.SeverityEnum.Medium:
+                return 'warn';
+            default:
+                return 'info';
+        }
+    }
     /** In free mode the confirm action is blocked until the instructor has typed instructions; with review comments to address the comments alone suffice. */
     readonly confirmDisabled = computed(() => this.isFreeMode && this.instructions().trim().length === 0);
 

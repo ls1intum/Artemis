@@ -10,7 +10,26 @@
 
     @if (!isFreeMode) {
         <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"></label>
-        <div class="review-adapt-exercise-dialog__finding">{{ findingText }}</div>
+        <div class="review-adapt-exercise-dialog__findings-list">
+            @for (finding of findings; track $index) {
+                <div class="review-adapt-exercise-dialog__finding-card">
+                    <div class="review-adapt-exercise-dialog__finding-header">
+                        <p-tag [severity]="severityTag(finding.severity)" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                        <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                        @if (finding.locationLabel) {
+                            <code class="review-adapt-exercise-dialog__finding-location">{{ finding.locationLabel }}</code>
+                        }
+                    </div>
+                    <div class="review-adapt-exercise-dialog__finding-description">{{ finding.description }}</div>
+                    @if (finding.suggestedFix; as fix) {
+                        <div class="review-adapt-exercise-dialog__finding-fix">
+                            <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                            <pre class="review-adapt-exercise-dialog__finding-fix-code">{{ fix.replacementCode || fix.expectedCode }}</pre>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     } @else {
         <small class="review-adapt-exercise-dialog__free-help text-color-secondary" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
     }

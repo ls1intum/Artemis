@@ -57,7 +57,7 @@ import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } f
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
+import { combineAdaptFeedback, firstConsistencyIssueContent, selectedThreadsFindings, selectedThreadsFindingsText } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -602,7 +602,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!exerciseId || !this.exercise?.isAtLeastEditor || !this.hyperionEnabled) {
             return;
         }
-        const findingsText = selectedThreadsFindingsText(this.exerciseReviewCommentService.selectedFeedbackThreads(), this.translateService);
+        const selectedThreads = this.exerciseReviewCommentService.selectedFeedbackThreads();
+        const findingsText = selectedThreadsFindingsText(selectedThreads, this.translateService);
         if (!findingsText) {
             return;
         }
@@ -613,8 +614,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 closable: true,
                 closeOnEscape: true,
                 width: '40vw',
-                // The combined findings are shown read-only as the feedback to address; the instructor's typed instructions are optional and sent in addition.
-                data: { findingText: findingsText },
+                // The findings are shown read-only as structured cards (severity/category/location/description); the instructor's typed instructions are optional and sent in addition. The
+                // flattened findingsText drives the agent prompt below — the dialog display and the prompt are built from the same source so they never drift.
+                data: { findings: selectedThreadsFindings(selectedThreads, this.translateService) },
             }) ?? undefined;
         this.adaptDialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
             if (!result) {
