@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { DebugElement, VERSION } from '@angular/core';
+import { ApplicationRef, DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -379,6 +379,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
@@ -453,6 +455,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         await new Promise((resolve) => setTimeout(resolve, 10));
         fixture.changeDetectorRef.detectChanges();
+        // The task-status components are attached via ApplicationRef.attachView and render on the app tick.
+        TestBed.inject(ApplicationRef).tick();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         // TODO: make sure to exclude random numbers here that change after updates of dependencies

@@ -823,7 +823,7 @@ describe('ModelingSubmissionComponent', () => {
             usageCount: 1,
         } as GradingInstruction;
 
-        comp.assessmentResult().feedbacks = [
+        comp.assessmentResult()!.feedbacks = [
             {
                 id: 1,
                 detailText: 'feedback1',

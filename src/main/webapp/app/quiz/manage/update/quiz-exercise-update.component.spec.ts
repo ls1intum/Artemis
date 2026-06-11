@@ -521,13 +521,13 @@ describe('QuizExerciseUpdateComponent', () => {
 
         it('should updateCategories properly by making category available for selection again when removing it', () => {
             comp.quizExercise.set(quizExercise);
-            comp.exerciseCategories = [];
+            comp.exerciseCategories.set([]);
             const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
             comp.updateCategories(newCategories);
 
             expect(comp.quizExercise().categories).toEqual(newCategories);
-            expect(comp.exerciseCategories).toEqual(newCategories);
+            expect(comp.exerciseCategories()).toEqual(newCategories);
         });
     });
 

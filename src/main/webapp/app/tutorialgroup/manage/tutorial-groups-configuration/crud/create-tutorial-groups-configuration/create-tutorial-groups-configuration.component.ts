@@ -32,11 +32,11 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
     ngUnsubscribe = new Subject<void>();
 
     newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
-    isLoading: boolean;
+    readonly isLoading = signal<boolean>(false);
     readonly course = signal<Course>(undefined!);
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.activatedRoute.paramMap
             .pipe(
                 take(1),
@@ -44,7 +44,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                     const courseId = Number(params.get('courseId'));
                     return this.courseManagementService.find(courseId);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
@@ -60,14 +60,14 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
         const { period, usePublicTutorialGroupChannels, useTutorialGroupChannels } = formData;
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.newTutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
         this.newTutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
             .create(this.newTutorialGroupsConfiguration, this.course().id!, period ?? [])
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )

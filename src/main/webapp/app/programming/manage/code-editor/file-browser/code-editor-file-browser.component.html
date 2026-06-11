@@ -55,16 +55,16 @@
     <!-- File Tree -->
     <div class="card-body">
         <!-- Root level create file/folder tree element -->
-        @if (creatingFile && creatingFile[0] === '') {
+        @if (creatingFile() && creatingFile()![0] === '') {
             <jhi-code-editor-file-browser-create-node
-                [createFileType]="creatingFile![1]"
+                [createFileType]="creatingFile()![1]"
                 [folder]="''"
                 (onClearCreatingFile)="clearCreatingFile()"
                 (onCreateFile)="onCreateFile($event)"
             />
         }
         @if (!isLoadingFiles()) {
-            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate" />
+            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem()" [itemTemplate]="itemTemplate" />
         }
         <!-- Loading files indicator -->
         @if (isLoadingFiles()) {
@@ -81,14 +81,14 @@
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->
-    @if (repositoryFiles?.[item.value] === FileType.PROBLEM_STATEMENT) {
+    @if (repositoryFiles()?.[item.value] === FileType.PROBLEM_STATEMENT) {
         <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="fileBadges()?.[item.value] ?? []" (onNodeSelect)="handleNodeSelected(item)" />
     }
     <!--folder-->
-    @if (repositoryFiles?.[item.value] === FileType.FOLDER) {
+    @if (repositoryFiles()?.[item.value] === FileType.FOLDER) {
         <jhi-code-editor-file-browser-folder
             [item]="item"
-            [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
+            [isBeingRenamed]="!!renamingFile() && renamingFile()![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"
             [onCollapseExpand]="onCollapseExpand"
@@ -104,12 +104,12 @@
         />
     }
     <!--file-->
-    @if (repositoryFiles?.[item.value] === FileType.FILE) {
+    @if (repositoryFiles()?.[item.value] === FileType.FILE) {
         <jhi-code-editor-file-browser-file
             [item]="item"
             [hasChanges]="repositoryFilesWithInformationAboutChange()?.[item.value] ?? false"
             [badges]="fileBadges()?.[item.value] ?? []"
-            [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
+            [isBeingRenamed]="!!renamingFile() && renamingFile()![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"
             [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
@@ -121,9 +121,9 @@
         />
     }
     <!--new item-->
-    @if (creatingFile && creatingFile[0] === item.value) {
+    @if (creatingFile() && creatingFile()![0] === item.value) {
         <jhi-code-editor-file-browser-create-node
-            [createFileType]="creatingFile![1]"
+            [createFileType]="creatingFile()![1]"
             [folder]="''"
             (onClearCreatingFile)="clearCreatingFile()"
             (onCreateFile)="onCreateFile($event)"

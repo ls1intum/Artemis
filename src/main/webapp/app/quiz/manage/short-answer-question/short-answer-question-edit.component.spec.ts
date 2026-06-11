@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -612,7 +613,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
     });
 
-    it('should set question text', () => {
+    it('should set question text', async () => {
         const text = 'This is a text for a test';
         const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
@@ -621,8 +622,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.setQuestionText('0-0-0-0');
-
         expect(getNavigationSpy).toHaveBeenCalledOnce();
+        // Restore the global getElementById mock, then run a tick so the deferred (afterNextRender) refill executes.
+        getNavigationSpy.mockRestore();
+        TestBed.inject(ApplicationRef).tick();
+
         const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
         expect(component.textParts().pop()).toEqual(splitString);
     });

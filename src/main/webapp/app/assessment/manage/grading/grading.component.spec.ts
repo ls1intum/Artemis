@@ -622,6 +622,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('empty set');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('empty set');
         });
 
         it('should validate invalid grading scale with negative max points', () => {
@@ -630,13 +631,15 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('negative max points');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('negative max points');
         });
 
         it('should validate invalid grading scale with empty grade step fields correctly', () => {
             patchStep(0, { gradeName: '' });
-            translateStub.mockReturnValue('empty field');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            // The required() message is resolved once at form construction, so the raw key is asserted here.
+            expect(comp.invalidGradeStepsMessage()).toBe('artemisApp.gradingSystem.error.emptyFields');
         });
 
         it('should validate invalid grading scale with invalid percentages', () => {
@@ -644,6 +647,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid percentage');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid percentage');
         });
 
         it('should validate invalid grading scale with invalid points', () => {
@@ -657,6 +661,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid points');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid points');
         });
 
         it('should validate invalid grading scale with non-unique grade names', () => {
@@ -665,6 +670,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('non-unique grade names');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('non-unique grade names');
         });
 
         it('should validate invalid grading scale with unset first passing grade', () => {
@@ -673,6 +679,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('unset first passing grade');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('unset first passing grade');
         });
 
         it('should validate invalid grading scale with invalid bonus points', () => {
@@ -681,6 +688,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid bonus points');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid bonus points');
         });
 
         it('should validate invalid grading scale without strictly ascending bonus points', () => {
@@ -691,6 +699,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('descending bonus points');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('descending bonus points');
         });
 
         it('should validate invalid grading scale with invalid adjacency', () => {
@@ -706,6 +715,7 @@ describe('GradingComponent', () => {
             vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([invalidGradeStep, gradeStep2, gradeStep3]);
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid adjacency');
         });
 
         it('should validate invalid grading scale with invalid first grade step', () => {
@@ -722,6 +732,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid first grade step');
 
             expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid first grade step');
         });
 
         it('should validate grading scale with basic presentations and invalid presentationScore', () => {
@@ -730,6 +741,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations number');
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
@@ -737,6 +749,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid presentations weight');
 
             expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations weight');
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
@@ -744,6 +757,7 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations number');
         });
 
         it('should detect that max points are valid', () => {

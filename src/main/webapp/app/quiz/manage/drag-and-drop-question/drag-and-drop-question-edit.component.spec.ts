@@ -718,7 +718,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should get images from drop locations', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
         dragAndDropQuestion.correctMappings = [];
         dragAndDropQuestion.dragItems = [];
@@ -753,7 +753,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should blank out background image', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
         const { mockContext, mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,blanked');

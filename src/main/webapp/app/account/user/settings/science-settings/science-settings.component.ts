@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, WritableSignal, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -32,7 +32,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
     private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
-    featureToggleActive = false;
+    readonly featureToggleActive = signal(false);
     private lastConfirmedValues = new Map<string, boolean>();
 
     declare userSettings: WritableSignal<UserSettingsStructure<ScienceSetting>>;
@@ -55,7 +55,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
 
         // subscribe to feature toggle changes
         this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
-            this.featureToggleActive = active;
+            this.featureToggleActive.set(active);
         });
     }
 

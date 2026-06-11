@@ -616,6 +616,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
         this.renderScheduled = true;
         // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
+        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
         afterNextRender(
             () => {
                 this.renderScheduled = false;

@@ -608,7 +608,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.dragItems = question.dragItems!.filter((dragItem) => dragItem !== dragItemToDelete);
         if (dragItemToDelete.pictureFilePath) {
             this.removeFile.emit(dragItemToDelete.pictureFilePath);
-            this.filePreviewPaths().delete(dragItemToDelete.pictureFilePath);
+            this.filePreviewPaths.update((map) => {
+                const updated = new Map(map);
+                updated.delete(dragItemToDelete.pictureFilePath!);
+                return updated;
+            });
         }
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
@@ -778,7 +782,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     changeToTextDragItem(dragItem: DragItem): void {
         this.removeFile.emit(dragItem.pictureFilePath!);
-        this.filePreviewPaths().delete(dragItem.pictureFilePath!);
+        this.filePreviewPaths.update((map) => {
+            const updated = new Map(map);
+            updated.delete(dragItem.pictureFilePath!);
+            return updated;
+        });
         dragItem.pictureFilePath = undefined;
         dragItem.text = 'Text';
         this.questionUpdated.emit();
@@ -887,7 +895,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         question.dragItems!.splice(dragItemIndex, 0, backupDragItem);
         if (dragItem.pictureFilePath) {
             this.removeFile.emit(dragItem.pictureFilePath);
-            this.filePreviewPaths().delete(dragItem.pictureFilePath);
+            this.filePreviewPaths.update((map) => {
+                const updated = new Map(map);
+                updated.delete(dragItem.pictureFilePath!);
+                return updated;
+            });
         }
     }
 

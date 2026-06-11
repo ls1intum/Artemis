@@ -1,3 +1,5 @@
+import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -154,6 +156,8 @@ export class ExamScoresComponent implements OnInit {
     presentationScoreThreshold?: number;
 
     readonly course = signal<Course | undefined>(undefined);
+    private readonly translateService = inject(TranslateService);
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange);
 
     // Icons
     faSort = faSort;
@@ -681,6 +685,8 @@ export class ExamScoresComponent implements OnInit {
      * Localizes a number, e.g. switching the decimal separator
      */
     localize(numberToLocalize: number): string {
+        // Read the language signal so locale-formatted output re-renders when the UI language changes (zoneless).
+        this.currentLanguage();
         return this.localeConversionService.toLocaleString(numberToLocalize, this.course()?.accuracyOfScores);
     }
 

@@ -302,7 +302,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should update the file browser and monaco editor on file selection', async () => {
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles)[0];
+        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles())[0];
         const fileContent = 'lorem ipsum';
         await loadFile(selectedFile, fileContent);
 
@@ -320,7 +320,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should mark file to have unsaved changes in file tree if the file was changed in editor', async () => {
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles)[0];
+        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles())[0];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
         await loadFile(selectedFile, fileContent);
@@ -340,8 +340,8 @@ describe('CodeEditorContainerIntegration', () => {
     it('should save files and remove unsaved status of saved files afterwards', async () => {
         // setup
         cleanInitialize();
-        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles)[0];
-        const otherFileWithUnsavedChanges = Object.keys(container.fileBrowser()!.repositoryFiles)[2];
+        const selectedFile = Object.keys(container.fileBrowser()!.repositoryFiles())[0];
+        const otherFileWithUnsavedChanges = Object.keys(container.fileBrowser()!.repositoryFiles())[2];
         const fileContent = 'lorem ipsum';
         const newFileContent = 'new lorem ipsum';
         const saveFilesSubject = new Subject();
@@ -372,7 +372,7 @@ describe('CodeEditorContainerIntegration', () => {
         const repositoryFiles = { file: FileType.FILE, file2: FileType.FILE, folder: FileType.FOLDER };
         const expectedFilesAfterDelete = { file2: FileType.FILE, folder: FileType.FOLDER };
         const unsavedChanges = { file: 'lorem ipsum' };
-        container.fileBrowser()!.repositoryFiles = repositoryFiles;
+        container.fileBrowser()!.repositoryFiles.set(repositoryFiles);
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.changeDetectorRef.detectChanges();
@@ -394,7 +394,7 @@ describe('CodeEditorContainerIntegration', () => {
         container.actions()!.editorState.set(container.editorState);
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.unsavedFiles).toStrictEqual({});
-        expect(container.fileBrowser()!.repositoryFiles).toEqual(expectedFilesAfterDelete);
+        expect(container.fileBrowser()!.repositoryFiles()).toEqual(expectedFilesAfterDelete);
         expect(container.actions()!.editorState()).toBe(EditorState.CLEAN);
     });
 
@@ -446,7 +446,7 @@ describe('CodeEditorContainerIntegration', () => {
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
-        const unsavedFile = Object.keys(container.fileBrowser()!.repositoryFiles)[0];
+        const unsavedFile = Object.keys(container.fileBrowser()!.repositoryFiles())[0];
         const saveFilesSubject = new Subject();
         saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };

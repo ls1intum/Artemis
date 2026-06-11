@@ -394,11 +394,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.groupedPosts()[i] = g;
                 }
             });
+            // Notify the signal after the in-place group updates so the list re-renders independently of sibling writes.
+            this.groupedPosts.set([...this.groupedPosts()]);
         } else {
             this.groupedPosts.set(computedGroups);
         }
-
-        // Trigger Angular change detection.
     }
 
     private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {

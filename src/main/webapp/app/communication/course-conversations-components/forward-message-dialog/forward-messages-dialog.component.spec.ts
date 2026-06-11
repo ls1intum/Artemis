@@ -109,8 +109,8 @@ describe('ForwardMessageDialogComponent', () => {
         searchInput.dispatchEvent(new Event('input'));
         fixture.detectChanges();
 
-        expect(component.filteredOptions).toHaveLength(1);
-        expect(component.filteredOptions[0].name).toBe('General');
+        expect(component.filteredOptions()).toHaveLength(1);
+        expect(component.filteredOptions()[0].name).toBe('General');
     });
 
     it('should select a channel and add it to selectedChannels', () => {
@@ -210,7 +210,7 @@ describe('ForwardMessageDialogComponent', () => {
         await component.filterOptions();
         fixture.detectChanges();
 
-        expect(component.filteredOptions).toHaveLength(0);
+        expect(component.filteredOptions()).toHaveLength(0);
     });
 
     it('should detect if content overflows and set isContentLong correctly', () => {

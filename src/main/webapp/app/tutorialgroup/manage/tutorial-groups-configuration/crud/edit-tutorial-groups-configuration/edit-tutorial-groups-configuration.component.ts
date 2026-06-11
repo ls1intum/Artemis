@@ -29,14 +29,14 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
 
     ngUnsubscribe = new Subject<void>();
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     tutorialGroupsConfiguration: TutorialGroupConfigurationDTO;
-    formData: TutorialGroupsConfigurationFormData;
+    readonly formData = signal<TutorialGroupsConfigurationFormData>(undefined!);
     readonly course = signal<Course>(undefined!);
     tutorialGroupConfigurationId: number;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
@@ -45,21 +45,21 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                     this.course.set(course);
                     return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
-                        this.formData = {
+                        this.formData.set({
                             period: [
                                 dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!).toDate(),
                                 dayjs(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!).toDate(),
                             ],
                             useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
                             usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
-                        };
+                        });
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -74,14 +74,14 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
         const { period, useTutorialGroupChannels, usePublicTutorialGroupChannels } = formData;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.tutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
         this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
             .update(this.course().id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),

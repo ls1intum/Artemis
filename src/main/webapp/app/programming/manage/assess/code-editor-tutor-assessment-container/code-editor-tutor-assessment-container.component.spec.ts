@@ -281,16 +281,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         // Setup tree for file browser
         const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
-        codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
+        codeEditorFileBrowserComp.filesTreeViewItem.set(treeItems);
+        codeEditorFileBrowserComp.repositoryFiles.set(repositoryFiles);
         fixture.changeDetectorRef.detectChanges();
         codeEditorFileBrowserComp.selectedFileChange.emit('folder/file1');
         fixture.changeDetectorRef.detectChanges();
-        codeEditorFileBrowserComp.isLoadingFiles = false;
+        codeEditorFileBrowserComp.isLoadingFiles.set(false);
         fixture.changeDetectorRef.detectChanges();
         const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
         expect(browserComponent).toBeDefined();
-        expect(browserComponent.filesTreeViewItem).toHaveLength(1);
+        expect(browserComponent.filesTreeViewItem()).toHaveLength(1);
 
         const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
         codeEditorMonacoComp.loadingCount.set(0);

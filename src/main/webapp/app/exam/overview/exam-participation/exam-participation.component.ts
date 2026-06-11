@@ -591,6 +591,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
+        this.wallClockVersion();
         return this.individualStudentEndDateWithGracePeriod() && this.individualStudentEndDateWithGracePeriod().isBefore(this.serverDateService.now());
     }
 
@@ -796,7 +797,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * this will make sure that the component is displayed in the user interface
      */
     private activateActiveComponent() {
-        this.pageComponentVisited()[this.activePageIndex] = true;
+        this.pageComponentVisited.update((visited) => {
+            const next = [...visited];
+            next[this.activePageIndex] = true;
+            return next;
+        });
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
@@ -827,10 +832,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
      */
     private resetPageComponentVisited(activePageIndex: number) {
-        this.pageComponentVisited().fill(false);
-        if (activePageIndex >= 0) {
-            this.pageComponentVisited()[activePageIndex] = true;
-        }
+        this.pageComponentVisited.update((visited) => {
+            const next = visited.map(() => false);
+            if (activePageIndex >= 0) {
+                next[activePageIndex] = true;
+            }
+            return next;
+        });
     }
 
     /**

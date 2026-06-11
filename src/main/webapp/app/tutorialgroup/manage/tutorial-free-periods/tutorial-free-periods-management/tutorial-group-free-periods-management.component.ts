@@ -42,10 +42,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
 
     readonly createFreePeriodDialog = viewChild<CreateTutorialGroupFreePeriodComponent>('createFreePeriodDialog');
 
-    isLoading = false;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
+    readonly isLoading = signal(false);
+    readonly tutorialGroupsConfiguration = signal<TutorialGroupsConfiguration>(undefined!);
     readonly tutorialGroupFreePeriods = signal<TutorialGroupFreePeriod[]>([]);
-    course: Course;
+    readonly course = signal<Course>(undefined!);
     faTimes = faTimes;
     faPlus = faPlus;
 
@@ -95,23 +95,24 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.data])
             .pipe(
                 take(1),
                 switchMap(([{ course }]) => {
-                    this.course = course;
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
+                    this.course.set(course);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course().id!);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
-                        if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-                            this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', false));
+                        this.tutorialGroupsConfiguration.set(tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body));
+                        const freePeriods = this.tutorialGroupsConfiguration().tutorialGroupFreePeriods;
+                        if (freePeriods) {
+                            this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(freePeriods, 'start', false));
                         } else {
                             this.tutorialGroupFreePeriods.set([]);
                         }

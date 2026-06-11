@@ -83,8 +83,8 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
         fixture.detectChanges();
-        expect(component.formData).toEqual(tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

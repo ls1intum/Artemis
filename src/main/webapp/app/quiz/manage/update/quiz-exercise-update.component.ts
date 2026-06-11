@@ -180,8 +180,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     readonly isSaving = signal(false);
     scheduleQuizStart = false;
 
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
 
     /** Route params **/
     examId?: number;
@@ -309,6 +309,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                         } else if (this.quizExercise()) {
                             this.quizExercise().exerciseGroup = this.exerciseGroup;
                             this.savedEntity.exerciseGroup = this.exerciseGroup;
+                            // Commit a new reference so the in-place mutation renders under zoneless OnPush.
+                            this.quizExercise.update((quizExercise) => ({ ...quizExercise }));
                         }
                     });
                 } else {
@@ -318,6 +320,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                     } else if (this.quizExercise()) {
                         this.quizExercise().course = this.course;
                         this.savedEntity.course = this.course;
+                        // Commit a new reference so the in-place mutation renders under zoneless OnPush.
+                        this.quizExercise.update((quizExercise) => ({ ...quizExercise }));
                     }
                 }
             });
@@ -382,10 +386,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         if (!this.isExamMode()) {
-            this.exerciseCategories = this.quizExercise().categories || [];
+            this.exerciseCategories.set(this.quizExercise().categories || []);
             this.courseService.findAllCategoriesOfCourse(this.courseId!).subscribe({
                 next: (response: HttpResponse<string[]>) => {
-                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
+                    this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!));
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -557,7 +561,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.quizExercise().categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
         this.cacheValidation();
     }
 

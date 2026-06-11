@@ -242,11 +242,11 @@
                         <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
                     </div>
                 }
-                @if (invalidGradeStepsMessage()) {
+                @if (invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
                     <div class="alert alert-warning mt-3">
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span>
-                            {{ invalidGradeStepsMessage() }}
+                            {{ invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
                         </span>
                     </div>
                 }
@@ -398,11 +398,11 @@
                         <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
                     </div>
                 }
-                @if (invalidGradeStepsMessage()) {
+                @if (invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
                     <div class="alert alert-warning mt-3">
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span>
-                            {{ invalidGradeStepsMessage() }}
+                            {{ invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
                         </span>
                     </div>
                 }

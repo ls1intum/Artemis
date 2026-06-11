@@ -131,6 +131,8 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
             res?.onClose.subscribe((confirmed) => {
                 if (confirmed) {
                     this.savedEntity = cloneDeep(this.quizExercise());
+                    // savedEntity feeds pendingChanges(); re-run cacheValidation so its signal writes re-render under zoneless.
+                    this.cacheValidation();
                 }
             });
         });

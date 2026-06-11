@@ -3,12 +3,12 @@
         <!--UserSettingsCategory-->
         {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
     </h2>
-    <div class="d-flex userSettings()-info">
+    <div class="d-flex userSettings-info">
         <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
         <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
     </div>
-    @if (!featureToggleActive) {
-        <div class="d-flex mt-2 userSettings()-info">
+    @if (!featureToggleActive()) {
+        <div class="d-flex mt-2 userSettings-info">
             <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
             <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
         </div>

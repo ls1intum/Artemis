@@ -1,4 +1,19 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    Injector,
+    OnInit,
+    ViewEncapsulation,
+    afterNextRender,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -69,6 +84,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private injector = inject(Injector);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -667,7 +683,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
 
-        this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!));
+        this.refillTextParts(this.shortAnswerQuestion.text!);
     }
 
     /**
@@ -742,7 +758,18 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             .map((textPart) => textPart.join(' '))
             .join('\n');
 
-        this.textParts.set(this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text));
+        this.refillTextParts(this.shortAnswerQuestion.text);
+    }
+
+    /**
+     * Clears and refills textParts across two render passes. The @for tracks by index, so a plain
+     * reassignment would reuse the existing input elements and [value] would not re-apply when the
+     * re-parsed value equals the previously bound one (while the DOM may hold user-typed text).
+     * Recreating the nodes guarantees the inputs reflect the parsed model.
+     */
+    private refillTextParts(text: string): void {
+        this.textParts.set([]);
+        afterNextRender(() => this.textParts.set(this.parseQuestionTextIntoTextBlocks(text)), { injector: this.injector });
     }
 
     /**

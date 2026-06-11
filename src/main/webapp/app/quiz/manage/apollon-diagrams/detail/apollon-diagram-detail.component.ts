@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
@@ -34,7 +34,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private dialogService = inject(DialogService);
     private elementRef = inject(ElementRef);
-    private ngZone = inject(NgZone);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
@@ -145,13 +144,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
-        // Wrap callback in NgZone.run() because Apollon's React/Zustand store fires outside Angular's zone.
-        // Without this, programmatic model updates (e.g., from E2E tests) don't trigger change detection,
-        // leaving template bindings like [disabled]="!hasInteractive" stale.
+        // Apollon's React/Zustand store fires outside Angular; the isSaved signal write below schedules
+        // change detection under zoneless, so template bindings (e.g. the save button state) stay fresh.
         this.apollonEditor.subscribeToModelChange((newModel) => {
-            this.ngZone.run(() => {
-                this.isSaved.set(JSON.stringify(newModel) === this.lastSavedModelJson);
-            });
+            this.isSaved.set(JSON.stringify(newModel) === this.lastSavedModelJson);
         });
     }
 

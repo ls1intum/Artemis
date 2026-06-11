@@ -184,7 +184,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     lastKnownConversationId?: number;
 
     conversationSelected = true;
-    sidebarData: SidebarData;
+    readonly sidebarData = signal<SidebarData>(undefined!);
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     readonly isCollapsed = signal(false);
@@ -571,7 +571,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     updateSidebarData() {
-        this.sidebarData = {
+        this.sidebarData.set({
             groupByCategory: true,
             sidebarType: 'conversation',
             storageId: 'conversation',
@@ -580,7 +580,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course()),
             canCreateChannel: canCreateChannel(this.course()!),
-        };
+        });
     }
 
     // NOTE: conversationId can either be a number or a string according to SavedPostStatus (for saved post status)

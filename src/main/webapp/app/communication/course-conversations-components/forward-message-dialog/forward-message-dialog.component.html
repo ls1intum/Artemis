@@ -32,9 +32,9 @@
                 (blur)="onInputBlur()"
             />
         </div>
-        @if (showDropdown && filteredOptions.length > 0) {
+        @if (showDropdown && filteredOptions().length > 0) {
             <ul class="list-group autocomplete-dropdown" tabindex="0">
-                @for (option of filteredOptions; track option) {
+                @for (option of filteredOptions(); track option) {
                     <li
                         class="list-group-item list-group-item-action"
                         [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"

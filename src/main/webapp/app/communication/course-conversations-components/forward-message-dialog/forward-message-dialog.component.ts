@@ -55,7 +55,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     selectedChannels: (ChannelDTO | GroupChatDTO)[] = [];
     selectedUsers: UserPublicInfoDTO[] = [];
     readonly combinedOptions = signal<CombinedOption[]>([]);
-    filteredOptions: CombinedOption[] = [];
+    readonly filteredOptions = signal<CombinedOption[]>([]);
     defaultActions: TextEditorAction[];
     searchTerm: string = '';
     newPost = new Post();
@@ -191,7 +191,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Combines filtered channels and users into a unified options list.
      */
     private updateCombinedOptions(): void {
-        this.filteredOptions = [
+        this.filteredOptions.set([
             ...this.filteredChannels.map((channel) => ({
                 id: channel.id!,
                 name: channel.name!,
@@ -204,7 +204,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
                 type: 'user',
                 img: user.imageUrl!,
             })),
-        ];
+        ]);
     }
 
     /**

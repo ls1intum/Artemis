@@ -52,7 +52,9 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && this.studentExamWithGrade()?.studentResult?.overallGrade != undefined);
     readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
     readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
-    readonly hasPassed = computed(() => !!this.studentExamWithGrade()?.studentResult?.hasPassed);
+    // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
+    // (overallGrade undefined) the achieved-percentage badge must not switch to the passed color.
+    readonly hasPassed = computed(() => this.gradingScaleExists() && !!this.studentExamWithGrade()?.studentResult?.hasPassed);
 
     // Icons
     faClipboard = faClipboard;

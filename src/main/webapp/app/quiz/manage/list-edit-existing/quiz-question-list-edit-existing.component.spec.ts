@@ -111,7 +111,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let examService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let fileService: FileService;
-    let changeDetector: ChangeDetectorRef;
     let dialogService: DialogService;
 
     beforeEach(async () => {
@@ -140,7 +139,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         quizExerciseService = TestBed.inject(QuizExerciseService);
         fileService = TestBed.inject(FileService);
-        changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         dialogService = fixture.debugElement.injector.get(DialogService);
         component = fixture.componentInstance;
     });

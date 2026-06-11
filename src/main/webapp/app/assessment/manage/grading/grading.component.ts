@@ -518,6 +518,31 @@ export class GradingComponent implements OnInit {
     }
 
     /**
+     * Pure derivation of the presentations-config error message for the warning banner (replaces the
+     * previous side-effecting writes inside validPresentationsConfig, which would throw NG0600 under
+     * zoneless when invoked from template bindings). Re-evaluated on every change-detection pass.
+     */
+    presentationsConfigErrorMessage(): string | undefined {
+        if (this.presentationsConfig.presentationType === PresentationType.BASIC && (this.course?.presentationScore ?? 0) <= 0) {
+            return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+        }
+        if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
+            const presentationsNumber = this.presentationsConfig.presentationsNumber;
+            if (presentationsNumber === undefined || !Number.isInteger(presentationsNumber) || presentationsNumber < 1) {
+                return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+            }
+            const presentationsWeight = this.presentationsConfig.presentationsWeight;
+            if (presentationsWeight === undefined || presentationsWeight < 0 || presentationsWeight > 99) {
+                return this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
+            }
+            if ((this.course?.presentationScore ?? 0) > 0) {
+                return this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * Checks if the currently entered presentation settings are valid
      */
     validPresentationsConfig(): boolean {
@@ -600,12 +625,15 @@ export class GradingComponent implements OnInit {
      * not bound via the signal-form `[formField]` directive (which requires a definite field) but written here directly.
      */
     onDetailedPointsInput(index: number, lowerBound: boolean, value: number): void {
+        // valueAsNumber is NaN for an emptied input; coerce to undefined like the previous ngModel number accessor did,
+        // so validation treats the field as missing instead of letting NaN slip through the bound checks.
+        const points = Number.isNaN(value) ? undefined : value;
         this.updateGradeSteps((gradeSteps) => {
             const gradeStep = gradeSteps[index];
             if (lowerBound) {
-                gradeStep.lowerBoundPoints = value;
+                gradeStep.lowerBoundPoints = points;
             } else {
-                gradeStep.upperBoundPoints = value;
+                gradeStep.upperBoundPoints = points;
             }
             this.setPercentage(gradeStep, lowerBound);
         });

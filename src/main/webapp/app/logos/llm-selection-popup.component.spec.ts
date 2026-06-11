@@ -315,28 +315,28 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(LLMSelectionDecision.CLOUD_AI);
 
-            expect(component.currentSelection).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(component.currentSelection()).toBe(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should set currentSelection to LOCAL_AI when modal is opened with LOCAL_AI', () => {
             fixture.detectChanges();
             openModalSubject.next(LLMSelectionDecision.LOCAL_AI);
 
-            expect(component.currentSelection).toBe(LLMSelectionDecision.LOCAL_AI);
+            expect(component.currentSelection()).toBe(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should set currentSelection to NO_AI when modal is opened with NO_AI', () => {
             fixture.detectChanges();
             openModalSubject.next(LLMSelectionDecision.NO_AI);
 
-            expect(component.currentSelection).toBe(LLMSelectionDecision.NO_AI);
+            expect(component.currentSelection()).toBe(LLMSelectionDecision.NO_AI);
         });
 
         it('should set currentSelection to undefined when modal is opened without selection', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.currentSelection).toBeUndefined();
+            expect(component.currentSelection()).toBeUndefined();
         });
     });
 
@@ -346,7 +346,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
         });
 
         it('should read memirisEnabled=true from userIdentity when modal opens', () => {
@@ -354,7 +354,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
         });
 
         it('should read memirisEnabled=false from userIdentity when modal opens', () => {
@@ -362,7 +362,7 @@ describe('LLMSelectionModalComponent', () => {
             fixture.detectChanges();
             openModalSubject.next(undefined);
 
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
         });
 
         it('should update memirisEnabled each time the modal is opened', () => {
@@ -370,31 +370,31 @@ describe('LLMSelectionModalComponent', () => {
 
             userIdentitySignal.set({ memirisEnabled: false } as User);
             openModalSubject.next(undefined);
-            expect(component.memirisEnabled).toBe(false);
+            expect(component.memirisEnabled()).toBe(false);
 
             userIdentitySignal.set({ memirisEnabled: true } as User);
             openModalSubject.next(undefined);
-            expect(component.memirisEnabled).toBe(true);
+            expect(component.memirisEnabled()).toBe(true);
         });
     });
 
     describe('onMemirisToggle', () => {
         it('should call setUserEnabledMemiris with true when memirisEnabled is true', () => {
-            component.memirisEnabled = true;
+            component.memirisEnabled.set(true);
             component.onMemirisToggle();
 
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
         });
 
         it('should call setUserEnabledMemiris with false when memirisEnabled is false', () => {
-            component.memirisEnabled = false;
+            component.memirisEnabled.set(false);
             component.onMemirisToggle();
 
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(false);
         });
 
         it('should call setUserEnabledMemiris exactly once per toggle', () => {
-            component.memirisEnabled = true;
+            component.memirisEnabled.set(true);
             component.onMemirisToggle();
 
             expect(accountService.setUserEnabledMemiris).toHaveBeenCalledOnce();
