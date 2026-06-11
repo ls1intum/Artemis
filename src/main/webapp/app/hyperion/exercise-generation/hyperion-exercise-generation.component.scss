@@ -29,6 +29,15 @@
     white-space: nowrap;
 }
 
+// The running hint + Cancel row: let the hint text shrink/ellipsise (min-width: 0) so the Cancel button is never compressed and clipped inside the narrow popover.
+.generation-running-actions {
+    > small {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 // The popover body padding (PrimeNG popovers have no inner padding by default).
 .generation-popover-body {
     padding: 0.5rem;
