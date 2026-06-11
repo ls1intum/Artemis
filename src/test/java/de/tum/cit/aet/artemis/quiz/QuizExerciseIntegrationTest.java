@@ -376,7 +376,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_DnD_MissingTempID_badRequest() throws Exception {
-        // Creating a quiz with a new drag item (id=null) is now valid â€” the DTO layer
+        // Creating a quiz with a new drag item (id=null) is now valid - the DTO layer
         // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
@@ -455,7 +455,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_SA_MissingTempID_badRequest() throws Exception {
-        // Creating a quiz with a new spot (id=null) is now valid â€” the DTO layer
+        // Creating a quiz with a new spot (id=null) is now valid - the DTO layer
         // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
@@ -1335,9 +1335,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     /**
      * Regression tests for the production incident on 2026-04-23 where clicking "Start Quiz Now" on a quiz with open
      * student tabs produced {@code ObjectNotFoundException: AnswerOption with id 'N'} on every subsequent submit. The
-     * root cause was the handler re-persisting the full quiz graph via {@code saveAndFlush}, which â€” combined with
+     * root cause was the handler re-persisting the full quiz graph via {@code saveAndFlush}, which - combined with
      * {@code @OneToMany + @OrderColumn + orphanRemoval=true} on {@code MultipleChoiceQuestion.answerOptions} and its
-     * DnD/SA siblings â€” DELETE+INSERTed every option / drag item / drop location / short-answer spot row with fresh
+     * DnD/SA siblings - DELETE+INSERTed every option / drag item / drop location / short-answer spot row with fresh
      * primary keys. These tests pin the fix: lifecycle actions must now go through targeted UPDATE queries that leave
      * the child PKs untouched.
      */
@@ -1355,7 +1355,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         ChildIdSnapshot after = snapshotChildIds(quizExercise.getId());
         assertChildIdsUnchanged(before, after, "START_NOW");
-        // START_NOW must actually start the quiz â€” the synchronized batch's startTime must be persisted. Without this
+        // START_NOW must actually start the quiz - the synchronized batch's startTime must be persisted. Without this
         // assertion, a regression that skipped the batch INSERT (e.g. invoking an UPDATE query on a transient batch
         // whose id is null) would slip through the child-id-preservation check.
         assertThat(startNowResponse.startDate()).as("START_NOW must persist a batch startTime").isNotNull();

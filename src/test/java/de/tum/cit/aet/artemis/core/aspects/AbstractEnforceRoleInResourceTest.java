@@ -49,7 +49,7 @@ public abstract class AbstractEnforceRoleInResourceTest extends AbstractSpringIn
         course = courseUtilService.createEnrolledCourse(getTestPrefix());
 
         // create users of other course
-        // Users of the "other" course â€” not enrolled in the main course by design (tests 403 paths)
+        // Users of the "other" course - not enrolled in the main course by design (tests 403 paths)
         userUtilService.addStudent(getOtherPrefix() + "student1");
         userUtilService.addTeachingAssistant(getOtherPrefix() + "tutor1");
         userUtilService.addEditor(getOtherPrefix() + "editor1");

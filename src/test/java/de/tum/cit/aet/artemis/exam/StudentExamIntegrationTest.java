@@ -2919,7 +2919,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
         // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 6 â€” investigate remaining extra query in a follow-up
+        // TODO: Hibernate 7 increased base query count from 5 to 6 - investigate remaining extra query in a follow-up
         private final int BASE_QUERY_COUNT = 6;
 
         private TextExercise textExercise;
@@ -3022,8 +3022,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // load Quiz Submissions Submitted Answers (for comparison)
-            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion â€” needs FetchType.LAZY
-            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more â€” Hibernate now issues per-child-collection
+            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion - needs FetchType.LAZY
+            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more - Hibernate now issues per-child-collection
             // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
             // Tracked in #12808 to evaluate switching those collections to FetchType.LAZY and reclaiming the +2.
             final int quizQueryCount = 10;

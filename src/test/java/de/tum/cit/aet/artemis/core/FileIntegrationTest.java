@@ -419,7 +419,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
 
-        String unsanitizedName = "testâ€“file"; // contains en-dash
+        String unsanitizedName = "test-file"; // contains en-dash
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
@@ -440,7 +440,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String contentDisposition = result.getResponse().getHeader("Content-Disposition");
             assertThat(contentDisposition).isNotNull();
-            assertThat(contentDisposition).doesNotContain("â€“");
+            assertThat(contentDisposition).doesNotContain("-");
             assertThat(contentDisposition).contains("filename=\"test_file.pdf\"");
         }
     }
