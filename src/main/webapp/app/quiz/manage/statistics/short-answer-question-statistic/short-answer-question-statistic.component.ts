@@ -9,7 +9,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
@@ -22,7 +22,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
         '../quiz-point-statistic/quiz-point-statistic.component.scss',
         './short-answer-question-statistic.component.scss',
     ],
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
