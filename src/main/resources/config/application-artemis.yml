@@ -153,8 +153,8 @@ spring:
       # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
       timeout: 5m
       chat:
-        # The Azure deployment name; sent as the request model (on Foundry it usually equals the model name)
-        deployment-name: gpt-5-mini
+        # The Azure deployment name; used as the request model by the default ChatClient
+        model: gpt-5-mini
         # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
         temperature: 1.0
       ## Variant 2: local OpenAI-compatible server (LM Studio, Ollama, vLLM, ...) — same tree.

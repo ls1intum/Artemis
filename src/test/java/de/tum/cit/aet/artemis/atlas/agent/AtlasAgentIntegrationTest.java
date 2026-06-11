@@ -419,7 +419,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @Test
         void shouldSaveAndReadConversationWithRealJdbcRepository() {
             var repository = JdbcChatMemoryRepository.builder().jdbcTemplate(new JdbcTemplate(dataSource)).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
-            var conversationId = "course_1_user_1_schema_test";
+            var conversationId = "course_1_user_1_schema_test_" + java.util.UUID.randomUUID();
 
             repository.saveAll(conversationId, List.of(new UserMessage("What is a competency?"), new AssistantMessage("A competency is a learning objective.")));
             List<Message> messages = repository.findByConversationId(conversationId);
