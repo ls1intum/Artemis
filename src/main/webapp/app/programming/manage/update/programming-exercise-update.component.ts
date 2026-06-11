@@ -640,7 +640,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 .subscribe(() => this.setupMetadataSync());
         }
 
-        // If an exercise is created, load our readme template so the problemStatement is not empty
+        // Determine the module feature flags BEFORE the initial language template loads below. Setting selectedProgrammingLanguage synchronously runs loadProgrammingLanguageTemplate,
+        // which on the AI-eligible create path must leave the problem statement EMPTY (showGenerateWithAi() reads hyperionEnabled). If hyperionEnabled were still false here, the sample
+        // readme would load and the from-scratch run would treat it as an authoritative spec.
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+        // Load the language readme into the problem statement (so a manual exercise does not start empty); on the AI-eligible create path loadProgrammingLanguageTemplate leaves it
+        // empty instead, so the agent authors it from the instructor's brief.
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         if (this.programmingExercise.id || this.isImportFromFile || this.isImportFromSharing) {
             this.problemStatementLoaded = true;
@@ -655,9 +663,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
 
-        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
-        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
-        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         if (this.hyperionEnabled) {
             // Load the server's generation-supported language set once; on error the set stays empty so the entire-exercise action fails closed (stays disabled).
             // While the call is in flight the problem component shows a skeleton instead of a wrongly-disabled action; both callbacks clear the loading flag.

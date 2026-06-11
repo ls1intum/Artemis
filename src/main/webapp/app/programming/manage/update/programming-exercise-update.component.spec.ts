@@ -177,6 +177,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('AI create flow: ngOnInit leaves the problem statement EMPTY (the init-time readme load must not win the timing race)', () => {
+        // Regression: ngOnInit sets selectedProgrammingLanguage (→ loadProgrammingLanguageTemplate) synchronously; the module feature flags MUST be resolved first, or showGenerateWithAi()
+        // is false at that moment and the sample readme loads — which the from-scratch run then treats as an authoritative spec ("starts from bubble sort").
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+        const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# A sorting sample readme long enough to be treated as a real instructor spec'));
+        const route = TestBed.inject(ActivatedRoute);
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.params = of({ courseId });
+
+        comp.ngOnInit();
+
+        expect(comp.showGenerateWithAi()).toBe(true);
+        expect(getTemplateFile).not.toHaveBeenCalled();
+        expect(comp.programmingExercise.problemStatement).toBe('');
+    });
+
     describe('initializeEditMode', () => {
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);

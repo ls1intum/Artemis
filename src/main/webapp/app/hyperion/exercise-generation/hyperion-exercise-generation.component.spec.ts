@@ -493,6 +493,22 @@ describe('HyperionExerciseGenerationComponent', () => {
             expect(host.querySelector('.generation-chip')).toBeNull();
         });
 
+        it('auto-opens the popover via a valid PrimeNG show() call (no synthetic event that would throw)', () => {
+            createCompact();
+            generationService.generateExercise.mockReturnValue(of({ jobId: 'job-open' }));
+            component.generate();
+            fixture.detectChanges();
+
+            const popover = (component as unknown as { genPopover: () => { show: (e: unknown, t: unknown) => void } | undefined }).genPopover?.();
+            const chip = (fixture.nativeElement as HTMLElement).querySelector('.generation-chip');
+            expect(popover).toBeTruthy();
+            expect(chip).toBeTruthy();
+            // PrimeNG Popover.show(event, target) calls event.stopPropagation() when BOTH are truthy: a synthetic event object (no such method) throws — this is the shipped-then-fixed bug.
+            expect(() => popover!.show({ currentTarget: chip, target: chip }, chip)).toThrow();
+            // The fix passes no event, so the guard short-circuits and the overlay still anchors to the chip.
+            expect(() => popover!.show(undefined, chip)).not.toThrow();
+        });
+
         it('drives the chip label/icon from the verdict', () => {
             createCompact();
             generationService.generateExercise.mockReturnValue(of({ jobId: 'job-v' }));

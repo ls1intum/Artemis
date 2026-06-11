@@ -299,7 +299,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             const popover = this.genPopover();
             if (chip && popover) {
                 this.autoOpenHandled = true;
-                popover.show({ currentTarget: chip, target: chip } as unknown as Event, chip);
+                // Pass NO event: PrimeNG's Popover.show(event, target) calls event.stopPropagation() whenever both are truthy, so a synthetic event object (which has no such method)
+                // throws. With an undefined event the guard short-circuits and the overlay still anchors to the target (this.target = target || ...).
+                popover.show(undefined as unknown as Event, chip);
             }
         });
     }
@@ -328,9 +330,10 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
                         this.progressEvents.set(status.events);
                         const terminal = status.events.findLast((event) => this.isTerminal(event));
                         if (status.running) {
-                            // A new run resets any earlier terminal outcome and its one-shot focus guard so this card shows live progress again.
+                            // A new run resets any earlier terminal outcome and the one-shot focus/auto-open guards so this card shows live progress again and the popover re-opens.
                             this.finalEvent.set(undefined);
                             this.terminalFocusHandled = false;
+                            this.autoOpenHandled = false;
                             this.running.set(true);
                             this.startTimer();
                             this.subscribeToJob(status.jobId);
@@ -536,6 +539,8 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.showLog.set(false);
         this.retryGuidance.set('');
         this.terminalFocusHandled = false;
+        // Re-arm the one-shot auto-open so the popover opens again for this fresh run (a retry or a second run in the same mounted card).
+        this.autoOpenHandled = false;
     }
 
     private startTimer(): void {
