@@ -124,14 +124,14 @@ public class ExerciseGenerationOrchestrationService {
         Consumer<ChatResponse> usageSink = chatResponse -> llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(courseId).withExercise(exercise.getId()).withUser(user.getId()));
         try {
-            emit(progress, "Creating sandbox session");
+            emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
             // Register a node-local interrupt: a cancellation arriving during a long build destroys this session so the in-flight exec fails fast instead of waiting for the next
             // between-turn poll. destroySession is idempotent, so this is safe alongside the orchestrator's own teardown.
             String activeSessionId = sessionId;
             jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
 
-            emit(progress, "Seeding workspace from the exercise repositories");
+            emit(progress, "Loading the example exercise");
             // Capture the seeded tests-repo harness snapshot up front so the verifier can reject any later tampering against this exact baseline.
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
@@ -179,7 +179,7 @@ public class ExerciseGenerationOrchestrationService {
                 // while still requiring each to pass on the solution and fail on the template (W1: kills the structural-binding retry thrash).
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
 
-                emit(progress, "Verifying the generated exercise (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
+                emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
                 // Read the produced repositories back out so the verifier can run the sandbox-free integrity gates (harness immutability against the seed snapshot, and the
                 // solution-leak check across the produced template/solution). extractRepository already strips orphan residue, so the gates see the same files that ship. The
                 // extraction-failed flag is threaded so the verifier can fail CLOSED on a genuine read-back error (distinct from a genuinely empty repo).

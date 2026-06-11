@@ -59,28 +59,23 @@
                 "HIGH": "High"
             },
             "adaptExercise": {
-                "action": "Adapt with Artemis Intelligence",
+                "action": "Adapt with AI",
                 "menuAction": "Adapt exercise",
                 "adaptSelected": "Adapt selected comments ({{count}})",
-                "title": "Adapt exercise with Artemis Intelligence",
-                "summary": "Artemis Intelligence will adapt this exercise to address this feedback.",
-                "freeSummary": "Tell Artemis Intelligence how to adapt this exercise.",
+                "title": "Adapt exercise",
+                "summary": "This exercise will be adapted to address this feedback.",
+                "freeSummary": "Describe how this exercise should be adapted.",
                 "feedbackLabel": "Feedback to address",
                 "instructionsLabel": "Additional instructions (optional)",
-                "instructionsPlaceholder": "Add any extra guidance for Artemis Intelligence (optional)...",
-                "freeInstructionsPlaceholder": "Describe what Artemis Intelligence should change about this exercise...",
+                "instructionsPlaceholder": "Add any extra guidance (optional)...",
+                "freeInstructionsPlaceholder": "Describe what should change about this exercise...",
                 "confirm": "Adapt exercise",
                 "cancel": "Cancel",
                 "started": "Adaptation started.",
-                "alreadyRunning": "An Artemis Intelligence run is already in progress for this exercise.",
-                "startError": "Could not start the Artemis Intelligence adaptation. Please try again.",
-                "presetsLabel": "Common adaptations",
-                "presetRegenerateTests": "Regenerate the tests",
-                "presetRegenerateTestsValue": "Regenerate the test suite to cover more behaviour and edge cases, keeping the same public API.",
-                "presetSimplifyTemplate": "Simplify the template",
-                "presetSimplifyTemplateValue": "Make the template a clean starting point: keep the public signatures but replace the bodies with clear TODO stubs.",
-                "presetEdgeCaseTests": "Add edge-case tests",
-                "presetEdgeCaseTestsValue": "Add tests for edge cases the current suite misses: empty, single-element, boundary, and error conditions."
+                "alreadyRunning": "An adaptation is already in progress for this exercise.",
+                "startError": "Could not start the adaptation. Please try again.",
+                "findingsListLabel": "Review comments to address",
+                "freeHelp": "There are no open review comments. Describe the change you want."
             },
             "submitBeforeComment": "Submit the exercise before starting a thread."
         }

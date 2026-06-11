@@ -52,7 +52,7 @@ export function parseGenerationProgress(events: ExerciseGenerationEvent[], finis
                 continue;
             }
 
-            if (/^Verifying the generated exercise/i.test(line)) {
+            if (/^Checking the exercise builds and grades/i.test(line)) {
                 phase = 'verifying';
                 const match = ATTEMPT.exec(line);
                 if (match) {
@@ -62,7 +62,7 @@ export function parseGenerationProgress(events: ExerciseGenerationEvent[], finis
                 currentStep = line;
                 continue;
             }
-            if (/^Verification passed\. Saving/i.test(line)) {
+            if (/^Checks passed\. Saving/i.test(line)) {
                 phase = 'saving';
                 currentStep = line;
                 continue;
@@ -76,7 +76,7 @@ export function parseGenerationProgress(events: ExerciseGenerationEvent[], finis
                 continue;
             }
 
-            if (/^Creating sandbox session/i.test(line) || /^Seeding workspace/i.test(line)) {
+            if (/^Setting up the build environment/i.test(line) || /^Loading the example exercise/i.test(line)) {
                 phase = 'preparing';
                 currentStep = line;
                 continue;
@@ -179,10 +179,15 @@ function classifyTranscriptLine(line: string): TranscriptEntry {
             repo: isFileTool && target ? repoOf(target) : undefined,
         };
     }
-    if (/^Verifying the generated exercise/i.test(line)) {
+    if (/^Checking the exercise builds and grades/i.test(line)) {
         return { kind: 'verify', text: line };
     }
-    if (/^Verification passed/i.test(line) || /^Creating sandbox session/i.test(line) || /^Seeding workspace/i.test(line) || /^Agent (finished|submitted)/i.test(line)) {
+    if (
+        /^Checks passed/i.test(line) ||
+        /^Setting up the build environment/i.test(line) ||
+        /^Loading the example exercise/i.test(line) ||
+        /^Agent (finished|submitted)/i.test(line)
+    ) {
         return { kind: 'milestone', text: line };
     }
     if (/could not be executed|Model call failed|Reached the step budget/i.test(line)) {

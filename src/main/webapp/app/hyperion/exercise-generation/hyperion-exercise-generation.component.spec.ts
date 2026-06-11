@@ -306,7 +306,7 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(component.fileChangeCount()).toBe(1);
         expect(component.filesByRepo()).toEqual([{ repo: 'solution', files: [{ path: 'solution/A.java', repo: 'solution', action: 'create' }] }]);
 
-        jobStream.next({ type: 'PROGRESS', message: 'Verifying the generated exercise (attempt 2 of 3)' });
+        jobStream.next({ type: 'PROGRESS', message: 'Checking the exercise builds and grades (attempt 2 of 3)' });
         expect(component.progress().phase).toBe('verifying');
         expect(component.progress().attempt).toBe(2);
         expect(component.progress().attemptTotal).toBe(3);
@@ -383,11 +383,11 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(component.phaseKey()).toBe('authoring');
         expect(component.phaseIndex()).toBe(1);
 
-        jobStream.next({ type: 'PROGRESS', message: 'Verifying the generated exercise (attempt 1 of 3)' });
+        jobStream.next({ type: 'PROGRESS', message: 'Checking the exercise builds and grades (attempt 1 of 3)' });
         expect(component.phaseKey()).toBe('verifying');
         expect(component.phaseIndex()).toBe(2);
 
-        jobStream.next({ type: 'PROGRESS', message: 'Verification passed. Saving the exercise' });
+        jobStream.next({ type: 'PROGRESS', message: 'Checks passed. Saving the exercise' });
         expect(component.phaseKey()).toBe('saving');
         expect(component.phaseIndex()).toBe(3);
 

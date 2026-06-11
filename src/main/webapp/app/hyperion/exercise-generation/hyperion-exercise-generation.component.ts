@@ -142,7 +142,25 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         const index = GENERATION_PHASE_ORDER.indexOf(this.phaseKey());
         return index === -1 ? GENERATION_PHASE_ORDER.length - 1 : index;
     });
-    readonly currentStep = computed(() => this.progress().currentStep);
+    // The live caption is derived from the coarse phase, not the raw server line, so an instructor sees plain language ("Writing the solution and tests", "Checking it builds and
+    // grades") instead of build-agent internals. The opt-in detail log keeps the specifics. The terminal "done" phase shows no caption.
+    readonly currentStepKey = computed<string | undefined>(() => {
+        switch (this.progress().phase) {
+            case 'preparing':
+                return 'preparing';
+            case 'authoring':
+                return 'authoring';
+            case 'verifying':
+                return 'checking';
+            case 'saving':
+                return 'saving';
+            default:
+                return undefined;
+        }
+    });
+    readonly currentStepParams = computed<Record<string, unknown>>(() =>
+        this.progress().phase === 'verifying' ? { attempt: this.progress().attempt ?? 1, total: this.progress().attemptTotal ?? 1 } : {},
+    );
     readonly attempt = computed(() => this.progress().attempt);
     readonly attemptTotal = computed(() => this.progress().attemptTotal);
     readonly showAttempt = computed(() => (this.progress().attemptTotal ?? 0) > 1);

@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -32,25 +31,16 @@ export interface ReviewAdaptExerciseDialogResult {
 export class ReviewAdaptExerciseDialogComponent {
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
-    private readonly translateService = inject(TranslateService);
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
-    /** The finding to address; absent in the finding-free "free adapt" mode. */
+    /** The review comments to address; absent in the finding-free "free adapt" mode (no open review comments). */
     readonly findingText: string | undefined = (this.dialogConfig.data as ReviewAdaptExerciseDialogData).findingText;
-    /** Whether this is the finding-free "free adapt" mode (no finding, instructions required). */
+    /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */
     readonly isFreeMode = this.findingText === undefined;
     readonly instructions = signal('');
-    /** In free mode the confirm action is blocked until the instructor has typed instructions; in review-thread mode the finding alone suffices. */
+    /** In free mode the confirm action is blocked until the instructor has typed instructions; with review comments to address the comments alone suffice. */
     readonly confirmDisabled = computed(() => this.isFreeMode && this.instructions().trim().length === 0);
-
-    /**
-     * Quick-fill: replaces the instructions with the translated preset value for the given i18n key
-     * (the instructor can then edit it before confirming).
-     */
-    applyPreset(presetValueKey: string): void {
-        this.instructions.set(this.translateService.instant(presetValueKey));
-    }
 
     /** Closes the dialog with the instructions so the host can assemble and emit the feedback prompt (review-thread mode) or start the run (free mode). */
     confirm(): void {

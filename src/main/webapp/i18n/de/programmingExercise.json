@@ -331,7 +331,7 @@
                     "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
                 },
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden.",
-                "orSeparator": "oder"
+                "draftStatementOnly": "Nur die Aufgabenstellung entwerfen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -847,7 +847,6 @@
                 }
             },
             "artemisIntelligence": {
-                "title": "Artemis Intelligenz",
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",
@@ -929,7 +928,6 @@
                 "reanalyze": "Erneut analysieren"
             },
             "generateExercise": {
-                "brand": "Artemis Intelligence",
                 "cardTitle": "Aufgabengenerierung",
                 "generateEntire": "Gesamte Aufgabe generieren",
                 "entireExerciseTooltip": "Speichert die Aufgabe mit leeren Repositories und verlässt den Einrichtungsassistenten, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst.",
@@ -945,10 +943,10 @@
                 "cancelling": "Wird abgebrochen…",
                 "runningHint": "Das dauert in der Regel einige Minuten. Der Fortschritt wird hier angezeigt; die Aufgabe wird erst nach erfolgreicher Verifizierung gespeichert.",
                 "phase": {
-                    "preparing": "Arbeitsbereich wird vorbereitet",
-                    "authoring": "Aufgabe wird erstellt",
-                    "verifying": "Aufgabe wird verifiziert",
-                    "saving": "Aufgabe wird gespeichert",
+                    "preparing": "Wird vorbereitet",
+                    "authoring": "Aufgabe wird geschrieben",
+                    "verifying": "Build und Bewertung werden geprüft",
+                    "saving": "Wird gespeichert",
                     "done": "Wird abgeschlossen"
                 },
                 "attempt": "Versuch {{ attempt }} von {{ total }}",
@@ -962,8 +960,8 @@
                     "tests": "Tests",
                     "other": "Sonstige"
                 },
-                "showLog": "Agentenprotokoll anzeigen",
-                "hideLog": "Agentenprotokoll ausblenden",
+                "showLog": "Details anzeigen",
+                "hideLog": "Details ausblenden",
                 "transcriptTool": {
                     "create": "Erstellen",
                     "edit": "Bearbeiten",
@@ -995,10 +993,19 @@
                 "languageUnsupportedTooltip": "KI-Generierung ist für diese Programmiersprache noch nicht verfügbar.",
                 "languageLoadingTooltip": "Sprachunterstützung wird geprüft…",
                 "confirmTitle": "Gesamte Aufgabe generieren?",
-                "confirmMessage": "Artemis Intelligence speichert diese Aufgabe mit leeren Repositories, verlässt den Einrichtungsassistenten und generiert die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert alles, bevor du es behältst. Dies dauert einige Minuten und verbraucht KI-Credits.",
+                "confirmMessage": "Dadurch wird die Aufgabe mit leeren Repositories gespeichert, der Einrichtungsassistent verlassen und die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung generiert. Das Ergebnis wird vor dem Speichern verifiziert. Du kannst danach alles prüfen und bearbeiten.",
                 "confirmAccept": "Aufgabe generieren",
                 "confirmReject": "Abbrechen",
-                "dismiss": "Schließen"
+                "dismiss": "Schließen",
+                "step": {
+                    "preparing": "Wird eingerichtet",
+                    "authoring": "Musterlösung und Tests werden geschrieben",
+                    "checking": "Build und Bewertung werden geprüft (Versuch {{attempt}} von {{total}})",
+                    "saving": "Aufgabe wird gespeichert"
+                }
+            },
+            "creationAssistance": {
+                "label": "Kreationsassistent"
             }
         },
         "error": {

@@ -14,10 +14,10 @@ describe('parseGenerationProgress', () => {
     });
 
     it('moves through preparing, authoring, verifying and saving as the run progresses', () => {
-        expect(parseGenerationProgress([progress('Creating sandbox session')], false).phase).toBe('preparing');
+        expect(parseGenerationProgress([progress('Setting up the build environment')], false).phase).toBe('preparing');
         expect(parseGenerationProgress([progress('Turn 1: write_file solution/A.java')], false).phase).toBe('authoring');
-        expect(parseGenerationProgress([progress('Verifying the generated exercise (attempt 1 of 3)')], false).phase).toBe('verifying');
-        expect(parseGenerationProgress([progress('Verification passed. Saving the exercise.')], false).phase).toBe('saving');
+        expect(parseGenerationProgress([progress('Checking the exercise builds and grades (attempt 1 of 3)')], false).phase).toBe('verifying');
+        expect(parseGenerationProgress([progress('Checks passed. Saving the exercise.')], false).phase).toBe('saving');
     });
 
     it('forces the done phase once a terminal event has arrived', () => {
@@ -26,7 +26,7 @@ describe('parseGenerationProgress', () => {
     });
 
     it('captures the verification attempt and total', () => {
-        const result = parseGenerationProgress([progress('Verifying the generated exercise (attempt 2 of 3)')], false);
+        const result = parseGenerationProgress([progress('Checking the exercise builds and grades (attempt 2 of 3)')], false);
         expect(result.attempt).toBe(2);
         expect(result.attemptTotal).toBe(3);
     });
@@ -108,12 +108,12 @@ describe('parseTranscript', () => {
 
     it('classifies the verify tool call and the verifying milestone as verify entries', () => {
         expect(parseTranscript([progress('Turn 4: verify {}')])[0].kind).toBe('verify');
-        expect(parseTranscript([progress('Verifying the generated exercise (attempt 1 of 3)')])[0].kind).toBe('verify');
+        expect(parseTranscript([progress('Checking the exercise builds and grades (attempt 1 of 3)')])[0].kind).toBe('verify');
     });
 
     it('classifies setup, save and finish lines as milestones', () => {
-        expect(parseTranscript([progress('Creating sandbox session')])[0].kind).toBe('milestone');
-        expect(parseTranscript([progress('Verification passed. Saving the exercise.')])[0].kind).toBe('milestone');
+        expect(parseTranscript([progress('Setting up the build environment')])[0].kind).toBe('milestone');
+        expect(parseTranscript([progress('Checks passed. Saving the exercise.')])[0].kind).toBe('milestone');
         expect(parseTranscript([progress('Agent finished after 12 turn(s)')])[0].kind).toBe('milestone');
     });
 

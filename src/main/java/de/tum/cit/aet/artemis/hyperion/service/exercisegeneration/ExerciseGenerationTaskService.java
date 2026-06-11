@@ -96,7 +96,7 @@ public class ExerciseGenerationTaskService {
                 default -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                     if (outcome.isAccepted()) {
-                        emitter.progress("Verification passed. Saving the exercise.");
+                        emitter.progress("Checks passed. Saving the exercise.");
                         try {
                             persistenceService.persist(exercise, user, outcome);
                             // Advisory only: surface any spec-fidelity / coverage gaps as review comments WITHOUT changing the accepted status. The differential oracle accepted
