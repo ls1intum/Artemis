@@ -4,6 +4,7 @@ import { ActivatedRoute, ChildrenOutletContexts, Router } from '@angular/router'
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
@@ -29,6 +30,8 @@ class ResizeObserverMock {
     unobserve = vi.fn();
     disconnect = vi.fn();
 }
+
+const createResult = (partial: Partial<Result>): Result => Object.assign(new Result(), partial);
 
 describe('ExerciseSplitPanelComponent', () => {
     setupTestBed({ zoneless: true });
@@ -142,7 +145,7 @@ describe('ExerciseSplitPanelComponent', () => {
 
     it.each([false, undefined])('should disable wide splitting when a failed build can create read-only editor annotations and allowOnlineEditor is %s', (allowOnlineEditor) => {
         const submission = { buildFailed: true } as ProgrammingSubmission;
-        const result = { id: 2, completionDate: new Date(), submission } as Result;
+        const result = createResult({ id: 2, completionDate: dayjs(), submission });
         submission.results = [result];
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
         fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
@@ -156,7 +159,7 @@ describe('ExerciseSplitPanelComponent', () => {
 
     it('should show the read-only editor feedback tab for file-line referenced feedback', () => {
         const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
-        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
         const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
@@ -167,7 +170,7 @@ describe('ExerciseSplitPanelComponent', () => {
     });
 
     it('should show the read-only editor feedback tab for successful Athena feedback results', () => {
-        const result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+        const result = createResult({ id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
         const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
@@ -179,7 +182,7 @@ describe('ExerciseSplitPanelComponent', () => {
 
     it('should show the read-only editor feedback tab for static code analysis feedback', () => {
         const feedback = { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: '{"filePath":"src/Main.java","startLine":4}', type: FeedbackType.AUTOMATIC } as Feedback;
-        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
         const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
@@ -191,7 +194,7 @@ describe('ExerciseSplitPanelComponent', () => {
 
     it('should not show the read-only editor feedback tab for unreferenced feedback', () => {
         const feedback = { type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'General feedback' } as Feedback;
-        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const result = createResult({ id: 2, completionDate: dayjs(), feedbacks: [feedback] });
         const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
