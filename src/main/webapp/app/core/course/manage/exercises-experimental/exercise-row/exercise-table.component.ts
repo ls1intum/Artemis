@@ -1,64 +1,21 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    faCaretDown,
-    faCaretUp,
-    faChartBar,
-    faClipboardList,
-    faEye,
-    faLayerGroup,
-    faLightbulb,
-    faListAlt,
-    faPencilAlt,
-    faPlayCircle,
-    faPlus,
-    faRedo,
-    faSort,
-    faStopCircle,
-    faTable,
-    faTrash,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TableModule, TableRowReorderEvent } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
-import { PopoverModule } from 'primeng/popover';
-import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import {
-    DifficultyLevel,
-    Exercise,
-    ExerciseMode,
-    ExerciseType,
-    IncludedInOverallScore,
-    getExerciseUrlSegment,
-    getIcon,
-} from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, Exercise, ExerciseType, IncludedInOverallScore, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
-import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
-import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseManagementDevSettingsService } from 'app/core/course/manage/exercises-experimental/dev-settings/exercise-management-dev-settings.service';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseActionsComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-actions.component';
 
-type SortColumn = 'title' | 'releaseDate' | 'dueDate' | 'assessmentDueDate' | 'points' | 'difficulty';
+type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
 const DIFFICULTY_ORDER: Record<string, number> = {
     [DifficultyLevel.EASY]: 0,
@@ -81,14 +38,11 @@ export interface TableGroupChange {
         FaIconComponent,
         TableModule,
         SelectModule,
-        PopoverModule,
-        ButtonModule,
         CheckboxModule,
         TranslateDirective,
-        ArtemisTranslatePipe,
         ArtemisDatePipe,
-        DeleteButtonDirective,
         ExerciseCategoriesComponent,
+        ExerciseActionsComponent,
     ],
 })
 export class ExerciseTableComponent {
@@ -112,47 +66,17 @@ export class ExerciseTableComponent {
     readonly selectionAllChange = output<boolean>();
 
     protected readonly ExerciseType = ExerciseType;
-    protected readonly ExerciseMode = ExerciseMode;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly DifficultyLevel = DifficultyLevel;
-    protected readonly RepositoryType = RepositoryType;
-    protected readonly AssessmentType = AssessmentType;
     protected readonly QuizStatus = QuizStatus;
     protected readonly QuizMode = QuizMode;
 
     protected readonly faSort = faSort;
     protected readonly faCaretUp = faCaretUp;
     protected readonly faCaretDown = faCaretDown;
-    protected readonly faTable = faTable;
-    protected readonly faListAlt = faListAlt;
-    protected readonly faWrench = faWrench;
-    protected readonly faTrash = faTrash;
-    protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faEye = faEye;
-    protected readonly faPlayCircle = faPlayCircle;
-    protected readonly faStopCircle = faStopCircle;
-    protected readonly faLayerGroup = faLayerGroup;
-    protected readonly faChartBar = faChartBar;
-    protected readonly faClipboardList = faClipboardList;
-    protected readonly faLightbulb = faLightbulb;
-    protected readonly faRedo = faRedo;
-    protected readonly faUsers = faUsers;
-    protected readonly faPlus = faPlus;
 
     readonly sortColumn = signal<SortColumn>('title');
     readonly sortAsc = signal(true);
-
-    protected readonly devSettings = inject(ExerciseManagementDevSettingsService);
-
-    private readonly dialogErrorSources = new Map<number, Subject<string>>();
-
-    private readonly textExerciseService = inject(TextExerciseService);
-    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
-    private readonly quizExerciseService = inject(QuizExerciseService);
-    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly eventManager = inject(EventManager);
 
     readonly sortedExercises = computed(() => {
         const col = this.sortColumn();
@@ -163,21 +87,9 @@ export class ExerciseTableComponent {
                 case 'title':
                     cmp = (a.title ?? '').localeCompare(b.title ?? '');
                     break;
-                case 'releaseDate': {
-                    const da = effectiveDate(a, this.group(), 'releaseDate');
-                    const db = effectiveDate(b, this.group(), 'releaseDate');
-                    cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
-                    break;
-                }
                 case 'dueDate': {
                     const da = effectiveDate(a, this.group(), 'dueDate');
                     const db = effectiveDate(b, this.group(), 'dueDate');
-                    cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
-                    break;
-                }
-                case 'assessmentDueDate': {
-                    const da = effectiveDate(a, this.group(), 'assessmentDueDate');
-                    const db = effectiveDate(b, this.group(), 'assessmentDueDate');
                     cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
                     break;
                 }
@@ -253,10 +165,6 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.group(), 'assessmentDueDate');
     }
 
-    isAutomatic(exercise: Exercise): boolean {
-        return (exercise as any).assessmentType === AssessmentType.AUTOMATIC;
-    }
-
     difficultyBadgeClass(exercise: Exercise): string {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
@@ -291,20 +199,6 @@ export class ExerciseTableComponent {
         return exercise as QuizExercise;
     }
 
-    addBatch(_quiz: QuizExercise): void {}
-
-    setQuizVisible(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.VISIBLE } as QuizExercise);
-    }
-
-    startQuiz(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.ACTIVE, quizStarted: true } as QuizExercise);
-    }
-
-    endQuiz(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.INVISIBLE, quizEnded: true, quizStarted: false } as QuizExercise);
-    }
-
     quizStatusLabel(exercise: QuizExercise): string {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
@@ -332,51 +226,6 @@ export class ExerciseTableComponent {
                 return 'bg-primary';
             default:
                 return 'bg-light text-dark';
-        }
-    }
-
-    dialogError$(exercise: Exercise): Observable<string> {
-        const id = exercise.id ?? -1;
-        if (!this.dialogErrorSources.has(id)) {
-            this.dialogErrorSources.set(id, new Subject<string>());
-        }
-        return this.dialogErrorSources.get(id)!.asObservable();
-    }
-
-    fetchExerciseDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exercise);
-    }
-
-    deleteExercise(exercise: Exercise, event: { [key: string]: boolean }): void {
-        const src = this.dialogErrorSources.get(exercise.id ?? -1) ?? new Subject<string>();
-        const finish = (obs: Observable<unknown>, evtName: string) =>
-            obs.subscribe({
-                next: () => {
-                    this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
-                    src.next('');
-                },
-                error: (e: HttpErrorResponse) => src.next(e.message),
-            });
-
-        switch (exercise.type) {
-            case ExerciseType.TEXT:
-                finish(this.textExerciseService.delete(exercise.id!), 'textExerciseListModification');
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                finish(this.fileUploadExerciseService.delete(exercise.id!), 'fileUploadExerciseListModification');
-                break;
-            case ExerciseType.QUIZ:
-                finish(this.quizExerciseService.delete(exercise.id!), 'quizExerciseListModification');
-                break;
-            case ExerciseType.MODELING:
-                finish(this.modelingExerciseService.delete(exercise.id!), 'modelingExerciseListModification');
-                break;
-            case ExerciseType.PROGRAMMING:
-                finish(
-                    this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
-                    'programmingExerciseListModification',
-                );
-                break;
         }
     }
 }

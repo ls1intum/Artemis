@@ -1,0 +1,76 @@
+<div class="d-flex gap-1 align-items-center justify-content-end flex-nowrap">
+    @for (action of visibleQuiz(); track action.id) {
+        <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+    }
+    @if (visibleQuiz().length > 0 && visibleMain().length > 0) {
+        <div class="vr mx-1"></div>
+    }
+    @if (hasOverflow()) {
+        <button type="button" class="btn btn-outline-secondary" (click)="toggleMenu($event)" title="More actions">
+            <fa-icon [icon]="faEllipsis" />
+        </button>
+        <p-popover #menu appendTo="body">
+            <div class="d-flex flex-column gap-1" style="min-width: 11rem">
+                @for (action of overflowQuiz(); track action.id) {
+                    <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
+                }
+                @if (overflowQuiz().length > 0 && overflowMain().length > 0) {
+                    <hr class="my-1" />
+                }
+                @for (action of overflowMain(); track action.id) {
+                    <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
+                }
+            </div>
+        </p-popover>
+    }
+    @for (action of visibleMain(); track action.id) {
+        <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+    }
+</div>
+
+<!-- Hidden off-screen render used only to measure each button's natural width -->
+<div #measureContainer class="actions-measure d-flex gap-1" aria-hidden="true">
+    @for (action of allActions(); track action.id) {
+        <span #measureItem [attr.data-id]="action.id">
+            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+        </span>
+    }
+    <span #ellipsisMeasure>
+        <button type="button" class="btn btn-outline-secondary"><fa-icon [icon]="faEllipsis" /></button>
+    </span>
+    <span #separatorMeasure><div class="vr"></div></span>
+</div>
+
+<ng-template #actionTpl let-action let-inMenu="inMenu">
+    @switch (action.kind) {
+        @case ('delete') {
+            <button
+                jhiDeleteButton
+                [renderButtonText]="false"
+                [renderButtonStyle]="false"
+                [entityTitle]="exercise().title!"
+                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                [fetchEntitySummary]="deletionSummary()"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="onDelete($event)"
+                [dialogError]="dialogError$"
+                class="btn {{ action.styleClass }}"
+                [class.text-start]="inMenu"
+                [class.w-100]="inMenu"
+            >
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+            </button>
+        }
+        @case ('button') {
+            <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="runAction(action)">
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+            </button>
+        }
+        @default {
+            <a [routerLink]="action.link" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="closeMenuIfOpen(inMenu)">
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+            </a>
+        }
+    }
+</ng-template>
