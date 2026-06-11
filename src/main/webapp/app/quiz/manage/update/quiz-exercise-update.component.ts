@@ -328,7 +328,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
-                this.quizExercise.set(response.body!);
+                const quiz = response.body!;
+                quiz.quizQuestions ??= [];
+                this.quizExercise.set(quiz);
                 this.init();
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
@@ -620,7 +622,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise().quizQuestions!.forEach((question) => (scoreSum += question.points!));
+        this.quizExercise().quizQuestions?.forEach((question) => (scoreSum += question.points!));
         return scoreSum;
     }
 
@@ -767,6 +769,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         // dragItems[i], enabling identity-based matching in the edit components.
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
+        quizExercise.quizQuestions ??= [];
         this.quizExercise.set(quizExercise);
         // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
         // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite

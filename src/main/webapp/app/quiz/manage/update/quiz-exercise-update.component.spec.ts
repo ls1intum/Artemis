@@ -223,6 +223,22 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(initStub).toHaveBeenCalledOnce();
             });
 
+            it('should default quizQuestions to an empty array when the server omits them', () => {
+                // GIVEN a quiz without questions, whose empty collection is dropped during serialization
+                configureStubs();
+                resetQuizExercise();
+                quizExercise.quizQuestions = undefined;
+
+                // WHEN
+                comp.course = course;
+                comp.ngOnInit();
+
+                // THEN the editor works on a real array (e.g. for the max score calculation)
+                expect(comp.quizExercise.quizQuestions).toEqual([]);
+                expect(comp.calculateMaxExerciseScore()).toBe(0);
+                resetQuizExercise();
+            });
+
             afterEach(() => {
                 vi.clearAllMocks();
             });
@@ -825,6 +841,14 @@ describe('QuizExerciseUpdateComponent', () => {
                 saQuestion.points = 3;
                 comp.quizExercise().quizQuestions = [multiQuestion, dndQuestion, saQuestion];
                 expect(comp.calculateMaxExerciseScore()).toBe(6);
+            });
+
+            it('should return 0 when the quiz has no questions (server omits empty collections)', () => {
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+                comp.quizExercise.quizQuestions = undefined;
+                expect(comp.calculateMaxExerciseScore()).toBe(0);
+                resetQuizExercise();
             });
         });
 

@@ -114,8 +114,11 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
-            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(participation.id!);
+            // Release this component's subscription first, so the service only sees remaining observers
+            // (e.g. the exercise header and the code editor show the same participation simultaneously)
+            // when deciding whether the shared websocket state may be torn down.
             this.submissionSubscription.unsubscribe();
+            this.submissionService.unsubscribeForLatestSubmissionOfParticipation(participation.id!);
         }
     }
 

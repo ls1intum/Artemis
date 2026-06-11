@@ -387,8 +387,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         const fileName = 'testFile.' + extension;
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
+        const input = { files: [file], value: fileName };
 
-        component.createImageDragItem({ target: { files: [file] } });
+        component.createImageDragItem({ target: input });
 
         expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
@@ -401,6 +402,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
+        expect(input.value).toBe('');
     });
 
     it('should delete drag item', () => {

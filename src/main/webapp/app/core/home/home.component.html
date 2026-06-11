@@ -53,7 +53,7 @@
                                 <div class="d-flex mb-2">
                                     <label for="password" jhiTranslate="login.form.password"></label>
                                     <div class="ms-auto">
-                                        <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request" tabindex="4"></a>
+                                        <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="/account/reset/request" tabindex="4"></a>
                                     </div>
                                 </div>
                                 <input
@@ -86,7 +86,7 @@
                                     <div class="form-check">
                                         <label class="form-check-label" for="acceptTerms">
                                             <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
-                                            <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
+                                            <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms"></a>
                                         </label>
                                     </div>
                                 }
@@ -128,7 +128,7 @@
                         @if (isRegistrationEnabled) {
                             <div>
                                 <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
-                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="account/register"></a>
+                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
                             </div>
                         }
                     </div>
@@ -163,7 +163,7 @@
                                 <div class="form-check">
                                     <label class="form-check-label" for="acceptTerms">
                                         <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
-                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
+                                        <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms"></a>
                                     </label>
                                 </div>
                             }

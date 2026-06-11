@@ -578,7 +578,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!dragItemFile) {
             return undefined;
         }
-        return this.createImageDragItemFromFile(dragItemFile);
+        const dragItem = this.createImageDragItemFromFile(dragItemFile);
+        event.target.value = '';
+        return dragItem;
     }
 
     createImageDragItemFromFile(dragItemFile: File): DragItem {
