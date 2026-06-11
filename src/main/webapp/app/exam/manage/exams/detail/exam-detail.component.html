@@ -2,7 +2,7 @@
     <div class="col-11">
         @if (exam()) {
             <div>
-                <h2 id="exam()-detail-title">
+                <h2 id="exam-detail-title">
                     @if (!exam().testExam) {
                         <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
                     }
@@ -72,7 +72,7 @@
                             <fa-icon [icon]="faUndo" />
                         </button>
                         <button
-                            id="exam()-delete"
+                            id="exam-delete"
                             jhiDeleteButton
                             [buttonSize]="buttonSize"
                             [entityTitle]="exam().title || ''"

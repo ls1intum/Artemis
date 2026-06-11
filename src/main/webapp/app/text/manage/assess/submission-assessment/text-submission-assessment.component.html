@@ -59,7 +59,7 @@
             </jhi-resizeable-container>
         </div>
         <div class="row mt-3">
-            @if (result() && result().id) {
+            @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback
                     [feedbacks]="unreferencedFeedback()"
                     (feedbacksChange)="unreferencedFeedback.set($event)"
@@ -67,7 +67,7 @@
                     (feedbacksChange)="validateFeedback($event)"
                     [readOnly]="readOnly"
                     [useDefaultFeedbackSuggestionBadgeText]="true"
-                    [resultId]="result().id"
+                    [resultId]="result()!.id!"
                 />
             }
         </div>
