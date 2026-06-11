@@ -49,14 +49,11 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-                [showGenerateWithAi]="showGenerateWithAi()"
-                [generationLanguageSupported]="generationLanguageSupported()"
-                [generationLanguagesLoading]="generationLanguagesLoading()"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
-                [formInvalid]="!!getInvalidReasons().length"
+                [isAiMode]="isAiMode()"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
-                (generateWithAi)="saveWithAi($event)"
+                (briefChange)="currentBrief.set($event)"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-grading
@@ -79,8 +76,15 @@
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
+                [aiModeAvailable]="showGenerateWithAi()"
+                [editMode]="editMode()"
+                [isAiMode]="isAiMode()"
+                [aiBriefPresent]="!!currentBrief().trim()"
+                [aiLanguageSupported]="generationLanguageSupported()"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
+                (setEditMode)="setEditMode($event)"
+                (aiGenerate)="saveWithAi(currentBrief())"
                 (save)="save()"
                 (onCancel)="previousState()"
             />

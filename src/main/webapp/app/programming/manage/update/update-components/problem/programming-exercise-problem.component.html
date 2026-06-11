@@ -1,8 +1,9 @@
 <section>
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
-    <!-- User Prompt Input -->
-    @if (hyperionEnabled) {
+    <!-- AI mode: the "Your Requirements" brief drives the from-scratch generation, triggered by the footer's single "Generate entire exercise" action. "Draft a plan to review"
+         optionally synthesises a problem statement into the editor below so the instructor can review and adapt the plan before the full build. -->
+    @if (isAiMode()) {
         <div class="mb-3">
             <div class="d-flex align-items-center mb-2">
                 <label for="userPrompt" class="form-label mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
@@ -12,7 +13,7 @@
                 <textarea
                     id="userPrompt"
                     [ngModel]="userPrompt()"
-                    (ngModelChange)="userPrompt.set($event)"
+                    (ngModelChange)="onBriefChange($event)"
                     pTextarea
                     fluid
                     rows="4"
@@ -24,20 +25,14 @@
                 <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
-        <small class="text-color-secondary d-block mb-2">
-            @if (showGenerateWithAi()) {
-                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.tieredHint"></span>
-            } @else {
-                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.draftHint"></span>
-            }
-        </small>
+        <small class="text-color-secondary d-block mb-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.aiModeHint"></small>
         <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
             <button
                 pButton
                 type="button"
                 id="generate-problem-statement"
-                [severity]="showGenerateWithAi() ? 'secondary' : 'primary'"
-                [outlined]="showGenerateWithAi()"
+                severity="secondary"
+                [outlined]="true"
                 size="small"
                 [disabled]="!userPrompt()?.trim() || isAiApplying() || isGeneratingWithAi()"
                 (click)="handleProblemStatementAction()"
@@ -47,53 +42,12 @@
                 } @else {
                     <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
                 }
-                @if (shouldShowGenerateButton()) {
-                    @if (showGenerateWithAi()) {
-                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.draftStatementOnly"></span>
-                    } @else {
-                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
-                    }
-                } @else {
-                    <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
-                }
+                <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.problemStatement.draftPlanToReview"></span>
             </button>
             <button pButton type="button" id="cancel-generation" severity="secondary" outlined size="small" (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
                 <fa-icon pButtonIcon [icon]="faBan" />
                 <span pButtonLabel jhiTranslate="entity.action.cancel"></span>
             </button>
-            @if (showGenerateWithAi()) {
-                <!-- "Generate entire exercise" is the single filled primary action of this flow; drafting just the statement above is the secondary, outlined alternative. -->
-                @if (generationLanguagesLoading()) {
-                    <!-- The server-driven supported-language set has not arrived yet; stand in with a skeleton sized to the action so the layout does not jump. -->
-                    <p-skeleton width="11rem" height="2rem" />
-                } @else {
-                    <button
-                        pButton
-                        type="button"
-                        id="generate-entire-exercise"
-                        severity="primary"
-                        size="small"
-                        [loading]="isGeneratingWithAi()"
-                        [disabled]="!userPrompt()?.trim() || isGeneratingWithAi() || isAiApplying() || formInvalid() || !generationLanguageSupported()"
-                        [pTooltip]="
-                            (formInvalid()
-                                ? 'artemisApp.programmingExercise.generateExercise.formInvalidTooltip'
-                                : !generationLanguageSupported()
-                                  ? 'artemisApp.programmingExercise.generateExercise.languageUnsupportedTooltip'
-                                  : 'artemisApp.programmingExercise.generateExercise.entireExerciseTooltip'
-                            ) | artemisTranslate
-                        "
-                        tooltipPosition="top"
-                        (click)="generateWithAi.emit(userPrompt() ?? '')"
-                    >
-                        @if (!isGeneratingWithAi()) {
-                            <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
-                        }
-                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.generateExercise.generateEntire"></span>
-                    </button>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.generateExercise.entireExerciseHelp" />
-                }
-            }
         </div>
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {

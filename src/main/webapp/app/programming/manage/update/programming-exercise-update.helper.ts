@@ -51,6 +51,60 @@ export enum ProgrammingExerciseInputField {
     PLAGIARISM_CONTROL = 'plagiarismControl',
 }
 
+/**
+ * The lean field set shown on the AI-assisted create flow. It mirrors the simple layout but HIDES the problem statement (the agent authors it from the instructor's "Your Requirements"
+ * brief) and SHOWS the short name + project type (both are structural — the scaffold the agent builds on). The instructor keeps the policy fields the agent cannot infer (points, dates,
+ * difficulty, categories). Everything advanced stays hidden. The footer's "Generate entire exercise" action replaces Save in this mode (see programming-exercise-update.component).
+ */
+export const IS_DISPLAYED_IN_AI_MODE: Record<ProgrammingExerciseInputField, boolean> = {
+    // General section — title (also the channel name) is the one field the agent never produces; short name is needed to scaffold the repositories.
+    title: true,
+    channelName: false,
+    shortName: true,
+    editRepositoriesCheckoutPath: false,
+    addAuxiliaryRepository: false,
+    categories: true,
+    // Mode section — difficulty is instructor policy and stays manual for now (the agent does not emit it yet).
+    difficulty: true,
+    participationMode: false,
+    allowOfflineIde: false,
+    allowOnlineCodeEditor: false,
+    allowOnlineIde: false,
+    // Language section — the agent builds against a concrete harness, so language + project type + package are confirmed up front; SCA / sequential runs / build script stay off.
+    programmingLanguage: true,
+    projectType: true,
+    withExemplaryDependency: false,
+    packageName: true,
+    enableStaticCodeAnalysis: false,
+    sequentialTestRuns: false,
+    customizeBuildScript: false,
+    // Version Control section
+    allowBranching: false,
+    // Problem section — the statement editor stays visible so the instructor can review/adapt the AI-drafted "plan" before the full build; it starts empty (the brief drives a
+    // from-scratch run, or "Draft a plan to review" populates it).
+    problemStatement: true,
+    linkedCompetencies: false,
+    // Grading section — points, included-in-score and the timeline/dates are instructor policy and stay; everything else is advanced.
+    includeExerciseInCourseScoreCalculation: true,
+    points: true,
+    bonusPoints: true,
+    submissionPolicy: false,
+    timeline: true,
+    releaseDate: true,
+    startDate: false,
+    dueDate: true,
+    runTestsAfterDueDate: false,
+    assessmentDueDate: true,
+    exampleSolutionPublicationDate: false,
+    complaintOnAutomaticAssessment: false,
+    manualFeedbackRequests: false,
+    showTestNamesToStudents: false,
+    includeTestsIntoExampleSolution: false,
+    assessmentInstructions: false,
+    presentationScore: false,
+    plagiarismControl: false,
+};
+
 export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, boolean> = {
     // General section
     title: true,

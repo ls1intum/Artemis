@@ -162,7 +162,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         newProfileInfo.programmingLanguageFeatures = [programmingLanguageFeature];
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
 
-        comp.isSimpleMode.set(false);
+        comp.editMode.set('advanced');
 
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
@@ -177,14 +177,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('AI create flow: ngOnInit leaves the problem statement EMPTY (the init-time readme load must not win the timing race)', () => {
-        // Regression: ngOnInit sets selectedProgrammingLanguage (→ loadProgrammingLanguageTemplate) synchronously; the module feature flags MUST be resolved first, or showGenerateWithAi()
-        // is false at that moment and the sample readme loads — which the from-scratch run then treats as an authoritative spec ("starts from bubble sort").
+    it('AI create flow: ngOnInit leaves the problem statement EMPTY when AI mode is active (the synchronous readme load must be skipped)', () => {
+        // In AI mode the language readme (a worked sample, e.g. the Java sorting exercise) must NOT load: ngOnInit sets selectedProgrammingLanguage synchronously, which runs
+        // loadProgrammingLanguageTemplate. On the AI path that has to leave the statement empty, otherwise a from-scratch run would treat the sample as an authoritative spec ("bubble sort").
         vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
         const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# A sorting sample readme long enough to be treated as a real instructor spec'));
         const route = TestBed.inject(ActivatedRoute);
         route.url = of([{ path: 'new' } as UrlSegment]);
         route.params = of({ courseId });
+        comp.editMode.set('ai'); // the user has opted into AI mode before the language template resolves
 
         comp.ngOnInit();
 
@@ -230,6 +231,54 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         expect(comp.isSimpleMode()).toBeFalsy();
         expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+    });
+
+    describe('AI mode (create-only third mode)', () => {
+        beforeEach(() => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise = exercise;
+            comp.backupExercise = {} as ProgrammingExercise;
+            // Create + Hyperion + not an import → showGenerateWithAi() is true, so AI mode is eligible.
+            comp.hyperionEnabled = true;
+        });
+
+        it('entering AI mode blanks the problem statement and uses the lean AI field set; AI mode is never persisted to localStorage', () => {
+            comp.programmingExercise.problemStatement = '# A leftover readme sample';
+
+            comp.setEditMode('ai');
+
+            expect(comp.isAiMode()).toBe(true);
+            expect(comp.isSimpleMode()).toBe(true); // AI reuses the simple layout machinery
+            expect(comp.programmingExercise.problemStatement).toBe('');
+            // The lean AI map hides the problem statement editor section's advanced siblings but shows the short name (structural).
+            expect(comp.isEditFieldDisplayedRecord().shortName).toBe(true);
+            expect(comp.isEditFieldDisplayedRecord().projectType).toBe(true);
+            // AI mode is ephemeral: only simple/advanced are written to localStorage.
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).not.toBe('ai');
+        });
+
+        it('persists the manual preference when leaving AI mode for a manual mode', () => {
+            comp.setEditMode('ai');
+            comp.setEditMode('advanced');
+            expect(comp.isAiMode()).toBe(false);
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+        });
+
+        it('falls back to simple mode if AI eligibility disappears while in AI mode', () => {
+            // Keep Hyperion on through ngOnInit so the constructor effects settle with AI mode eligible.
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+            fixture.detectChanges();
+
+            comp.setEditMode('ai');
+            expect(comp.isAiMode()).toBe(true);
+
+            // Eligibility goes away (e.g. Hyperion disabled): the guard effect must drop AI mode so the footer never routes to a path that cannot run.
+            comp.hyperionEnabled = false;
+            fixture.detectChanges();
+            expect(comp.isAiMode()).toBe(false);
+            expect(comp.editMode()).toBe('simple');
+        });
     });
 
     describe('save', () => {
@@ -373,7 +422,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
                 fixture.changeDetectorRef.detectChanges();
 
@@ -384,7 +433,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should keep gradle if gradle is supported', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
                 fixture.changeDetectorRef.detectChanges();
 
@@ -395,7 +444,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should keep gradle not in creation modal', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.isCreate = false;
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
                 fixture.changeDetectorRef.detectChanges();
@@ -483,7 +532,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             vi.spyOn(comp, 'saveWithModalCheck' as any).mockImplementation((fn: any) => fn());
             const router = TestBed.inject(Router) as unknown as MockRouter;
 
-            // The child emits the "Your Requirements" brief through generateWithAi → saveWithAi($event).
+            // The child emits the "Your Requirements" brief via briefChange → currentBrief; the footer's "Generate entire exercise" action routes it through aiGenerate → saveWithAi(currentBrief()).
             comp.saveWithAi('  Implement a bounded LRU cache  ');
             response$.next(new HttpResponse({ body: savedEntity }));
 
@@ -949,8 +998,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
             expect(comp.showGenerateWithAi()).toBe(true);
+            comp.editMode.set('ai'); // the from-scratch (empty statement) behaviour is gated on AI mode, not merely eligibility
 
-            // Ignore any template load triggered by ngOnInit before Hyperion was enabled; assert only the language-change behaviour on the AI path.
+            // Ignore any template load triggered by ngOnInit before AI mode was entered; assert only the language-change behaviour on the AI path.
             getTemplateFile.mockClear();
             comp.programmingExercise.problemStatement = '# stale readme that must be cleared';
             comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);

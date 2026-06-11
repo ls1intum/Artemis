@@ -47,7 +47,7 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { IS_DISPLAYED_IN_AI_MODE, IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -133,16 +133,46 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
-    isSimpleMode = signal<boolean>(true);
+    /**
+     * The create/edit form mode. {@code simple} and {@code advanced} are the existing manual modes (persisted to localStorage); {@code ai} is the create-only AI-assisted mode (never
+     * persisted). {@link isSimpleMode} stays a boolean computed (AI uses the simple layout) so the many existing {@code isSimpleMode()} readers and the field-visibility machinery keep
+     * working unchanged; AI-specific hiding is layered on top via {@link IS_DISPLAYED_IN_AI_MODE}.
+     */
+    editMode = signal<'simple' | 'advanced' | 'ai'>('simple');
+    isSimpleMode = computed(() => this.editMode() !== 'advanced');
+    isAiMode = computed(() => this.editMode() === 'ai');
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
+    /** The instructor's "Your Requirements" brief, surfaced from the problem child so the footer's "Generate entire exercise" action can thread it into the run. */
+    currentBrief = signal<string>('');
+
+    setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
+        const previous = this.editMode();
+        this.editMode.set(mode);
+        if (mode === 'ai') {
+            // Entering AI mode: the agent authors the problem statement from the brief, so clear any readme/sample left over from manual mode — otherwise a from-scratch run would treat
+            // it as the spec. The statement editor is hidden in AI mode anyway; "Draft a plan to review" re-populates it when the instructor wants a reviewable plan first.
+            this.programmingExercise.problemStatement = '';
+            this.problemStatementLoaded = true;
+            this.rerenderSubject.next();
+        } else {
+            // Only the durable manual preference is persisted; AI mode is a one-shot create intent and is never written to localStorage.
+            this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, mode === 'simple');
+            // Leaving AI mode back to a manual mode: reload the language readme so the manual editor is not left empty.
+            if (previous === 'ai' && this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
+                this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
+                this.rerenderSubject.next();
+            }
+        }
+    };
 
     isEditFieldDisplayedRecord = computed(() => {
-        const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
+        // AI mode uses its own lean field set; simple mode uses the simple set; advanced (and imports) show everything.
+        const inputFieldEditModeMapping = this.isAiMode() ? IS_DISPLAYED_IN_AI_MODE : IS_DISPLAYED_IN_SIMPLE_MODE;
 
         const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
-            if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
+            if ((this.isSimpleMode() || this.isAiMode()) && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
                 isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
             }
 
@@ -306,15 +336,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         effect(
             function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
+                // Restore the durable manual preference only (simple/advanced). AI mode is create-only and ephemeral — it is never persisted, so it is never restored here.
+                const simpleModeStored: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+                this.editMode.set(simpleModeStored === false ? 'advanced' : 'simple');
             }.bind(this),
         );
+
+        // AI mode is only valid on the AI-eligible create path. If that eligibility goes away (e.g. switching to an unsupported context, edit or import), fall back to simple so the
+        // footer never stays labelled "Generate entire exercise" while routing to a path that cannot run.
+        effect(() => {
+            if (this.isAiMode() && !this.showGenerateWithAi()) {
+                this.editMode.set('simple');
+            }
+        });
     }
 
     // STRUCTURAL eligibility only: the "Generate entire exercise" action area is shown in any supported create flow (create mode + Hyperion + not an import),
@@ -1205,8 +1239,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     switchEditMode = () => {
-        this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
-        this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, this.isSimpleMode());
+        // The legacy 2-way toggle: simple ↔ advanced (AI mode is entered via the 3-way mode selector, not this toggle).
+        this.setEditMode(this.editMode() === 'advanced' ? 'simple' : 'advanced');
     };
 
     /**
@@ -1221,11 +1255,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
-        // On the AI-eligible create path the problem statement must start EMPTY. The language readme is a worked sample (e.g. the Java sorting exercise); if it were pre-filled it
-        // would be persisted and the server's length heuristic (isNonTrivialProblemStatement) would read it as an authoritative spec, putting the agent into "spec mode" — it would
-        // rebuild the sample instead of authoring from the instructor's brief. The instructor's intent comes solely from "Your Requirements". Manual / import create keeps the
-        // readme starter so a hand-authored exercise is not left with an empty statement.
-        if (this.showGenerateWithAi()) {
+        // In AI mode the problem statement must start EMPTY. The language readme is a worked sample (e.g. the Java sorting exercise); if it were pre-filled it would be persisted and the
+        // server's length heuristic (isNonTrivialProblemStatement) would read it as an authoritative spec, putting the agent into "spec mode" — it would rebuild the sample instead of
+        // authoring from the instructor's brief. The intent comes solely from "Your Requirements". Manual (simple/advanced) and import create keep the readme starter.
+        if (this.isAiMode()) {
             this.programmingExercise.problemStatement = '';
             this.problemStatementLoaded = true;
             return;

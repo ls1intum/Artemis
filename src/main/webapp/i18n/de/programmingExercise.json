@@ -10,7 +10,13 @@
                 "switchToSimpleMode": "Zum einfachen Modus wechseln",
                 "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
-                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten.",
+                "aiModeTooltip": "Im KI-Modus beschreibst du die gewünschte Aufgabe in eigenen Worten. Lege die erforderliche Konfiguration fest (Kurzname, Sprache, Punkte, Termine) und lasse Artemis Intelligence die Problemstellung schreiben, die Repositorys aufbauen und die Aufgabe für dich verifizieren. Du kannst vorab einen Plan entwerfen und prüfen."
+            },
+            "editMode": {
+                "simple": "Einfach",
+                "advanced": "Erweitert",
+                "ai": "KI"
             },
             "problemStatementGlobalRefinementRequest": {
                 "userPrompt": "Eingabeaufforderung"
@@ -298,6 +304,8 @@
                 "draftHint": "Entwirf die Aufgabenbeschreibung oder verfeinere die aktuelle Problemstellung.",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
+                "aiModeHint": "Beschreibe die gewünschte Aufgabe. Wenn du auf „Gesamte Aufgabe generieren“ klickst, schreibt Artemis Intelligence die Problemstellung, baut die Repositorys und verifiziert die Aufgabe — und bringt dich anschließend in den Editor. Optional kannst du zuerst einen Plan entwerfen, um ihn vor dem vollständigen Build zu prüfen und anzupassen.",
+                "draftPlanToReview": "Plan zum Prüfen entwerfen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
@@ -930,6 +938,8 @@
             "generateExercise": {
                 "cardTitle": "Aufgabengenerierung",
                 "generateEntire": "Gesamte Aufgabe generieren",
+                "briefRequired": "Beschreibe zuerst die gewünschte Aufgabe unter „Deine Anforderungen“.",
+                "languageUnsupported": "Die Generierung der gesamten Aufgabe ist für die ausgewählte Sprache noch nicht verfügbar. Wähle eine unterstützte Sprache, um fortzufahren.",
                 "entireExerciseTooltip": "Speichert die Aufgabe mit leeren Repositories und verlässt den Einrichtungsassistenten, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst.",
                 "formInvalidTooltip": "Fülle zuerst die erforderlichen Aufgabenfelder aus.",
                 "entireExerciseHelp": "Speichert die Aufgabe mit leeren Repositories, generiert dann die Musterlösung, eine fehlschlagende Vorlage, Tests und die Aufgabenstellung — und verifiziert sie, bevor du sie übernimmst. Dabei wird der Einrichtungsassistent verlassen und die Aufgabe geöffnet, wo du den Lauf verfolgen kannst.",

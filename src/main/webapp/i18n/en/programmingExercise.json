@@ -10,7 +10,13 @@
                 "switchToSimpleMode": "Switch to simple mode",
                 "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
                 "switchToAdvancedMode": "Switch to advanced mode",
-                "advancedModeTooltip": "The advanced mode offers extended configuration options."
+                "advancedModeTooltip": "The advanced mode offers extended configuration options.",
+                "aiModeTooltip": "AI mode lets you describe the exercise you want in plain language. Set the required configuration (short name, language, points, dates), then let Artemis Intelligence author the problem statement, build the repositories, and verify the exercise for you. You can draft and review a plan before the full build."
+            },
+            "editMode": {
+                "simple": "Simple",
+                "advanced": "Advanced",
+                "ai": "AI"
             },
             "problemStatementGlobalRefinementRequest": {
                 "userPrompt": "User Prompt"
@@ -298,6 +304,8 @@
                 "draftHint": "Draft the exercise brief, or refine the current problem statement.",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
+                "aiModeHint": "Describe the exercise you want. When you click \"Generate entire exercise\", Artemis Intelligence writes the problem statement, builds the repositories, and verifies the exercise — then drops you into the editor. Optionally draft a plan first to review and adapt it before the full build.",
+                "draftPlanToReview": "Draft a plan to review",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
                 "generationError": "Failed to generate problem statement. Please try again.",
@@ -930,6 +938,8 @@
             "generateExercise": {
                 "cardTitle": "Exercise generation",
                 "generateEntire": "Generate entire exercise",
+                "briefRequired": "Describe the exercise you want under \"Your Requirements\" first.",
+                "languageUnsupported": "Whole-exercise generation is not available for the selected language yet. Pick a supported language to continue.",
                 "entireExerciseTooltip": "Saves the exercise with empty repositories and leaves the setup wizard, then generates the solution, a failing template, tests, and the problem statement — and verifies them before you keep it.",
                 "formInvalidTooltip": "Complete the required exercise fields first.",
                 "entireExerciseHelp": "Saves the exercise with empty repositories, then generates the solution, a failing template, tests, and the problem statement — and verifies them before you keep it. This leaves the setup wizard and opens the exercise where you can watch the run.",

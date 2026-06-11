@@ -14,7 +14,6 @@ vi.mock('y-monaco', () => ({
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Tooltip } from 'primeng/tooltip';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs';
@@ -631,114 +630,44 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(applyChecklistSpy).toHaveBeenCalledWith('Proposed content', comp.editableInstructions());
     });
 
-    describe('Generate entire exercise (tiered whole-exercise action)', () => {
-        it('shows the higher-tier action only when whole-exercise generation is eligible', () => {
-            // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-
-            fixture.componentRef.setInput('showGenerateWithAi', false);
+    describe('AI mode (lean create brief)', () => {
+        it('shows the "Your Requirements" brief and "Draft a plan to review" action only in AI mode', () => {
+            fixture.componentRef.setInput('isAiMode', false);
             fixture.detectChanges();
-            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#userPrompt')).toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-problem-statement')).toBeNull();
 
-            fixture.componentRef.setInput('showGenerateWithAi', true);
+            fixture.componentRef.setInput('isAiMode', true);
             fixture.detectChanges();
-            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).not.toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#userPrompt')).not.toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-problem-statement')).not.toBeNull();
         });
 
-        it('emits generateWithAi when the action is clicked (wired to the parent saveWithAi flow)', () => {
-            // hyperionEnabled is a plain boolean captured from the profile at construction; force it on for the action area to render.
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.componentRef.setInput('generationLanguageSupported', true);
-            // A brief is required (consistent with the problem-statement action): the button is disabled until one is entered.
-            const brief = 'A bounded integer stack with push, pop, peek and a fixed capacity.';
-            comp.userPrompt.set(brief);
-            fixture.detectChanges();
-
+        it('updates the brief and emits briefChange so the footer action sees the latest requirements', () => {
             const emitted: string[] = [];
-            comp.generateWithAi.subscribe((value) => emitted.push(value));
+            comp.briefChange.subscribe((value) => emitted.push(value));
 
-            (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!.click();
+            comp.onBriefChange('A bounded integer stack with push, pop, peek and a fixed capacity.');
 
-            // The brief is emitted so the parent can thread it into the run as the agent's prompt (it is what a from-scratch exercise is authored from).
-            expect(emitted).toEqual([brief]);
+            expect(comp.userPrompt()).toBe('A bounded integer stack with push, pop, peek and a fixed capacity.');
+            expect(emitted).toEqual(['A bounded integer stack with push, pop, peek and a fixed capacity.']);
         });
 
-        it('disables the entire-exercise action until a brief is entered', () => {
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.componentRef.setInput('generationLanguageSupported', true);
+        it('keeps "Draft a plan to review" disabled until a brief is entered, then delegates to handleProblemStatementAction', () => {
+            fixture.componentRef.setInput('isAiMode', true);
             comp.userPrompt.set('');
             fixture.detectChanges();
 
-            const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!;
+            const button = fixture.debugElement.query(By.css('#generate-problem-statement')).nativeElement as HTMLButtonElement;
             expect(button.disabled).toBe(true);
 
             comp.userPrompt.set('Implement a bank account.');
             fixture.detectChanges();
             expect(button.disabled).toBe(false);
-        });
 
-        it('disables and explains the entire-exercise action when the form is invalid', () => {
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.componentRef.setInput('generationLanguageSupported', true);
-            comp.userPrompt.set('Implement a bank account.');
-
-            // A valid form with a brief: the action is enabled and carries the normal tooltip.
-            fixture.componentRef.setInput('formInvalid', false);
-            fixture.detectChanges();
-            const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!;
-            expect(button.disabled).toBe(false);
-
-            // An invalid form must disable the persisting action (not a silent server 400).
-            fixture.componentRef.setInput('formInvalid', true);
-            fixture.detectChanges();
-            expect(button.disabled).toBe(true);
-        });
-
-        it('renders the entire-exercise action but disabled with the unsupported-language tooltip when the language is not supported (R2)', () => {
-            // Discoverability: the action must stay visible on an unsupported language (rendered, not removed), but disabled so it cannot be run.
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.componentRef.setInput('generationLanguagesLoading', false);
-            fixture.componentRef.setInput('generationLanguageSupported', false);
-            fixture.componentRef.setInput('formInvalid', false);
-            comp.userPrompt.set('Implement a bank account.');
-            fixture.detectChanges();
-
-            const buttonDebugEl = fixture.debugElement.query(By.css('#generate-entire-exercise'));
-            expect(buttonDebugEl).not.toBeNull();
-            const button = buttonDebugEl.nativeElement as HTMLButtonElement;
-            // Even with a valid form and a brief, an unsupported language keeps the action disabled.
-            expect(button.disabled).toBe(true);
-            // The explanatory tooltip on the action resolves to the unsupported-language key (artemisTranslate / MockTranslateService echo the key).
-            const tooltipContent = buttonDebugEl.injector.get(Tooltip).content as string;
-            expect(tooltipContent).toContain('languageUnsupportedTooltip');
-
-            // Becomes enabled once the language is supported.
-            fixture.componentRef.setInput('generationLanguageSupported', true);
-            fixture.detectChanges();
-            expect(button!.disabled).toBe(false);
-        });
-
-        it('shows a skeleton instead of the entire-exercise action while the supported-language set is loading', () => {
-            (comp as { hyperionEnabled: boolean }).hyperionEnabled = true;
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.componentRef.setInput('generationLanguagesLoading', true);
-            fixture.componentRef.setInput('generationLanguageSupported', false);
-            comp.userPrompt.set('Implement a bank account.');
-            fixture.detectChanges();
-
-            // While loading: skeleton present, action absent (no wrongly-disabled "unsupported" flash).
-            expect((fixture.nativeElement as HTMLElement).querySelector('p-skeleton')).not.toBeNull();
-            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).toBeNull();
-
-            // Once loaded: skeleton gone, action rendered.
-            fixture.componentRef.setInput('generationLanguagesLoading', false);
-            fixture.detectChanges();
-            expect((fixture.nativeElement as HTMLElement).querySelector('p-skeleton')).toBeNull();
-            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-entire-exercise')).not.toBeNull();
+            const actionSpy = vi.spyOn(comp, 'handleProblemStatementAction').mockImplementation(() => {});
+            button.click();
+            expect(actionSpy).toHaveBeenCalledOnce();
         });
     });
 });

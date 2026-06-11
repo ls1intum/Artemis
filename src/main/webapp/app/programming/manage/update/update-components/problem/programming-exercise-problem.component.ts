@@ -18,7 +18,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { SkeletonModule } from 'primeng/skeleton';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -54,7 +53,6 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
         ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
-        SkeletonModule,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
@@ -64,31 +62,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
-    /** Whether whole-exercise generation ("Generate entire exercise") is eligible (create mode + Hyperion + supported language); gated by the parent's {@code showGenerateWithAi}. */
-    showGenerateWithAi = input<boolean>(false);
-    /** Whether a whole-exercise generation save is currently in flight, to disable the action and show a spinner. */
+    /** Whether a whole-exercise generation save is currently in flight, to disable the "Draft a plan to review" action while the footer's run is starting. */
     isGeneratingWithAi = input<boolean>(false);
-    /**
-     * Whether the parent form currently has validation errors. When {@code true}, the higher-tier "Generate entire exercise" action is disabled
-     * with an explanatory tooltip (it persists the exercise, so it must not be invoked on an invalid form), mirroring the normal Save gating.
-     */
-    formInvalid = input<boolean>(false);
-    /**
-     * Whether the currently selected programming language is one the from-scratch generation oracle can verify. When {@code false}, the
-     * "Generate entire exercise" action is rendered but disabled with an explanatory tooltip, so the capability stays discoverable
-     * (R2) rather than silently vanishing on unsupported languages.
-     */
-    generationLanguageSupported = input<boolean>(false);
-    /** Whether the server-driven supported-language set is still loading; while {@code true} a skeleton stands in for the action. */
-    generationLanguagesLoading = input<boolean>(false);
+    /** Whether the create form is in AI mode: the "Your Requirements" brief + the "Draft a plan to review" action are shown (the footer owns "Generate entire exercise"). */
+    isAiMode = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
-    /**
-     * Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the editor to auto-start the agentic run (wired to the parent's
-     * {@code saveWithAi()}). Emits the instructor's "Your Requirements" brief so the parent threads it into the run as the agent's prompt — it is what a from-scratch exercise is
-     * authored from.
-     */
-    generateWithAi = output<string>();
+    /** Emits the instructor's "Your Requirements" brief on every keystroke so the parent can thread it into the footer's "Generate entire exercise" action. */
+    briefChange = output<string>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
@@ -158,6 +139,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     handleProblemStatementAction(): void {
         this.aiOps.handleProblemStatementAction(this.programmingExercise(), this.editableInstructions());
+    }
+
+    /** Updates the local brief signal and surfaces it to the parent so the footer's "Generate entire exercise" action always has the latest "Your Requirements" text. */
+    onBriefChange(value: string): void {
+        this.userPrompt.set(value);
+        this.briefChange.emit(value);
     }
 
     closeDiffView(): void {
