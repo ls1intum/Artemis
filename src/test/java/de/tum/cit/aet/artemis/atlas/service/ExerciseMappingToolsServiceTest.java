@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -93,9 +94,10 @@ class ExerciseMappingToolsServiceTest {
         service = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository, courseRepository, authorizationCheckService,
                 userRepository, Optional.of(atlasMLApi), sessionCacheService, contentExtractionService);
 
-        // Content extraction is mocked: preview uses extractContent(exercise, false) for the AtlasML
-        // suggestion description (extractContent(exercise, true)). Lenient: not every test reaches the preview path.
-        lenient().when(contentExtractionService.extractContent(any(), anyBoolean())).thenReturn(new ExtractedContentDTO("Bubble Sort", "Bubble Sort", Map.of()));
+        // Content extraction is mocked: the preview path builds the AtlasML suggestion description via
+        // extractContent(exercise, true) (flavor stripping enabled). Stubbing eq(true) keeps the test honest -
+        // a regression that drops the flag would no longer match. Lenient: not every test reaches the preview path.
+        lenient().when(contentExtractionService.extractContent(any(), eq(true))).thenReturn(new ExtractedContentDTO("Bubble Sort", "Bubble Sort", Map.of()));
 
         course = new Course();
         course.setId(10L);
@@ -164,6 +166,9 @@ class ExerciseMappingToolsServiceTest {
         // competency2 (id=2) not in AtlasML response -> suggested=false
         assertThat(preview.competencies().get(1).suggested()).isFalse();
         assertThat(preview.viewOnly()).isFalse();
+
+        // The preview path must request flavor-stripped content so the AtlasML query matches the cleaned text.
+        verify(contentExtractionService, atLeastOnce()).extractContent(any(), eq(true));
     }
 
     @Test

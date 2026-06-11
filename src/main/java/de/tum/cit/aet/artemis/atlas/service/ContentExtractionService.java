@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,11 +126,7 @@ public class ContentExtractionService {
             // Spring AI's .entity(Class) automatically appends JSON schema / format instructions to
             // the user message; no need to inject them via the prompt template.
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
-            AzureOpenAiChatOptions.Builder optionsBuilder = AzureOpenAiChatOptions.builder().deploymentName(flavorStripModel).temperature(flavorStripTemperature);
-            if (flavorStripReasoningEffort != null && !flavorStripReasoningEffort.isBlank()) {
-                optionsBuilder.reasoningEffort(flavorStripReasoningEffort);
-            }
-            AzureOpenAiChatOptions options = optionsBuilder.build();
+            AzureOpenAiChatOptions options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
             FlavorStripEditsDTO parsedEdits = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().entity(FlavorStripEditsDTO.class);
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
@@ -145,10 +143,32 @@ public class ContentExtractionService {
     }
 
     /**
-     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the
-     * first literal occurrence of {@code edit.search()} is replaced with {@code edit.replace()}.
-     * Edits whose {@code search} cannot be found in the working text are skipped (logged at
-     * DEBUG) so a single off-target span does not poison the whole strip.
+     * Build the Azure chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
+     * explicit temperature alongside {@code reasoningEffort}, so exactly one is set: {@code reasoningEffort}
+     * when configured, otherwise {@code temperature}. Mirrors {@code CompetencyOrchestrationService.buildChatOptions}.
+     */
+    static AzureOpenAiChatOptions buildChatOptions(String model, String reasoningEffort, double temperature) {
+        AzureOpenAiChatOptions.Builder builder = AzureOpenAiChatOptions.builder().deploymentName(model);
+        if (reasoningEffort != null && !reasoningEffort.isBlank()) {
+            builder.reasoningEffort(reasoningEffort);
+        }
+        else {
+            builder.temperature(temperature);
+        }
+        return builder.build();
+    }
+
+    /**
+     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the first
+     * occurrence of {@code edit.search()} is replaced with {@code edit.replace()} via
+     * {@link #findSpan(String, String)} (exact match, then a whitespace-tolerant fallback). Edits
+     * whose {@code search} cannot be located are skipped (logged at DEBUG) so a single off-target
+     * span does not poison the whole strip.
+     * <p>
+     * The prompt contract only permits {@code replace} to be empty (pure deletion) or a single
+     * grammatical joiner character. To enforce the byte-identical guarantee server-side, edits
+     * whose replacement exceeds that minimal value are skipped rather than trusted — a malformed
+     * response can therefore never rewrite technical content.
      */
     private String applyEdits(String rawText, List<EditDTO> edits) {
         String working = rawText;
@@ -156,15 +176,54 @@ public class ContentExtractionService {
             if (edit == null || edit.search() == null || edit.search().isEmpty()) {
                 continue;
             }
-            int index = working.indexOf(edit.search());
-            if (index < 0) {
+            String replacement = edit.replace() == null ? "" : edit.replace();
+            if (replacement.length() > 1) {
+                log.debug("Skipping flavor-strip edit; replacement exceeds the allowed minimal value: {}", replacement);
+                continue;
+            }
+            int[] span = findSpan(working, edit.search());
+            if (span == null) {
                 log.debug("Skipping flavor-strip edit; search span not found in working text: {}", edit.search());
                 continue;
             }
-            String replacement = edit.replace() == null ? "" : edit.replace();
-            working = working.substring(0, index) + replacement + working.substring(index + edit.search().length());
+            working = working.substring(0, span[0]) + replacement + working.substring(span[1]);
         }
         return working;
+    }
+
+    /**
+     * Locate the {@code search} span in {@code working}. First tries an exact literal match; if that
+     * fails, falls back to a whitespace-tolerant match that ignores leading/trailing whitespace and
+     * treats any internal whitespace run as equivalent, while still requiring every non-whitespace
+     * character to match exactly. This lets weaker models — whose search spans often differ from the
+     * source only in whitespace (extra indentation, single vs. double spaces) — still land their
+     * deletions, without ever matching a span whose visible content differs (e.g. a paraphrased word),
+     * so kept content stays byte-identical.
+     *
+     * @return the {@code [start, end)} offsets of the matched span, or {@code null} if not found
+     */
+    private static int[] findSpan(String working, String search) {
+        int exact = working.indexOf(search);
+        if (exact >= 0) {
+            return new int[] { exact, exact + search.length() };
+        }
+        String trimmed = search.strip();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        // Build a pattern matching each whitespace-delimited token literally, joined by \s+ for any
+        // internal whitespace run. Leading/trailing whitespace is dropped by strip(), so only the
+        // non-whitespace skeleton must match; the actual source whitespace inside the span is consumed.
+        String[] tokens = trimmed.split("\\s+");
+        StringBuilder regex = new StringBuilder();
+        for (int i = 0; i < tokens.length; i++) {
+            if (i > 0) {
+                regex.append("\\s+");
+            }
+            regex.append(Pattern.quote(tokens[i]));
+        }
+        Matcher matcher = Pattern.compile(regex.toString()).matcher(working);
+        return matcher.find() ? new int[] { matcher.start(), matcher.end() } : null;
     }
 
     /**

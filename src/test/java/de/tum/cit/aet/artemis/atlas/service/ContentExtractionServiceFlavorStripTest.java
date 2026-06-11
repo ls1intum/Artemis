@@ -129,6 +129,61 @@ class ContentExtractionServiceFlavorStripTest {
     }
 
     @Test
+    void stripFlavorText_whitespaceTolerantMatch_deletesFlavorWhenOnlyWhitespaceDiffers() {
+        // The model's search span has a double space where the source has a single one, so exact match fails.
+        // The whitespace-tolerant fallback still removes the flavor line; leftover whitespace is normalized away.
+        String raw = "# Task\nImplement merge sort.\nAnd remember: have fun out there!";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "And  remember: have fun out there!", ""))));
+
+        assertThat(service.stripFlavorText(raw)).isEqualTo("# Task\nImplement merge sort.\n");
+    }
+
+    @Test
+    void stripFlavorText_nonWhitespaceMismatch_skipsEditAndKeepsContentByteIdentical() {
+        // The model paraphrased a word in its search span ("Extends" -> "Extending"). The non-whitespace skeleton
+        // no longer matches, so even whitespace-tolerant matching refuses the edit and the text is unchanged.
+        String raw = "Recall the PECS rule: Producer Extends, Consumer Super.";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "Producer Extending, Consumer Super.", ""))));
+
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_overlongReplacement_skipsEditAndKeepsContent() {
+        // The prompt contract only allows an empty or single-character replacement. A response that tries to rewrite
+        // technical content with a longer replacement must be ignored so the byte-identical guarantee holds server-side.
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("malformed", "equals 5", "equals 42 and more"))));
+
+        assertThat(service.stripFlavorText("The sum of 2 and 3 equals 5.")).isEqualTo("The sum of 2 and 3 equals 5.");
+    }
+
+    @Test
+    void stripFlavorText_singleCharReplacement_isApplied() {
+        // An empty or single-character grammatical joiner replacement is within the allowed contract and applied.
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("join clauses", " flavor ", "."))));
+
+        assertThat(service.stripFlavorText("Keep this flavor and that.")).isEqualTo("Keep this.and that.");
+    }
+
+    @Test
+    void buildChatOptions_withReasoningEffort_setsReasoningEffortNotTemperature() {
+        // GPT-5 reasoning deployments reject temperature + reasoningEffort together; only reasoningEffort is set.
+        AzureOpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "medium", 1.0);
+
+        assertThat(options.getReasoningEffort()).isEqualTo("medium");
+        assertThat(options.getTemperature()).isNull();
+        assertThat(options.getDeploymentName()).isEqualTo("gpt-5.4-mini");
+    }
+
+    @Test
+    void buildChatOptions_blankReasoningEffort_setsTemperatureNotReasoningEffort() {
+        AzureOpenAiChatOptions options = ContentExtractionService.buildChatOptions("gpt-5.4-mini", "  ", 1.0);
+
+        assertThat(options.getTemperature()).isEqualTo(1.0);
+        assertThat(options.getReasoningEffort()).isNull();
+    }
+
+    @Test
     void extractContent_withStripFlavorTextFalse_neverCallsClient() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("Sort");
