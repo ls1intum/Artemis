@@ -10,7 +10,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('FileUploadExerciseService', () => {
@@ -257,7 +257,7 @@ describe('FileUploadExerciseService', () => {
                 service.import(exercise).subscribe((resp) => resolve(resp));
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import/123` });
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import?sourceId=123` });
             req.flush(importedExercise);
 
             const response = await resultPromise;
@@ -276,7 +276,7 @@ describe('FileUploadExerciseService', () => {
 
             service.import(exercise).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import/123` });
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import?sourceId=123` });
             expect(req.request.body).toBeDefined();
             req.flush({});
         });

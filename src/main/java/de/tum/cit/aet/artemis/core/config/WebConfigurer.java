@@ -54,10 +54,14 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final ToolsInterceptor toolsInterceptor;
 
-    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
+    private final LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor;
+
+    public WebConfigurer(Environment env, ArtemisProperties jHipsterProperties, ToolsInterceptor toolsInterceptor,
+            LegacyApiPathDeprecationInterceptor legacyApiPathDeprecationInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
+        this.legacyApiPathDeprecationInterceptor = legacyApiPathDeprecationInterceptor;
     }
 
     @Override
@@ -146,6 +150,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
+        // Tags responses on every API request that resolved to a multi-path controller (legacy + canonical
+        // prefix). The interceptor reads the controller's @RequestMapping to derive the successor URL,
+        // so adding a new module migration requires only updating that controller's mapping.
+        registry.addInterceptor(legacyApiPathDeprecationInterceptor).addPathPatterns("/api/**");
     }
 
     /**

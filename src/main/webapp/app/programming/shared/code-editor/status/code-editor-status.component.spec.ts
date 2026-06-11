@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -9,21 +11,19 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorStatusComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorStatusComponent;
     let fixture: ComponentFixture<CodeEditorStatusComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [CodeEditorStatusComponent, TranslatePipeMock],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule), CodeEditorStatusComponent, TranslatePipeMock],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorStatusComponent);
-                comp = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(CodeEditorStatusComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     it('should create', () => {
@@ -47,7 +47,7 @@ describe('CodeEditorStatusComponent', () => {
 
     Object.keys(CommitState).forEach((commitState) =>
         it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non-empty description`, () => {
-            comp.commitState = commitState as CommitState;
+            fixture.componentRef.setInput('commitState', commitState as CommitState);
             fixture.changeDetectorRef.detectChanges();
             const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
             showsExactlyOneStatusSegment(commitStateSegment, commitStateToTranslationKey[commitState as keyof typeof commitStateToTranslationKey]);

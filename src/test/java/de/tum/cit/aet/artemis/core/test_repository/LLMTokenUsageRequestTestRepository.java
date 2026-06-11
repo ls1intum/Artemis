@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 
 @Lazy
 @Repository

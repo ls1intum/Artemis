@@ -5,12 +5,12 @@ import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',

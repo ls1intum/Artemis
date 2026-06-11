@@ -29,10 +29,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -336,15 +336,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     Optional<StudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.login = :username
-            """)
-    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @Query("""
             SELECT DISTINCT p
@@ -1496,22 +1487,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Finds all grade scores for all exercises in multiple courses, including individual and team exercises.
-     * Need special handling for quiz exercises, as the submission date is stored in reverse order compared to all other exercise types.
-     *
-     * @param courseIds the ids of multiple course for which to find all grade scores
-     * @param studentId the id of the student for which to find all grade scores
-     * @return a set of {@link CourseGradeScoreDTO}
-     */
-    default Set<CourseGradeScoreDTO> findGradeScoresForAllExercisesForCoursesAndStudent(Collection<Long> courseIds, long studentId) {
-        // Distinguish between individual and team participations for performance reasons
-        Set<CourseGradeScoreDTO> individualGradeScores = findIndividualGradesByCourseIdAndStudentId(courseIds, studentId);
-        Set<CourseGradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(courseIds, studentId);
-        Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
-        return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
-    }
-
-    /**
      * Count the number of presentation scores for a participant (regular or team exercise) in a course.
      * This query handles both individual participations and team participations where the participant is a team member.
      *
@@ -1678,4 +1653,31 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Page<StudentParticipation> page = findAll(spec, unsortedPageable);
         return page.map(StudentParticipation::getId);
     }
+
+    /**
+     * Counts the number of unique, active students who have an initialized participation
+     * for a specific exercise and are explicitly assigned this exact exercise variant
+     * in their current exam.
+     *
+     * Should be used for exam dashboard to ignore test run submissions
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @param examId     the exam id we are interested in
+     * @return the total number of students who currently participate in given exam and in given exercise
+     *
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p.student.id)
+            FROM StudentParticipation p
+            JOIN StudentExam se ON p.student.id = se.user.id
+            JOIN se.exercises e
+            WHERE p.exercise.id = :exerciseId
+            AND se.exam.id = :examId
+            AND e.id = :exerciseId
+            AND p.testRun = FALSE
+            AND(p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
+            OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
+            """)
+    long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
+
 }

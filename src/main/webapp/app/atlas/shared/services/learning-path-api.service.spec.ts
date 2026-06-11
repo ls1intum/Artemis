@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
-import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathApiService', () => {
@@ -40,7 +40,7 @@ describe('LearningPathApiService', () => {
 
     it('should get learning path navigation', async () => {
         const methodCall = learningPathApiService.getLearningPathNavigation(learningPathId);
-        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-paths/${learningPathId}/navigation` });
         response.flush({});
         await methodCall;
     });
@@ -52,7 +52,7 @@ describe('LearningPathApiService', () => {
         const methodCall = learningPathApiService.getRelativeLearningPathNavigation(learningPathId, learningObjectId, learningObjectType, competencyId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${baseUrl}/learning-path/${learningPathId}/relative-navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
+            url: `${baseUrl}/learning-paths/${learningPathId}/relative-navigation?learningObjectId=${learningObjectId}&learningObjectType=${learningObjectType}&competencyId=${competencyId}`,
         });
         response.flush({});
         await methodCall;
@@ -60,14 +60,14 @@ describe('LearningPathApiService', () => {
 
     it('should start learning path for current user', async () => {
         const methodCall = learningPathApiService.startLearningPathForCurrentUser(learningPathId);
-        const response = httpClient.expectOne({ method: 'PATCH', url: `${baseUrl}/learning-path/${learningPathId}/start` });
+        const response = httpClient.expectOne({ method: 'PATCH', url: `${baseUrl}/learning-paths/${learningPathId}/start` });
         response.flush({});
         await methodCall;
     });
 
     it('should get learning path navigation overview', async () => {
         const methodCall = learningPathApiService.getLearningPathNavigationOverview(learningPathId);
-        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-paths/${learningPathId}/navigation-overview` });
         response.flush({});
         await methodCall;
     });
@@ -81,7 +81,7 @@ describe('LearningPathApiService', () => {
 
     it('should get learning path competency graph', async () => {
         const methodCall = learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
-        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competency-graph` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-paths/${learningPathId}/competency-graph` });
         response.flush({});
         await methodCall;
     });
@@ -95,7 +95,7 @@ describe('LearningPathApiService', () => {
 
     it('should get learning path competencies', async () => {
         const methodCall = learningPathApiService.getLearningPathCompetencies(learningPathId);
-        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competencies` });
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-paths/${learningPathId}/competencies` });
         response.flush([]);
         await methodCall;
     });
@@ -105,7 +105,7 @@ describe('LearningPathApiService', () => {
         const methodCall = learningPathApiService.getLearningPathCompetencyLearningObjects(learningPathId, competencyId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${baseUrl}/learning-path/${learningPathId}/competencies/${competencyId}/learning-objects`,
+            url: `${baseUrl}/learning-paths/${learningPathId}/competencies/${competencyId}/learning-objects`,
         });
         response.flush([]);
         await methodCall;

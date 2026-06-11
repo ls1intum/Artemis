@@ -9,7 +9,7 @@ import { delay, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';

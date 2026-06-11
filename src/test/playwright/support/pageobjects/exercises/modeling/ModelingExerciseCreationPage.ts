@@ -1,5 +1,9 @@
+import { Dayjs } from 'dayjs';
 import { MODELING_EXERCISE_BASE } from '../../../constants';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
+
+// Date format expected by ExerciseTimelineComponent#handleManualInput.
+const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     async addCategories(categories: string[]) {
@@ -23,13 +27,36 @@ export class ModelingExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse((response) => response.url().includes(`${MODELING_EXERCISE_BASE}/import?sourceExerciseId=`));
         await this.page.click('#save-entity');
         return await responsePromise;
     }
 
     async includeInOverallScore(selection: string = 'No') {
         await this.page.locator('#modeling-includeInScore-picker').locator('.btn', { hasText: selection }).click({ force: true });
+    }
+
+    async setReleaseDate(date: Dayjs) {
+        await this.setTimelineDate('Release Date', date);
+    }
+
+    async setStartDate(date: Dayjs) {
+        await this.setTimelineDate('Start Date', date);
+    }
+
+    async setDueDate(date: Dayjs) {
+        await this.setTimelineDate('Due Date', date);
+    }
+
+    async setAssessmentDueDate(date: Dayjs) {
+        await this.setTimelineDate('Assessment Due Date', date);
+    }
+
+    private async setTimelineDate(label: string, date: Dayjs) {
+        const dateInput = this.page.getByLabel(label, { exact: true });
+        await dateInput.waitFor({ state: 'visible' });
+        await dateInput.fill(date.format(TIMELINE_DATE_FORMAT));
+        await dateInput.press('Tab');
     }
 
     async pickDifficulty(options: { hard?: boolean; medium?: boolean; easy?: boolean }) {

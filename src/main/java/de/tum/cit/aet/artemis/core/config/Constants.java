@@ -323,27 +323,6 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Athena functionality.
-     */
-    public static final String PROFILE_ATHENA = "athena";
-
-    /**
-     * The name of the Spring profile used for Athena functionality.
-     */
-    public static final String PROFILE_APOLLON = "apollon";
-
-    /**
-     * The name of the Spring profile used for the external LDAP system.
-     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
-     */
-    public static final String PROFILE_LDAP = "ldap";
-
-    /**
-     * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
-     */
-    public static final String PROFILE_SAML2 = "saml2";
-
-    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
@@ -456,6 +435,31 @@ public final class Constants {
     public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
+     * The name of the module feature used for Athena (LLM-based automatic assessment) functionality.
+     */
+    public static final String MODULE_FEATURE_ATHENA = "athena";
+
+    /**
+     * The name of the module feature used for Apollon (UML modeling conversion) functionality.
+     */
+    public static final String MODULE_FEATURE_APOLLON = "apollon";
+
+    /**
+     * The name of the module feature used for synchronizing user details from an external LDAP system.
+     */
+    public static final String MODULE_FEATURE_LDAP = "ldap";
+
+    /**
+     * The name of the module feature used for SAML2-based single sign-on, see {@link de.tum.cit.aet.artemis.account.security.SAML2Service}.
+     */
+    public static final String MODULE_FEATURE_SAML2 = "saml2";
+
+    /**
+     * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
+     */
+    public static final String SAML2_PROPERTIES_PREFIX = "saml2";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -529,6 +533,26 @@ public final class Constants {
      * The name of the property used to enable or disable LTI functionality.
      */
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Athena functionality.
+     */
+    public static final String ATHENA_ENABLED_PROPERTY_NAME = "artemis.athena.enabled";
+
+    /**
+     * The name of the property used to enable or disable Apollon functionality.
+     */
+    public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
+
+    /**
+     * The name of the property used to enable or disable LDAP-based user synchronization.
+     */
+    public static final String LDAP_ENABLED_PROPERTY_NAME = "artemis.user-management.ldap.enabled";
+
+    /**
+     * The name of the property used to enable or disable SAML2-based single sign-on.
+     */
+    public static final String SAML2_ENABLED_PROPERTY_NAME = "artemis.user-management.saml2.enabled";
 
     /**
      * The name of the property used to enable or disable Theia functionality.

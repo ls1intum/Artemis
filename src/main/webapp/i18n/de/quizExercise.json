@@ -19,7 +19,12 @@
                 "modalTitle": "Quizfragen mit KI generieren",
                 "configuration": {
                     "title": "Konfiguration",
+                    "mode": "Generierungsmodus",
+                    "modeFreeTopicLabel": "Freies Thema",
+                    "modeCompetencyGraphLabel": "Aus Kompetenzen",
                     "topic": "Thema",
+                    "competencies": "Kompetenzen",
+                    "competenciesPlaceholder": "Zu prüfende Kompetenzen auswählen...",
                     "optionalPrompt": "Optionaler Prompt",
                     "optionalPromptTooltip": "Füge optionale Anweisungen, Einschränkungen oder Erwartungen hinzu, um die generierten Fragen gezielt zu steuern.",
                     "language": "Sprache",
@@ -53,8 +58,9 @@
                     }
                 },
                 "errors": {
-                    "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
+                    "invalidConfiguration": "Bitte gib ein Thema an (oder wähle Kompetenzen aus) und wähle mindestens einen Fragetyp.",
                     "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut.",
+                    "competencyLoadFailed": "Kurskompetenzen konnten nicht geladen werden. Bitte versuche es erneut.",
                     "refinementFailed": "Quizfragen konnten nicht verfeinert werden. Bitte versuche es erneut.",
                     "partialRefinementFailed": "{{ count }} Frage(n) konnten nicht verfeinert werden und wurden übersprungen."
                 },
@@ -111,6 +117,8 @@
                 "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich. Nach dem Ende des Quizzes kannst du eine Re-Evaluierung durchführen.",
                 "editNotPossibleAfterEnd": "Nach dem Ende der Quiz-Bearbeitungszeit ist eine Bearbeitung nicht möglich."
             },
+            "deleteQuestion": "Frage löschen",
+            "refineQuestion": "Frage verfeinern",
             "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
@@ -136,6 +144,11 @@
             "options": "Optionen",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
+            "includedInOverallScoreCourseLabelShort": "Berechnung des Kursergebnisses",
+            "includedInOverallScoreExamLabelShort": "Berechnung des Klausurergebnisses",
+            "includedInScoreYes": "Diese Aufgabe einbeziehen",
+            "includedInScoreBonus": "Als Bonuspunkte einbeziehen",
+            "includedInScoreNo": "Nicht einbeziehen",
             "allowedNumberOfAttempts": "Erlaubte Anzahl an Versuchen",
             "isVisibleBeforeStart": "Vor dem Start sichtbar",
             "isOpenForPractice": "Zum Üben freigegeben",
@@ -150,6 +163,16 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
+            "questionsDescription": "Fragen für diese Quiz-Aufgabe hinzufügen und verwalten.",
+            "sections": {
+                "settings": {
+                    "title": "Quiz-Einstellungen",
+                    "description": "Allgemeine Einstellungen konfigurieren."
+                },
+                "general": "Allgemein",
+                "schedule": "Zeitplan & Modus",
+                "competencies": "Kompetenzen"
+            },
             "noQuestionsFoundCourse": "Keine Fragen in Kurs gefunden",
             "noQuestionsFoundExam": "Keine Fragen in Klausur gefunden",
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",

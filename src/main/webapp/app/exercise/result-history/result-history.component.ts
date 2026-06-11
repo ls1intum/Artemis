@@ -1,4 +1,4 @@
-import { Component, OnChanges, input, signal } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
@@ -16,7 +16,7 @@ export const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['./result-history.scss'],
     imports: [NgClass, FaIconComponent, ResultComponent, NgStyle],
 })
-export class ResultHistoryComponent implements OnChanges {
+export class ResultHistoryComponent {
     readonly getTextColorClass = getTextColorClass;
     readonly getResultIconClass = getResultIconClass;
     readonly evaluateTemplateStatus = evaluateTemplateStatus;
@@ -24,32 +24,37 @@ export class ResultHistoryComponent implements OnChanges {
 
     results = input.required<Result[]>();
     participationInput = input<Participation>();
-    participation = signal<Participation | undefined>(undefined);
     exercise = input<Exercise>();
     selectedResultId = input<number>();
 
-    showPreviousDivider = false;
-    displayedResults: Result[];
-    movedLastRatedResult: boolean;
+    readonly showPreviousDivider = computed(() => this.results().length > MAX_RESULT_HISTORY_LENGTH);
 
-    ngOnChanges() {
-        this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
+    private readonly displayedResultsState = computed(() => {
+        let displayedResults: Result[];
         if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING) {
-            this.displayedResults = this.results().filter((result) => result.successful !== undefined);
+            displayedResults = this.results().filter((result) => result.successful !== undefined);
         } else {
-            this.displayedResults = this.results();
+            displayedResults = this.results();
         }
-        const successfulResultsLength = this.displayedResults.length;
+        let movedLastRatedResult = false;
+        const successfulResultsLength = displayedResults.length;
         if (successfulResultsLength > MAX_RESULT_HISTORY_LENGTH) {
-            this.displayedResults = this.displayedResults.slice(successfulResultsLength - MAX_RESULT_HISTORY_LENGTH);
+            displayedResults = displayedResults.slice(successfulResultsLength - MAX_RESULT_HISTORY_LENGTH);
             const lastRatedResult = this.results()
                 .filter((result) => result.rated)
                 .last();
-            if (!this.displayedResults.first()?.rated && lastRatedResult) {
-                this.displayedResults[0] = lastRatedResult;
-                this.movedLastRatedResult = true;
+            if (!displayedResults.first()?.rated && lastRatedResult) {
+                displayedResults = displayedResults.includes(lastRatedResult)
+                    ? [lastRatedResult, ...displayedResults.filter((result) => result !== lastRatedResult)]
+                    : [lastRatedResult, ...displayedResults.slice(1)];
+                movedLastRatedResult = true;
             }
         }
-        this.participation.set(this.participationInput() ?? this.displayedResults?.[0]?.submission?.participation);
-    }
+        return { displayedResults, movedLastRatedResult };
+    });
+
+    readonly displayedResults = computed(() => this.displayedResultsState().displayedResults);
+    readonly movedLastRatedResult = computed(() => this.displayedResultsState().movedLastRatedResult);
+
+    readonly participation = computed<Participation | undefined>(() => this.participationInput() ?? this.displayedResults()?.[0]?.submission?.participation);
 }

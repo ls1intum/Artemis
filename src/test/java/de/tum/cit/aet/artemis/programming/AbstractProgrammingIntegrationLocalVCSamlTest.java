@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;

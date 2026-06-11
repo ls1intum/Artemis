@@ -2,10 +2,10 @@ import { Component, ElementRef, inject, input, output, signal, viewChild } from 
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCloudUploadAlt, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
 @Component({
     selector: 'jhi-pdf-drop-zone',

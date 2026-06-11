@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**

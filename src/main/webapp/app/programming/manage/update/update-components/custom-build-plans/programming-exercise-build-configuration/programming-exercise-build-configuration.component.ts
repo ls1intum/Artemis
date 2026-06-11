@@ -2,10 +2,10 @@ import { Component, OnInit, effect, inject, input, output, signal, viewChild } f
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -159,11 +159,11 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     addEnvVar() {
-        this.envVars.push(['', '']);
+        this.envVars = [...this.envVars, ['', '']];
     }
 
     removeEnvVar(index: number) {
-        this.envVars.splice(index, 1);
+        this.envVars = this.envVars.filter((_, envVarIndex) => envVarIndex !== index);
         this.parseDockerFlagsToString();
     }
 

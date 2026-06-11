@@ -1,4 +1,6 @@
-- name: maven
-  script: mvn clean test
+- name: compile
+  script: 'mvn -B clean compile'
+- name: test
+  script: 'mvn -B test'
   resultPaths:
     - '**/target/surefire-reports/*.xml'

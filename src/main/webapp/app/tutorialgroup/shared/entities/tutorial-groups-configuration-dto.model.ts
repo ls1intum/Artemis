@@ -1,6 +1,6 @@
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriodDTO, fromTutorialGroupFreePeriodDTO, toTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 export interface TutorialGroupConfigurationDTO {
     id?: number;

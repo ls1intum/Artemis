@@ -14,26 +14,26 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from '../result/result.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
-import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -339,7 +339,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     viewBuildLogs(buildJobId: string): void {
-        const url = `/api/programming/build-log/${buildJobId}`;
+        const url = `/api/localci/build-jobs/${buildJobId}/build-log`;
         window.open(url, '_blank');
     }
 

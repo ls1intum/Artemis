@@ -1,12 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { faScroll } from '@fortawesome/free-solid-svg-icons';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 
 @Component({
     selector: 'jhi-text-unit',

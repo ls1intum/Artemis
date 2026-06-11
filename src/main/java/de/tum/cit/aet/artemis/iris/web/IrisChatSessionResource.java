@@ -20,18 +20,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -130,7 +130,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<IrisChatSessionResponseDTO> createSession(@RequestParam IrisChatMode mode, @RequestParam long entityId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var session = irisChatSessionService.createSession(mode, entityId, user);
-        var uriString = "/api/iris/chat/" + session.getCourseId() + "/session/" + session.getId();
+        var uriString = "/api/iris/chat/courses/" + session.getCourseId() + "/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
@@ -145,7 +145,7 @@ public class IrisChatSessionResource {
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
-    @GetMapping("{courseId}/session/{sessionId}")
+    @GetMapping({ "courses/{courseId}/sessions/{sessionId}", "{courseId}/session/{sessionId}" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {
@@ -178,7 +178,7 @@ public class IrisChatSessionResource {
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of session DTOs
      */
-    @GetMapping("{courseId}/sessions/overview")
+    @GetMapping({ "courses/{courseId}/sessions/overview", "{courseId}/sessions/overview" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {

@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -50,12 +50,12 @@ import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {

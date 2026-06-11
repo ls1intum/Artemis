@@ -22,7 +22,7 @@ jobs:
 
         steps:
             - name: Validate PR description
-              uses: actions/github-script@v8
+              uses: actions/github-script@v9
               env:
                   AZURE_ENDPOINT: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}
                   AZURE_API_KEY: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}

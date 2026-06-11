@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.util;
 
 import java.time.ZonedDateTime;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;

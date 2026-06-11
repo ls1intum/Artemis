@@ -5,11 +5,19 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,10 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -29,8 +39,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -42,6 +55,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 /**
  * REST controller for managing ExamUser.
  */
+@Validated
 @Conditional(ExamEnabled.class)
 @Lazy
 @RestController
@@ -170,6 +184,25 @@ public class ExamUserResource {
     }
 
     /**
+     * GET courses/{courseId}/exams/{examId}/exam-students/paged : Paginated, filterable, and sortable list of registered students
+     * for the exam-students management view. Projects a merged ExamUser + StudentExam row per registration.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @param search   search term, pagination / sorting info, and an optional filter value (e.g. {@code "Submitted"}, {@code "AttendanceNotChecked"})
+     * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
+        log.debug("REST request to get paged exam-students for exam: {}", examId);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+        Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET courses/{courseId}/exams/{examId}/export-students : Gets all relevant information about all exam users for exporting
      *
      * @param courseId the id of the course
@@ -184,6 +217,29 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         List<ExportExamUserDTO> exportData = examUserService.exportStudents(examId);
         return ResponseEntity.ok(exportData);
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/students/search : Search for users that can be registered for the exam.
+     * Searches across login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Already registered users are flagged with {@code isRegistered = true}.
+     *
+     * @param courseId   the id of the course
+     * @param examId     the id of the exam
+     * @param searchTerm the text entered by the instructor
+     * @param page       zero-based page index (default 0)
+     * @param size       number of results per page (default 10)
+     * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} and Link pagination headers
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/students/search")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
+        log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        Page<UserForRegistrationDTO> result = examUserService.searchUsersForExamRegistration(examId, searchTerm, page, size);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
+        return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
     }
 
 }

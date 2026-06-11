@@ -2,7 +2,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faCheckCircle, faCircle, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { convertToHtmlLinebreaks, escapeString } from 'app/shared/util/text.utils';
+import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
 
 enum FeedbackType {
     POSITIVE = 'positive',

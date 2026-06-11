@@ -1,8 +1,0 @@
-<div class="form-group d-flex flex-column gap-1">
-    <div class="d-flex flex-md-row flex-column align-items-md-center">
-        <label for="confirm-entity-name" [ngClass]="warningTextColor" [jhiTranslate]="confirmationText"></label>
-        <code class="display-spaces background-grey rounded-2 d-inline-block ms-md-2 px-2">{{ entityNameSignal() }}</code>
-        <jhi-copy-to-clipboard-button [copyText]="entityNameSignal()" />
-    </div>
-    <input id="confirm-entity-name" type="text" class="form-control" name="confirmEntityName" [formControl]="control" (blur)="onTouched()" />
-</div>

@@ -1,8 +1,8 @@
 import { Component, OnInit, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-test-exam-working-time',

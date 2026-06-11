@@ -1,30 +1,38 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { takeUntil } from 'rxjs/operators';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, FaIconComponent, TutorialGroupFreePeriodsTableComponent, CreateTutorialGroupFreePeriodComponent],
+    imports: [
+        LoadingIndicatorContainerComponent,
+        TranslateDirective,
+        FaIconComponent,
+        TutorialGroupFreePeriodsTableComponent,
+        CreateTutorialGroupFreePeriodComponent,
+        CourseTitleBarActionsDirective,
+    ],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

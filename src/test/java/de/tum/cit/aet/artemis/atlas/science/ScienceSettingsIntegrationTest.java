@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
 

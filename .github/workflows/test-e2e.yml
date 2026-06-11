@@ -190,7 +190,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -209,7 +209,7 @@ jobs:
 
       - name: Post E2E comment (Phase 1)
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -382,7 +382,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -402,7 +402,7 @@ jobs:
       - name: Update E2E comment (Phase 2)
         id: update-comment
         if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -563,7 +563,7 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: JUnit Test Results
@@ -571,7 +571,7 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@v6.3.0
+        uses: mikepenz/action-junit-report@v6.4.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -592,7 +592,7 @@ jobs:
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           INPUT_SUMMARY: ${{ steps.test-report.outputs.summary }}
           INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
@@ -610,7 +610,7 @@ jobs:
 
       - name: Post E2E comment (All Tests)
         if: success() || failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
@@ -728,14 +728,14 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: JUnit Test Results
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@v6.3.0
+        uses: mikepenz/action-junit-report@v6.4.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -834,7 +834,7 @@ jobs:
 
       - name: Update E2E comment with overall status
         if: always() && github.event.workflow_run.event == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         env:
           INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}

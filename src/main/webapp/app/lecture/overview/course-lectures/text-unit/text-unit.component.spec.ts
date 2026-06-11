@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

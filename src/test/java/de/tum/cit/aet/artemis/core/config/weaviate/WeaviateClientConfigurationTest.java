@@ -7,10 +7,10 @@ import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateAuthenticationException;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateClientConfiguration;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateAuthenticationException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**

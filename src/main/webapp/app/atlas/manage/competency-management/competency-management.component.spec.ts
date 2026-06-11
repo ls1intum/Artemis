@@ -1,24 +1,22 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import '@angular/localize/init';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -35,8 +33,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -48,7 +46,7 @@ describe('CompetencyManagementComponent', () => {
     let courseCompetencyApiService: CourseCompetencyApiService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let alertService: AlertService;
     let localStorageService: LocalStorageService;
     let featureToggleService: MockFeatureToggleService;
@@ -84,7 +82,6 @@ describe('CompetencyManagementComponent', () => {
                     provide: ProfileService,
                     useClass: MockProfileService,
                 },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -143,7 +140,7 @@ describe('CompetencyManagementComponent', () => {
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
 
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
     });
 
     afterEach(() => {
@@ -211,11 +208,11 @@ describe('CompetencyManagementComponent', () => {
 
     it('should open course competency explanation', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
-        const openModalSpy = vi.spyOn(modalService, 'open');
+        const openSpy = vi.spyOn(dialogService, 'open');
         fixture.detectChanges();
 
         component.openCourseCompetencyExplanation();
-        expect(openModalSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 
     it('should open import modal and update values', async () => {
@@ -247,43 +244,69 @@ describe('CompetencyManagementComponent', () => {
     it('should open import modal with correct options', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
 
-        const modalRef = {
-            result: new Promise(() => {}), // Never resolves - we just test the modal opens
-            componentInstance: {},
-        } as NgbModalRef;
+        const dialogRef = {
+            onClose: new Subject<unknown>(), // Never emits - we just test the modal opens
+        } as any;
 
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
 
         fixture.detectChanges();
 
-        // Call the method - it will open the modal but we don't await the result
+        // Call the method - it will open the dialog but we don't await the result
         component.openImportAllModal();
 
-        expect(modalService.open).toHaveBeenCalledWith(ImportAllCourseCompetenciesModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-        });
+        expect(openSpy).toHaveBeenCalledWith(
+            ImportAllCourseCompetenciesModalComponent,
+            expect.objectContaining({
+                style: { width: '90vw', maxWidth: '50rem' },
+                modal: true,
+                showHeader: false,
+                dismissableMask: false,
+                draggable: false,
+                resizable: false,
+                data: { courseId: 1 },
+            }),
+        );
     });
 
-    it('should open agent chat modal and set courseId', () => {
+    it('should open agent chat modal and pass the courseId', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
-        const modalRef = {
-            componentInstance: {
-                courseId: signal<number | null>(1),
-                competencyChanged: {
-                    subscribe: vi.fn(),
-                },
-            },
-        } as any;
-        const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(null);
         fixture.detectChanges();
 
         component['openAgentChatModal']();
 
-        expect(openModalSpy).toHaveBeenCalledWith(AgentChatModalComponent, {
-            size: 'lg',
-            backdrop: true,
+        expect(openSpy).toHaveBeenCalledWith(
+            AgentChatModalComponent,
+            expect.objectContaining({
+                style: { width: '90vw', maxWidth: '50rem' },
+                modal: true,
+                showHeader: false,
+                dismissableMask: true,
+                draggable: false,
+                resizable: false,
+                data: expect.objectContaining({ courseId: 1 }),
+            }),
+        );
+    });
+
+    it('should wire onCompetencyChanged callback to reload competencies', async () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        let capturedData: Record<string, unknown> | undefined;
+        vi.spyOn(dialogService, 'open').mockImplementation((_component, config) => {
+            capturedData = config?.['data'] as Record<string, unknown>;
+            return null;
         });
-        expect(modalRef.componentInstance.courseId()).toBe(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component['openAgentChatModal']();
+
+        expect(capturedData).toBeDefined();
+        expect(typeof capturedData!['onCompetencyChanged']).toBe('function');
+
+        const loadSpy = vi.spyOn(component as any, 'loadCourseCompetencies').mockResolvedValue(undefined);
+        (capturedData!['onCompetencyChanged'] as () => void)();
+        expect(loadSpy).toHaveBeenCalledOnce();
     });
 });

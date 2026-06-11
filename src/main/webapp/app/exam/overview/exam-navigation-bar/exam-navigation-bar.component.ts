@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
 import dayjs from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
@@ -16,13 +16,13 @@ import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamTimerComponent } from '../timer/exam-timer.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Component({

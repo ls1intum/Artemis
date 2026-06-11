@@ -42,7 +42,7 @@ runs:
         fi
 
     - name: Download Docker tag
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: docker-tag
         github-token: ${{ inputs.github-token }}

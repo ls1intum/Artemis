@@ -17,7 +17,7 @@
         <div class="entity-content flex-grow-1 min-width-0">
             <div class="d-flex align-items-center gap-2 mb-1">
                 <h6 class="entity-title mb-0">{{ entity().title | artemisTranslate }}</h6>
-                <span class="badge bg-secondary text-white px-2 py-1 small text-capitalize">{{ entity().type }}</span>
+                <span class="badge bg-secondary text-white px-2 py-1 small">{{ 'global.search.types.' + entity().type | artemisTranslate }}</span>
             </div>
             <p class="entity-description mb-0 text-secondary small">
                 {{ entity().description | artemisTranslate }}

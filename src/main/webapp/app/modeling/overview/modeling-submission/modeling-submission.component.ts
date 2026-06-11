@@ -1,11 +1,9 @@
-import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -14,9 +12,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
@@ -35,17 +32,17 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { onError } from 'app/shared/util/global.utils';
-import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { stringifyIgnoringFields } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
@@ -55,6 +52,7 @@ import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/
 import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -73,15 +71,12 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         TeamSubmissionSyncComponent,
         ModelingAssessmentComponent,
         TranslateDirective,
-        NgClass,
-        NgbTooltip,
-        AdditionalFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
         ExerciseSubmitButtonComponent,
+        UnifiedFeedbackComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -520,7 +515,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.result = this.assessmentResult;
             this.prepareAssessmentData();
+
+            if (result.successful) {
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise?.title ?? '' });
+            }
+        } else if (result.successful === false) {
+            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }
 
         this.isGeneratingFeedback = false;
@@ -712,6 +714,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
         this.modelingEditor()?.importPatch(submissionPatch.patch);
+    }
+
+    onTeamSyncReconnected() {
+        this.modelingEditor()?.broadcastFullState();
     }
 
     private isModelEmpty(model?: string): boolean {

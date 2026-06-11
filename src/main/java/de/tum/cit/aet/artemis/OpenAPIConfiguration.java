@@ -186,6 +186,10 @@ public class OpenAPIConfiguration {
             removeDTOSuffixesFromSchemaRecursively(schema.getItems());
         }
 
+        if (schema.getAdditionalProperties() instanceof Schema<?> additionalPropertiesSchema) {
+            removeDTOSuffixesFromSchemaRecursively(additionalPropertiesSchema);
+        }
+
         if (schema.getProperties() != null) {
             schema.getProperties().values().forEach(this::removeDTOSuffixesFromSchemaRecursively);
         }

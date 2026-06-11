@@ -15,6 +15,12 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
         let modelingExercise: ModelingExercise;
 
         test('Create a new modeling exercise', async ({ login, page, courseManagementExercises, modelingExerciseCreation, modelingExerciseEditor, modelingExerciseAssessment }) => {
+            // The full create-edit-example-assess flow includes three modeling-canvas warmups
+            // (each waiting on the Apollon editor + react-flow nodes), an example-submission
+            // creation, and an example-assessment cycle. The cumulative work routinely overruns
+            // the 60s @fast budget under multi-node CI load; observed worst case ~150s. Lift
+            // the per-test timeout to 180s via test.slow().
+            test.slow();
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exercises`);
             await page.waitForLoadState('domcontentloaded');
@@ -22,6 +28,10 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
             await modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
             await modelingExerciseCreation.setPoints(10);
+            await modelingExerciseCreation.setReleaseDate(dayjs().subtract(1, 'hour'));
+            await modelingExerciseCreation.setStartDate(dayjs());
+            await modelingExerciseCreation.setDueDate(dayjs().add(1, 'day'));
+            await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
             const response = await modelingExerciseCreation.save();
             modelingExercise = await response.json();
             await expect(courseManagementExercises.getExerciseTitle(modelingExercise.title!)).toBeAttached();

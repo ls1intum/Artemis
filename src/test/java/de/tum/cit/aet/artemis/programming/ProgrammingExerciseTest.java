@@ -22,12 +22,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -171,6 +172,56 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         }
 
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExerciseAssessmentTypeToSemiAutomatic() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        var dto = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", dto, ProgrammingExercise.class, HttpStatus.OK);
+
+        // Check that controller processed the assessment type correctly
+        assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+
+        // Check that assessment type was stored correctly
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
+                .orElseThrow();
+        assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExerciseAssessmentTypeToAutomatic() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExerciseRepository.save(programmingExercise);
+
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        var dto = UpdateProgrammingExerciseDTO.of(programmingExercise);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", dto, ProgrammingExercise.class, HttpStatus.OK);
+
+        // Check that controller processed the assessment type correctly
+        assertThat(updatedExercise.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+
+        // Check that assessment type was stored correctly
+        ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
+                .orElseThrow();
+        assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
     }
 
     @Test

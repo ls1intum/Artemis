@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';

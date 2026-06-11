@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ExamConfigurationException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -74,14 +76,15 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableItemWeaviateService;
 
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService,
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -96,7 +99,7 @@ public class ExamImportService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.channelService = channelService;
-        this.exerciseWeaviateService = exerciseWeaviateService;
+        this.searchableItemWeaviateService = searchableItemWeaviateService;
     }
 
     /**
@@ -122,8 +125,12 @@ public class ExamImportService {
         channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
         Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
 
-        // 3rd: Index all imported exercises in Weaviate
-        exerciseWeaviateService.ifPresent(service -> service.updateExamExercisesAsync(examWithExercises));
+        // 3rd: Index all imported exercises and the exam itself in Weaviate
+        searchableItemWeaviateService.ifPresent(service -> {
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
+        });
 
         return examWithExercises;
     }
@@ -146,7 +153,16 @@ public class ExamImportService {
         // The Exam is used to ensure the connection ExerciseGroups <-> Exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam);
 
-        return exerciseGroupRepository.findWithExamAndExercisesByExamId(targetExamId);
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
+
+        // Index the imported exercises and update the exam in Weaviate
+        searchableItemWeaviateService.ifPresent(service -> {
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(examWithExercises));
+            service.updateExercisesAsync(examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
+        });
+
+        return examWithExercises.getExerciseGroups();
     }
 
     /**
@@ -306,7 +322,7 @@ public class ExamImportService {
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(sourceExerciseId);
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(sourceExerciseId);
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         yield Optional.empty();
                     }
@@ -316,9 +332,12 @@ public class ExamImportService {
                     originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
                     Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(originalProgrammingExercise.getId());
                     originalProgrammingExercise.setGradingCriteria(gradingCriteria);
-                    prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
-                    yield Optional
-                            .of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false, false));
+
+                    ProgrammingExercise newProgrammingExercise = (ProgrammingExercise) exerciseToCopy;
+                    copyProgrammingExerciseInformationForExamImport(originalProgrammingExercise, newProgrammingExercise);
+                    prepareProgrammingExerciseForExamImport(newProgrammingExercise);
+
+                    yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newProgrammingExercise, false, false, false));
                 }
 
                 case FILE_UPLOAD -> {
@@ -374,6 +393,35 @@ public class ExamImportService {
         newExercise.setExampleSolutionPublicationDate(null);
 
         newExercise.forceNewProjectKey();
+    }
+
+    /**
+     * Copies programming-specific fields that are not part of {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}.
+     * The DTO intentionally only carries generic exercise fields and possible overrides such as title, short name, and points.
+     *
+     * @param originalExercise the source programming exercise with complete programming settings
+     * @param newExercise      the exam-import skeleton created from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO}
+     */
+    static void copyProgrammingExerciseInformationForExamImport(final ProgrammingExercise originalExercise, final ProgrammingExercise newExercise) {
+        newExercise.setProgrammingLanguage(originalExercise.getProgrammingLanguage());
+        newExercise.setProjectType(originalExercise.getProjectType());
+        newExercise.setPackageName(originalExercise.getPackageName());
+        newExercise.setAllowOnlineEditor(originalExercise.isAllowOnlineEditor());
+        newExercise.setAllowOfflineIde(originalExercise.isAllowOfflineIde());
+        newExercise.setAllowOnlineIde(originalExercise.isAllowOnlineIde());
+        newExercise.setStaticCodeAnalysisEnabled(originalExercise.isStaticCodeAnalysisEnabled());
+        newExercise.setMaxStaticCodeAnalysisPenalty(originalExercise.getMaxStaticCodeAnalysisPenalty());
+        newExercise.setShowTestNamesToStudents(originalExercise.getShowTestNamesToStudents());
+        newExercise.setReleaseTestsWithExampleSolution(originalExercise.isReleaseTestsWithExampleSolution());
+        newExercise.setAssessmentType(originalExercise.getAssessmentType());
+        newExercise.setDifficulty(originalExercise.getDifficulty());
+        newExercise.setMode(originalExercise.getMode());
+        newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
+        newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
+        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
+        newExercise.setProblemStatement(originalExercise.getProblemStatement());
+        newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
+        newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));
     }
 
     /**

@@ -3,7 +3,7 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OsDetectorService } from '../services/os-detector.service';
 import { SearchOverlayService } from '../services/search-overlay.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-global-search-navbar',

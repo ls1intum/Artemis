@@ -39,10 +39,10 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 

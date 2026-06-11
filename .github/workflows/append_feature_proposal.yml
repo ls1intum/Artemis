@@ -12,7 +12,7 @@ jobs:
     steps:
       - id: feature-proposal-tag-check
         name: Check if feature proposal tag added
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check if feature proposal tag added
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Append Feature Proposal Template to Issue Description
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -108,7 +108,7 @@ jobs:
             }
 
       - name: Update or Post instructions comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |

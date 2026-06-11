@@ -10,7 +10,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('PasskeyAuthenticationGuard', () => {
     setupTestBed({ zoneless: true });

@@ -1,0 +1,57 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
+import { UserService } from 'app/account/user/shared/user.service';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Authority } from 'app/foundation/constants/authority.constants';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
+import { provideHttpClient } from '@angular/common/http';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+
+describe('User Service', () => {
+    setupTestBed({ zoneless: true });
+
+    let service: UserService;
+    let adminService: AdminUserService;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting()],
+        });
+
+        service = TestBed.inject(UserService);
+        adminService = TestBed.inject(AdminUserService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    describe('Service methods', () => {
+        it('should return Authorities', () => {
+            adminService.authorities().subscribe((_authorities) => {
+                expect(_authorities).toEqual([Authority.STUDENT, Authority.ADMIN]);
+            });
+            const req = httpMock.expectOne({ method: 'GET' });
+
+            req.flush([Authority.STUDENT, Authority.ADMIN]);
+        });
+
+        it('should call correct URL to initialize LTI user', () => {
+            service.initializeLTIUser().subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = 'api/account/users/initialize';
+            expect(req.request.url).toBe(`${resourceUrl}`);
+        });
+
+        it('should call correct URL to accept external LLM', () => {
+            service.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = 'api/account/users/select-llm-usage';
+            expect(req.request.url).toBe(`${resourceUrl}`);
+        });
+    });
+});

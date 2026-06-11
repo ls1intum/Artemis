@@ -123,4 +123,20 @@ public class ModuleFeatureService {
     public boolean isTheiaEnabled() {
         return artemisConfigHelper.isTheiaEnabled(environment);
     }
+
+    public boolean isAthenaEnabled() {
+        return artemisConfigHelper.isAthenaEnabled(environment);
+    }
+
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
+
+    public boolean isLdapEnabled() {
+        return artemisConfigHelper.isLdapEnabled(environment);
+    }
+
+    public boolean isSaml2Enabled() {
+        return artemisConfigHelper.isSaml2Enabled(environment);
+    }
 }

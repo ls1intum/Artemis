@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;

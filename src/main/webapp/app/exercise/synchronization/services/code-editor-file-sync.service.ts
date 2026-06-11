@@ -3,7 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,

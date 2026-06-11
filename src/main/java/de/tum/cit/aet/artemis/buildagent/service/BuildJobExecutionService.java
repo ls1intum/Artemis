@@ -45,16 +45,16 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
+import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
@@ -477,7 +477,10 @@ public class BuildJobExecutionService {
                     var testResultFileString = fileContent.replace("\n\t", "");
                     if (!testResultFileString.isBlank()) {
                         if (fileName.endsWith(".xml")) {
+                            log.debug("Parsing test result XML file '{}' for build job {} ({} bytes)", fileName, buildJobId, testResultFileString.length());
                             TestResultXmlParser.processTestResultFile(testResultFileString, failedTests, successfulTests);
+                            log.debug("After parsing '{}' for build job {}: {} failed tests, {} successful tests", fileName, buildJobId, failedTests.size(),
+                                    successfulTests.size());
                         }
                         else if (fileName.endsWith(".json")) {
                             CustomFeedbackParser.processTestResultFile(fileName, testResultFileString, failedTests, successfulTests);

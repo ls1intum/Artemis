@@ -1,0 +1,65 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { StatisticsScoreDistributionGraphComponent } from 'app/exercise/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { vi } from 'vitest';
+
+describe('StatisticsScoreDistributionGraphComponent', () => {
+    setupTestBed({ zoneless: true });
+    let fixture: ComponentFixture<StatisticsScoreDistributionGraphComponent>;
+    let component: StatisticsScoreDistributionGraphComponent;
+    let routeInNewTabStub: ReturnType<typeof vi.spyOn>;
+
+    const expectedLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StatisticsScoreDistributionGraphComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: Router, useClass: MockRouter }, provideNoopAnimationsForTests()],
+        }).compileComponents();
+        fixture = TestBed.createComponent(StatisticsScoreDistributionGraphComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('averageScoreOfExercise', 75);
+        fixture.componentRef.setInput('scoreDistribution', [0, 0, 0, 0, 0, 5, 0, 0, 0, 5]);
+        fixture.componentRef.setInput('numberOfExerciseScores', 10);
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('courseId', 2);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.FILE_UPLOAD);
+
+        const navigationService = TestBed.inject(ArtemisNavigationUtilService);
+        routeInNewTabStub = vi.spyOn(navigationService, 'routeInNewTab').mockImplementation(() => undefined);
+        fixture.detectChanges();
+    });
+
+    it('should initialize', () => {
+        expect(component.barChartLabels).toEqual(expectedLabels);
+        let expectedRelativeData = [0, 0, 0, 0, 0, 50, 0, 0, 0, 50];
+        expectedRelativeData.forEach((data, index) => {
+            expect(component.ngxData[index].value).toBe(data);
+        });
+
+        fixture.componentRef.setInput('numberOfExerciseScores', 0);
+        component.ngOnInit();
+        expectedRelativeData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        expectedRelativeData.forEach((data, index) => {
+            expect(component.ngxData[index].value).toBe(data);
+        });
+    });
+
+    it.each(expectedLabels)('should delegate the on bar select', (label: string) => {
+        const event = { name: label };
+        component.ngOnInit();
+
+        component.selectChartBar(event);
+
+        expect(routeInNewTabStub).toHaveBeenCalledOnce();
+        expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/scores`], {
+            queryParams: { scoreRangeFilter: expectedLabels.indexOf(label) },
+        });
+    });
+});

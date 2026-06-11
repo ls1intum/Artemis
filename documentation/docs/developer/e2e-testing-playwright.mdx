@@ -62,13 +62,13 @@ Services stay running between test runs, so re-runs only take seconds.
 The script automatically kills any processes occupying ports 8080 (server), 9000 (client), and 7921 (local VC SSH),
 so you don't need to manually stop conflicting processes before running it.
 
-**Prerequisites:** Docker, Java 25+, Node.js 24+, npm.
+**Prerequisites:** Docker, Java 25+, Node.js 24+, pnpm (activate via `corepack enable`).
 
 **Architecture:**
 
 - **Docker:** PostgreSQL only (port 5432)
 - **Host:** Spring Boot server via `./gradlew bootRun -x webapp` (port 8080)
-- **Host:** Angular client via `npm start` (port 9000, proxies API calls to 8080)
+- **Host:** Angular client via `pnpm start` (port 9000, proxies API calls to 8080)
 - **Host:** Playwright tests connect to `http://localhost:9000`
 
 **First run (starts everything):**
@@ -139,10 +139,10 @@ First, navigate to the Playwright folder:
 cd src/test/playwright
 ```
 
-Then install the dependencies:
+Then install the dependencies (activate pnpm once via `corepack enable` if you haven't already):
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Customize Playwright configuration
@@ -196,8 +196,8 @@ Install Playwright browser binaries, set up the environment to ensure Playwright
 On some operating systems this might not work, and playwright needs to be manually installed via a package manager.
 
 ```bash
-npm run playwright:setup-local
-npm run playwright:init
+pnpm run playwright:setup-local
+pnpm run playwright:init
 ```
 
 ### 5. Open Playwright UI
@@ -205,7 +205,7 @@ npm run playwright:init
 To open the Playwright UI, run:
 
 ```bash
-npm run playwright:open
+pnpm run playwright:open
 ```
 
 This opens a graphical interface that allows you to run individual tests, test files, or test suites while observing
@@ -214,13 +214,13 @@ the test execution in a browser window.
 Another way to run tests is through the command line. To run all tests in the command line, use:
 
 ```bash
-npm run playwright:test
+pnpm run playwright:test
 ```
 
 To run a specific test file, use:
 
 ```bash
-npx playwright test <path_to_test_file>
+pnpm exec playwright test <path_to_test_file>
 ```
 
 If you want to run a specific test suite or a single test, add the `-g` flag to the previous command, followed by the
@@ -229,7 +229,7 @@ For example, you can run the test suite "Course creation" located in the file `C
 the command:
 
 ```bash
-npx playwright test e2e/course/CourseManagement.spec.ts -g "Course creation"
+pnpm exec playwright test e2e/course/CourseManagement.spec.ts -g "Course creation"
 ```
 
 ## Test parallelization

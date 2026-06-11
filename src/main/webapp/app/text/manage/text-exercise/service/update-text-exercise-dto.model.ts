@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 /**

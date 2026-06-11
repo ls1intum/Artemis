@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 

@@ -10,7 +10,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseServicable } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

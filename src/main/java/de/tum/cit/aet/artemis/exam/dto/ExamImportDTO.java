@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamImportDTO(@NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate, @NotNull ZonedDateTime startDate,
         @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart, @Nullable ZonedDateTime examStudentReviewEnd,
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,

@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 
 export const textEditorRoute: Routes = [
     {

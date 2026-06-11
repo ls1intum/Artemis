@@ -7,9 +7,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
 
 describe('OnlineUnitComponent', () => {
     setupTestBed({ zoneless: true });

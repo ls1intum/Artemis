@@ -6,11 +6,11 @@ import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communica
 import { MetisService } from 'app/communication/service/metis.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { BehaviorSubject } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -20,7 +20,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from 'test/helpers/sample/metis-sample-data';
 import { getElement } from 'test/helpers/utils/general-test.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

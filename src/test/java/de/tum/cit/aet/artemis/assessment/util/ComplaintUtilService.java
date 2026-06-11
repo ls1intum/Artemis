@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -17,9 +20,6 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 

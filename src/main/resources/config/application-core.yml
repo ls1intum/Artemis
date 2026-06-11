@@ -33,12 +33,22 @@ artemis:
         enabled: true
     lti:
         enabled: false
+    athena:
+        enabled: false # Set this to true to enable the Athena module for LLM-based feedback suggestions; requires the athena service to be reachable via artemis.athena.url
+    apollon:
+        enabled: false # Set this to true to enable the Apollon module for UML diagram PDF export; requires the apollon conversion service to be reachable via artemis.apollon.conversion-service-url
     user-management:
+        ldap:
+            enabled: false # Set this to true to enable LDAP-based user synchronization (artemis.user-management.ldap.url etc.)
+        saml2:
+            enabled: false # Set this to true to enable SAML2 single sign-on; requires the saml2 and spring.security.saml2 blocks (see application-saml2.yml.example)
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
+            # relying-party-id: ""  # Optional: override the WebAuthn Relying Party ID (defaults to the hostname from server.url). Needed when a reverse proxy serves a different hostname.
+            # additional-allowed-origins: []  # Optional: extra origins allowed for WebAuthn passkey authentication, e.g. when a reverse proxy serves a different URL than server.url.
 spring:
     liquibase:
         enabled: true

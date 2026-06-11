@@ -1,17 +1,17 @@
 import { Component, OnInit, inject, input } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/shared/util/navigation.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/foundation/util/navigation.utils';
+import { Course } from 'app/course/shared/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type NameToValueMap = { [name: string]: any };
 

@@ -4,7 +4,7 @@
     name="search-filter"
     type="text"
     class="form-control"
-    [disabled]="inputDisabled"
+    [disabled]="inputDisabled()"
     [placeholder]="'artemisApp.team.selectOwnerForTeam' | artemisTranslate"
     [(ngModel)]="owner"
     (selectItem)="onAutocompleteSelect($event.item)"

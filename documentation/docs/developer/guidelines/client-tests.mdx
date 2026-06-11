@@ -7,81 +7,22 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 We use [NgMocks](https://www.npmjs.com/package/ng-mocks/) for mocking the dependencies of an angular component.
 
-<Callout variant={CalloutVariant.danger}>
-**Jest is deprecated.** We are actively migrating all client tests from Jest to [Vitest](https://vitest.dev/).
-All new tests should be written using Vitest. Do not write new tests using Jest.
-The authoritative list of modules already migrated to Vitest is defined by the `include` patterns in `vitest.config.ts`.
-</Callout>
-
 <Callout variant={CalloutVariant.info}>
-**Vitest** is the preferred testing framework for all client tests.
+**Vitest** is the testing framework for all client tests.
 
 **Running Vitest tests:**
 
-- Watch mode: `npm run vitest`
-- Single run: `npm run vitest:run`
-- With coverage: `npm run vitest:coverage`
+- Watch mode: `pnpm run vitest`
+- Single run: `pnpm run vitest:run`
+- With coverage: `pnpm run vitest:coverage`
 
-**Key differences from Jest (for migrating existing tests):**
-
-- Use `vi.spyOn()` instead of `jest.spyOn()`
-- Use `vi.fn()` instead of `jest.fn()`
-- Use `vi.clearAllMocks()` instead of `jest.clearAllMocks()`
-- Use `vi.restoreAllMocks()` instead of `jest.restoreAllMocks()`
 </Callout>
 
-Some existing tests still use [Jest](https://jestjs.io) and will be migrated incrementally.
-
-You can run all Jest tests by invoking `npm run test` in the root directory of the Artemis project.
+You can run all tests by invoking `pnpm test` in the root directory of the Artemis project.
 If you want to run individual tests, you can use the following commands:
 
-1. Run all tests in a file: `npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'`
-2. Run all tests in a module or folder: `npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'`
-
-## General Test Pattern
-
-<Callout variant={CalloutVariant.info}>
-The code examples below use `jest.*` APIs for historical context, as many existing tests still use Jest.
-**For new tests, replace all `jest.*` calls with their `vi.*` equivalents** (e.g. `vi.spyOn()`, `vi.fn()`, `vi.restoreAllMocks()`).
-</Callout>
-
-The most basic test looks like this:
-
-```ts
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-describe('SomeComponent', () => {
-    let someComponentFixture: ComponentFixture<SomeComponent>;
-    let someComponent: SomeComponent;
-
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [
-                SomeComponent,
-                MockPipe(SomePipeUsedInTemplate),
-                MockComponent(SomeComponentUsedInTemplate),
-                MockDirective(SomeDirectiveUsedInTemplate),
-            ],
-            providers: [
-                MockProvider(SomeServiceUsedInComponent),
-            ],
-        })
-            .compileComponents();
-
-        someComponentFixture = TestBed.createComponent(SomeComponent);
-        someComponent = someComponentFixture.componentInstance;
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        someComponentFixture.detectChanges();
-        expect(someComponent).not.toBeUndefined();
-    });
-});
-```
+1. Run all tests in a file: `pnpm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'`
+2. Run all tests in a module or folder: `pnpm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'`
 
 ## Guidelines Overview
 
@@ -221,7 +162,7 @@ describe('SomeComponent', () => {
     afterEach(() => {
         ...
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should make get request', fakeAsync(() => {
@@ -239,16 +180,16 @@ describe('SomeComponent', () => {
 
 * **Never use** `NO_ERRORS_SCHEMA` ([angular documentation](https://angular.dev/guide/testing/components-scenarios#noerrorsschema)). Use stubs/mocks instead.
 
-* **Reset mocks** with `jest.restoreAllMocks()` in `afterEach`.
+* **Reset mocks** with `vi.restoreAllMocks()` in `afterEach`.
     * This is important if they get defined across multiple tests
-    * Only works if mocks are created with `jest.spyOn`.
-    * Avoid manually assigning `jest.fn()`.
+    * Only works if mocks are created with `vi.spyOn`.
+    * Avoid manually assigning `vi.fn()`.
 
 
 ## Coverage & Quality
 
 * Ensure at least **80% line coverage**.
-    * Run `npm test` for coverage report.
+    * Run `pnpm test` for coverage report.
     * Or [run the tests in IntelliJ IDEA with coverage activated](https://www.jetbrains.com/help/idea/running-test-with-coverage.html).
 
 * Prefer **user-interaction tests** instead of testing internal methods directly.
@@ -257,8 +198,8 @@ describe('SomeComponent', () => {
 
 ```ts
 it('should trigger saveExerciseWithoutReevaluation once', () => {
-    const emitSpy = jest.spyOn(comp.confirmed, 'emit');
-    const saveExerciseWithoutReevaluationSpy = jest.spyOn(comp, 'saveExerciseWithoutReevaluation');
+    const emitSpy = vi.spyOn(comp.confirmed, 'emit');
+    const saveExerciseWithoutReevaluationSpy = vi.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
     const button = fixture.debugElement.nativeElement.querySelector('#save-button');
     button.click();
@@ -306,8 +247,8 @@ Use clear terminology for test doubles:
 Example:
 
 ```ts
-const clearSpy = jest.spyOn(component, 'clear');
-const getNumberStub = jest.spyOn(component, 'getNumber').mockReturnValue(42);
+const clearSpy = vi.spyOn(component, 'clear');
+const getNumberStub = vi.spyOn(component, 'getNumber').mockReturnValue(42);
 ```
 
 
@@ -333,7 +274,7 @@ expect(course).toBeUndefined();
 expect(courseList).toHaveLength(4);
 ```
 
-* If you have minimized `expect`, use the verification function that provides the most meaningful error message in case the verification fails. Use matchers from [Jest](https://jestjs.io/docs/expect) and [Jest Extended](https://jest-extended.jestcommunity.dev/docs/matchers).
+* If you have minimized `expect`, use the verification function that provides the most meaningful error message in case the verification fails.
 
 * Use a **uniform style** for common cases to keep the codebase as consistent as possible:
 

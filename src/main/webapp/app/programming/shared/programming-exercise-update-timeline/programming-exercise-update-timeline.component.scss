@@ -1,0 +1,15 @@
+.frame {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 2rem;
+
+    .section {
+        flex: 1 1 20rem;
+        min-width: min(100%, 20rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

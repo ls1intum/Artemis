@@ -8,7 +8,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 

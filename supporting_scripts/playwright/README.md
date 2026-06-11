@@ -15,10 +15,10 @@ Running playwright locally involves three steps:
 ## 1. Start Artemis
 
 To start Artemis, depending on your OS, either run `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh`.
-This will set up the database, start Artemis inside a docker container, and start the client via npm.
+This will set up the database, start Artemis inside a docker container, and start the client via pnpm.
 After this step, you are be able to access Artemis locally as you usually would be.
 Note that you need to run the scripts in step 2 and 3 in another shell, as the client needs to keep running.
-In case you stop the client, you can simply re-run it at the root of the Artemis project with `npm run start`.
+In case you stop the client, you can simply re-run it at the root of the Artemis project with `pnpm start`.
 
 ## 2. Setup users
 
