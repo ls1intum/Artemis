@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -232,16 +233,17 @@ public class ConversationMessageResource {
             throw new BadRequestAlertException("Invalid post ID found", conversationMessagingService.getEntityName(), "invalidPostId");
         }
 
-        // authorization: the caller may only retrieve posts they can access (course-wide channel or participant of the conversation).
-        // Set.copyOf de-duplicates because the access helper compares COUNT(DISTINCT id) against the number of requested ids.
-        User user = userRepository.getUser();
-        postRepository.userHasAccessToAllPostsElseThrow(Set.copyOf(postIds), user.getId());
-
         List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
 
         if (posts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        // authorization: the caller may only retrieve posts they can access (course-wide channel or participant of the conversation).
+        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        User user = userRepository.getUser();
+        Set<Long> foundPostIds = posts.stream().map(Post::getId).collect(Collectors.toSet());
+        postRepository.userHasAccessToAllPostsElseThrow(foundPostIds, user.getId());
 
         if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");

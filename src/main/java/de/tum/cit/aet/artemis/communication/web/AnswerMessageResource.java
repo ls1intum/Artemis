@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,16 +138,17 @@ public class AnswerMessageResource {
             throw new BadRequestAlertException("Invalid answer post ID found", answerMessageService.getEntityName(), "invalidAnswerPostId");
         }
 
-        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
-        // Set.copyOf de-duplicates because the access helper compares COUNT(DISTINCT id) against the number of requested ids.
-        User user = userRepository.getUser();
-        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Set.copyOf(answerPostIds), user.getId());
-
         List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
 
         if (answerPosts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
+        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        User user = userRepository.getUser();
+        Set<Long> foundAnswerPostIds = answerPosts.stream().map(AnswerPost::getId).collect(Collectors.toSet());
+        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(foundAnswerPostIds, user.getId());
 
         if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");
