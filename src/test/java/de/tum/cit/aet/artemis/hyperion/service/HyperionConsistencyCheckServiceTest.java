@@ -86,8 +86,9 @@ class HyperionConsistencyCheckServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         // Wire minimal renderer with mocked dependencies

@@ -31,8 +31,9 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
+
+import com.openai.errors.OpenAIInvalidDataException;
+import com.openai.errors.OpenAIIoException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -68,8 +69,9 @@ class HyperionCodeGenerationServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
         this.strategy = new TestCodeGenerationStrategy(chatClient, templates, llmTokenUsageService);
 
@@ -399,20 +401,20 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void callChatClient_withTransientAiException_throwsNetworkingException() {
+    void callChatClient_withTransientOpenAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new TransientAiException("Temporary AI service issue"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("Temporary AI service issue"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("Temporary AI service issue. Please retry.");
     }
 
     @Test
-    void callChatClient_withNonTransientAiException_throwsNetworkingException() {
+    void callChatClient_withNonTransientOpenAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI configuration error"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIInvalidDataException("AI configuration error"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("AI request failed due to configuration or input. Check model and request.");

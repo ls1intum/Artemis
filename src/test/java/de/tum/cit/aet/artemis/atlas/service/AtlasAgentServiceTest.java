@@ -82,6 +82,7 @@ class AtlasAgentServiceTest {
         // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default
         // options, which must be non-null (lenient: not every nested test exercises the chat path).
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         previewService = new AtlasAgentPreviewService(chatMemory);
         AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, templateService, chatMemory, TEST_PROPERTIES);

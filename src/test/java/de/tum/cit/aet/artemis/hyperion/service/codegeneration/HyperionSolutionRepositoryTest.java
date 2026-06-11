@@ -23,7 +23,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.retry.NonTransientAiException;
+
+import com.openai.errors.OpenAIInvalidDataException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -56,8 +57,9 @@ class HyperionSolutionRepositoryServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, llmTokenUsageService);
 
@@ -147,9 +149,9 @@ class HyperionSolutionRepositoryServiceTest {
     }
 
     @Test
-    void generateSolutionPlan_withNonTransientAiException_throwsNetworkingException() {
+    void generateSolutionPlan_withNonTransientOpenAiException_throwsNetworkingException() {
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI service error"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIInvalidDataException("AI service error"));
 
         assertThatThrownBy(() -> solutionRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
                 .isInstanceOf(NetworkingException.class).hasMessageContaining("AI request failed");
