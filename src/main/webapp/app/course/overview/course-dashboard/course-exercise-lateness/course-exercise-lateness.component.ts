@@ -58,7 +58,7 @@ export class CourseExerciseLatenessComponent {
                 series: this.exerciseLateness().map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: round(lateness.relativeLatestSubmission || 100, 1),
+                        value: round(lateness.relativeLatestSubmission ?? 100, 1),
                         title: lateness.title,
                     };
                 }),
@@ -68,7 +68,7 @@ export class CourseExerciseLatenessComponent {
                 series: this.exerciseLateness().map((lateness) => {
                     return {
                         name: lateness.shortName?.toUpperCase() || lateness.title,
-                        value: round(lateness.relativeAverageLatestSubmission || 100, 1),
+                        value: round(lateness.relativeAverageLatestSubmission ?? 100, 1),
                         title: lateness.title,
                     };
                 }),

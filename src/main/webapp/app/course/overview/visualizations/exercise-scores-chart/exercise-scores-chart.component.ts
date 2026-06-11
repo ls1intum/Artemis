@@ -186,7 +186,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
      * Toggling the visibility of a line is handled by the built-in chart.js legend.
      * @param event the event sent by p-chart
      */
-    onSelect(event: any): void {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         const exerciseId = selected?.meta?.['exerciseId'];
         if (exerciseId !== undefined) {

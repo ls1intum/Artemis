@@ -72,7 +72,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                         return '';
                     }
                     // bar 0 carries the weight as value and the bonus as extra, bar 1 vice versa
-                    const isWeightBar = item.dataIndex === 0;
+                    const isWeightBar = item.datasetIndex === 0;
                     const weightPercentage = ((isWeightBar ? meta.value : (meta.weight as number)) ?? 0).toFixed(2);
                     const bonusPercentage = ((isWeightBar ? (meta.bonus as number) : meta.value) ?? 0).toFixed(2);
                     return [
@@ -177,7 +177,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 const color = getColor(i / testCases.length, 50);
 
                 weight.series.push({ name: label, value: Math.max(element.relWeight, 0), bonus: Math.max(element.relScore, 0), id: element.id });
-                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relScore, 0), id: element.id });
+                weightAndBonus.series.push({ name: label, value: Math.max(element.relScore, 0), weight: Math.max(element.relWeight, 0), id: element.id });
 
                 points.series.push({ name: label, value: Math.max(element.relPoints, 0) });
 

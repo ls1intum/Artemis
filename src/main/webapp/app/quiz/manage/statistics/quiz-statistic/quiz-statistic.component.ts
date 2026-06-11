@@ -44,14 +44,14 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
-            this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
+            this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
             this.chartEntries.update((entries) => {
                 if (!entries.length) {
                     return entries;
                 }
                 const updated = [...entries];
                 const lastEntry = updated[updated.length - 1];
-                updated[updated.length - 1] = { name: this.translateService.instant('showStatistic.quizStatistic.average'), value: lastEntry.value };
+                updated[updated.length - 1] = { name: this.translateService.instant('artemisApp.showStatistic.quizStatistic.average'), value: lastEntry.value };
                 return updated;
             });
         });

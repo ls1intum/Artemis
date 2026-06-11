@@ -95,7 +95,7 @@ export class AssessmentDashboardInformationComponent {
         doughnutChartOptions({
             arcWidth: 1,
             legend: { position: 'bottom' },
-            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
+            tooltip: { label: (item) => `${(this.numberOfSubmissions().total > 0 ? (item.parsed * 100) / this.numberOfSubmissions().total : 0).toFixed(2)}%` },
         }),
     );
 

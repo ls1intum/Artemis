@@ -182,7 +182,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * @param data the data that should be displayed
      */
     private determineMaxChartHeight(data: number[]): void {
-        this.yScaleMax.set(Math.max(this.yScaleMax(), ...data));
+        this.yScaleMax.set(Math.max(10, ...data));
     }
 
     /**

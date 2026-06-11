@@ -91,12 +91,10 @@ export abstract class AbstractQuizStatisticComponent {
      * @returns string of the following pattern: absolute value (relative value)
      */
     protected formatDataLabel(absoluteValue: number): string {
-        const relativeValue = (absoluteValue / this.totalParticipants) * 100;
-        if (isNaN(relativeValue)) {
+        if (!this.totalParticipants || !this.participants) {
             return absoluteValue + ' (0%)';
-        } else {
-            return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
         }
+        return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
     }
 
     /**
