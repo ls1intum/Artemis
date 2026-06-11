@@ -20,13 +20,16 @@ public class IrisResponseNotification extends CourseNotification {
 
     protected String messagePreview;
 
+    protected String chatTitle;
+
     /**
      * Default constructor used when creating a new notification.
      */
-    public IrisResponseNotification(Long courseId, String courseTitle, String courseImageUrl, Long sessionId, String messagePreview) {
+    public IrisResponseNotification(Long courseId, String courseTitle, String courseImageUrl, Long sessionId, String messagePreview, String chatTitle) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.sessionId = sessionId;
         this.messagePreview = messagePreview;
+        this.chatTitle = chatTitle;
     }
 
     /**

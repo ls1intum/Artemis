@@ -7,8 +7,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.text.LineBreakRendering;
+import org.commonmark.renderer.text.TextContentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -36,6 +42,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -78,6 +86,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
     private static final int MESSAGE_PREVIEW_MAX_LENGTH = 200;
+
+    private static final String MESSAGE_PREVIEW_ELLIPSIS = "…";
+
+    private static final String MESSAGE_PREVIEW_FALLBACK = "Iris has answered your message";
+
+    private static final Parser MESSAGE_PREVIEW_PARSER = Parser.builder().build();
+
+    private static final TextContentRenderer MESSAGE_PREVIEW_RENDERER = TextContentRenderer.builder().lineBreakRendering(LineBreakRendering.STRIP).build();
 
     private final IrisSettingsService irisSettingsService;
 
@@ -160,7 +176,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 return;
             }
             var course = courseRepository.findByIdElseThrow(session.getCourseId());
-            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), buildPreview(message));
+            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), buildPreview(message), session.getTitle());
             courseNotificationService.sendCourseNotification(notification, List.of(user));
         }
         catch (Exception e) {
@@ -171,10 +187,28 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     /**
      * Builds a short single-line plain-text preview of an assistant message for use in notifications.
+     * <p>
+     * Iris answers are Markdown, but neither the push notification banner nor the in-app notification list can
+     * render Markdown. The formatting is therefore flattened to plain text: all text contents are concatenated,
+     * parsed and re-rendered with commonmark's {@link TextContentRenderer} (which drops emphasis, heading, link
+     * and list markup while keeping the readable text), collapsed to a single line and truncated to
+     * {@link #MESSAGE_PREVIEW_MAX_LENGTH} characters. Non-text contents (e.g. JSON tool calls) are skipped.
+     *
+     * @param message the assistant message to preview
+     * @return a single-line, length-bounded plain-text preview, or a generic fallback if the message has no text
      */
     private static String buildPreview(IrisMessage message) {
-        // TODO
-        return "IRIS HAS ANSWERED";
+        String markdown = message.getContent().stream().filter(IrisTextMessageContent.class::isInstance).map(IrisMessageContent::getContentAsString).filter(Objects::nonNull)
+                .collect(Collectors.joining(" ")).strip();
+        if (markdown.isBlank()) {
+            return MESSAGE_PREVIEW_FALLBACK;
+        }
+        Node document = MESSAGE_PREVIEW_PARSER.parse(markdown);
+        String plainText = MESSAGE_PREVIEW_RENDERER.render(document).replaceAll("\\s+", " ").strip();
+        if (plainText.isBlank()) {
+            return MESSAGE_PREVIEW_FALLBACK;
+        }
+        return StringUtils.abbreviate(plainText, MESSAGE_PREVIEW_ELLIPSIS, MESSAGE_PREVIEW_MAX_LENGTH);
     }
 
     /**
