@@ -53,7 +53,7 @@
                     @if (canCancel() || cancelling()) {
                         <button pButton type="button" severity="secondary" outlined size="small" [disabled]="cancelling()" (click)="cancel()">
                             <fa-icon pButtonIcon [icon]="faBan" />
-                            <span jhiTranslate="artemisApp.programmingExercise.generateExercise.{{ cancelling() ? 'cancelling' : 'cancel' }}"></span>
+                            <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.generateExercise.{{ cancelling() ? 'cancelling' : 'cancel' }}"></span>
                         </button>
                     }
                 </div>
