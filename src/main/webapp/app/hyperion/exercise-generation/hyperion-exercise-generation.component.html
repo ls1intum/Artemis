@@ -234,43 +234,4 @@
             <small class="text-color-secondary d-block mt-2" jhiTranslate="artemisApp.programmingExercise.generateExercise.retryHint"></small>
         }
     }
-
-    @if (progressEvents().length > 0) {
-        <div class="mt-3">
-            <p-button
-                severity="secondary"
-                [text]="true"
-                size="small"
-                (onClick)="showLog.set(!showLog())"
-                [attr.aria-expanded]="showLog()"
-                [attr.aria-controls]="'generation-transcript'"
-            >
-                <span jhiTranslate="artemisApp.programmingExercise.generateExercise.{{ showLog() ? 'hideLog' : 'showLog' }}"></span>
-            </p-button>
-        </div>
-        @if (showLog()) {
-            <!-- The agent transcript is opt-in detail; role="log" gives it structure but it is not a live region, so it does not compete with the status/result announcements.
-                 Each line is rendered structurally (turn badge, tool chip, monospace file/command target) rather than as undifferentiated text. -->
-            <div #transcript id="generation-transcript" class="generation-transcript mt-2" role="log">
-                @for (entry of transcriptEntries(); track $index) {
-                    <div class="transcript-entry" [attr.data-kind]="entry.kind" [attr.title]="entry.text">
-                        <fa-icon class="transcript-icon" [icon]="iconForEntry(entry)" [fixedWidth]="true" />
-                        @if (entry.turn) {
-                            <span class="transcript-turn">{{ entry.turn }}</span>
-                        }
-                        @if (entry.tool) {
-                            <span class="transcript-tool" [attr.data-repo]="entry.repo">{{
-                                'artemisApp.programmingExercise.generateExercise.transcriptTool.' + toolKey(entry.tool) | artemisTranslate
-                            }}</span>
-                        }
-                        @if (entry.target) {
-                            <code class="transcript-target">{{ entry.target }}</code>
-                        } @else {
-                            <span class="transcript-text">{{ entry.text }}</span>
-                        }
-                    </div>
-                }
-            </div>
-        }
-    }
 </ng-template>

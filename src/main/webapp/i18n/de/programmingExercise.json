@@ -960,17 +960,6 @@
                     "tests": "Tests",
                     "other": "Sonstige"
                 },
-                "showLog": "Details anzeigen",
-                "hideLog": "Details ausblenden",
-                "transcriptTool": {
-                    "create": "Erstellen",
-                    "edit": "Bearbeiten",
-                    "read": "Lesen",
-                    "run": "Ausführen",
-                    "verify": "Prüfen",
-                    "submit": "Absenden",
-                    "tool": "Tool"
-                },
                 "reviewChanges": "Änderungen überprüfen",
                 "success": "Die Aufgabe wurde generiert und gespeichert. Überprüfe die Änderungen.",
                 "needsReview": "Es wurde ein Aufgabenentwurf generiert, der die Verifizierung nicht vollständig bestanden hat. Er wurde zum Fertigstellen gespeichert, und die offenen Punkte wurden als Review-Kommentare hinzugefügt — behebe sie, bevor du die Aufgabe verwendest.",

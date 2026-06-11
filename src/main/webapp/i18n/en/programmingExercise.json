@@ -960,17 +960,6 @@
                     "tests": "Tests",
                     "other": "Other"
                 },
-                "showLog": "Show details",
-                "hideLog": "Hide details",
-                "transcriptTool": {
-                    "create": "Create",
-                    "edit": "Edit",
-                    "read": "Read",
-                    "run": "Run",
-                    "verify": "Verify",
-                    "submit": "Submit",
-                    "tool": "Tool"
-                },
                 "reviewChanges": "Review changes",
                 "success": "The exercise was generated and saved. Review the changes.",
                 "needsReview": "A draft exercise was generated but did not fully pass verification. It was saved for you to finish, and the open issues were added as review comments — resolve them before using the exercise.",

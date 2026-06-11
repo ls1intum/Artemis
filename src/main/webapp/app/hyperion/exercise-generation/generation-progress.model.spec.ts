@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseGenerationProgress, parseTranscript } from 'app/hyperion/exercise-generation/generation-progress.model';
+import { parseGenerationProgress } from 'app/hyperion/exercise-generation/generation-progress.model';
 import { ExerciseGenerationEvent } from 'app/hyperion/services/hyperion-exercise-generation-websocket.service';
 
 function progress(message: string): ExerciseGenerationEvent {
@@ -82,55 +82,5 @@ describe('parseGenerationProgress', () => {
         expect(result.currentStep).toContain('compacting');
         // an unrecognised line updates the caption but keeps the coarse phase
         expect(result.phase).toBe('authoring');
-    });
-});
-
-describe('parseTranscript', () => {
-    it('classifies a file tool call with its turn, tool, target and repository', () => {
-        const [entry] = parseTranscript([progress('Turn 3: write_file solution/src/Sorter.java')]);
-        expect(entry).toEqual({
-            kind: 'tool',
-            turn: 3,
-            tool: 'write_file',
-            target: 'solution/src/Sorter.java',
-            text: 'Turn 3: write_file solution/src/Sorter.java',
-            repo: 'solution',
-        });
-    });
-
-    it('classifies a bash tool call with the command as the target and no repo', () => {
-        const [entry] = parseTranscript([progress('Turn 2: bash {"command":"sh verify.sh solution"}')]);
-        expect(entry.kind).toBe('tool');
-        expect(entry.tool).toBe('bash');
-        expect(entry.target).toBe('{"command":"sh verify.sh solution"}');
-        expect(entry.repo).toBeUndefined();
-    });
-
-    it('classifies the verify tool call and the verifying milestone as verify entries', () => {
-        expect(parseTranscript([progress('Turn 4: verify {}')])[0].kind).toBe('verify');
-        expect(parseTranscript([progress('Checking the exercise builds and grades (attempt 1 of 3)')])[0].kind).toBe('verify');
-    });
-
-    it('classifies setup, save and finish lines as milestones', () => {
-        expect(parseTranscript([progress('Setting up the build environment')])[0].kind).toBe('milestone');
-        expect(parseTranscript([progress('Checks passed. Saving the exercise.')])[0].kind).toBe('milestone');
-        expect(parseTranscript([progress('Agent finished after 12 turn(s)')])[0].kind).toBe('milestone');
-    });
-
-    it('classifies failure lines as errors and other lines as notices', () => {
-        expect(parseTranscript([progress('Model call failed (timeout); retrying.')])[0].kind).toBe('error');
-        expect(parseTranscript([progress('Context window under pressure (~60000 tokens); compacting earlier steps.')])[0].kind).toBe('notice');
-    });
-
-    it('maps terminal event types to their categories', () => {
-        expect(parseTranscript([{ type: 'ERROR', message: 'boom' }])[0]).toEqual({ kind: 'error', text: 'boom' });
-        expect(parseTranscript([{ type: 'CANCELLED', message: 'stopped' }])[0]).toEqual({ kind: 'notice', text: 'stopped' });
-        expect(parseTranscript([{ type: 'DONE', message: 'saved' }])[0]).toEqual({ kind: 'milestone', text: 'saved' });
-    });
-
-    it('splits a coalesced multi-line event into one entry per line', () => {
-        const entries = parseTranscript([progress('Turn 1: write_file solution/A.java\nTurn 2: edit_file tests/T.java')]);
-        expect(entries.map((e) => e.turn)).toEqual([1, 2]);
-        expect(entries.map((e) => e.tool)).toEqual(['write_file', 'edit_file']);
     });
 });

@@ -14,22 +14,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subscription, forkJoin } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    IconDefinition,
-    faBan,
-    faCircle,
-    faCircleCheck,
-    faCircleInfo,
-    faCircleXmark,
-    faFileCirclePlus,
-    faFilePen,
-    faFlagCheckered,
-    faMagnifyingGlass,
-    faSpinner,
-    faTerminal,
-    faTriangleExclamation,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faBan, faCircle, faCircleCheck, faCircleXmark, faSpinner, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -38,14 +23,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
-import {
-    GENERATION_PHASE_ORDER,
-    GenerationFileChange,
-    GenerationRepo,
-    TranscriptEntry,
-    parseGenerationProgress,
-    parseTranscript,
-} from 'app/hyperion/exercise-generation/generation-progress.model';
+import { GENERATION_PHASE_ORDER, GenerationFileChange, GenerationRepo, parseGenerationProgress } from 'app/hyperion/exercise-generation/generation-progress.model';
 import {
     ExerciseGenerationEvent,
     ExerciseGenerationVerdict,
@@ -129,7 +107,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     readonly jobId = signal<string | undefined>(undefined);
     readonly progressEvents = signal<ExerciseGenerationEvent[]>([]);
     readonly finalEvent = signal<ExerciseGenerationEvent | undefined>(undefined);
-    readonly showLog = signal<boolean>(false);
     readonly elapsedSeconds = signal<number>(0);
 
     readonly diffLoading = signal<boolean>(false);
@@ -147,9 +124,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
 
     readonly progress = computed(() => parseGenerationProgress(this.progressEvents(), !!this.finalEvent()));
     readonly phaseKey = computed(() => this.progress().phase);
-
-    /** The structured, renderable transcript derived from the raw progress lines (turn badge, tool chip, monospace target). */
-    readonly transcriptEntries = computed<TranscriptEntry[]>(() => parseTranscript(this.progressEvents()));
 
     /** Index of the current phase within {@link GENERATION_PHASE_ORDER}; {@code done} keeps the last phase active so the list reads as complete. */
     readonly phaseIndex = computed(() => {
@@ -252,7 +226,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
     });
 
-    private readonly transcriptContainer = viewChild<{ nativeElement: HTMLElement }>('transcript');
     private readonly reviewButton = viewChild<{ nativeElement: HTMLElement }>('reviewButton');
     private readonly actionButtons = viewChild<{ nativeElement: HTMLElement }>('actionButtons');
     /** The compact-mode popover and its anchor chip; used to auto-open the overview once when a run becomes active. */
@@ -267,18 +240,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private terminalFocusHandled = false;
 
     constructor() {
-        // Keep the transcript pinned to the latest line as events arrive, unless the user has scrolled up to read earlier output.
-        afterRenderEffect(() => {
-            this.progressEvents();
-            const container = this.transcriptContainer()?.nativeElement;
-            if (container) {
-                const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 40;
-                if (nearBottom) {
-                    container.scrollTop = container.scrollHeight;
-                }
-            }
-        });
-
         // On a terminal outcome, move focus once to the next action (the now-removed Cancel button would otherwise drop focus to <body>, stranding keyboard/SR users).
         afterRenderEffect(() => {
             if (!this.finalEvent() || this.terminalFocusHandled) {
@@ -448,53 +409,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** The icon for a transcript entry: by tool for tool calls, by category otherwise. */
-    protected iconForEntry(entry: TranscriptEntry): IconDefinition {
-        if (entry.kind === 'error') {
-            return faTriangleExclamation;
-        }
-        if (entry.kind === 'verify') {
-            return faCircleCheck;
-        }
-        if (entry.kind === 'milestone') {
-            return faFlagCheckered;
-        }
-        switch (entry.tool) {
-            case 'write_file':
-                return faFileCirclePlus;
-            case 'edit_file':
-                return faFilePen;
-            case 'read_file':
-                return faMagnifyingGlass;
-            case 'bash':
-                return faTerminal;
-            case 'submit':
-                return faFlagCheckered;
-            default:
-                return faCircleInfo;
-        }
-    }
-
-    /** Maps an agent tool name to the i18n key suffix for its short, human-readable action label (e.g. {@code write_file} → {@code create}). */
-    protected toolKey(tool: string | undefined): string {
-        switch (tool) {
-            case 'write_file':
-                return 'create';
-            case 'edit_file':
-                return 'edit';
-            case 'read_file':
-                return 'read';
-            case 'bash':
-                return 'run';
-            case 'verify':
-                return 'verify';
-            case 'submit':
-                return 'submit';
-            default:
-                return 'tool';
-        }
-    }
-
     private subscribeToJob(id: string): void {
         this.jobSubscription = this.websocketService.subscribeToJob(id).subscribe({
             next: (event) => this.handleEvent(event),
@@ -536,7 +450,6 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.cancelling.set(false);
         this.progressEvents.set([]);
         this.finalEvent.set(undefined);
-        this.showLog.set(false);
         this.retryGuidance.set('');
         this.terminalFocusHandled = false;
         // Re-arm the one-shot auto-open so the popover opens again for this fresh run (a retry or a second run in the same mounted card).

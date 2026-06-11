@@ -327,16 +327,6 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(component.progress().attemptTotal).toBe(3);
     });
 
-    it('keeps the raw agent log collapsed by default and toggles it', () => {
-        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-log' }));
-        component.generate();
-        jobStream.next({ type: 'PROGRESS', message: 'Turn 1: write_file solution/A.java' });
-
-        expect(component.showLog()).toBe(false);
-        component.showLog.set(true);
-        expect(component.showLog()).toBe(true);
-    });
-
     it('self-hides when idle and renders the branded card once a run is active or recent', () => {
         // No run started: the card is not a permanent fixture, so nothing renders.
         expect(component.hasActiveOrRecentRun()).toBe(false);
@@ -373,17 +363,15 @@ describe('HyperionExerciseGenerationComponent', () => {
         }
     });
 
-    it('resets the elapsed timer, log toggle and transcript when a new run starts', () => {
+    it('resets the streamed events, verdict and elapsed timer when a new run starts', () => {
         generationService.generateExercise.mockReturnValue(of({ jobId: 'job-reset' }));
         component.generate();
         jobStream.next({ type: 'PROGRESS', message: 'work' });
-        component.showLog.set(true);
         jobStream.next({ type: 'DONE', completionStatus: 'PARTIAL', message: 'not verified' });
 
         component.generate();
         expect(component.progressEvents()).toEqual([]);
         expect(component.finalEvent()).toBeUndefined();
-        expect(component.showLog()).toBe(false);
         expect(component.elapsedSeconds()).toBe(0);
     });
 
