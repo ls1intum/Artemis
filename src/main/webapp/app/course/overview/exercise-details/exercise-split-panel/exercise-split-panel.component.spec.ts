@@ -16,8 +16,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('split.js', () => ({
     default: vi.fn(() => ({ destroy: vi.fn(), getSizes: vi.fn(() => [65, 35]) })),
@@ -146,7 +148,7 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.splitOnWide()).toBe(true);
     });
 
-    it.each([false, undefined])('should not show the feedback tab for a failed build without inline feedback when allowOnlineEditor is %s', (allowOnlineEditor) => {
+    it.each([false, undefined])('should show the feedback tab for a failed build when allowOnlineEditor is %s', (allowOnlineEditor) => {
         const result = createResult({ id: 2, completionDate: dayjs() });
         const submission = { buildFailed: true, results: [result] };
         result.submission = submission;
@@ -156,7 +158,7 @@ describe('ExerciseSplitPanelComponent', () => {
 
         const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
 
-        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
         expect(component.showPrimaryEditorPanel()).toBe(false);
         expect(resizablePanels.splitOnWide()).toBe(true);
     });
@@ -206,15 +208,15 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(router.navigate).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 1], { relativeTo: {} });
     });
 
-    it('should not show the feedback tab for successful Athena feedback results without inline feedback', () => {
-        const result = createResult({ id: 2, successful: true });
+    it('should show the feedback tab for successful Athena feedback results even before feedback details are attached', () => {
+        const result = createResult({ id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
         const submission = { buildFailed: false, results: [result] };
         result.submission = submission;
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
         fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
         fixture.detectChanges();
 
-        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
         expect(component.showPrimaryEditorPanel()).toBe(false);
     });
 

@@ -40,6 +40,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -210,7 +211,27 @@ export class ExerciseSplitPanelComponent {
 
     private latestResultHasInlineFeedback(): boolean {
         const latestResult = this.latestResultOfActiveParticipation();
-        return latestResult?.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
+        if (!latestResult) {
+            return false;
+        }
+        if (this.resultBelongsToFailedBuild(latestResult)) {
+            return true;
+        }
+        if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && latestResult.successful) {
+            return true;
+        }
+        return latestResult.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
+    }
+
+    private resultBelongsToFailedBuild(result: Result): boolean {
+        if ((result.submission as ProgrammingSubmission | undefined)?.buildFailed) {
+            return true;
+        }
+        return (
+            this.studentParticipation()?.submissions?.some(
+                (submission) => (submission as ProgrammingSubmission).buildFailed && submission.results?.some((submissionResult) => submissionResult.id === result.id),
+            ) ?? false
+        );
     }
 
     private latestResultOfActiveParticipation(): Result | undefined {
