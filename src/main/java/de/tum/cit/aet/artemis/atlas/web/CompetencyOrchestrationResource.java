@@ -51,7 +51,7 @@ public class CompetencyOrchestrationResource {
     /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
-            case SUCCESS -> HttpStatus.OK;
+            case SUCCESS, NO_OP -> HttpStatus.OK;
             case PARTIAL -> HttpStatus.MULTI_STATUS;
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason()) {

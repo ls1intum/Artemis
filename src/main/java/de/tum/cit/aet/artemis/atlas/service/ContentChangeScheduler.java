@@ -124,24 +124,42 @@ public class ContentChangeScheduler {
             result = orchestrationService.runBatch(courseId, exerciseIds);
         }
         catch (Exception ex) {
+            // An exception escapes runBatch only from batch preparation (exercise resolution), before
+            // any competency is mutated — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
+            accumulator.requeueAfterFailedRun(courseId, exerciseIds);
             broadcastSummary(courseId, runId, exerciseCount, false);
             return;
         }
 
-        if (result != null && result.status() == CompetencyOrchestrationResultDTO.Status.IN_PROGRESS) {
-            // Concurrent course orchestration — requeue the whole batch and let the next tick pick it
-            // up instead of consuming the change events as a permanent failure. The requeue also
-            // refunds the daily-run reservation taken by claimDueBatch, so a long concurrent run does
-            // not let repeated retry ticks burn the per-course cap without an actual run. No completion
-            // to surface.
-            log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, exerciseCount);
-            accumulator.requeueAfterConcurrentRun(courseId, exerciseIds);
-            return;
+        CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
+        switch (status) {
+            case IN_PROGRESS -> {
+                // Concurrent course orchestration — requeue the whole batch and let the next tick pick
+                // it up instead of consuming the change events as a permanent failure. The requeue also
+                // refunds the daily-run reservation taken by claimDueBatch, so a long concurrent run
+                // does not let repeated retry ticks burn the per-course cap without an actual run. No
+                // completion to surface.
+                log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, exerciseCount);
+                accumulator.requeueAfterConcurrentRun(courseId, exerciseIds);
+            }
+            case NO_OP ->
+                // Nothing was applicable (all claimed ids deleted / exam / wrong course) — nothing ran
+                // and nothing was discarded, so report no completion rather than a misleading success.
+                log.debug("atlas.automatic course {} run {} had no applicable exercises; no summary broadcast", courseId, runId);
+            case FAILED -> {
+                // The run failed before committing any mutation — requeue so the changes are retried on
+                // a later tick. The daily-run reservation is kept (not refunded), so the per-course cap
+                // bounds how many failed retries a day can burn.
+                log.debug("atlas.automatic course {} run {} failed; requeueing {} exercise(s) for retry", courseId, runId, exerciseCount);
+                accumulator.requeueAfterFailedRun(courseId, exerciseIds);
+                broadcastSummary(courseId, runId, exerciseCount, false);
+            }
+            case SUCCESS -> broadcastSummary(courseId, runId, exerciseCount, true);
+            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply). null:
+            // unknown state, do not requeue. Both surface as a failure toast.
+            case null, default -> broadcastSummary(courseId, runId, exerciseCount, false);
         }
-
-        boolean success = result != null && result.status() == CompetencyOrchestrationResultDTO.Status.SUCCESS;
-        broadcastSummary(courseId, runId, exerciseCount, success);
     }
 
     private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {

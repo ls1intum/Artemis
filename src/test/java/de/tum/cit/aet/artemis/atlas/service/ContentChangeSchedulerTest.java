@@ -106,12 +106,55 @@ class ContentChangeSchedulerTest {
 
         scheduler.tick();
 
+        // A transient failure committed no mutation — the batch is requeued (without refunding the
+        // daily reservation) so it retries on a later tick instead of being silently discarded.
+        verify(accumulator).requeueAfterFailedRun(COURSE_ID, exerciseIds);
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
         assertThat(summary.exerciseCount()).isEqualTo(2);
         assertThat(summary.successCount()).isEqualTo(0);
         assertThat(summary.failureCount()).isEqualTo(2);
+    }
+
+    @Test
+    void tick_partialResult_broadcastsFailureButDoesNotRequeue() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
+                .thenReturn(CompetencyOrchestrationResultDTO.partial("half", List.of(), CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
+
+        scheduler.tick();
+
+        // Some mutations were already committed — requeueing would re-apply them, so the batch is not
+        // requeued; the failure is still surfaced.
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().failureCount()).isEqualTo(2);
+    }
+
+    @Test
+    void tick_noOpResult_doesNotBroadcastOrRequeue() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        when(accumulator.tryClaimLock(COURSE_ID)).thenReturn(true);
+        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenReturn(CompetencyOrchestrationResultDTO.noOp("nothing applicable"));
+
+        scheduler.tick();
+
+        // No applicable exercise was processed and nothing was discarded — no completion toast and no
+        // requeue, so a deleted/exam-only batch is not reported as a fake success.
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any());
+        verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any());
+        verify(accumulator).releaseLock(COURSE_ID);
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }
 
     @Test
@@ -157,6 +200,9 @@ class ContentChangeSchedulerTest {
 
         scheduler.tick();
 
+        // An exception escapes only from batch preparation (before any mutation), so the batch is
+        // requeued rather than discarded.
+        verify(accumulator).requeueAfterFailedRun(COURSE_ID, exerciseIds);
         verify(accumulator).releaseLock(COURSE_ID);
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());

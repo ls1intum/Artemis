@@ -170,7 +170,31 @@ public class ContentChangeAccumulatorService {
         }
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        map.executeOnKey(courseId, new RequeueEntryProcessor(new HashSet<>(exerciseIds), now, today));
+        map.executeOnKey(courseId, new RequeueEntryProcessor(new HashSet<>(exerciseIds), now, today, true));
+    }
+
+    /**
+     * Requeue a batch that was claimed via {@link #claimDueBatch(long)} but failed to run (LLM
+     * error, internal prep error, missing chat client, or an exception thrown before any competency
+     * was mutated). Re-merges the exercise ids (restarting the debounce window) so the changes are
+     * retried on a later tick rather than being silently discarded. Unlike
+     * {@link #requeueAfterConcurrentRun}, the daily-run reservation is <em>kept</em>: the run was
+     * actually attempted, so the per-day cap bounds how many failed retries a course can burn before
+     * giving up for the day. A no-op for an empty id set.
+     * <p>
+     * Must only be called when no competency mutation was committed (status {@code FAILED}, never
+     * {@code PARTIAL}) — re-running a partially applied batch would re-apply the committed changes.
+     *
+     * @param courseId    the course whose batch is being requeued
+     * @param exerciseIds the exercise ids to re-add to the accumulator
+     */
+    public void requeueAfterFailedRun(long courseId, Set<Long> exerciseIds) {
+        if (exerciseIds.isEmpty()) {
+            return;
+        }
+        Instant now = Instant.now(clock);
+        LocalDate today = LocalDate.now(clock);
+        map.executeOnKey(courseId, new RequeueEntryProcessor(new HashSet<>(exerciseIds), now, today, false));
     }
 
     /**
@@ -303,9 +327,10 @@ public class ContentChangeAccumulatorService {
     }
 
     /**
-     * Hazelcast-side requeue: re-merge claimed ids and release one daily-run reservation atomically.
-     * Used by the scheduler when a claimed batch hit a concurrent run and must retry without the
-     * earlier optimistic quota reservation sticking.
+     * Hazelcast-side requeue: re-merge claimed ids atomically. When {@code refundDailyRun} is set
+     * (concurrent-run requeue) one daily-run reservation is released so a retry-only tick does not
+     * burn automatic quota; when unset (failed-run requeue) the reservation is kept so the per-day
+     * cap bounds how many failed retries a course can attempt.
      */
     static final class RequeueEntryProcessor implements EntryProcessor<Long, ContentChangeAccumulator, Void>, Serializable {
 
@@ -318,10 +343,13 @@ public class ContentChangeAccumulatorService {
 
         private final LocalDate today;
 
-        RequeueEntryProcessor(Set<Long> exerciseIds, Instant now, LocalDate today) {
+        private final boolean refundDailyRun;
+
+        RequeueEntryProcessor(Set<Long> exerciseIds, Instant now, LocalDate today, boolean refundDailyRun) {
             this.exerciseIds = exerciseIds;
             this.now = now;
             this.today = today;
+            this.refundDailyRun = refundDailyRun;
         }
 
         @Override
@@ -331,7 +359,7 @@ public class ContentChangeAccumulatorService {
             for (Long exerciseId : exerciseIds) {
                 next = next.with(exerciseId, now);
             }
-            entry.setValue(next.refundDailyRun(today));
+            entry.setValue(refundDailyRun ? next.refundDailyRun(today) : next);
             return null;
         }
     }

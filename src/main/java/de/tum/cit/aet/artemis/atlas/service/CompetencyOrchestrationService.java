@@ -185,8 +185,9 @@ public class CompetencyOrchestrationService {
      *
      * @param courseId    the course whose buffered batch is being drained
      * @param exerciseIds programming-exercise ids in the batch
-     * @return the single batch result; {@code SUCCESS} when the run completed (even with zero
-     *         applicable exercises), {@code IN_PROGRESS} when another run holds the course lock
+     * @return the single batch result; {@code SUCCESS} when the run completed, {@code NO_OP} when no
+     *         claimed exercise was applicable (so nothing was processed), {@code IN_PROGRESS} when
+     *         another run holds the course lock
      */
     public CompetencyOrchestrationResultDTO runBatch(long courseId, Set<Long> exerciseIds) {
         if (chatClient == null) {
@@ -194,7 +195,7 @@ public class CompetencyOrchestrationService {
         }
         List<ProgrammingExercise> exercises = resolveBatchExercises(courseId, exerciseIds);
         if (exercises.isEmpty()) {
-            return CompetencyOrchestrationResultDTO.success("No applicable exercises in batch.", List.of());
+            return CompetencyOrchestrationResultDTO.noOp("No applicable exercises in batch.");
         }
 
         RunInfo claim = new RunInfo(UUID.randomUUID().toString(), exercises.getFirst().getId(), Instant.now());
@@ -247,7 +248,7 @@ public class CompetencyOrchestrationService {
             log.info("Atlas orchestrator (manual flush) course {} running batch of {} exercise(s) (including clicked exercise {})", courseId, mergedExerciseIds.size(), exerciseId);
             List<ProgrammingExercise> exercises = resolveBatchExercises(courseId, mergedExerciseIds);
             if (exercises.isEmpty()) {
-                return CompetencyOrchestrationResultDTO.success("No applicable exercises in batch.", List.of());
+                return CompetencyOrchestrationResultDTO.noOp("No applicable exercises in batch.");
             }
             return orchestrateBatch(exercises, courseId);
         }

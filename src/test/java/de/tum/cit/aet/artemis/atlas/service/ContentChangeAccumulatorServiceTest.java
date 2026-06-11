@@ -181,6 +181,32 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
+    void requeueAfterFailedRun_keepsReservationSoFailedRetriesAreBoundedByDailyCap() {
+        service.record(1L, 200L);
+
+        // Each iteration models a scheduler tick that drained the batch but failed before committing
+        // anything: the ids are requeued, but the daily reservation is kept so failed retries are
+        // bounded by the cap. After DAILY_CAP attempts the batch can no longer be claimed today.
+        for (int i = 0; i < DAILY_CAP; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            Optional<BatchClaim> claim = service.claimDueBatch(1L);
+            assertThat(claim).as("failed retry #%d must still claim the requeued batch", i + 1).isPresent();
+            assertThat(claim.get().exerciseIds()).containsExactly(200L);
+            service.requeueAfterFailedRun(1L, claim.get().exerciseIds());
+        }
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("cap exhausted after DAILY_CAP failed attempts").isEmpty();
+
+        // The changes were not discarded: the requeued id is still buffered and is claimable the next
+        // day once the cap resets.
+        clock.advanceSeconds(24 * 60 * 60);
+        Optional<BatchClaim> nextDayClaim = service.claimDueBatch(1L);
+        assertThat(nextDayClaim).as("requeued batch survives to the next day").isPresent();
+        assertThat(nextDayClaim.get().exerciseIds()).containsExactly(200L);
+    }
+
+    @Test
     void tryClaimLock_secondAcquirerIsRejectedUntilRelease() throws Exception {
         assertThat(service.tryClaimLock(42L)).isTrue();
         java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();

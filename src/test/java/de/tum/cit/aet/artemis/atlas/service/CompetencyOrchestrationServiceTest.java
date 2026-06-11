@@ -6,8 +6,8 @@ import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.FAILED;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.IN_PROGRESS;
+import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.NO_OP;
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.PARTIAL;
-import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.SUCCESS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -250,12 +250,14 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void runBatch_onlyNonApplicableExercises_returnsSuccessWithoutClaimingLock() {
+    void runBatch_onlyNonApplicableExercises_returnsNoOpWithoutClaimingLock() {
         when(programmingExerciseRepository.findAllById(any())).thenReturn(List.of(examExercise(12L)));
 
         CompetencyOrchestrationResultDTO result = createService(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(12L, 99L));
 
-        assertThat(result.status()).isEqualTo(SUCCESS);
+        // No applicable exercise was processed — a NO_OP (not SUCCESS) so the scheduler does not report
+        // the claimed ids as successfully orchestrated.
+        assertThat(result.status()).isEqualTo(NO_OP);
         assertThat(result.appliedActions()).isEmpty();
         // Exam and missing exercises are dropped before the per-course lock is even claimed.
         verify(runMap, never()).putIfAbsent(anyLong(), any());
