@@ -541,11 +541,6 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, @Nullable ZonedDateTime computedBuildAndTestDate) {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
+        return false;
     }
 }

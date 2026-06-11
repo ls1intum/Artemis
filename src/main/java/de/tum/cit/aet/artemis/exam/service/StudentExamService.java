@@ -251,7 +251,7 @@ public class StudentExamService {
 
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
         List<StudentParticipation> eligibleParticipations = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().getFeedbackSuggestionModule() != null).toList();
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().areFeedbackSuggestionsEnabled()).toList();
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with a configured AI feedback module", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
         }

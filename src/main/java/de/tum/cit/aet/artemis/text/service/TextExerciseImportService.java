@@ -91,11 +91,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        if (newExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionModule(null);
-        }
-
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         TextExercise savedExercise = textExerciseRepository.save(newExercise);
         if (!competencyLinks.isEmpty()) {

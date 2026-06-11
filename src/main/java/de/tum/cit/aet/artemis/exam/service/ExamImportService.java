@@ -418,7 +418,6 @@ public class ExamImportService {
         newExercise.setMode(originalExercise.getMode());
         newExercise.setIncludedInOverallScore(originalExercise.getIncludedInOverallScore());
         newExercise.setAllowComplaintsForAutomaticAssessments(originalExercise.getAllowComplaintsForAutomaticAssessments());
-        newExercise.setAllowFeedbackRequests(originalExercise.getAllowFeedbackRequests());
         newExercise.setProblemStatement(originalExercise.getProblemStatement());
         newExercise.setGradingInstructions(originalExercise.getGradingInstructions());
         newExercise.setCategories(new HashSet<>(originalExercise.getCategories()));

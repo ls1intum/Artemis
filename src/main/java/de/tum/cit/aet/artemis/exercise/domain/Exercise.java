@@ -653,6 +653,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
+    public boolean getAllowFeedbackRequests() {
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isAutoFeedbackEnabled();
+    }
+
+    public boolean areFeedbackSuggestionsEnabled() {
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        return course != null && course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled();
+    }
+
     public Set<GradingCriterion> getGradingCriteria() {
         return gradingCriteria;
     }
