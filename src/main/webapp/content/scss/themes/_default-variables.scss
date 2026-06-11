@@ -542,7 +542,7 @@ $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
 $feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
 $graph-grey: rgba(127, 127, 127, 255);
 $graph-dark-blue: rgba(53, 61, 71, 1);
@@ -552,6 +552,10 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
+
+// Chart text and grid line colors (consumed by chart.js via ChartColorService)
+$chart-text-color: #666666;
+$chart-grid-color: rgba(0, 0, 0, 0.1);
 
 // User-Management
 $user-management-background-color: rgba($black, 0.02);

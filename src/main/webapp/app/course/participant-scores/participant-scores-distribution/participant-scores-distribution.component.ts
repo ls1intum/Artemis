@@ -1,6 +1,10 @@
-import { Component, HostListener, OnInit, effect, inject, input, output } from '@angular/core';
-import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { Component, HostListener, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChartModule } from 'primeng/chart';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,9 +12,8 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-interface NgxClickEvent {
+interface ChartClickEvent {
     name: string;
     value: number;
     label: string;
@@ -19,8 +22,8 @@ interface NgxClickEvent {
 @Component({
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
-    styleUrls: ['./participant-score-distribution.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [BarChartModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
+    styleUrls: ['./participant-score-distribution.component.scss'],
+    imports: [ChartModule, TranslateDirective, HelpIconComponent],
 })
 export class ParticipantScoresDistributionComponent implements OnInit {
     private gradingService = inject(GradingService);
@@ -38,29 +41,40 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly scoreToHighlight = input<number>();
 
-    readonly onSelect = output<NgxClickEvent>();
+    readonly onSelect = output<ChartClickEvent>();
 
     gradingScaleExists = false;
     isBonus?: boolean;
-    ngxData: NgxChartsSingleSeriesDataEntry[];
-    yScaleMax: number;
+    private entries: ChartSeriesEntry[] = [];
     height = 500;
-
-    showYAxisLabel = true;
-    yAxisLabel: string;
-    xAxisLabel: string;
 
     helpIconTooltip: string;
 
     readonly binWidth = 5;
 
-    ngxColor = {
-        name: 'Participation scores distribution',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    backupDomain: string[];
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    private readonly chartColors = signal<string[]>([]);
+    private readonly yScaleMax = signal<number | undefined>(undefined);
+    readonly showYAxisLabel = signal(true);
+    private readonly yAxisLabel = signal('');
+    private readonly xAxisLabel = signal('');
+    private backupDomain: string[] = [];
+
+    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.chartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            xAxis: { label: this.xAxisLabel() },
+            yAxis: { label: this.showYAxisLabel() ? this.yAxisLabel() : undefined, max: this.yScaleMax() },
+            tooltip: {
+                title: (items) => items[0]?.label ?? '',
+                label: (item) => `${this.translateService.instant('statistics.amountOfStudents')}: ${item.parsed.y}`,
+            },
+            dataLabels: this.isCourseScore() ? undefined : { formatter: (value) => (this.dataLabelFormatting() ? this.dataLabelFormatting()!(value) : `${value}`) },
+        }),
+    );
+    readonly dataLabelsPlugin = [ChartDataLabels];
 
     constructor() {
         // Replaces ngOnChanges: recompute the chart whenever any of the data inputs change.
@@ -93,7 +107,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         // For course scores we keep the larger height (500px); the exam statistics use the old 400px height.
         this.height = this.isCourseScore() ? 500 : 400;
         this.createChart();
-        this.yScaleMax = this.calculateTickMax();
+        this.yScaleMax.set(this.calculateTickMax());
         this.helpIconTooltip = this.determineHelpIconTooltip();
         this.highlightScore();
     }
@@ -105,10 +119,10 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      */
     @HostListener('window:resize')
     realignChart() {
-        if (window.innerWidth < 700 && this.showYAxisLabel) {
-            this.showYAxisLabel = false;
-        } else if (window.innerWidth > 700 && !this.showYAxisLabel) {
-            this.showYAxisLabel = true;
+        if (window.innerWidth < 700 && this.showYAxisLabel()) {
+            this.showYAxisLabel.set(false);
+        } else if (window.innerWidth > 700 && !this.showYAxisLabel()) {
+            this.showYAxisLabel.set(true);
         }
     }
 
@@ -118,12 +132,11 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
      * If no grading key exists, this default configuration is presented to the user.
      */
-    private generateDefaultNgxChartsSetting(): void {
-        this.ngxData = [];
+    private generateDefaultChartSetting(): void {
+        this.entries = [];
         if (this.gradingScaleExists) {
-            this.ngxData = [];
             this.gradingScale()!.gradeSteps.forEach((step) => {
-                this.ngxData.push({
+                this.entries.push({
                     name: step.gradeName,
                     value: 0,
                 });
@@ -134,7 +147,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
                     name: i.toString(),
                     value: 0,
                 };
-                this.ngxData.push(entry);
+                this.entries.push(entry);
             }
         }
         this.createChartLabels();
@@ -150,18 +163,18 @@ export class ParticipantScoresDistributionComponent implements OnInit {
                 label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
                 label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
                 label += ` {${gradeStep.gradeName}}`;
-                this.ngxData[i].name = label;
+                this.entries[i].name = label;
             });
         } else {
-            for (let i = 0; i < this.ngxData.length; i++) {
+            for (let i = 0; i < this.entries.length; i++) {
                 let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                label += i === this.ngxData.length - 1 ? ']' : ')';
+                label += i === this.entries.length - 1 ? ']' : ')';
 
-                this.ngxData[i].name = label;
+                this.entries[i].name = label;
             }
         }
 
-        this.ngxData = [...this.ngxData];
+        this.chartEntries.set([...this.entries]);
     }
 
     /**
@@ -212,14 +225,14 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     private addToHistogram(percentageOrGradeName: number | string): void {
         // Update histogram data structure
         const histogramIndex = this.findGradeStepIndex(percentageOrGradeName);
-        this.ngxData[histogramIndex].value++;
+        this.entries[histogramIndex].value++;
     }
 
     /**
      * Sets up the distribution chart for given scores
      */
     private createChart(): void {
-        this.generateDefaultNgxChartsSetting();
+        this.generateDefaultChartSetting();
         this.setupChartColoring();
         this.setupAxisLabels();
         const elements = this.scores() ?? this.gradeNames();
@@ -227,13 +240,14 @@ export class ParticipantScoresDistributionComponent implements OnInit {
             throw new Error('Either "scores" or "gradeNames" should be given as input.');
         }
         elements.forEach((scoreOrGradeName) => this.addToHistogram(scoreOrGradeName));
+        this.chartEntries.set([...this.entries]);
     }
 
     /**
      * Determines and returns the maximum value displayed on the y-axis
      */
     private calculateTickMax(): number {
-        const histogramData = this.ngxData.map((dataPack) => dataPack.value);
+        const histogramData = this.entries.map((dataPack) => dataPack.value);
         const max = Math.max(...histogramData);
         return Math.ceil((max + 1) / 10) * 10 + 20;
     }
@@ -282,37 +296,38 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      * In either case, all bars above the thresholds remain grey
      */
     private setupChartColoring(): void {
-        this.ngxColor.domain = [];
+        const domain: string[] = [];
         if (!this.gradingScaleExists) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
                 if (i < 40 / this.binWidth) {
-                    this.ngxColor.domain.push(GraphColors.YELLOW);
+                    domain.push(GraphColors.YELLOW);
                 } else {
-                    this.ngxColor.domain.push(GraphColors.GREY);
+                    domain.push(GraphColors.GREY);
                 }
             }
         } else {
             this.gradingScale()!.gradeSteps.forEach((gradeStep) => {
                 const color = this.getGradeStepColor(gradeStep);
-                this.ngxColor.domain.push(color);
+                domain.push(color);
             });
         }
-        this.backupDomain = this.ngxColor.domain;
-        this.ngxData = [...this.ngxData];
+        this.backupDomain = domain;
+        this.chartColors.set([...domain]);
     }
 
     /**
      * Auxiliary method in order to keep the chart translation sensitive
      */
     private setupAxisLabels(): void {
-        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+        this.yAxisLabel.set(this.translateService.instant('artemisApp.examScores.yAxes'));
+        let xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
         if (this.gradingScaleExists && !this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
+            xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
         } else if (this.gradingScaleExists && this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
+            xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
         }
+        this.xAxisLabel.set(xAxisLabel);
     }
 
     /**
@@ -342,16 +357,26 @@ export class ParticipantScoresDistributionComponent implements OnInit {
      */
     private highlightScore(): void {
         if (this.scoreToHighlight() === undefined) {
-            this.ngxColor.domain = this.backupDomain;
-            this.ngxData = [...this.ngxData];
+            this.chartColors.set([...this.backupDomain]);
             return;
         }
         const index = this.findGradeStepIndex(this.scoreToHighlight()!);
-        const bar = this.ngxData[index];
+        const bar = this.entries[index];
 
         if (bar.value > 0) {
-            this.ngxColor.domain[index] = GraphColors.LIGHT_BLUE;
-            this.ngxData = [...this.ngxData];
+            const domain = [...this.backupDomain];
+            domain[index] = GraphColors.LIGHT_BLUE;
+            this.chartColors.set(domain);
+        }
+    }
+
+    /**
+     * Re-emits chart bar clicks in the shape previously provided by ngx-charts.
+     */
+    onChartSelect(event: any): void {
+        const selected = toChartSelectEvent(event, this.chartData());
+        if (selected?.label !== undefined && selected.value !== undefined) {
+            this.onSelect.emit({ name: selected.label, value: selected.value, label: selected.label });
         }
     }
 }
