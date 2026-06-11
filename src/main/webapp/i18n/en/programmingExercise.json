@@ -294,7 +294,7 @@
                 "tasksOfExercise": "Tasks:",
                 "generationAssistance": "Generate Draft Problem Statement",
                 "refinementAssistance": "Refine Problem Statement",
-                "tieredHint": "Two ways to use AI: draft just the problem statement to refine yourself, or generate the entire exercise — solution, template, tests, and statement.",
+                "tieredHint": "Describe your exercise in “Your Requirements”. Generate the entire exercise straight from your brief, or draft just the problem statement first to review and edit before generating the rest.",
                 "draftHint": "Draft the exercise brief, or refine the current problem statement.",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",

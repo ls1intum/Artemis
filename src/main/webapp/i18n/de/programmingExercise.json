@@ -294,7 +294,7 @@
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
                 "refinementAssistance": "Problemstellung verfeinern",
-                "tieredHint": "Zwei KI-Wege: nur die Problemstellung entwerfen und selbst verfeinern, oder die gesamte Aufgabe erzeugen — Lösung, Vorlage, Tests und Problemstellung.",
+                "tieredHint": "Beschreiben Sie Ihre Aufgabe unter „Ihre Anforderungen“. Erzeugen Sie die gesamte Aufgabe direkt aus Ihrer Beschreibung, oder entwerfen Sie zunächst nur die Problemstellung, um sie vor dem Erzeugen zu prüfen und zu bearbeiten.",
                 "draftHint": "Entwirf die Aufgabenbeschreibung oder verfeinere die aktuelle Problemstellung.",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",

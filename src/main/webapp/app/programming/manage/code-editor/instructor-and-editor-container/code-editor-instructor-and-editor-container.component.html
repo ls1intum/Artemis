@@ -21,7 +21,12 @@
         <!-- Creation Assistance run card: rendered inline at the top of the editor (NOT inside the collapsible instructions panel, which can be display:none) so the streaming
              progress is always visible during an active/recent generation or adaptation run. Self-hides when idle; reattaches to a live run via /status. -->
         @if (hyperionEnabled && exercise.isAtLeastEditor && exercise.id) {
-            <jhi-hyperion-exercise-generation [exerciseId]="exercise.id" [autoStart]="autoStartGeneration()" (generationCompleted)="onProblemStatementSaved()" />
+            <jhi-hyperion-exercise-generation
+                [exerciseId]="exercise.id"
+                [autoStart]="autoStartGeneration()"
+                [autoStartPrompt]="autoStartGenerationPrompt()"
+                (generationCompleted)="onProblemStatementSaved()"
+            />
         }
         <jhi-code-editor-container
             [participation]="selectedParticipation!"

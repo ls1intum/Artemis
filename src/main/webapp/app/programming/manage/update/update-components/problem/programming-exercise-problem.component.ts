@@ -83,8 +83,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     generationLanguagesLoading = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
-    /** Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the detail page to auto-start the agentic run (wired to the parent's {@code saveWithAi()}). */
-    generateWithAi = output<void>();
+    /**
+     * Requests the higher-tier whole-exercise generation: saves the exercise with empty repos and navigates to the editor to auto-start the agentic run (wired to the parent's
+     * {@code saveWithAi()}). Emits the instructor's "Your Requirements" brief so the parent threads it into the run as the agent's prompt — it is what a from-scratch exercise is
+     * authored from.
+     */
+    generateWithAi = output<string>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);

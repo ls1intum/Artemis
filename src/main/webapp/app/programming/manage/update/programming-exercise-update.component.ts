@@ -62,7 +62,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
+import { AUTO_START_EXERCISE_GENERATION_PROMPT, AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -273,6 +273,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hyperionEnabledForAi.set(value);
     }
     public isGeneratingWithAi = signal<boolean>(false);
+    /** The instructor's "Your Requirements" brief captured when "Generate entire exercise" is clicked, threaded to the editor's auto-started run as the agent's prompt. */
+    private aiGenerationBrief = '';
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -875,7 +877,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * and spends generation credits. We therefore gate it behind an explicit confirmation (R5). On reject nothing happens; on accept we proceed through the
      * usual pre-update modal check before kicking off the generation.
      */
-    saveWithAi() {
+    saveWithAi(brief = '') {
+        this.aiGenerationBrief = brief.trim();
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmTitle'),
             message: this.translateService.instant('artemisApp.programmingExercise.generateExercise.confirmMessage'),
@@ -1074,7 +1077,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.navigationUtilService.navigateToExerciseCodeEditor(exercise, { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } });
+        this.navigationUtilService.navigateToExerciseCodeEditor(exercise, {
+            state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: this.aiGenerationBrief },
+        });
         this.calendarService.reloadEvents();
     }
 
@@ -1211,6 +1216,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // On the AI-eligible create path the problem statement must start EMPTY. The language readme is a worked sample (e.g. the Java sorting exercise); if it were pre-filled it
+        // would be persisted and the server's length heuristic (isNonTrivialProblemStatement) would read it as an authoritative spec, putting the agent into "spec mode" — it would
+        // rebuild the sample instead of authoring from the instructor's brief. The instructor's intent comes solely from "Your Requirements". Manual / import create keeps the
+        // readme starter so a hand-authored exercise is not left with an empty statement.
+        if (this.showGenerateWithAi()) {
+            this.programmingExercise.problemStatement = '';
+            this.problemStatementLoaded = true;
+            return;
+        }
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;

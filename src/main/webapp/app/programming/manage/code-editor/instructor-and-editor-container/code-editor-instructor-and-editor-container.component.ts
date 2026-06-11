@@ -51,7 +51,7 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { HyperionExerciseAdaptationService } from 'app/hyperion/services/hyperion-exercise-adaptation.service';
 import { HyperionExerciseGenerationComponent } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.component';
-import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
+import { AUTO_START_EXERCISE_GENERATION_PROMPT, AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { Router } from '@angular/router';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -131,6 +131,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * the read-only detail page) so the instructor watches the run stream live in the editor where they will review and refine the result.
      */
     protected readonly autoStartGeneration = signal(false);
+    /** The instructor's "Your Requirements" brief carried from the create flow, passed to the auto-started run as its prompt. */
+    protected readonly autoStartGenerationPrompt = signal<string | undefined>(undefined);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -228,6 +230,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const navigationState = inject(Router).currentNavigation()?.extras.state;
         if (navigationState?.[AUTO_START_EXERCISE_GENERATION_STATE] === true) {
             this.autoStartGeneration.set(true);
+            // The create flow's "Your Requirements" brief: threaded into the auto-started run as the agent's prompt so a from-scratch exercise is authored from the instructor's intent.
+            const brief = navigationState?.[AUTO_START_EXERCISE_GENERATION_PROMPT];
+            if (typeof brief === 'string' && brief.trim()) {
+                this.autoStartGenerationPrompt.set(brief.trim());
+            }
         }
         this.aiOps.setChangeHandler({
             onContentChanged: (content, exercise) => {

@@ -56,7 +56,7 @@
                 [formInvalid]="!!getInvalidReasons().length"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
-                (generateWithAi)="saveWithAi()"
+                (generateWithAi)="saveWithAi($event)"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-grading

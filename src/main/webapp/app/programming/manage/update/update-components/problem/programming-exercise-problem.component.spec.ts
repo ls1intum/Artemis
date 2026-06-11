@@ -651,15 +651,17 @@ describe('ProgrammingExerciseProblemComponent', () => {
             fixture.componentRef.setInput('showGenerateWithAi', true);
             fixture.componentRef.setInput('generationLanguageSupported', true);
             // A brief is required (consistent with the problem-statement action): the button is disabled until one is entered.
-            comp.userPrompt.set('A bounded integer stack with push, pop, peek and a fixed capacity.');
+            const brief = 'A bounded integer stack with push, pop, peek and a fixed capacity.';
+            comp.userPrompt.set(brief);
             fixture.detectChanges();
 
-            const emitted: void[] = [];
-            comp.generateWithAi.subscribe(() => emitted.push(undefined));
+            const emitted: string[] = [];
+            comp.generateWithAi.subscribe((value) => emitted.push(value));
 
             (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#generate-entire-exercise')!.click();
 
-            expect(emitted).toHaveLength(1);
+            // The brief is emitted so the parent can thread it into the run as the agent's prompt (it is what a from-scratch exercise is authored from).
+            expect(emitted).toEqual([brief]);
         });
 
         it('disables the entire-exercise action until a brief is entered', () => {

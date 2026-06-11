@@ -84,7 +84,7 @@
                             ) | artemisTranslate
                         "
                         tooltipPosition="top"
-                        (click)="generateWithAi.emit()"
+                        (click)="generateWithAi.emit(userPrompt() ?? '')"
                     >
                         @if (!isGeneratingWithAi()) {
                             <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />

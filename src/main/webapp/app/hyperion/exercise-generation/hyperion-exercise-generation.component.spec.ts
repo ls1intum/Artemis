@@ -270,6 +270,21 @@ describe('HyperionExerciseGenerationComponent', () => {
         expect(websocketService.subscribeToJob).toHaveBeenCalledWith('job-auto');
     });
 
+    it('auto-starts with the instructor brief as the prompt when one was provided by the create flow', () => {
+        generationService.getStatus.mockReturnValue(of(undefined));
+        generationService.generateExercise.mockReturnValue(of({ jobId: 'job-brief' }));
+
+        fixture = TestBed.createComponent(HyperionExerciseGenerationComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.componentRef.setInput('autoStart', true);
+        fixture.componentRef.setInput('autoStartPrompt', 'Implement a bounded LRU cache with get/put in O(1)');
+        fixture.detectChanges();
+
+        // The from-scratch run is driven by the instructor's "Your Requirements" brief, not undefined.
+        expect(generationService.generateExercise).toHaveBeenCalledWith(42, 'Implement a bounded LRU cache with get/put in O(1)');
+    });
+
     it('does not auto-start when a run is already in progress', () => {
         generationService.getStatus.mockReturnValue(of({ jobId: 'job-running', running: true, events: [] }));
         generationService.generateExercise.mockReturnValue(of({ jobId: 'job-auto' }));

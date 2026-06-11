@@ -134,7 +134,8 @@ export class ProblemStatementAiOperationsHelper {
                         editableInstructions?.setText(draftContent);
                         exercise.problemStatement = draftContent;
                         this.currentProblemStatement.set(draftContent);
-                        this.userPrompt.set('');
+                        // Keep the brief: after drafting a statement the instructor can immediately click "Generate entire exercise" (which requires a non-empty brief), so the staged
+                        // plan → review → generate flow works without re-typing. The drafted statement becomes the reviewed spec; the brief remains the run's prompt.
                         this.changeHandler?.onContentChanged(draftContent, exercise);
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');

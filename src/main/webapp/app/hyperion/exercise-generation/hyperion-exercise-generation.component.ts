@@ -96,6 +96,9 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     /** When {@code true}, automatically starts a generation run once on load (used by the create flow's auto-start). */
     readonly autoStart = input<boolean>(false);
 
+    /** The instructor's "Your Requirements" brief from the create flow, used as the prompt for the auto-started from-scratch run (undefined for adapt / editor-started runs). */
+    readonly autoStartPrompt = input<string | undefined>(undefined);
+
     /**
      * Optional router link to the code editor where a recovered draft's review comments live. When set on a NEEDS_REVIEW
      * outcome, the card offers an "open in editor" button. The editor host itself leaves this undefined (the comments are
@@ -258,7 +261,8 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         if (this.running() || this.finalEvent()) {
             return;
         }
-        this.generate();
+        // Author from the instructor's "Your Requirements" brief when the create flow provided one; otherwise the run starts from scratch with the generic from-scratch instruction.
+        this.generate(this.autoStartPrompt());
     }
 
     generate(guidance?: string): void {

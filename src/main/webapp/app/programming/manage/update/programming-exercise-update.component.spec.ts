@@ -42,6 +42,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FileService } from 'app/foundation/service/file.service';
+import { AUTO_START_EXERCISE_GENERATION_PROMPT } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { Signal, signal } from '@angular/core';
@@ -98,6 +100,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let fileService: FileService;
     let programmingExerciseSharingService: ProgrammingExerciseSharingService;
     let localStorageService: LocalStorageService;
 
@@ -138,6 +141,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
+        fileService = TestBed.inject(FileService);
         programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
         localStorageService = TestBed.inject(LocalStorageService);
 
@@ -439,9 +443,37 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             response$.next(new HttpResponse({ body: savedEntity }));
 
             expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
-                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: '' },
             });
             expect(comp.isGeneratingWithAi()).toBe(false);
+        });
+
+        it('threads the instructor brief from "Generate entire exercise" into the auto-start navigation state', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.course = course;
+            const savedEntity = new ProgrammingExercise(course, undefined);
+            savedEntity.id = 7;
+            savedEntity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            // The component declares ConfirmationService in its own providers; accept immediately so saveExerciseWithAi runs.
+            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((opts: any) => (opts.accept?.(), confirmationService));
+            vi.spyOn(comp, 'saveWithModalCheck' as any).mockImplementation((fn: any) => fn());
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            // The child emits the "Your Requirements" brief through generateWithAi → saveWithAi($event).
+            comp.saveWithAi('  Implement a bounded LRU cache  ');
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(expect.anything(), {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: 'Implement a bounded LRU cache' },
+            });
         });
 
         it('should navigate to the instructor code editor with auto-start state after AI exercise creation in exam mode', () => {
@@ -469,7 +501,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             response$.next(new HttpResponse({ body: savedEntity }));
 
             expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
-                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true },
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: '' },
             });
         });
 
@@ -888,6 +920,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+        });
+
+        // From-scratch by default for AI: the language readme is a worked sample (the Java sorting exercise). If it were pre-filled on the AI create path it would be persisted and
+        // read by the server as an authoritative spec ("spec mode"), making the agent rebuild the sample instead of authoring from the instructor's brief. So the AI path must start
+        // the statement EMPTY; the manual path keeps the readme starter.
+        it('should NOT load the readme template and leave the problem statement empty on the AI create path', () => {
+            const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# A worked sorting sample readme that is long enough to look like a real spec'));
+            fixture.detectChanges(); // ngOnInit assigns programmingExercise from the route (create mode, id undefined)
+            comp.hyperionEnabled = true; // create + Hyperion + not import → showGenerateWithAi() is true
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+            expect(comp.showGenerateWithAi()).toBe(true);
+
+            // Ignore any template load triggered by ngOnInit before Hyperion was enabled; assert only the language-change behaviour on the AI path.
+            getTemplateFile.mockClear();
+            comp.programmingExercise.problemStatement = '# stale readme that must be cleared';
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            expect(getTemplateFile).not.toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('');
+            expect(comp.problemStatementLoaded).toBe(true);
+        });
+
+        it('should load the readme template on the manual (non-AI) create path', () => {
+            const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# Default readme'));
+            fixture.detectChanges();
+            comp.hyperionEnabled = false; // not AI-eligible → keep today's readme starter
+            expect(comp.showGenerateWithAi()).toBe(false);
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            expect(getTemplateFile).toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('# Default readme');
+            expect(comp.problemStatementLoaded).toBe(true);
         });
     });
 
