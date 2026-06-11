@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_STATELESS_JENKINS;
 import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
 
 import java.security.MessageDigest;
@@ -42,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
-@Profile({ PROFILE_JENKINS, PROFILE_STATELESS_JENKINS, PROFILE_HADES })
+@Profile({ PROFILE_JENKINS, PROFILE_HADES })
 @Lazy
 @RestController
 @RequestMapping("api/programming/public/")
