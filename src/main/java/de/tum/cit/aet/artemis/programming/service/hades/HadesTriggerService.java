@@ -82,8 +82,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
             String assignmentHash = triggeredByPushTo == RepositoryType.USER ? commitHash : null;
+            String testHash = triggeredByPushTo == RepositoryType.TESTS ? commitHash : null;
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), null, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, null, null);
 
             // Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
