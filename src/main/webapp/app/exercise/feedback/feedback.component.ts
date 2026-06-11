@@ -12,7 +12,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -65,7 +64,6 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
 export class FeedbackComponent implements OnInit, OnChanges {
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
-    private translateService = inject(TranslateService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);

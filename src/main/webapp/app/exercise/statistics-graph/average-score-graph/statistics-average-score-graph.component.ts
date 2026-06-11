@@ -70,7 +70,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             tooltip: {
                 label: (item) => {
                     const name = String(item.label ?? '');
-                    const value = item.parsed.y;
+                    const value = item.parsed.y ?? 0;
                     return [
                         `${this.translateService.instant('artemisApp.courseStatistics.exerciseAverage')}: ${value}%`,
                         `${this.translateService.instant('artemisApp.courseStatistics.exerciseType')}: ${this.translateService.instant(

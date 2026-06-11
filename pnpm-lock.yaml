@@ -5,16 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@swimlane/ngx-charts>@angular/animations': ^21.2.0
-  '@swimlane/ngx-charts>@angular/cdk': ^21.2.0
-  '@swimlane/ngx-charts>@angular/common': ^21.2.0
-  '@swimlane/ngx-charts>@angular/compiler': ^21.2.0
-  '@swimlane/ngx-charts>@angular/core': ^21.2.0
-  '@swimlane/ngx-charts>@angular/forms': ^21.2.0
-  '@swimlane/ngx-charts>@angular/platform-browser': ^21.2.0
-  '@swimlane/ngx-charts>@angular/platform-browser-dynamic': ^21.2.0
-  '@swimlane/ngx-charts>@angular/router': ^21.2.0
-  '@swimlane/ngx-charts>rxjs': ^7.8.2
   '@swimlane/ngx-graph>@angular/animations': ^21.2.0
   '@swimlane/ngx-graph>@angular/cdk': ^21.2.0
   '@swimlane/ngx-graph>@angular/common': ^21.2.0
