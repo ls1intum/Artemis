@@ -783,16 +783,12 @@ public class FileUploadExerciseResource {
         if (updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
         }
-        if (updateFileUploadExerciseDTO.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(updateFileUploadExerciseDTO.allowFeedbackRequests());
-        }
         if (updateFileUploadExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
         }
         if (updateFileUploadExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(updateFileUploadExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateFileUploadExerciseDTO.gradingInstructions());
 
         exercise.setExampleSolution(updateFileUploadExerciseDTO.exampleSolution());

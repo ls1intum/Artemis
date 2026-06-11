@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -55,8 +53,6 @@ public class TextExerciseExportImportResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final UserRepository userRepository;
@@ -64,14 +60,12 @@ public class TextExerciseExportImportResource {
     private final ExerciseVersionService exerciseVersionService;
 
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, Optional<AthenaApi> athenaApi,
-            ExerciseVersionService exerciseVersionService) {
+            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExerciseVersionService exerciseVersionService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
-        this.athenaApi = athenaApi;
         this.exerciseVersionService = exerciseVersionService;
     }
 
@@ -105,16 +99,6 @@ public class TextExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalTextExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
-
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
-        try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
-                    () -> importedExercise.setFeedbackSuggestionModule(null));
-        }
-        catch (BadRequestAlertException e) {
-            importedExercise.setFeedbackSuggestionModule(null);
-        }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         exerciseVersionService.createExerciseVersion(newTextExercise, user);
