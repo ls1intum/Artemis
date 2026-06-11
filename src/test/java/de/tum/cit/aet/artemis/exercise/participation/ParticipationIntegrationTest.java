@@ -1059,6 +1059,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participation = participationUtilService.addTeamParticipationForProgrammingExercise(teamExercise, team);
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
