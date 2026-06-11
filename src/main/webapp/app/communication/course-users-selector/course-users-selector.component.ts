@@ -200,9 +200,9 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         }
 
         if (this.multiSelect()) {
-            this.selectedUsers.set(selectedUsers ?? []);
+            this.selectedUsers.set(selectedUsers);
         } else {
-            this.selectedUsers.set(selectedUsers?.length ? [selectedUsers[0]] : []);
+            this.selectedUsers.set(selectedUsers.length ? [selectedUsers[0]] : []);
         }
     }
     // === END CONTROL VALUE ACCESSOR ===

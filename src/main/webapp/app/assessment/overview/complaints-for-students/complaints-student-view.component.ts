@@ -45,7 +45,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     submission: Submission;
     // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
-    readonly complaint = signal<Complaint>(undefined!);
+    readonly complaint = signal<Complaint | undefined>(undefined);
     course?: Course;
     // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     readonly formComplaintType = signal<ComplaintType | undefined>(undefined);

@@ -235,11 +235,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         clearInterval(this.estimatedDurationInterval);
         if (this.estimatedCompletionDate() && this.buildStartDate()) {
-            this.estimatedDurationInterval = setInterval(() => {
-                this.estimatedRemaining.set(Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds')));
-                this.estimatedDuration.set(dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds'));
-            });
+            // The displayed value has second granularity — update once immediately, then once per second
+            // (an interval without delay would schedule zoneless change detection as fast as the browser allows).
+            this.updateEstimatedBuildDuration();
+            this.estimatedDurationInterval = setInterval(() => this.updateEstimatedBuildDuration(), 1000);
         }
+    }
+
+    private updateEstimatedBuildDuration() {
+        this.estimatedRemaining.set(Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds')));
+        this.estimatedDuration.set(dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds'));
     }
 
     /**
