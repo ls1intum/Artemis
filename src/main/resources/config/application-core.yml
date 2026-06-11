@@ -35,6 +35,10 @@ artemis:
         enabled: false
     athena:
         enabled: false # Set this to true to enable the Athena module for LLM-based feedback suggestions; requires the athena service to be reachable via artemis.athena.url
+        modules:
+            text: module_text_cofee
+            programming: module_programming_themisml
+            modeling: module_modeling_cofee
     apollon:
         enabled: false # Set this to true to enable the Apollon module for UML diagram PDF export; requires the apollon conversion service to be reachable via artemis.apollon.conversion-service-url
     user-management:
