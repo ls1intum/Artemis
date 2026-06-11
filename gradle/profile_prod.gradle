@@ -15,13 +15,13 @@ bootRun {
     jvmArgs = ["--add-opens=java.base/java.lang=ALL-UNNAMED"]
 }
 
-tasks.register("webapp_test", NpmTask) {
-    dependsOn "npm_install"
+tasks.register("webapp_test", PnpmTask) {
+    dependsOn pnpmInstall
     args = ["run", "webapp:test"]
 }
 
-tasks.register("webapp", NpmTask) {
-    dependsOn "npm_install"
+tasks.register("webapp", PnpmTask) {
+    dependsOn pnpmInstall
     args = ["run", "webapp:prod"]
     environment = [APP_VERSION: project.version]
 }

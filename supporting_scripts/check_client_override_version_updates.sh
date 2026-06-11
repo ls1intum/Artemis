@@ -1,69 +1,94 @@
 #!/bin/bash
 
-# This script checks your package.json overrides and only reports updates when the major or minor version changes.
-# Patch-level differences in packages that use a caret (^) prefix are ignored.
+# Reports pnpm override entries (across every pnpm-workspace.yaml in the repo) that
+# have a newer major/minor release on npm. Patch-level differences in entries that
+# use a caret (^) prefix are ignored.
+#
+# Since pnpm 11, overrides moved out of `package.json` (which used to host them under
+# `pnpm.overrides`) and into the per-project `pnpm-workspace.yaml`. This script
+# parses that YAML directly (via python3 + pyyaml) and queries the npm registry via
+# `npm view`. The root project, the `documentation/` Docusaurus site, and the
+# `src/test/playwright/` test workspace each have their own overrides set.
 
-PACKAGE_JSON="package.json"
+set -e
 
-if [ ! -f "$PACKAGE_JSON" ]; then
-  echo "package.json not found!"
-  exit 1
+WORKSPACE_FILES=(
+    "pnpm-workspace.yaml"
+    "documentation/pnpm-workspace.yaml"
+    "src/test/playwright/pnpm-workspace.yaml"
+)
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: python3 is required to parse pnpm-workspace.yaml." >&2
+    exit 1
+fi
+if ! python3 -c "import yaml" 2>/dev/null; then
+    echo "Error: PyYAML is required. Install it with 'pip3 install pyyaml'." >&2
+    exit 1
+fi
+if ! command -v npm >/dev/null 2>&1; then
+    echo "Error: npm is required (to query the registry via 'npm view')." >&2
+    exit 1
 fi
 
-echo "Checking for updates..." >&2
-
-# Extract the top-level override keys.
-OVERRIDES=$(jq -r '.overrides | keys[]' "$PACKAGE_JSON")
-
-check_dep() {
-  local DEP_NAME="$1"
-  local CUR_VERSION="$2"
-
-  # Get the latest stable version from npm.
-  local LATEST_VERSION
-  LATEST_VERSION=$(npm show "$DEP_NAME" version 2>/dev/null)
-  if [ -z "$LATEST_VERSION" ]; then
-    # If no version is found, skip.
-    return
-  fi
-
-  # If current version uses ^, only report if major or minor changes.
-  # For example, ^19.2.0 => ignore 19.2.x updates but show 19.3.x or 20.x.x updates.
-  if [[ "$CUR_VERSION" =~ ^\^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    local CUR_MAJOR="${BASH_REMATCH[1]}"
-    local CUR_MINOR="${BASH_REMATCH[2]}"
-    local LATEST_MAJOR LATEST_MINOR
-    LATEST_MAJOR=$(echo "$LATEST_VERSION" | cut -d. -f1)
-    LATEST_MINOR=$(echo "$LATEST_VERSION" | cut -d. -f2)
-
-    # Only show if major is bigger, or if same major but minor is bigger.
-    if (( LATEST_MAJOR > CUR_MAJOR )); then
-      echo "$DEP_NAME: Current -> $CUR_VERSION, Latest -> $LATEST_VERSION"
-    elif (( LATEST_MAJOR == CUR_MAJOR && LATEST_MINOR > CUR_MINOR )); then
-      echo "$DEP_NAME: Current -> $CUR_VERSION, Latest -> $LATEST_VERSION"
-    fi
-  else
-    # If no caret, do a simple direct comparison.
-    # This means we show if they differ at all.
-    if [[ "$LATEST_VERSION" != "$CUR_VERSION" ]]; then
-      echo "$DEP_NAME: Current -> $CUR_VERSION, Latest -> $LATEST_VERSION"
-    fi
-  fi
+list_overrides() {
+    # Emits one line per override: "<package>\t<version>". For parent-scoped entries
+    # ("monaco-editor>dompurify") we keep the full key so the caller can decide whether
+    # to look up the leaf package on npm.
+    local file="$1"
+    python3 -c "
+import yaml, sys
+data = yaml.safe_load(open('$file')) or {}
+overrides = data.get('overrides', {}) or {}
+for k, v in overrides.items():
+    print(str(k) + '\t' + str(v))
+"
 }
 
-for PACKAGE in $OVERRIDES; do
-  CUR_VALUE=$(jq -r ".overrides[\"$PACKAGE\"]" "$PACKAGE_JSON")
+check_dep() {
+    local file=$1 raw_name=$2 cur=$3
+    # Strip 'parent>' prefix, then optionally strip a version-range qualifier
+    # (e.g. 'dompurify@<3.4.3' -> 'dompurify'). Naively doing `${name%@*}` would
+    # also eat the leading scope marker on packages like '@angular/cdk', leaving
+    # an empty string and silently skipping the entry — so handle scoped packages
+    # separately: only strip when there is an additional '@' past the scope.
+    local name="${raw_name##*>}"
+    if [[ "$name" == @* ]]; then
+        local rest="${name:1}"
+        if [[ "$rest" == *@* ]]; then
+            name="@${rest%@*}"
+        fi
+    else
+        name="${name%@*}"
+    fi
+    [[ -z "$name" ]] && return
 
-  # If it's an object of subdependencies, handle them individually.
-  if [[ "$CUR_VALUE" =~ "{" ]]; then
-    SUB_PACKAGES=$(jq -r ".overrides[\"$PACKAGE\"] | keys[]" "$PACKAGE_JSON")
-    for SUB_DEP in $SUB_PACKAGES; do
-      CUR_SUB_VERSION=$(jq -r ".overrides[\"$PACKAGE\"][\"$SUB_DEP\"]" "$PACKAGE_JSON")
-      check_dep "$SUB_DEP" "$CUR_SUB_VERSION"
-    done
-  else
-    # Direct dependency.
-    check_dep "$PACKAGE" "$CUR_VALUE"
-  fi
+    local latest
+    latest=$(npm view "$name" version 2>/dev/null) || return
+    [[ -z "$latest" ]] && return
 
+    # Caret-prefixed entries opt out of patch-level reporting (per the file
+    # header). Exact pins are reported on any version drift.
+    if [[ "$cur" =~ ^\^([0-9]+)\.([0-9]+)\.([0-9]+)([.-].+)?$ ]]; then
+        local cur_major="${BASH_REMATCH[1]}" cur_minor="${BASH_REMATCH[2]}"
+        local latest_major latest_minor
+        latest_major=$(echo "$latest" | cut -d. -f1)
+        latest_minor=$(echo "$latest" | cut -d. -f2)
+        if (( latest_major > cur_major )) || (( latest_major == cur_major && latest_minor > cur_minor )); then
+            echo "$file: $raw_name: Current -> $cur, Latest -> $latest"
+        fi
+    elif [[ "$cur" != "$latest" ]]; then
+        echo "$file: $raw_name: Current -> $cur, Latest -> $latest"
+    fi
+}
+
+for wf in "${WORKSPACE_FILES[@]}"; do
+    if [[ ! -f "$wf" ]]; then
+        continue
+    fi
+    echo "Checking overrides in $wf..." >&2
+    while IFS=$'\t' read -r name version; do
+        [[ -z "$name" ]] && continue
+        check_dep "$wf" "$name" "$version"
+    done < <(list_overrides "$wf")
 done

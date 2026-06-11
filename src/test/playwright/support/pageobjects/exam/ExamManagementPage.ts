@@ -58,14 +58,32 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the exam assessment dashboard
-     * @param courseID the id of the course
-     * @param examID the id of the exam
-     * @param timeout timeout of waiting for assessment dashboard button
+     * Opens the exam assessment dashboard.
+     *
+     * Under heavy multi-node CI load the goto occasionally lands on `/courses` instead of
+     * the assessment-dashboard route — the assessment dashboard's lazy chunk fails to load
+     * and Angular's auth/router fall-back redirects to /courses. When that happens the
+     * downstream `clickExerciseDashboardButton` reloads /courses forever and ultimately
+     * times out. Verify the URL after navigation and re-issue the goto if it drifted.
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
-        await this.page.waitForLoadState('networkidle');
+        const expectedUrl = `/course-management/${courseID}/exams/${examID}/assessment-dashboard`;
+        const expectedPattern = new RegExp(`/course-management/${courseID}/exams/${examID}/assessment-dashboard(?:[/?#].*)?$`);
+        // Try up to twice — under multi-node CI load the first goto occasionally lands on
+        // `/courses` (assessment-dashboard chunk fails to load and Angular's fall-back redirect
+        // kicks in). Detecting the URL drift early lets us retry the navigation cleanly rather
+        // than letting downstream helpers reload the wrong page until they time out.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.goto(expectedUrl);
+            await this.page.waitForLoadState('domcontentloaded');
+            if (expectedPattern.test(this.page.url())) {
+                return;
+            }
+        }
+        // Both attempts drifted (typically to /courses). Fail loudly with an actionable
+        // message rather than returning silently and letting a downstream helper time out
+        // against the wrong page — matching the throw-on-miss behaviour of `openExam`.
+        throw new Error(`openAssessmentDashboard: expected URL matching ${expectedUrl} but landed at ${this.page.url()}`);
     }
 
     /**
@@ -91,15 +109,33 @@ export class ExamManagementPage {
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
-        await this.page.waitForLoadState('networkidle');
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        await row.waitFor({ state: 'visible' });
+        const visibleWithin = async (timeout: number): Promise<boolean> =>
+            row
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        // The exam-students endpoint joins across submissions; under heavy multi-node CI load
+        // the row for a just-handed-in student can take >30s to surface in the first response
+        // (the participation-state propagation lags behind the submit POST). Try up to four
+        // reload attempts with progressively shorter per-attempt waits — totalling ~90s — so
+        // the test does not give up on a slow but eventually-correct backend state.
+        let visible = await visibleWithin(30_000);
+        for (let attempt = 0; !visible && attempt < 3; attempt++) {
+            await this.page.reload();
+            await this.page.waitForLoadState('load');
+            visible = await visibleWithin(20_000);
+        }
+        if (!visible) {
+            // One last wait so the assertion error surfaces with the locator's call log.
+            await row.waitFor({ state: 'visible', timeout: 10_000 });
+        }
         await expect(row).toContainText('Submitted');
     }
 
     async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         const row = this.page.locator('tbody tr', { hasText: username }).first();
         await row.waitFor({ state: 'visible' });
         await row.getByRole('link', { name: 'View exam' }).click();

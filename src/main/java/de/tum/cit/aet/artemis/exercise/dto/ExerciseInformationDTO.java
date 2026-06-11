@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -28,8 +29,18 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints,
-        IncludedInOverallScore includedInOverallScore, DifficultyLevel difficulty, ExerciseMode exerciseMode, Class<? extends Exercise> type, Boolean allowOnlineEditor,
+        IncludedInOverallScore includedInOverallScore, DifficultyLevel difficulty, ExerciseMode exerciseMode, ExerciseType type, Boolean allowOnlineEditor,
         Boolean allowOfflineIde) {
+
+    /**
+     * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function
+     * and maps it to the {@link ExerciseType} discriminator used by the canonical record component.
+     */
+    public ExerciseInformationDTO(long id, String shortName, String title, ZonedDateTime start, ZonedDateTime due, Double maxPoints, IncludedInOverallScore includedInOverallScore,
+            DifficultyLevel difficulty, ExerciseMode exerciseMode, Class<? extends Exercise> type, Boolean allowOnlineEditor, Boolean allowOfflineIde) {
+        this(id, shortName, title, start, due, maxPoints, includedInOverallScore, difficulty, exerciseMode, ExerciseType.getExerciseTypeFromClass(type), allowOnlineEditor,
+                allowOfflineIde);
+    }
 
     /**
      * Create a new ExerciseInformationDTO from an exercise.
@@ -51,7 +62,8 @@ public record ExerciseInformationDTO(long id, String shortName, String title, Zo
         }
 
         return new ExerciseInformationDTO(exercise.getId(), exercise.getShortName(), exercise.getTitle(), startDate, exercise.getDueDate(), exercise.getMaxPoints(),
-                exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), exercise.getClass(), allowOnlineEditor, allowOfflineIde);
+                exercise.getIncludedInOverallScore(), exercise.getDifficulty(), exercise.getMode(), ExerciseType.getExerciseTypeFromClass(exercise.getClass()), allowOnlineEditor,
+                allowOfflineIde);
     }
 
     public boolean isIndividual() {

@@ -5,7 +5,7 @@ import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingL
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
@@ -56,6 +56,26 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 export function dayjsToString(day: dayjs.Dayjs) {
     // We need to add the Z at the end. Otherwise, the server can't parse it.
     return day.utc().format(TIME_FORMAT) + 'Z';
+}
+
+export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
+
+export function getExamBuildAndTestAfterDueDate(exam: Exam) {
+    return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
+}
+
+export function getExamEndDateWithGrace(exam: Exam) {
+    const gracePeriodSeconds = exam.gracePeriod ?? 0;
+    return dayjs(exam.endDate as any).add(gracePeriodSeconds, 'seconds');
+}
+
+export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
+    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
+    if (afterDueDate.isAfter(dayjs())) {
+        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
+        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
+        await page.waitForTimeout(timeToWait);
+    }
 }
 
 /**
@@ -318,7 +338,45 @@ export async function createFileWithContent(filePath: string, content: string) {
 
 export async function newBrowserPage(browser: Browser) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
-    return await context.newPage();
+    const page = await context.newPage();
+    await addE2EInitScript(page);
+    return page;
+}
+
+/**
+ * Adds init scripts that must run on every E2E page to prevent overlays from blocking
+ * test interactions. This is called automatically for the main `page` fixture via
+ * `baseFixtures.ts` and must also be applied to pages created by `newBrowserPage`.
+ */
+export async function addE2EInitScript(page: Page) {
+    // Register on the context so the suppression also applies to pages created later.
+    await page.context().addInitScript(() => {
+        // Hide the notification popup overlay
+        const injectStyle = () => {
+            const style = document.createElement('style');
+            style.textContent = [
+                'jhi-course-notification-popup-overlay { display: none !important; }',
+                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
+                // CSS backup for the localStorage suppression below.
+                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
+            ].join('\n');
+            document.head.appendChild(style);
+        };
+        if (document.head) {
+            injectStyle();
+        } else {
+            document.addEventListener('DOMContentLoaded', injectStyle);
+        }
+
+        // Suppress the passkey setup modal by setting a far-future reminder date.
+        try {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 10);
+            localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
+        } catch {
+            // localStorage may not be available on about:blank — safe to ignore
+        }
+    });
 }
 
 /**
@@ -387,6 +445,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
                 submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
                 programmingLanguage: ProgrammingLanguage.C,
+                skipBuildResultCheck: true,
             };
             break;
         case ExerciseType.TEXT:

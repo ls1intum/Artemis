@@ -81,7 +81,7 @@ describe('Rating Service', () => {
             });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/assessment/course/123/rating');
+        expect(req.request.url).toBe('api/assessment/courses/123/rating');
         expect(req.request.params.get('page')).toBe('0');
         expect(req.request.params.get('size')).toBe('20');
         expect(req.request.params.get('sort')).toBeFalsy();
@@ -118,7 +118,7 @@ describe('Rating Service', () => {
             });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/assessment/course/456/rating');
+        expect(req.request.url).toBe('api/assessment/courses/456/rating');
         expect(req.request.params.get('page')).toBe('2');
         expect(req.request.params.get('size')).toBe('10');
         expect(req.request.params.get('sort')).toBe('rating,desc');

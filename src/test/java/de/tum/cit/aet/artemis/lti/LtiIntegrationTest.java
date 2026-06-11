@@ -92,7 +92,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         doReturn(expectedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/admin/lti-platforms/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         LtiPlatformConfiguration actualPlatform = objectMapper.readValue(jsonContent, LtiPlatformConfiguration.class);
@@ -112,7 +112,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(platformToDelete).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
 
-        request.performMvcRequest(delete("/api/lti/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
+        request.performMvcRequest(delete("/api/lti/admin/lti-platforms/{platformId}", platformId)).andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
         verify(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
@@ -129,7 +129,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         doReturn(platformToUpdate).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
 
-        request.performMvcRequest(put("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
+        request.performMvcRequest(put("/api/lti/admin/lti-platforms").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
@@ -141,7 +141,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
         fillLtiPlatformConfig(platformToUpdate);
 
-        request.put("/api/lti/admin/lti-platform", platformToUpdate, HttpStatus.BAD_REQUEST);
+        request.put("/api/lti/admin/lti-platforms", platformToUpdate, HttpStatus.BAD_REQUEST);
 
         verify(ltiPlatformConfigurationRepository, never()).save(platformToUpdate);
     }
@@ -161,7 +161,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration platformWithNewRegistrationId = cloneLtiPlatformConfig(initialPlatform);
         platformWithNewRegistrationId.setRegistrationId("newRegistrationId-" + UUID.randomUUID());
 
-        request.put("/api/lti/admin/lti-platform", platformWithNewRegistrationId, HttpStatus.BAD_REQUEST);
+        request.put("/api/lti/admin/lti-platforms", platformWithNewRegistrationId, HttpStatus.BAD_REQUEST);
 
         verify(ltiPlatformConfigurationRepository, never()).save(platformWithNewRegistrationId);
     }
@@ -174,7 +174,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         fillLtiPlatformConfig(platformToCreate);
         platformToCreate.setRegistrationId(null);
 
-        request.performMvcRequest(post("/api/lti/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
+        request.performMvcRequest(post("/api/lti/admin/lti-platforms").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToCreate)))
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(any());

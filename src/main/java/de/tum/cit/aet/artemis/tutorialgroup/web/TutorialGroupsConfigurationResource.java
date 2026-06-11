@@ -26,13 +26,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
@@ -71,7 +71,7 @@ public class TutorialGroupsConfigurationResource {
      * @param courseId the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
-    @GetMapping("courses/{courseId}/tutorial-groups-configuration")
+    @GetMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
@@ -91,7 +91,7 @@ public class TutorialGroupsConfigurationResource {
      * @param tutorialGroupConfigurationDto the tutorial group configuration to create
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
-    @PostMapping("courses/{courseId}/tutorial-groups-configuration")
+    @PostMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
     @EnforceAtLeastInstructor
     public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDto)
             throws URISyntaxException {
@@ -116,7 +116,7 @@ public class TutorialGroupsConfigurationResource {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
-        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + persistedConfiguration.getId()))
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configurations/" + persistedConfiguration.getId()))
                 .body(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 
@@ -128,7 +128,8 @@ public class TutorialGroupsConfigurationResource {
      * @param updatedTutorialGroupConfigurationDto the configuration dto to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration dto
      */
-    @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
+    @PutMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}",
+            "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}" })
     @EnforceAtLeastInstructor
     public ResponseEntity<TutorialGroupConfigurationDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {

@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { AgentChatService } from './agent-chat.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatService', () => {

@@ -20,6 +20,6 @@ public record ParticipationWithExerciseDTO(long id, ExerciseDTO exercise) {
      * @return the participation DTO
      */
     public static ParticipationWithExerciseDTO of(Participation participation) {
-        return new ParticipationWithExerciseDTO(participation.getId(), ExerciseDTO.of(participation.getExercise()));
+        return new ParticipationWithExerciseDTO(participation.getId(), participation.getExercise() != null ? ExerciseDTO.of(participation.getExercise()) : null);
     }
 }

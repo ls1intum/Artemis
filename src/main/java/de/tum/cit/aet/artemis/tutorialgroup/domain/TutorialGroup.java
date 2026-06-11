@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Entity
@@ -374,11 +374,20 @@ public class TutorialGroup extends DomainObject {
 
     /**
      * Hides privacy sensitive information.
+     * <p>
+     * Both the entity references and the flattened transient fields populated by
+     * {@code TutorialGroupService.setTransientPropertiesForUser} must be cleared so privacy is
+     * preserved regardless of which projection a caller serializes.
      */
     public void hidePrivacySensitiveInformation() {
         this.setRegistrations(null);
         this.setTeachingAssistant(null);
         this.setCourse(null);
+        this.setNumberOfRegisteredUsers(null);
+        this.setTeachingAssistantName(null);
+        this.setTeachingAssistantId(null);
+        this.setTeachingAssistantImageUrl(null);
+        this.setCourseTitle(null);
     }
 
     /**

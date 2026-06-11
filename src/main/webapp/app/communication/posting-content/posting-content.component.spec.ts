@@ -10,12 +10,12 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from 'test/helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

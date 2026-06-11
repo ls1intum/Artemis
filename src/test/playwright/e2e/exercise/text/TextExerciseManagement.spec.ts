@@ -24,6 +24,11 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             textExerciseExampleSubmissions,
             textExerciseExampleSubmissionCreation,
         }) => {
+            // Login → openCourseManagement → openExercises → createTextExercise + form +
+            // example-submission flow + up-to-three 20s polling reloads on the exercises list
+            // exceeds the 90s @slow budget under multi-node CI load. Lift the per-test
+            // timeout to 270s via test.slow() — observed worst case ~200s.
+            test.slow();
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
@@ -59,10 +64,30 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             expect(submissionCreationResponse.status()).toBe(200);
             expect(textSubmission.text).toBe(submission);
 
-            // Make sure text exercise is shown in exercises list
-            await page.goto(`/course-management/${course.id}/exercises`);
-            await page.waitForLoadState('networkidle');
-            await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
+            // Make sure text exercise is shown in exercises list. Under heavy parallel CI
+            // load the exercises-list response occasionally lags behind the create response,
+            // so the freshly created card isn't in the first render. Reload up to three
+            // times before failing — each reload re-fetches the list, and the server-side
+            // commit reliably propagates within a few seconds.
+            const exerciseUrl = `/course-management/${course.id}/exercises`;
+            const card = courseManagementExercises.getExercise(exercise.id!);
+            const visibleWithin = async (timeout: number): Promise<boolean> =>
+                card
+                    .waitFor({ state: 'visible', timeout })
+                    .then(() => true)
+                    .catch(() => false);
+            await page.goto(exerciseUrl);
+            await page.waitForLoadState('load');
+            for (let attempt = 0; attempt < 3; attempt++) {
+                if (await visibleWithin(20_000)) {
+                    break;
+                }
+                if (attempt === 2) {
+                    throw new Error(`Newly created text exercise card #exercise-card-${exercise.id!} did not appear after 3 reloads`);
+                }
+                await page.reload();
+                await page.waitForLoadState('load');
+            }
         });
 
         test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {

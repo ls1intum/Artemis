@@ -1,0 +1,109 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SshUserSettingsComponent } from 'app/account/user/settings/ssh-settings/ssh-user-settings.component';
+import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+
+describe('SshUserSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<SshUserSettingsComponent>;
+    let comp: SshUserSettingsComponent;
+    const mockKey = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o comment';
+    const mockedUserSshKeys = [
+        {
+            id: 3,
+            publicKey: mockKey,
+            label: 'Key label',
+            keyHash: 'Key hash',
+        } as UserSshPublicKey,
+        {
+            id: 4,
+            publicKey: mockKey,
+            label: 'Key label',
+            keyHash: 'Key hash 2',
+        } as UserSshPublicKey,
+    ];
+    let alertServiceMock: {
+        error: ReturnType<typeof vi.fn>;
+        success: ReturnType<typeof vi.fn>;
+    };
+    let sshServiceMock: {
+        deleteSshPublicKey: ReturnType<typeof vi.fn>;
+        getSshPublicKeys: ReturnType<typeof vi.fn>;
+        sshKeys: UserSshPublicKey[];
+    };
+    let translateService: TranslateService;
+
+    beforeEach(async () => {
+        sshServiceMock = {
+            deleteSshPublicKey: vi.fn(),
+            getSshPublicKeys: vi.fn(),
+            sshKeys: [],
+        };
+        alertServiceMock = {
+            error: vi.fn(),
+            success: vi.fn(),
+        };
+        await TestBed.configureTestingModule({
+            imports: [SshUserSettingsComponent],
+            providers: [
+                { provide: SshUserSettingsService, useValue: sshServiceMock },
+                { provide: AlertService, useValue: alertServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        })
+            .overrideComponent(SshUserSettingsComponent, {
+                set: {
+                    imports: [],
+                    template: '',
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(SshUserSettingsComponent);
+        comp = fixture.componentInstance;
+        translateService = TestBed.inject(TranslateService);
+        translateService.use('en');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should initialize with User without keys', async () => {
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of([] as UserSshPublicKey[]));
+        comp.ngOnInit();
+        expect(sshServiceMock.getSshPublicKeys).toHaveBeenCalled();
+        expect(comp.keyCount).toBe(0);
+    });
+
+    it('should initialize with User with keys', async () => {
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
+        comp.ngOnInit();
+        expect(sshServiceMock.getSshPublicKeys).toHaveBeenCalled();
+        expect(comp.sshPublicKeys).toHaveLength(2);
+        expect(comp.sshPublicKeys[0].publicKey).toEqual(mockKey);
+        expect(comp.keyCount).toBe(2);
+    });
+
+    it('should delete SSH key', async () => {
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
+        sshServiceMock.deleteSshPublicKey.mockReturnValue(of(new HttpResponse({ status: 200 })));
+        comp.ngOnInit();
+        comp.deleteSshKey(mockedUserSshKeys[0]);
+        expect(sshServiceMock.deleteSshPublicKey).toHaveBeenCalled();
+    });
+
+    it('should fail to load SSH keys', () => {
+        sshServiceMock.getSshPublicKeys.mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
+        comp.ngOnInit();
+        expect(comp.keyCount).toBe(0);
+        expect(alertServiceMock.error).toHaveBeenCalled();
+    });
+});

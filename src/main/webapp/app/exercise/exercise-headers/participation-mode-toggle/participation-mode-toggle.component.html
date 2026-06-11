@@ -1,7 +1,8 @@
-@if (hasPractice()) {
-    @if (hasBoth()) {
-        <div class="segmented-control">
+@if (hasPractice() || hasGraded()) {
+    @if (hasPractice() && hasGraded()) {
+        <div id="participation-mode-toggle" class="segmented-control">
             <button
+                id="practice-mode-button"
                 class="segmented-control__button"
                 [class.segmented-control__button--active]="mode() === 'practice'"
                 [class.segmented-control__button--practice]="mode() === 'practice'"
@@ -11,6 +12,7 @@
                 <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
             </button>
             <button
+                id="graded-mode-button"
                 class="segmented-control__button"
                 [class.segmented-control__button--active]="mode() === 'graded'"
                 [class.segmented-control__button--graded]="mode() === 'graded'"
@@ -21,14 +23,15 @@
             </button>
         </div>
     } @else {
-        <div class="segmented-control">
+        <div id="participation-mode-badge" class="segmented-control">
             <span
+                id="mode-badge"
                 class="segmented-control__button segmented-control__button--active"
-                [class.segmented-control__button--practice]="mode() === 'practice'"
-                [class.segmented-control__button--graded]="mode() === 'graded'"
+                [class.segmented-control__button--practice]="hasPractice()"
+                [class.segmented-control__button--graded]="hasGraded()"
             >
-                <fa-icon [icon]="mode() === 'practice' ? faBook : faGraduationCap" />
-                @if (mode() === 'practice') {
+                <fa-icon [icon]="hasPractice() ? faBook : faGraduationCap" />
+                @if (hasPractice()) {
                     <span jhiTranslate="artemisApp.exerciseActions.mode.practice"></span>
                 } @else {
                     <span jhiTranslate="artemisApp.exerciseActions.mode.graded"></span>

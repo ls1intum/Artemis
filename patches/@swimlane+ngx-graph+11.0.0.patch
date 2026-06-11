@@ -1,7 +1,7 @@
-diff --git a/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs b/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
+diff --git a/fesm2022/swimlane-ngx-graph.mjs b/fesm2022/swimlane-ngx-graph.mjs
 index 84d6b7f..a6584da 100644
---- a/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
-+++ b/node_modules/@swimlane/ngx-graph/fesm2022/swimlane-ngx-graph.mjs
+--- a/fesm2022/swimlane-ngx-graph.mjs
++++ b/fesm2022/swimlane-ngx-graph.mjs
 @@ -1482,7 +1482,7 @@ class GraphComponent {
          if (layoutSettings) {
              this.setLayoutSettings(this.layoutSettings);

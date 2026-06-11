@@ -36,14 +36,15 @@
             [isPractice]="participationMode() === 'practice'"
             [athenaEnabled]="athenaEnabled()"
             [feedbackRequestLimit]="feedbackRequestLimit()"
+            [quizLiveStatus]="quizLiveStatus()"
             (viewingSubmissionChange)="isViewingSubmission.set($event)"
         />
         <jhi-participation-mode-toggle
             class="ms-auto flex-shrink-0"
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"
-            [hasPractice]="hasParticipation()"
-            [hasBoth]="hasBothParticipations()"
+            [hasPractice]="showPracticeMode()"
+            [hasGraded]="showGradedMode()"
         />
     </div>
 </div>

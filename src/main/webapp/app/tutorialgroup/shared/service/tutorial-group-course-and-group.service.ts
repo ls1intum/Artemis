@@ -2,9 +2,9 @@ import { Injectable, inject, signal } from '@angular/core';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { map } from 'rxjs/operators';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Injectable({

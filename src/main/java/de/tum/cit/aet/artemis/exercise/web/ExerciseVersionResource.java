@@ -56,7 +56,9 @@ public class ExerciseVersionResource {
      * @param pageable   pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of exercise versions in body
      */
-    @GetMapping("{exerciseId}/versions")
+    // Canonical path pairs the id with its collection (exercises/{exerciseId}/versions); the bare
+    // {exerciseId}/versions path is kept as a deprecated alias so existing clients keep working.
+    @GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     public ResponseEntity<List<ExerciseVersionMetadataDTO>> getExerciseVersions(@PathVariable Long exerciseId, Pageable pageable) {
         log.debug("REST request to get versions for Exercise : {}", exerciseId);
@@ -72,7 +74,9 @@ public class ExerciseVersionResource {
      * @param versionId  the ID of the exercise version to retrieve
      * @return the ResponseEntity with status 200 (OK) and the exercise snapshot in body
      */
-    @GetMapping("{exerciseId}/version/{versionId}")
+    // Canonical path uses the plural collections (exercises/{exerciseId}/versions/{versionId}); the
+    // legacy {exerciseId}/version/{versionId} path is kept as a deprecated alias for existing clients.
+    @GetMapping({ "exercises/{exerciseId}/versions/{versionId}", "{exerciseId}/version/{versionId}" })
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     public ResponseEntity<ExerciseSnapshotDTO> getExerciseSnapshot(@PathVariable Long exerciseId, @PathVariable Long versionId) {
         log.debug("REST request to get snapshot for ExerciseVersion : {}", versionId);

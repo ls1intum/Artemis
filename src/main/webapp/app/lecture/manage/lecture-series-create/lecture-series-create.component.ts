@@ -9,13 +9,13 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Router } from '@angular/router';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
-import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
+import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
 
 interface InitialLecture {
     id: string;

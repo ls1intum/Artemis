@@ -14,15 +14,15 @@ import {
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CompetencyPageableSearch, SearchResult } from 'app/foundation/pagination/pageable-table';
 import { HttpParams } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import {
     CompetencyProgressDTO,
     CompetencyWithTailRelationResponseDTO,

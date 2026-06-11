@@ -1,13 +1,13 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,9 +16,9 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,7 +41,7 @@ export enum LOADING_STATE {
     template: '',
 })
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
     private router = inject(Router);
     private exerciseService = inject(ProgrammingExerciseService);
@@ -239,8 +239,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.initializeProperties();
+        if (this.codeEditorContainer() != undefined) {
+            this.codeEditorContainer()!.initializeProperties();
         }
         this.teardownFileBinding();
         this.fileSyncService.reset();
@@ -326,8 +326,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Always use this method for changing the editor content to save file modifications.
      */
     saveChangesAndSelectDomain(domain: DomainChange) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.actions.onSave();
+        if (this.codeEditorContainer() != undefined) {
+            // Save before switching domains. Use a non-null assertion (not optional chaining) so a missing
+            // actions component throws instead of silently skipping the save and losing unsaved edits.
+            this.codeEditorContainer()!.actions()!.onSave();
         }
         this.domainService.setDomain(domain);
     }
@@ -425,7 +427,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
 
-        const monacoComponent = this.codeEditorContainer?.monacoEditor;
+        const monacoComponent = this.codeEditorContainer()?.monacoEditor?.();
         if (!monacoComponent || monacoComponent.binaryFileSelected()) {
             return;
         }

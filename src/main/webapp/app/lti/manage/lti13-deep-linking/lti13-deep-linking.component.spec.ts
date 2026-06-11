@@ -4,20 +4,20 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 
 describe('Lti13DeepLinkingComponent', () => {
     setupTestBed({ zoneless: true });
@@ -33,6 +33,7 @@ describe('Lti13DeepLinkingComponent', () => {
         identity: ReturnType<typeof vi.fn>;
         getAuthenticationState: ReturnType<typeof vi.fn>;
         hasAnyAuthority: ReturnType<typeof vi.fn>;
+        hasAnyAuthorityDirect: ReturnType<typeof vi.fn>;
     };
     let sortServiceMock: { sortByProperty: ReturnType<typeof vi.fn> };
     let alertServiceMock: { error: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
@@ -52,6 +53,7 @@ describe('Lti13DeepLinkingComponent', () => {
             identity: vi.fn().mockResolvedValue(undefined),
             getAuthenticationState: vi.fn().mockReturnValue(of(null)),
             hasAnyAuthority: vi.fn().mockResolvedValue(true),
+            hasAnyAuthorityDirect: vi.fn().mockReturnValue(true),
         };
         sortServiceMock = { sortByProperty: vi.fn() };
         alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
@@ -161,7 +163,7 @@ describe('Lti13DeepLinkingComponent', () => {
         await fixture.whenStable();
 
         expect(component.isLinking).toBe(false);
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: new HttpParams()
                 .set('resourceType', DeepLinkingType.EXERCISE)
@@ -188,7 +190,7 @@ describe('Lti13DeepLinkingComponent', () => {
             .set('clientRegistrationId', '')
             .set('contentIds', Array.from(component.selectedExercises!).join(','));
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -212,7 +214,7 @@ describe('Lti13DeepLinkingComponent', () => {
             .set('clientRegistrationId', '')
             .set('contentIds', Array.from(component.selectedExercises!).join(','));
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -310,7 +312,7 @@ describe('Lti13DeepLinkingComponent', () => {
             .toString();
 
         expect(httpMock.post).toHaveBeenCalledWith(
-            `api/lti/lti13/deep-linking/${component.courseId}`,
+            `api/lti/lti13/courses/${component.courseId}/deep-linking`,
             null,
             expect.objectContaining({
                 observe: 'response',
@@ -338,7 +340,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -359,7 +361,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -384,7 +386,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LECTURE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1,2');
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -434,7 +436,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should invoke account service using jhiHasAnyAuthority directive', () => {
         fixture.changeDetectorRef.detectChanges();
-        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
+        expect(accountServiceMock.hasAnyAuthorityDirect).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
     });
 
     it('should toggle exercise selection correctly', () => {
@@ -509,7 +511,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.GROUPED_EXERCISE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1');
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });
@@ -531,7 +533,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.GROUPED_LECTURE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1');
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/deep-linking/${component.courseId}`, null, {
+        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
             observe: 'response',
             params: expectedParams,
         });

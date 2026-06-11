@@ -1,59 +1,73 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockPipe } from 'ng-mocks';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { Subject } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
-import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
-import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
+import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 
-const mockSource = {
-    course: { id: 1, name: 'Web Development' },
-    lecture: { id: 1, name: 'Angular Basics' },
-    lectureUnit: { id: 1, name: 'Signals Introduction', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
-    snippet: 'Signals are reactive.',
-};
-
-const mockResult: IrisSearchResult = {
-    answer: '## Answer\nSignals are a reactive primitive.',
-    sources: [mockSource],
-};
-
-const mockResultNoSources: IrisSearchResult = {
-    answer: 'A simple answer with no sources.',
-    sources: [],
-};
-
-const mockSearchService = { search: vi.fn(), ask: vi.fn() };
+const SOURCES: LectureSearchResult[] = [
+    {
+        course: { id: 1, name: 'Course A' },
+        lecture: { id: 1, name: 'L1' },
+        lectureUnit: { id: 1, name: 'Unit 1', link: '/u/1', pageNumber: 1, sourceType: 'lecture_unit_slide', queryParams: { unit: 1, page: 1 } },
+    },
+    {
+        course: { id: 1, name: 'Course A' },
+        lecture: { id: 1, name: 'L1' },
+        lectureUnit: { id: 2, name: 'Unit 2', link: '/u/2', pageNumber: 2, sourceType: 'lecture_unit_slide', queryParams: { unit: 2, page: 2 } },
+    },
+    {
+        course: { id: 1, name: 'Course A' },
+        lecture: { id: 1, name: 'L1' },
+        lectureUnit: { id: 3, name: 'Unit 3', link: '/u/3', pageNumber: 3, sourceType: 'lecture_unit_slide_video', queryParams: { unit: 3, page: 3, timestamp: 42 } },
+    },
+];
 
 describe('GlobalSearchIrisAnswerComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: GlobalSearchIrisAnswerComponent;
     let fixture: ComponentFixture<GlobalSearchIrisAnswerComponent>;
+    let askSubject: Subject<IrisSearchStatusUpdate>;
+    let mockAsk: ReturnType<typeof vi.fn>;
+
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+
+    beforeAll(() => {
+        Element.prototype.scrollIntoView = vi.fn();
+    });
+
+    afterAll(() => {
+        Element.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     beforeEach(() => {
-        vi.clearAllMocks();
-        Element.prototype.scrollIntoView = vi.fn();
-        Element.prototype.scrollTo = vi.fn() as typeof Element.prototype.scrollTo;
-        mockSearchService.ask.mockReturnValue(new Subject().asObservable());
+        vi.useFakeTimers();
+        askSubject = new Subject<IrisSearchStatusUpdate>();
+        mockAsk = vi.fn().mockReturnValue(askSubject.asObservable());
 
         TestBed.configureTestingModule({
-            imports: [GlobalSearchIrisAnswerComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe), MockComponent(IrisLogoComponent)],
-            providers: [provideRouter([]), { provide: LectureSearchService, useValue: mockSearchService }, { provide: TranslateService, useClass: MockTranslateService }],
+            imports: [GlobalSearchIrisAnswerComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: IrisSearchAnswerService, useValue: { ask: mockAsk } }],
         });
 
         fixture = TestBed.createComponent(GlobalSearchIrisAnswerComponent);
         component = fixture.componentInstance;
-
-        fixture.componentRef.setInput('query', '');
-        fixture.componentRef.setInput('selectedSourceIndex', -1);
+        fixture.componentRef.setInput('searchQuery', '');
         fixture.detectChanges();
     });
 
@@ -61,228 +75,331 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    describe('Close button', () => {
-        it('should emit closeDrawer when clicked', () => {
-            const spy = vi.fn();
-            component.closeDrawer.subscribe(spy);
+    it('should not render the iris card when there is no result and not thinking', () => {
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card).toBeNull();
+    });
 
-            const closeBtn = fixture.nativeElement.querySelector('.iris-close-btn');
-            closeBtn.click();
+    it('should render the iris card when thinking', () => {
+        // @ts-expect-error — accessing protected signal for testing
+        component.irisThinking.set(true);
+        fixture.detectChanges();
 
-            expect(spy).toHaveBeenCalledOnce();
+        const card = fixture.nativeElement.querySelector('.iris-inline-answer');
+        expect(card).toBeTruthy();
+    });
+
+    it('should render the thinking wrapper when irisThinking is true', () => {
+        // @ts-expect-error
+        component.irisThinking.set(true);
+        fixture.detectChanges();
+
+        const thinkingWrapper = fixture.nativeElement.querySelector('.iris-thinking-wrapper');
+        expect(thinkingWrapper).toBeTruthy();
+    });
+
+    it('should not render the thinking wrapper when irisThinking is false', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: [] });
+        fixture.detectChanges();
+
+        const thinkingWrapper = fixture.nativeElement.querySelector('.iris-thinking-wrapper');
+        expect(thinkingWrapper).toBeNull();
+    });
+
+    it('should render the answer text region when irisResult has an answer', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Signals are reactive primitives.', sources: [] });
+        fixture.detectChanges();
+
+        const answerEl = fixture.nativeElement.querySelector('.iris-answer-text');
+        expect(answerEl).toBeTruthy();
+    });
+
+    it('should apply is-clamped class when shouldClamp is true', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Long answer.', sources: [] });
+        fixture.detectChanges(); // effect runs, resets isOverflowing=false
+        // Set isOverflowing AFTER effect ran — changing it does not re-trigger the effect
+        // @ts-expect-error
+        component.isOverflowing.set(true);
+        fixture.detectChanges();
+
+        const answerEl = fixture.nativeElement.querySelector('.iris-answer-text');
+        expect(answerEl.classList).toContain('is-clamped');
+    });
+
+    it('should apply is-expanded class when isOverflowing and isExpanded are both true', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Long answer.', sources: [] });
+        fixture.detectChanges(); // effect runs, resets isOverflowing/isExpanded to false
+        // @ts-expect-error
+        component.isOverflowing.set(true);
+        // @ts-expect-error
+        component.isExpanded.set(true);
+        fixture.detectChanges();
+
+        const answerEl = fixture.nativeElement.querySelector('.iris-answer-text');
+        expect(answerEl.classList).toContain('is-expanded');
+    });
+
+    it('should show the "show more" toggle button when the answer overflows', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Long answer text here.', sources: [] });
+        fixture.detectChanges(); // effect runs, resets isOverflowing
+        // @ts-expect-error
+        component.isOverflowing.set(true);
+        fixture.detectChanges();
+
+        const toggleBtn = fixture.nativeElement.querySelector('.iris-toggle-btn');
+        expect(toggleBtn).toBeTruthy();
+    });
+
+    it('should expand the answer when the "show more" toggle button is clicked', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Long answer.', sources: [] });
+        fixture.detectChanges(); // effect runs, resets isOverflowing
+        // @ts-expect-error
+        component.isOverflowing.set(true);
+        fixture.detectChanges();
+
+        const toggleBtn = fixture.nativeElement.querySelector('.iris-toggle-btn');
+        toggleBtn.click();
+        fixture.detectChanges();
+
+        expect(component['isExpanded']()).toBe(true);
+    });
+
+    it('should show the "show less" toggle button when expanded', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Long answer.', sources: [] });
+        fixture.detectChanges(); // effect runs, resets isOverflowing/isExpanded
+        // @ts-expect-error
+        component.isOverflowing.set(true);
+        // @ts-expect-error
+        component.isExpanded.set(true);
+        fixture.detectChanges();
+
+        const buttons = fixture.nativeElement.querySelectorAll('.iris-toggle-btn');
+        // When expanded: show-less button is visible (show-more is not shown because !shouldClamp)
+        expect(buttons.length).toBeGreaterThan(0);
+    });
+
+    it('collapse() should set isExpanded to false', () => {
+        // @ts-expect-error
+        component.isExpanded.set(true);
+        component.collapse();
+        expect(component['isExpanded']()).toBe(false);
+    });
+
+    it('should render source chips when sources are present', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: SOURCES.slice(0, 2) });
+        fixture.detectChanges();
+
+        const chips = fixture.nativeElement.querySelectorAll('a.iris-chip');
+        expect(chips.length).toBe(2);
+    });
+
+    it('should show the "+N more" button when there are more than 2 sources', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
+        fixture.detectChanges();
+
+        const moreBtn = fixture.nativeElement.querySelector('.iris-more-btn');
+        expect(moreBtn).toBeTruthy();
+    });
+
+    it('should expand all sources when the "+N more" button is clicked', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
+        fixture.detectChanges();
+
+        const moreBtn = fixture.nativeElement.querySelector('.iris-more-btn');
+        moreBtn.click();
+        fixture.detectChanges();
+
+        const chips = fixture.nativeElement.querySelectorAll('a.iris-chip');
+        expect(chips.length).toBe(SOURCES.length);
+    });
+
+    it('should show the collapse button when all sources are expanded', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
+        fixture.detectChanges(); // effect runs, resets moreOpen=false
+        // @ts-expect-error
+        component.moreOpen.set(true); // set AFTER effect ran — does not re-trigger it
+        fixture.detectChanges();
+
+        const collapseBtn = fixture.nativeElement.querySelector('.iris-collapse-btn');
+        expect(collapseBtn).toBeTruthy();
+    });
+
+    it('should collapse sources when the collapse button is clicked', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: SOURCES });
+        fixture.detectChanges(); // effect runs, resets moreOpen=false
+        // @ts-expect-error
+        component.moreOpen.set(true);
+        fixture.detectChanges();
+
+        const collapseBtn = fixture.nativeElement.querySelector('.iris-collapse-btn');
+        collapseBtn.click();
+        fixture.detectChanges();
+
+        expect(component['moreOpen']()).toBe(false);
+    });
+
+    it('should reset isExpanded, isOverflowing, and moreOpen when irisResult changes', () => {
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'First answer', sources: [] });
+        // @ts-expect-error
+        component.isExpanded.set(true);
+        // @ts-expect-error
+        component.moreOpen.set(true);
+        fixture.detectChanges();
+
+        // Trigger effect by setting a new result
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Second answer', sources: [] });
+        fixture.detectChanges();
+
+        expect(component['isExpanded']()).toBe(false);
+        expect(component['moreOpen']()).toBe(false);
+    });
+
+    describe('ask() pipeline integration', () => {
+        it('should call irisSearchAnswerService.ask() after debounce when query is non-empty', () => {
+            fixture.componentRef.setInput('searchQuery', 'angular signals');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            expect(mockAsk).toHaveBeenCalledWith('angular signals');
+        });
+
+        it('should NOT call irisSearchAnswerService.ask() for an empty query', () => {
+            mockAsk.mockClear();
+            fixture.componentRef.setInput('searchQuery', '   ');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            expect(mockAsk).not.toHaveBeenCalled();
+        });
+
+        it('should NOT call ask() before the debounce period has elapsed', () => {
+            mockAsk.mockClear();
+            fixture.componentRef.setInput('searchQuery', 'signals');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300 - 1);
+            fixture.detectChanges();
+
+            expect(mockAsk).not.toHaveBeenCalled();
+        });
+
+        it('should set irisThinking to true when a thinking update is received', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+
+            expect(component['irisThinking']()).toBe(true);
+        });
+
+        it('should set irisResult with the answer when the final update is received', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });
+            fixture.detectChanges();
+
+            expect(component['irisThinking']()).toBe(false);
+            expect(component['irisResult']()).toEqual({ answer: 'Signals are reactive.', sources: [] });
+        });
+
+        it('should set irisResult to undefined if the final update has no answer', () => {
+            fixture.componentRef.setInput('searchQuery', 'navigate somewhere');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: false });
+            fixture.detectChanges();
+
+            expect(component['irisResult']()).toBeUndefined();
+        });
+
+        it('should reset irisResult and irisThinking immediately when a new query is emitted', () => {
+            // First query resolves
+            fixture.componentRef.setInput('searchQuery', 'query one');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'First answer', sources: [] });
+            fixture.detectChanges();
+            expect(component['irisResult']()?.answer).toBe('First answer');
+
+            // New query — outer switchMap runs synchronously on emission, cancelling the timer before it fires
+            fixture.componentRef.setInput('searchQuery', 'query two');
+            fixture.detectChanges();
+
+            expect(component['irisResult']()).toBeUndefined();
+            expect(component['irisThinking']()).toBe(false);
+        });
+
+        it('should ignore a final update whose runId does not match the thinking update', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-stale', isThinking: false, answer: 'Stale answer', sources: [] });
+            fixture.detectChanges();
+
+            expect(component['irisResult']()).toBeUndefined();
+            expect(component['irisThinking']()).toBe(true);
+        });
+
+        it('should accept a final update whose runId matches the thinking update', () => {
+            fixture.componentRef.setInput('searchQuery', 'what are signals?');
+            fixture.detectChanges();
+            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
+            fixture.detectChanges();
+
+            askSubject.next({ runId: 'run-1', isThinking: true });
+            fixture.detectChanges();
+            askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Valid answer', sources: [] });
+            fixture.detectChanges();
+
+            expect(component['irisResult']()?.answer).toBe('Valid answer');
         });
     });
 
-    describe('Loading state', () => {
-        it('should show loading indicator when isLoading is true', () => {
-            (component as any).isLoading.set(true);
-            fixture.detectChanges();
-
-            const loading = fixture.nativeElement.querySelector('.iris-loading');
-            expect(loading).toBeTruthy();
+    describe('SOURCE_ICONS', () => {
+        it('should map lecture_unit_slide to faFilePdf', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_slide']).toBe(faFilePdf);
         });
 
-        it('should hide loading indicator when isLoading is false', () => {
-            (component as any).isLoading.set(false);
-            fixture.detectChanges();
-
-            const loading = fixture.nativeElement.querySelector('.iris-loading');
-            expect(loading).toBeFalsy();
-        });
-    });
-
-    describe('Error state', () => {
-        it('should show error message when hasError is true', () => {
-            (component as any).hasError.set(true);
-            fixture.detectChanges();
-
-            const errorMsg = fixture.nativeElement.querySelector('.iris-error-msg');
-            expect(errorMsg).toBeTruthy();
+        it('should map lecture_unit_slide_video to faFileVideo', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_slide_video']).toBe(faFileVideo);
         });
 
-        it('should not show error message when hasError is false', () => {
-            (component as any).hasError.set(false);
-            fixture.detectChanges();
-
-            const errorMsg = fixture.nativeElement.querySelector('.iris-error-msg');
-            expect(errorMsg).toBeFalsy();
-        });
-    });
-
-    describe('Result rendering', () => {
-        it('should show answer text when result is available', () => {
-            (component as any).result.set(mockResult);
-            fixture.detectChanges();
-
-            const answerText = fixture.nativeElement.querySelector('.iris-answer-text');
-            expect(answerText).toBeTruthy();
+        it('should map lecture_unit_video to faVideo', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_video']).toBe(faVideo);
         });
 
-        it('should show source cards when result has sources', () => {
-            (component as any).result.set(mockResult);
-            fixture.detectChanges();
-
-            const sourceCards = fixture.nativeElement.querySelectorAll('.iris-source-card');
-            expect(sourceCards).toHaveLength(1);
-        });
-
-        it('should display source name, course, lecture, and page number', () => {
-            (component as any).result.set(mockResult);
-            fixture.detectChanges();
-
-            const card = fixture.nativeElement.querySelector('.iris-source-card');
-            expect(card.querySelector('.iris-source-title').textContent.trim()).toBe('Signals Introduction');
-            const meta = card.querySelector('.iris-source-meta');
-            expect(meta.textContent).toContain('Web Development');
-            expect(meta.textContent).toContain('Angular Basics');
-            expect(meta.textContent).toContain('3');
-        });
-
-        it('should apply is-selected class to the selected source card', () => {
-            (component as any).result.set(mockResult);
-            fixture.componentRef.setInput('selectedSourceIndex', 0);
-            fixture.detectChanges();
-
-            const card = fixture.nativeElement.querySelector('.iris-source-card');
-            expect(card.classList.contains('is-selected')).toBe(true);
-        });
-
-        it('should not apply is-selected class when index does not match', () => {
-            (component as any).result.set(mockResult);
-            fixture.componentRef.setInput('selectedSourceIndex', -1);
-            fixture.detectChanges();
-
-            const card = fixture.nativeElement.querySelector('.iris-source-card');
-            expect(card.classList.contains('is-selected')).toBe(false);
-        });
-
-        it('should not show sources section when sources array is empty', () => {
-            (component as any).result.set(mockResultNoSources);
-            fixture.detectChanges();
-
-            const sourcesList = fixture.nativeElement.querySelector('.iris-sources-list');
-            expect(sourcesList).toBeFalsy();
-        });
-    });
-
-    describe('itemCount', () => {
-        it('should be 0 when result is undefined', () => {
-            (component as any).result.set(undefined);
-            expect(component.itemCount()).toBe(0);
-        });
-
-        it('should equal the number of sources', () => {
-            (component as any).result.set({ ...mockResult, sources: [mockSource, mockSource] });
-            expect(component.itemCount()).toBe(2);
-        });
-    });
-
-    describe('Keyboard navigation', () => {
-        it('should navigate to source link when Enter is pressed on a selected source', () => {
-            (component as any).result.set(mockResult);
-            fixture.componentRef.setInput('selectedSourceIndex', 0);
-            fixture.detectChanges();
-
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-
-            component.handleKeydown(event);
-
-            expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith('/courses/1/lectures/1/units/1');
-        });
-
-        it('should not navigate when Enter is pressed with no selection', () => {
-            (component as any).result.set(mockResult);
-            fixture.componentRef.setInput('selectedSourceIndex', -1);
-            fixture.detectChanges();
-
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-
-            component.handleKeydown(event);
-
-            expect(navigateSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not navigate on non-Enter key', () => {
-            (component as any).result.set(mockResult);
-            fixture.componentRef.setInput('selectedSourceIndex', 0);
-            fixture.detectChanges();
-
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
-            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-
-            component.handleKeydown(event);
-
-            expect(navigateSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Search pipeline', () => {
-        let pipelineFixture: ComponentFixture<GlobalSearchIrisAnswerComponent>;
-        let pipelineComponent: GlobalSearchIrisAnswerComponent;
-
-        beforeEach(() => {
-            // Fake timers must be active before component construction so that
-            // RxJS debounceTime uses the fake scheduler from the start.
-            vi.useFakeTimers();
-
-            vi.clearAllMocks();
-            Element.prototype.scrollIntoView = vi.fn();
-            Element.prototype.scrollTo = vi.fn() as typeof Element.prototype.scrollTo;
-            mockSearchService.ask.mockReturnValue(new Subject().asObservable());
-
-            pipelineFixture = TestBed.createComponent(GlobalSearchIrisAnswerComponent);
-            pipelineComponent = pipelineFixture.componentInstance;
-            pipelineFixture.componentRef.setInput('query', '');
-            pipelineFixture.componentRef.setInput('selectedSourceIndex', -1);
-            pipelineFixture.detectChanges();
-        });
-
-        afterEach(() => {
-            vi.useRealTimers();
-        });
-
-        it('should call the ask service with the query after debounce', () => {
-            mockSearchService.ask.mockReturnValue(of(mockResult));
-
-            pipelineFixture.componentRef.setInput('query', 'signals');
-            pipelineFixture.detectChanges();
-
-            vi.advanceTimersByTime(300);
-            pipelineFixture.detectChanges();
-
-            expect(mockSearchService.ask).toHaveBeenCalledWith('signals');
-            expect((pipelineComponent as any).result()).toEqual(mockResult);
-        });
-
-        it('should not call the ask service for a whitespace-only query', () => {
-            pipelineFixture.componentRef.setInput('query', '   ');
-            pipelineFixture.detectChanges();
-
-            vi.advanceTimersByTime(300);
-            pipelineFixture.detectChanges();
-
-            expect(mockSearchService.ask).not.toHaveBeenCalled();
-        });
-
-        it('should set hasError and clear result when the ask service errors', () => {
-            mockSearchService.ask.mockReturnValue(throwError(() => new Error('Server error')));
-
-            pipelineFixture.componentRef.setInput('query', 'bad query');
-            pipelineFixture.detectChanges();
-
-            vi.advanceTimersByTime(300);
-            pipelineFixture.detectChanges();
-
-            expect((pipelineComponent as any).result()).toBeUndefined();
-            expect((pipelineComponent as any).isLoading()).toBe(false);
-            expect((pipelineComponent as any).hasError()).toBe(true);
-
-            const errorMsg = pipelineFixture.nativeElement.querySelector('.iris-error-msg');
-            expect(errorMsg).toBeTruthy();
+        it('should fall back to faFile for an unknown source type', () => {
+            expect(component['SOURCE_ICONS']['unknown_type'] ?? component['faFile']).toBe(faFile);
         });
     });
 });

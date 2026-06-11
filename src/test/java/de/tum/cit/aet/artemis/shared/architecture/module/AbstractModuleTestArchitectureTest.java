@@ -24,8 +24,11 @@ public abstract class AbstractModuleTestArchitectureTest extends AbstractArchite
 
     @Test
     void integrationTestsShouldExtendAbstractModuleIntegrationTest() {
+        // allowEmptyShould(true): the rule is "if there are IntegrationTest classes, they must extend X" —
+        // a module with no integration tests yet (a freshly extracted module before its tests are added)
+        // is still allowed.
         classesOfThisModuleThat().haveSimpleNameEndingWith("IntegrationTest").should().beAssignableTo(isAssignableToAnyAllowedClass(getAbstractModuleIntegrationTestClasses()))
-                .because("All integration tests should extend any of %s".formatted(getAbstractModuleIntegrationTestClasses())).check(testClasses);
+                .allowEmptyShould(true).because("All integration tests should extend any of %s".formatted(getAbstractModuleIntegrationTestClasses())).check(testClasses);
     }
 
     // TODO: Many integration tests across multiple modules still use @Autowired fields.

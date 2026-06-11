@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -53,7 +53,7 @@ public class IrisTutorSuggestionSessionResource {
      * @return the ResponseEntity with status 200 (OK) and the current session, or status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("{postId}/sessions/current")
+    @PostMapping({ "posts/{postId}/sessions/current", "{postId}/sessions/current" })
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
@@ -78,7 +78,7 @@ public class IrisTutorSuggestionSessionResource {
      * @return the ResponseEntity with status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("{postId}/sessions")
+    @PostMapping({ "posts/{postId}/sessions", "{postId}/sessions" })
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 

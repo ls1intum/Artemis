@@ -1,9 +1,13 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
-import { Range } from 'app/shared/util/utils';
+import { Range } from 'app/foundation/util/utils';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 describe('PlagiarismInspectorService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: PlagiarismInspectorService;
 
     let result: PlagiarismComparison[];

@@ -129,3 +129,39 @@ $delete-delay-duration: 6s;
         width: 100%;
     }
 }
+
+.post-create-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: $zindex-modal;
+}
+
+.post-create-edit-modal-dialog {
+    margin: 0;
+    width: 100%;
+    max-width: $modal-lg;
+    display: flex;
+    flex-direction: column;
+}
+
+.post-create-edit-modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.post-create-edit-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: var(--bs-backdrop-opacity, 0.5);
+    z-index: $zindex-modal-backdrop;
+}

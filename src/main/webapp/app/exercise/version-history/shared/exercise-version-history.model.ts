@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 /**
  * Lightweight metadata for a single exercise version, used in the timeline sidebar.

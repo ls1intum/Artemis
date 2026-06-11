@@ -16,6 +16,10 @@
         }
     }
 
+    .video-wrapper.is-resizing youtube-player {
+        pointer-events: none;
+    }
+
     .video-column {
         flex: 3;
         position: relative;

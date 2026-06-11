@@ -17,7 +17,7 @@ export function printUsage() {
     console.log(`
 Artemis Course Setup Script
 
-Usage: npm run setupCourse -- [options]
+Usage: pnpm run setupCourse -- [options]
 
 Options:
   --server-url=<url>         Server URL (default: http://localhost:8080)
@@ -36,9 +36,9 @@ Environment Variables:
   ARTEMIS_STUDENT_PASSWORD   Password for created students/tutors
 
 Examples:
-  npm run setupCourse
-  npm run setupCourse -- --student-count=10
-  npm run setupCourse -- --course-id=123 --skip-participations
-  npm run setupCourse -- --server-url=http://artemis.example.com
+  pnpm run setupCourse
+  pnpm run setupCourse -- --student-count=10
+  pnpm run setupCourse -- --course-id=123 --skip-participations
+  pnpm run setupCourse -- --server-url=http://artemis.example.com
 `);
 }

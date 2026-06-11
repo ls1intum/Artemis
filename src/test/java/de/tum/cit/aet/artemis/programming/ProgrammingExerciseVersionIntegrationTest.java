@@ -26,7 +26,7 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
@@ -183,7 +183,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         params.add("recreateBuildPlans", String.valueOf(true));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + programmingExercise.getId(), exerciseToBeImported,
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
@@ -365,8 +365,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         Long templateParticipationId = programmingExercise.getTemplateParticipation().getId();
 
-        request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + templateParticipationId + "/repository/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + templateParticipationId + "/repository/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -388,8 +388,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         Long solutionParticipationId = programmingExercise.getSolutionParticipation().getId();
 
-        request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + solutionParticipationId + "/repository/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + solutionParticipationId + "/repository/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -414,8 +414,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long auxiliaryRepositoryId = auxiliaryRepositories.getFirst().getId();
         assertThat(auxiliaryRepositoryId).isNotNull();
 
-        request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -440,8 +440,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(version2.getId()).isNotEqualTo(version1.getId());
 
-        List<ExerciseVersionMetadataDTO> response = request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.OK, new TypeReference<>() {
-        });
+        List<ExerciseVersionMetadataDTO> response = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.OK,
+                new TypeReference<>() {
+                });
 
         assertThat(response).isNotNull();
         assertThat(response).hasSize(2);
@@ -469,7 +470,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // `beforeEach` requires instructor access to run
         // Switch to student user and attempt to get snapshot
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
     }
 
     @Test
@@ -479,7 +480,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Switch to instructor user and attempt to get snapshot
         userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
-        request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
     }
 
     @Test
@@ -491,7 +492,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         MvcResult mvcResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "1"))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "1"))
                 .andExpect(status().isOk()).andReturn();
 
         var response = mvcResult.getResponse();
@@ -511,7 +512,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).isEmpty();
 
         MvcResult mvcResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "5"))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "5"))
                 .andExpect(status().isOk()).andReturn();
 
         var response = mvcResult.getResponse();
@@ -527,14 +528,15 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseVersions_forbiddenForUnknownExercise() throws Exception {
         long unknownExerciseId = programmingExercise.getId() + 9999;
-        request.get("/api/exercise/" + unknownExerciseId + "/versions?page=0&size=1", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/exercise/exercises/" + unknownExerciseId + "/versions?page=0&size=1", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
-        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
+        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + version.getId(), HttpStatus.OK,
+                ExerciseSnapshotDTO.class);
 
         assertThat(snapshot).isNotNull();
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(version.getExerciseSnapshot());
@@ -549,7 +551,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         // Switch to student user and attempt to get snapshot
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
 
     @Test
@@ -562,7 +564,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         // Switch to instructor user and attempt to get snapshot
         userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
-        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
 
     @Test
@@ -572,12 +574,13 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long versionId = version.getId();
 
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        ExerciseSnapshotDTO tutorSnapshot = request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.OK, ExerciseSnapshotDTO.class);
+        ExerciseSnapshotDTO tutorSnapshot = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.OK,
+                ExerciseSnapshotDTO.class);
         assertThat(tutorSnapshot).isNotNull();
 
         userUtilService.addTeachingAssistant(TEST_PREFIX + "isolated-tutor-group", TEST_PREFIX + "external_tutor");
         userUtilService.changeUser(TEST_PREFIX + "external_tutor");
-        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
 
     @Test
@@ -586,7 +589,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         long unknownVersionId = version.getId() + 9999;
 
-        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + unknownVersionId, HttpStatus.NOT_FOUND, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/versions/" + unknownVersionId, HttpStatus.NOT_FOUND, ExerciseSnapshotDTO.class);
     }
 
     @Test
@@ -600,7 +603,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // attempt to get snapshot with wrong exercise id
-        request.get("/api/exercise/" + newExercise.getId() + "/version/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/exercises/" + newExercise.getId() + "/versions/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
     }
 
 }

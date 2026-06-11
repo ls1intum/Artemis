@@ -1,9 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/map.extension';
+import 'app/foundation/util/array.extension';
 import path from 'path';
 
 /**
@@ -64,6 +63,9 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        launchOptions: {
+            args: ['--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator'],
+        },
     },
 
     /* Configure projects for fast, slow, and multi-node tests */

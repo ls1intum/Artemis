@@ -1,9 +1,10 @@
-import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/buildagent/shared/entities/build-log.model';
+import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,12 +15,12 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
+import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
@@ -30,13 +31,13 @@ import { ChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { FeedbackNodeComponent } from './node/feedback-node.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view
@@ -65,7 +66,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
-    activeModal? = inject(NgbActiveModal, { optional: true });
+    readonly dialogRef = inject(DynamicDialogRef, { optional: true });
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
@@ -76,21 +78,93 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private showTestDetails = false;
 
-    @Input() exercise?: Exercise;
-    @Input() result: Result;
-    @Input() participation: Participation;
+    readonly exerciseInput = input<Exercise | undefined>(undefined, { alias: 'exercise' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly resultInput = input<Result>(undefined!, { alias: 'result' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly participationInput = input<Participation>(undefined!, { alias: 'participation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly feedbackFilterInput = input<number[]>(undefined!, { alias: 'feedbackFilter' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showScoreChartInput = input(false, { alias: 'showScoreChart' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly exerciseTypeInput = input<ExerciseType>(undefined!, { alias: 'exerciseType' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly messageKeyInput = input<string | undefined>(undefined, { alias: 'messageKey' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showMissingAutomaticFeedbackInformationInput = input(false, { alias: 'showMissingAutomaticFeedbackInformation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly latestDueDateInput = input<dayjs.Dayjs | undefined>(undefined, { alias: 'latestDueDate' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly taskNameInput = input<string | undefined>(undefined, { alias: 'taskName' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly numberOfNotExecutedTestsInput = input<number | undefined>(undefined, { alias: 'numberOfNotExecutedTests' }); // eslint-disable-line @angular-eslint/no-input-rename
+
+    private exerciseValue?: Exercise;
+    private resultValue?: Result;
+    private participationValue?: Participation;
+    private feedbackFilterValue?: number[];
+    private showScoreChartValue?: boolean;
+    private exerciseTypeValue?: ExerciseType;
+    private messageKeyValue?: string;
+    private showMissingAutomaticFeedbackInformationValue?: boolean;
+    private latestDueDateValue?: dayjs.Dayjs;
+    private taskNameValue?: string;
+    private numberOfNotExecutedTestsValue?: number;
+
+    get exercise(): Exercise | undefined {
+        return this.exerciseValue ?? this.exerciseInput();
+    }
+
+    set exercise(exercise: Exercise | undefined) {
+        this.exerciseValue = exercise;
+    }
+
+    get result(): Result {
+        return this.resultValue ?? this.resultInput();
+    }
+
+    set result(result: Result) {
+        this.resultValue = result;
+    }
+
+    get participation(): Participation {
+        return this.participationValue ?? this.participationInput();
+    }
+
+    set participation(participation: Participation) {
+        this.participationValue = participation;
+    }
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
      * Used to show only feedback related to a specific task.
      */
-    @Input() feedbackFilter: number[];
-    @Input() showScoreChart = false;
-    @Input() exerciseType: ExerciseType;
+    get feedbackFilter(): number[] {
+        return this.feedbackFilterValue ?? this.feedbackFilterInput();
+    }
+
+    set feedbackFilter(feedbackFilter: number[] | undefined) {
+        this.feedbackFilterValue = feedbackFilter;
+    }
+
+    get showScoreChart(): boolean {
+        return this.showScoreChartValue ?? this.showScoreChartInput();
+    }
+
+    set showScoreChart(showScoreChart: boolean) {
+        this.showScoreChartValue = showScoreChart;
+    }
+
+    get exerciseType(): ExerciseType {
+        return this.exerciseTypeValue ?? this.exerciseTypeInput();
+    }
+
+    set exerciseType(exerciseType: ExerciseType) {
+        this.exerciseTypeValue = exerciseType;
+    }
+
     /**
      * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */
-    @Input() messageKey?: string = undefined;
+    get messageKey(): string | undefined {
+        return this.messageKeyValue ?? this.messageKeyInput();
+    }
+
+    set messageKey(messageKey: string | undefined) {
+        this.messageKeyValue = messageKey;
+    }
+
     /**
      * For programming exercises with individual due dates automatic feedbacks
      * for tests marked as AFTER_DUE_DATE are hidden until the last student can
@@ -98,15 +172,42 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Students should be informed why some feedbacks seem to be missing from
      * the result.
      */
-    @Input() showMissingAutomaticFeedbackInformation = false;
-    @Input() latestDueDate?: dayjs.Dayjs;
-    @Input() taskName?: string;
-    @Input() numberOfNotExecutedTests?: number;
-    @Input() isExamReviewPage = false;
-    @Input() isPrinting = false;
+    get showMissingAutomaticFeedbackInformation(): boolean {
+        return this.showMissingAutomaticFeedbackInformationValue ?? this.showMissingAutomaticFeedbackInformationInput();
+    }
+
+    set showMissingAutomaticFeedbackInformation(showMissingAutomaticFeedbackInformation: boolean) {
+        this.showMissingAutomaticFeedbackInformationValue = showMissingAutomaticFeedbackInformation;
+    }
+
+    get latestDueDate(): dayjs.Dayjs | undefined {
+        return this.latestDueDateValue ?? this.latestDueDateInput();
+    }
+
+    set latestDueDate(latestDueDate: dayjs.Dayjs | undefined) {
+        this.latestDueDateValue = latestDueDate;
+    }
+
+    get taskName(): string | undefined {
+        return this.taskNameValue ?? this.taskNameInput();
+    }
+
+    set taskName(taskName: string | undefined) {
+        this.taskNameValue = taskName;
+    }
+
+    get numberOfNotExecutedTests(): number | undefined {
+        return this.numberOfNotExecutedTestsValue ?? this.numberOfNotExecutedTestsInput();
+    }
+
+    set numberOfNotExecutedTests(numberOfNotExecutedTests: number | undefined) {
+        this.numberOfNotExecutedTestsValue = numberOfNotExecutedTests;
+    }
+
+    readonly isExamReviewPage = input(false);
+    readonly isPrinting = input(false);
 
     // Icons
-    faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
     isLoading = false;
@@ -154,6 +255,23 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * When a result has feedbacks assigned to it, no server call will be executed.
      */
     ngOnInit(): void {
+        // When opened via DialogService, inputs arrive through DynamicDialogConfig.data rather than template bindings.
+        // The standalone-feedback page (and the existing spec) bind inputs directly, so dialogConfig may be absent.
+        const data = this.dialogConfig?.data;
+        if (data) {
+            this.exercise = data.exercise ?? this.exercise;
+            this.result = data.result ?? this.result;
+            this.participation = data.participation ?? this.participation;
+            this.exerciseType = data.exerciseType ?? this.exerciseType;
+            this.feedbackFilter = data.feedbackFilter ?? this.feedbackFilter;
+            this.showScoreChart = data.showScoreChart ?? this.showScoreChart;
+            this.messageKey = data.messageKey ?? this.messageKey;
+            this.showMissingAutomaticFeedbackInformation = data.showMissingAutomaticFeedbackInformation ?? this.showMissingAutomaticFeedbackInformation;
+            this.latestDueDate = data.latestDueDate ?? this.latestDueDate;
+            this.taskName = data.taskName ?? this.taskName;
+            this.numberOfNotExecutedTests = data.numberOfNotExecutedTests ?? this.numberOfNotExecutedTests;
+        }
+
         this.isLoading = true;
 
         this.initializeExerciseInformation();
@@ -231,7 +349,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
-                        if (this.isExamReviewPage) {
+                        if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
                         }
                     }

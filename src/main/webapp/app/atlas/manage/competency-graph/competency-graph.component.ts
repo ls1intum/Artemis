@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Subject } from 'rxjs';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';

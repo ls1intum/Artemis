@@ -74,7 +74,7 @@ import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
 import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
+import de.tum.cit.aet.artemis.localci.service.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 
@@ -1359,6 +1359,12 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("atlas-session-preview-history", createAtlasSessionMapConfig(artemisProperties));
         // Node metrics snapshots for multi-node admin metrics page (pushed every 15s, expire after 60s)
         config.getMapConfigs().put("nodeMetrics", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(60));
+        // Atlas competency-orchestrator per-course locks. The lock is normally released explicitly
+        // in CompetencyOrchestrationService.run()'s finally block; this TTL only catches the case
+        // where the JVM dies mid-run. Configured here (not via @PostConstruct on the service) because
+        // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
+        // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
+        config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
     }
 
     /**

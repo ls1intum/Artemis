@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- File upload exercises are always assessed manually, but the client did not set a default
+         assessment type. As a result, existing file upload exercises in the database may have a
+         NULL assessment_type, which hides the assessment dashboard in the exercise detail view. -->
+    <changeSet id="20260513214248-1" author="artemis">
+        <update tableName="exercise">
+            <column name="assessment_type" value="MANUAL"/>
+            <where>discriminator = 'F' AND assessment_type IS NULL</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

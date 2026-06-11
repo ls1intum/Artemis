@@ -16,11 +16,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 /**
@@ -38,9 +36,8 @@ class PyrisStatusUpdateServiceErrorCodeTest {
     void setUp() {
         callbackApi = mock(ProcessingStateCallbackApi.class);
 
-        service = new PyrisStatusUpdateService(mock(PyrisJobService.class), mock(IrisExerciseChatSessionService.class), mock(IrisTextExerciseChatSessionService.class),
-                mock(IrisCourseChatSessionService.class), mock(IrisCompetencyGenerationService.class), mock(IrisLectureChatSessionService.class),
-                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi));
+        service = new PyrisStatusUpdateService(mock(PyrisJobService.class), mock(IrisChatSessionService.class), mock(IrisCompetencyGenerationService.class),
+                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi), mock(IrisWebsocketService.class));
     }
 
     @Test
@@ -51,12 +48,12 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         // Build a terminal stage list with an ERROR stage carrying errorCode "YOUTUBE_PRIVATE"
         // name, weight, state, message, internal, chatMessage
         var errorStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.ERROR, "video is private", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(errorStage), 7L, "YOUTUBE_PRIVATE");
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(errorStage), 7L, "YOUTUBE_PRIVATE", null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
         // The callback API must receive the errorCode "YOUTUBE_PRIVATE" (not null)
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(false), eq("YOUTUBE_PRIVATE"));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(false), eq("YOUTUBE_PRIVATE"), eq(null));
     }
 
     @Test
@@ -64,10 +61,35 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
 
         var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
-        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(doneStage), 7L, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO(null, List.of(doneStage), 7L, null, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
+    }
+
+    @Test
+    void displayPageNumbersAreReadOnlyFromDedicatedField() {
+        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
+
+        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("{\"displayPageNumbers\":[9,9,9]}", List.of(doneStage), 7L, null, List.of(1, 2, -1));
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(List.of(1, 2, -1)));
+        verify(callbackApi).handleCheckpointData(eq(42L), eq("job-token-abc"), eq("{\"displayPageNumbers\":[9,9,9]}"));
+    }
+
+    @Test
+    void missingDisplayPageNumbersRemainNullableOnSuccess() {
+        var job = new LectureIngestionWebhookJob("job-token-abc", 1L, 2L, 42L);
+
+        var doneStage = new PyrisStageDTO("Ingestion", 1, PyrisStageState.DONE, "success", false, null);
+        var statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("done", List.of(doneStage), 7L, null, null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(null));
     }
 }

@@ -6,14 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -25,7 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('TextExercise Management Component', () => {
@@ -59,7 +59,8 @@ describe('TextExercise Management Component', () => {
         courseExerciseService = TestBed.inject(CourseExerciseService);
         dialogService = TestBed.inject(DialogService);
 
-        // Set exercises via internal property since textExercises is a signal input
+        // Seed both the signal input and internal state for tests with and without change detection
+        fixture.componentRef.setInput('textExercises', [textExercise]);
         comp.internalTextExercises.set([textExercise]);
         // Initialize filter which is normally done in ngOnInit
         comp['filter'] = new ExerciseFilter();
@@ -82,7 +83,7 @@ describe('TextExercise Management Component', () => {
         );
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
         // THEN
@@ -95,7 +96,7 @@ describe('TextExercise Management Component', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
         // Set the course before opening the modal to ensure courseId is defined
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
 
         comp.openImportModal();
         expect(dialogService.open).toHaveBeenCalledOnce();
@@ -113,8 +114,12 @@ describe('TextExercise Management Component', () => {
 
     describe('TextExercise Search Exercises', () => {
         it('should show all exercises', () => {
+            const filter = new ExerciseFilter('EXT', '', 'text');
+
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
+            fixture.componentRef.setInput('exerciseFilter', filter);
+            comp.filter = filter;
+            comp['applyFilter']();
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);
@@ -122,8 +127,12 @@ describe('TextExercise Management Component', () => {
         });
 
         it('should show no exercises', () => {
+            const filter = new ExerciseFilter('Prog', '', 'all');
+
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', filter);
+            comp.filter = filter;
+            comp['applyFilter']();
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);

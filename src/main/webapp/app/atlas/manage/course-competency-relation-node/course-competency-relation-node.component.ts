@@ -3,9 +3,9 @@ import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.com
 import { Node } from '@swimlane/ngx-graph';
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',

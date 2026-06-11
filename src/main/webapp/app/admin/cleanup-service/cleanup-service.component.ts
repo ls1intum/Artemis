@@ -1,0 +1,120 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { Subject } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+
+import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+
+/**
+ * Admin component for managing data cleanup operations.
+ * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
+ */
+@Component({
+    selector: 'jhi-cleanup-service',
+    templateUrl: './cleanup-service.component.html',
+    imports: [
+        FormDateTimePickerComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TranslateDirective,
+        FormsModule,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        CleanupOperationModalComponent,
+    ],
+})
+export class CleanupServiceComponent implements OnInit {
+    private dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
+
+    private readonly dataCleanupService = inject(DataCleanupService);
+
+    /** Whether the cleanup operation modal is visible */
+    showCleanupModal = signal<boolean>(false);
+
+    /** The currently selected operation for the modal */
+    selectedOperation = signal<CleanupOperation | undefined>(undefined);
+
+    /** Cleanup operations data - uses signal for reactivity */
+    readonly cleanupOperations = signal<CleanupOperation[]>([
+        {
+            name: 'deleteOrphans',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
+        {
+            name: 'deletePlagiarismComparisons',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
+        {
+            name: 'deleteNonRatedResults',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
+        {
+            name: 'deleteOldRatedResults',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
+        {
+            name: 'deleteOldSubmissionVersions',
+            deleteFrom: dayjs().subtract(12, 'months'),
+            deleteTo: dayjs().subtract(6, 'months'),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        },
+    ]);
+
+    ngOnInit(): void {
+        this.loadLastExecutions();
+    }
+
+    loadLastExecutions(): void {
+        this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
+            const executionRecords = executionRecordsBody.body!;
+            if (executionRecords && executionRecords.length > 0) {
+                this.cleanupOperations.update((operations) =>
+                    operations.map((operation, index) => {
+                        const executionRecord = executionRecords[index];
+                        if (executionRecord && executionRecord.executionDate) {
+                            return { ...operation, lastExecuted: convertDateFromServer(executionRecord.executionDate) };
+                        }
+                        return operation;
+                    }),
+                );
+            }
+        });
+    }
+
+    validateDates(operation: CleanupOperation): void {
+        const datesValid = operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom));
+        operation.datesValid.set(datesValid);
+    }
+
+    /**
+     * Handles displaying the modal with operation details and counts.
+     */
+    openCleanupOperationModal(operation: CleanupOperation): void {
+        this.selectedOperation.set(operation);
+        this.showCleanupModal.set(true);
+    }
+}

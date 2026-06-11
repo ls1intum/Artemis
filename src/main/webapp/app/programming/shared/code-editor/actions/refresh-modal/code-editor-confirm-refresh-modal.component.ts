@@ -1,39 +1,35 @@
-import { Component, EventEmitter, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject } from '@angular/core';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-code-editor-confirm-refresh-modal',
     templateUrl: './code-editor-confirm-refresh-modal.component.html',
-    styleUrls: ['../conflict-modal/code-editor-resolve-conflict-modal.scss'],
     providers: [CodeEditorRepositoryFileService],
     imports: [FormsModule, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorConfirmRefreshModalComponent {
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
     faBan = faBan;
     faTimes = faTimes;
 
-    shouldRefresh: EventEmitter<void> = new EventEmitter<void>();
-
     /**
      * Reset the git repository.
      *
-     * @function resetRepository
+     * @function refreshFiles
      */
     refreshFiles() {
-        this.activeModal.close();
-        this.shouldRefresh.emit();
+        this.dialogRef.close(true);
     }
 
     closeModal() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,7 +11,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -70,5 +71,13 @@ public class StudentExamApi extends AbstractExamApi {
 
     public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
         return studentExamRepository.findByExamIdAndUserId(examId, userId);
+    }
+
+    public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {
+        return studentExamRepository.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, courseIds);
+    }
+
+    public Set<Long> findAssignedExamExerciseIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {
+        return studentExamRepository.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, courseIds);
     }
 }
