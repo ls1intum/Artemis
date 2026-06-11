@@ -177,6 +177,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
+            onAssistantMessageSent(session, savedMessage);
         }
         else {
             savedMessage = null;
@@ -226,6 +227,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
         return updatedJob.get();
+    }
+
+    /**
+     * Hook invoked after an assistant (LLM) message has been persisted and pushed over the websocket.
+     * Subclasses with course and user context may override this to react to a finished answer (e.g. to
+     * notify the user when the chat is not open anywhere). Default: no-op.
+     *
+     * @param session the chat session the message belongs to
+     * @param message the assistant message that was sent
+     */
+    protected void onAssistantMessageSent(S session, IrisMessage message) {
+        // no-op by default
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";
