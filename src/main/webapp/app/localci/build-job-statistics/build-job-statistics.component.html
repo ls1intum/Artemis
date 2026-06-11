@@ -20,7 +20,9 @@
         }
     </div>
     <div class="d-flex align-items-center flex-wrap gap-3">
-        <ngx-charts-pie-chart class="chart-container" [view]="[80, 80]" [results]="pieChartData()" [scheme]="pieChartColorScheme" [doughnut]="true" [arcWidth]="0.4" />
+        <div class="chart-container">
+            <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="80px" height="80px" />
+        </div>
         <div class="d-flex flex-wrap gap-2 stats-container">
             <div class="stats-item">
                 <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>

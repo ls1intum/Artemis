@@ -1,12 +1,15 @@
-import { Component, OnChanges, OnInit, inject, input } from '@angular/core';
+import { Component, OnChanges, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,7 +21,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, ChartModule, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnChanges, OnInit {
     protected readonly faSpinner = faSpinner;
@@ -38,18 +41,21 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     stats: number[];
     titleLink: string[] | undefined;
 
-    ngxDoughnutData: NgxChartsSingleSeriesDataEntry[] = [
+    readonly chartEntries = signal<ChartSeriesEntry[]>([
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
         { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
-    ];
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
-    } as Color;
-    bindFormatting = this.valueFormatting.bind(this);
+    ]);
+
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]);
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            legend: false,
+            tooltip: { label: (item) => `${item.label}: ${this.valueFormatting({ value: item.parsed })}` },
+        }),
+    );
 
     ngOnChanges() {
         // [0, 0, 0] will lead to the chart not being displayed,
@@ -99,17 +105,18 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     }
 
     /**
-     * Assigns a given array of numbers to ngxData
+     * Assigns a given array of numbers to the chart entries
      * @param values the values that should be displayed by the chart
      */
     private updatePieChartData(values: number[]) {
-        this.ngxDoughnutData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
-        this.ngxDoughnutData = [...this.ngxDoughnutData];
+        const currentData = this.chartEntries();
+        currentData.forEach((entry: ChartSeriesEntry, index: number) => (entry.value = values[index]));
+        this.chartEntries.set([...currentData]);
     }
 
     /**
      * Modifies the tooltip content of the chart.
-     * @param data a dedicated object passed by ngx-charts
+     * @param data the data point hovered by the user
      * @returns absolute value represented by doughnut piece or 0 if the currentMax is 0.
      * This is necessary in order to compensate the workaround for
      * displaying a chart even if no values are there to display (i.e. currentMax is 0)

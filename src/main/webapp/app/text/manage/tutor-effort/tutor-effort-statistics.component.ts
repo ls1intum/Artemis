@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,10 @@ import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions } from 'app/shared-ui/chart/chart-options';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 
@@ -24,7 +27,7 @@ interface TutorEffortRange {
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
     styleUrls: ['./tutor-effort-statistics.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, BarChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, ChartModule, ArtemisTranslatePipe],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     private route = inject(ActivatedRoute);
@@ -32,6 +35,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private textExerciseService = inject(TextExerciseService);
     private textAssessmentService = inject(TextAssessmentService);
     private translateService = inject(TranslateService);
+    private chartColorService = inject(ChartColorService);
 
     tutorEfforts: TutorEffort[] = [];
     numberOfSubmissions: number;
@@ -41,7 +45,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     currentCourseId: number;
     numberOfTutorsInvolvedInCourse: number;
     effortDistribution: number[];
-    yScaleMax = 10;
+    readonly yScaleMax = signal(10);
     medianValue: number;
 
     showMedianLegend = false;
@@ -49,11 +53,41 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     // Distance value representing step difference between chartLabel entries, i.e:. 1-10, 10-20
     readonly bucketSize = 10;
 
-    xAxisLabel: string;
-    yAxisLabel: string;
+    readonly xAxisLabel = signal('');
+    readonly yAxisLabel = signal('');
 
     // Icons
     faSync = faSync;
+
+    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.chartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            xAxis: { label: this.xAxisLabel() },
+            yAxis: { label: this.yAxisLabel(), max: this.yScaleMax(), tickFormatter: this.yAxisTickFormatting },
+            tooltip: {
+                title: (items) => {
+                    const item = items[0];
+                    if (!item) {
+                        return '';
+                    }
+                    const amount = item.parsed.y;
+                    const tutorsKey = amount !== 1 ? 'artemisApp.textExercise.tutorEffortStatistics.multipleTutors' : 'artemisApp.textExercise.tutorEffortStatistics.singleTutor';
+                    return `${amount} ${this.translateService.instant(tutorsKey)}`;
+                },
+                label: (item) => {
+                    const label = item.label ?? '';
+                    return [
+                        this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.forMinutes', { interval: label }),
+                        this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.medianOfSubmissions', {
+                            median: this.getMedianAmountOfAssessedSubmissions(label),
+                        }),
+                    ];
+                },
+            },
+        }),
+    );
 
     constructor() {
         super();
@@ -64,8 +98,8 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
 
     ngOnInit(): void {
         this.translateLabels();
-        this.ngxChartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
-        this.ngxColor.domain = Array(13).fill(GraphColors.LIGHT_BLUE);
+        this.chartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
+        this.chartColors.set(Array(13).fill(GraphColors.LIGHT_BLUE));
         this.route.params.subscribe((params) => {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);
@@ -96,15 +130,10 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         const avgTemp = this.totalTimeSpent === 0 ? 0 : this.numberOfSubmissions / this.totalTimeSpent;
         this.averageTimeSpent = avgTemp ? Math.round((avgTemp + Number.EPSILON) * 100) / 100 : 0;
         this.distributeEffortToSets();
-        this.ngxData = [];
-        this.effortDistribution.forEach((effort, index) => {
-            this.ngxData.push({ name: this.ngxChartLabels[index], value: effort });
-        });
+        this.chartEntries.set(this.effortDistribution.map((effort, index) => ({ name: this.chartLabels[index], value: effort })));
         this.determineMaxChartHeight(this.effortDistribution);
         this.medianValue = this.computeEffortMedian();
         this.highlightMedian(this.medianValue);
-
-        this.ngxData = [...this.ngxData];
     }
 
     loadNumberOfTutorsInvolved() {
@@ -121,7 +150,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * and so on. chartlabels is divided in steps of length 10, which is why division/10 and floor function is used.
      */
     distributeEffortToSets() {
-        this.effortDistribution = new Array<number>(this.ngxChartLabels.length).fill(0);
+        this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
         this.tutorEfforts.forEach((effort) => {
             const BUCKET_INDEX = this.determineIndex(effort.totalTimeSpentMinutes);
             this.effortDistribution[BUCKET_INDEX]++;
@@ -142,7 +171,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * @returns the median assessed submissions for a bar
      */
     getMedianAmountOfAssessedSubmissions(label: string): number {
-        const index = this.ngxChartLabels.indexOf(label);
+        const index = this.chartLabels.indexOf(label);
         const range = this.identifyMinimumAndMaximumTimesSpent(index);
 
         return this.computeMedianAmountOfAssessedSubmissions(range);
@@ -153,15 +182,15 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * @param data the data that should be displayed
      */
     private determineMaxChartHeight(data: number[]): void {
-        this.yScaleMax = Math.max(this.yScaleMax, ...data);
+        this.yScaleMax.set(Math.max(this.yScaleMax(), ...data));
     }
 
     /**
      * Auxiliary method that ensures that the chart is instantly translation sensitive
      */
     private translateLabels() {
-        this.xAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes');
-        this.yAxisLabel = this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.tutors');
+        this.xAxisLabel.set(this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.minutes'));
+        this.yAxisLabel.set(this.translateService.instant('artemisApp.textExercise.tutorEffortStatistics.tutors'));
     }
 
     /**
@@ -180,7 +209,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * @param timeSpent the time the tutor spent
      */
     private determineIndex(timeSpent: number): number {
-        const BUCKET_LAST_INDEX = this.ngxChartLabels.length - 1;
+        const BUCKET_LAST_INDEX = this.chartLabels.length - 1;
         const BUCKET_POSITION = timeSpent / this.bucketSize;
         // the element will either be distributed in one of first 12 elements (chartLabels.length)
         // or the last element if the time passed is larger than 120 (i.e.: chartLabels[12] = 120+)
@@ -193,12 +222,14 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      */
     private highlightMedian(medianValue: number) {
         const index = this.determineIndex(medianValue);
-        if (this.ngxData[index].value > 0) {
-            this.ngxColor.domain[index] = GraphColors.BLUE;
+        const colors: string[] = Array(this.chartLabels.length).fill(GraphColors.LIGHT_BLUE);
+        if (this.chartEntries()[index].value > 0) {
+            colors[index] = GraphColors.BLUE;
             this.showMedianLegend = true;
         } else {
             this.showMedianLegend = false;
         }
+        this.chartColors.set(colors);
     }
 
     /**

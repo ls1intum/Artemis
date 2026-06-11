@@ -1,9 +1,12 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -36,8 +39,7 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    styleUrls: ['./assessment-dashboard-information.component.scss'],
-    imports: [TranslateDirective, PieChartModule, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
+    imports: [TranslateDirective, ChartModule, RouterLink, ArtemisTranslatePipe, SidePanelComponent],
 })
 export class AssessmentDashboardInformationComponent {
     private translateService = inject(TranslateService);
@@ -85,19 +87,17 @@ export class AssessmentDashboardInformationComponent {
             value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
         },
     ]);
-    readonly customColors = computed(() => [
-        {
-            name: this.openedAssessmentsTitle(),
-            value: GraphColors.RED,
-        },
-        {
-            name: this.completedAssessmentsTitle(),
-            value: GraphColors.BLUE,
-        },
-    ]);
+    // The colors are index-aligned with the entries of the assessments computed (open, completed).
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.RED, GraphColors.BLUE]);
 
-    view: [number, number] = [320, 150];
-    legendPosition = LegendPosition.Below;
+    readonly chartData = computed(() => singleSeriesChartData(this.assessments(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 1,
+            legend: { position: 'bottom' },
+            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
+        }),
+    );
 
     readonly complaintsLink = computed(() => {
         const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
