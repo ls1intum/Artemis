@@ -202,6 +202,14 @@ export class Feedback implements BaseEntity {
         return line;
     }
 
+    public static hasProgrammingEditorReference(feedback: Feedback): boolean {
+        return !!Feedback.getReferenceFilePath(feedback) && Feedback.getReferenceLine(feedback) !== undefined;
+    }
+
+    public static canBeShownInProgrammingEditor(feedback: Feedback): boolean {
+        return Feedback.hasProgrammingEditorReference(feedback) || (Feedback.isStaticCodeAnalysisFeedback(feedback) && Feedback.hasDetailText(feedback));
+    }
+
     /**
      * Feedback is empty if it has 0 credits and the comment is empty.
      * @param that

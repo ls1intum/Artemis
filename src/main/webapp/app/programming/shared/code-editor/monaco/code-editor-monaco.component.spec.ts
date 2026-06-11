@@ -116,6 +116,12 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
         getInlineFeedbackNodeStub = vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn(() => null),
+            setItem: vi.fn(),
+            removeItem: vi.fn(),
+            clear: vi.fn(),
+        } as unknown as Storage);
 
         fixture.componentRef.setInput('sessionId', 'test');
         fixture.componentRef.setInput('commitState', CommitState.CLEAN);
@@ -124,6 +130,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     afterEach(() => {
         global.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+        vi.unstubAllGlobals();
         vi.restoreAllMocks();
     });
 
@@ -803,6 +810,20 @@ describe('CodeEditorMonacoComponent', () => {
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
+    });
+
+    it('should only include valid programming editor references for the selected file', () => {
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(
+            comp.filterFeedbackForSelectedFile([
+                ...exampleFeedbacks,
+                { id: 4, reference: 'file:file1.java' },
+                { id: 5, reference: 'file:file1.java_line:invalid' },
+                { id: 6, detailText: 'Unreferenced feedback' },
+            ] as Feedback[]),
+        ).toEqual(exampleFeedbacks.slice(0, 2));
     });
 
     it('should add a new feedback widget', async () => {

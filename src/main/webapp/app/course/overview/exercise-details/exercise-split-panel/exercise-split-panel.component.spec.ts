@@ -15,6 +15,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('split.js', () => ({
     default: vi.fn(() => ({ destroy: vi.fn(), getSizes: vi.fn(() => [65, 35]) })),
@@ -125,14 +129,85 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.splitOnWide()).toBe(true);
     });
 
-    it.each([false, undefined])('should disable wide splitting when the read-only editor is shown as feedback tab and allowOnlineEditor is %s', (allowOnlineEditor) => {
+    it.each([false, undefined])('should keep wide splitting enabled without read-only editor annotations and allowOnlineEditor is %s', (allowOnlineEditor) => {
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
         fixture.detectChanges();
 
         const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
 
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+        expect(resizablePanels.splitOnWide()).toBe(true);
+    });
+
+    it.each([false, undefined])('should disable wide splitting when a failed build can create read-only editor annotations and allowOnlineEditor is %s', (allowOnlineEditor) => {
+        const submission = { buildFailed: true } as ProgrammingSubmission;
+        const result = { id: 2, completionDate: new Date(), submission } as Result;
+        submission.results = [result];
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
         expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
         expect(resizablePanels.splitOnWide()).toBe(false);
+    });
+
+    it('should show the read-only editor feedback tab for file-line referenced feedback', () => {
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+    });
+
+    it('should show the read-only editor feedback tab for successful Athena feedback results', () => {
+        const result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+    });
+
+    it('should show the read-only editor feedback tab for static code analysis feedback', () => {
+        const feedback = { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: '{"filePath":"src/Main.java","startLine":4}', type: FeedbackType.AUTOMATIC } as Feedback;
+        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(true);
+    });
+
+    it('should not show the read-only editor feedback tab for unreferenced feedback', () => {
+        const feedback = { type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'General feedback' } as Feedback;
+        const result = { id: 2, completionDate: new Date(), feedbacks: [feedback] } as Result;
+        const submission = { buildFailed: false, results: [result] } as ProgrammingSubmission;
+        result.submission = submission;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [submission] } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
+    });
+
+    it('should not use latest rated result from another participation to show the read-only editor feedback tab', () => {
+        const feedback = { reference: 'file:src/Main.java_line:4', type: FeedbackType.MANUAL } as Feedback;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false } as ProgrammingExercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.componentRef.setInput('latestRatedResult', { id: 2, feedbacks: [feedback] } as Result);
+        fixture.detectChanges();
+
+        expect(component.showReadOnlyEditorAsFeedbackTab()).toBe(false);
     });
 });

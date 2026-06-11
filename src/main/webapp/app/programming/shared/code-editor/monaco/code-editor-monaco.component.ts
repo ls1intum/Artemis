@@ -945,7 +945,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (!this.selectedFile()) {
             return [];
         }
-        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
+        return feedbacks.filter((feedback) => Feedback.hasProgrammingEditorReference(feedback) && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
     }
 
     /**

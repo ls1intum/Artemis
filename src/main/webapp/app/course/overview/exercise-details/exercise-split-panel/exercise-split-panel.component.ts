@@ -37,6 +37,10 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -152,7 +156,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly showEditorAsFeedbackTab = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true;
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor !== true && this.latestResultNeedsReadOnlyEditor();
     });
 
     readonly showReadOnlyEditorAsFeedbackTab = computed(() => this.showEditorPanel() && this.showEditorAsFeedbackTab());
@@ -199,6 +203,35 @@ export class ExerciseSplitPanelComponent {
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
         );
     });
+
+    private latestResultNeedsReadOnlyEditor(): boolean {
+        const latestResult = this.latestResultOfActiveParticipation();
+        if (!latestResult) {
+            return false;
+        }
+        if (this.resultBelongsToFailedBuild(latestResult)) {
+            return true;
+        }
+        if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && latestResult.successful) {
+            return true;
+        }
+        return latestResult.feedbacks?.some(Feedback.canBeShownInProgrammingEditor) ?? false;
+    }
+
+    private resultBelongsToFailedBuild(result: Result): boolean {
+        if ((result.submission as ProgrammingSubmission | undefined)?.buildFailed) {
+            return true;
+        }
+        return (
+            this.studentParticipation()?.submissions?.some(
+                (submission) => (submission as ProgrammingSubmission).buildFailed && submission.results?.some((submissionResult) => submissionResult.id === result.id),
+            ) ?? false
+        );
+    }
+
+    private latestResultOfActiveParticipation(): Result | undefined {
+        return findLatestResult(getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
+    }
 
     constructor() {
         // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
