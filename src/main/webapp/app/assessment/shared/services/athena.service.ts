@@ -19,22 +19,6 @@ export class AthenaService {
     public resourceUrl = 'api/athena';
 
     /**
-     * Fetches all available modules for a course and exercise.
-     *
-     * @param courseId The id of the course for which the feedback suggestion modules should be fetched
-     * @param exercise The exercise for which the feedback suggestion modules should be fetched
-     */
-    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
-            return of([] as string[]);
-        }
-
-        return this.http
-            .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
-            .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
-    }
-
-    /**
      * Get feedback suggestions for the given submission from Athena
      *
      * @param exercise
@@ -42,9 +26,6 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!exercise.feedbackSuggestionModule) {
-            return of([]);
-        }
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
             return of([] as T[]);
         }
