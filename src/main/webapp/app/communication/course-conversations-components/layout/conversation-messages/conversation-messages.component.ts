@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
+import { Observable, Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/metis.util';
@@ -520,12 +520,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private buildSourceRequests(sourcePostIds: number[], sourceAnswerIds: number[]): Observable<Posting[] | undefined>[] {
         const requests: Observable<Posting[] | undefined>[] = [];
 
+        // forwarded-source previews are non-critical: a source may live in a conversation the viewer cannot access (403),
+        // or the fetch may otherwise fail. Swallow any error to undefined so one bad source does not break rendering of the
+        // whole message list (extractFetchedSources tolerates undefined).
         if (sourcePostIds.length > 0) {
-            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds));
+            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds).pipe(catchError(() => of(undefined))));
         }
 
         if (sourceAnswerIds.length > 0) {
-            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds));
+            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds).pipe(catchError(() => of(undefined))));
         }
 
         return requests;

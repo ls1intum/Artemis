@@ -13,7 +13,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { DialogService } from 'primeng/dynamicdialog';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Directive, NO_ERRORS_SCHEMA, input, output } from '@angular/core';
@@ -23,7 +23,7 @@ import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/c
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
@@ -448,6 +448,27 @@ examples.forEach((activeConversation) => {
                     }
                 });
             }
+        });
+
+        it('should still render messages when a forwarded-source fetch fails', () => {
+            const mockForwardedMessages: ForwardedMessage[] = [
+                { id: 101, sourceId: 10, sourceType: 'POST' } as unknown as ForwardedMessage,
+                { id: 102, sourceId: 11, sourceType: 'ANSWER' } as unknown as ForwardedMessage,
+            ];
+            const mockSourceAnswerPosts: AnswerPost[] = [{ id: 11, content: 'Forwarded Answer Content', resolvesPost: true } as AnswerPost];
+
+            vi.spyOn(metisService, 'getForwardedMessagesByIds').mockReturnValue(of(new HttpResponse({ body: [{ id: 1, messages: mockForwardedMessages }] })));
+            // the source post is inaccessible to the viewer -> the server replies 403; it must not break the rest of the rendering
+            vi.spyOn(metisService, 'getSourcePostsByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            vi.spyOn(metisService, 'getSourceAnswerPostsByIds').mockReturnValue(of(mockSourceAnswerPosts));
+
+            component.allPosts = [{ id: 1, content: 'Some content...', hasForwardedMessages: true } as Post];
+            component.setPosts();
+
+            // the message list still renders and the accessible answer source is attached; the inaccessible post source is dropped to undefined
+            expect(component.posts).toHaveLength(1);
+            expect(component.posts[0].forwardedPosts).toEqual([undefined]);
+            expect(component.posts[0].forwardedAnswerPosts?.[0]?.id).toBe(11);
         });
 
         it('should filter posts to show only pinned posts when showOnlyPinned is true', () => {
