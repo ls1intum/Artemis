@@ -419,7 +419,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
 
-        String unsanitizedName = "test-file"; // contains en-dash
+        String unsanitizedName = "test–file"; // contains en-dash
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
