@@ -95,10 +95,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
-    // TODO: rename in a follow up
-    @Column(name = "allow_manual_feedback_requests")
-    private boolean allowFeedbackRequests;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
@@ -133,9 +129,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Nullable
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
-
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
 
     @ManyToOne
     private Course course;
@@ -229,14 +222,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
-    }
-
-    public boolean getAllowFeedbackRequests() {
-        return allowFeedbackRequests;
-    }
-
-    public void setAllowFeedbackRequests(boolean allowFeedbackRequests) {
-        this.allowFeedbackRequests = allowFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
@@ -666,18 +651,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
-    }
-
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
-    }
-
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
-    }
-
-    public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

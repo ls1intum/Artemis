@@ -15,11 +15,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
@@ -649,23 +647,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
         return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
     }
-
-    /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
-     *
-     * @param courseId                           The course for which the access should be revoked
-     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
-            """)
-    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
