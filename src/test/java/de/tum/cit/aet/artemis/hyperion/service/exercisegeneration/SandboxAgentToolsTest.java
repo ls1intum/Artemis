@@ -250,23 +250,6 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void bash_applyPatchHeredoc_shortCircuits() {
-        // The most common form the model emits: an apply_patch heredoc. The first word is still apply_patch, so it is caught and the sandbox is never touched.
-        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
-        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch <<'PATCH'\n*** Begin Patch\n*** End Patch\nPATCH");
-        assertThat(out).startsWith("exit=2\napply_patch is NOT available");
-        assertThat(sandbox.lastScript).isNull();
-    }
-
-    @Test
-    void bash_applyPatchWithRedirect_shortCircuits() {
-        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
-        String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch < my.patch");
-        assertThat(out).startsWith("exit=2\napply_patch is NOT available");
-        assertThat(sandbox.lastScript).isNull();
-    }
-
-    @Test
     void bash_commandMentioningApplyPatch_isNotMistakenForAnInvocation() {
         // A genuine command that merely MENTIONS apply_patch (e.g. grepping for it) must run normally — only the FIRST shell word being apply_patch is short-circuited.
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));

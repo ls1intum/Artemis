@@ -7,15 +7,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
 /**
- * Per-language (and, where it matters, per-project-type) generation guidance injected into the agent system prompt. This is the single place that encodes the conventions an LLM
- * cannot infer from a cleared scaffold for each Artemis-supported language: the source/test layout, the test framework, <em>how the test runner names a test in its result
- * report</em>
- * (which is exactly what an Artemis {@code [task]} binding must reference — and it differs sharply between frameworks), how the template is made to compile-but-fail, how the tests
- * reference the code under test, and the handful of gotchas that otherwise make a generated exercise fail to build.
- * <p>
- * Each profile is grounded in the language's shipped sample exercise under {@code src/main/resources/templates/<language>/}. Only the profile for the exercise's own language is
- * ever
- * added to a prompt, so coverage of all languages does not bloat any single run.
+ * Per-language (and where it matters per-project-type) generation guidance injected into the agent system prompt. The single non-obvious thing it encodes — the rest the LLM infers
+ * from the cleared scaffold — is <em>how each test framework names a test in its result report</em>, which is exactly what an Artemis {@code [task]} binding must match verbatim
+ * and
+ * which differs sharply between frameworks. Each profile is grounded in the language's shipped sample under {@code src/main/resources/templates/<language>/}, and only the
+ * exercise's
+ * own language is added to a prompt, so covering every language never bloats a single run.
  */
 final class LanguageGenerationProfile {
 

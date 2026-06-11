@@ -274,8 +274,7 @@ public class SandboxBuildCommandService {
      * Non-obvious field semantics: {@code testDir == ""} means the tests sit at the build root (not a {@code tests/} subdir); {@code solutionDir == ""} means the language checks
      * out no sibling solution; an empty {@code scaReportFiles} means SCA is disabled (no SCA reports collected, non-SCA behaviour unchanged).
      */
-    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir, String solutionDir, boolean checkoutSolution,
-            List<String> scaReportFiles) {
+    private record BuildRecipe(List<String> phases, List<String> reportGlobs, String testDir, String solutionDir, boolean checkoutSolution, List<String> scaReportFiles) {
 
         /**
          * Whether a sibling {@code solution/} checkout is materialized — exactly when the language defines a solution checkout path (Haskell/OCaml) AND the exercise checks it out.
@@ -354,7 +353,7 @@ public class SandboxBuildCommandService {
 
         List<String> phaseScripts = phases.stream().map(BuildPhaseDTO::script).filter(s -> s != null && !s.isBlank()).map(s -> substitute(s, assignmentDir, testDir)).toList();
         if (!phaseScripts.isEmpty()) {
-            return new BuildRecipe(phaseScripts, reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+            return new BuildRecipe(phaseScripts, reportGlobs, testDir, solutionDir, checkoutSolution, scaReportFiles);
         }
         // Generic fallback mirroring build_and_run_tests.sh: prefer a Gradle wrapper, then Maven, then a system Gradle.
         String fallback = """
@@ -362,7 +361,7 @@ public class SandboxBuildCommandService {
                 elif [ -f pom.xml ]; then mvn clean test;
                 elif [ -f build.gradle ]; then gradle clean test --no-daemon;
                 else echo 'No recognized build system' >&2; exit 2; fi""";
-        return new BuildRecipe(List.of(fallback), reportGlobs, assignmentDir, testDir, solutionDir, checkoutSolution, scaReportFiles);
+        return new BuildRecipe(List.of(fallback), reportGlobs, testDir, solutionDir, checkoutSolution, scaReportFiles);
     }
 
     /**

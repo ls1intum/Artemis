@@ -221,12 +221,8 @@ public class AgentLoopRunner {
                                 "ERROR: this tool call could not be executed: " + e.getMessage()
                                         + ". Only use the available tools (read_file, write_file, edit_file, bash, verify, submit) with valid JSON arguments, then continue."))
                         .toList();
-                if (errorResponses.isEmpty()) {
-                    conversation.add(new UserMessage("The previous step could not be executed: " + e.getMessage() + ". Continue using only the available tools."));
-                }
-                else {
-                    conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
-                }
+                // The catch is only reachable when this turn had tool calls (the no-tool-calls path returns above), so errorResponses always covers at least one call id.
+                conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, stepListener);
                 prompt = new Prompt(conversation, options);
                 continue;

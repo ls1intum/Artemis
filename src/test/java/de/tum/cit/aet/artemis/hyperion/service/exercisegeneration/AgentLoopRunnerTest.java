@@ -179,8 +179,10 @@ class AgentLoopRunnerTest {
         ChatModel chatModel = mock(ChatModel.class);
         String longContent = "x".repeat(500);
         // Arguments deliberately put a large "content" BEFORE "path" (the model controls key order); the transcript line must still surface the full, untruncated path, because the
-        // client's "files changed" view parses the path as the file tool's argument. This is the contract with generation-progress.model.ts.
-        String args = "{\"content\":\"" + longContent + "\",\"path\":\"solution/src/de/tum/example/VeryLongClassNameThatExceedsTheTruncationLimit.java\"}";
+        // client's "files changed" view parses the path as the file tool's argument. This is the contract with generation-progress.model.ts. The path carries a space to also pin
+        // that
+        // an internal space is kept verbatim (the display must not split or trim on whitespace).
+        String args = "{\"content\":\"" + longContent + "\",\"path\":\"solution/src/de/tum/My Example/VeryLongClassNameThatExceedsTheTruncationLimit.java\"}";
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", args), textResponse("DONE"));
 
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
@@ -189,7 +191,7 @@ class AgentLoopRunnerTest {
 
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
-        assertThat(steps).contains("Turn 1: write_file solution/src/de/tum/example/VeryLongClassNameThatExceedsTheTruncationLimit.java");
+        assertThat(steps).contains("Turn 1: write_file solution/src/de/tum/My Example/VeryLongClassNameThatExceedsTheTruncationLimit.java");
     }
 
     @Test
@@ -207,20 +209,6 @@ class AgentLoopRunnerTest {
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
         assertThat(steps).contains("Turn 1: write_file a\\b\"c.java");
-    }
-
-    @Test
-    void describeToolCall_keepsAPathWithSpacesIntact() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", "{\"path\":\"solution/My Notes.md\",\"content\":\"x\"}"), textResponse("DONE"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-        List<String> steps = new ArrayList<>();
-
-        runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
-
-        assertThat(steps).contains("Turn 1: write_file solution/My Notes.md");
     }
 
     @Test

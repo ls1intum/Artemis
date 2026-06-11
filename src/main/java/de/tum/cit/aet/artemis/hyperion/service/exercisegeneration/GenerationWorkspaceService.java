@@ -190,7 +190,7 @@ public class GenerationWorkspaceService {
                     continue;
                 }
                 byte[] content = resource.getInputStream().readAllBytes();
-                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || isBinary(content)) {
+                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || BinaryContent.isBinary(content)) {
                     continue;
                 }
                 reference.put(REFERENCE_DIR + "/" + relativePath, new String(content, StandardCharsets.UTF_8));
@@ -200,16 +200,6 @@ public class GenerationWorkspaceService {
                 log.debug("Skipping reference sample resource {}: {}", resource, e.getMessage());
             }
         }
-    }
-
-    /** Whether the bytes look binary (contain a NUL), so a non-text template asset (e.g. a wrapper jar) is not packed as a corrupt UTF-8 reference file. */
-    private static boolean isBinary(byte[] content) {
-        for (byte b : content) {
-            if (b == 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
