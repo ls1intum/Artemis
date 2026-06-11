@@ -391,7 +391,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const athenaResultFinished = isAthenaResultFinished(changedResults, currentResults);
 
                     if (athenaResultFinished) {
-                        if (latestChangedResult.successful === true) {
+                        if (latestChangedResult?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
                         } else {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -423,7 +423,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this._studentParticipations.set(updatedParticipations);
                     this.exercise = { ...this.exercise, studentParticipations: updatedParticipations };
                     this.sortResults();
-                    if (athenaResultFinished && latestChangedResult.successful === true) {
+                    if (athenaResultFinished && latestChangedResult?.successful === true) {
                         this.navigateToAthenaResult(changedParticipation);
                     }
                 }
