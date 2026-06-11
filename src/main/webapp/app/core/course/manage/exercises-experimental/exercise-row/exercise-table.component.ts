@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -17,7 +17,6 @@ import {
     faPlayCircle,
     faPlus,
     faRedo,
-    faRobot,
     faSort,
     faStopCircle,
     faTable,
@@ -36,7 +35,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
 import {
     DifficultyLevel,
     Exercise,
@@ -91,11 +89,9 @@ export interface TableGroupChange {
         ArtemisDatePipe,
         DeleteButtonDirective,
         ExerciseCategoriesComponent,
-        ExerciseVariantAiModalDispatcherComponent,
     ],
 })
 export class ExerciseTableComponent {
-    readonly aiVariantModalExercise = signal<Exercise | null>(null);
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
     readonly courseId = input.required<number>();
@@ -140,7 +136,6 @@ export class ExerciseTableComponent {
     protected readonly faClipboardList = faClipboardList;
     protected readonly faLightbulb = faLightbulb;
     protected readonly faRedo = faRedo;
-    protected readonly faRobot = faRobot;
     protected readonly faUsers = faUsers;
     protected readonly faPlus = faPlus;
 
@@ -148,7 +143,6 @@ export class ExerciseTableComponent {
     readonly sortAsc = signal(true);
 
     protected readonly devSettings = inject(ExerciseManagementDevSettingsService);
-    private readonly router = inject(Router);
 
     private readonly dialogErrorSources = new Map<number, Subject<string>>();
 
@@ -383,17 +377,6 @@ export class ExerciseTableComponent {
                     'programmingExerciseListModification',
                 );
                 break;
-        }
-    }
-
-    openCreateVariant(exercise: Exercise): void {
-        if (this.devSettings.variantCreationMode() === 'chat') {
-            const exId = exercise.id;
-            if (exId !== undefined) {
-                this.router.navigate(['/course-management', this.courseId(), 'exercises', 'experimental', 'create-variant', exId]);
-            }
-        } else {
-            this.aiVariantModalExercise.set(exercise);
         }
     }
 }

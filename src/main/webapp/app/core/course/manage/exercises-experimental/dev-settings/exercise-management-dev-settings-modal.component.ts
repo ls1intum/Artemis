@@ -36,17 +36,6 @@ export class ExerciseManagementDevSettingsModalComponent {
         { label: 'Ellipsis', value: 'ellipsis' },
     ];
 
-    protected readonly variantCreationModeOptions = [
-        { label: 'Modal', value: 'modal' },
-        { label: 'Chat', value: 'chat' },
-    ];
-
-    protected readonly variantModalStyleOptions = [
-        { label: 'Classic', value: 'classic' },
-        { label: 'Cards Inline', value: 'cards-inline' },
-        { label: 'Cards Wizard', value: 'cards-wizard' },
-    ];
-
     protected readonly groupEditModeOptions = [
         { label: 'Inline', value: 'inline' },
         { label: 'Modal', value: 'modal' },

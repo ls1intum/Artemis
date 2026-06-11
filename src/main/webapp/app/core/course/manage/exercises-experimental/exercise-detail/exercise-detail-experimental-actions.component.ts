@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -7,27 +7,11 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
 
 @Component({
     selector: 'jhi-exercise-detail-experimental-actions',
     templateUrl: './exercise-detail-experimental-actions.component.html',
     styleUrl: './exercise-detail-experimental-actions.component.scss',
-    imports: [
-        RouterLink,
-        FaIconComponent,
-        TranslateDirective,
-        NgbTooltip,
-        DeleteButtonDirective,
-        ArtemisTranslatePipe,
-        FeatureOverlayComponent,
-        ExerciseVariantAiModalDispatcherComponent,
-    ],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeatureOverlayComponent],
 })
-export class ExerciseDetailExperimentalActionsComponent extends NonProgrammingExerciseDetailCommonActionsComponent {
-    readonly aiVariantModalVisible = signal(false);
-
-    openAiVariantModal(): void {
-        this.aiVariantModalVisible.set(true);
-    }
-}
+export class ExerciseDetailExperimentalActionsComponent extends NonProgrammingExerciseDetailCommonActionsComponent {}

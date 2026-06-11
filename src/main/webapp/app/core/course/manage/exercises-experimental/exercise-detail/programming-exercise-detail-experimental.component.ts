@@ -1,8 +1,7 @@
-import { Component, ViewEncapsulation, signal } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
@@ -16,7 +15,6 @@ import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/prog
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from 'app/programming/shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
-import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail-experimental',
@@ -39,10 +37,6 @@ import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manag
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
-        ExerciseVariantAiModalDispatcherComponent,
     ],
 })
-export class ProgrammingExerciseDetailExperimentalComponent extends ProgrammingExerciseDetailComponent {
-    protected readonly faRobot = faRobot;
-    readonly aiVariantModalVisible = signal(false);
-}
+export class ProgrammingExerciseDetailExperimentalComponent extends ProgrammingExerciseDetailComponent {}

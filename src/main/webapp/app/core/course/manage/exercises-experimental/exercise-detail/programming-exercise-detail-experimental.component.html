@@ -8,19 +8,8 @@
                 </div>
                 <hr />
                 <div class="button-header">
-                    <jhi-exercise-variant-ai-modal-dispatcher
-                        [visible]="aiVariantModalVisible()"
-                        (visibleChange)="aiVariantModalVisible.set($event)"
-                        [sourceExercise]="programmingExercise"
-                        [courseId]="programmingExercise.course?.id"
-                    />
                     <div class="d-flex flex-wrap gap-2">
                         @if (programmingExercise.isAtLeastEditor) {
-                            <!-- Create Variant with AI — experimental-only button -->
-                            <a class="btn btn-warning btn-sm" (click)="aiVariantModalVisible.set(true)">
-                                <fa-icon [icon]="faRobot" />&nbsp;
-                                <span>Create Variant with AI</span>
-                            </a>
                             <a [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
                                 <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"></span>

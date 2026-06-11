@@ -1,7 +1,4 @@
-import { Component, signal } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseVariantAiModalDispatcherComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-modal-dispatcher.component';
+import { Component } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
@@ -16,15 +13,10 @@ import { QuizExerciseDetailComponent } from 'app/quiz/manage/detail/quiz-exercis
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,
-        FaIconComponent,
         QuizExerciseManageButtonsComponent,
         QuizExerciseLifecycleButtonsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
-        ExerciseVariantAiModalDispatcherComponent,
     ],
 })
-export class QuizExerciseDetailExperimentalComponent extends QuizExerciseDetailComponent {
-    protected readonly faRobot = faRobot;
-    readonly aiVariantModalVisible = signal(false);
-}
+export class QuizExerciseDetailExperimentalComponent extends QuizExerciseDetailComponent {}

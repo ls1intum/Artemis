@@ -31,26 +31,6 @@
             />
         </div>
         <div>
-            <label class="fw-semibold d-block mb-2">Variant Creation</label>
-            <p-selectbutton
-                [options]="variantCreationModeOptions"
-                [ngModel]="devSettings.variantCreationMode()"
-                (ngModelChange)="devSettings.setVariantCreationMode($event)"
-                optionValue="value"
-                [allowEmpty]="false"
-            />
-        </div>
-        <div>
-            <label class="fw-semibold d-block mb-2">Variant Modal Style</label>
-            <p-selectbutton
-                [options]="variantModalStyleOptions"
-                [ngModel]="devSettings.variantModalStyle()"
-                (ngModelChange)="devSettings.setVariantModalStyle($event)"
-                optionValue="value"
-                [allowEmpty]="false"
-            />
-        </div>
-        <div>
             <label class="fw-semibold d-block mb-2">Group Edit</label>
             <p-selectbutton
                 [options]="groupEditModeOptions"

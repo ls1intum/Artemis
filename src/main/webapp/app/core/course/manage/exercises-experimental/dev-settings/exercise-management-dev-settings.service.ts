@@ -3,16 +3,12 @@ import { Injectable, effect, signal } from '@angular/core';
 export type ExerciseRowVariant = 'compact' | 'columnar' | 'table';
 export type ActionButtonVariant = 'icon-only' | 'text-and-icon' | 'ellipsis';
 export type AddExerciseVariant = 'none' | 'inline' | 'slim' | 'modal-split' | 'modal-unified';
-export type VariantCreationMode = 'modal' | 'chat';
-export type VariantModalStyle = 'classic' | 'cards-inline' | 'cards-wizard';
 export type GroupEditMode = 'inline' | 'modal';
 
 const KEY_ROW = 'exerciseMgmt.devSettings.exerciseRowVariant';
 const KEY_MASS_ACTIONS = 'exerciseMgmt.devSettings.massActions';
 const KEY_ADD_EXERCISE = 'exerciseMgmt.devSettings.addExerciseVariant';
 const KEY_ACTION_BUTTONS = 'exerciseMgmt.devSettings.actionButtonVariant';
-const KEY_VARIANT_CREATION = 'exerciseMgmt.devSettings.variantCreationMode';
-const KEY_MODAL_STYLE = 'exerciseMgmt.devSettings.variantModalStyle';
 const KEY_GROUP_EDIT = 'exerciseMgmt.devSettings.groupEditMode';
 
 @Injectable({ providedIn: 'root' })
@@ -21,8 +17,6 @@ export class ExerciseManagementDevSettingsService {
     readonly massActionsEnabled = signal<boolean>(localStorage.getItem(KEY_MASS_ACTIONS) === 'true');
     readonly addExerciseVariant = signal<AddExerciseVariant>((localStorage.getItem(KEY_ADD_EXERCISE) as AddExerciseVariant) ?? 'none');
     readonly actionButtonVariant = signal<ActionButtonVariant>((localStorage.getItem(KEY_ACTION_BUTTONS) as ActionButtonVariant) ?? 'icon-only');
-    readonly variantCreationMode = signal<VariantCreationMode>((localStorage.getItem(KEY_VARIANT_CREATION) as VariantCreationMode) ?? 'modal');
-    readonly variantModalStyle = signal<VariantModalStyle>((localStorage.getItem(KEY_MODAL_STYLE) as VariantModalStyle) ?? 'classic');
     readonly groupEditMode = signal<GroupEditMode>((localStorage.getItem(KEY_GROUP_EDIT) as GroupEditMode) ?? 'inline');
 
     constructor() {
@@ -30,8 +24,6 @@ export class ExerciseManagementDevSettingsService {
         effect(() => localStorage.setItem(KEY_MASS_ACTIONS, String(this.massActionsEnabled())));
         effect(() => localStorage.setItem(KEY_ADD_EXERCISE, this.addExerciseVariant()));
         effect(() => localStorage.setItem(KEY_ACTION_BUTTONS, this.actionButtonVariant()));
-        effect(() => localStorage.setItem(KEY_VARIANT_CREATION, this.variantCreationMode()));
-        effect(() => localStorage.setItem(KEY_MODAL_STYLE, this.variantModalStyle()));
         effect(() => localStorage.setItem(KEY_GROUP_EDIT, this.groupEditMode()));
     }
 
@@ -49,14 +41,6 @@ export class ExerciseManagementDevSettingsService {
 
     setActionButtonVariant(variant: ActionButtonVariant): void {
         this.actionButtonVariant.set(variant);
-    }
-
-    setVariantCreationMode(mode: VariantCreationMode): void {
-        this.variantCreationMode.set(mode);
-    }
-
-    setVariantModalStyle(style: VariantModalStyle): void {
-        this.variantModalStyle.set(style);
     }
 
     setGroupEditMode(mode: GroupEditMode): void {

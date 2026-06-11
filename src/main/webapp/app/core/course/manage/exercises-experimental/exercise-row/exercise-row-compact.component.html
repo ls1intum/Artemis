@@ -126,9 +126,6 @@
                     <fa-icon [icon]="faClipboardList" /><span class="ms-1">Examples</span>
                 </a>
             }
-            <button class="btn btn-warning" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
-                <fa-icon [icon]="faRobot" /><span class="ms-1">Create Variant with AI</span>
-            </button>
             @if (exercise().type === ExerciseType.PROGRAMMING) {
                 <a [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]" class="btn btn-warning">
                     <fa-icon [icon]="faPencilAlt" /><span class="ms-1">Edit in Editor</span>
@@ -192,9 +189,6 @@
                         <fa-icon [icon]="faClipboardList" /><span class="ms-2">Examples</span>
                     </a>
                 }
-                <button class="btn btn-warning text-start" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
-                    <fa-icon [icon]="faRobot" /><span class="ms-2">Create Variant with AI</span>
-                </button>
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
                     <a
                         [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -262,9 +256,6 @@
                     <fa-icon [icon]="faClipboardList" />
                 </a>
             }
-            <button class="btn btn-warning" type="button" title="Create Variant with AI" (click)="openCreateVariant()">
-                <fa-icon [icon]="faRobot" />
-            </button>
             @if (exercise().type === ExerciseType.PROGRAMMING) {
                 <a
                     [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise().id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -294,10 +285,4 @@
             </button>
         </div>
     }
-    <jhi-exercise-variant-ai-modal-dispatcher
-        [visible]="aiVariantModalVisible()"
-        (visibleChange)="aiVariantModalVisible.set($event)"
-        [sourceExercise]="exercise()"
-        [courseId]="courseId()"
-    />
 </div>

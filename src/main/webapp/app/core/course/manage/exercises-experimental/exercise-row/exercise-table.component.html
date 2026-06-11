@@ -176,9 +176,6 @@
                                 <fa-icon [icon]="faClipboardList" /><span class="ms-1">Examples</span>
                             </a>
                         }
-                        <button class="btn btn-warning" type="button" title="Create Variant with AI" (click)="openCreateVariant(exercise)">
-                            <fa-icon [icon]="faRobot" /><span class="ms-1">Create Variant with AI</span>
-                        </button>
                         @if (exercise.type === ExerciseType.PROGRAMMING) {
                             <a
                                 [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -247,9 +244,6 @@
                                         <fa-icon [icon]="faClipboardList" /><span class="ms-2">Examples</span>
                                     </a>
                                 }
-                                <button class="btn btn-warning text-start" type="button" title="Create Variant with AI" (click)="openCreateVariant(exercise)">
-                                    <fa-icon [icon]="faRobot" /><span class="ms-2">Create Variant with AI</span>
-                                </button>
                                 @if (exercise.type === ExerciseType.PROGRAMMING) {
                                     <a
                                         [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -324,9 +318,6 @@
                                 <fa-icon [icon]="faClipboardList" />
                             </a>
                         }
-                        <button class="btn btn-warning" type="button" title="Create Variant with AI" (click)="openCreateVariant(exercise)">
-                            <fa-icon [icon]="faRobot" />
-                        </button>
                         @if (exercise.type === ExerciseType.PROGRAMMING) {
                             <a
                                 [routerLink]="['/course-management', courseId(), 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, -1]"
@@ -369,7 +360,3 @@
         </tr>
     </ng-template>
 </p-table>
-
-@if (aiVariantModalExercise(); as exercise) {
-    <jhi-exercise-variant-ai-modal-dispatcher [visible]="true" (visibleChange)="aiVariantModalExercise.set(null)" [sourceExercise]="exercise" [courseId]="courseId()" />
-}

@@ -267,13 +267,6 @@ export const courseManagementRoutes: Routes = [
                         data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'artemisApp.fileUploadExercise.home.title' },
                         canActivate: [UserRouteAccessService],
                     },
-                    {
-                        path: 'exercises/experimental/create-variant/:exerciseId',
-                        loadComponent: () =>
-                            import('app/core/course/manage/exercises-experimental/create-modal/exercise-variant-ai-page.component').then((m) => m.ExerciseVariantAiPageComponent),
-                        data: { authorities: IS_AT_LEAST_TUTOR, pageTitle: 'Create AI Variant' },
-                        canActivate: [UserRouteAccessService],
-                    },
                     // Original versioned exercise detail — real detail pages, no changes, backed by mock interceptor.
                     {
                         path: 'exercises/original/programming-exercises/:exerciseId',

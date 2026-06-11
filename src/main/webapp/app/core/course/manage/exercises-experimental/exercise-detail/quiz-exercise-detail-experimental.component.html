@@ -8,19 +8,6 @@
                 </div>
                 <hr />
                 <div class="d-flex flex-wrap gap-2">
-                    <!-- Create Variant with AI — experimental-only button -->
-                    @if (quizExercise.isAtLeastEditor) {
-                        <a class="btn btn-warning btn-sm" (click)="aiVariantModalVisible.set(true)">
-                            <fa-icon [icon]="faRobot" />&nbsp;
-                            <span>Create Variant with AI</span>
-                        </a>
-                        <jhi-exercise-variant-ai-modal-dispatcher
-                            [visible]="aiVariantModalVisible()"
-                            (visibleChange)="aiVariantModalVisible.set($event)"
-                            [sourceExercise]="quizExercise"
-                            [courseId]="quizExercise.course?.id"
-                        />
-                    }
                     <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise" [isDetailPage]="true" (loadQuizExercises)="load()" />
                 </div>
                 <hr />
