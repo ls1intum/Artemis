@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -218,6 +219,39 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
             assertThat(match.startB()).isEqualTo(2);
             assertThat(match.length()).isEqualTo(3);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetPlagiarismComparisonsForSplitView_multipleMatchesDoesNotDuplicateElements() throws Exception {
+        var submissionA = plagiarismComparison2.getSubmissionA();
+        submissionA.setElements(List.of(createSubmissionElement(submissionA, 1), createSubmissionElement(submissionA, 2)));
+        var submissionB = plagiarismComparison2.getSubmissionB();
+        submissionB.setElements(List.of(createSubmissionElement(submissionB, 1), createSubmissionElement(submissionB, 2), createSubmissionElement(submissionB, 3)));
+
+        var secondMatch = new PlagiarismMatch();
+        secondMatch.setStartA(4);
+        secondMatch.setStartB(5);
+        secondMatch.setLength(6);
+        plagiarismComparison2.setMatches(Set.of(plagiarismComparison2.getMatches().iterator().next(), secondMatch));
+        plagiarismComparisonRepository.saveAndFlush(plagiarismComparison2);
+
+        PlagiarismComparisonDTO comparison = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+
+        assertThat(comparison.submissionA().elements()).hasSize(2);
+        assertThat(comparison.submissionB().elements()).hasSize(3);
+        assertThat(comparison.matches()).hasSize(2);
+    }
+
+    private PlagiarismSubmissionElement createSubmissionElement(PlagiarismSubmission submission, int column) {
+        var element = new PlagiarismSubmissionElement();
+        element.setPlagiarismSubmission(submission);
+        element.setColumn(column);
+        element.setLine(1);
+        element.setLength(1);
+        return element;
     }
 
     @Test

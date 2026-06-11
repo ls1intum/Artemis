@@ -47,7 +47,6 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
             FROM PlagiarismComparison comparison
                 LEFT JOIN FETCH comparison.submissionA submissionA
                 LEFT JOIN FETCH submissionA.elements elementsA
-                LEFT JOIN FETCH comparison.matches matches
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
