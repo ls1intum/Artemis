@@ -65,6 +65,7 @@ import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/servic
 import { AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -88,7 +89,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         FeatureOverlayComponent,
         ConfirmDialogModule,
     ],
-    providers: [ConfirmationService],
+    providers: [ConfirmationService, BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -111,6 +112,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
     private readonly hyperionExerciseGenerationService = inject(HyperionExerciseGenerationService);
     private readonly confirmationService = inject(ConfirmationService);
+    private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -277,7 +279,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public readonly importOptions: ImportOptions = {
         recreateBuildPlans: false,
         updateTemplate: false,
-        setTestCaseVisibilityToAfterDueDate: false,
+        setTestCaseVisibilityToAfterDueDate: true,
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
@@ -813,6 +815,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
             this.courseService.find(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
@@ -820,6 +823,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = false;
 
             // Sync categories
             this.exerciseCategories = this.programmingExercise.categories ?? [];
@@ -1311,7 +1315,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
-        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(customBuildPlanComponent.buildPlanPhases.phases);
+        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(this.buildPhasesTemplateService.buildPlan()?.phases ?? []);
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
