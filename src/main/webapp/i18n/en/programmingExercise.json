@@ -1002,6 +1002,15 @@
                     "authoring": "Writing the solution and tests",
                     "checking": "Checking it builds and grades (attempt {{attempt}} of {{total}})",
                     "saving": "Saving the exercise"
+                },
+                "progressHeading": "Progress",
+                "chipDone": "Exercise ready",
+                "chipNeedsReview": "Needs review",
+                "chipFailed": "Generation failed",
+                "chipCancelled": "Cancelled",
+                "chipPartial": "Incomplete",
+                "chip": {
+                    "running": "Generating… {{step}}/{{total}}"
                 }
             },
             "creationAssistance": {

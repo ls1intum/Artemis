@@ -6,6 +6,11 @@
     width: 100%;
 }
 
+// Compact (editor): the host box dissolves so the status chip sits directly in the toolbar's flex row rather than forcing a full-width block.
+:host(.hyperion-compact) {
+    display: contents;
+}
+
 :host ::ng-deep .hyperion-exercise-generation .p-card-body {
     padding: 1rem;
 }
@@ -19,16 +24,51 @@
     margin-left: auto;
 }
 
-// Lay the read-only phase stepper out full-width: each of the four stages takes an equal share so the labels ("Preparing", "Writing the exercise", "Checking it builds and grades",
-// "Saving") have room and never run together the way they did inside the old narrow floating card.
-.generation-steps ::ng-deep {
-    .p-steps-item {
-        flex: 1 1 0;
-        min-width: 0;
-    }
+// The compact toolbar status chip.
+.generation-chip {
+    white-space: nowrap;
+}
 
-    .p-steps-item .p-menuitem-link {
-        padding: 0.25rem 0.5rem;
+// The popover body padding (PrimeNG popovers have no inner padding by default).
+.generation-popover-body {
+    padding: 0.5rem;
+}
+
+// The vertical phase overview that replaces the cramped horizontal stepper: one row per phase, with a state icon (done / active-spinner / pending) and the plain-language label, so the
+// coarse progress reads top-to-bottom with room for the full labels ("Checking it builds and grades") and the live "attempt N of M" on the verify row.
+.generation-phase-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .generation-phase-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.15rem 0;
+        color: var(--text-color-secondary);
+
+        .generation-phase-icon {
+            flex: 0 0 auto;
+            color: var(--text-color-secondary);
+        }
+
+        &[data-state='done'] {
+            color: var(--text-color);
+
+            .generation-phase-icon {
+                color: var(--primary);
+            }
+        }
+
+        &[data-state='active'] {
+            color: var(--text-color);
+            font-weight: 600;
+
+            .generation-phase-icon {
+                color: var(--primary);
+            }
+        }
     }
 }
 

@@ -1002,6 +1002,15 @@
                     "authoring": "Musterlösung und Tests werden geschrieben",
                     "checking": "Build und Bewertung werden geprüft (Versuch {{attempt}} von {{total}})",
                     "saving": "Aufgabe wird gespeichert"
+                },
+                "progressHeading": "Fortschritt",
+                "chipDone": "Aufgabe bereit",
+                "chipNeedsReview": "Überprüfung nötig",
+                "chipFailed": "Erzeugung fehlgeschlagen",
+                "chipCancelled": "Abgebrochen",
+                "chipPartial": "Unvollständig",
+                "chip": {
+                    "running": "Wird erzeugt… {{step}}/{{total}}"
                 }
             },
             "creationAssistance": {

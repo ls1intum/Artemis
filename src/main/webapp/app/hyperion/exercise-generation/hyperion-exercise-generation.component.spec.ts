@@ -450,4 +450,60 @@ describe('HyperionExerciseGenerationComponent', () => {
         // It renders as a real router link the host can follow to the editor.
         expect((fixture.nativeElement as HTMLElement).querySelector('a[href*="programming-exercises"]')).not.toBeNull();
     });
+
+    describe('compact mode (editor toolbar chip + popover)', () => {
+        function createCompact(): void {
+            fixture = TestBed.createComponent(HyperionExerciseGenerationComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exerciseId', 42);
+            fixture.componentRef.setInput('compact', true);
+            fixture.detectChanges();
+        }
+
+        it('renders the inline card with a vertical phase list (not p-steps) by default', () => {
+            // default create() (compact=false): start a run so the card is shown.
+            generationService.generateExercise.mockReturnValue(of({ jobId: 'job-inline' }));
+            component.generate();
+            jobStream.next({ type: 'PROGRESS', message: 'Turn 1: write_file solution/src/A.java' });
+            fixture.detectChanges();
+
+            const host = fixture.nativeElement as HTMLElement;
+            expect(host.querySelector('.hyperion-exercise-generation')).not.toBeNull(); // the inline p-card
+            expect(host.querySelector('.generation-phase-list')).not.toBeNull(); // the new vertical list
+            expect(host.querySelector('.p-steps')).toBeNull(); // the old horizontal stepper is gone
+            expect(host.querySelector('.generation-chip')).toBeNull(); // no toolbar chip in inline mode
+        });
+
+        it('renders only a compact status chip (no inline card) while running', () => {
+            createCompact();
+            generationService.generateExercise.mockReturnValue(of({ jobId: 'job-chip' }));
+            component.generate();
+            fixture.detectChanges();
+
+            const host = fixture.nativeElement as HTMLElement;
+            expect(host.querySelector('.generation-chip')).not.toBeNull();
+            // The full overview lives in the (lazy) popover, not inline as a card.
+            expect(host.querySelector('p-card.hyperion-exercise-generation, .hyperion-exercise-generation')).toBeNull();
+        });
+
+        it('self-hides the chip when there is no active or recent run', () => {
+            createCompact();
+            const host = fixture.nativeElement as HTMLElement;
+            expect(component.hasActiveOrRecentRun()).toBe(false);
+            expect(host.querySelector('.generation-chip')).toBeNull();
+        });
+
+        it('drives the chip label/icon from the verdict', () => {
+            createCompact();
+            generationService.generateExercise.mockReturnValue(of({ jobId: 'job-v' }));
+            component.generate();
+            // running → secondary chip, step counter
+            expect(component.chipSeverity()).toBe('secondary');
+            expect(component.chipStepParams().total).toBe(4);
+
+            jobStream.next({ type: 'DONE', completionStatus: 'SUCCESS', message: 'saved' });
+            expect(component.chipSeverity()).toBe('success');
+            expect(component.chipResultKey()).toBe('chipDone');
+        });
+    });
 });

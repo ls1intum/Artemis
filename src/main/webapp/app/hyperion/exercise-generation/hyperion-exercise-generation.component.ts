@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, afterRenderEffect, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -8,26 +9,27 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { CardModule } from 'primeng/card';
-import { StepsModule } from 'primeng/steps';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { TextareaModule } from 'primeng/textarea';
-import { MenuItem } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subscription, forkJoin } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     IconDefinition,
     faBan,
+    faCircle,
     faCircleCheck,
     faCircleInfo,
+    faCircleXmark,
     faFileCirclePlus,
     faFilePen,
     faFlagCheckered,
     faMagnifyingGlass,
+    faSpinner,
     faTerminal,
     faTriangleExclamation,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -63,15 +65,18 @@ const REPO_ORDER: GenerationRepo[] = ['solution', 'template', 'tests', 'other'];
     templateUrl: './hyperion-exercise-generation.component.html',
     styleUrl: './hyperion-exercise-generation.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    // In compact mode the host box dissolves (display: contents in scss) so the chip participates directly in the editor toolbar's flex row instead of forcing a full-width block.
+    host: { '[class.hyperion-compact]': 'compact()' },
     imports: [
         ButtonModule,
         TooltipModule,
         TagModule,
         ProgressBarModule,
         CardModule,
-        StepsModule,
+        PopoverModule,
         TextareaModule,
         FormsModule,
+        NgTemplateOutlet,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -84,17 +89,27 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faBan = faBan;
     protected readonly faXmark = faXmark;
+    protected readonly faCircle = faCircle;
+    protected readonly faCircleCheck = faCircleCheck;
+    protected readonly faSpinner = faSpinner;
+    /** The working phases, exposed so the compact phase list can render one row per phase. */
+    protected readonly phaseOrder = GENERATION_PHASE_ORDER;
 
     readonly exerciseId = input.required<number>();
 
     /** When {@code true}, automatically starts a generation run once on load (used by the create flow's auto-start). */
     readonly autoStart = input<boolean>(false);
+
+    /**
+     * When {@code true} the card renders as a compact toolbar status chip that opens a popover with the full overview (used in the instructor code editor, which has a toolbar to
+     * anchor to). When {@code false} (default) it renders inline as a full-width card (used on the read-only detail page, which has no toolbar).
+     */
+    readonly compact = input<boolean>(false);
 
     /** The instructor's "Your Requirements" brief from the create flow, used as the prompt for the auto-started from-scratch run (undefined for adapt / editor-started runs). */
     readonly autoStartPrompt = input<string | undefined>(undefined);
@@ -136,14 +151,74 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     /** The structured, renderable transcript derived from the raw progress lines (turn badge, tool chip, monospace target). */
     readonly transcriptEntries = computed<TranscriptEntry[]>(() => parseTranscript(this.progressEvents()));
 
-    /** The four working phases rendered as stepper steps, labels resolved from i18n. The {@code done} phase reuses the last step (all complete). */
-    readonly phaseSteps = computed<MenuItem[]>(() =>
-        GENERATION_PHASE_ORDER.map((phase) => ({ label: this.translateService.instant(`artemisApp.programmingExercise.generateExercise.phase.${phase}`) })),
-    );
-    /** Index of the current phase within {@link GENERATION_PHASE_ORDER}; {@code done} keeps the last step active so the stepper reads as complete. */
+    /** Index of the current phase within {@link GENERATION_PHASE_ORDER}; {@code done} keeps the last phase active so the list reads as complete. */
     readonly phaseIndex = computed(() => {
         const index = GENERATION_PHASE_ORDER.indexOf(this.phaseKey());
         return index === -1 ? GENERATION_PHASE_ORDER.length - 1 : index;
+    });
+    /** The chip's one-line status while running: "Generating… 2/4". The terminal label is resolved in the template from the verdict. */
+    readonly chipStepParams = computed(() => ({ step: this.phaseIndex() + 1, total: GENERATION_PHASE_ORDER.length }));
+
+    /**
+     * The visual state of a phase row in the compact phase list: phases before the current one are {@code done}, the current one is {@code active} while running, the rest are
+     * {@code pending}. On a terminal outcome (not running) every phase reads as done.
+     *
+     * @param index the phase's position in {@link GENERATION_PHASE_ORDER}
+     */
+    protected phaseState(index: number): 'done' | 'active' | 'pending' {
+        if (!this.running()) {
+            return 'done';
+        }
+        if (index < this.phaseIndex()) {
+            return 'done';
+        }
+        return index === this.phaseIndex() ? 'active' : 'pending';
+    }
+
+    /** The icon for a phase row: a check when done, a spinner while active, an empty circle while pending. */
+    protected phaseIcon(index: number): IconDefinition {
+        const state = this.phaseState(index);
+        return state === 'done' ? faCircleCheck : state === 'active' ? faSpinner : faCircle;
+    }
+
+    /** The chip icon for a terminal run: success/needs-review/error/cancelled; while running the template shows a spinner instead. */
+    readonly chipIcon = computed<IconDefinition>(() => {
+        if (this.succeeded()) {
+            return faCircleCheck;
+        }
+        if (this.needsReview()) {
+            return faTriangleExclamation;
+        }
+        if (this.finalEvent()?.type === 'ERROR') {
+            return faCircleXmark;
+        }
+        return facArtemisIntelligence;
+    });
+    /** The chip's PrimeNG severity, mirroring the verdict. */
+    readonly chipSeverity = computed<'success' | 'warn' | 'danger' | 'secondary'>(() => {
+        if (this.running()) {
+            return 'secondary';
+        }
+        if (this.succeeded()) {
+            return 'success';
+        }
+        if (this.needsReview()) {
+            return 'warn';
+        }
+        return this.finalEvent()?.type === 'ERROR' ? 'danger' : 'secondary';
+    });
+    /** The i18n key suffix for the chip's terminal label. */
+    readonly chipResultKey = computed<string>(() => {
+        if (this.succeeded()) {
+            return 'chipDone';
+        }
+        if (this.needsReview()) {
+            return 'chipNeedsReview';
+        }
+        if (this.finalEvent()?.type === 'ERROR') {
+            return 'chipFailed';
+        }
+        return this.finalEvent()?.type === 'CANCELLED' ? 'chipCancelled' : 'chipPartial';
     });
     // The live caption is derived from the coarse phase, not the raw server line, so an instructor sees plain language ("Writing the solution and tests", "Checking it builds and
     // grades") instead of build-agent internals. The opt-in detail log keeps the specifics. The terminal "done" phase shows no caption.
@@ -180,6 +255,10 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private readonly transcriptContainer = viewChild<{ nativeElement: HTMLElement }>('transcript');
     private readonly reviewButton = viewChild<{ nativeElement: HTMLElement }>('reviewButton');
     private readonly actionButtons = viewChild<{ nativeElement: HTMLElement }>('actionButtons');
+    /** The compact-mode popover and its anchor chip; used to auto-open the overview once when a run becomes active. */
+    private readonly genPopover = viewChild<Popover>('genPopover');
+    private readonly genChip = viewChild<{ nativeElement: HTMLElement }>('genChip');
+    private autoOpenHandled = false;
 
     private jobSubscription?: Subscription;
     private dialogRef?: DynamicDialogRef;
@@ -208,6 +287,20 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
             this.terminalFocusHandled = true;
             const host = this.succeeded() ? this.reviewButton() : this.actionButtons();
             host?.nativeElement?.querySelector('button')?.focus();
+        });
+
+        // Compact mode: auto-open the popover once when a run first appears (active or recently terminal), so the instructor sees the progress without having to click the chip. A
+        // one-shot flag (mirroring terminalFocusHandled) means a manual dismiss is respected and re-renders never reopen it.
+        afterRenderEffect(() => {
+            if (!this.compact() || this.autoOpenHandled || !this.hasActiveOrRecentRun()) {
+                return;
+            }
+            const chip = this.genChip()?.nativeElement;
+            const popover = this.genPopover();
+            if (chip && popover) {
+                this.autoOpenHandled = true;
+                popover.show({ currentTarget: chip, target: chip } as unknown as Event, chip);
+            }
         });
     }
 
