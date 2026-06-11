@@ -584,8 +584,7 @@ describe('TextEditorComponent', () => {
 
     it('canDeactivate true when no submission or unchanged; false when changed', () => {
         // no submission
-        // @ts-ignore
-        delete comp.submission();
+        comp.submission.set(undefined!);
         expect(comp.canDeactivate()).toBe(true);
         // unchanged
         comp.submission.set({ text: 'same' } as TextSubmission);
