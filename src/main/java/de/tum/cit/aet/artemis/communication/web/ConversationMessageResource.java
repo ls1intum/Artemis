@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -65,12 +68,15 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
+    private final PostRepository postRepository;
+
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PostRepository postRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.postRepository = postRepository;
     }
 
     /**
@@ -225,6 +231,11 @@ public class ConversationMessageResource {
         if (postIds.stream().anyMatch(id -> id <= 0)) {
             throw new BadRequestAlertException("Invalid post ID found", conversationMessagingService.getEntityName(), "invalidPostId");
         }
+
+        // authorization: the caller may only retrieve posts they can access (course-wide channel or participant of the conversation).
+        // Set.copyOf de-duplicates because the access helper compares COUNT(DISTINCT id) against the number of requested ids.
+        User user = userRepository.getUser();
+        postRepository.userHasAccessToAllPostsElseThrow(Set.copyOf(postIds), user.getId());
 
         List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
 
