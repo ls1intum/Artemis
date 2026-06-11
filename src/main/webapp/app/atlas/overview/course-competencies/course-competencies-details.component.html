@@ -1,5 +1,4 @@
 <jhi-fireworks [active]="showFireworks" />
-<jhi-competency-detail-dev-settings-modal [visible]="settingsVisible()" (visibleChange)="settingsVisible.set($event)" />
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
@@ -38,8 +37,7 @@
                         <span class="badge" [ngClass]="softDueDatePassed ? 'bg-danger' : 'bg-success'" id="date-badge"> {{ competency.softDueDate | artemisTimeAgo }} </span>
                     </div>
                 }
-                <div class="col-auto d-flex align-items-center gap-1">
-                    <p-button icon="pi pi-cog" [rounded]="true" [text]="true" severity="secondary" (onClick)="settingsVisible.set(true)" />
+                <div class="col-auto">
                     @if (competency.course?.isAtLeastInstructor) {
                         <a class="btn btn-sm btn-warning float-end" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
                             <fa-icon [icon]="faPencilAlt" />
@@ -53,125 +51,22 @@
         <div class="row mt-2">
             <div class="col-lg-9 col-md-8">
                 <div class="row">
-                    <!-- Non-exercise lecture units render the same in all variants -->
                     @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
                         @if (lectureUnitLink.lectureUnit; as lectureUnit) {
-                            @if (lectureUnit.type !== LectureUnitType.EXERCISE) {
-                                <div class="col-12 col-lg-11 mt-3">
-                                    @switch (lectureUnit.type) {
-                                        @case (LectureUnitType.ATTACHMENT_VIDEO) {
-                                            <jhi-attachment-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                        }
-                                        @case (LectureUnitType.TEXT) {
-                                            <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                        }
-                                        @case (LectureUnitType.ONLINE) {
-                                            <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                        }
+                            <div class="col-12 col-lg-11 mt-3">
+                                @switch (lectureUnit.type) {
+                                    @case (LectureUnitType.EXERCISE) {
+                                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                     }
-                                </div>
-                            }
-                        }
-                    }
-
-                    <!-- Version 1 (default): exercise units listed individually -->
-                    @if (devSettings.exerciseViewVariant() === 'default') {
-                        @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
-                            @if (lectureUnitLink.lectureUnit?.type === LectureUnitType.EXERCISE) {
-                                <div class="col-12 col-lg-11 mt-3">
-                                    <jhi-exercise-unit [exerciseUnit]="$any(lectureUnitLink.lectureUnit)" [course]="competency!.course!" />
-                                </div>
-                            }
-                        }
-                    }
-
-                    <!-- Version 2 (group-card): one card per group with a "View group" button; standalone exercises shown individually -->
-                    @if (devSettings.exerciseViewVariant() === 'group-card') {
-                        @for (item of groupedExerciseLinks; track $index) {
-                            <div class="col-12 col-lg-11 mt-3">
-                                @if (item.type === 'standalone') {
-                                    <jhi-course-exercise-row [exercise]="item.link.exercise!" [course]="competency!.course!" />
-                                } @else {
-                                    <div class="competency-group-card">
-                                        <fa-icon [icon]="faLayerGroup" size="lg" class="text-muted flex-shrink-0" />
-                                        <div class="flex-grow-1">
-                                            <div class="fw-medium">{{ item.group.groupTitle }}</div>
-                                            <small class="text-muted">{{ item.group.exercises.length }} variants</small>
-                                        </div>
-                                        <a class="btn btn-sm btn-outline-primary" [routerLink]="['/courses', courseId, 'exercises', 'experimental', 'group', item.group.groupId]"
-                                            >View group</a
-                                        >
-                                    </div>
-                                }
-                            </div>
-                        }
-                    }
-
-                    <!-- Version 2b (group-card-v2): group card matching the exercise card layout more closely -->
-                    @if (devSettings.exerciseViewVariant() === 'group-card-v2') {
-                        @for (item of groupedExerciseLinks; track $index) {
-                            <div class="col-12 col-lg-11 mt-3">
-                                @if (item.type === 'standalone') {
-                                    <jhi-course-exercise-row [exercise]="item.link.exercise!" [course]="competency!.course!" />
-                                } @else {
-                                    <div class="competency-group-card-v2 align-items-center position-relative">
-                                        <a class="stretched-link" [routerLink]="['/courses', courseId, 'exercises', 'experimental', 'group', item.group.groupId]"></a>
-                                        <div class="col-auto d-none d-md-block">
-                                            <span class="group-card-icon">
-                                                <fa-icon class="me-3" [icon]="faLayerGroup" size="lg" />
-                                            </span>
-                                        </div>
-                                        <div class="col max-width">
-                                            <div class="row m-0">
-                                                <div class="col-auto p-0 d-md-none">
-                                                    <h4 class="fw-medium exercise-title">
-                                                        <fa-icon [icon]="faLayerGroup" />
-                                                        &nbsp;{{ item.group.groupTitle }}
-                                                    </h4>
-                                                </div>
-                                                <div class="col-sm p-0 col d-none d-md-flex">
-                                                    <h5 class="exercise-title">{{ item.group.groupTitle }}</h5>
-                                                </div>
-                                            </div>
-                                            <div class="row" style="justify-content: space-between">
-                                                <div class="col-auto mt-2 mb-2">
-                                                    <a
-                                                        class="btn btn-sm btn-primary position-relative"
-                                                        style="z-index: 1"
-                                                        [routerLink]="['/courses', courseId, 'exercises', 'experimental', 'group', item.group.groupId]"
-                                                    >
-                                                        <fa-icon [icon]="faEye" class="me-1" />
-                                                        View group
-                                                    </a>
-                                                </div>
-                                                <div class="col-auto mb-2">{{ item.group.exercises.length }} variants</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    }
-
-                    <!-- Version 3 (grouped): group header + connected exercise list; standalone exercises shown individually -->
-                    @if (devSettings.exerciseViewVariant() === 'grouped') {
-                        @for (item of groupedExerciseLinks; track $index) {
-                            <div class="col-12 col-lg-11 mt-3">
-                                @if (item.type === 'standalone') {
-                                    <jhi-course-exercise-row [exercise]="item.link.exercise!" [course]="competency!.course!" />
-                                } @else {
-                                    <div class="competency-exercise-group">
-                                        <div class="competency-exercise-group-header">
-                                            <fa-icon [icon]="faLayerGroup" size="sm" class="text-muted flex-shrink-0" />
-                                            <span class="fw-medium">{{ item.group.groupTitle }}</span>
-                                            <span class="badge bg-secondary ms-auto">{{ item.group.exercises.length }} variants</span>
-                                        </div>
-                                        @for (exLink of item.group.exercises; track exLink.exercise?.id; let first = $first) {
-                                            <div [class.border-top]="!first">
-                                                <jhi-exercise-unit [exerciseUnit]="toExerciseUnit(exLink)" [course]="competency!.course!" />
-                                            </div>
-                                        }
-                                    </div>
+                                    @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                        <jhi-attachment-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.TEXT) {
+                                        <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.ONLINE) {
+                                        <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
                                 }
                             </div>
                         }
