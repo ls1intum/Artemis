@@ -234,7 +234,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.ngOnInit();
 
                 // THEN the editor works on a real array (e.g. for the max score calculation)
-                expect(comp.quizExercise.quizQuestions).toEqual([]);
+                expect(comp.quizExercise().quizQuestions).toEqual([]);
                 expect(comp.calculateMaxExerciseScore()).toBe(0);
                 resetQuizExercise();
             });
@@ -845,8 +845,8 @@ describe('QuizExerciseUpdateComponent', () => {
 
             it('should return 0 when the quiz has no questions (server omits empty collections)', () => {
                 resetQuizExercise();
-                comp.quizExercise = quizExercise;
-                comp.quizExercise.quizQuestions = undefined;
+                comp.quizExercise.set(quizExercise);
+                comp.quizExercise().quizQuestions = undefined;
                 expect(comp.calculateMaxExerciseScore()).toBe(0);
                 resetQuizExercise();
             });

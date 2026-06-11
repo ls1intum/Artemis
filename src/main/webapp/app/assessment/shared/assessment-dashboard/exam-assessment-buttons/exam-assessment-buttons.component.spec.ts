@@ -182,7 +182,7 @@ describe('ExamAssessmentButtons', () => {
         examAssessmentButtonsFixture.detectChanges();
         expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
-        expect(examAssessmentButtonsComponent.course().isAtLeastInstructor).toBe(true);
+        expect(examAssessmentButtonsComponent.course()!.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
         const evaluateQuizExercises = vi.spyOn(examManagementService, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = examAssessmentButtonsFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
@@ -203,7 +203,7 @@ describe('ExamAssessmentButtons', () => {
         examAssessmentButtonsFixture.detectChanges();
         expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
-        expect(examAssessmentButtonsComponent.course().isAtLeastInstructor).toBe(true);
+        expect(examAssessmentButtonsComponent.course()!.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
