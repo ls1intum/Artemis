@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -20,6 +19,7 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerSer
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -81,17 +81,20 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
-            // Propagate the commit hash so Hades can stamp it on the result; without it the parser
-            // falls back to the branch name and the result cannot be matched to the submission.
-            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), commitHash, null, null);
+            String assignmentHash = triggeredByPushTo == RepositoryType.USER ? commitHash : null;
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), null, null, null);
 
-            // Choose if script is bash or groovy: Hades should use a Bash script
+            // Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
 
             var auxiliaryRepository = new ArrayList<RepositoryDTO>();
             var additionalProperties = new HashMap<String, String>();
-            additionalProperties.put("projectType", Objects.requireNonNull(participation.getProgrammingExercise().getProjectType()).toString());
+
+            ProjectType projectType = participation.getProgrammingExercise().getProjectType();
+            if (projectType != null) {
+                additionalProperties.put("projectType", projectType.toString());
+            }
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,

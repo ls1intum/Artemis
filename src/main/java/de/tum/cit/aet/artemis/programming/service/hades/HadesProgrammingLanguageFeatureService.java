@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureServ
  */
 @Lazy
 @Service
-@Profile({ PROFILE_HADES })
+@Profile(PROFILE_HADES)
 public class HadesProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     protected HadesProgrammingLanguageFeatureService(LicenseService licenseService) {

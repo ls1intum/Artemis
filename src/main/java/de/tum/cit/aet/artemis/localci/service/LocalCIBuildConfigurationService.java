@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 @Lazy
 @Service
-@Profile({ PROFILE_LOCALCI })
+@Profile(PROFILE_LOCALCI)
 public class LocalCIBuildConfigurationService {
 
     private final BuildScriptProviderService buildScriptProviderService;
