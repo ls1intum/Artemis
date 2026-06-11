@@ -1,6 +1,6 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Column } from 'app/shared-ui/import/import.component';
@@ -35,6 +35,10 @@ export interface ImportAllCourseCompetenciesResult {
     courseCompetencyImportOptions: CourseCompetencyImportOptionsDTO;
 }
 
+export interface ImportAllCourseCompetenciesModalData {
+    courseId: number;
+}
+
 @Component({
     selector: 'jhi-import-all-course-competencies-modal',
     imports: [ImportTableComponent, ImportCourseCompetenciesSettingsComponent, FaIconComponent, TranslateDirective],
@@ -51,25 +55,33 @@ export class ImportAllCourseCompetenciesModalComponent {
 
     protected readonly closeIcon = faXmark;
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
-    readonly courseId = input.required<number>();
+    readonly courseId = signal<number>(0);
     readonly disabledIds = computed(() => [+this.courseId()]);
 
     importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
+
+    constructor() {
+        const data = this.dialogConfig?.data as ImportAllCourseCompetenciesModalData | undefined;
+        if (data) {
+            this.courseId.set(data.courseId);
+        }
+    }
 
     public selectCourse(course: Course): void {
         const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
             sourceCourseId: course.id,
             ...this.importSettings(),
         };
-        this.activeModal.close(<ImportAllCourseCompetenciesResult>{
+        this.dialogRef.close(<ImportAllCourseCompetenciesResult>{
             course,
             courseCompetencyImportOptions,
         });
     }
 
     protected closeModal(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 }

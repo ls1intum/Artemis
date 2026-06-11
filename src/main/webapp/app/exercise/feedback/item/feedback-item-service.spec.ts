@@ -1,26 +1,25 @@
-import { expect } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FeedbackItemService', () => {
     setupTestBed({ zoneless: true });
+
     let service: FeedbackItemServiceImpl;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(FeedbackItemServiceImpl);
-            });
+        }).compileComponents();
+
+        service = TestBed.inject(FeedbackItemServiceImpl);
     });
 
     it('should create generic feedback item', () => {

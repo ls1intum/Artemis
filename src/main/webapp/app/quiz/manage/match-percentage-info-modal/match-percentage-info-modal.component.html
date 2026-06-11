@@ -1,25 +1,31 @@
-<ng-template #info let-c="close" let-d="dismiss">
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.quizExercise.matchingInfoModalTitle"></h4>
-        <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
-    </div>
-    <div class="modal-body">
-        <table class="table">
-            <tr>
-                <th jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></th>
-                <td jhiTranslate="artemisApp.quizExercise.matchLetterCase.explanation"></td>
-            </tr>
+<p-dialog
+    [(visible)]="isVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="true"
+    [closeOnEscape]="true"
+    [closable]="true"
+    appendTo="body"
+    [style]="{ width: '50rem' }"
+    [breakpoints]="{ '850px': '95vw' }"
+    [header]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
+>
+    <table class="table">
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></th>
+            <td jhiTranslate="artemisApp.quizExercise.matchLetterCase.explanation"></td>
+        </tr>
 
-            <tr>
-                <th jhiTranslate="artemisApp.quizExercise.matchPercentage.explanationTitle"></th>
-                <td jhiTranslate="artemisApp.quizExercise.matchPercentage.explanation"></td>
-            </tr>
-        </table>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
-    </div>
-</ng-template>
+        <tr>
+            <th jhiTranslate="artemisApp.quizExercise.matchPercentage.explanationTitle"></th>
+            <td jhiTranslate="artemisApp.quizExercise.matchPercentage.explanation"></td>
+        </tr>
+    </table>
+    <ng-template pTemplate="footer">
+        <button type="button" class="btn btn-outline" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+    </ng-template>
+</p-dialog>
 <div>
-    <button class="btn" (click)="open(info)"><fa-icon [icon]="farQuestionCircle" /></button>
+    <button class="btn" (click)="open()"><fa-icon [icon]="farQuestionCircle" /></button>
 </div>

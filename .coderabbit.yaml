@@ -143,7 +143,7 @@ reviews:
         sql:{param_annotation,uppercase,avoid_subqueries};java:avoid_star_imports
     - path: src/test/javascript/spec/**/*.ts
       instructions: >-
-        jest: true; mock: NgMocks; bad_practices: avoid_full_module_import;
+        vitest: true; mock: NgMocks; bad_practices: avoid_full_module_import;
         perf_improvements: mock_irrelevant_deps; service_testing:
         mock_http_for_logic; no_schema: avoid_NO_ERRORS_SCHEMA;
         expectation_specificity: true; solutions: {boolean: toBeTrue/False,

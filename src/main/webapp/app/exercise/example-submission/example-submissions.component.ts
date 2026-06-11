@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { onError } from 'app/foundation/util/global.utils';
@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -23,12 +24,13 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private activatedRoute = inject(ActivatedRoute);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
     exercise: Exercise;
     readonly exerciseType = ExerciseType;
     createdExampleAssessment: boolean[];
+    private importDialogRef?: DynamicDialogRef | null;
 
     // Icons
     faPlus = faPlus;
@@ -61,9 +63,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Closes open modal on component destroy
      */
     ngOnDestroy() {
-        if (this.modalService?.hasOpenModals()) {
-            this.modalService.dismissAll();
-        }
+        this.importDialogRef?.close();
     }
 
     /**
@@ -111,12 +111,22 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
      * Then invokes import api for selected submission
      */
     openImportModal() {
-        const exampleSubmissionImportModalRef = this.modalService.open(ExampleSubmissionImportComponent, {
-            size: 'lg',
-            backdrop: 'static',
+        this.importDialogRef = this.dialogService.open(ExampleSubmissionImportComponent, {
+            width: '60rem',
+            modal: true,
+            closable: false,
+            closeOnEscape: false,
+            dismissableMask: false,
+            draggable: false,
+            showHeader: false,
+            inputValues: {
+                exercise: this.exercise,
+            },
         });
-        exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
-        exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
+        this.importDialogRef?.onClose.subscribe((selectedSubmission: Submission | undefined) => {
+            if (!selectedSubmission) {
+                return;
+            }
             this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');

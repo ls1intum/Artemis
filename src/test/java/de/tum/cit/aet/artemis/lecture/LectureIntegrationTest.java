@@ -49,11 +49,11 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
@@ -371,6 +371,20 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_attachmentDisplayPageNumbersStoredAsComparableJson_shouldLoadOnPostgres() throws Exception {
+        attachmentDirectOfLecture.setDisplayPageNumbers(List.of(1, 3, 5));
+        attachmentRepository.saveAndFlush(attachmentDirectOfLecture);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        assertThat(receivedLectureWithDetails.id()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetails.attachments()).hasSize(2);
+        assertThat(receivedLectureWithDetails.attachments()).anyMatch(attachment -> attachment.id().equals(attachmentDirectOfLecture.getId()));
+        assertThat(attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow().getDisplayPageNumbers()).containsExactly(1, 3, 5);
     }
 
     @Test

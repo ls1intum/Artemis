@@ -41,7 +41,7 @@
     </div>
     <div>
         <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints"></label>
-        {{ exercise.maxPoints }} P
+        {{ exercise().maxPoints }} P
     </div>
 </div>
 <form>
@@ -118,7 +118,7 @@
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="exercise.programmingLanguage === 'JAVA' ? ('artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate) : undefined"
+            [ngbTooltip]="exercise().programmingLanguage === 'JAVA' ? ('artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate) : undefined"
             placement="bottom auto"
             (click)="changeSort('type')"
         >

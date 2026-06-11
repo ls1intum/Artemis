@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { round } from 'app/foundation/util/utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -6,9 +6,9 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
     template: `
-        <div class="chart-body" placement="left auto" [ngbTooltip]="tooltip">
-            <div class="passed-bar" [style]="{ width: passedPercent + '%' }"></div>
-            <div class="failed-bar" [style]="{ left: passedPercent + '%', width: failedPercent + '%' }"></div>
+        <div class="chart-body" placement="left auto" [ngbTooltip]="tooltip()">
+            <div class="passed-bar" [style]="{ width: passedPercent() + '%' }"></div>
+            <div class="failed-bar" [style]="{ left: passedPercent() + '%', width: failedPercent() + '%' }"></div>
         </div>
     `,
     styles: [
@@ -18,37 +18,29 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     ],
     imports: [NgbTooltip],
 })
-export class TestCasePassedBuildsChartComponent implements OnChanges {
-    @Input() testCaseStats?: TestCaseStats;
-    @Input() totalParticipations: number;
+export class TestCasePassedBuildsChartComponent {
+    readonly testCaseStats = input<TestCaseStats>();
+    readonly totalParticipations = input.required<number>();
 
-    passedPercent = 0;
-    failedPercent = 0;
-    tooltip = '';
+    private readonly chartData = computed(() => {
+        const testCaseStats = this.testCaseStats();
+        const totalPassedAndFailed = (testCaseStats?.numPassed ?? 0) + (testCaseStats?.numFailed ?? 0);
+        const totalParticipations = Math.max(totalPassedAndFailed, this.totalParticipations());
 
-    ngOnChanges() {
-        const totalPassedAndFailed = (this.testCaseStats?.numPassed ?? 0) + (this.testCaseStats?.numFailed ?? 0);
-        if (totalPassedAndFailed > this.totalParticipations) {
-            this.totalParticipations = totalPassedAndFailed;
+        if (totalParticipations > 0) {
+            const passedPercent = ((testCaseStats?.numPassed || 0) / totalParticipations) * 100;
+            const failedPercent = ((testCaseStats?.numFailed || 0) / totalParticipations) * 100;
+            return { passedPercent, failedPercent, totalParticipations };
         }
+        return { passedPercent: 0, failedPercent: 0, totalParticipations: 0 };
+    });
 
-        if (this.totalParticipations > 0) {
-            const passedPercent = ((this.testCaseStats?.numPassed || 0) / this.totalParticipations) * 100;
-            const failedPercent = ((this.testCaseStats?.numFailed || 0) / this.totalParticipations) * 100;
-
-            setTimeout(() => {
-                this.passedPercent = passedPercent;
-                this.failedPercent = failedPercent;
-                this.tooltip = TestCasePassedBuildsChartComponent.generateTooltip(passedPercent, failedPercent, this.totalParticipations!);
-            });
-        } else {
-            setTimeout(() => {
-                this.passedPercent = 0;
-                this.failedPercent = 0;
-                this.tooltip = TestCasePassedBuildsChartComponent.generateTooltip(0, 0, 0);
-            });
-        }
-    }
+    readonly passedPercent = computed(() => this.chartData().passedPercent);
+    readonly failedPercent = computed(() => this.chartData().failedPercent);
+    readonly tooltip = computed(() => {
+        const data = this.chartData();
+        return TestCasePassedBuildsChartComponent.generateTooltip(data.passedPercent, data.failedPercent, data.totalParticipations);
+    });
 
     private static generateTooltip(passedPercent: number, failedPercent: number, totalStudents: number): string {
         const notExecutedPercent = round(100 - passedPercent - failedPercent);

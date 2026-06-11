@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -12,6 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
@@ -23,6 +26,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExercise Management Component', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.id = 456;
@@ -33,6 +38,13 @@ describe('ProgrammingExercise Management Component', () => {
     const programmingExercise3 = new ProgrammingExercise(course, undefined);
     programmingExercise3.id = 458;
     programmingExercise3.title = 'Exercise 2b';
+
+    const headers = new HttpHeaders().append('link', 'link;link');
+    const programmingExerciseResponse = () =>
+        new HttpResponse({
+            body: [programmingExercise, programmingExercise2, programmingExercise3],
+            headers,
+        });
 
     let comp: ProgrammingExerciseComponent;
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
@@ -50,6 +62,7 @@ describe('ProgrammingExercise Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
@@ -65,42 +78,37 @@ describe('ProgrammingExercise Management Component', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modalService = TestBed.inject(NgbModal);
 
-        comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
+        vi.spyOn(courseExerciseService, 'findAllProgrammingExercisesForCourse').mockReturnValue(of(programmingExerciseResponse()));
+
+        comp.programmingExercises.set([programmingExercise, programmingExercise2, programmingExercise3]);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(courseExerciseService, 'findAllProgrammingExercisesForCourse').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [programmingExercise],
-                    headers,
-                }),
-            ),
-        );
+        vi.spyOn(courseExerciseService, 'findAllProgrammingExercisesForCourse').mockReturnValue(of(new HttpResponse({ body: [programmingExercise], headers })));
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         fixture.changeDetectorRef.detectChanges();
         comp.ngOnInit();
 
         // THEN
         expect(courseExerciseService.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
-        expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
+        expect(comp.programmingExercises()[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
     it('should delete exercise', () => {
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
-        const mockSubscriber = jest.fn();
+        vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const mockSubscriber = vi.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
@@ -110,11 +118,11 @@ describe('ProgrammingExercise Management Component', () => {
     });
 
     it('should delete multiple exercises', () => {
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
-        const mockSubscriber = jest.fn();
+        vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const mockSubscriber = vi.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteMultipleProgrammingExercises([{ id: 441 }, { id: 442 }, { id: 443 }] as ProgrammingExercise[], {
             deleteStudentReposBuildPlans: true,
@@ -126,11 +134,11 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
-        const mockSubscriber = jest.fn();
+        vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
+        const mockSubscriber = vi.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
@@ -141,7 +149,7 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('should open edit selected modal', () => {
         const mockReturnValue = { componentInstance: {}, closed: of() } as unknown as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openEditSelectedModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, {
@@ -158,37 +166,41 @@ describe('ProgrammingExercise Management Component', () => {
     describe('ProgrammingExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'programming');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Exercise', '', 'programming'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(3);
         });
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'text');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Exercise', '', 'text'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(0);
         });
 
         it('should show first exercise', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Exercise 1');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Exercise 1'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(1);
         });
 
         it('should show last 2 exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('2');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('2'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.programmingExercises).toHaveLength(3);
+            expect(comp.programmingExercises()).toHaveLength(3);
             expect(comp.filteredProgrammingExercises).toHaveLength(2);
         });
     });
@@ -199,7 +211,7 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.selectedExercises[0]).toContainEntry(['id', programmingExercise.id]);
+            expect(comp.selectedExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         });
 
         it('should remove selected exercise to list', () => {
@@ -213,16 +225,16 @@ describe('ProgrammingExercise Management Component', () => {
 
         it('should select all', () => {
             // WHEN
-            comp.toggleMultipleExercises(comp.programmingExercises);
+            comp.toggleMultipleExercises(comp.programmingExercises());
 
             // THEN
-            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises.length);
+            expect(comp.selectedExercises).toHaveLength(comp.programmingExercises().length);
         });
 
         it('should deselect all', () => {
             // WHEN
-            comp.toggleMultipleExercises(comp.programmingExercises); // Select all
-            comp.toggleMultipleExercises(comp.programmingExercises); // Deselect all
+            comp.toggleMultipleExercises(comp.programmingExercises()); // Select all
+            comp.toggleMultipleExercises(comp.programmingExercises()); // Deselect all
 
             // THEN
             expect(comp.selectedExercises).toHaveLength(0);
@@ -233,8 +245,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleExercise(programmingExercise);
 
             // THEN
-            expect(comp.isExerciseSelected(programmingExercise)).toBeTrue();
-            expect(comp.isExerciseSelected(programmingExercise2)).toBeFalse();
+            expect(comp.isExerciseSelected(programmingExercise)).toBe(true);
+            expect(comp.isExerciseSelected(programmingExercise2)).toBe(false);
         });
     });
 });

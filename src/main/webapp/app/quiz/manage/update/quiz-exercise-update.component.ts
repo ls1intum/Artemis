@@ -29,7 +29,8 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
-import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -136,7 +137,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private changeDetector = inject(ChangeDetectorRef);
     private exerciseGroupService = inject(ExerciseGroupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private calendarService = inject(CalendarService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
@@ -254,12 +255,19 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    readonly defaultSecondLayerDialogOptions: NgbModalOptions = {
-        size: 'md',
-        scrollable: false,
-        backdrop: 'static',
-        backdropClass: 'second-layer-modal-bg',
-        centered: true,
+    readonly defaultSecondLayerDialogOptions = {
+        width: '40rem',
+        breakpoints: {
+            '768px': '95vw',
+        },
+        modal: true,
+        closable: true,
+        closeOnEscape: true,
+        dismissableMask: false,
+        draggable: false,
+        resizable: false,
+        showHeader: false,
+        styleClass: 'second-layer-modal-bg',
     };
 
     /**
@@ -321,6 +329,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
+                // The server omits empty collections during serialization, so a quiz without questions
+                // arrives without the quizQuestions field — the editor relies on it being an array.
+                this.quizExercise.quizQuestions ??= [];
                 this.init();
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
@@ -612,7 +623,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.quizQuestions!.forEach((question) => (scoreSum += question.points!));
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach((question) => (scoreSum += question.points!));
+        }
         return scoreSum;
     }
 
@@ -666,20 +679,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 descriptionKey: 'artemisApp.quizWarning.description',
                 confirmButtonKey: 'artemisApp.quizWarning.confirmButton',
             };
-            const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, this.defaultSecondLayerDialogOptions);
-            modalRef.componentInstance.translationKeys = keys;
-            modalRef.componentInstance.canBeUndone = true;
-            modalRef.componentInstance.initialize();
-            modalRef.result.then(
-                () => {
-                    // On confirm
+            const ref = this.dialogService.open(GenericConfirmationDialogComponent, {
+                ...this.defaultSecondLayerDialogOptions,
+                data: {
+                    translationKeys: keys,
+                    canBeUndone: true,
+                },
+            });
+            ref?.onClose.subscribe((confirmed: boolean | undefined) => {
+                if (confirmed) {
                     this.save();
-                },
-                () => {
-                    // On cancel
-                    return;
-                },
-            );
+                }
+            });
         } else {
             this.save();
         }
@@ -762,6 +773,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.reconcileMappingReferences(quizExercise);
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        // The server omits empty collections during serialization — keep the editor working on a real array.
+        this.quizExercise.quizQuestions ??= [];
         // Prefer the server-provided editability flag (e.g. exam-date-aware) when present; otherwise fall back to the
         // local check. The create/update endpoints currently omit the field, which is why the unconditional overwrite
         // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.

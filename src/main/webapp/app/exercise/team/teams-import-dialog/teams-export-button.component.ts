@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TeamService } from '../team.service';
@@ -10,7 +10,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
+            [btnSize]="buttonSize()"
             [icon]="faFileExport"
             [title]="'artemisApp.team.exportTeams.buttonLabel'"
             (onClick)="exportTeams($event)"
@@ -24,8 +24,8 @@ export class TeamsExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() teams: Team[];
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly teams = input.required<Team[]>();
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     // Icons
     faFileExport = faFileExport;
@@ -36,6 +36,6 @@ export class TeamsExportButtonComponent {
      */
     exportTeams(event: MouseEvent) {
         event.stopPropagation();
-        this.teamService.exportTeams(this.teams);
+        this.teamService.exportTeams(this.teams());
     }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -22,27 +22,31 @@ export class ExerciseImportFromFileComponent implements OnInit {
     private dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private alertService = inject(AlertService);
 
-    @Input() exerciseType: ExerciseType;
-    @Input() exercise: Exercise;
+    exerciseType = input<ExerciseType | undefined>();
+    private readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
 
-    titleKey: string;
+    exercise?: Exercise;
+
+    titleKey?: string;
     fileForImport?: File;
     //Icons
     faUpload = faUpload;
 
     ngOnInit(): void {
-        // Get data from DynamicDialogConfig if available (when opened via DialogService)
-        const dialogData = this.dialogConfig?.data as ExerciseImportDialogData | undefined;
-        if (dialogData?.exerciseType) {
-            this.exerciseType = dialogData.exerciseType;
+        const exerciseType = this.selectedExerciseType();
+        if (exerciseType) {
+            this.titleKey =
+                exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.importFromFile.title` : `artemisApp.${exerciseType}Exercise.importFromFile.title`;
         }
-
-        this.titleKey =
-            this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.importFromFile.title` : `artemisApp.${this.exerciseType}Exercise.importFromFile.title`;
     }
 
     /** uploads the zip file and extracts the minimal information required to fill the exercise-update component, it's async, so one can conveniently use await **/
     async uploadExercise() {
+        const exerciseType = this.selectedExerciseType();
+        if (!exerciseType) {
+            return;
+        }
+
         const jsonRegex = new RegExp('.*.json');
         const zip = await JSZip.loadAsync(this.fileForImport as File);
         const jsonFiles = zip.file(jsonRegex);
@@ -53,11 +57,11 @@ export class ExerciseImportFromFileComponent implements OnInit {
         const exerciseDetails = await jsonFiles[0].async('string');
 
         const exerciseJson = JSON.parse(exerciseDetails) as Exercise;
-        if (exerciseJson.type !== this.exerciseType) {
+        if (exerciseJson.type !== exerciseType) {
             this.alertService.error('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
             return;
         }
-        switch (this.exerciseType) {
+        switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
                 const progEx = this.exercise as ProgrammingExercise;
@@ -82,7 +86,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
-                    exerciseType: this.exerciseType,
+                    exerciseType,
                 });
                 return;
         }
@@ -93,9 +97,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
     }
 
     /** sets the zip file that is selected in the file input dialog **/
-    setFileForExerciseImport(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileForExerciseImport(event: Event): void {
+        const fileInput = event.target as HTMLInputElement;
+        if (fileInput.files?.length) {
+            const fileList = fileInput.files;
             if (fileList.length != 1) {
                 this.alertService.error('artemisApp.programmingExercise.importFromFile.fileCountError');
                 return;

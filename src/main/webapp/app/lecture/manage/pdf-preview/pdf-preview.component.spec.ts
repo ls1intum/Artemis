@@ -1311,7 +1311,7 @@ describe('PdfPreviewComponent', () => {
             await component.loadPdf(fileUrl, arrayBuffer, sourceId);
 
             expect(PDFDocument.load).toHaveBeenCalledWith(arrayBuffer);
-            expect(PDFJS.getDocument).toHaveBeenCalledWith(fileUrl);
+            expect(PDFJS.getDocument).toHaveBeenCalledWith({ url: fileUrl });
             expect(component.sourcePDFs().has(sourceId)).toBe(true);
             expect(component.totalPages()).toBe(3);
             expect(component.isPdfLoading()).toBe(false);
