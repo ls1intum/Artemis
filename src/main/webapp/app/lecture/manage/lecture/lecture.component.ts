@@ -134,7 +134,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     )
                     .subscribe({
                         next: (res: Lecture) => {
-                            this.lectures().push(res);
+                            this.lectures.set([...this.lectures(), res]);
                             this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -289,7 +289,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 map((res: HttpResponse<Lecture>) => res.body!),
                 concatMap((createdLecture: Lecture) => {
                     // Add the new lecture to the list
-                    this.lectures().push(createdLecture);
+                    this.lectures.set([...this.lectures(), createdLecture]);
                     this.applyFilters();
 
                     // Create attachment units sequentially to maintain order
