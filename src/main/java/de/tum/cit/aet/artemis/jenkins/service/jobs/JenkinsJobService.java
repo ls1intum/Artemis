@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 @Lazy
 @Service
 @Profile(PROFILE_JENKINS)
-// TODO: EXTRACTED TO MICROSERVICE - This class has been copied to jenkins-connector/src/main/java/de/tum/cit/aet/artemis/jenkins/connector/service/JenkinsJobService.java
+// TODO: EXTRACTED TO MICROSERVICE - This class has been copied to https://github.com/ls1intum/jenkins-connector
 // This code will be removed once the microservice migration is complete
 public class JenkinsJobService {
 
