@@ -314,10 +314,6 @@ public class ParticipationResource {
                     "dueDateOver.feedbackRequestAfterDueDate");
         }
 
-        if (exercise instanceof ProgrammingExercise) {
-            ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
-        }
-
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
             var submissions = submissionRepository.findAllByParticipationId(participation.getId());
             // Only count real submitted entries, not auto-created placeholders

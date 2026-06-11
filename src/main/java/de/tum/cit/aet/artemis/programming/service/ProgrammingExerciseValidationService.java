@@ -128,7 +128,6 @@ public class ProgrammingExerciseValidationService {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
         validateBuildPhaseNames(programmingExercise);
         validateDockerFlags(programmingExercise);
