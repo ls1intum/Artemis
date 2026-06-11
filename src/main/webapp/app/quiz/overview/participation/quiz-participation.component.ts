@@ -1,9 +1,8 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, combineLatest, map, of, take } from 'rxjs';
+import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -30,7 +29,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { onError } from 'app/foundation/util/global.utils';
+import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular';
@@ -82,7 +81,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
