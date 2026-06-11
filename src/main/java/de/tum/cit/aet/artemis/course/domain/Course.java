@@ -172,8 +172,8 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
-    @Column(name = "restricted_athena_modules_access", nullable = false)
-    private boolean restrictedAthenaModulesAccess = false; // default is false
+    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private CourseAthenaConfig athenaConfig;
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -784,12 +784,12 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
-    public boolean getRestrictedAthenaModulesAccess() {
-        return restrictedAthenaModulesAccess;
+    public CourseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
     }
 
-    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
-        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
     }
 
     public Set<TutorialGroup> getTutorialGroups() {
