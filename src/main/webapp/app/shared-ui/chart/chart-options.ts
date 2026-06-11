@@ -123,10 +123,13 @@ function buildTooltip(tooltip: BaseChartConfig['tooltip']) {
     if (tooltip === false) {
         return { enabled: false };
     }
+    // reference line datasets are decorative and never part of tooltips
+    const referenceLineFilter = (item: TooltipItem<ChartType>) => !item.dataset.referenceLine;
     if (!tooltip) {
-        return undefined;
+        return { filter: referenceLineFilter };
     }
     return {
+        filter: referenceLineFilter,
         callbacks: {
             title: tooltip.title,
             label: tooltip.label,

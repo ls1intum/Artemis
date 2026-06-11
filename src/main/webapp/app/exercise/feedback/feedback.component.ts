@@ -1,4 +1,4 @@
-import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, Injector, OnChanges, OnInit, SimpleChanges, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -16,7 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
@@ -27,7 +26,11 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { ChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
+import { ChartModule } from 'primeng/chart';
+import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { multiSeriesToStackedBarData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions } from 'app/shared-ui/chart/chart-options';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
@@ -50,7 +53,7 @@ import { Participation, getLatestSubmission } from 'app/exercise/shared/entities
         FaIconComponent,
         NgClass,
         NgbTooltip,
-        BarChartModule,
+        ChartModule,
         NgTemplateOutlet,
         FeedbackNodeComponent,
         UpperCasePipe,
@@ -218,19 +221,23 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     commitHash?: string;
 
-    chartData: ChartData = {
+    readonly chartData = signal<FeedbackChartData>({
         xScaleMax: 100,
-        scheme: {
-            name: 'Feedback Detail',
-            selectable: true,
-            group: ScaleType.Ordinal,
-            domain: [GraphColors.GREEN, GraphColors.RED],
-        },
+        colors: [GraphColors.GREEN, GraphColors.RED],
         results: [],
-    };
-    // Static chart settings
-    labels: string[];
-    legendPosition = LegendPosition.Below;
+    });
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => this.chartData().colors);
+    readonly scoreChartData = computed(() => multiSeriesToStackedBarData(this.chartData().results, this.chartColors()));
+    readonly scoreChartOptions = computed(() =>
+        barChartOptions({
+            horizontal: true,
+            stacked: true,
+            xAxis: { max: this.chartData().xScaleMax, tickFormatter: this.xAxisFormatting },
+            yAxis: { display: false },
+            legend: { position: 'bottom' },
+            tooltip: false,
+        }),
+    );
 
     badge: Badge;
 
@@ -241,14 +248,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * from true to false
      */
     private feedbackItemNodesBeforePrinting: FeedbackNode[];
-
-    constructor() {
-        const translateService = this.translateService;
-
-        const pointsLabel = translateService.instant('artemisApp.result.chart.points');
-        const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
-        this.labels = [pointsLabel, deductionsLabel];
-    }
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -413,7 +412,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.chartData = this.feedbackChartService.create(feedbackItemNodes, this.exercise!);
+        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, this.exercise!));
     }
 
     getCommitHash(): string {
