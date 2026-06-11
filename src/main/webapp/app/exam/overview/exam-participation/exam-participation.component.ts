@@ -185,7 +185,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
     readonly loadingExam = signal<boolean>(undefined!);
-    // Re-read by the time-based isOver()/isGracePeriodOver() getters; bumped when wall-clock state must re-render.
+    // Render-version signal read by the template-bound isOver()/isGracePeriodOver() getters. Bumped whenever
+    // state outside Angular's reactivity changes (wall-clock transitions, in-place submission sync mutations)
+    // so the exam view and its default-CD children (e.g. the navigation sidebar icons) re-render under zoneless.
     private readonly wallClockVersion = signal(0);
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
@@ -960,6 +962,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
         submission.isSynced = true;
         submission.submitted = true;
+        // In-place mutations above are invisible to signals; nudge the render-version so the
+        // navigation sidebar's save-state icons refresh under zoneless.
+        this.wallClockVersion.update((version) => version + 1);
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {

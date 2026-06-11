@@ -342,7 +342,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private ensureExerciseDetailsInitialized() {
-        if (!this.exerciseDetailSections()) {
+        // The signal is initialized with an empty array (previously an undefined field), so check emptiness.
+        if (this.exerciseDetailSections().length === 0) {
             this.exerciseDetailSections.set(this.getExerciseDetails());
         }
     }
