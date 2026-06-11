@@ -79,7 +79,7 @@ public class HyperionExerciseGenerationResource {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         if (!agentSystemPromptService.isGenerationSupported(language)) {
             // Fail clearly instead of running and producing a result the differential oracle cannot verify (best-effort/no-profile languages).
-            throw new BadRequestAlertException("Artemis Intelligence cannot generate a whole exercise for programming language '" + language
+            throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language
                     + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
