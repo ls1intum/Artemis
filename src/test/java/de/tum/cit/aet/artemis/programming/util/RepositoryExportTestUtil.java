@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -483,18 +482,6 @@ public final class RepositoryExportTestUtil {
         return commits.next().getId();
     }
 
-    /**
-     * Creates and returns a working copy repository handle for the template repo of the given exercise.
-     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
-     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
-     */
-    public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
-            throws GitAPIException, IOException, URISyntaxException {
-        String projectKey = exercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
-    }
-
     // ===========================================================================
     // Utilities for reducing code duplication across test suites
     // ===========================================================================
@@ -510,7 +497,7 @@ public final class RepositoryExportTestUtil {
      */
     public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
         String projectKey = exercise.getProjectKey().toUpperCase();
-        String slug = (exercise.getShortName() + "-" + username).toLowerCase();
+        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase();
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
         if (Files.exists(bareRepoPath)) {
             FileUtils.deleteDirectory(bareRepoPath.toFile());

@@ -78,7 +78,7 @@ export class TestRunManagementComponent implements OnInit {
     faTimes = faTimes;
 
     ngOnInit(): void {
-        this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true).subscribe({
+        this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), true).subscribe({
             next: (response: HttpResponse<Exam>) => {
                 this.exam.set(response.body!);
                 this.course.set(this.exam()!.course!);

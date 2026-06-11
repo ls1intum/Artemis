@@ -161,8 +161,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             }
 
             diffEditor.setFileContents(
-                inlineFix.expectedCode,
-                inlineFix.replacementCode,
+                inlineFix.expectedCode ?? '',
+                inlineFix.replacementCode ?? '',
                 this.getInlineFixDiffFileName(thread),
                 this.getInlineFixDiffFileName(thread),
                 this.getInlineFixDiffLanguageId(thread),
@@ -528,12 +528,22 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     private getValidSuggestedInlineFix(inlineFix: InlineCodeChange | null | undefined): InlineCodeChange | undefined {
-        if (!inlineFix || inlineFix.expectedCode == null || inlineFix.replacementCode == null || inlineFix.applied == null) {
+        // Only structural fields are required; expectedCode/replacementCode may legitimately be absent.
+        if (!inlineFix || inlineFix.applied == null) {
             return undefined;
         }
         if (inlineFix.startLine == null || inlineFix.endLine == null || inlineFix.startLine < 1 || inlineFix.endLine < inlineFix.startLine) {
             return undefined;
         }
-        return inlineFix;
+        // The server serializes the fix with @JsonInclude(NON_EMPTY), which omits an empty expectedCode/replacementCode
+        // (e.g. a pure deletion has an empty replacement). An absent value therefore means an empty string, not a
+        // malformed fix; normalize it so downstream consumers (diff editor, apply-to-editor) always get well-formed strings.
+        return {
+            startLine: inlineFix.startLine,
+            endLine: inlineFix.endLine,
+            expectedCode: inlineFix.expectedCode ?? '',
+            replacementCode: inlineFix.replacementCode ?? '',
+            applied: inlineFix.applied,
+        };
     }
 }

@@ -11,6 +11,7 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTemplateTest;
@@ -35,7 +36,7 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
     private static final Set<Class<?>> TEST_GROUPS = Set.of(AbstractSpringIntegrationLocalVCSamlTest.class, AbstractSpringIntegrationJenkinsLocalVCTest.class,
             AbstractSpringIntegrationJenkinsLocalVCBatchTest.class, AbstractSpringIntegrationJenkinsLocalVCTemplateTest.class, AbstractSpringIntegrationLocalCILocalVCTest.class,
-            AbstractSpringIntegrationIndependentTest.class);
+            AbstractSpringIntegrationIndependentTest.class, AbstractSpringIntegrationIndependentBatchTest.class);
 
     @Override
     protected synchronized void append(ILoggingEvent loggingEvent) {
@@ -75,6 +76,16 @@ public class ParallelConsoleAppender extends AppenderBase<ILoggingEvent> {
 
         System.out.writeBytes(logs.toByteArray());
         logs.reset();
+        System.out.flush();
+    }
+
+    /**
+     * Prints test infrastructure output directly to the console after all test logs have been flushed.
+     *
+     * @param output the output to print
+     */
+    public static synchronized void printToConsole(String output) {
+        System.out.print(output);
         System.out.flush();
     }
 
