@@ -255,7 +255,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
+                athenaAutoFeedbackEnabled: new FormControl(this.course.athenaAutoFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -571,9 +572,14 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    changeAthenaGradingFeedback() {
+        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
+        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
+    }
+
+    changeAthenaAutoFeedback() {
+        this.course.athenaAutoFeedbackEnabled = !this.course.athenaAutoFeedbackEnabled;
+        this.courseForm.controls['athenaAutoFeedbackEnabled'].setValue(this.course.athenaAutoFeedbackEnabled);
     }
 
     /**

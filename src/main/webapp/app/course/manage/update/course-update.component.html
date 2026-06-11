@@ -391,13 +391,37 @@
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            name="restrictedAthenaModulesEnabled"
-                            id="field_restrictedAthenaModulesEnabled"
-                            [checked]="course.restrictedAthenaModulesAccess"
-                            (change)="changeRestrictedAthenaModulesEnabled()"
+                            name="athenaGradingFeedbackEnabled"
+                            id="field_athenaGradingFeedbackEnabled"
+                            [checked]="course.athenaGradingFeedbackEnabled"
+                            (change)="changeAthenaGradingFeedback()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label" for="field_restrictedAthenaModulesEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}" />
+                        <label
+                            class="form-control-label"
+                            jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label"
+                            for="field_athenaGradingFeedbackEnabled"
+                        ></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.course.athenaConfig.gradingFeedbackEnabled.tooltip' | artemisTranslate }}"
+                        />
+                    </div>
+                    <div class="form-group form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaAutoFeedbackEnabled"
+                            id="field_athenaAutoFeedbackEnabled"
+                            [checked]="course.athenaAutoFeedbackEnabled"
+                            (change)="changeAthenaAutoFeedback()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athenaConfig.autoFeedbackEnabled.label" for="field_athenaAutoFeedbackEnabled"></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.course.athenaConfig.autoFeedbackEnabled.tooltip' | artemisTranslate }}"
+                        />
                     </div>
                 }
                 <!-- Not part of model -->
