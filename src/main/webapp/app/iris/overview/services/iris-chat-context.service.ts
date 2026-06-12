@@ -64,17 +64,17 @@ export class IrisChatContextService {
     }
 
     /**
-     * Adopt the server's view of the loaded session's context. Any in-flight user pending
-     * is discarded — the server is authoritative. If we are on a non-course page (lecture /
-     * exercise) whose context differs from the server's, auto-stage that page context so the
-     * chip reflects the user's intent and the next sendMessage commits it.
+     * Adopt the server's authoritative context for the loaded session, discarding any in-flight pending.
+     * On a lecture / exercise page whose context differs, auto-stage it so the chip reflects intent and the
+     * next sendMessage commits it. Course pages need no staging; tutor-suggestion pages must not be staged
+     * (their sessions are not IrisChatSessions — the server would 400 the pendingContext).
      */
     adoptServerContext(serverCtx: SessionContext | undefined): void {
         this._pending.set(undefined);
         this._committed.set(serverCtx);
 
         const pageCtx = this._page();
-        if (pageCtx && pageCtx.mode !== ChatServiceMode.COURSE && !sameSessionContext(pageCtx, serverCtx)) {
+        if (pageCtx && pageCtx.mode !== ChatServiceMode.COURSE && pageCtx.mode !== ChatServiceMode.TUTOR_SUGGESTION && !sameSessionContext(pageCtx, serverCtx)) {
             this._pending.set(pageCtx);
         }
     }

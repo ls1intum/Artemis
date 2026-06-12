@@ -117,13 +117,6 @@ export class IrisChatHttpService {
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
     }
 
-    createSession(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
-        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
-            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/posts/${entityId}/sessions`, null, { observe: 'response' });
-        }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { mode, entityId } });
-    }
-
     /**
      * Creates a new (empty) course chat session ("New Chat"). Every new session is a course session;
      * exercise/lecture context is layered on later via a context switch.
