@@ -149,7 +149,7 @@ describe('CoursesComponent', () => {
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             expect(component.courses).toEqual(courses);
-            expect(component.nextRelevantExams).toHaveLength(0);
+            expect(component.nextRelevantExams()).toHaveLength(0);
         });
 
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
@@ -197,8 +197,8 @@ describe('CoursesComponent', () => {
 
             component.courses = courses;
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses);
-            expect(component.recentlyAccessedCourses).toEqual([]);
+            expect(component.regularCourses()).toEqual(courses);
+            expect(component.recentlyAccessedCourses()).toEqual([]);
             expect(recentCoursesSpy).not.toHaveBeenCalled();
 
             // Test for more than 5 courses
@@ -208,8 +208,8 @@ describe('CoursesComponent', () => {
             }
             component.courses = courses;
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses.slice(2));
-            expect(component.recentlyAccessedCourses).toEqual(courses.slice(0, 2));
+            expect(component.regularCourses()).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses()).toEqual(courses.slice(0, 2));
             expect(recentCoursesSpy).toHaveBeenCalledOnce();
         });
     });
@@ -217,7 +217,7 @@ describe('CoursesComponent', () => {
     it('should load next relevant exam', async () => {
         const navigateSpy = vi.spyOn(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
-        component.nextRelevantExams = [exam1];
+        component.nextRelevantExams.set([exam1]);
         component.openExam();
         await fixture.whenStable();
 
@@ -262,7 +262,7 @@ describe('CoursesComponent', () => {
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual([course1, course2, course6]);
-        expect(component.nextRelevantExams).toEqual([]);
+        expect(component.nextRelevantExams()).toEqual([]);
     });
 
     it('should initialize search course text correctly', () => {

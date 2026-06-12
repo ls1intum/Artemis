@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
@@ -48,17 +48,19 @@ export class CoursesComponent implements OnInit {
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
 
+    // All written inside the dashboard HTTP subscribe — must be signals under zoneless,
+    // otherwise the course list silently never renders after the response arrives.
     courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
-    nextRelevantExams?: Exam[];
+    readonly nextRelevantExams = signal<Exam[] | undefined>(undefined);
 
-    public recentlyAccessedCourses: Course[] = [];
-    public regularCourses: Course[] = [];
+    public readonly recentlyAccessedCourses = signal<Course[]>([]);
+    public readonly regularCourses = signal<Course[]>([]);
 
     searchCourseText = '';
 
-    coursesLoaded = false;
+    readonly coursesLoaded = signal(false);
     isSortAscending = true;
 
     async ngOnInit() {
@@ -70,7 +72,7 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (res.body) {
-                    this.coursesLoaded = true;
+                    this.coursesLoaded.set(true);
                     const courses: Course[] = [];
                     if (res.body.courses === undefined || res.body.courses.length === 0) {
                         return;
@@ -81,7 +83,7 @@ export class CoursesComponent implements OnInit {
                     });
                     this.courses = sortCourses(courses);
 
-                    this.nextRelevantExams = res.body.activeExams ?? [];
+                    this.nextRelevantExams.set(res.body.activeExams ?? []);
                     this.sortCoursesInRecentlyAccessedAndRegularCourses();
                 }
             },
@@ -94,11 +96,11 @@ export class CoursesComponent implements OnInit {
      */
     sortCoursesInRecentlyAccessedAndRegularCourses() {
         if (this.courses.length <= 5) {
-            this.regularCourses = this.courses;
+            this.regularCourses.set(this.courses);
         } else {
             const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY);
-            this.recentlyAccessedCourses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
-            this.regularCourses = this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!));
+            this.recentlyAccessedCourses.set(this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!)));
+            this.regularCourses.set(this.courses.filter((course) => !lastAccessedCourseIds.includes(course.id!)));
         }
     }
 
@@ -108,13 +110,14 @@ export class CoursesComponent implements OnInit {
     get nextRelevantExam(): Exam | undefined {
         // TODO: support multiple relevant exams in the future
         let relevantExam: Exam | undefined;
-        if (this.nextRelevantExams) {
-            if (this.nextRelevantExams.length === 0) {
+        const nextRelevantExams = this.nextRelevantExams();
+        if (nextRelevantExams) {
+            if (nextRelevantExams.length === 0) {
                 return undefined;
-            } else if (this.nextRelevantExams.length === 1) {
-                relevantExam = this.nextRelevantExams[0];
+            } else if (nextRelevantExams.length === 1) {
+                relevantExam = nextRelevantExams[0];
             } else {
-                relevantExam = this.nextRelevantExams.sort((a, b) => {
+                relevantExam = [...nextRelevantExams].sort((a, b) => {
                     return dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf();
                 })[0];
             }
@@ -140,8 +143,8 @@ export class CoursesComponent implements OnInit {
     onSort(): void {
         if (this.courses) {
             this.isSortAscending = !this.isSortAscending;
-            this.regularCourses = [...sortCourses(this.regularCourses, this.isSortAscending)];
-            this.recentlyAccessedCourses = [...sortCourses(this.recentlyAccessedCourses, this.isSortAscending)];
+            this.regularCourses.set([...sortCourses(this.regularCourses(), this.isSortAscending)]);
+            this.recentlyAccessedCourses.set([...sortCourses(this.recentlyAccessedCourses(), this.isSortAscending)]);
         }
     }
 }
