@@ -88,6 +88,13 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     }
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
     await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    // The build above produces the automatic result, but for exam programming exercises the server also defaults
+    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
+    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
+    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
+    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
+    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
+    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
 }
 
 /**

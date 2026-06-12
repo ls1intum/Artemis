@@ -374,11 +374,16 @@ launch_node() {
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
+        # Run the JVM in UTC to match production servers (which run UTC) and the app's own
+        # hibernate.jdbc.time_zone=UTC. On a developer machine in a non-UTC zone (e.g. CEST) the
+        # default JVM zone otherwise shifts ZonedDateTime values by the offset on DB round-trips,
+        # pushing date-gated logic — such as a programming exercise's "Run Tests after Due Date"
+        # date — hours into the future and breaking date-sensitive E2E tests only locally.
         if [ "$DEBUG" = true ]; then
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" 2>&1 | tee "$log_file"
         else
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" > "$log_file" 2>&1
         fi
     ) &
