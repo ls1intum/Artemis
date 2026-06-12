@@ -320,7 +320,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.onAiBriefChange('Implement a Roman numeral converter that handles 1..3999');
 
-            expect(comp.programmingExercise.title).toBe('Roman numeral converter that handles 1..3999'.slice(0, 80));
+            // The lead-in "Implement a " is stripped; the disallowed ".." collapses to a space so the placeholder satisfies the server title pattern.
+            expect(comp.programmingExercise.title).toBe('Roman numeral converter that handles 1 3999');
             const autoShortName = comp.programmingExercise.shortName;
             expect(autoShortName).toMatch(/^[a-zA-Z][a-zA-Z0-9]*$/);
 
@@ -332,6 +333,25 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.title = 'My exact title';
             comp.onAiBriefChange('Some completely different brief text');
             expect(comp.programmingExercise.title).toBe('My exact title');
+        });
+
+        it('derives a title that always satisfies the server title pattern even from free-prose briefs (no colon, commas, slashes)', () => {
+            // Regression: a brief without an early colon used to yield a raw slice containing commas/periods, which the server rejects with titlePatternInvalid (400) — and because the
+            // lean page hides the title field, the persist failed silently. The derived placeholder must be valid by construction.
+            comp.setEditMode('ai');
+            const pattern = /^[a-zA-Z0-9 _-]+$/;
+
+            for (const brief of [
+                'For week 5 of our intro course, right after the recursion lecture, I would like a medium exercise on file-system sizes.',
+                'Build a parser for arithmetic expressions (with +, -, *, /) and report division-by-zero errors clearly.',
+                'студенты: пишут кэш', // non-Latin → must still fall back to a valid title
+            ]) {
+                comp.programmingExercise.title = undefined;
+                comp.onAiBriefChange(brief);
+                const title = comp.programmingExercise.title ?? '';
+                expect(title.length).toBeGreaterThanOrEqual(3);
+                expect(title).toMatch(pattern);
+            }
         });
 
         it('re-defaults the package name when the language changes in AI mode', () => {

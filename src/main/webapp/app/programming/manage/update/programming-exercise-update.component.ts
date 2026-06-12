@@ -181,8 +181,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const beforeColon = firstLine.includes(':') ? firstLine.slice(0, firstLine.indexOf(':')).trim() : firstLine;
         const withoutLeadIn = beforeColon.replace(/^(create|implement|build|write|design|make|develop)\s+(an?|the)\s+/i, '').trim();
         const candidate = withoutLeadIn.length >= 3 ? withoutLeadIn : beforeColon;
-        const capped = candidate.length > 80 ? candidate.slice(0, 80).replace(/\s+\S*$/, '') : candidate;
-        return capped.charAt(0).toUpperCase() + capped.slice(1);
+        // The exercise title column only allows letters, digits, space, hyphen and underscore (EXERCISE_TITLE_NAME_PATTERN). The brief is free prose (commas, colons, slashes, …), so a
+        // raw slice would fail the server's title validation and silently block the persist on the lean page — where the title field is hidden and cannot be corrected. Replace every
+        // disallowed character with a space and collapse the runs; this placeholder only lives during the ~3-minute run before the server reconciles the real title from the H1.
+        const sanitized = candidate
+            .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const capped =
+            sanitized.length > 80
+                ? sanitized
+                      .slice(0, 80)
+                      .replace(/\s+\S*$/, '')
+                      .trim()
+                : sanitized;
+        const titled = capped.length >= 3 ? capped : 'AI exercise';
+        return titled.charAt(0).toUpperCase() + titled.slice(1);
     }
 
     setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
