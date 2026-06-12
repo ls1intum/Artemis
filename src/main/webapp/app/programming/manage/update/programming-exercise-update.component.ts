@@ -361,6 +361,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // INDEPENDENT of the selected language. This keeps the capability discoverable (R2) — on an unsupported language the action is rendered but disabled with an
     // explanatory tooltip (see generationLanguageSupported), rather than silently vanishing. Whether the action can actually run is gated separately by
     // generationLanguageSupported (and the form-validity guard in saveExerciseWithAi).
+    // NOTE: this deliberately does NOT exclude exam mode. Whole-exercise generation in an exam exercise group is intentional and exercised end-to-end (the auto-start navigation
+    // handles the exam route, see onSaveSuccessWithAi); the generated exercise is a normal, verified programming exercise that happens to live in an exercise group. It is gated by
+    // create-mode + Hyperion just like the course case, so there is nothing exam-specific to block.
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
