@@ -18,7 +18,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { PlanSuggestions, ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -70,6 +70,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseChange = output<ProgrammingExercise>();
     /** Emits the instructor's "Your Requirements" brief on every keystroke so the parent can thread it into the footer's "Generate entire exercise" action. */
     briefChange = output<string>();
+    /** Emits the metadata a draft proposes (title/difficulty/categories) so the parent can apply them as editable defaults on the lean AI page. */
+    planSuggestions = output<PlanSuggestions>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
@@ -119,6 +121,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 this.problemStatementChange.emit(content);
                 this.programmingExerciseChange.emit(exercise);
             },
+            onPlanSuggestions: (suggestions) => this.planSuggestions.emit(suggestions),
         });
     }
 

@@ -13,6 +13,10 @@
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten.",
                 "aiModeTooltip": "Im KI-Modus beschreibst du die gewünschte Aufgabe in eigenen Worten. Wähle einfach die Programmiersprache und beschreibe, was du möchtest — Artemis Intelligence schreibt die Problemstellung, baut die Repositorys und verifiziert die Aufgabe für dich. Titel, Punkte und Bezeichner werden mit sinnvollen Standardwerten gefüllt, die du danach anpassen kannst. Du kannst vorab einen Plan entwerfen und prüfen."
             },
+            "aiPlanSuggestions": {
+                "title": "Vorgeschlagene Einstellungen",
+                "hint": "Artemis Intelligence hat diese aus deinem Plan vorgeschlagen und automatisch übernommen. Du kannst sie beliebig anpassen oder entfernen — sie beeinflussen die Generierung nicht."
+            },
             "editMode": {
                 "simple": "Einfach",
                 "advanced": "Erweitert",

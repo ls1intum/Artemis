@@ -13,6 +13,10 @@
                 "advancedModeTooltip": "The advanced mode offers extended configuration options.",
                 "aiModeTooltip": "AI mode lets you describe the exercise you want in plain language. Just pick the programming language and describe what you want — Artemis Intelligence authors the problem statement, builds the repositories, and verifies the exercise for you. Title, points and identifiers are filled in with sensible defaults you can refine afterwards. You can draft and review a plan before the full build."
             },
+            "aiPlanSuggestions": {
+                "title": "Suggested settings",
+                "hint": "Artemis Intelligence proposed these from your plan and applied them automatically. Adjust or clear them as you like — they do not affect generation."
+            },
             "editMode": {
                 "simple": "Simple",
                 "advanced": "Advanced",

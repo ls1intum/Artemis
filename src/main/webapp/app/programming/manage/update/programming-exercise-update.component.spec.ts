@@ -25,6 +25,7 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -367,6 +368,48 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.onProgrammingLanguageChange(ProgrammingLanguage.GO);
             expect(comp.programmingExercise.packageName).toBe('exercise');
+        });
+
+        it('applies draft plan suggestions (title/difficulty/snapped categories) and reveals the suggestions panel', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = undefined;
+            // One existing course category to snap against (keeps its colour); the other proposal is genuinely new.
+            comp.existingCategories = [new ExerciseCategory('Data Structures', '#111111')];
+            expect(comp.aiPlanSuggestionsApplied()).toBe(false);
+
+            comp.onPlanSuggestions({ title: 'Ring Buffer!', difficulty: DifficultyLevel.MEDIUM, categories: ['data structures', 'Generics', 'data structures'] });
+
+            // Title sanitised + applied; difficulty applied; panel revealed.
+            expect(comp.programmingExercise.title).toBe('Ring Buffer');
+            expect(comp.programmingExercise.difficulty).toBe(DifficultyLevel.MEDIUM);
+            expect(comp.aiPlanSuggestionsApplied()).toBe(true);
+            // Categories snapped: the existing one is reused verbatim (same colour), the new one is added once (deduped), and a colour is assigned.
+            const names = (comp.programmingExercise.categories ?? []).map((category) => category.category);
+            expect(names).toEqual(['Data Structures', 'Generics']);
+            const snapped = comp.programmingExercise.categories!.find((category) => category.category === 'Data Structures');
+            expect(snapped!.color).toBe('#111111');
+            expect(comp.programmingExercise.categories!.find((category) => category.category === 'Generics')!.color).toBeDefined();
+        });
+
+        it('does not overwrite an instructor-edited title when applying plan suggestions', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = 'Hand picked title';
+
+            comp.onPlanSuggestions({ title: 'Model Title', difficulty: DifficultyLevel.HARD });
+
+            expect(comp.programmingExercise.title).toBe('Hand picked title');
+            // Difficulty still applies even when the title is left alone.
+            expect(comp.programmingExercise.difficulty).toBe(DifficultyLevel.HARD);
+        });
+
+        it('ignores plan suggestions outside AI mode', () => {
+            comp.setEditMode('advanced');
+            comp.programmingExercise.difficulty = undefined;
+
+            comp.onPlanSuggestions({ difficulty: DifficultyLevel.EASY, categories: ['x'] });
+
+            expect(comp.programmingExercise.difficulty).toBeUndefined();
+            expect(comp.aiPlanSuggestionsApplied()).toBe(false);
         });
     });
 

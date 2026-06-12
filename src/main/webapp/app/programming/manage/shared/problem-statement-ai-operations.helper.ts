@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { PlanSuggestions, ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
@@ -21,6 +21,9 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 export interface ProblemStatementChangeHandler {
     /** Called when the problem statement content changes (generation, refinement accept, revert). */
     onContentChanged(content: string, exercise: ProgrammingExercise): void;
+
+    /** Called after a draft generation when the model proposed editable metadata (title/difficulty/categories) for the instructor to review. Optional: only the create flow consumes it. */
+    onPlanSuggestions?(suggestions: PlanSuggestions, exercise: ProgrammingExercise): void;
 }
 
 /**
@@ -137,6 +140,10 @@ export class ProblemStatementAiOperationsHelper {
                         // Keep the brief: after drafting a statement the instructor can immediately click "Generate entire exercise" (which requires a non-empty brief), so the staged
                         // plan → review → generate flow works without re-typing. The drafted statement becomes the reviewed spec; the brief remains the run's prompt.
                         this.changeHandler?.onContentChanged(draftContent, exercise);
+                        // Surface the draft's proposed metadata (title/difficulty/categories) so the parent can apply them as editable defaults. Advisory only — never drives generation.
+                        if (result.suggestions) {
+                            this.changeHandler?.onPlanSuggestions?.(result.suggestions, exercise);
+                        }
                     } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     }

@@ -31,6 +31,9 @@ import {
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { PlanSuggestions } from 'app/programming/manage/services/problem-statement.service';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -88,6 +91,8 @@ export const AI_MODE_DEFAULT_POINTS = 10;
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
+        DifficultyPickerComponent,
+        CategorySelectorComponent,
     ],
     providers: [BuildPhasesTemplateService],
 })
@@ -145,6 +150,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     currentBrief = signal<string>('');
     /** The last title this component auto-derived from the brief; lets {@link onAiBriefChange} keep the (hidden) title in sync with the brief without clobbering anything else. */
     private lastAutoSeededTitle = '';
+    /** True once a draft proposed metadata in AI mode; reveals the compact, editable "Suggested settings" panel (difficulty + categories) on the otherwise-lean page. */
+    readonly aiPlanSuggestionsApplied = signal<boolean>(false);
 
     /**
      * Threads the "Your Requirements" brief from the problem child to the footer action AND keeps the hidden title/short name seeded from it, so the lean AI page needs no title field:
@@ -181,10 +188,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const beforeColon = firstLine.includes(':') ? firstLine.slice(0, firstLine.indexOf(':')).trim() : firstLine;
         const withoutLeadIn = beforeColon.replace(/^(create|implement|build|write|design|make|develop)\s+(an?|the)\s+/i, '').trim();
         const candidate = withoutLeadIn.length >= 3 ? withoutLeadIn : beforeColon;
-        // The exercise title column only allows letters, digits, space, hyphen and underscore (EXERCISE_TITLE_NAME_PATTERN). The brief is free prose (commas, colons, slashes, …), so a
-        // raw slice would fail the server's title validation and silently block the persist on the lean page — where the title field is hidden and cannot be corrected. Replace every
-        // disallowed character with a space and collapse the runs; this placeholder only lives during the ~3-minute run before the server reconciles the real title from the H1.
-        const sanitized = candidate
+        return this.sanitizeExerciseTitle(candidate);
+    }
+
+    /**
+     * Coerces an arbitrary candidate string into a valid exercise title. The exercise title column only allows letters, digits, space, hyphen and underscore
+     * (EXERCISE_TITLE_NAME_PATTERN). A free-prose candidate (commas, colons, slashes, …) would otherwise fail the server's title validation and silently block the persist on the lean
+     * page — where the title field is hidden and cannot be corrected. Replaces every disallowed character with a space, collapses the runs, caps at a sentence length on a word
+     * boundary, upper-cases the first letter, and falls back to a safe default when nothing usable remains.
+     */
+    private sanitizeExerciseTitle(candidate: string): string {
+        const sanitized = (candidate ?? '')
             .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
@@ -197,6 +211,57 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 : sanitized;
         const titled = capped.length >= 3 ? capped : 'AI exercise';
         return titled.charAt(0).toUpperCase() + titled.slice(1);
+    }
+
+    /**
+     * Applies the metadata a draft proposed (title, difficulty, categories) as EDITABLE defaults on the lean AI page, then reveals the compact suggestions panel so the instructor can
+     * review and adjust them. Advisory only — none of this drives generation (the agent's context is the brief + language). The title only replaces our own placeholder, never an
+     * instructor-edited title; categories are snapped to the course's existing taxonomy so near-duplicates do not fragment it.
+     */
+    onPlanSuggestions(suggestions: PlanSuggestions): void {
+        if (!this.isAiMode()) {
+            return;
+        }
+        const proposedTitle = suggestions.title ? this.sanitizeExerciseTitle(suggestions.title) : '';
+        const currentTitle = this.programmingExercise.title ?? '';
+        if (proposedTitle && (currentTitle === '' || currentTitle === this.lastAutoSeededTitle)) {
+            this.lastAutoSeededTitle = proposedTitle;
+            this.programmingExercise.title = proposedTitle;
+            this.programmingExercise.shortName = this.deriveShortName(proposedTitle);
+        }
+        if (suggestions.difficulty) {
+            this.programmingExercise.difficulty = suggestions.difficulty;
+        }
+        if (suggestions.categories?.length) {
+            this.updateCategories(this.snapSuggestedCategories(suggestions.categories));
+        }
+        this.aiPlanSuggestionsApplied.set(true);
+        this.calculateFormStatusSections();
+    }
+
+    /**
+     * Maps proposed category names to {@link ExerciseCategory} chips, snapping each to an existing course category (case-insensitive, reusing its colour) so the model's free-text
+     * proposals never mint near-duplicates that fragment the course taxonomy. Genuinely new categories get a stable colour from the shared palette. De-duplicated, order preserved.
+     */
+    private snapSuggestedCategories(names: string[]): ExerciseCategory[] {
+        const existing = this.existingCategories ?? [];
+        const palette = ['#6ae8ac', '#9dca53', '#94a11c', '#1b97ca', '#0d3cc2', '#0ab84f'];
+        const result: ExerciseCategory[] = [];
+        const seen = new Set<string>();
+        names.forEach((raw) => {
+            const name = (raw ?? '').trim();
+            if (!name) {
+                return;
+            }
+            const key = name.toLowerCase();
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            const match = existing.find((category) => (category.category ?? '').toLowerCase() === key);
+            result.push(match ?? new ExerciseCategory(name, palette[result.length % palette.length]));
+        });
+        return result;
     }
 
     setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
@@ -219,6 +284,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.problemStatementLoaded = true;
             // The lean AI page hides short name, package name and points; seed valid defaults for them so the form is valid and "Generate entire exercise" enables with no extra input.
             this.seedAiModeDefaults();
+            // The "Suggested settings" panel only appears after a draft proposes metadata; entering AI mode fresh starts hidden.
+            this.aiPlanSuggestionsApplied.set(false);
             this.rerenderSubject.next();
         } else {
             // Only the durable manual preference is persisted; AI mode is a one-shot create intent and is never written to localStorage.

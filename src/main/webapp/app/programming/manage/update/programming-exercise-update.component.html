@@ -58,7 +58,25 @@
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
                 (briefChange)="onAiBriefChange($event)"
+                (planSuggestions)="onPlanSuggestions($event)"
             />
+            <!-- AI mode: once a draft proposes metadata, reveal a compact, editable "Suggested settings" panel (difficulty + categories). These were applied automatically from the plan;
+            the instructor can adjust or clear them. Everything else (points, dates, …) stays defaulted/deferred. Hidden until a draft exists so the empty page stays language + brief. -->
+            @if (isAiMode() && aiPlanSuggestionsApplied()) {
+                <hr class="mb-5" />
+                <section>
+                    <h3 jhiTranslate="artemisApp.programmingExercise.aiPlanSuggestions.title"></h3>
+                    <p class="text-color-secondary" jhiTranslate="artemisApp.programmingExercise.aiPlanSuggestions.hint"></p>
+                    <div class="form-group">
+                        <label class="label-narrow d-block" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                        <jhi-difficulty-picker [exercise]="programmingExercise" (ngModelChange)="calculateFormStatusSections()" />
+                    </div>
+                    <div class="form-group">
+                        <label class="label-narrow d-block" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                    </div>
+                </section>
+            }
             <!-- AI mode defaults the whole Grading section (points/score inclusion seeded, timeline deferred until release); hide the section and the divider that would otherwise dangle
             above the footer, keeping the brief the last thing before "Generate entire exercise". -->
             @if (!isAiMode()) {
